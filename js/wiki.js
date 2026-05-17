@@ -298,7 +298,7 @@ function applyWikiLinks(container, termMap, re) {
       var pType     = s.types.length > 1 ? 'multi' : (s.types[0] || 'Freeweave');
       var icon      = TYPE_ICONS[s.types[0]] || '\u2726';
       var label     = s.types.length > 1 ? s.types.join(' / ') : (s.types[0] || '');
-      html += '<div class="spell-card">'
+      html += '<div class="spell-card" onclick="openSpellModal(' + globalIdx + ')">'
            +  '<div class="sc-type-tab sc-tab-' + pType + '">'
            +    '<span class="sc-tab-icon">' + icon + '</span>'
            +    '<span class="sc-tab-label">' + label + '</span>'
@@ -309,7 +309,7 @@ function applyWikiLinks(container, termMap, re) {
            +  '</div>'
            +  '<div class="sc-meta">'
            +    '<span class="sc-lvl-label">' + lvlLabel + '</span>'
-           +    '<button class="sc-read-more" onclick="openSpellModal(' + globalIdx + ')">Read more →</button>'
+           +    '<button class="sc-read-more" onclick="event.stopPropagation(); openSpellModal(' + globalIdx + ')">Read more →</button>'
            +  '</div>'
            +  '</div>';
     });
