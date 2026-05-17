@@ -1,1 +1,91 @@
-# anavale-wiki
+# Anavale Wiki
+
+Player-facing wiki for the **Anavale** D&D campaign (Pogglewog continent). Built as a single-page application with no build step — open `index.html` directly in a browser or serve via GitHub Pages.
+
+---
+
+## File Structure
+
+```
+anavale-wiki/
+├── index.html              # Main wiki shell (HTML only — no inline CSS or JS)
+├── welcome.html            # Animated world introduction for new players
+│
+├── css/
+│   ├── wiki.css            # Core styles: layout, sidebar, parchment theme, typography
+│   └── spells.css          # Spellbook section styles (tabs, cards, modal)
+│
+├── js/
+│   └── wiki.js             # Navigation, search, wiki-linking, spellbook UI
+│
+├── data/
+│   └── spells.js           # SPELL_DATA (spell list) + SPELL_STATS (full spell details)
+│
+├── assets/
+│   ├── icons/              # SVG icons for the four Gigglegloom types
+│   │   ├── icon-bubbleseed.svg
+│   │   ├── icon-featherflow.svg
+│   │   ├── icon-steelfist.svg
+│   │   └── icon-flamerage.svg
+│   ├── images/
+│   │   ├── regions/        # Region header images (caparia.jpg, nombi.jpg, etc.)
+│   │   └── creatures/      # Creature images
+│
+└── pages/                  # Reserved for future page partials / expansion content
+```
+
+---
+
+## Script Load Order
+
+`index.html` loads files in this order:
+
+```html
+<link rel="stylesheet" href="css/wiki.css">
+<link rel="stylesheet" href="css/spells.css">
+...
+<script src="data/spells.js"></script>
+<script src="js/wiki.js"></script>
+```
+
+`data/spells.js` must load before `js/wiki.js` because `wiki.js` reads `SPELL_DATA` and `SPELL_STATS` at DOM-ready time.
+
+---
+
+## CSS Custom Properties
+
+All design tokens live in the `:root` block at the top of `css/wiki.css`. Key categories:
+
+| Group | Variables |
+|---|---|
+| Color palette | `--parchment`, `--ink`, `--gold`, `--amber`, `--teal`, `--violet` |
+| Type colors | `--bubbleseed`, `--featherflow`, `--steelfist`, `--flamerage` |
+| Layout | `--sidebar-w`, `--content-pad`, `--section-gap`, `--card-radius` |
+| Typography | `--font-serif`, `--text-base` through `--text-3xl`, `--line-height` |
+| Decoration | `--shadow-sm/md/lg`, `--border-color` |
+
+---
+
+## Key JS Functions (js/wiki.js)
+
+| Function | Purpose |
+|---|---|
+| `show(id)` | Navigate to a page by ID (toggles `.active` class) |
+| `addWikiLinks()` | Auto-links recognized lore terms to their wiki pages |
+| `renderSpells()` | Renders the filtered/paginated spell list |
+| `openSpellModal(name)` | Opens the full spell detail modal |
+
+---
+
+## Deployment
+
+The wiki deploys via **GitHub Pages** from the `main` branch root. Push to `main` → live at your Pages URL within ~60 seconds.
+
+---
+
+## Campaign Notes
+
+- **Ruleset:** 2024 D&D 5e Player's Handbook
+- **Setting:** Anavale, continent of Pogglewog
+- **Magic system:** The Gigglegloom (four types: Bubbleseed, Featherflow, Steelfist, Flamerage)
+- **Tone:** Disney-inspired high fantasy with a dark undercurrent (the Vareth, the Dimming)
