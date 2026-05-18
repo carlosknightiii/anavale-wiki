@@ -347,23 +347,74 @@ function buildSearchIndex() {
   var items     = typeof ITEMS          !== 'undefined' ? ITEMS          : [];
   var pois      = typeof POIS           !== 'undefined' ? POIS           : [];
 
-  regions.forEach(function(r)   { allData.push({ hash: 'region/' + r.id,   title: r.name, text: r.name + ' ' + (r.summary||'') + ' ' + (r.tone||'') }); });
-  nations.forEach(function(n)   { allData.push({ hash: 'nation/' + n.id,   title: n.name, text: n.name + ' ' + (n.summary||'') + ' ' + (n.culture||'') + ' ' + (n.beliefs||'') }); });
-  cities.forEach(function(c)    { allData.push({ hash: 'city/' + c.id,     title: c.name, text: c.name + ' ' + (c.summary||'') + ' ' + (c.description||'') }); });
-  creatures.forEach(function(c) { allData.push({ hash: 'creature/' + c.id, title: c.name, text: c.name + ' ' + (c.description||'') + ' ' + (c.behavior||'') + ' ' + (c.tags||[]).join(' ') }); });
-  orgs.forEach(function(o)      { allData.push({ hash: 'org/' + o.id,      title: o.name, text: o.name + ' ' + (o.summary||'') + ' ' + (o.purpose||'') + ' ' + (o.tags||[]).join(' ') }); });
-  chars.forEach(function(c)     { allData.push({ hash: 'gods',             title: c.name, text: c.name + ' ' + (c.summary||'') + ' ' + (c.player_knowledge||'') }); });
-  items.forEach(function(it)    { allData.push({ hash: 'item/' + it.id,    title: it.name, text: it.name + ' ' + (it.summary||'') + ' ' + (it.description||'') }); });
-  pois.forEach(function(p)      { allData.push({ hash: 'poi/' + p.id,      title: p.name, text: p.name + ' ' + (p.summary||'') + ' ' + (p.description||'') }); });
+  // SECURITY: Only index player-facing entries. Hidden entries (player_facing === false
+  // or absent) must never appear in search results. Teaser entries are indexed with
+  // name+summary only — never description, behavior, dm_notes, or other DM content.
+  regions.forEach(function(r) {
+    var vis = getVisibility(r);
+    if (vis === 'hidden') return;
+    var text = r.name + ' ' + (r.summary||'');
+    if (vis === 'visible') text += ' ' + (r.tone||'');
+    allData.push({ hash: 'region/' + r.id, title: r.name, text: text, player_facing: r.player_facing });
+  });
+  nations.forEach(function(n) {
+    var vis = getVisibility(n);
+    if (vis === 'hidden') return;
+    var text = n.name + ' ' + (n.summary||'');
+    if (vis === 'visible') text += ' ' + (n.culture||'') + ' ' + (n.beliefs||'');
+    allData.push({ hash: 'nation/' + n.id, title: n.name, text: text, player_facing: n.player_facing });
+  });
+  cities.forEach(function(c) {
+    var vis = getVisibility(c);
+    if (vis === 'hidden') return;
+    var text = c.name + ' ' + (c.summary||'');
+    if (vis === 'visible') text += ' ' + (c.description||'');
+    allData.push({ hash: 'city/' + c.id, title: c.name, text: text, player_facing: c.player_facing });
+  });
+  creatures.forEach(function(c) {
+    var vis = getVisibility(c);
+    if (vis === 'hidden') return;
+    var text = c.name + ' ' + (c.summary||'');
+    if (vis === 'visible') text += ' ' + (c.description||'') + ' ' + (c.behavior||'') + ' ' + (c.tags||[]).join(' ');
+    allData.push({ hash: 'creature/' + c.id, title: c.name, text: text, player_facing: c.player_facing });
+  });
+  orgs.forEach(function(o) {
+    var vis = getVisibility(o);
+    if (vis === 'hidden') return;
+    var text = o.name + ' ' + (o.summary||'');
+    if (vis === 'visible') text += ' ' + (o.purpose||'') + ' ' + (o.tags||[]).join(' ');
+    allData.push({ hash: 'org/' + o.id, title: o.name, text: text, player_facing: o.player_facing });
+  });
+  chars.forEach(function(c) {
+    var vis = getVisibility(c);
+    if (vis === 'hidden') return;
+    var text = c.name + ' ' + (c.summary||'');
+    if (vis === 'visible') text += ' ' + (c.player_knowledge||'');
+    allData.push({ hash: 'gods', title: c.name, text: text, player_facing: c.player_facing });
+  });
+  items.forEach(function(it) {
+    var vis = getVisibility(it);
+    if (vis === 'hidden') return;
+    var text = it.name + ' ' + (it.summary||'');
+    if (vis === 'visible') text += ' ' + (it.description||'');
+    allData.push({ hash: 'item/' + it.id, title: it.name, text: text, player_facing: it.player_facing });
+  });
+  pois.forEach(function(p) {
+    var vis = getVisibility(p);
+    if (vis === 'hidden') return;
+    var text = p.name + ' ' + (p.summary||'');
+    if (vis === 'visible') text += ' ' + (p.description||'');
+    allData.push({ hash: 'poi/' + p.id, title: p.name, text: text, player_facing: p.player_facing });
+  });
 
-  // Static pages
+  // Static pages — always player-facing
   [
-    { hash: 'home',        title: 'Welcome, Traveller', text: 'welcome home introduction anavale pogglewog' },
-    { hash: 'gigglegloom', title: 'The Gigglegloom',    text: 'gigglegloom magic bubbleseed featherflow steelfist flamerage prior conclave' },
-    { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey vareth quietude' },
-    { hash: 'gods',        title: 'The Gods',           text: 'gods oro nara thyun solvara grak partition brightcreed stillkeep veilborn' },
-    { hash: 'rumors',      title: 'Rumours & Hearsay',  text: 'rumors hearsay rumours' },
-    { hash: 'spells',      title: 'Spellbook',          text: 'spells spellbook gigglegloom cast' }
+    { hash: 'home',        title: 'Welcome, Traveller', text: 'welcome home introduction anavale pogglewog',                                  player_facing: true },
+    { hash: 'gigglegloom', title: 'The Gigglegloom',    text: 'gigglegloom magic bubbleseed featherflow steelfist flamerage prior conclave',   player_facing: true },
+    { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey vareth quietude',                              player_facing: true },
+    { hash: 'gods',        title: 'The Gods',           text: 'gods oro nara thyun solvara grak partition brightcreed stillkeep veilborn',     player_facing: true },
+    { hash: 'rumors',      title: 'Rumours & Hearsay',  text: 'rumors hearsay rumours',                                                       player_facing: true },
+    { hash: 'spells',      title: 'Spellbook',          text: 'spells spellbook gigglegloom cast',                                            player_facing: true }
   ].forEach(function(p) { allData.push(p); });
 
   allData.forEach(function(entry) {
@@ -389,8 +440,15 @@ function doSearch(query) {
       if (end < entry.text.length) excerpt += '…';
       var re      = new RegExp('(' + escapeRegex(q) + ')', 'gi');
       excerpt     = excerpt.replace(re, '<mark>$1</mark>');
-      _searchResults.push({ hash: entry.hash, title: entry.title, excerpt: excerpt });
+      _searchResults.push({ hash: entry.hash, title: entry.title, excerpt: excerpt, player_facing: entry.player_facing });
     }
+  });
+
+  // SECURITY: Secondary filter — remove any hidden entry that somehow reached results.
+  // This is a defence-in-depth check; buildSearchIndex() should never add hidden entries,
+  // but this ensures they can never surface even if the index is stale or patched incorrectly.
+  _searchResults = _searchResults.filter(function(r) {
+    return r.player_facing === true || r.player_facing === 'teaser';
   });
 
   // Sort: exact title match first, then alphabetical

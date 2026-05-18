@@ -20,7 +20,8 @@ var REGIONS = [
     world_wonders:    ["The Brightwall", "The Prior Stone", "The Partition Scar"],
     key_sites:        ["The Brightwall", "The Partition Scar", "The Prior Stone", "Gobblewump Crossing", "Greyveil Hollow", "The Grasping Ledge", "Mosswhisper Grove"],
     cities:           ["solenveil", "prismhold", "mirrenport", "reveltown", "bumbleton", "veilhaven", "pebbleshire", "doopu-station", "lightcrak", "inkwell", "pebblecrown"],
-    tags:             ["caparia", "pogglewog", "confederation", "heartlands", "colorful"]
+    tags:             ["caparia", "pogglewog", "confederation", "heartlands", "colorful"],
+    player_facing:    true
   },
   {
     id:               "nombi",
@@ -39,7 +40,8 @@ var REGIONS = [
     world_wonders:    [],
     key_sites:        ["The Pale Ring", "The Dimwall", "The Ancient One glacier", "Sky Islands of Nombi"],
     cities:           ["coldmere", "frostgate", "tumblesnow", "hollowpine"],
-    tags:             ["nombi", "pogglewog", "frozen", "north", "aurora", "fjords"]
+    tags:             ["nombi", "pogglewog", "frozen", "north", "aurora", "fjords"],
+    player_facing:    true
   },
   {
     id:               "sohot",
@@ -58,7 +60,8 @@ var REGIONS = [
     world_wonders:    ["The Bubblespring"],
     key_sites:        ["The Quiet Pillar", "The Bubblespring", "The Grakstone", "Mt. Sumsum", "Ashfall Wastes"],
     cities:           ["aurentum-city", "sunharbor", "ashenveil", "driprock", "scaldmere"],
-    tags:             ["sohot", "pogglewog", "desert", "south", "ancient", "ruins"]
+    tags:             ["sohot", "pogglewog", "desert", "south", "ancient", "ruins"],
+    player_facing:    true
   },
   {
     id:               "jugabi",
@@ -77,6 +80,7 @@ var REGIONS = [
     world_wonders:    ["Bloom Hollow"],
     key_sites:        ["Bloom Hollow", "The Humid One's Heart", "The Graskvine", "The Canopy Sea"],
     cities:           ["rootdeep", "tanglevine", "mumblewump"],
-    tags:             ["jugabi", "pogglewog", "jungle", "rainforest", "southwest", "canopy"]
+    tags:             ["jugabi", "pogglewog", "jungle", "rainforest", "southwest", "canopy"],
+    player_facing:    true
   }
 ];
