@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anavale DM Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/wiki.css">
+<style>
+/* ══════════════════════════════════════════════
+   ANAVALE DM TOOLS — dm.html
+   Session B2 Content Management System
+   ══════════════════════════════════════════════ */
+
+/* ── PASSWORD GATE ─────────────────────────── */
+.gate-overlay {
+  position: fixed; inset: 0;
+  background: #1a1208;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.5s ease;
+}
+.gate-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+.gate-card {
+  background: var(--parchment);
+  border: 2px solid var(--gold);
+  border-radius: var(--card-radius);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg), 0 0 60px rgba(200,148,10,0.2);
+}
+.gate-title {
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-3xl);
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+.gate-sub {
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  font-size: var(--text-sm);
+}
+.gate-input-wrap {
+  display: flex; gap: 0.5rem;
+}
+.gate-input-wrap input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: rgba(255,255,255,0.5);
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-size: var(--text-base);
+}
+.gate-input-wrap input:focus { outline: 2px solid var(--gold); }
+.gate-btn {
+  padding: 0.6rem 1.2rem;
+  background: var(--gold);
+  color: white;
+  border: none; border-radius: var(--border-radius);
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.gate-btn:hover { background: var(--gold-light); color: var(--ink); }
+.gate-error {
+  color: #cc3333;
+  font-style: italic;
+  margin-top: 0.75rem;
+  font-size: var(--text-sm);
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+.gate-card.shake { animation: shake 0.4s ease; }
+
+/* ── DM APP SHELL ──────────────────────────── */
+.dm-app {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+.dm-header {
+  background: var(--parchment-dark);
+  border-bottom: 2px solid var(--gold);
+  padding: 0.9rem 2rem;
+  display: flex; align-items: baseline; gap: 1rem;
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
+}
+.dm-header-title {
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-2xl);
+  color: var(--gold);
+}
+.dm-header-sub {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+}
+
+/* ── TABS ──────────────────────────────────── */
+.dm-tabs {
+  display: flex; flex-wrap: wrap; gap: 0;
+  background: #2a1f0e;
+  padding: 0.5rem 1.5rem 0;
+  border-bottom: 2px solid var(--gold);
+  flex-shrink: 0;
+}
+.dm-tab {
+  padding: 0.45rem 1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: rgba(245,234,212,0.65);
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.18s;
+}
+.dm-tab:hover { color: var(--parchment); background: rgba(200,148,10,0.15); }
+.dm-tab.active {
+  background: var(--parchment);
+  color: var(--ink);
+  border-color: var(--gold);
+  border-bottom-color: var(--parchment);
+  margin-bottom: -2px;
+}
+
+/* ── MAIN TWO-COLUMN ───────────────────────── */
+.dm-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── FORMS PANEL ───────────────────────────── */
+.dm-forms-panel {
+  flex: 1;
+  background: var(--parchment);
+  padding: 2rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-color);
+}
+.dm-form { display: none; }
+.dm-form.active { display: block; }
+
+.dm-form-title {
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-2xl);
+  color: var(--gold);
+  margin-bottom: 0.2rem;
+}
+.dm-form-subtitle {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  margin-bottom: 1.75rem;
+}
+
+/* ── FORM FIELDS ───────────────────────────── */
+.field-group { margin-bottom: 1.2rem; }
+
+.field-label {
+  display: block;
+  font-weight: bold;
+  color: var(--ink);
+  margin-bottom: 0.15rem;
+  font-size: var(--text-base);
+}
+.field-label .req {
+  color: var(--gold);
+  margin-left: 0.2rem;
+  font-weight: normal;
+}
+.field-help {
+  display: block;
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  margin-bottom: 0.35rem;
+  line-height: 1.45;
+}
+
+.field-input,
+.field-textarea,
+.field-select {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: rgba(255,255,255,0.55);
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-size: var(--text-base);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.field-input:focus,
+.field-textarea:focus,
+.field-select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(200,148,10,0.18);
+}
+.field-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: var(--line-height);
+}
+.field-textarea.tall { min-height: 120px; }
+
+/* ── TWO-COLUMN FIELD ROW ──────────────────── */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.field-row .field-group { margin-bottom: 0; }
+
+/* ── RADIO TOGGLE (Yes / No) ───────────────── */
+.field-toggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  width: fit-content;
+  margin-top: 0.25rem;
+}
+.field-toggle input[type=radio] { display: none; }
+.field-toggle label {
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  transition: all 0.15s;
+  font-style: normal;
+  user-select: none;
+}
+.field-toggle input[type=radio]:checked + label {
+  background: var(--gold);
+  color: white;
+}
+
+/* ── CHECKBOX PILL GROUP ───────────────────── */
+.field-checkboxes {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+.field-checkboxes label {
+  display: flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  transition: all 0.15s;
+  font-style: normal;
+  user-select: none;
+}
+.field-checkboxes input[type=checkbox] { display: none; }
+.field-checkboxes label:has(input:checked) {
+  background: rgba(200,148,10,0.12);
+  border-color: var(--gold);
+  color: var(--amber);
+  font-weight: bold;
+}
+
+/* ── REPEATING GROUPS ──────────────────────── */
+.repeating-group {
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  background: rgba(255,255,255,0.25);
+}
+.repeating-group-title {
+  font-weight: bold;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: var(--text-base);
+}
+.repeating-item {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  position: relative;
+  padding-right: 1.75rem;
+}
+.repeating-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.btn-remove {
+  position: absolute; top: 0; right: 0;
+  background: none; border: none;
+  color: #cc3333; cursor: pointer;
+  font-size: var(--text-base);
+  line-height: 1;
+  padding: 0 0.2rem;
+}
+.btn-remove:hover { color: #ff4444; }
+.btn-add {
+  background: none;
+  border: 1px dashed var(--gold);
+  color: var(--gold);
+  border-radius: var(--border-radius);
+  padding: 0.3rem 0.85rem;
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  transition: all 0.2s;
+}
+.btn-add:hover { background: rgba(200,148,10,0.1); }
+
+/* ── IMAGE UPLOAD ──────────────────────────── */
+.image-upload-area {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--card-radius);
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(255,255,255,0.25);
+  margin-top: 0.35rem;
+}
+.image-upload-area:hover { border-color: var(--gold); background: rgba(200,148,10,0.05); }
+.image-upload-area input[type=file] { display: none; }
+.image-upload-label {
+  cursor: pointer;
+  color: var(--ink-faint);
+  font-style: italic;
+  font-size: var(--text-sm);
+}
+.image-preview {
+  max-width: 180px;
+  max-height: 180px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+  display: none;
+}
+.image-preview.visible { display: inline-block; }
+.image-path-hint {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+
+/* ── SECTION DIVIDER ───────────────────────── */
+.form-section-divider {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 1.5rem 0 1rem;
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.form-section-divider::before,
+.form-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+/* ── FORM ACTIONS ──────────────────────────── */
+.dm-form-actions {
+  display: flex; gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+.btn-generate {
+  padding: 0.65rem 1.75rem;
+  background: var(--gold);
+  color: white;
+  border: none; border-radius: var(--border-radius);
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-generate:hover { background: var(--gold-light); color: var(--ink); }
+.btn-clear {
+  padding: 0.65rem 1rem;
+  background: none;
+  color: var(--ink-faint);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-family: var(--font-serif);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-clear:hover { border-color: var(--ink-faint); color: var(--ink); }
+
+/* ── SIDE PANEL ────────────────────────────── */
+.dm-side-panel {
+  width: 360px;
+  min-width: 280px;
+  max-width: 400px;
+  background: #2a1f0e;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── OUTPUT PANEL ──────────────────────────── */
+.dm-output {
+  padding: 1.25rem;
+  border-bottom: 1px solid rgba(200,148,10,0.3);
+  flex-shrink: 0;
+}
+.dm-vscode-notice {
+  background: rgba(80,120,200,0.12);
+  border: 1px solid rgba(80,120,200,0.35);
+  border-radius: var(--border-radius);
+  padding: 0.4rem 0.7rem;
+  color: rgba(180,210,255,0.8);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  line-height: 1.45;
+  margin-bottom: 0.75rem;
+}
+.dm-save-status {
+  border-radius: var(--border-radius);
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  margin-top: 0.5rem;
+  display: none;
+  line-height: 1.45;
+}
+.dm-save-status.pending {
+  display: block;
+  background: rgba(200,148,10,0.12);
+  border: 1px solid rgba(200,148,10,0.3);
+  color: var(--gold-light);
+}
+.dm-save-status.success {
+  display: block;
+  background: rgba(0,150,80,0.18);
+  border: 1px solid rgba(0,200,100,0.4);
+  color: #80ffb0;
+}
+.dm-save-status.error {
+  display: block;
+  background: rgba(200,50,50,0.18);
+  border: 1px solid rgba(220,80,80,0.4);
+  color: #ffaaaa;
+}
+.dm-output-label {
+  color: rgba(245,234,212,0.4);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-sans);
+}
+.dm-file-target {
+  background: rgba(200,148,10,0.12);
+  border: 1px solid rgba(200,148,10,0.35);
+  border-radius: var(--border-radius);
+  padding: 0.45rem 0.75rem;
+  color: var(--gold-light);
+  font-size: var(--text-sm);
+  margin-bottom: 0.75rem;
+  font-family: var(--font-sans);
+}
+.dm-file-target strong { color: #f0d060; }
+.dm-json-pre {
+  background: #1a1208;
+  border: 1px solid rgba(200,148,10,0.18);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  color: #b8e878;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre;
+}
+.dm-output-actions {
+  display: flex; gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.btn-copy, .btn-save {
+  flex: 1;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(200,148,10,0.45);
+  background: rgba(200,148,10,0.1);
+  color: var(--gold-light);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  transition: all 0.2s;
+  text-align: center;
+}
+.btn-copy:hover, .btn-save:hover {
+  background: rgba(200,148,10,0.25);
+  border-color: var(--gold-light);
+}
+.btn-copy.copied {
+  background: rgba(0,150,80,0.25);
+  border-color: #00cc60;
+  color: #70ff90;
+}
+
+/* ── RECENTLY ADDED ────────────────────────── */
+.dm-recent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+.dm-recent h3 {
+  font-family: 'Charm', Georgia, serif;
+  color: var(--gold);
+  font-size: var(--text-lg);
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(200,148,10,0.25);
+  padding-bottom: 0.4rem;
+}
+.recent-item {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(200,148,10,0.2);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.4rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recent-item:hover {
+  border-color: var(--gold);
+  background: rgba(200,148,10,0.08);
+}
+.recent-item-name {
+  color: var(--parchment);
+  font-size: var(--text-sm);
+  font-family: var(--font-serif);
+}
+.recent-item-meta {
+  color: rgba(245,234,212,0.35);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  margin-top: 0.1rem;
+}
+.dm-recent-empty {
+  color: rgba(245,234,212,0.25);
+  font-style: italic;
+  font-size: var(--text-sm);
+  text-align: center;
+  padding: 2rem 0;
+  line-height: 1.8;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     PASSWORD GATE
+     ══════════════════════════════════════════ -->
+<div id="gate" class="gate-overlay">
+  <div class="gate-card" id="gate-card">
+    <div class="gate-title">⚔ DM Sanctum</div>
+    <div class="gate-sub">Enter the seal to access the DM tools</div>
+    <div class="gate-input-wrap">
+      <input type="password" id="gate-input" placeholder="Password…" autocomplete="off">
+      <button class="gate-btn" onclick="checkPassword()">Enter</button>
+    </div>
+    <div id="gate-error" class="gate-error" style="display:none">✦ Incorrect seal. Try again.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DM APP
+     ══════════════════════════════════════════ -->
+<div id="dm-app" class="dm-app" style="display:none">
+
+  <div class="dm-header">
+    <div class="dm-header-title">⚔ Anavale DM Tools</div>
+    <div class="dm-header-sub">Content Management System — generate entries for the wiki data files</div>
+  </div>
+
+  <div class="dm-tabs">
+    <button class="dm-tab active" data-tab="city"         onclick="switchTab('city')">🏙️ City</button>
+    <button class="dm-tab"        data-tab="creature"     onclick="switchTab('creature')">🐾 Creature</button>
+    <button class="dm-tab"        data-tab="poi"          onclick="switchTab('poi')">📍 Point of Interest</button>
+    <button class="dm-tab"        data-tab="character"    onclick="switchTab('character')">🧙 Character</button>
+    <button class="dm-tab"        data-tab="organization" onclick="switchTab('organization')">🏛️ Organization</button>
+    <button class="dm-tab"        data-tab="item"         onclick="switchTab('item')">⚔️ Item</button>
+  </div>
+
+  <div class="dm-main">
+
+    <!-- ════════════════════════════════════════
+         FORMS PANEL
+         ════════════════════════════════════════ -->
+    <div class="dm-forms-panel">
+
+
+      <!-- ── CITY FORM ───────────────────────── -->
+      <div id="form-city" class="dm-form active">
+        <div class="dm-form-title">🏙️ New City or Settlement</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/cities.js</strong> — city, town, village, port, outpost, or ruin</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="city-name">Name <span class="req">✦</span></label>
+            <span class="field-help">Full name of the settlement as it appears on maps and in text</span>
+            <input class="field-input" type="text" id="city-name" oninput="autoId('city-name','city-id')" placeholder="e.g. Reveltown">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="city-id">ID <span class="req">✦</span></label>
+            <span class="field-help">Lowercase kebab-case identifier (auto-filled from name, editable)</span>
+            <input class="field-input" type="text" id="city-id" placeholder="e.g. reveltown">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="city-region">Region <span class="req">✦</span></label>
+            <span class="field-help">Which of the four Pogglewog regions this settlement is in</span>
+            <select class="field-select" id="city-region" onchange="filterNations('city-nation','city-region')">
+              <option value="">— Select region —</option>
+              <option value="caparia">Caparia</option>
+              <option value="nombi">Nombi</option>
+              <option value="sohot">Sohot</option>
+              <option value="jugabi">Jugabi</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="city-nation">Nation</label>
+            <span class="field-help">Which nation controls or contains this settlement (filtered by region)</span>
+            <select class="field-select" id="city-nation">
+              <option value="">— Select region first —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="city-type">Type <span class="req">✦</span></label>
+            <span class="field-help">Settlement classification used for search and display</span>
+            <select class="field-select" id="city-type">
+              <option value="">— Select type —</option>
+              <option value="capital">Capital</option>
+              <option value="major-city">Major City</option>
+              <option value="town">Town</option>
+              <option value="village">Village</option>
+              <option value="port">Port</option>
+              <option value="outpost">Outpost</option>
+              <option value="hidden">Hidden Settlement</option>
+              <option value="ruin">Ruin</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="city-color-health">Color Health</label>
+            <span class="field-help">Current Gigglegloom saturation and vitality of the settlement</span>
+            <select class="field-select" id="city-color-health">
+              <option value="">— Select —</option>
+              <option value="excellent">Excellent</option>
+              <option value="good">Good</option>
+              <option value="moderate">Moderate</option>
+              <option value="faded">Faded</option>
+              <option value="dire">Dire</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="city-summary">Summary <span class="req">✦</span></label>
+          <span class="field-help">One or two sentences — what a traveller would know before arriving. This appears in search results.</span>
+          <textarea class="field-textarea" id="city-summary" placeholder="e.g. A colorful market town built around the Mirrenflow docks. Known for its twice-weekly creature festivals and the Formery's noisiest regional office."></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="city-description">Description</label>
+          <span class="field-help">Longer DM reference description — atmosphere, layout, sensory details, what makes this place feel alive</span>
+          <textarea class="field-textarea tall" id="city-description" placeholder="Streets, smells, sounds, the colour of the light in the evening…"></textarea>
+        </div>
+
+        <div class="repeating-group">
+          <div class="repeating-group-title">
+            <span>Landmarks</span>
+            <button class="btn-add" onclick="addLandmark()">+ Add Landmark</button>
+          </div>
+          <div id="city-landmarks-list"></div>
+          <div id="city-landmarks-empty" style="color:var(--ink-faint);font-style:italic;font-size:var(--text-sm)">No landmarks added yet.</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="city-strategic">Strategic Importance</label>
+          <span class="field-help">Why this settlement matters — politically, militarily, magically, or economically</span>
+          <textarea class="field-textarea" id="city-strategic" placeholder="e.g. Controls the main mountain pass between Caparia and Sohot. All overland trade from the south passes through."></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Formery Present</label>
+            <span class="field-help">Does the Bureau of Thorough Consideration have an office here?</span>
+            <div class="field-toggle">
+              <input type="radio" name="city-formery" id="city-formery-yes" value="true">
+              <label for="city-formery-yes">Yes</label>
+              <input type="radio" name="city-formery" id="city-formery-no" value="false" checked>
+              <label for="city-formery-no">No</label>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Vareth Presence</label>
+            <span class="field-help">Is there active Vareth activity, Drakhold influence, or Dimming occurring here?</span>
+            <div class="field-toggle">
+              <input type="radio" name="city-vareth" id="city-vareth-yes" value="true">
+              <label for="city-vareth-yes">Yes</label>
+              <input type="radio" name="city-vareth" id="city-vareth-no" value="false" checked>
+              <label for="city-vareth-no">No</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="city-tone">Tone</label>
+          <span class="field-help">The emotional register — how it feels to be here. A few words or a phrase.</span>
+          <input class="field-input" type="text" id="city-tone" placeholder="e.g. Cheerful and chaotic. Market energy. Bumble Frogs everywhere.">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="city-tags">Tags</label>
+          <span class="field-help">Comma-separated keywords for search (region, nation, type, features)</span>
+          <input class="field-input" type="text" id="city-tags" placeholder="e.g. caparia, solenmere, capital, confederation, colorful">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Image</label>
+          <span class="field-help">Upload an image — save the file to assets/images/regions/ after generating</span>
+          <div class="image-upload-area" onclick="document.getElementById('city-img-input').click()">
+            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path')">
+            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
+            <br>
+            <img id="city-img-preview" class="image-preview" src="" alt="Preview">
+            <div id="city-img-path" class="image-path-hint"></div>
+          </div>
+        </div>
+
+        <div class="dm-form-actions">
+          <button class="btn-generate" onclick="generateCity()">✦ Generate Entry</button>
+          <button class="btn-clear" onclick="clearForm('city')">Clear Form</button>
+        </div>
+      </div>
+
+
+      <!-- ── CREATURE FORM ──────────────────── -->
+      <div id="form-creature" class="dm-form">
+        <div class="dm-form-title">🐾 New Creature</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/creatures.js</strong></div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="creature-name">Name <span class="req">✦</span></label>
+            <span class="field-help">Common name for this creature</span>
+            <input class="field-input" type="text" id="creature-name" oninput="autoId('creature-name','creature-id')" placeholder="e.g. Dustwhump Badger">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-id">ID <span class="req">✦</span></label>
+            <span class="field-help">Lowercase kebab-case identifier</span>
+            <input class="field-input" type="text" id="creature-id" placeholder="e.g. dustwhump-badger">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="creature-tier">Tier <span class="req">✦</span></label>
+            <span class="field-help">Gigglegloom classification tier</span>
+            <select class="field-select" id="creature-tier">
+              <option value="">— Select tier —</option>
+              <option value="merry">The Merry — light territory, full saturation</option>
+              <option value="dimmed">The Dimmed — dark territory, near-zero saturation</option>
+              <option value="sparked">The Sparked — Gigglegloom overloaded</option>
+              <option value="unseen">The Unseen — outside the Gigglegloom entirely</option>
+              <option value="common">Common — aquatic, sky, domestic, etc.</option>
+              <option value="rare">Rare &amp; Mysterious</option>
+              <option value="ancient">Ancient &amp; Mythic</option>
+              <option value="corrupted">Vareth-Corrupted</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-category">Category</label>
+            <span class="field-help">Sub-classification (e.g. aquatic, sky, domestic, the-merry, ancient)</span>
+            <input class="field-input" type="text" id="creature-category" placeholder="e.g. aquatic">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Regions <span class="req">✦</span></label>
+          <span class="field-help">Where this creature is found across Pogglewog — select all that apply</span>
+          <div class="field-checkboxes" id="creature-regions">
+            <label><input type="checkbox" value="caparia"><span>Caparia</span></label>
+            <label><input type="checkbox" value="nombi"><span>Nombi</span></label>
+            <label><input type="checkbox" value="sohot"><span>Sohot</span></label>
+            <label><input type="checkbox" value="jugabi"><span>Jugabi</span></label>
+            <label><input type="checkbox" value="all"><span>All Regions</span></label>
+            <label><input type="checkbox" value="ocean"><span>Ocean / Sea</span></label>
+            <label><input type="checkbox" value="underground"><span>Underground</span></label>
+            <label><input type="checkbox" value="sky"><span>Sky</span></label>
+            <label><input type="checkbox" value="vareth-territory"><span>Vareth Territory</span></label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-habitat">Habitat</label>
+          <span class="field-help">Specific habitat within the region — forests, coasts, meadows, caverns, etc.</span>
+          <input class="field-input" type="text" id="creature-habitat" placeholder="e.g. Dense forest undergrowth near Gigglegloom surge sites">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-description">Description <span class="req">✦</span></label>
+          <span class="field-help">Physical appearance and defining features — what a player sees when encountering this creature</span>
+          <textarea class="field-textarea tall" id="creature-description" placeholder="What does this creature look like?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-behavior">Behavior</label>
+          <span class="field-help">How this creature acts — habits, social structure, what it does when approached</span>
+          <textarea class="field-textarea" id="creature-behavior" placeholder="How does this creature behave?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-gigglegloom">Gigglegloom Relationship</label>
+          <span class="field-help">How this creature interacts with the Gigglegloom — feeds on it, emits it, responds to types?</span>
+          <textarea class="field-textarea" id="creature-gigglegloom" placeholder="e.g. Naturally drawn to Bubbleseed surges. Will follow a Bubbleseed practitioner for days."></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-dimmed">Dimmed Version</label>
+          <span class="field-help">What this creature looks like or does differently in Vareth-touched territory (blank if no dimmed version)</span>
+          <textarea class="field-textarea" id="creature-dimmed" placeholder="e.g. Fur fades to pale grey. No longer makes sound. Still tries to bring gifts."></textarea>
+        </div>
+
+        <div class="form-section-divider">DM Only</div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-dm-notes">DM Notes</label>
+          <span class="field-help">Private notes — encounter hooks, plot uses, secrets that should never reach players</span>
+          <textarea class="field-textarea" id="creature-dm-notes" placeholder="Private DM information…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Player Facing</label>
+          <span class="field-help">Can players see this creature's entry in the wiki? Set to No for The Unseen and secret creatures.</span>
+          <div class="field-toggle">
+            <input type="radio" name="creature-pf" id="creature-pf-yes" value="true" checked>
+            <label for="creature-pf-yes">Yes</label>
+            <input type="radio" name="creature-pf" id="creature-pf-no" value="false">
+            <label for="creature-pf-no">No</label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="creature-tags">Tags</label>
+          <span class="field-help">Comma-separated keywords (tier, region, habitat, notable traits)</span>
+          <input class="field-input" type="text" id="creature-tags" placeholder="e.g. merry, caparia, forest, bubbleseed-aligned, friendly">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Image</label>
+          <span class="field-help">Upload an image — save to assets/images/creatures/ after generating</span>
+          <div class="image-upload-area" onclick="document.getElementById('creature-img-input').click()">
+            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path')">
+            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
+            <br>
+            <img id="creature-img-preview" class="image-preview" src="" alt="Preview">
+            <div id="creature-img-path" class="image-path-hint"></div>
+          </div>
+        </div>
+
+        <div class="dm-form-actions">
+          <button class="btn-generate" onclick="generateCreature()">✦ Generate Entry</button>
+          <button class="btn-clear" onclick="clearForm('creature')">Clear Form</button>
+        </div>
+      </div>
+
+
+      <!-- ── POI FORM ───────────────────────── -->
+      <div id="form-poi" class="dm-form">
+        <div class="dm-form-title">📍 New Point of Interest</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/pois.js</strong> — landmark, sacred site, ruin, dark zone, or Drakhold outpost</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="poi-name">Name <span class="req">✦</span></label>
+            <span class="field-help">The name of this location as it appears on maps and in lore</span>
+            <input class="field-input" type="text" id="poi-name" oninput="autoId('poi-name','poi-id')" placeholder="e.g. The Hollow Scar">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-id">ID <span class="req">✦</span></label>
+            <span class="field-help">Lowercase kebab-case identifier</span>
+            <input class="field-input" type="text" id="poi-id" placeholder="e.g. hollow-scar">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="poi-region">Region <span class="req">✦</span></label>
+            <span class="field-help">Which Pogglewog region contains this location</span>
+            <select class="field-select" id="poi-region" onchange="filterNations('poi-nation','poi-region')">
+              <option value="">— Select region —</option>
+              <option value="caparia">Caparia</option>
+              <option value="nombi">Nombi</option>
+              <option value="sohot">Sohot</option>
+              <option value="jugabi">Jugabi</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-nation">Nation</label>
+            <span class="field-help">Which nation's territory this falls within (if any)</span>
+            <select class="field-select" id="poi-nation">
+              <option value="">— Select region first —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="poi-type">Type <span class="req">✦</span></label>
+            <span class="field-help">The classification of this location</span>
+            <select class="field-select" id="poi-type">
+              <option value="">— Select type —</option>
+              <option value="world-wonder">World Wonder</option>
+              <option value="sacred-site">Sacred Site</option>
+              <option value="ruin">Ruin</option>
+              <option value="dark-zone">Dark Zone (Vareth)</option>
+              <option value="natural">Natural Landmark</option>
+              <option value="site">Notable Site</option>
+              <option value="drakhold-outpost">Drakhold Outpost</option>
+              <option value="mosskin-site">Mosskin Site</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-color-health">Color Health</label>
+            <span class="field-help">Gigglegloom saturation at this location</span>
+            <select class="field-select" id="poi-color-health">
+              <option value="">— Select —</option>
+              <option value="excellent">Excellent / Surging</option>
+              <option value="good">Good</option>
+              <option value="moderate">Moderate</option>
+              <option value="faded">Faded</option>
+              <option value="dire">Dire / Absent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="poi-summary">Summary <span class="req">✦</span></label>
+          <span class="field-help">One or two sentences — what a traveller would hear about this place before visiting</span>
+          <textarea class="field-textarea" id="poi-summary" placeholder="e.g. A crack in the bedrock where raw Prior Gigglegloom seeps through. The air shimmers. Maps stop working reliably within half a mile."></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="poi-description">Description</label>
+          <span class="field-help">Sensory description for DM use — what characters experience when they arrive</span>
+          <textarea class="field-textarea tall" id="poi-description" placeholder="What does it look, feel, sound, and smell like to be here?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="poi-gigglegloom">Gigglegloom Notes</label>
+          <span class="field-help">How the Gigglegloom behaves here — surges, anomalies, suppression, wild effects</span>
+          <textarea class="field-textarea" id="poi-gigglegloom" placeholder="e.g. Flamerage practitioners report their magic becoming unpredictable within 200 feet."></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Vareth Presence</label>
+            <span class="field-help">Active Vareth corruption, Drakhold activity, or Dimming at this location?</span>
+            <div class="field-toggle">
+              <input type="radio" name="poi-vareth" id="poi-vareth-yes" value="true">
+              <label for="poi-vareth-yes">Yes</label>
+              <input type="radio" name="poi-vareth" id="poi-vareth-no" value="false" checked>
+              <label for="poi-vareth-no">No</label>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Player Facing</label>
+            <span class="field-help">Can players read about this location in the wiki?</span>
+            <div class="field-toggle">
+              <input type="radio" name="poi-pf" id="poi-pf-yes" value="true" checked>
+              <label for="poi-pf-yes">Yes</label>
+              <input type="radio" name="poi-pf" id="poi-pf-no" value="false">
+              <label for="poi-pf-no">No</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section-divider">DM Only</div>
+
+        <div class="field-group">
+          <label class="field-label" for="poi-dm-notes">DM Notes</label>
+          <span class="field-help">Private notes — secrets, plot hooks, hidden dangers, things players haven't discovered yet</span>
+          <textarea class="field-textarea" id="poi-dm-notes" placeholder="Private DM information…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="poi-tags">Tags</label>
+          <span class="field-help">Comma-separated keywords for search</span>
+          <input class="field-input" type="text" id="poi-tags" placeholder="e.g. caparia, sacred, gigglegloom, brightcreed, world-wonder">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Image</label>
+          <span class="field-help">Upload an image — save to assets/images/regions/ after generating</span>
+          <div class="image-upload-area" onclick="document.getElementById('poi-img-input').click()">
+            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path')">
+            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
+            <br>
+            <img id="poi-img-preview" class="image-preview" src="" alt="Preview">
+            <div id="poi-img-path" class="image-path-hint"></div>
+          </div>
+        </div>
+
+        <div class="dm-form-actions">
+          <button class="btn-generate" onclick="generatePoi()">✦ Generate Entry</button>
+          <button class="btn-clear" onclick="clearForm('poi')">Clear Form</button>
+        </div>
+      </div>
+
+
+      <!-- ── CHARACTER FORM ─────────────────── -->
+      <div id="form-character" class="dm-form">
+        <div class="dm-form-title">🧙 New Character</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/characters.js</strong> — NPC, ally, villain, god, or faction leader</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="char-name">Name <span class="req">✦</span></label>
+            <span class="field-help">Full name or title of this character</span>
+            <input class="field-input" type="text" id="char-name" oninput="autoId('char-name','char-id')" placeholder="e.g. Mira of the Wanderkeep">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-id">ID <span class="req">✦</span></label>
+            <span class="field-help">Lowercase kebab-case identifier</span>
+            <input class="field-input" type="text" id="char-id" placeholder="e.g. mira-wanderkeep">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="char-role">Role</label>
+            <span class="field-help">Brief role descriptor shown in search results and character summaries</span>
+            <input class="field-input" type="text" id="char-role" placeholder="e.g. Senior Wanderkeep Protector, Southern Routes">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-category">Category <span class="req">✦</span></label>
+            <span class="field-help">The broad type of character — used for display and filtering</span>
+            <select class="field-select" id="char-category">
+              <option value="">— Select —</option>
+              <option value="god">God</option>
+              <option value="villain">Villain / Vareth Lieutenant</option>
+              <option value="ally">Ally / Hero</option>
+              <option value="npc">NPC</option>
+              <option value="faction-leader">Faction Leader</option>
+              <option value="monarch">Monarch / Ruler</option>
+              <option value="wanderer">Wanderer</option>
+              <option value="criminal">Criminal</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="char-pronouns">Pronouns</label>
+            <span class="field-help">Character's pronouns — used exactly as written</span>
+            <input class="field-input" type="text" id="char-pronouns" placeholder="e.g. she/her, he/him, they/them">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-status">Status</label>
+            <span class="field-help">Current state of this character in the world</span>
+            <select class="field-select" id="char-status">
+              <option value="">— Select —</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="unknown">Unknown</option>
+              <option value="deceased">Deceased</option>
+              <option value="missing">Missing</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="char-location">Location</label>
+            <span class="field-help">Where this character is currently based or most often found</span>
+            <input class="field-input" type="text" id="char-location" placeholder="e.g. Frostgate, Nombi">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-affiliation">Affiliation</label>
+            <span class="field-help">Organization, faction, or group this character belongs to</span>
+            <input class="field-input" type="text" id="char-affiliation" placeholder="e.g. The Wanderkeep, The Vareth">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-summary">Summary <span class="req">✦</span></label>
+          <span class="field-help">One or two sentences — what players would know or hear about this character before meeting them</span>
+          <textarea class="field-textarea" id="char-summary" placeholder="Public-facing summary of who this character is…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-appearance">Appearance</label>
+          <span class="field-help">Physical description — what players see when they encounter this character</span>
+          <textarea class="field-textarea" id="char-appearance" placeholder="What does this character look like?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-personality">Personality</label>
+          <span class="field-help">How this character behaves, speaks, and relates to others</span>
+          <textarea class="field-textarea" id="char-personality" placeholder="Personality traits, speech patterns, how they treat people…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-motivation">Motivation</label>
+          <span class="field-help">What this character wants — their driving goal or desire</span>
+          <textarea class="field-textarea" id="char-motivation" placeholder="What does this character want above all else?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-contradiction">Contradiction</label>
+          <span class="field-help">The tension at the heart of this character — what makes them complex and interesting to play against</span>
+          <textarea class="field-textarea" id="char-contradiction" placeholder="What is the gap between who they are and what they do?"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="char-gigglegloom">Gigglegloom Relationship</label>
+            <span class="field-help">Type affinity, abilities, sensitivity to the Dimming, or any notable Gigglegloom interactions</span>
+            <textarea class="field-textarea" id="char-gigglegloom" placeholder="e.g. Featherflow practitioner. Can sense Dimming at distance."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-color">Color</label>
+            <span class="field-help">This character's associated color — aura, Gigglegloom hue, or identifying shade</span>
+            <input class="field-input" type="text" id="char-color" placeholder="e.g. Deep teal, shifting, never quite still">
+          </div>
+        </div>
+
+        <div class="form-section-divider">DM Only</div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-secret">Secret</label>
+          <span class="field-help">What this character is hiding — DM eyes only, never shown in the player wiki</span>
+          <textarea class="field-textarea" id="char-secret" placeholder="Hidden truth, hidden agenda, hidden grief…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-player-knowledge">Player Knowledge</label>
+          <span class="field-help">What players currently know or believe about this character (may differ significantly from reality)</span>
+          <textarea class="field-textarea" id="char-player-knowledge" placeholder="What do the players know at this point in the campaign?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-dm-notes">DM Notes</label>
+          <span class="field-help">Private reference notes — session uses, plot hooks, things to remember when running this character</span>
+          <textarea class="field-textarea" id="char-dm-notes" placeholder="Private DM information…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="char-tags">Tags</label>
+          <span class="field-help">Comma-separated keywords for search</span>
+          <input class="field-input" type="text" id="char-tags" placeholder="e.g. wanderkeep, caparia, ally, featherflow, active">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Image</label>
+          <span class="field-help">Upload an image — save to assets/images/characters/ after generating</span>
+          <div class="image-upload-area" onclick="document.getElementById('char-img-input').click()">
+            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path')">
+            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
+            <br>
+            <img id="char-img-preview" class="image-preview" src="" alt="Preview">
+            <div id="char-img-path" class="image-path-hint"></div>
+          </div>
+        </div>
+
+        <div class="dm-form-actions">
+          <button class="btn-generate" onclick="generateCharacter()">✦ Generate Entry</button>
+          <button class="btn-clear" onclick="clearForm('character')">Clear Form</button>
+        </div>
+      </div>
+
+
+      <!-- ── ORGANIZATION FORM ───────────────── -->
+      <div id="form-organization" class="dm-form">
+        <div class="dm-form-title">🏛️ New Organization</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/organizations.js</strong> — guild, faction, government body, or criminal syndicate</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="org-name">Name <span class="req">✦</span></label>
+            <span class="field-help">Short name used in navigation, search results, and quick references</span>
+            <input class="field-input" type="text" id="org-name" oninput="autoId('org-name','org-id')" placeholder="e.g. The Inkweavers">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-id">ID <span class="req">✦</span></label>
+            <span class="field-help">Lowercase kebab-case identifier</span>
+            <input class="field-input" type="text" id="org-id" placeholder="e.g. inkweavers">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-full-name">Full Name</label>
+          <span class="field-help">Complete formal name if different from the short name (e.g. "The Bureau of Thorough Consideration" for "The Formery"). Leave blank if they are the same.</span>
+          <input class="field-input" type="text" id="org-full-name" placeholder="e.g. The Sovereign Guild of Inkweavers and Mapmakers">
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="org-alignment">Alignment <span class="req">✦</span></label>
+            <span class="field-help">The moral alignment of this organization within Anavale — determines wiki visibility</span>
+            <select class="field-select" id="org-alignment">
+              <option value="">— Select —</option>
+              <option value="light">Light — allied with color, joy, and resistance</option>
+              <option value="neutral">Neutral — neither side, or complicated</option>
+              <option value="dark">Dark — allied with the Vareth, Dimming, or silence</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-type">Type</label>
+            <span class="field-help">Organizational category (guild, government body, religious order, criminal syndicate, etc.)</span>
+            <input class="field-input" type="text" id="org-type" placeholder="e.g. Thieves' Guild">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="org-age">Age</label>
+            <span class="field-help">How long this organization has existed — years or a vague descriptor</span>
+            <input class="field-input" type="text" id="org-age" placeholder="e.g. 300 years, ancient, founded after the Partition">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-headquarters">Headquarters</label>
+            <span class="field-help">Primary base of operations, if it has one</span>
+            <input class="field-input" type="text" id="org-headquarters" placeholder="e.g. Solenveil, Caparia">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="org-leadership">Leadership</label>
+            <span class="field-help">Who leads this organization and how leadership is structured</span>
+            <input class="field-input" type="text" id="org-leadership" placeholder="e.g. A rotating council of seven, identity unknown">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-membership">Membership</label>
+            <span class="field-help">Who belongs and how one joins</span>
+            <input class="field-input" type="text" id="org-membership" placeholder="e.g. Invitation only. ~200 active members across Pogglewog.">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-summary">Summary <span class="req">✦</span></label>
+          <span class="field-help">One or two sentences — what everyone in Anavale knows about this organization. Appears in search results.</span>
+          <textarea class="field-textarea" id="org-summary" placeholder="Public-facing summary…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-purpose">Purpose</label>
+          <span class="field-help">What this organization exists to do — stated mission and actual goals (may differ)</span>
+          <textarea class="field-textarea" id="org-purpose" placeholder="What does this organization do and why does it exist?"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-public-perception">Public Perception</label>
+          <span class="field-help">How the general public of Anavale views this organization — reputation, rumors, feelings</span>
+          <textarea class="field-textarea" id="org-public-perception" placeholder="How is this organization regarded by ordinary people?"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="org-vareth">Vareth Relationship</label>
+            <span class="field-help">How this organization relates to the Vareth — opposed, unaware, allied, or complicated</span>
+            <input class="field-input" type="text" id="org-vareth" placeholder="e.g. Actively opposed. Monitors color health across all regions.">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-gigglegloom">Gigglegloom Relationship</label>
+            <span class="field-help">How this organization relates to or uses the Gigglegloom</span>
+            <input class="field-input" type="text" id="org-gigglegloom" placeholder="e.g. Governs all licensed Gigglegloom use. Answers to no government.">
+          </div>
+        </div>
+
+        <div class="form-section-divider">DM Only</div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-secret">Secret</label>
+          <span class="field-help">What this organization is hiding — DM eyes only, never shown in the player wiki</span>
+          <textarea class="field-textarea" id="org-secret" placeholder="Hidden agenda, true nature, dark secret…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-session-role">Session Role</label>
+          <span class="field-help">How this organization might appear in a session — as quest givers, recurring comedy beats, obstacles, or allies</span>
+          <textarea class="field-textarea" id="org-session-role" placeholder="e.g. Appears once per session with a new absurdity. Never blocks the plot for long."></textarea>
+        </div>
+
+        <div class="repeating-group">
+          <div class="repeating-group-title">
+            <span>Notable Facts</span>
+            <button class="btn-add" onclick="addNotableFact()">+ Add Fact</button>
+          </div>
+          <div id="org-facts-list"></div>
+          <div id="org-facts-empty" style="color:var(--ink-faint);font-style:italic;font-size:var(--text-sm)">No facts added yet.</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="org-tags">Tags</label>
+          <span class="field-help">Comma-separated keywords for search</span>
+          <input class="field-input" type="text" id="org-tags" placeholder="e.g. guild, caparia, neutral, trade, goldenway">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Image</label>
+          <span class="field-help">Upload a sigil, seal, or image — save to assets/images/organizations/ after generating</span>
+          <div class="image-upload-area" onclick="document.getElementById('org-img-input').click()">
+            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path')">
+            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
+            <br>
+            <img id="org-img-preview" class="image-preview" src="" alt="Preview">
+            <div id="org-img-path" class="image-path-hint"></div>
+          </div>
+        </div>
+
+        <div class="dm-form-actions">
+          <button class="btn-generate" onclick="generateOrganization()">✦ Generate Entry</button>
+          <button class="btn-clear" onclick="clearForm('organization')">Clear Form</button>
+        </div>
+      </div>
+
+
+      <!-- ── ITEM FORM ───────────────────────── -->
+      <div id="form-item" class="dm-form">
+        <div class="dm-form-title">⚔️ New Item</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/items.js</strong> — weapon, artifact, potion, document, or treasure</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="item-name">Name <span class="req">✦</span></label>
+            <span class="field-help">Name of the item as it would appear in an inventory, tale, or museum plaque</span>
+            <input class="field-input" type="text" id="item-name" oninput="autoId('item-name','item-id')" placeholder="e.g. The Voidblush Vial">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-id">ID <span class="req">✦</span></label>
+            <span class="field-help">Lowercase kebab-case identifier</span>
+            <input class="field-input" type="text" id="item-id" placeholder="e.g. voidblush-vial">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="item-type">Type <span class="req">✦</span></label>
+            <span class="field-help">The general category of this item</span>
+            <select class="field-select" id="item-type">
+              <option value="">— Select type —</option>
+              <option value="weapon">Weapon</option>
+              <option value="armor">Armor</option>
+              <option value="artifact">Artifact</option>
+              <option value="tool">Tool</option>
+              <option value="potion">Potion / Consumable</option>
+              <option value="document">Document / Tome</option>
+              <option value="treasure">Treasure</option>
+              <option value="reagent">Magical Reagent</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-rarity">Rarity</label>
+            <span class="field-help">How difficult this item is to find or acquire in Anavale</span>
+            <select class="field-select" id="item-rarity">
+              <option value="">— Select —</option>
+              <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
+              <option value="rare">Rare</option>
+              <option value="legendary">Legendary</option>
+              <option value="unique">Unique — one exists in all of Anavale</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-description">Description <span class="req">✦</span></label>
+          <span class="field-help">Physical appearance, feel, and properties — what it looks like and what it does</span>
+          <textarea class="field-textarea tall" id="item-description" placeholder="Appearance, magical properties, and effects…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-history">History</label>
+          <span class="field-help">Where this item came from — who made it, how it was found, what events shaped it</span>
+          <textarea class="field-textarea" id="item-history" placeholder="Origin, creation, notable past events…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-gigglegloom">Gigglegloom Relationship</label>
+          <span class="field-help">How this item interacts with the Gigglegloom — channels, absorbs, suppresses, or responds to specific types?</span>
+          <textarea class="field-textarea" id="item-gigglegloom" placeholder="e.g. One drop temporarily reverses Stage 1 Fading in a small area. The Vareth wants it eradicated."></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="item-location">Current Location</label>
+            <span class="field-help">Where this item is now, if known</span>
+            <input class="field-input" type="text" id="item-location" placeholder="e.g. Prism Exchange vault, Prismhold">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-owner">Current Owner</label>
+            <span class="field-help">Who currently possesses or controls this item, if known</span>
+            <input class="field-input" type="text" id="item-owner" placeholder="e.g. Unknown. Seven assassination attempts to recover it.">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Player Facing</label>
+          <span class="field-help">Can players read about this item in the wiki? Set to No for secret or undiscovered items.</span>
+          <div class="field-toggle">
+            <input type="radio" name="item-pf" id="item-pf-yes" value="true" checked>
+            <label for="item-pf-yes">Yes</label>
+            <input type="radio" name="item-pf" id="item-pf-no" value="false">
+            <label for="item-pf-no">No</label>
+          </div>
+        </div>
+
+        <div class="form-section-divider">DM Only</div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-dm-notes">DM Notes</label>
+          <span class="field-help">Private notes — plot hooks, mechanical effects, secrets players haven't uncovered yet</span>
+          <textarea class="field-textarea" id="item-dm-notes" placeholder="Private DM information…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-tags">Tags</label>
+          <span class="field-help">Comma-separated keywords for search</span>
+          <input class="field-input" type="text" id="item-tags" placeholder="e.g. artifact, gigglegloom, prism-exchange, legendary, voidblush">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Image</label>
+          <span class="field-help">Upload an image — save to assets/images/items/ after generating</span>
+          <div class="image-upload-area" onclick="document.getElementById('item-img-input').click()">
+            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path')">
+            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
+            <br>
+            <img id="item-img-preview" class="image-preview" src="" alt="Preview">
+            <div id="item-img-path" class="image-path-hint"></div>
+          </div>
+        </div>
+
+        <div class="dm-form-actions">
+          <button class="btn-generate" onclick="generateItem()">✦ Generate Entry</button>
+          <button class="btn-clear" onclick="clearForm('item')">Clear Form</button>
+        </div>
+      </div>
+
+
+    </div><!-- /dm-forms-panel -->
+
+    <!-- ════════════════════════════════════════
+         SIDE PANEL — Output + Recently Added
+         ════════════════════════════════════════ -->
+    <div class="dm-side-panel">
+
+      <div class="dm-output">
+        <div class="dm-vscode-notice">💡 <strong>Save to Data File</strong> works in Chrome/Edge. In VS Code Live Preview, use <strong>Copy JSON</strong> instead.</div>
+        <div class="dm-output-label">Output</div>
+        <div class="dm-file-target" id="file-target">📁 Generate an entry to see the target file</div>
+        <pre class="dm-json-pre" id="json-output">// Fill out the form and click
+// ✦ Generate Entry to see
+// the JS object here.</pre>
+        <div class="dm-output-actions">
+          <button class="btn-copy" id="copy-btn" onclick="copyJson()">📋 Copy JSON</button>
+          <button class="btn-save" id="save-btn" onclick="saveToFile()">💾 Save to Data File</button>
+        </div>
+        <div class="dm-save-status" id="save-status"></div>
+      </div>
+
+      <div class="dm-recent">
+        <h3>Recently Added</h3>
+        <div id="recent-list"></div>
+      </div>
+
+    </div><!-- /dm-side-panel -->
+
+  </div><!-- /dm-main -->
+</div><!-- /dm-app -->
+
+
+<!-- Data files for dynamic dropdowns -->
+<script src="data/regions.js"></script>
+<script src="data/nations.js"></script>
+<script src="data/cities.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════
+   ANAVALE DM TOOLS — Core Logic
+   ══════════════════════════════════════════════ */
+
+var CURRENT_TAB    = 'city';
+var LAST_GENERATED = null;
+var RECENT_KEY     = 'anavale_dm_recent';
+var RECENT_ITEMS   = [];
+
+var FILE_TARGETS = {
+  city:         'data/cities.js',
+  creature:     'data/creatures.js',
+  poi:          'data/pois.js',
+  character:    'data/characters.js',
+  organization: 'data/organizations.js',
+  item:         'data/items.js'
+};
+
+// The array variable name inside each target file — used to validate
+// the user opened the correct file before writing anything.
+var ARRAY_NAMES = {
+  city:         'CITIES',
+  creature:     'CREATURE_DATA',
+  poi:          'POIS',
+  character:    'CHARACTER_DATA',
+  organization: 'ORGANIZATION_DATA',
+  item:         'ITEMS'
+};
+
+var TAB_ICONS = {
+  city: '🏙️', creature: '🐾', poi: '📍',
+  character: '🧙', organization: '🏛️', item: '⚔️'
+};
+
+/* ── AUTHENTICATION ──────────────────────────── */
+function checkPassword() {
+  var input = document.getElementById('gate-input');
+  var card  = document.getElementById('gate-card');
+  var error = document.getElementById('gate-error');
+  if (input.value === 'anavale-dm') {
+    sessionStorage.setItem('dm_auth', '1');
+    var overlay = document.getElementById('gate');
+    overlay.classList.add('fade-out');
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      document.getElementById('dm-app').style.display = 'flex';
+      renderRecent();
+      updateFileTarget();
+    }, 500);
+  } else {
+    card.classList.remove('shake');
+    void card.offsetWidth; // reflow to restart animation
+    card.classList.add('shake');
+    error.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (sessionStorage.getItem('dm_auth') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('dm-app').style.display = 'flex';
+    renderRecent();
+    updateFileTarget();
+  } else {
+    document.getElementById('gate-input').focus();
+  }
+  document.getElementById('gate-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+});
+
+/* ── TAB SWITCHING ───────────────────────────── */
+function switchTab(tab) {
+  CURRENT_TAB = tab;
+  document.querySelectorAll('.dm-tab').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  document.querySelectorAll('.dm-form').forEach(function(form) {
+    form.classList.remove('active');
+  });
+  var formEl = document.getElementById('form-' + tab);
+  if (formEl) formEl.classList.add('active');
+  updateFileTarget();
+  resetOutput();
+}
+
+function updateFileTarget() {
+  var target = FILE_TARGETS[CURRENT_TAB] || '—';
+  document.getElementById('file-target').innerHTML =
+    '📁 Add this entry to: <strong>' + target + '</strong>';
+}
+
+function resetOutput() {
+  document.getElementById('json-output').textContent =
+    '// Fill out the form and click\n// ✦ Generate Entry to see\n// the JS object here.';
+  LAST_GENERATED = null;
+}
+
+/* ── AUTO-ID ─────────────────────────────────── */
+function autoId(nameInputId, idInputId) {
+  var name = document.getElementById(nameInputId).value;
+  var id = name.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+  document.getElementById(idInputId).value = id;
+}
+
+/* ── DYNAMIC NATION DROPDOWN ─────────────────── */
+function filterNations(nationSelectId, regionSelectId) {
+  var region = document.getElementById(regionSelectId).value;
+  var sel    = document.getElementById(nationSelectId);
+  sel.innerHTML = '<option value="">— Select nation —</option>';
+  if (!region || typeof NATIONS === 'undefined') return;
+  NATIONS.filter(function(n) { return n.region === region; })
+    .forEach(function(n) {
+      var opt = document.createElement('option');
+      opt.value = n.id;
+      opt.textContent = n.name;
+      sel.appendChild(opt);
+    });
+}
+
+/* ── IMAGE UPLOAD PREVIEW ────────────────────── */
+function previewImage(input, previewId, pathId) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var preview  = document.getElementById(previewId);
+  var pathHint = document.getElementById(pathId);
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    preview.src = e.target.result;
+    preview.classList.add('visible');
+  };
+  reader.readAsDataURL(file);
+  pathHint.textContent = '📸 Filename: ' + file.name + ' — copy to the appropriate assets/images/ folder';
+}
+
+/* ── REPEATING GROUP — LANDMARKS ─────────────── */
+var _landmarkN = 0;
+function addLandmark() {
+  _landmarkN++;
+  var id  = 'lm-' + _landmarkN;
+  var div = document.createElement('div');
+  div.className = 'repeating-item';
+  div.id = id;
+  div.innerHTML =
+    '<button class="btn-remove" onclick="removeRepeat(\'' + id + '\')" title="Remove">✕</button>' +
+    '<div class="field-group" style="margin-bottom:0.5rem">' +
+      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Landmark Name</label>' +
+      '<input class="field-input" type="text" id="' + id + '-name" placeholder="e.g. The Mirrenflow Bridge">' +
+    '</div>' +
+    '<div class="field-group" style="margin-bottom:0">' +
+      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Description</label>' +
+      '<textarea class="field-textarea" id="' + id + '-desc" placeholder="Brief description…" style="min-height:60px"></textarea>' +
+    '</div>';
+  var list = document.getElementById('city-landmarks-list');
+  list.appendChild(div);
+  document.getElementById('city-landmarks-empty').style.display = 'none';
+}
+
+/* ── REPEATING GROUP — NOTABLE FACTS ─────────── */
+var _factN = 0;
+function addNotableFact() {
+  _factN++;
+  var id  = 'fact-' + _factN;
+  var div = document.createElement('div');
+  div.className = 'repeating-item';
+  div.id = id;
+  div.innerHTML =
+    '<button class="btn-remove" onclick="removeRepeat(\'' + id + '\')" title="Remove">✕</button>' +
+    '<div class="field-group" style="margin-bottom:0">' +
+      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Fact</label>' +
+      '<input class="field-input" type="text" id="' + id + '-text" placeholder="e.g. Has never failed to deliver a message in 200 years.">' +
+    '</div>';
+  var list = document.getElementById('org-facts-list');
+  list.appendChild(div);
+  document.getElementById('org-facts-empty').style.display = 'none';
+}
+
+function removeRepeat(id) {
+  var el = document.getElementById(id);
+  if (el) el.parentNode.removeChild(el);
+}
+
+/* ── VALUE HELPERS ───────────────────────────── */
+function val(id) {
+  var el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function orNull(str) {
+  return str || null;
+}
+
+function tagsArr(id) {
+  var raw = val(id);
+  if (!raw) return [];
+  return raw.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+}
+
+function radioVal(name) {
+  var el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : 'false';
+}
+
+function boolRadio(name) {
+  return radioVal(name) === 'true';
+}
+
+function checkedVals(containerId) {
+  var c = document.getElementById(containerId);
+  if (!c) return [];
+  return Array.from(c.querySelectorAll('input[type=checkbox]:checked'))
+    .map(function(cb) { return cb.value; });
+}
+
+/* ── FORMAT JS OBJECT LITERAL ────────────────── */
+function formatJsObj(obj, depth) {
+  depth = depth || 0;
+  var pad  = '  '.repeat(depth + 1);
+  var cpad = '  '.repeat(depth);
+  var lines = ['{'];
+  var keys  = Object.keys(obj);
+  keys.forEach(function(key, i) {
+    var v     = obj[key];
+    var comma = i < keys.length - 1 ? ',' : '';
+    var vs;
+    if (v === null) {
+      vs = 'null';
+    } else if (typeof v === 'boolean') {
+      vs = v ? 'true' : 'false';
+    } else if (typeof v === 'number') {
+      vs = String(v);
+    } else if (Array.isArray(v)) {
+      if (v.length === 0) {
+        vs = '[]';
+      } else if (typeof v[0] === 'string') {
+        vs = '["' + v.map(function(s) {
+          return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        }).join('", "') + '"]';
+      } else {
+        var items = v.map(function(item) {
+          return pad + '  ' + formatJsObj(item, depth + 2);
+        });
+        vs = '[\n' + items.join(',\n') + '\n' + pad + ']';
+      }
+    } else if (typeof v === 'object') {
+      vs = formatJsObj(v, depth + 1);
+    } else {
+      vs = '"' + String(v)
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '') + '"';
+    }
+    lines.push(pad + key + ': ' + vs + comma);
+  });
+  lines.push(cpad + '}');
+  return lines.join('\n');
+}
+
+/* ── GENERATORS ──────────────────────────────── */
+
+function generateCity() {
+  var name = val('city-name');
+  if (!name)             { alert('Name is required (✦).'); return; }
+  var region = val('city-region');
+  if (!region)           { alert('Region is required (✦).'); return; }
+  var type = val('city-type');
+  if (!type)             { alert('Type is required (✦).'); return; }
+  var summary = val('city-summary');
+  if (!summary)          { alert('Summary is required (✦).'); return; }
+
+  // Collect landmarks
+  var landmarks = [];
+  document.querySelectorAll('#city-landmarks-list .repeating-item').forEach(function(item) {
+    var lname = (item.querySelector('input') || {}).value || '';
+    var ldesc = (item.querySelector('textarea') || {}).value || '';
+    if (lname.trim()) landmarks.push({ name: lname.trim(), description: ldesc.trim() });
+  });
+
+  var entry = {
+    id:                   val('city-id') || slugify(name),
+    name:                 name,
+    nation:               orNull(val('city-nation')),
+    region:               region,
+    continent:            'pogglewog',
+    type:                 type,
+    summary:              summary,
+    description:          orNull(val('city-description')),
+    landmarks:            landmarks,
+    strategic_importance: orNull(val('city-strategic')),
+    color_health:         orNull(val('city-color-health')),
+    formery_present:      boolRadio('city-formery'),
+    vareth_presence:      boolRadio('city-vareth'),
+    tone:                 orNull(val('city-tone')),
+    tags:                 tagsArr('city-tags')
+  };
+  showOutput(entry, 'city');
+}
+
+function generateCreature() {
+  var name = val('creature-name');
+  if (!name)        { alert('Name is required (✦).'); return; }
+  var tier = val('creature-tier');
+  if (!tier)        { alert('Tier is required (✦).'); return; }
+  var desc = val('creature-description');
+  if (!desc)        { alert('Description is required (✦).'); return; }
+  var regions = checkedVals('creature-regions');
+  if (!regions.length) { alert('Select at least one region (✦).'); return; }
+
+  var entry = {
+    id:                       val('creature-id') || slugify(name),
+    name:                     name,
+    tier:                     tier,
+    category:                 orNull(val('creature-category')),
+    regions:                  regions,
+    habitat:                  orNull(val('creature-habitat')),
+    description:              desc,
+    behavior:                 orNull(val('creature-behavior')),
+    gigglegloom_relationship: orNull(val('creature-gigglegloom')),
+    dimmed_version:           orNull(val('creature-dimmed')),
+    dm_notes:                 orNull(val('creature-dm-notes')),
+    player_facing:            boolRadio('creature-pf'),
+    tags:                     tagsArr('creature-tags')
+  };
+  showOutput(entry, 'creature');
+}
+
+function generatePoi() {
+  var name = val('poi-name');
+  if (!name)   { alert('Name is required (✦).'); return; }
+  var region = val('poi-region');
+  if (!region) { alert('Region is required (✦).'); return; }
+  var type = val('poi-type');
+  if (!type)   { alert('Type is required (✦).'); return; }
+  var summary = val('poi-summary');
+  if (!summary){ alert('Summary is required (✦).'); return; }
+
+  var entry = {
+    id:                   val('poi-id') || slugify(name),
+    name:                 name,
+    nation:               orNull(val('poi-nation')),
+    region:               region,
+    continent:            'pogglewog',
+    type:                 type,
+    summary:              summary,
+    description:          orNull(val('poi-description')),
+    gigglegloom_notes:    orNull(val('poi-gigglegloom')),
+    color_health:         orNull(val('poi-color-health')),
+    vareth_presence:      boolRadio('poi-vareth'),
+    dm_notes:             orNull(val('poi-dm-notes')),
+    player_facing:        boolRadio('poi-pf'),
+    tags:                 tagsArr('poi-tags')
+  };
+  showOutput(entry, 'poi');
+}
+
+function generateCharacter() {
+  var name = val('char-name');
+  if (!name)      { alert('Name is required (✦).'); return; }
+  var category = val('char-category');
+  if (!category)  { alert('Category is required (✦).'); return; }
+  var summary = val('char-summary');
+  if (!summary)   { alert('Summary is required (✦).'); return; }
+
+  var entry = {
+    id:                       val('char-id') || slugify(name),
+    name:                     name,
+    role:                     orNull(val('char-role')),
+    category:                 category,
+    pronouns:                 orNull(val('char-pronouns')),
+    status:                   orNull(val('char-status')),
+    location:                 orNull(val('char-location')),
+    affiliation:              orNull(val('char-affiliation')),
+    summary:                  summary,
+    appearance:               orNull(val('char-appearance')),
+    personality:              orNull(val('char-personality')),
+    motivation:               orNull(val('char-motivation')),
+    contradiction:            orNull(val('char-contradiction')),
+    secret:                   orNull(val('char-secret')),
+    player_knowledge:         orNull(val('char-player-knowledge')),
+    dm_notes:                 orNull(val('char-dm-notes')),
+    gigglegloom_relationship: orNull(val('char-gigglegloom')),
+    color:                    orNull(val('char-color')),
+    tags:                     tagsArr('char-tags')
+  };
+  showOutput(entry, 'character');
+}
+
+function generateOrganization() {
+  var name = val('org-name');
+  if (!name)       { alert('Name is required (✦).'); return; }
+  var alignment = val('org-alignment');
+  if (!alignment)  { alert('Alignment is required (✦).'); return; }
+  var summary = val('org-summary');
+  if (!summary)    { alert('Summary is required (✦).'); return; }
+
+  // Collect notable facts
+  var facts = [];
+  document.querySelectorAll('#org-facts-list .repeating-item').forEach(function(item) {
+    var text = (item.querySelector('input') || {}).value || '';
+    if (text.trim()) facts.push(text.trim());
+  });
+
+  var fullName = val('org-full-name');
+  var entry = {
+    id:                       val('org-id') || slugify(name),
+    name:                     name,
+    full_name:                fullName || name,
+    alignment:                alignment,
+    type:                     orNull(val('org-type')),
+    age:                      orNull(val('org-age')),
+    headquarters:             orNull(val('org-headquarters')),
+    leadership:               orNull(val('org-leadership')),
+    membership:               orNull(val('org-membership')),
+    summary:                  summary,
+    purpose:                  orNull(val('org-purpose')),
+    public_perception:        orNull(val('org-public-perception')),
+    secret:                   orNull(val('org-secret')),
+    session_role:             orNull(val('org-session-role')),
+    vareth_relationship:      orNull(val('org-vareth')),
+    gigglegloom_relationship: orNull(val('org-gigglegloom')),
+    notable_facts:            facts,
+    tags:                     tagsArr('org-tags')
+  };
+  showOutput(entry, 'organization');
+}
+
+function generateItem() {
+  var name = val('item-name');
+  if (!name)  { alert('Name is required (✦).'); return; }
+  var type = val('item-type');
+  if (!type)  { alert('Type is required (✦).'); return; }
+  var desc = val('item-description');
+  if (!desc)  { alert('Description is required (✦).'); return; }
+
+  var entry = {
+    id:                       val('item-id') || slugify(name),
+    name:                     name,
+    type:                     type,
+    rarity:                   orNull(val('item-rarity')),
+    description:              desc,
+    history:                  orNull(val('item-history')),
+    gigglegloom_relationship: orNull(val('item-gigglegloom')),
+    current_location:         orNull(val('item-location')),
+    current_owner:            orNull(val('item-owner')),
+    dm_notes:                 orNull(val('item-dm-notes')),
+    player_facing:            boolRadio('item-pf'),
+    tags:                     tagsArr('item-tags')
+  };
+  showOutput(entry, 'item');
+}
+
+/* ── SHOW OUTPUT ─────────────────────────────── */
+function showOutput(entry, type) {
+  LAST_GENERATED = { entry: entry, type: type };
+  var jsStr = formatJsObj(entry, 0);
+  document.getElementById('json-output').textContent = jsStr;
+  var target = FILE_TARGETS[type];
+  document.getElementById('file-target').innerHTML =
+    '📁 Add this entry to: <strong>' + target + '</strong>';
+  saveToRecent(entry, type);
+  renderRecent();
+}
+
+/* ── COPY JSON ───────────────────────────────── */
+function copyJson() {
+  var text = document.getElementById('json-output').textContent;
+  if (!text || text.startsWith('//')) { alert('Generate an entry first.'); return; }
+  var btn = document.getElementById('copy-btn');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = '📋 Copy JSON';
+        btn.classList.remove('copied');
+      }, 2200);
+    }).catch(fallbackCopy.bind(null, text, btn));
+  } else {
+    fallbackCopy(text, btn);
+  }
+}
+
+function fallbackCopy(text, btn) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (btn) {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = '📋 Copy JSON';
+      btn.classList.remove('copied');
+    }, 2200);
+  }
+}
+
+/* ── SAVE STATUS HELPERS ─────────────────────── */
+function showSaveStatus(state, msg) {
+  var el = document.getElementById('save-status');
+  if (!el) return;
+  el.className = 'dm-save-status ' + state;
+  el.textContent = msg;
+  if (state === 'success') {
+    setTimeout(function() {
+      el.className = 'dm-save-status';
+      el.textContent = '';
+    }, 6000);
+  }
+}
+
+/* ── SAVE TO DATA FILE (safe append) ─────────── */
+async function saveToFile() {
+  if (!LAST_GENERATED) { showSaveStatus('error', '⚠ Generate an entry first.'); return; }
+  var jsStr = document.getElementById('json-output').textContent;
+  if (!jsStr || jsStr.startsWith('//')) { showSaveStatus('error', '⚠ Generate an entry first.'); return; }
+
+  // File System Access API not available (Firefox, Safari, VS Code Live Preview)
+  if (!window.showOpenFilePicker) {
+    copyJson();
+    showSaveStatus('error',
+      '⚠ Direct file saving is not supported in this browser or environment. ' +
+      'The entry has been copied to your clipboard — paste it before the closing ]; in ' +
+      FILE_TARGETS[LAST_GENERATED.type] + '.'
+    );
+    return;
+  }
+
+  var type       = LAST_GENERATED.type;
+  var entry      = LAST_GENERATED.entry;
+  var targetFile = FILE_TARGETS[type];
+  var arrayName  = ARRAY_NAMES[type];
+  var entryName  = entry.name || 'Entry';
+
+  try {
+    // 1. Ask the user to select the file
+    var [fileHandle] = await window.showOpenFilePicker({
+      types: [{ description: 'JavaScript Data File', accept: { 'text/javascript': ['.js'] } }],
+      multiple: false
+    });
+
+    // 2. Read existing content
+    var file            = await fileHandle.getFile();
+    var existingContent = await file.text();
+
+    // 3. Validate correct file was selected
+    if (!existingContent.includes('var ' + arrayName)) {
+      showSaveStatus('error',
+        '⚠ Wrong file selected. This is a ' + type.charAt(0).toUpperCase() + type.slice(1) +
+        ' entry — please select ' + targetFile + ' (which contains the ' + arrayName + ' array). Nothing was written.'
+      );
+      return;
+    }
+
+    // 4. Format the new entry as indented JSON (valid JS, quoted keys accepted)
+    var newEntryLines = JSON.stringify(entry, null, 2)
+      .split('\n')
+      .map(function(line) { return '  ' + line; })
+      .join('\n');
+
+    // 5. Find the last `}` in the file followed by optional whitespace and `];`
+    //    That closing `}` belongs to the last entry in the array.
+    //    We append a comma after it, add the new entry, then close with ];
+    //
+    //    Pattern: last occurrence of }  (optional whitespace/newlines)  ];
+    //    We use a greedy match on the entire content so lastIndex lands on
+    //    the real closing ]  rather than an inner one.
+    var updatedContent;
+    // Replace the last `}` that is immediately followed (only whitespace) by `];`
+    // at the very end of the file.
+    var appendPattern = /(\})([\s\n\r]*)(];\s*)$/;
+    if (appendPattern.test(existingContent)) {
+      // Array has existing entries — add comma + new entry before ];
+      updatedContent = existingContent.replace(
+        appendPattern,
+        '},\n' + newEntryLines + '\n$3'
+      );
+    } else {
+      // Array appears to be empty: var ARRAY = [];
+      var emptyPattern = new RegExp('(var\\s+' + arrayName + '\\s*=\\s*\\[)(\\s*\\]\\s*;)');
+      if (emptyPattern.test(existingContent)) {
+        updatedContent = existingContent.replace(
+          emptyPattern,
+          '$1\n' + newEntryLines + '\n$2'
+        );
+      } else {
+        // Could not find insertion point — refuse to write, fall back to clipboard
+        copyJson();
+        showSaveStatus('error',
+          '⚠ Could not find the insertion point in the file. ' +
+          'Nothing was written. The entry has been copied to your clipboard — ' +
+          'paste it manually before the closing ]; in ' + targetFile + '.'
+        );
+        return;
+      }
+    }
+
+    // Safety check: the updated content must be longer than the original
+    // (i.e. we actually added something, not just replaced)
+    if (updatedContent.length <= existingContent.length) {
+      copyJson();
+      showSaveStatus('error',
+        '⚠ Insertion produced no change or a shorter file. Nothing was written. ' +
+        'Entry copied to clipboard — paste manually before the closing ]; in ' + targetFile + '.'
+      );
+      return;
+    }
+
+    // 6. Show "writing…" status before committing
+    showSaveStatus('pending', '⏳ Adding ' + entryName + ' to ' + targetFile + '… do not close this window.');
+
+    // 7. Write the updated content back
+    var writable = await fileHandle.createWritable();
+    await writable.write(updatedContent);
+    await writable.close();
+
+    // 8. Count entries for the success message (count top-level id: occurrences)
+    var idCount = (updatedContent.match(/^\s{2}"?id"?:/gm) || []).length;
+    var countStr = idCount > 0 ? ' — ' + idCount + ' entries total' : '';
+    showSaveStatus('success', '✓ ' + entryName + ' saved to ' + targetFile + countStr);
+
+    var btn = document.getElementById('save-btn');
+    btn.textContent = '✓ Saved!';
+    setTimeout(function() { btn.textContent = '💾 Save to Data File'; }, 3000);
+
+  } catch(e) {
+    if (e.name === 'AbortError') {
+      // User cancelled the file picker — do nothing
+      showSaveStatus('pending', '');
+      document.getElementById('save-status').className = 'dm-save-status';
+    } else {
+      console.error('Save failed:', e);
+      copyJson();
+      showSaveStatus('error',
+        '⚠ Save failed: ' + e.message + '. ' +
+        'Nothing was written. Entry copied to clipboard — paste manually before the closing ]; in ' + targetFile + '.'
+      );
+    }
+  }
+}
+
+/* ── CLEAR FORM ──────────────────────────────── */
+function clearForm(formType) {
+  var form = document.getElementById('form-' + formType);
+  if (!form) return;
+  form.querySelectorAll('input[type=text], textarea').forEach(function(el) { el.value = ''; });
+  form.querySelectorAll('select').forEach(function(el) { el.selectedIndex = 0; });
+  form.querySelectorAll('input[type=checkbox]').forEach(function(el) { el.checked = false; });
+  // Reset radio buttons to their HTML default (the one with the `checked` attribute)
+  form.querySelectorAll('input[type=radio]').forEach(function(el) { el.checked = false; });
+  form.querySelectorAll('input[type=radio][checked]').forEach(function(el) { el.checked = true; });
+  // Clear repeating items
+  var lmList = document.getElementById('city-landmarks-list');
+  if (lmList) {
+    lmList.innerHTML = '';
+    var lmEmpty = document.getElementById('city-landmarks-empty');
+    if (lmEmpty) lmEmpty.style.display = '';
+  }
+  var fList = document.getElementById('org-facts-list');
+  if (fList) {
+    fList.innerHTML = '';
+    var fEmpty = document.getElementById('org-facts-empty');
+    if (fEmpty) fEmpty.style.display = '';
+  }
+  // Clear image previews
+  form.querySelectorAll('.image-preview').forEach(function(img) {
+    img.src = ''; img.classList.remove('visible');
+  });
+  form.querySelectorAll('.image-path-hint').forEach(function(el) { el.textContent = ''; });
+  form.querySelectorAll('input[type=file]').forEach(function(el) { el.value = ''; });
+  // Reset nation dropdowns
+  form.querySelectorAll('select[id$="-nation"]').forEach(function(sel) {
+    sel.innerHTML = '<option value="">— Select region first —</option>';
+  });
+  resetOutput();
+  updateFileTarget();
+}
+
+/* ── RECENTLY ADDED ──────────────────────────── */
+function saveToRecent(entry, type) {
+  try { RECENT_ITEMS = JSON.parse(localStorage.getItem(RECENT_KEY)) || []; }
+  catch(e) { RECENT_ITEMS = []; }
+  RECENT_ITEMS.unshift({
+    name:      entry.name,
+    id:        entry.id,
+    type:      type,
+    target:    FILE_TARGETS[type],
+    timestamp: new Date().toISOString(),
+    entry:     entry
+  });
+  RECENT_ITEMS = RECENT_ITEMS.slice(0, 10);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(RECENT_ITEMS)); } catch(e) {}
+}
+
+function renderRecent() {
+  try { RECENT_ITEMS = JSON.parse(localStorage.getItem(RECENT_KEY)) || []; }
+  catch(e) { RECENT_ITEMS = []; }
+  var list = document.getElementById('recent-list');
+  if (!list) return;
+  if (!RECENT_ITEMS.length) {
+    list.innerHTML = '<div class="dm-recent-empty">No entries yet.<br>Generate one using the form.</div>';
+    return;
+  }
+  list.innerHTML = RECENT_ITEMS.map(function(item, i) {
+    var d = new Date(item.timestamp);
+    var ds = d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) +
+             ' ' + d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
+    var icon = TAB_ICONS[item.type] || '•';
+    return '<div class="recent-item" onclick="restoreEntry(' + i + ')">' +
+      '<div class="recent-item-name">' + icon + ' ' + escHtml(item.name) + '</div>' +
+      '<div class="recent-item-meta">' + escHtml(item.target) + ' · ' + ds + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function restoreEntry(index) {
+  var item = RECENT_ITEMS[index];
+  if (!item) return;
+  switchTab(item.type);
+  var jsStr = formatJsObj(item.entry, 0);
+  document.getElementById('json-output').textContent = jsStr;
+  document.getElementById('file-target').innerHTML =
+    '📁 Add this entry to: <strong>' + escHtml(item.target) + '</strong>';
+  LAST_GENERATED = { entry: item.entry, type: item.type };
+}
+
+/* ── UTILITIES ───────────────────────────────── */
+function slugify(str) {
+  return str.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

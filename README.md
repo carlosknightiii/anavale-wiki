@@ -97,6 +97,33 @@ The wiki deploys via **GitHub Pages** from the `main` branch root. Push to `main
 
 ---
 
+## DM Tools
+
+A private content management system lives at `dm.html` (same directory as `index.html`). It is **not linked** from any player-facing page.
+
+**Access:** Open `dm.html` directly in a browser and enter the password when prompted. Authentication persists for the session (uses `sessionStorage`).
+
+**What it does:** Provides six form-based generators — City, Creature, Point of Interest, Character, Organization, and Item. Each form collects all fields matching the appropriate data file schema, then generates a ready-to-paste JS object literal. The output panel shows:
+
+- The target data file (e.g. `📁 Add this entry to: data/cities.js`)
+- The formatted JS object literal
+- A **Copy JSON** button
+- A **Save to Data File** button (uses the File System Access API in Chrome/Edge; falls back to clipboard in other browsers)
+
+A **Recently Added** panel tracks the last 10 generated entries via `localStorage` so entries can be recovered if the tab is closed.
+
+**Image folders** (created alongside `dm.html`):
+
+```
+assets/images/characters/      # Character portrait images
+assets/images/organizations/   # Organization seals and sigils
+assets/images/items/           # Item images
+```
+
+Existing folders: `assets/images/regions/` and `assets/images/creatures/`.
+
+---
+
 ## Campaign Notes
 
 - **Ruleset:** 2024 D&D 5e Player's Handbook
