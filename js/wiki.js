@@ -711,18 +711,302 @@ var REGION_CONFIG = {
   }
 };
 
+// ══ HOME PAGE HELPERS ════════════════════════════════════════════════════════
+
+var _homeParallaxHandler = null;
+var _darkWhisperHandler  = null;
+
+// Generate floating color particles inside a container element.
+// direction: 'up' → float upward (hero); 'down' → sink downward (dark section).
+function createParticles(container, count, colors, direction) {
+  var cls = direction === 'down' ? 'home-particle-dark' : 'home-particle';
+  for (var i = 0; i < count; i++) {
+    var p   = document.createElement('div');
+    var sz  = Math.random() * 6 + 4;           // 4–10px
+    var col = colors[Math.floor(Math.random() * colors.length)];
+    p.className = cls;
+    p.style.cssText = [
+      'left:'               + (Math.random() * 100)              + '%',
+      'width:'              + sz                                  + 'px',
+      'height:'             + sz                                  + 'px',
+      'background:'         + col,
+      'box-shadow:0 0 '     + Math.round(sz * 1.6)               + 'px ' + col,
+      'animation-duration:' + (Math.random() * 8 + 8)            + 's',
+      'animation-delay:'    + (Math.random() * 8)                + 's',
+      'border-radius:50%',
+      'opacity:'            + (Math.random() * 0.4 + 0.5).toFixed(2)  // 0.50–0.90
+    ].join(';');
+    container.appendChild(p);
+  }
+}
+
+// Parallax scroll handler for the hero map image.
+// Replaces any previous handler to avoid accumulation on re-render.
+function initParallax() {
+  var heroImg = document.getElementById('home-map-image');
+  if (!heroImg) return;
+  if (_homeParallaxHandler) {
+    window.removeEventListener('scroll', _homeParallaxHandler);
+  }
+  _homeParallaxHandler = function() {
+    var img = document.getElementById('home-map-image');
+    if (!img) {
+      window.removeEventListener('scroll', _homeParallaxHandler);
+      _homeParallaxHandler = null;
+      return;
+    }
+    img.style.transform = 'translateY(' + (window.pageYOffset * 0.3) + 'px)';
+  };
+  window.addEventListener('scroll', _homeParallaxHandler, { passive: true });
+}
+
+// IntersectionObserver reveal — adds .revealed to any .reveal element
+// that enters the viewport with ≥15% visibility. Called after DOM renders.
+function initScrollAnimations() {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal').forEach(function(el) {
+    observer.observe(el);
+  });
+}
+
+// Dark Whisper — per-line color drain via IntersectionObserver.
+// Each line starts colored (from data-color), then dims to grey on scroll into view.
+function initDarkWhisperEffect() {
+  var section = document.getElementById('home-dark-whisper');
+  if (!section) return;
+
+  var lines = section.querySelectorAll('.dark-line');
+  lines.forEach(function(line) {
+    var color = line.getAttribute('data-color');
+    if (color) line.style.color = color;
+  });
+
+  var lineObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var line = entry.target;
+        var delay = parseInt(line.getAttribute('data-delay') || '0');
+        setTimeout(function() {
+          line.classList.add('dimmed');
+        }, delay);
+        lineObserver.unobserve(line);
+      }
+    });
+  }, { threshold: 0.5, rootMargin: '0px 0px -10% 0px' });
+
+  lines.forEach(function(line, i) {
+    line.setAttribute('data-delay', i * 200);
+    lineObserver.observe(line);
+  });
+
+  var content = document.getElementById('wiki-content');
+  if (content) content.style.filter = '';
+}
+
+// ══ HOME PAGE RENDERER ═══════════════════════════════════════════════════════
+
 function renderHome(el) {
-  el.innerHTML = pageHeader('Introduction', 'Welcome, Traveller',
-    'A practical guide to the continent of Pogglewog and the wider world of Anavale')
-    + '<div class="wiki-body">'
-    + '<p>You are reading the <em>Anavale Traveller\'s Compendium</em> — a collection of observations, records, and accumulated wisdom gathered by scholars, wanderers, merchants, and at least one extremely well-travelled tortoise. It is not complete. It is not official. It is, however, honest, which is more than can be said for several of the Formery\'s pamphlets.</p>'
-    + '<p>Anavale is a world that rewards attention. Pay attention to the color of things. Pay attention to the creatures. Pay attention when the Bumble Frogs go quiet — they are almost never quiet, and when they are, something has happened or is about to.</p>'
-    + '<div class="pull-quote">"The world is full of color and it wants to stay that way. Assist it where you can."<cite>— Common Brightcreed greeting, Caparia</cite></div>'
-    + '<p>This compendium is organized into sections covering the world\'s magic, its regions, its creatures, its organizations, and a final section of rumours that the editorial committee insists on including despite ongoing disagreement about their accuracy.</p>'
-    + '<p>Use the navigation on the left to explore. Begin wherever your curiosity takes you. That is, after all, very much in the spirit of Anavale.</p>'
-    + '<div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>'
-    + '<p><strong>A note on navigation:</strong> Throughout this compendium, important terms are <span class="wiki-link" style="cursor:default;">underlined and bold</span> and may be clicked to navigate directly to the relevant entry. In Anavale, everything is connected. This compendium tries to reflect that.</p>'
-    + '</div>';
+  var typeCards = [
+    { id:'bubbleseed', name:'Bubbleseed', element:'Earth · Growth · Joy',
+      desc:'Warm and generous. Overshoots. Smells like fresh soil. Gets emotionally attached to what it nurtures.',
+      color:'#2a7a3a', video:'assets/videos/anim-bubbleseed.mp4', icon:'assets/icons/icon-bubbleseed.svg' },
+    { id:'featherflow', name:'Featherflow', element:'Wind · Water · Freedom',
+      desc:'Never goes straight. Values freedom above all. Subtly resists anything that cages it.',
+      color:'#2266b8', video:'assets/videos/anim-featherflow.mp4', icon:'assets/icons/icon-featherflow.svg' },
+    { id:'steelfist', name:'Steelfist', element:'Metal · Resolve · Order',
+      desc:'Does exactly what it is told. Rewards discipline. Punishes sloppiness.',
+      color:'#6a3aaa', video:'assets/videos/anim-steelfist.mp4', icon:'assets/icons/icon-steelfist.svg' },
+    { id:'flamerage', name:'Flamerage', element:'Fire · Destruction · Fury',
+      desc:'Responds to emotion before intent. Spectacular. The only type that can temporarily overpower early-stage Fading.',
+      color:'#aa3a1a', video:'assets/videos/anim-flamerage.mp4', icon:'assets/icons/icon-flamerage.svg' }
+  ];
+  var typeCardsHtml = typeCards.map(function(t, idx) {
+    return '<div class="type-card reveal reveal-delay-' + (idx + 1) + '"'
+      + ' style="--type-color:' + t.color + '" onclick="navigate(\'gigglegloom\')">'
+      + '<div class="type-card-video-wrap">'
+        + '<video class="type-card-video" src="' + t.video + '" autoplay muted loop playsinline preload="auto"></video>'
+        + '<div class="type-card-video-overlay"></div>'
+      + '</div>'
+      + '<div class="type-card-content">'
+        + '<img class="type-card-icon" src="' + t.icon + '" alt="' + t.name + '">'
+        + '<div class="type-card-name">' + t.name + '</div>'
+        + '<div class="type-card-element">' + t.element + '</div>'
+        + '<div class="type-card-desc">' + t.desc + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML = '<div class="home-page-wrap">'
+
+  // ── Section 1: Hero ──────────────────────────────────────────────────────
+  + '<section class="home-hero" id="home-hero">'
+    + '<div class="home-hero-map-wrap">'
+      + '<img id="home-map-image" class="home-hero-map"'
+      + ' src="assets/images/pogglewog-map.webp"'
+      + ' alt="The continent of Pogglewog">'
+    + '</div>'
+    + '<div class="home-hero-overlay"></div>'
+    + '<div class="home-particles-container" id="home-particles-container"></div>'
+    + '<div class="home-hero-content">'
+      + '<div class="home-hero-eyebrow">✦ THE ANAVALE TRAVELLER\'S COMPENDIUM ✦</div>'
+      + '<h1 class="home-hero-title home-tagline-line" style="animation-delay:0.3s">Welcome, Traveller</h1>'
+      + '<div class="home-hero-taglines">'
+        + '<p class="home-tagline-line" style="animation-delay:0.6s">A world of color, magic, and quiet shadow.</p>'
+        + '<p class="home-tagline-line" style="animation-delay:0.9s">Everything that glows has a name.</p>'
+        + '<p class="home-tagline-line" style="animation-delay:1.2s">Everything grey was once something else.</p>'
+      + '</div>'
+      + '<button class="home-explore-btn"'
+        + ' onclick="document.getElementById(\'home-section-2\').scrollIntoView({behavior:\'smooth\'})">'
+        + '✦ · BEGIN EXPLORING · ✦'
+      + '</button>'
+    + '</div>'
+    + '<div class="home-hero-bottom-fade"></div>'
+  + '</section>'
+
+  // ── Section 2: World at a Glance ─────────────────────────────────────────
+  + '<section class="home-section home-glance-section" id="home-section-2">'
+    + '<div class="home-section-inner">'
+      + '<h2 class="home-section-heading home-section-heading-light reveal">The World of Anavale</h2>'
+      + '<div class="glance-grid">'
+
+        + '<div class="glance-card reveal reveal-delay-1"'
+          + ' onclick="navigate(\'gigglegloom\')">'
+          + '<div class="glance-card-subhead">Magic System</div>'
+          + '<div class="glance-card-title">The Gigglegloom</div>'
+          + '<div class="glance-card-body">Magic is alive. It has opinions. It chose Anavale.</div>'
+          + '<div class="glance-card-link">→ Learn More</div>'
+        + '</div>'
+
+        + '<div class="glance-card reveal reveal-delay-2"'
+          + ' onclick="navigate(\'color\')">'
+          + '<div class="glance-card-subhead">Color\'s Role</div>'
+          + '<div class="glance-card-title">Color &amp; The Dimming</div>'
+          + '<div class="glance-card-body">Color is not decoration. It is life. It is power. When it fades, so do you.</div>'
+          + '<div class="glance-card-link">→ Learn More</div>'
+        + '</div>'
+
+        + '<div class="glance-card reveal reveal-delay-3">'
+          + '<div class="glance-card-subhead">The Threat</div>'
+          + '<div class="glance-card-title">The Vareth</div>'
+          + '<div class="glance-card-body">A grey silence spreading from the edges of the world. It does not conquer. It waits.</div>'
+          + '<div class="glance-card-link" style="opacity:0.45;font-style:italic;">✦ Discover in play</div>'
+        + '</div>'
+
+        + '<div class="glance-card reveal reveal-delay-4"'
+          + ' onclick="navigate(\'region/caparia\')">'
+          + '<div class="glance-card-subhead">The Setting</div>'
+          + '<div class="glance-card-title">The Continent</div>'
+          + '<div class="glance-card-body">Four regions. Fifteen nations. One world worth fighting for.</div>'
+          + '<div class="glance-card-link">→ Learn More</div>'
+        + '</div>'
+
+      + '</div>'
+    + '</div>'
+  + '</section>'
+
+  // ── Section 3: Four Regions ───────────────────────────────────────────────
+  + (function() {
+      var regionData = [
+        { id: 'caparia', name: 'Caparia', label: 'Region',
+          climate: 'The colorful heartlands',
+          blurb: 'Lush meadows, sparkling rivers, and the most colorful cities in Anavale. The Confederation was built here. Color maintenance is not a tradition — it is law.',
+          image: 'assets/images/regions/img-caparia-landscape.png' },
+        { id: 'nombi', name: 'Nombi', label: 'Region',
+          climate: 'The frozen, aurora-lit north',
+          blurb: 'Dense forests, icy mountains, and skies painted by the aurora. The north is stoic and beautiful and dangerous in equal measure. Honor is currency here.',
+          image: 'assets/images/regions/img-nombi-landscape.png' },
+        { id: 'sohot', name: 'Sohot', label: 'Region',
+          climate: 'The ancient, blazing south',
+          blurb: 'Desert dunes, ancient ruins, and the weight of a fallen empire. The south remembers everything. The south is also on fire, mostly.',
+          image: 'assets/images/regions/img-sohot-landscape.png' },
+        { id: 'jugabi', name: 'Jugabi', label: 'Region',
+          climate: 'The living jungle southwest',
+          blurb: 'The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on the continent. The jungle has opinions. The jungle is always right.',
+          image: 'assets/images/regions/img-jugabi-landscape.png' }
+      ];
+      var rowsHtml = regionData.map(function(r, i) {
+        return '<div class="home-region-row reveal reveal-delay-' + (i + 1) + '"'
+          + ' onclick="navigate(\'region/' + r.id + '\')">'
+          + '<div class="home-region-row-bg" style="background-image:url(\'' + r.image + '\')"></div>'
+          + '<div class="home-region-row-overlay"></div>'
+          + '<div class="home-region-row-content">'
+            + '<div class="home-region-row-label">' + r.label + '</div>'
+            + '<div class="home-region-row-name">' + r.name + '</div>'
+            + '<div class="home-region-row-climate">' + r.climate + '</div>'
+            + '<div class="home-region-row-blurb">' + r.blurb + '</div>'
+          + '</div>'
+        + '</div>';
+      }).join('');
+      return '<section class="home-section home-regions-section">'
+        + '<div class="home-section-inner">'
+          + '<h2 class="home-section-heading home-section-heading-light reveal">Explore the Regions</h2>'
+          + '<p class="home-section-blurb home-section-blurb-light reveal">'
+            + 'Pogglewog is a continent of four great regions — each shaped by its climate, '
+            + 'its magic, and the nations that call it home. Every region tells a different '
+            + 'story. Every story is still being written.'
+          + '</p>'
+          + '<div class="home-regions-list">' + rowsHtml + '</div>'
+        + '</div>'
+      + '</section>';
+    })()
+
+  // ── Section 4: Gigglegloom Types ─────────────────────────────────────────
+  + '<section class="home-section home-types-section">'
+    + '<div class="home-section-inner">'
+      + '<h2 class="home-section-heading home-section-heading-light reveal">The Gigglegloom</h2>'
+      + '<p class="home-section-blurb home-section-blurb-light reveal">'
+        + 'The Gigglegloom is a living magical force woven through all things. '
+        + 'It is alive, opinionated, and mischievous. It responds to emotion and intent. '
+        + 'It occasionally does whatever it wants instead.'
+      + '</p>'
+      + '<div class="home-types-list">'
+        + typeCardsHtml
+      + '</div>'
+    + '</div>'
+  + '</section>'
+
+  // ── Section 5: Dark Whisper ───────────────────────────────────────────────
+  + '<section class="home-dark-section" id="home-dark-whisper">'
+    + '<div class="home-dark-inner">'
+      + '<div class="dark-line dark-ornament" data-color="#c8940a">✦ · · ·</div>'
+      + '<p class="dark-line dark-large" data-color="#e8b830">Something is changing.</p>'
+      + '<p class="dark-line dark-body" data-color="#c8d4f0">In the far reaches of every region, travellers report the same thing.</p>'
+      + '<p class="dark-line dark-body" data-color="#a8d4b8">Colours that seem thinner than they used to be.</p>'
+      + '<p class="dark-line dark-body" data-color="#d4b8e8">Laughter that arrives a moment late.</p>'
+      + '<p class="dark-line dark-body" data-color="#f0c8a0">Creatures that sit very still and watch.</p>'
+      + '<div class="dark-line dark-ornament" data-color="#888888">· · ·</div>'
+      + '<p class="dark-line dark-formery" data-color="#a0a0a0">The Wanderkeep has filed seventeen incident reports this year.</p>'
+      + '<p class="dark-line dark-formery" data-color="#909090">The Formery has acknowledged all seventeen.</p>'
+      + '<p class="dark-line dark-formery" data-color="#808080">Form 44-C: Notification of Possible Ambient Saturation Decline.</p>'
+      + '<div class="dark-line dark-ornament" data-color="#666666">· · ·</div>'
+      + '<p class="dark-line dark-large" data-color="#707070">The forms are in order.</p>'
+      + '<p class="dark-line dark-large dark-final" data-color="#505050">The world is not.</p>'
+      + '<div class="dark-line dark-ornament" data-color="#404040">· · · ✦</div>'
+    + '</div>'
+  + '</section>'
+
+  + '</div>';   // end .home-page-wrap
+
+  // Initialize after DOM has rendered
+  setTimeout(function() {
+    initScrollAnimations();
+    initParallax();
+    initDarkWhisperEffect();
+    var heroParticles = document.getElementById('home-particles-container');
+    if (heroParticles) {
+      createParticles(heroParticles, 40,
+        ['#2a7a3a', '#2266b8', '#6a3aaa', '#aa3a1a'],
+        'up');
+    }
+  }, 50);
 }
 
 function renderGigglegloom(el) {
