@@ -1,71 +1,158 @@
+/* ============================================================
+   ANAVALE WIKI — wiki.css
+   Main stylesheet for the Anavale Traveller's Compendium
+
+   TABLE OF CONTENTS
+   ─────────────────────────────────────────────────────────
+   1.  CSS Custom Properties (Design Tokens)
+   2.  Reset & Base
+   3.  Layout — Sidebar + Main
+   4.  Sidebar Navigation
+   5.  Accordion Navigation (B3-A)
+   6.  Search
+   7.  Main Content Area
+   8.  Page Header
+   9.  Body Text & Pull Quotes
+   10. Entry Cards & Grid
+   11. Entry Card — Gigglegloom Rainbow Hover Effect
+   12. Entry Card — Inner Text Elements
+   13. Creature Entries
+   14. Region Page
+   15. Rumor Table
+   16. Warning Box & Ornament
+   17. Wiki Links & Search Highlight
+   18. Breadcrumb Navigation (B3-A)
+   19. Section Headings & Wiki Lists (B3-A)
+   20. Visibility System — Teaser States (B3-B)
+   21. Entry Images — Hero & Legacy
+   22. Settlement Cards — Image Left Layout
+   23. Nation Page Layout
+   24. Dimming Severity Indicators
+   25. Custom Wiki Graphics
+   26. Clickable Card Hover (B3-A legacy)
+   27. Wiki Content Container (B3-A)
+   28. Responsive / Mobile
+   ============================================================ */
+
+
+/* ============================================================
+   1. CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+   All colors, sizes, fonts, and shadows in one place.
+   Update here to change the look globally.
+   ============================================================ */
 :root {
-  /* ── Color palette ─────────────────────────────────────── */
-  --parchment:      #f5ead4;
-  --parchment-dark: #e8d4a8;
-  --ink:            #2a1f0e;
-  --ink-light:      #4a3520;
-  --ink-faint:      #7a6548;
-  --gold:           #c8940a;
-  --gold-light:     #e8b830;
-  --amber:          #7a5200;   /* WCAG AA on parchment: 5.23:1 */
-  --teal:           #1a6a5a;
-  --violet:         #4a2878;
-  --green:          #2a5818;
 
-  /* ── Gigglegloom type colors ───────────────────────────── */
-  --bubbleseed: #2a7a3a;
-  --featherflow: #2266b8;
-  --steelfist:  #6a3aaa;
-  --flamerage:  #aa3a1a;
+  /* ── Parchment palette — warm cream background tones ───── */
+  --parchment:        #f5ead4;   /* main content background */
+  --parchment-light:  #f8f1e2;   /* card backgrounds, slightly lighter */
+  --parchment-dark:   #e8d4a8;   /* pull quotes, darker parchment areas */
 
-  /* ── Layout ─────────────────────────────────────────────── */
-  --sidebar-w:      260px;
-  --content-pad:    2rem;
-  --section-gap:    2.5rem;
-  --card-radius:    6px;
-  --border-radius:  4px;
+  /* ── Ink palette — dark brown text tones ───────────────── */
+  --ink:              #2a1f0e;   /* primary text, darkest */
+  --ink-light:        #4a3520;   /* body text, slightly lighter */
+  --ink-faint:        #7a6548;   /* captions, hints, secondary text */
 
-  /* ── Typography ─────────────────────────────────────────── */
-  --font-serif:     'IM Fell English', Georgia, serif;
-  --font-sans:      'Segoe UI', system-ui, sans-serif;
-  --font-mono:      'Courier New', Courier, monospace;
-  --text-base:      1rem;       /* 16px */
-  --text-sm:        0.875rem;   /* 14px */
-  --text-xs:        0.75rem;    /* 12px */
-  --text-lg:        1.125rem;   /* 18px */
-  --text-xl:        1.375rem;   /* 22px */
-  --text-2xl:       1.75rem;    /* 28px */
-  --text-3xl:       2.25rem;    /* 36px */
-  --line-height:    1.7;
-  --line-tight:     1.3;
+  /* ── Gold & accent tones ────────────────────────────────── */
+  --gold:             #c8940a;   /* primary accent — borders, icons */
+  --gold-light:       #e8b830;   /* hover states, highlights */
+  --amber:            #7a5200;   /* WCAG AA compliant on parchment (5.23:1)
+                                    Used for tags, labels, links in body text */
+  --white:            #ffffff;
 
-  /* ── Shadows & borders ──────────────────────────────────── */
-  --shadow-sm:      0 1px 3px rgba(0,0,0,0.15);
-  --shadow-md:      0 3px 8px rgba(0,0,0,0.2);
-  --shadow-lg:      0 6px 20px rgba(0,0,0,0.25);
-  --border-color:   rgba(139, 107, 62, 0.35);
+  /* ── Supporting accent colors ───────────────────────────── */
+  --teal:             #1a6a5a;
+  --violet:           #4a2878;
+  --green:            #2a5818;
+
+  /* ── Gigglegloom type colors ────────────────────────────── 
+     The four magic types of Anavale. Used in spell displays,
+     type badges, and the rainbow hover animation on cards. */
+  --bubbleseed:       #2a7a3a;   /* gold-green, joy/growth magic */
+  --featherflow:      #2266b8;   /* blue-teal, wind/water magic */
+  --steelfist:        #6a3aaa;   /* indigo-violet, force/structure magic */
+  --flamerage:        #aa3a1a;   /* red-orange, fire/passion magic */
+
+  /* ── Layout dimensions ──────────────────────────────────── */
+  --sidebar-w:        260px;     /* fixed sidebar width */
+  --content-pad:      2rem;
+  --section-gap:      2.5rem;
+  --card-radius:      6px;       /* corner radius for cards and images */
+  --border-radius:    4px;       /* corner radius for smaller elements */
+
+  /* ── Typography ─────────────────────────────────────────── 
+     Cinzel Decorative: display/heading font — ornate, fantasy feel
+     Roboto: sans-serif body — clean, readable at small sizes
+     Courier New: monospaced — used in Formery stamps, code */
+  --font-serif:       'Cinzel Decorative', Georgia, serif;
+  --font-sans:        'Roboto', system-ui, sans-serif;
+  --font-mono:        'Courier New', Courier, monospace;
+
+  /* Type scale — rem units for accessibility (respects user font size) */
+  --text-xs:          0.75rem;   /* 12px */
+  --text-sm:          0.875rem;  /* 14px */
+  --text-base:        1rem;      /* 16px */
+  --text-lg:          1.125rem;  /* 18px */
+  --text-xl:          1.375rem;  /* 22px */
+  --text-2xl:         1.75rem;   /* 28px */
+  --text-3xl:         2.25rem;   /* 36px */
+  --line-height:      1.7;
+  --line-tight:       1.3;
+
+  /* ── Shadows ────────────────────────────────────────────── */
+  --shadow-sm:        0 1px 3px rgba(0,0,0,0.15);
+  --shadow-md:        0 3px 8px rgba(0,0,0,0.2);
+  --shadow-lg:        0 6px 20px rgba(0,0,0,0.25);
+
+  /* ── Borders ────────────────────────────────────────────── */
+  --border-color:     rgba(0, 0, 0, 0.35);
+  --border-gold:      rgba(200, 148, 10, 0.2);  /* subtle gold border */
+  --border-gold-mid:  rgba(200, 148, 10, 0.35); /* medium gold border */
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ============================================================
+   2. RESET & BASE
+   Minimal reset. Box-sizing applied globally.
+   Body uses the ink color over the parchment set in .main.
+   ============================================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
-  background: #1a1208;
-  font-family: 'IM Fell English', Georgia, serif;
+  /* Dark background shows behind sidebar and during load */
+  background: var(--ink);
+  font-family: var(--font-serif);
   color: var(--ink);
   min-height: 100vh;
 }
 
-/* ── LAYOUT ── */
+
+/* ============================================================
+   3. LAYOUT — SIDEBAR + MAIN
+   Two-column layout: fixed-width sidebar + flexible main area.
+   ============================================================ */
+
+/* Outer wrapper — flex container for sidebar + main */
 .layout {
   display: flex;
   min-height: 100vh;
 }
 
-/* ── SIDEBAR ── */
+
+/* ============================================================
+   4. SIDEBAR NAVIGATION
+   Fixed-height sticky sidebar on the left. Scrollable
+   independently of the main content area.
+   ============================================================ */
+
+/* Sidebar container — black background, gold right border */
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: #0e0c08;
+  background: #000;
   border-right: 2px solid #3a2a10;
   position: sticky;
   top: 0;
@@ -74,279 +161,156 @@ body {
   padding: 2rem 0;
 }
 
+/* "The Anavale Traveller's Compendium" title at top of sidebar */
 .sidebar-title {
-  font-family: 'Charm', serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--gold-light);
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--white);
   padding: 0 1.5rem 1.5rem;
-  border-bottom: 1px solid rgba(200,148,10,0.2);
   margin-bottom: 1rem;
   line-height: 1.3;
 }
 
+/* Top-level nav section wrapper — adds bottom spacing between sections */
 .nav-section {
   margin-bottom: 0.5rem;
 }
 
+/* Section title labels — e.g. "REGIONS", "CREATURES" */
 .nav-section-title {
-  font-family: 'Charm', serif;
-  font-size: 0.82rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--gold);
-  padding: 0.9rem 1.5rem 0.35rem;
-  opacity: 0.85;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--white);
+  padding: 0.5rem 0.5rem 0 1rem;
 }
 
+/* Individual navigation links — used for leaf nodes (no children) */
 .nav-link {
   display: block;
-  padding: 0.5rem 1.5rem;
-  color: rgba(200,180,140,0.8);
+  padding: 0.3rem 2.5rem;
+  color: var(--white);
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
   transition: color 0.2s, background 0.2s;
   cursor: pointer;
   border: none;
   background: none;
   width: 100%;
   text-align: left;
-  font-family: 'IM Fell English', Georgia, serif;
 }
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--gold-light);
   background: rgba(200,148,10,0.08);
 }
 
-/* ── MAIN CONTENT ── */
-.main {
-  flex: 1;
-  background: var(--parchment);
-  background-image:
-    url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  min-height: 100vh;
-  position: relative;
-}
 
-/* ── PAGES ── */
-.page {
-  display: none;
-  padding: 3rem 3.5rem 5rem;
-}
-.page.active { display: block; }
+/* ============================================================
+   5. ACCORDION NAVIGATION (added in B3-A)
+   Collapsible sections in the sidebar. Each section has
+   a header button and a body that expands/collapses via
+   max-height transition. Nesting handled with indent levels.
+   ============================================================ */
 
-/* ── PAGE HEADER ── */
-.page-header {
-  border-bottom: 2px solid var(--gold);
-  padding-bottom: 1.5rem;
-  margin-bottom: 2.5rem;
-}
-.page-category {
-  font-family: 'Charm', serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: #2a1a06;
-  margin-bottom: 0.5rem;
-}
-.page-title {
-  font-family: 'Charm', serif;
-  font-size: 2.8rem;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1.1;
-  margin-bottom: 0.5rem;
-}
-.page-subtitle {
-  font-style: italic;
-  color: var(--ink-faint);
-  font-size: 1rem;
-}
-
-/* ── BODY TEXT ── */
-.wiki-body {
-  font-size: 1.05rem;
-  line-height: 2;
-  color: var(--ink-light);
-}
-.wiki-body p { margin-bottom: 1.2rem; }
-.wiki-body em { color: var(--amber); font-style: normal; font-weight: 600; }
-.wiki-body strong { color: var(--ink); }
-
-/* ── PULL QUOTE ── */
-.pull-quote {
-  margin: 2rem 0;
-  padding: 1.5rem 2rem;
-  border-left: 4px solid var(--gold);
-  background: rgba(200,148,10,0.06);
-  font-style: italic;
-  font-size: 1.05rem;
-  color: var(--ink-faint);
-  line-height: 1.8;
-}
-.pull-quote cite {
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  font-style: normal;
-  color: var(--ink-light);  /* explicit color replaces opacity: 0.7 which caused 2.54:1 contrast failure */
-}
-
-/* ── ENTRY CARDS ── */
-.entry-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem 0;
-}
-.entry-card {
-  background: rgba(200,148,10,0.05);
-  border: 1px solid rgba(200,148,10,0.2);
-  border-radius: 4px;
-  padding: 1.5rem;
-}
-.entry-name {
-  font-family: 'Charm', serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 0.3rem;
-}
-.entry-tag {
-  font-size: 0.75rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 0.8rem;
-}
-.entry-body {
-  font-size: 0.92rem;
-  line-height: 1.75;
-  color: var(--ink-light);
-}
-
-/* ── CREATURE ENTRIES ── */
-.creature-entry {
-  border-bottom: 1px solid rgba(200,148,10,0.15);
-  padding: 1.5rem 0;
-}
-.creature-entry:last-child { border-bottom: none; }
-.creature-header {
+/* Clickable accordion header — the section label + arrow */
+.nav-accordion-header {
   display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-.creature-name {
-  font-family: 'Charm', serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--ink);
-}
-.creature-latin {
-  font-style: italic;
-  color: var(--ink-faint);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 2.5rem;
+  color: var(--white);
   font-size: 0.9rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
 }
-.creature-body {
-  font-size: 0.97rem;
-  line-height: 1.85;
-  color: var(--ink-light);
-}
-.creature-note {
-  margin-top: 0.5rem;
-  font-style: italic;
-  color: var(--amber);
-  font-size: 0.9rem;
-}
-
-/* ── REGION PAGE ── */
-.region-section {
-  margin-bottom: 3rem;
-}
-.region-heading {
-  font-family: 'Charm', serif;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--ink);
-  border-bottom: 1px solid rgba(200,148,10,0.3);
-  padding-bottom: 0.5rem;
-  margin-bottom: 1rem;
-}
-.region-tag {
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 0.8rem;
+.nav-accordion-header:hover,
+.nav-accordion-header.active {
+  color: var(--gold-light);
+  background: rgba(200,148,10,0.08);
 }
 
-/* ── RUMOR TABLE ── */
-.rumor-entry {
-  padding: 1.2rem 0;
-  border-bottom: 1px dashed rgba(200,148,10,0.25);
-}
-.rumor-entry:last-child { border: none; }
-.rumor-source {
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 0.4rem;
-}
-.rumor-text {
-  font-style: italic;
-  font-size: 0.98rem;
-  line-height: 1.8;
-  color: var(--ink-light);
-}
-.rumor-note {
-  font-size: 0.85rem;
-  color: var(--ink-faint);
-  margin-top: 0.3rem;
-}
-
-/* ── WARNING BOX ── */
-.warning-box {
-  background: rgba(122,82,0,0.07);
-  border: 1px solid rgba(122,82,0,0.25);
-  border-radius: 4px;
-  padding: 1.2rem 1.5rem;
-  margin: 1.5rem 0;
-}
-.warning-title {
-  font-family: 'Charm', serif;
-  font-size: 1rem;
-  color: var(--amber);
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-.warning-body {
-  font-size: 0.92rem;
-  line-height: 1.7;
-  color: var(--ink-faint);
-}
-
-/* ── ORNAMENT ── */
-.ornament {
-  text-align: center;
-  color: var(--gold);
-  font-size: 1.1rem;
-  letter-spacing: 0.5em;
-  margin: 2rem 0;
+/* Chevron arrow — rotates 90° when section is open */
+.nav-accordion-arrow {
+  font-size: 0.6rem;
   opacity: 0.5;
+  transition: transform 0.25s;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+.nav-accordion-header.open .nav-accordion-arrow {
+  transform: rotate(90deg);
+  opacity: 1;
 }
 
-/* ── SEARCH ── */
+/* Collapsible body — max-height animates from 0 to open */
+.nav-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.nav-accordion-body.open {
+  /* Large enough to accommodate deeply nested content */
+  max-height: 1200px;
+}
+
+/* Nesting indent levels — each level indents slightly more */
+.nav-level-2 { padding-left: 0.5rem; }
+.nav-level-3 { padding-left: 0.5rem; }
+.nav-level-4 { padding-left: 0.5rem; }
+
+.nav-level-2 .nav-accordion-header,
+.nav-level-2 .nav-link {
+  font-size: 0.8rem;
+  padding-left: 2.5rem;
+  opacity: 0.9;
+}
+.nav-level-3 .nav-accordion-header,
+.nav-level-3 .nav-link {
+  font-size: 0.8rem;
+  padding-left: 3rem;
+  opacity: 1;
+}
+.nav-level-4 .nav-link {
+  font-size: 0.8rem;
+  padding-left: 3.5rem;
+  opacity: 1;
+}
+
+/* ✨ Teaser indicator in sidebar — marks entries not yet fully visible */
+.nav-teaser-mark {
+  font-size: 0.7rem;
+  margin-right: 0.2rem;
+  vertical-align: middle;
+}
+
+
+/* ============================================================
+   6. SEARCH
+   Sidebar search bar and dropdown results panel.
+   Results overlay the sidebar content — they don't push it down.
+   ============================================================ */
+
+/* Wrapper that anchors the absolute results dropdown */
 .search-container {
-  position: relative;   /* anchor for the absolute results dropdown */
+  position: relative;
   margin: 0 0 0.5rem;
 }
+
+/* Inner wrapper with horizontal padding */
 .search-wrap {
   position: relative;
-  margin: 0 1rem 0;
+  margin: 0 1rem;
 }
+
+/* The text input itself */
 .wiki-search-input {
   width: 100%;
   background: rgba(255,255,255,0.05);
@@ -359,11 +323,15 @@ body {
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
-.wiki-search-input::placeholder { color: rgba(200,170,110,0.45); }
+.wiki-search-input::placeholder {
+  color: rgba(200,170,110,0.45);
+}
 .wiki-search-input:focus {
   border-color: rgba(200,148,10,0.65);
   background: rgba(255,255,255,0.08);
 }
+
+/* Search icon — decorative, non-interactive */
 .search-icon {
   position: absolute;
   right: 0.55rem;
@@ -373,8 +341,10 @@ body {
   font-size: 1rem;
   pointer-events: none;
 }
+
+/* Dropdown results panel — appears below the input */
 .search-results {
-  position: absolute;   /* overlay — does not push nav down */
+  position: absolute;
   top: 100%;
   left: 1rem;
   right: 1rem;
@@ -387,6 +357,8 @@ body {
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0,0,0,0.6);
 }
+
+/* Individual result row */
 .search-result {
   display: block;
   width: 100%;
@@ -398,25 +370,35 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
-.search-result:hover { background: rgba(200,148,10,0.08); }
+.search-result:hover {
+  background: rgba(200,148,10,0.08);
+}
+
+/* Result entry name */
 .search-result-title {
-  font-family: 'Charm', serif;
+  font-family: var(--font-serif);
   font-size: 0.9rem;
   color: var(--gold-light);
   margin-bottom: 0.2rem;
 }
+
+/* Result summary excerpt */
 .search-result-excerpt {
   font-size: 0.76rem;
   color: rgba(200,180,140,0.6);
   line-height: 1.5;
   font-family: 'IM Fell English', Georgia, serif;
 }
+
+/* Highlighted matching text within excerpts */
 .search-result-excerpt mark {
   background: rgba(200,148,10,0.3);
   color: rgba(230,210,160,0.95);
   border-radius: 2px;
   padding: 0 1px;
 }
+
+/* Empty state message */
 .search-no-results {
   padding: 0.75rem 1.5rem;
   font-size: 0.82rem;
@@ -425,10 +407,477 @@ body {
   font-family: 'IM Fell English', Georgia, serif;
 }
 
-/* ── WIKI LINKS ── */
+
+/* ============================================================
+   7. MAIN CONTENT AREA
+   Parchment-colored flex child that fills remaining width.
+   Subtle SVG noise texture adds tactile paper feel.
+   ============================================================ */
+.main {
+  flex: 1;
+  background: var(--parchment);
+  /* Inline SVG noise texture — no external file needed */
+  background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Legacy page div — used by older static pages not yet on hash routing */
+.page {
+  display: none;
+  padding: 3rem 3.5rem 5rem;
+}
+.page.active {
+  display: block;
+}
+
+/* Wiki content container — hash-routed pages render into this div */
+#wiki-content {
+  padding: 3rem 3.5rem 5rem;
+  min-height: 100vh;
+}
+
+
+/* ============================================================
+   8. PAGE HEADER
+   Appears at the top of every wiki page. Contains the
+   category label (e.g. "REGION"), page title, and subtitle.
+   Separated from content by a gold horizontal rule.
+   ============================================================ */
+.page-header {
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Small uppercase label above the title — e.g. "REGION", "CITY" */
+.page-category {
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0;
+}
+
+/* Large display title — e.g. "Caparia", "Gobblewump Crossing" */
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 2.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+/* Italic subtitle beneath the title — climate, nation, type, etc. */
+.page-subtitle {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 1rem;
+}
+
+
+/* ============================================================
+   9. BODY TEXT & PULL QUOTES
+   Standard wiki prose and highlighted quotations.
+   ============================================================ */
+
+/* Main body text container — wraps descriptive paragraphs */
+.wiki-body {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.wiki-body p {
+  margin-bottom: 1.2rem;
+}
+/* In-text emphasis — used for in-world terms and proper nouns */
+.wiki-body em {
+  color: var(--amber);
+  font-style: normal;
+  font-weight: 600;
+}
+.wiki-body strong {
+  color: var(--ink);
+}
+
+/* Pull quote — highlighted quotation with gold left border.
+   Used for in-world flavour text and NPC quotes. */
+.pull-quote {
+  margin: 2rem 0;
+  padding: 1.5rem 2rem;
+  border-left: 4px solid var(--ink);
+  background: var(--parchment-dark);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--ink);
+  line-height: 1.8;
+}
+/* Citation line beneath pull quotes — e.g. "— A Bunari merchant" */
+.pull-quote cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  font-style: normal;
+  /* Explicit color rather than opacity — opacity caused a 2.54:1 contrast failure */
+  color: var(--ink);
+}
+
+
+/* ============================================================
+   10. ENTRY CARDS & GRID
+   Cards display summaries of world entries — cities, creatures,
+   organizations, etc. — in a responsive grid layout.
+   ============================================================ */
+
+/* Responsive grid container — auto-fills columns min 300px wide */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+/* Individual entry card — parchment background with gold border.
+   position: relative is required for the ::before rainbow overlay. */
+.entry-card {
+  background: var(--parchment-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  /* Two transitions combined — transform for lift, box-shadow for glow */
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+
+/* ============================================================
+   11. ENTRY CARD — GIGGLEGLOOM RAINBOW HOVER EFFECT
+   On hover, an animated gradient border cycles through the
+   four Gigglegloom magic type colors: Bubbleseed → Featherflow
+   → Steelfist → Flamerage → Bubbleseed.
+
+   HOW IT WORKS:
+   The ::before pseudo-element sits behind the card (z-index: -1)
+   at inset: -2px so it bleeds 2px outside the card edges —
+   creating the appearance of a colored border. On hover its
+   opacity transitions from 0 to 1, revealing the gradient.
+   The gradient background-size: 300% allows the animation to
+   shift the gradient position smoothly in a loop.
+   ============================================================ */
+
+/* Hidden rainbow overlay — behind the card, invisible at rest */
+.entry-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--card-radius) + 2px);
+  background: linear-gradient(
+    135deg,
+    var(--bubbleseed),
+    var(--featherflow),
+    var(--steelfist),
+    var(--flamerage),
+    var(--bubbleseed)   /* repeat first stop for seamless loop */
+  );
+  background-size: 300% 300%;
+  opacity: 0;
+  z-index: -1;          /* behind card content */
+  transition: opacity 0.3s ease;
+  animation: gigglegloom-shift 4s ease infinite;
+}
+
+/* Reveal the rainbow border on hover */
+.entry-card:hover::before {
+  opacity: 1;
+}
+
+/* Card lifts slightly and gains a soft shadow on hover */
+.entry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  /* Darken background so white text is legible against the dark card */
+  background: rgba(20, 12, 4, 0.85);
+}
+
+/* Continuous gradient shift animation — cycles the color loop */
+@keyframes gigglegloom-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+/* ============================================================
+   12. ENTRY CARD — INNER TEXT ON HOVER
+   All text inside a hovered card must switch to white so it
+   remains legible against the darkened card background.
+
+   WHY SOME RULES USE !important:
+   The .dimming-zero / .dimming-low / .dimming-high classes
+   are declared later in this file (Section 24) and win the
+   CSS specificity race against these hover rules despite having
+   equal specificity — because they appear later in the cascade.
+   !important is the correct and intentional fix here.
+   ============================================================ */
+
+/* Primary text — entry names, body copy, creature descriptions */
+.entry-card:hover .entry-name,
+.entry-card:hover .entry-body,
+.entry-card:hover .creature-name,
+.entry-card:hover .creature-body,
+.entry-card:hover .creature-latin,
+.entry-card:hover .creature-note,
+.entry-card:hover .wiki-body,
+.entry-card:hover p {
+  color: #ffffff;
+}
+
+/* Secondary text — tags, labels, citations.
+   Slightly transparent white preserves visual hierarchy. */
+.entry-card:hover .entry-tag,
+.entry-card:hover .region-tag,
+.entry-card:hover .nation-fact-label,
+.entry-card:hover .nation-fact-value,
+.entry-card:hover .pull-quote,
+.entry-card:hover cite {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Teaser hint — "✦ The full story has not yet been discovered" */
+.entry-card:hover .entry-teaser-hint {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Dimming severity indicators — green/amber/red colored text.
+   !important required because .dimming-* classes appear later
+   in the file and would otherwise override these hover rules. */
+.entry-card:hover .dimming-zero,
+.entry-card:hover .dimming-low,
+.entry-card:hover .dimming-high {
+  color: #ffffff !important;
+}
+
+
+/* ============================================================
+   13. ENTRY CARD — INNER TEXT ELEMENTS (at rest)
+   Text styles for content within entry cards.
+   ============================================================ */
+
+/* Entry title — city name, creature name, org name, etc. */
+.entry-name {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+}
+
+/* Small type label — e.g. "Capital", "Creature", "Organization" */
+.entry-tag {
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  text-transform: none;
+  color: var(--amber);
+  margin-bottom: 0.8rem;
+}
+
+/* Summary paragraph text inside cards */
+.entry-body {
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+
+/* ============================================================
+   14. CREATURE ENTRIES
+   Used on individual creature pages and tier list pages.
+   Each creature is a horizontal entry with a divider between.
+   ============================================================ */
+
+/* Creature row — separated by a subtle gold line */
+.creature-entry {
+  border-bottom: 1px solid rgba(200,148,10,0.15);
+  padding: 1.5rem 0;
+}
+.creature-entry:last-child {
+  border-bottom: none;
+}
+
+/* Header row — name and latin classification side by side */
+.creature-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Creature display name — larger than body text */
+.creature-name {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+/* Italic classification or subtitle — e.g. "The Merry · Common" */
+.creature-latin {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+}
+
+/* Creature description, behavior, and habitat text */
+.creature-body {
+  font-size: 0.97rem;
+  line-height: 1.85;
+  color: var(--ink-light);
+}
+
+/* DM flavor note or special observation — gold italic */
+.creature-note {
+  margin-top: 0.5rem;
+  font-style: italic;
+  color: var(--amber);
+  font-size: 0.9rem;
+}
+
+
+/* ============================================================
+   15. REGION PAGE
+   Layout elements specific to region overview pages —
+   Caparia, Nombi, Sohot, Jugabi.
+   ============================================================ */
+
+/* Region section block — adds bottom spacing between sections */
+.region-section {
+  margin-bottom: 3rem;
+}
+
+/* Section heading within a region page — e.g. "Nations", "Rivers" */
+.region-heading {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  border-bottom: var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Small uppercase label — e.g. "CAPARIA · REGION" */
+.region-tag {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 0.8rem;
+}
+
+/* Bulleted list of key sites, rivers, geography within a region */
+.region-site-list {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+  color: var(--ink);
+  line-height: 1.8;
+}
+.region-site-list li {
+  margin-bottom: 0.2rem;
+}
+
+
+/* ============================================================
+   16. RUMOR TABLE
+   Used on the Rumours & Hearsay page. Each rumor is a row
+   with a source label, the rumor text, and an optional note.
+   ============================================================ */
+
+/* Individual rumor row — separated by a dashed gold line */
+.rumor-entry {
+  padding: 1.2rem 0;
+  border-bottom: 1px dashed rgba(200,148,10,0.25);
+}
+.rumor-entry:last-child {
+  border: none;
+}
+
+/* Who or where the rumor came from — small uppercase label */
+.rumor-source {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 0.4rem;
+}
+
+/* The rumor text itself — italic for in-world voice */
+.rumor-text {
+  font-style: italic;
+  font-size: 0.98rem;
+  line-height: 1.8;
+  color: var(--ink-light);
+}
+
+/* Optional DM note beneath the rumor — faint, smaller */
+.rumor-note {
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  margin-top: 0.3rem;
+}
+
+
+/* ============================================================
+   17. WARNING BOX & ORNAMENT
+   Warning boxes call out dangerous or important information.
+   Ornaments are decorative gold separators between sections.
+   ============================================================ */
+
+/* Amber-tinted box for warnings, cautions, and important notes */
+.warning-box {
+  background: rgba(122,82,0,0.07);
+  border: 1px solid rgba(122,82,0,0.25);
+  border-radius: 4px;
+  padding: 1.2rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.warning-title {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--amber);
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+}
+.warning-body {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--ink-faint);
+}
+
+/* Decorative divider — centered gold symbols, e.g. "✦ · ✦ · ✦" */
+.ornament {
+  text-align: center;
+  color: var(--gold);
+  font-size: 1.1rem;
+  letter-spacing: 0.5em;
+  margin: 2rem 0;
+  opacity: 0.5;
+}
+
+
+/* ============================================================
+   18. WIKI LINKS & SEARCH HIGHLIGHT
+   Wiki links appear inline in body text and link to other
+   wiki entries. Search highlight marks matched text in search.
+   ============================================================ */
+
+/* Inline wiki links — underlined, inherit text color.
+   Font weight 400 used because Cinzel Decorative only has 400.
+   text-shadow creates a faux-bold effect for visual weight. */
 .wiki-link {
-  font-weight: 700;
-  /* IM Fell English only has weight 400; text-shadow faux-bold adds visual mass */
+  font-weight: 400;
   text-shadow: 0.4px 0 0 currentColor, -0.2px 0 0 currentColor;
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
@@ -441,7 +890,7 @@ body {
   opacity: 0.75;
 }
 
-/* ── SEARCH HIGHLIGHT ── */
+/* Yellow highlight applied to search match text in results */
 mark.search-highlight {
   background: rgba(200,148,10,0.25);
   color: inherit;
@@ -450,9 +899,286 @@ mark.search-highlight {
   outline: 1px solid rgba(200,148,10,0.35);
 }
 
-/* ── CUSTOM WIKI GRAPHICS ── */
 
-/* 1. Gigglegloom Icons */
+/* ============================================================
+   19. BREADCRUMB NAVIGATION (added in B3-A)
+   Shows the path to the current page — e.g.
+   Regions › Caparia › The Solenmere › Gobblewump Crossing
+   ============================================================ */
+.wiki-breadcrumb {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+}
+.wiki-breadcrumb a,
+.wiki-breadcrumb span[data-nav] {
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 700;
+}
+.wiki-breadcrumb a:hover,
+.wiki-breadcrumb span[data-nav]:hover {
+  color: var(--ink);
+}
+/* Separator character between breadcrumb segments */
+.wiki-breadcrumb .sep {
+  margin: 0 0.5rem;
+  opacity: 0.5;
+}
+
+
+/* ============================================================
+   20. SECTION HEADINGS & WIKI LISTS (added in B3-A)
+   Used within entry pages to divide content into sections.
+   ============================================================ */
+
+/* Bold section divider within a page — e.g. "Landmarks", "Nations" */
+.section-heading {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(200,148,10,0.25);
+  padding-bottom: 0.35rem;
+  margin: 2rem 0 1rem;
+}
+
+/* Bulleted list within wiki body content */
+.wiki-list {
+  margin: 0 0 1.5rem 1.5rem;
+  padding: 0;
+  line-height: 1.9;
+  color: var(--ink-light);
+  font-size: 0.97rem;
+}
+.wiki-list li {
+  margin-bottom: 0.2rem;
+}
+
+
+/* ============================================================
+   21. VISIBILITY SYSTEM — TEASER STATES (added in B3-B)
+   Three visibility states for wiki entries:
+   - Hidden (player_facing: false) — not shown at all
+   - Teaser (player_facing: 'teaser') — name + summary only
+   - Visible (player_facing: true) — full entry
+   ============================================================ */
+
+/* Footer shown at the bottom of Teaser entries.
+   Tells players the full entry is not yet discovered. */
+.teaser-footer {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(200,148,10,0.06);
+  border-left: 3px solid rgba(200,148,10,0.4);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* Small hint line on Teaser cards in lists and grids.
+   e.g. "✦ Not yet fully discovered" */
+.entry-teaser-hint {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--ink-faint);
+  opacity: 0.7;
+}
+
+
+/* ============================================================
+   22. ENTRY IMAGES — HERO & LEGACY
+   Two image display modes:
+   - Hero: full-width banner below the page header (current)
+   - Legacy float-right: kept for reference, not actively used
+   ============================================================ */
+
+/* Full-width hero image — spans content area below page header.
+   Used on all individual entry pages (cities, creatures, etc.)
+   Cropped with object-fit: cover to maintain consistent height. */
+.entry-hero-image {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border-gold);
+  margin-bottom: 2rem;
+  display: block;
+}
+
+/* Legacy float-right image — kept for reference only.
+   Was used before the hero image layout was introduced.
+   Not actively used in new renderers. */
+.entry-image {
+  float: right;
+  width: 220px;
+  max-width: 40%;
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border-gold);
+  margin: 0 0 1rem 1.5rem;
+  display: block;
+}
+
+
+/* ============================================================
+   23. SETTLEMENT CARDS — IMAGE LEFT LAYOUT
+   Used in the Cities & Settlements section on region pages.
+   Each card shows a square thumbnail on the left with the
+   city name, type, and summary text to the right.
+   ============================================================ */
+
+/* Outer card — flex row, image left, text right */
+.settlement-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* Square image thumbnail — fixed 300×300, cropped to cover */
+.settlement-card-img {
+  width: 300px;
+  height: 300px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border-gold);
+  flex-shrink: 0;
+}
+
+/* Placeholder shown when no image is available for a settlement */
+.settlement-card-img-placeholder {
+  background: rgba(200,148,10,0.06);
+  border: 1px dashed var(--border-gold);
+}
+
+/* Text column — takes remaining space, prevents overflow */
+.settlement-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+
+/* ============================================================
+   24. NATION PAGE LAYOUT
+   Two-column layout: main body text on the left, a sticky
+   "At a Glance" facts panel on the right.
+   ============================================================ */
+
+/* Grid: main content 1fr, facts sidebar 280px fixed */
+.nation-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Sticky facts panel — stays in view while body scrolls */
+.nation-facts {
+  background: rgba(200,148,10,0.06);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--card-radius);
+  padding: 1.25rem 1.5rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+/* "At a Glance" panel heading */
+.nation-facts-title {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+  font-weight: 400;
+}
+
+/* Individual fact row — label + value side by side */
+.nation-fact-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Fact label — e.g. "Government", "Capital", "Gigglegloom" */
+.nation-fact-label {
+  color: var(--amber);
+  font-weight: 400;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+/* Fact value — the corresponding data */
+.nation-fact-value {
+  color: var(--ink-light);
+}
+
+/* Section heading within the nation body — e.g. "Culture", "Customs" */
+.nation-section-heading {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 1.5rem 0 0.5rem;
+  border-bottom: 1px solid rgba(200,148,10,0.2);
+  padding-bottom: 0.3rem;
+}
+
+/* Nation body prose paragraphs */
+.nation-body p {
+  margin-bottom: 1rem;
+  font-size: 0.97rem;
+  line-height: 1.85;
+  color: var(--ink-light);
+}
+
+/* Nation breadcrumb — "← Caparia" above page header */
+.nation-breadcrumb {
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+.nation-breadcrumb button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--amber);
+  font-family: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+
+
+/* ============================================================
+   25. DIMMING SEVERITY INDICATORS
+   Colored text classes used to show Gigglegloom color health
+   and Vareth presence severity. Three levels:
+   - dimming-zero: green — no dimming, full color
+   - dimming-low:  amber — minor dimming present
+   - dimming-high: red   — significant dimming or Vareth activity
+
+   NOTE: These classes are declared AFTER the hover rules above.
+   The hover rules use !important on these specifically because
+   late-cascade placement would otherwise override the hover
+   color changes. See Section 12 for explanation.
+   ============================================================ */
+.dimming-zero { color: #2a7a3a; font-weight: 600; }  /* green — healthy */
+.dimming-low  { color: #c8940a; font-weight: 600; }  /* amber — caution */
+.dimming-high { color: #aa3a1a; font-weight: 600; }  /* red   — danger  */
+
+
+/* ============================================================
+   26. CUSTOM WIKI GRAPHICS
+   Decorative elements unique to Anavale's visual identity.
+   ============================================================ */
+
+/* 1. Gigglegloom type icons — SVG icons for each magic type */
 .giggle-icon {
   width: 100px;
   height: 100px;
@@ -463,18 +1189,23 @@ mark.search-highlight {
   border-radius: 4px;
 }
 
-/* 2. The Dimming Fader Bar */
+/* 2. The Dimming Fader Bar — gradient strip showing the
+      spectrum from vibrant color to absolute grey.
+      Ranges from vivid pink/orange through grey to black. */
 .dimming-fader {
   width: 100%;
   height: 24px;
   border-radius: 12px;
   margin: 2rem 0 3rem;
-  background: linear-gradient(to right,
+  background: linear-gradient(
+    to right,
     #ff0055, #ffaa00, #00ddaa,
-    #a8a8a8, #7a7a7a, #4a4a4a);
+    #a8a8a8, #7a7a7a, #4a4a4a
+  );
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
   position: relative;
 }
+/* Label beneath the fader bar */
 .dimming-fader::after {
   content: "Vibrant Color ⟷ Absolute Quietude";
   position: absolute;
@@ -487,21 +1218,29 @@ mark.search-highlight {
   white-space: nowrap;
 }
 
-/* 3. Creature Marginalia (Pawprints) */
+/* 3. Creature Marginalia — decorative pawprint row
+      Appears beneath creature entries as a whimsical flourish */
 .pawprints {
   text-align: right;
   opacity: 0.3;
   margin-top: -1rem;
   margin-bottom: 2rem;
 }
-.pawprints svg { width: 16px; height: 16px; fill: var(--amber); margin: 0 4px; }
+.pawprints svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--amber);
+  margin: 0 4px;
+}
 
-/* 4. Formery Bureaucratic Stamp */
+/* 4. Formery Bureaucratic Stamp — red rotated rubber stamp
+      Used to mark Formery-related entries with their signature
+      bureaucratic aesthetic */
 .formery-stamp {
   display: inline-block;
   border: 3px solid #b22222;
   color: #b22222;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-weight: bold;
   font-size: 0.85rem;
   padding: 0.4rem 0.8rem;
@@ -512,8 +1251,10 @@ mark.search-highlight {
   box-shadow: inset 0 0 2px #b22222;
 }
 
-/* 5. Whimsical Dividers */
-.divider-pennants, .divider-aurora {
+/* 5. Whimsical Dividers — pennant and aurora decorative rules
+      Horizontal repeating pattern dividers between sections */
+.divider-pennants,
+.divider-aurora {
   width: 100%;
   height: 30px;
   margin: 2.5rem 0;
@@ -523,182 +1264,12 @@ mark.search-highlight {
 }
 
 
-/* ── Entry Image ─────────────────────────────────────────────── */
-.entry-image {
-  width: 100%;
-  max-width: 400px;
-  border-radius: var(--card-radius);
-  border: 1px solid rgba(200,148,10,0.2);
-  margin-bottom: 1rem;
-  display: block;
-}
-
-/* ── Region Site List ─────────────────────────────────────────── */
-.region-site-list {
-  margin: 0.5rem 0 0 1.25rem;
-  padding: 0;
-  color: var(--ink);
-  line-height: 1.8;
-}
-.region-site-list li { margin-bottom: 0.2rem; }
-
-/* ── Spellbook Section ────────────────────────────────────────── */
-
-/* ── B3-A: ACCORDION SIDEBAR ──────────────────────────────────── */
-.nav-accordion-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1.5rem;
-  color: rgba(200,180,140,0.8);
-  font-size: 1rem;
-  font-family: 'IM Fell English', Georgia, serif;
-  cursor: pointer;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  transition: color 0.2s, background 0.2s;
-  line-height: 1.4;
-}
-.nav-accordion-header:hover,
-.nav-accordion-header.active {
-  color: var(--gold-light);
-  background: rgba(200,148,10,0.08);
-}
-.nav-accordion-arrow {
-  font-size: 0.6rem;
-  opacity: 0.5;
-  transition: transform 0.25s;
-  flex-shrink: 0;
-  margin-left: 0.5rem;
-}
-.nav-accordion-header.open .nav-accordion-arrow {
-  transform: rotate(90deg);
-  opacity: 0.8;
-}
-.nav-accordion-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-.nav-accordion-body.open {
-  max-height: 1200px;
-}
-
-/* Nesting indent levels */
-.nav-level-2 { padding-left: 1rem; }
-.nav-level-3 { padding-left: 1.5rem; }
-.nav-level-4 { padding-left: 2rem; }
-
-.nav-level-2 .nav-accordion-header,
-.nav-level-2 .nav-link {
-  font-size: 0.93rem;
-  padding-left: 2.5rem;
-  opacity: 0.9;
-}
-.nav-level-3 .nav-accordion-header,
-.nav-level-3 .nav-link {
-  font-size: 0.87rem;
-  padding-left: 3rem;
-  opacity: 0.8;
-}
-.nav-level-4 .nav-link {
-  font-size: 0.82rem;
-  padding-left: 3.5rem;
-  opacity: 0.75;
-}
-
-/* ── B3-A: BREADCRUMB ─────────────────────────────────────────── */
-.wiki-breadcrumb {
-  font-family: 'Charm', serif;
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-  margin-bottom: 1.5rem;
-}
-.wiki-breadcrumb a,
-.wiki-breadcrumb span[data-nav] {
-  color: var(--amber);
-  text-decoration: none;
-  cursor: pointer;
-}
-.wiki-breadcrumb a:hover,
-.wiki-breadcrumb span[data-nav]:hover {
-  text-decoration: underline;
-}
-.wiki-breadcrumb .sep { margin: 0 0.5rem; opacity: 0.5; }
-
-/* ── B3-A: SECTION HEADING ───────────────────────────────────── */
-.section-heading {
-  font-family: 'Charm', serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--ink);
-  border-bottom: 1px solid rgba(200,148,10,0.25);
-  padding-bottom: 0.35rem;
-  margin: 2rem 0 1rem;
-}
-
-/* ── B3-A: WIKI LIST ─────────────────────────────────────────── */
-.wiki-list {
-  margin: 0 0 1.5rem 1.5rem;
-  padding: 0;
-  line-height: 1.9;
-  color: var(--ink-light);
-  font-size: 0.97rem;
-}
-.wiki-list li { margin-bottom: 0.2rem; }
-
-/* ── B3-B: VISIBILITY SYSTEM ─────────────────────────────────── */
-.teaser-footer {
-  margin-top: 1.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(200,148,10,0.06);
-  border-left: 3px solid rgba(200,148,10,0.4);
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-  font-style: italic;
-}
-
-.entry-teaser-hint {
-  margin-top: 0.5rem;
-  font-size: 0.78rem;
-  font-style: italic;
-  color: var(--ink-faint);
-  opacity: 0.7;
-}
-
-.nav-teaser-mark {
-  font-size: 0.7rem;
-  margin-right: 0.2rem;
-  vertical-align: middle;
-}
-
-/* ── B3-A: ENTRY IMAGE (float-right legacy — kept for reference) */
-.entry-image {
-  float: right;
-  width: 220px;
-  max-width: 40%;
-  border-radius: var(--card-radius);
-  border: 1px solid rgba(200,148,10,0.2);
-  margin: 0 0 1rem 1.5rem;
-  display: block;
-}
-
-/* ── ENTRY HERO IMAGE — full-width below page header ─────────── */
-.entry-hero-image {
-  width: 100%;
-  max-height: 420px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: var(--card-radius);
-  border: 1px solid rgba(200,148,10,0.2);
-  margin-bottom: 2rem;
-  display: block;
-}
-
-/* ── B3-A: CLICKABLE CARD HOVER ──────────────────────────────── */
+/* ============================================================
+   27. CLICKABLE CARD HOVER — LEGACY (B3-A)
+   Original hover styles for cards with data-nav attribute.
+   Predates the Gigglegloom rainbow effect. Kept for any cards
+   that use data-nav rather than onclick.
+   ============================================================ */
 .entry-card[data-nav] {
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -708,103 +1279,21 @@ mark.search-highlight {
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
-/* ── B3-A: WIKI CONTENT CONTAINER ───────────────────────────── */
-#wiki-content {
-  padding: 3rem 3.5rem 5rem;
-  min-height: 100vh;
-}
 
-/* ── NATION PAGE STYLES (preserved from B1) ──────────────────── */
-.nation-layout {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 2.5rem;
-  align-items: start;
-}
+/* ============================================================
+   28. RESPONSIVE / MOBILE
+   Breakpoints for smaller screens. The sidebar collapses
+   and multi-column layouts stack to single column.
+   ============================================================ */
+
+/* Nation page: collapse two-column to single column below 900px */
 @media (max-width: 900px) {
-  .nation-layout { grid-template-columns: 1fr; }
-}
-.nation-facts {
-  background: rgba(200,148,10,0.06);
-  border: 1px solid rgba(200,148,10,0.2);
-  border-radius: var(--card-radius);
-  padding: 1.25rem 1.5rem;
-  position: sticky;
-  top: 1.5rem;
-}
-.nation-facts-title {
-  font-family: 'Charm', serif;
-  font-size: 1rem;
-  color: var(--gold);
-  margin-bottom: 0.8rem;
-  font-weight: 700;
-}
-.nation-fact-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.6rem;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-.nation-fact-label {
-  color: var(--amber);
-  font-weight: 700;
-  min-width: 80px;
-  flex-shrink: 0;
-}
-.nation-fact-value { color: var(--ink-light); }
-.nation-section-heading {
-  font-family: 'Charm', serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 1.5rem 0 0.5rem;
-  border-bottom: 1px solid rgba(200,148,10,0.2);
-  padding-bottom: 0.3rem;
-}
-.nation-body p { margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.85; color: var(--ink-light); }
-.nation-breadcrumb {
-  margin-bottom: 1.5rem;
-  font-size: 0.85rem;
-  color: var(--ink-faint);
-}
-.nation-breadcrumb button {
-  background: none; border: none; cursor: pointer;
-  color: var(--amber); font-family: inherit; font-size: inherit;
-  text-decoration: underline; padding: 0;
-}
-.dimming-zero  { color: #2a7a3a; font-weight: 600; }
-.dimming-low   { color: #c8940a; font-weight: 600; }
-.dimming-high  { color: #aa3a1a; font-weight: 600; }
-
-/* ── SETTLEMENT CARDS — image left, text right ─────────────────── */
-.settlement-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
+  .nation-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
-.settlement-card-img {
-  width: 90px;
-  height: 90px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: var(--card-radius);
-  border: 1px solid rgba(200,148,10,0.2);
-  flex-shrink: 0;
-}
-
-.settlement-card-img-placeholder {
-  background: rgba(200,148,10,0.06);
-  border: 1px dashed rgba(200,148,10,0.2);
-}
-
-.settlement-card-text {
-  flex: 1;
-  min-width: 0;
-}
-
+/* Settlement cards: stack image above text below 600px */
 @media (max-width: 600px) {
   .settlement-card {
     flex-direction: column;
