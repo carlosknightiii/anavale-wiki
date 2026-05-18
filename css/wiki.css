@@ -675,7 +675,7 @@ mark.search-highlight {
   vertical-align: middle;
 }
 
-/* ── B3-A: ENTRY IMAGE (updated) ────────────────────────────── */
+/* ── B3-A: ENTRY IMAGE (float-right legacy — kept for reference) */
 .entry-image {
   float: right;
   width: 220px;
@@ -683,6 +683,18 @@ mark.search-highlight {
   border-radius: var(--card-radius);
   border: 1px solid rgba(200,148,10,0.2);
   margin: 0 0 1rem 1.5rem;
+  display: block;
+}
+
+/* ── ENTRY HERO IMAGE — full-width below page header ─────────── */
+.entry-hero-image {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(200,148,10,0.2);
+  margin-bottom: 2rem;
   display: block;
 }
 
@@ -764,3 +776,41 @@ mark.search-highlight {
 .dimming-zero  { color: #2a7a3a; font-weight: 600; }
 .dimming-low   { color: #c8940a; font-weight: 600; }
 .dimming-high  { color: #aa3a1a; font-weight: 600; }
+
+/* ── SETTLEMENT CARDS — image left, text right ─────────────────── */
+.settlement-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.settlement-card-img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(200,148,10,0.2);
+  flex-shrink: 0;
+}
+
+.settlement-card-img-placeholder {
+  background: rgba(200,148,10,0.06);
+  border: 1px dashed rgba(200,148,10,0.2);
+}
+
+.settlement-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .settlement-card {
+    flex-direction: column;
+  }
+  .settlement-card-img {
+    width: 100%;
+    height: 160px;
+  }
+}

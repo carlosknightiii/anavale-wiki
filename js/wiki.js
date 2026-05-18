@@ -60,10 +60,11 @@ function renderNotFound(el, hash) {
     + '<p>Use the navigation on the left to find what you are looking for.</p></div>';
 }
 
-// Render an optional entry image
+// Render an optional entry image as a full-width hero below the page header
 function entryImage(src, alt) {
   if (!src) return '';
-  return '<img src="' + esc(src) + '" alt="' + esc(alt || '') + '" class="entry-image">';
+  return '<img class="entry-hero-image" src="' + esc(src)
+    + '" alt="' + esc(alt || '') + '">';
 }
 
 // Visibility badge (player_facing)
@@ -871,6 +872,31 @@ function renderSpellsPage(el) {
 
 // ══ DATA-DRIVEN PAGE RENDERERS ═══════════════════════════════════════════════
 
+// Settlement card — image left, text right. Used by renderRegion() settlements section.
+function cityCard(city) {
+  var vis = getVisibility(city);
+  if (vis === 'hidden') return '';
+
+  var imgHtml = city.image
+    ? '<img class="settlement-card-img" src="' + esc(city.image)
+      + '" alt="' + esc(city.name) + '">'
+    : '<div class="settlement-card-img settlement-card-img-placeholder"></div>';
+
+  var textHtml = '<div class="settlement-card-text">'
+    + '<div class="entry-name">' + esc(city.name) + '</div>'
+    + '<div class="entry-tag">' + esc(city.type) + '</div>'
+    + '<div class="entry-body">' + esc(city.summary) + '</div>'
+    + (vis === 'teaser'
+        ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>'
+        : '')
+    + '</div>';
+
+  return '<div class="settlement-card entry-card" onclick="navigate(\'city/'
+    + city.id + '\')" style="cursor:pointer">'
+    + imgHtml + textHtml
+    + '</div>';
+}
+
 function renderRegion(id, el) {
   var regions   = typeof REGIONS        !== 'undefined' ? REGIONS        : [];
   var nations   = typeof NATIONS        !== 'undefined' ? NATIONS        : [];
@@ -937,19 +963,11 @@ function renderRegion(id, el) {
     body += '</ul></div>';
   }
 
-  // Settlements
+  // Settlements — image-left card layout via cityCard()
   if (rCities.length) {
-    body += '<div class="region-section"><div class="region-heading">Settlements</div><div class="entry-grid">';
-    rCities.forEach(function(c) {
-      var cVis = getVisibility(c);
-      body += '<div class="entry-card" data-nav="city/' + c.id + '" onclick="navigate(\'city/' + c.id + '\')">'
-        + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
-        + '<div class="entry-tag">' + esc(c.type) + '</div>'
-        + '<div class="entry-body">' + esc(c.summary || c.description || '') + '</div>'
-        + (cVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
-        + '</div>';
-    });
-    body += '</div></div>';
+    body += '<div class="region-section"><div class="region-heading">Settlements</div>';
+    rCities.forEach(function(c) { body += cityCard(c); });
+    body += '</div>';
   }
 
   // Creatures
