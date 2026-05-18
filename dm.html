@@ -1966,8 +1966,9 @@
    ══════════════════════════════════════════════ */
 
 var CURRENT_TAB    = 'city';
-var LAST_GENERATED = null;
-var RECENT_KEY     = 'anavale_dm_recent';
+var LAST_GENERATED  = null;
+var PENDING_EDIT_ID = null;  // set by cmEditEntry() so saveToFile() knows to replace, not append
+var RECENT_KEY      = 'anavale_dm_recent';
 var RECENT_ITEMS   = [];
 
 var FILE_TARGETS = {
@@ -2432,12 +2433,18 @@ function generateItem() {
 
 /* ── SHOW OUTPUT ─────────────────────────────── */
 function showOutput(entry, type) {
-  LAST_GENERATED = { entry: entry, type: type };
+  // Capture any pending edit context before clearing it
+  var editId = PENDING_EDIT_ID;
+  PENDING_EDIT_ID = null;
+
+  LAST_GENERATED = { entry: entry, type: type, isEdit: !!editId, editId: editId || null };
+
   var jsStr = formatJsObj(entry, 0);
   document.getElementById('json-output').textContent = jsStr;
   var target = FILE_TARGETS[type];
+  var editNote = editId ? ' <em style="color:var(--amber);">(replacing existing entry)</em>' : '';
   document.getElementById('file-target').innerHTML =
-    '📁 Add this entry to: <strong>' + target + '</strong>';
+    '📁 Add this entry to: <strong>' + target + '</strong>' + editNote;
   saveToRecent(entry, type);
   renderRecent();
 }
@@ -2494,7 +2501,43 @@ function showSaveStatus(state, msg) {
   }
 }
 
-/* ── SAVE TO DATA FILE (safe append) ─────────── */
+/* ── REPLACE ENTRY IN FILE CONTENT ────────────
+   Finds the entry whose `id` field matches entryId and replaces the entire
+   object (from its opening `  {` to its closing `  }`) with newEntryStr.
+   Returns the updated content string, or null if the entry wasn't found.
+
+   Strategy: locate the `id: "entryId"` declaration, walk backwards to the
+   preceding `  {` (2-space-indented opening brace — all top-level array
+   entries use this indent), then walk forwards to the next `\n  }` at the
+   same 2-space indent level (nested objects are always deeper-indented).
+   This avoids brittle brace-counting and is safe for our data file format.
+*/
+function replaceEntryInContent(content, entryId, newEntryStr) {
+  // Match: `id: "entryId"` or `"id": "entryId"` with flexible whitespace
+  var escapedId = entryId.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+  var idPattern = new RegExp('"?id"?\\s*:\\s*["\']' + escapedId + '["\']');
+  var idMatch   = idPattern.exec(content);
+  if (!idMatch) return null; // entry not found in this file
+
+  // Walk backwards to the `\n  {` that opens this entry
+  var entryOpen = content.lastIndexOf('\n  {', idMatch.index);
+  if (entryOpen === -1) return null;
+  entryOpen += 1; // skip the \n — land on the `  {`
+
+  // Walk forwards to the first `\n  }` (top-level closing brace) after the opening
+  // Nested objects use 6+ spaces, so `\n  }` is unambiguous as the entry close
+  var closePattern = /\n  \}/g;
+  closePattern.lastIndex = entryOpen;
+  var closeMatch = closePattern.exec(content);
+  if (!closeMatch) return null;
+
+  var entryEnd = closeMatch.index + closeMatch[0].length; // position just after the `}`
+
+  // Splice: keep everything before the entry, insert replacement, keep everything after
+  return content.slice(0, entryOpen) + newEntryStr + content.slice(entryEnd);
+}
+
+/* ── SAVE TO DATA FILE (safe append or replace) ── */
 async function saveToFile() {
   if (!LAST_GENERATED) { showSaveStatus('error', '⚠ Generate an entry first.'); return; }
   var jsStr = document.getElementById('json-output').textContent;
@@ -2513,6 +2556,8 @@ async function saveToFile() {
 
   var type       = LAST_GENERATED.type;
   var entry      = LAST_GENERATED.entry;
+  var isEdit     = LAST_GENERATED.isEdit;   // true when invoked after cmEditEntry()
+  var editId     = LAST_GENERATED.editId;   // the original id being replaced
   var targetFile = FILE_TARGETS[type];
   var arrayName  = ARRAY_NAMES[type];
   var entryName  = entry.name || 'Entry';
@@ -2537,72 +2582,88 @@ async function saveToFile() {
       return;
     }
 
-    // 4. Format the new entry as indented JSON (valid JS, quoted keys accepted)
+    // 4. Format the entry as indented JSON (valid JS, quoted keys accepted)
     var newEntryLines = JSON.stringify(entry, null, 2)
       .split('\n')
       .map(function(line) { return '  ' + line; })
       .join('\n');
 
-    // 5. Find the last `}` in the file followed by optional whitespace and `];`
-    //    That closing `}` belongs to the last entry in the array.
-    //    We append a comma after it, add the new entry, then close with ];
-    //
-    //    Pattern: last occurrence of }  (optional whitespace/newlines)  ];
-    //    We use a greedy match on the entire content so lastIndex lands on
-    //    the real closing ]  rather than an inner one.
     var updatedContent;
-    // Replace the last `}` that is immediately followed (only whitespace) by `];`
-    // at the very end of the file.
-    var appendPattern = /(\})([\s\n\r]*)(];\s*)$/;
-    if (appendPattern.test(existingContent)) {
-      // Array has existing entries — add comma + new entry before ];
-      updatedContent = existingContent.replace(
-        appendPattern,
-        '},\n' + newEntryLines + '\n$3'
-      );
-    } else {
-      // Array appears to be empty: var ARRAY = [];
-      var emptyPattern = new RegExp('(var\\s+' + arrayName + '\\s*=\\s*\\[)(\\s*\\]\\s*;)');
-      if (emptyPattern.test(existingContent)) {
-        updatedContent = existingContent.replace(
-          emptyPattern,
-          '$1\n' + newEntryLines + '\n$2'
-        );
-      } else {
-        // Could not find insertion point — refuse to write, fall back to clipboard
+
+    if (isEdit && editId) {
+      // ── REPLACE MODE: find the existing entry by id and replace it in place ──
+      // replaceEntryInContent() locates `  { ... }` by id and splices in the new JSON.
+      updatedContent = replaceEntryInContent(existingContent, editId, newEntryLines);
+      if (!updatedContent) {
         copyJson();
         showSaveStatus('error',
-          '⚠ Could not find the insertion point in the file. ' +
-          'Nothing was written. The entry has been copied to your clipboard — ' +
-          'paste it manually before the closing ]; in ' + targetFile + '.'
+          '⚠ Could not locate entry "' + editId + '" in the file. ' +
+          'Nothing was written. Entry copied to clipboard — paste manually into ' + targetFile + '.'
+        );
+        return;
+      }
+      if (updatedContent === existingContent) {
+        showSaveStatus('error',
+          '⚠ Replacement produced no change — the entry may already be identical. Nothing was written.'
+        );
+        return;
+      }
+
+    } else {
+      // ── APPEND MODE: add the new entry before the closing ]; ──
+      // Replace the last `}` immediately followed (only whitespace) by `];` at EOF.
+      var appendPattern = /(\})([\s\n\r]*)(];\s*)$/;
+      if (appendPattern.test(existingContent)) {
+        // Array has existing entries — add comma + new entry before ];
+        updatedContent = existingContent.replace(
+          appendPattern,
+          '},\n' + newEntryLines + '\n$3'
+        );
+      } else {
+        // Array appears to be empty: var ARRAY = [];
+        var emptyPattern = new RegExp('(var\\s+' + arrayName + '\\s*=\\s*\\[)(\\s*\\]\\s*;)');
+        if (emptyPattern.test(existingContent)) {
+          updatedContent = existingContent.replace(
+            emptyPattern,
+            '$1\n' + newEntryLines + '\n$2'
+          );
+        } else {
+          // Could not find insertion point — refuse to write, fall back to clipboard
+          copyJson();
+          showSaveStatus('error',
+            '⚠ Could not find the insertion point in the file. ' +
+            'Nothing was written. The entry has been copied to your clipboard — ' +
+            'paste it manually before the closing ]; in ' + targetFile + '.'
+          );
+          return;
+        }
+      }
+
+      // Safety check for append: updated content must be longer than the original
+      if (updatedContent.length <= existingContent.length) {
+        copyJson();
+        showSaveStatus('error',
+          '⚠ Insertion produced no change or a shorter file. Nothing was written. ' +
+          'Entry copied to clipboard — paste manually before the closing ]; in ' + targetFile + '.'
         );
         return;
       }
     }
 
-    // Safety check: the updated content must be longer than the original
-    // (i.e. we actually added something, not just replaced)
-    if (updatedContent.length <= existingContent.length) {
-      copyJson();
-      showSaveStatus('error',
-        '⚠ Insertion produced no change or a shorter file. Nothing was written. ' +
-        'Entry copied to clipboard — paste manually before the closing ]; in ' + targetFile + '.'
-      );
-      return;
-    }
+    // 5. Show "writing…" status before committing
+    var verb = isEdit ? 'Updating' : 'Adding';
+    showSaveStatus('pending', '⏳ ' + verb + ' ' + entryName + ' in ' + targetFile + '… do not close this window.');
 
-    // 6. Show "writing…" status before committing
-    showSaveStatus('pending', '⏳ Adding ' + entryName + ' to ' + targetFile + '… do not close this window.');
-
-    // 7. Write the updated content back
+    // 6. Write the updated content back
     var writable = await fileHandle.createWritable();
     await writable.write(updatedContent);
     await writable.close();
 
-    // 8. Count entries for the success message (count top-level id: occurrences)
+    // 7. Count entries for the success message (count top-level id: occurrences)
     var idCount = (updatedContent.match(/^\s{2}"?id"?:/gm) || []).length;
     var countStr = idCount > 0 ? ' — ' + idCount + ' entries total' : '';
-    showSaveStatus('success', '✓ ' + entryName + ' saved to ' + targetFile + countStr);
+    var verb2 = isEdit ? 'updated in' : 'saved to';
+    showSaveStatus('success', '✓ ' + entryName + ' ' + verb2 + ' ' + targetFile + countStr);
 
     var btn = document.getElementById('save-btn');
     btn.textContent = '✓ Saved!';
@@ -2968,6 +3029,9 @@ function cmCycleVisibility(idx) {
 function cmEditEntry(idx) {
   var item = CM_FILTERED[idx];
   if (!item) return;
+
+  // Signal to showOutput() / saveToFile() that the next Generate+Save is a replace, not an append
+  PENDING_EDIT_ID = item._entry.id;
 
   switchTab(item._type);
   cmPopulateForm(item._entry, item._type);
