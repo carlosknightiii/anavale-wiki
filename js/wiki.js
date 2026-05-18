@@ -74,6 +74,25 @@ function visibilityBadge(entry) {
   return '';
 }
 
+// ── VISIBILITY SYSTEM ─────────────────────────────────────────────────────────
+// Three states: 'hidden' (default), 'teaser' (name/summary only), 'visible' (full)
+
+function getVisibility(entry) {
+  if (!entry) return 'hidden';
+  if (entry.player_facing === true)      return 'visible';
+  if (entry.player_facing === 'teaser')  return 'teaser';
+  return 'hidden';
+}
+
+function isPlayerFacing(entry) {
+  return entry && (entry.player_facing === true || entry.player_facing === 'teaser');
+}
+
+// Content-type word for the universal teaser footer
+function teaserFooter(type) {
+  return '<div class="teaser-footer">✦ The full story of this ' + type + ' has not yet been discovered.</div>';
+}
+
 // ══ SIDEBAR ══════════════════════════════════════════════════════════════════
 
 // Accordion toggle — called from inline onclick
@@ -149,120 +168,161 @@ function buildSidebar() {
     + navLink('The Gods', 'gods', currentHash)
     + '</div>';
 
-  // ── Regions (accordion per region → nations → cities) ──
-  html += '<div class="nav-section">'
-    + '<div class="nav-section-title">◈ Regions</div>';
-
+  // ── Regions (only show if at least one visible/teaser entry beneath) ──
   var regionOrder = ['caparia', 'nombi', 'sohot', 'jugabi'];
+  var regionAccordions = '';
   regionOrder.forEach(function(rId) {
     var region = null;
     for (var i = 0; i < regions.length; i++) {
       if (regions[i].id === rId) { region = regions[i]; break; }
     }
     var rLabel = region ? region.name : titleCase(rId);
-    var rNations = nations.filter(function(n) { return n.region === rId; })
-      .sort(function(a,b) { return a.name.localeCompare(b.name); });
+
+    // Only include nations that are visible or teaser
+    var rNations = nations.filter(function(n) {
+      return n.region === rId && getVisibility(n) !== 'hidden';
+    }).sort(function(a,b) { return a.name.localeCompare(b.name); });
+
+    // Check if there are any visible/teaser cities directly in this region too
+    var rCitiesDirect = cities.filter(function(c) {
+      return c.region === rId && getVisibility(c) !== 'hidden';
+    });
+
+    // Skip region entirely if nothing visible beneath it
+    if (rNations.length === 0 && rCitiesDirect.length === 0) return;
 
     var innerHtml = '<div class="nav-level-2">'
       + navLink('Overview', 'region/' + rId, currentHash);
 
     rNations.forEach(function(n) {
-      var nCities = cities.filter(function(c) { return c.nation === n.id; })
-        .sort(function(a,b) { return a.name.localeCompare(b.name); });
+      var nVis   = getVisibility(n);
+      var nLabel = nVis === 'teaser'
+        ? '<span class="nav-teaser-mark">✨</span>' + esc(n.name)
+        : esc(n.name);
+
+      var nCities = cities.filter(function(c) {
+        return c.nation === n.id && getVisibility(c) !== 'hidden';
+      }).sort(function(a,b) { return a.name.localeCompare(b.name); });
 
       if (nCities.length > 0) {
         var cityLinks = '';
         nCities.forEach(function(c) {
+          var cVis   = getVisibility(c);
+          var cLabel = cVis === 'teaser' ? '✨ ' + c.name : c.name;
           cityLinks += '<div class="nav-level-4">'
-            + navLink(c.name, 'city/' + c.id, currentHash)
+            + navLink(cLabel, 'city/' + c.id, currentHash)
             + '</div>';
         });
         innerHtml += '<div class="nav-level-3">'
-          + makeAccordion('nation-' + n.id, n.name,
+          + makeAccordion('nation-' + n.id, nLabel,
             navLink('Overview', 'nation/' + n.id, currentHash) + cityLinks)
           + '</div>';
       } else {
         innerHtml += '<div class="nav-level-3">'
-          + navLink(n.name, 'nation/' + n.id, currentHash)
+          + navLink(nLabel, 'nation/' + n.id, currentHash)
           + '</div>';
       }
     });
 
     innerHtml += '</div>';
-
-    html += makeAccordion('region-' + rId, rLabel, innerHtml);
+    regionAccordions += makeAccordion('region-' + rId, rLabel, innerHtml);
   });
-  html += '</div>';
 
-  // ── Creatures (accordion by tier group) ────────────
+  if (regionAccordions) {
+    html += '<div class="nav-section">'
+      + '<div class="nav-section-title">◈ Regions</div>'
+      + regionAccordions
+      + '</div>';
+  }
+
+  // ── Creatures (accordion by tier group, visibility-filtered) ────────────
   var TIER_GROUPS = [
-    { key: 'merry',      label: 'The Merry',      tiers: ['merry'] },
-    { key: 'common',     label: 'Common',          tiers: ['common'] },
-    { key: 'rare',       label: 'Rare',            tiers: ['rare'] },
-    { key: 'sparked',    label: 'The Sparked',     tiers: ['sparked'] },
-    { key: 'dimmed',     label: 'The Dimmed',      tiers: ['dimmed'] },
-    { key: 'corrupted',  label: 'Corrupted',       tiers: ['corrupted'] },
-    { key: 'ancient',    label: 'Ancient & Mythic',tiers: ['ancient', 'unseen', 'unknown'] },
-    { key: 'regional',   label: 'Region-Exclusive',tiers: ['region-exclusive'] }
+    { key: 'merry',      label: 'The Merry',       tiers: ['merry'] },
+    { key: 'common',     label: 'Common',           tiers: ['common'] },
+    { key: 'rare',       label: 'Rare',             tiers: ['rare'] },
+    { key: 'sparked',    label: 'The Sparked',      tiers: ['sparked'] },
+    { key: 'dimmed',     label: 'The Dimmed',       tiers: ['dimmed'] },
+    { key: 'corrupted',  label: 'Corrupted',        tiers: ['corrupted'] },
+    { key: 'ancient',    label: 'Ancient & Mythic', tiers: ['ancient', 'unseen', 'unknown'] },
+    { key: 'regional',   label: 'Region-Exclusive', tiers: ['region-exclusive'] }
   ];
 
-  html += '<div class="nav-section"><div class="nav-section-title">✿ Creatures</div>';
   var creatureInner = '';
+  var hasCreatures = false;
   TIER_GROUPS.forEach(function(grp) {
     var grpCreatures = creatures.filter(function(c) {
-      return grp.tiers.indexOf(c.tier) >= 0 && c.player_facing !== false;
+      return grp.tiers.indexOf(c.tier) >= 0 && getVisibility(c) !== 'hidden';
     }).sort(function(a,b) { return a.name.localeCompare(b.name); });
     if (!grpCreatures.length) return;
+    hasCreatures = true;
     var links = grpCreatures.map(function(c) {
-      return '<div class="nav-level-3">' + navLink(c.name, 'creature/' + c.id, currentHash) + '</div>';
+      var cVis   = getVisibility(c);
+      var cLabel = cVis === 'teaser' ? '✨ ' + c.name : c.name;
+      return '<div class="nav-level-3">' + navLink(cLabel, 'creature/' + c.id, currentHash) + '</div>';
     }).join('');
     creatureInner += '<div class="nav-level-2">'
       + makeAccordion('tier-' + grp.key, grp.label, links)
       + '</div>';
   });
-  html += makeAccordion('creatures', 'All Creatures', creatureInner);
-  html += '</div>';
+  if (hasCreatures) {
+    html += '<div class="nav-section"><div class="nav-section-title">✿ Creatures</div>'
+      + makeAccordion('creatures', 'All Creatures', creatureInner)
+      + '</div>';
+  }
 
-  // ── Organizations ──────────────────────────────────
+  // ── Society (orgs, items, pois, rumors) ──────────
+  html += '<div class="nav-section"><div class="nav-section-title">⚑ Society</div>';
+
+  // Organizations — filtered by visibility
   var ORG_CATS = [
     { key: 'light',   label: 'Forces of Light' },
     { key: 'neutral', label: 'Neutral Powers'  },
     { key: 'dark',    label: 'Shadow Forces'   }
   ];
-
-  html += '<div class="nav-section"><div class="nav-section-title">⚑ Society</div>';
   var orgInner = '';
   ORG_CATS.forEach(function(cat) {
-    var catOrgs = orgs.filter(function(o) { return o.alignment === cat.key; })
-      .sort(function(a,b) { return a.name.localeCompare(b.name); });
+    var catOrgs = orgs.filter(function(o) {
+      return o.alignment === cat.key && getVisibility(o) !== 'hidden';
+    }).sort(function(a,b) { return a.name.localeCompare(b.name); });
     if (!catOrgs.length) return;
     var links = catOrgs.map(function(o) {
-      return '<div class="nav-level-3">' + navLink(o.name, 'org/' + o.id, currentHash) + '</div>';
+      var oVis   = getVisibility(o);
+      var oLabel = oVis === 'teaser' ? '✨ ' + o.name : o.name;
+      return '<div class="nav-level-3">' + navLink(oLabel, 'org/' + o.id, currentHash) + '</div>';
     }).join('');
     orgInner += '<div class="nav-level-2">'
       + makeAccordion('org-' + cat.key, cat.label, links)
       + '</div>';
   });
-  html += makeAccordion('organizations', 'Organizations', orgInner);
+  if (orgInner) {
+    html += makeAccordion('organizations', 'Organizations', orgInner);
+  }
 
-  // Items (if any)
-  if (items.length) {
-    var itemLinks = items.slice().sort(function(a,b) { return a.name.localeCompare(b.name); })
-      .map(function(it) {
-        return '<div class="nav-level-2">' + navLink(it.name, 'item/' + it.id, currentHash) + '</div>';
-      }).join('');
+  // Items — filtered by visibility
+  var visItems = items.filter(function(it) { return getVisibility(it) !== 'hidden'; })
+    .sort(function(a,b) { return a.name.localeCompare(b.name); });
+  if (visItems.length) {
+    var itemLinks = visItems.map(function(it) {
+      var itVis   = getVisibility(it);
+      var itLabel = itVis === 'teaser' ? '✨ ' + it.name : it.name;
+      return '<div class="nav-level-2">' + navLink(itLabel, 'item/' + it.id, currentHash) + '</div>';
+    }).join('');
     html += makeAccordion('items', 'Notable Items', itemLinks);
   }
 
-  // POIs (if any)
-  if (pois.length) {
-    var poiLinks = pois.slice().sort(function(a,b) { return a.name.localeCompare(b.name); })
-      .map(function(p) {
-        return '<div class="nav-level-2">' + navLink(p.name, 'poi/' + p.id, currentHash) + '</div>';
-      }).join('');
+  // POIs — filtered by visibility
+  var visPois = pois.filter(function(p) { return getVisibility(p) !== 'hidden'; })
+    .sort(function(a,b) { return a.name.localeCompare(b.name); });
+  if (visPois.length) {
+    var poiLinks = visPois.map(function(p) {
+      var pVis   = getVisibility(p);
+      var pLabel = pVis === 'teaser' ? '✨ ' + p.name : p.name;
+      return '<div class="nav-level-2">' + navLink(pLabel, 'poi/' + p.id, currentHash) + '</div>';
+    }).join('');
     html += makeAccordion('pois', 'Points of Interest', poiLinks);
   }
 
+  // Rumors always shown
   html += navLink('Rumours & Hearsay', 'rumors', currentHash);
   html += '</div>';
 
@@ -395,29 +455,29 @@ function buildWikiLinkMap() {
   var orgs      = typeof ORGANIZATION_DATA !== 'undefined' ? ORGANIZATION_DATA : [];
   var items     = typeof ITEMS          !== 'undefined' ? ITEMS          : [];
 
-  nations.forEach(function(n) {
+  nations.filter(function(n) { return getVisibility(n) !== 'hidden'; }).forEach(function(n) {
     _wikiLinkMap.push({ term: n.name, hash: 'nation/' + n.id });
     if (n.full_name && n.full_name !== n.name) {
       _wikiLinkMap.push({ term: n.full_name, hash: 'nation/' + n.id });
     }
   });
 
-  cities.forEach(function(c) {
+  cities.filter(function(c) { return getVisibility(c) !== 'hidden'; }).forEach(function(c) {
     _wikiLinkMap.push({ term: c.name, hash: 'city/' + c.id });
   });
 
-  creatures.filter(function(c) { return c.player_facing !== false; }).forEach(function(c) {
+  creatures.filter(function(c) { return getVisibility(c) !== 'hidden'; }).forEach(function(c) {
     _wikiLinkMap.push({ term: c.name, hash: 'creature/' + c.id });
   });
 
-  orgs.forEach(function(o) {
+  orgs.filter(function(o) { return getVisibility(o) !== 'hidden'; }).forEach(function(o) {
     _wikiLinkMap.push({ term: o.name, hash: 'org/' + o.id });
     if (o.full_name && o.full_name !== o.name) {
       _wikiLinkMap.push({ term: o.full_name, hash: 'org/' + o.id });
     }
   });
 
-  items.forEach(function(it) {
+  items.filter(function(it) { return getVisibility(it) !== 'hidden'; }).forEach(function(it) {
     _wikiLinkMap.push({ term: it.name, hash: 'item/' + it.id });
   });
 
@@ -481,18 +541,24 @@ function addWikiLinks() {
   var pattern = sorted.map(function(e) { return escapeRegex(e.term); }).join('|');
   var re      = new RegExp('(' + pattern + ')', 'g');
 
+  // linked tracks which terms have been linked in this render pass (link-once)
+  var linked = {};
   el.querySelectorAll('.wiki-body p, .creature-body, .entry-body, .rumor-text, .warning-body, .creature-note, .pull-quote, .nation-body p, .acc-body p, .acc-body li, .teaser-footer').forEach(function(container) {
-    walkTextNodes(container, termMap, re);
+    walkTextNodes(container, termMap, re, linked);
   });
 }
 
-function walkTextNodes(container, termMap, re) {
+function walkTextNodes(container, termMap, re, linked) {
   var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
   var nodes  = [];
   var n;
   while ((n = walker.nextNode())) nodes.push(n);
 
   nodes.forEach(function(textNode) {
+    // Skip text inside existing <a> or .wiki-link elements
+    var parent = textNode.parentNode;
+    if (parent && (parent.nodeName === 'A' || (parent.classList && parent.classList.contains('wiki-link')))) return;
+
     re.lastIndex = 0;
     if (!re.test(textNode.textContent)) return;
     re.lastIndex = 0;
@@ -504,9 +570,11 @@ function walkTextNodes(container, termMap, re) {
 
     while ((match = re.exec(text)) !== null) {
       if (match.index > last) frag.appendChild(document.createTextNode(text.slice(last, match.index)));
-      var matched = match[0];
-      var entry   = termMap[matched.toLowerCase()];
-      if (entry) {
+      var matched  = match[0];
+      var termKey  = matched.toLowerCase();
+      var entry    = termMap[termKey];
+      if (entry && !linked[termKey]) {
+        linked[termKey] = true;
         var span       = document.createElement('span');
         span.className = 'wiki-link';
         span.textContent = matched;
@@ -755,11 +823,17 @@ function renderRegion(id, el) {
   for (var i = 0; i < regions.length; i++) { if (regions[i].id === id) { region = regions[i]; break; } }
   if (!region) { renderNotFound(el, 'region/' + id); return; }
 
-  var cfg        = REGION_CONFIG[id] || {};
-  var rNations   = nations.filter(function(n) { return n.region === id; });
-  var rCities    = cities.filter(function(c) { return c.region === id; });
+  var cfg = REGION_CONFIG[id] || {};
+
+  // Only show visible/teaser nations, cities, creatures
+  var rNations = nations.filter(function(n) {
+    return n.region === id && getVisibility(n) !== 'hidden';
+  });
+  var rCities = cities.filter(function(c) {
+    return c.region === id && getVisibility(c) !== 'hidden';
+  });
   var rCreatures = creatures.filter(function(c) {
-    return c.player_facing !== false && Array.isArray(c.regions) && c.regions.indexOf(id) >= 0;
+    return getVisibility(c) !== 'hidden' && Array.isArray(c.regions) && c.regions.indexOf(id) >= 0;
   });
 
   var body = '';
@@ -785,10 +859,12 @@ function renderRegion(id, el) {
   if (rNations.length) {
     body += '<div class="region-section"><div class="region-heading">Nations</div><div class="entry-grid">';
     rNations.forEach(function(n) {
+      var nVis = getVisibility(n);
       body += '<div class="entry-card" data-nav="nation/' + n.id + '" onclick="navigate(\'nation/' + n.id + '\')">'
         + '<div class="entry-name"><span class="wiki-link">' + esc(n.name) + '</span></div>'
         + '<div class="entry-tag">' + esc(n.government_type) + '</div>'
         + '<div class="entry-body">' + esc(n.summary) + '</div>'
+        + (nVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
         + '</div>';
     });
     body += '</div></div>';
@@ -807,10 +883,12 @@ function renderRegion(id, el) {
   if (rCities.length) {
     body += '<div class="region-section"><div class="region-heading">Settlements</div><div class="entry-grid">';
     rCities.forEach(function(c) {
+      var cVis = getVisibility(c);
       body += '<div class="entry-card" data-nav="city/' + c.id + '" onclick="navigate(\'city/' + c.id + '\')">'
         + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
         + '<div class="entry-tag">' + esc(c.type) + '</div>'
         + '<div class="entry-body">' + esc(c.summary || c.description || '') + '</div>'
+        + (cVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
         + '</div>';
     });
     body += '</div></div>';
@@ -820,10 +898,15 @@ function renderRegion(id, el) {
   if (rCreatures.length) {
     body += '<div class="region-section"><div class="region-heading">Creatures Found Here</div><div class="entry-grid">';
     rCreatures.forEach(function(c) {
+      var cVis = getVisibility(c);
+      var desc = cVis === 'teaser'
+        ? (function() { var d = c.description || ''; var dot = d.search(/[.!?]/); return dot >= 0 ? d.slice(0, dot + 1) : d; })()
+        : c.description;
       body += '<div class="entry-card" data-nav="creature/' + c.id + '" onclick="navigate(\'creature/' + c.id + '\')">'
         + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
         + '<div class="entry-tag">' + esc(creatureSubtitle(c)) + '</div>'
-        + '<div class="entry-body">' + esc(c.description) + '</div>'
+        + '<div class="entry-body">' + esc(desc) + '</div>'
+        + (cVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
         + '</div>';
     });
     body += '</div></div>';
@@ -846,8 +929,26 @@ function renderNation(id, el) {
   for (var i = 0; i < nations.length; i++) { if (nations[i].id === id) { nation = nations[i]; break; } }
   if (!nation) { renderNotFound(el, 'nation/' + id); return; }
 
-  var nCities = cities.filter(function(c) { return c.nation === id; })
-    .sort(function(a,b) { return a.name.localeCompare(b.name); });
+  var vis = getVisibility(nation);
+  if (vis === 'hidden') { renderNotFound(el, 'nation/' + id); return; }
+
+  if (vis === 'teaser') {
+    el.innerHTML = breadcrumb([
+        { label: titleCase(nation.region), hash: 'region/' + nation.region },
+        { label: nation.name, hash: 'nation/' + id }
+      ])
+      + pageHeader(titleCase(nation.region) + ' · Nation', nation.name, nation.summary)
+      + '<div class="wiki-body">'
+      + '<p>' + esc(nation.summary) + '</p>'
+      + teaserFooter('nation')
+      + '</div>';
+    return;
+  }
+
+  // Visible — full render
+  var nCities = cities.filter(function(c) {
+    return c.nation === id && getVisibility(c) !== 'hidden';
+  }).sort(function(a,b) { return a.name.localeCompare(b.name); });
 
   var factsHtml = [
     ['Region',         titleCase(nation.region)],
@@ -877,10 +978,12 @@ function renderNation(id, el) {
     citiesHtml = '<div class="nation-section-heading">Cities & Settlements</div>'
       + '<div class="entry-grid">';
     nCities.forEach(function(c) {
+      var cVis = getVisibility(c);
       citiesHtml += '<div class="entry-card" data-nav="city/' + c.id + '" onclick="navigate(\'city/' + c.id + '\')">'
         + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
         + '<div class="entry-tag">' + esc(c.type) + '</div>'
         + '<div class="entry-body">' + esc(c.summary || '') + '</div>'
+        + (cVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
         + '</div>';
     });
     citiesHtml += '</div>';
@@ -914,9 +1017,27 @@ function renderCity(id, el) {
   for (var i = 0; i < cities.length; i++) { if (cities[i].id === id) { city = cities[i]; break; } }
   if (!city) { renderNotFound(el, 'city/' + id); return; }
 
+  var vis = getVisibility(city);
+  if (vis === 'hidden') { renderNotFound(el, 'city/' + id); return; }
+
   var nation = null;
   for (var j = 0; j < nations.length; j++) { if (nations[j].id === city.nation) { nation = nations[j]; break; } }
 
+  if (vis === 'teaser') {
+    el.innerHTML = breadcrumb([
+        { label: titleCase(city.region), hash: 'region/' + city.region },
+        { label: nation ? nation.name : titleCase(city.nation), hash: 'nation/' + city.nation },
+        { label: city.name, hash: 'city/' + id }
+      ])
+      + pageHeader(titleCase(city.region) + ' · ' + titleCase(city.type), city.name, city.summary)
+      + '<div class="wiki-body">'
+      + '<p>' + esc(city.summary || '') + '</p>'
+      + teaserFooter('settlement')
+      + '</div>';
+    return;
+  }
+
+  // Visible — full render
   var landmarksHtml = '';
   if (city.landmarks && city.landmarks.length) {
     landmarksHtml = '<div class="section-heading">Landmarks</div>'
@@ -964,7 +1085,30 @@ function renderCreature(id, el) {
   for (var i = 0; i < creatures.length; i++) { if (creatures[i].id === id) { creature = creatures[i]; break; } }
   if (!creature) { renderNotFound(el, 'creature/' + id); return; }
 
+  var vis = getVisibility(creature);
+  if (vis === 'hidden') { renderNotFound(el, 'creature/' + id); return; }
+
   var tierLabel = titleCase(creature.tier || creature.category);
+
+  if (vis === 'teaser') {
+    var desc = creature.description || '';
+    var dot  = desc.search(/[.!?]/);
+    var firstSentence = dot >= 0 ? desc.slice(0, dot + 1) : desc;
+    el.innerHTML = breadcrumb([
+        { label: 'Creatures', hash: 'creature/' + id },
+        { label: tierLabel, hash: 'creature/' + id },
+        { label: creature.name, hash: 'creature/' + id }
+      ])
+      + pageHeader('Bestiary · ' + tierLabel, creature.name, creatureSubtitle(creature))
+      + '<div class="wiki-body">'
+      + entryImage(creature.image, creature.name)
+      + '<p>' + esc(firstSentence) + '</p>'
+      + teaserFooter('creature')
+      + '</div>';
+    return;
+  }
+
+  // Visible — full render
   var dimmedHtml = '';
   if (creature.dimmed_version) {
     var dimmed = null;
@@ -1004,8 +1148,28 @@ function renderOrg(id, el) {
   for (var i = 0; i < orgs.length; i++) { if (orgs[i].id === id) { org = orgs[i]; break; } }
   if (!org) { renderNotFound(el, 'org/' + id); return; }
 
+  var vis = getVisibility(org);
+  if (vis === 'hidden') { renderNotFound(el, 'org/' + id); return; }
+
+  var alignColor = org.alignment === 'dark' ? '#aa3a1a' : (org.alignment === 'light' ? '#2a7a3a' : '#7a5200');
+
+  if (vis === 'teaser') {
+    el.innerHTML = breadcrumb([
+        { label: 'Organizations', hash: 'org/' + id },
+        { label: org.name, hash: 'org/' + id }
+      ])
+      + pageHeader('Organization · <span style="color:' + alignColor + '">' + titleCase(org.alignment) + '</span>',
+          org.name,
+          (org.full_name && org.full_name !== org.name) ? org.full_name : titleCase(org.type))
+      + '<div class="wiki-body">'
+      + '<p>' + esc(org.summary) + '</p>'
+      + teaserFooter('organization')
+      + '</div>';
+    return;
+  }
+
+  // Visible — full render
   var isFormery    = org.id === 'the-formery';
-  var alignColor   = org.alignment === 'dark' ? '#aa3a1a' : (org.alignment === 'light' ? '#2a7a3a' : '#7a5200');
   var factsHtml = [
     ['Type',      titleCase(org.type)],
     ['Alignment', titleCase(org.alignment)],
@@ -1055,6 +1219,20 @@ function renderItem(id, el) {
   for (var i = 0; i < items.length; i++) { if (items[i].id === id) { item = items[i]; break; } }
   if (!item) { renderNotFound(el, 'item/' + id); return; }
 
+  var vis = getVisibility(item);
+  if (vis === 'hidden') { renderNotFound(el, 'item/' + id); return; }
+
+  if (vis === 'teaser') {
+    el.innerHTML = pageHeader('Item · ' + titleCase(item.category || item.rarity), item.name, item.summary)
+      + '<div class="wiki-body">'
+      + entryImage(item.image, item.name)
+      + '<p>' + esc(item.summary || '') + '</p>'
+      + teaserFooter('item')
+      + '</div>';
+    return;
+  }
+
+  // Visible — full render
   el.innerHTML = pageHeader('Item · ' + titleCase(item.category || item.rarity), item.name, item.summary)
     + '<div class="wiki-body">'
     + entryImage(item.image, item.name)
@@ -1069,6 +1247,24 @@ function renderPOI(id, el) {
   for (var i = 0; i < pois.length; i++) { if (pois[i].id === id) { poi = pois[i]; break; } }
   if (!poi) { renderNotFound(el, 'poi/' + id); return; }
 
+  var vis = getVisibility(poi);
+  if (vis === 'hidden') { renderNotFound(el, 'poi/' + id); return; }
+
+  if (vis === 'teaser') {
+    el.innerHTML = breadcrumb([
+        { label: titleCase(poi.region || ''), hash: 'region/' + poi.region },
+        { label: poi.name, hash: 'poi/' + id }
+      ])
+      + pageHeader('Point of Interest · ' + titleCase(poi.type || ''), poi.name, poi.summary)
+      + '<div class="wiki-body">'
+      + entryImage(poi.image, poi.name)
+      + '<p>' + esc(poi.summary || '') + '</p>'
+      + teaserFooter('location')
+      + '</div>';
+    return;
+  }
+
+  // Visible — full render
   el.innerHTML = breadcrumb([
       { label: titleCase(poi.region || ''), hash: 'region/' + poi.region },
       { label: poi.name, hash: 'poi/' + id }

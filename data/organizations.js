@@ -17,7 +17,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Unknown. The Vareth has never targeted the Formery. The Formery has never filed a form about the Vareth. This is either because the Vareth is irrelevant to the Formery's purpose, or because the Formery has already filed the relevant forms and is waiting for the process to complete.",
     gigglegloom_relationship: "Unconfirmed. The Conclave has never successfully taken a saturation reading from a Formery office. This is the one measurement the Conclave has quietly stopped attempting.",
     notable_facts: ["Has an office in Confederation Hall in Solenveil \u2014 nobody invited it; it has been there 60 years", "Some of its oldest forms are written in a pre-Partition script no living scholar can read", "Has never been successfully petitioned to remove itself from any location", "The Gobblewump Crossing Formery office predates the town of Gobblewump Crossing", "The Pebblecrown Formery office predates the Winter Count Hall by an unknown margin", "Has filed Form 1-A (Entity Classification) seventeen times for The Unseen \u2014 returned stamped ENTITY DECLINES TO RESPOND each time"],
-    tags: ["bureaucratic", "pre-partition", "comedy", "session-recurring", "mystery", "venerable", "neutral"]
+    tags: ["bureaucratic", "pre-partition", "comedy", "session-recurring", "mystery", "venerable", "neutral"],
+    player_facing: false
   },
   {
     id: "gigglegloom-conclave",
@@ -37,7 +38,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Active opposition. Considers the Vareth the primary threat to Gigglegloom health. Has been unable to definitively locate the Vareth's influence network. Drak's secret archive would be of enormous value to them \u2014 they do not know it exists.",
     gigglegloom_relationship: "The Conclave IS the primary Gigglegloom institution. All legitimate magic flows through or past them.",
     notable_facts: ["Every Gigglegloom license passes through Prismhold", "Dingurei maintains more complete Gigglegloom surge records than the Conclave \u2014 the Conclave acknowledges this with diplomatic discomfort", "Has filed Form 1-A seventeen times for The Unseen", "Has been unable to take readings from: The Unseen, The Formery offices, Vaultkeepers, and The Deepworms tunnels", "The saturation monitoring network is classified \u2014 only Grand Chromist-level personnel know its full extent", "Considers breeding Greytalons a crime against the Gigglegloom"],
-    tags: ["arcane-authority", "ancient", "caparia", "prismhold", "light", "regulatory", "chromeguard"]
+    tags: ["arcane-authority", "ancient", "caparia", "prismhold", "light", "regulatory", "chromeguard"],
+    player_facing: false
   },
   {
     id: "chromeguard",
@@ -57,7 +59,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Primary anti-Vareth military force where Conclave jurisdiction applies. Have never been confirmed to act outside that jurisdiction. Whether they act outside it anyway is unconfirmed.",
     gigglegloom_relationship: "Each Chromeguard's unique color pattern is believed to be their individual Gigglegloom signature made visible. No two have ever been documented with identical patterns.",
     notable_facts: ["Armor shifts color continuously in patterns unique to each guard", "Cannot be impersonated \u2014 the pattern is individual and known to Conclave records", "Full membership numbers unknown \u2014 intentionally", "Have appeared simultaneously in three different nations on the same day \u2014 how this was possible has not been explained"],
-    tags: ["military", "conclave", "prismhold", "light", "secret", "enforcement"]
+    tags: ["military", "conclave", "prismhold", "light", "secret", "enforcement"],
+    player_facing: false
   },
   {
     id: "wanderkeep",
@@ -77,7 +80,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Primary on-the-ground Vareth monitoring force. Their most experienced rangers can detect Stage 1 Fading before most instruments can. Have never directly confronted Vareth lieutenants \u2014 this is policy, not capability.",
     gigglegloom_relationship: "Practitioners primarily \u2014 most rangers are licensed. Their expertise is in reading Gigglegloom health indicators rather than wielding magic offensively.",
     notable_facts: ["Primary health indicators: Sparkling distribution, Bumble Frog behavior, Grumblecrow nest saturation", "The ruling about Sable's death (Skiv's partner) was made by the Wanderkeep \u2014 they ruled it an accident and left within a week", "Are aware their response to Sable's death was insufficient; this is not discussed openly", "The Greytalon/Sparkling connection is their current active investigation"],
-    tags: ["protective", "ancient", "nomadic", "light", "gigglegloom-monitoring", "creature-expert"]
+    tags: ["protective", "ancient", "nomadic", "light", "gigglegloom-monitoring", "creature-expert"],
+    player_facing: false
   },
   {
     id: "sunnish",
@@ -97,7 +101,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Aware of the Vareth as an abstract threat. Do not have confirmed intelligence on any lieutenant's operations within Confederation borders. Are being too careful about confirming what they suspect.",
     gigglegloom_relationship: "Color maintenance is Caldenric law \u2014 the most explicit legal protection of Gigglegloom health of any government in Caparia.",
     notable_facts: ["Color maintenance is legal mandate in the Caldenric Accord", "Hosts the Pogglewog Confederation's arbitration council \u2014 2 reps per member nation, rotating", "The Formery has an office in Confederation Hall that nobody invited; it has been there 60 years", "Has never successfully removed any organization from Confederation Hall once it established itself there"],
-    tags: ["governmental", "caparia", "caldenric", "light", "democratic", "solenveil"]
+    tags: ["governmental", "caparia", "caldenric", "light", "democratic", "solenveil"],
+    player_facing: false
   },
   {
     id: "mosskin",
@@ -117,7 +122,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "The Vareth avoids them. This is the most significant fact about the Mosskin in campaign terms. Whatever they are, the Vareth has decided not to test it.",
     gigglegloom_relationship: "They ARE accumulated Gigglegloom that has developed will. They are not practitioners or vessels \u2014 they are the magic itself, very old, very concentrated, very present.",
     notable_facts: ["The Patient One (Opu Forest, Caparia): 10,000 years of forest Gigglegloom, communicates via leaf arrangements, chooses the Opuri's Council of Listeners", "The Ancient One (Nombi glacier): Oldest known, communicates in geological time, last clear signal 200 years ago, still being translated", "The Humid One (Dodooti Rainforest, Jugabi): Communicates through Bumble Frog positioning, in distress from The Graskvine Drakhold outpost nearby", "The Thornback One (Threvane): Distress signals intensifying for a decade from nearby political conflict", "Cannot be Dimmed \u2014 the Vareth has never attempted to directly confront a Mosskin", "The Black Prism has never appeared within five miles of any known Mosskin location"],
-    tags: ["ancient-entity", "pre-partition", "light", "gigglegloom-embodiment", "vareth-adverse", "fixed-location"]
+    tags: ["ancient-entity", "pre-partition", "light", "gigglegloom-embodiment", "vareth-adverse", "fixed-location"],
+    player_facing: false
   },
   {
     id: "goldenway",
@@ -137,7 +143,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Officially neutral. Practically: the 'no misery trade' policy means the Goldenway will not carry Vareth products and has quietly declined several contracts that would have benefited the Grusk. The Grusk has responded by establishing parallel trade networks.",
     gigglegloom_relationship: "Color is cargo. The Goldenway treats Gigglegloom products as valuable goods to be traded fairly, not as sacred material. This puts them in periodic tension with the Brightcreed.",
     notable_facts: ["The Driftmere captain-council and the Goldenway are practically the same organization \u2014 the overlap in membership is not officially acknowledged", "Secret internal policy: never trade in misery directly", "Has declined Vareth-adjacent contracts in patterns the careful observer can detect", "Offices in every major port, including Sunharbor (which is partly under Kess the Gray's influence)"],
-    tags: ["trade", "neutral", "established", "mirrenport", "caparia", "cross-national"]
+    tags: ["trade", "neutral", "established", "mirrenport", "caparia", "cross-national"],
+    player_facing: false
   },
   {
     id: "kindpact",
@@ -157,7 +164,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Indirect opposition \u2014 they fight the Vareth's effects on creatures without naming the Vareth directly in most of their communications. Husk documentation is their primary Vareth-adjacent work.",
     gigglegloom_relationship: "Color as creature health indicator is their core methodology. Their assessors are among the most experienced color-readers in Anavale.",
     notable_facts: ["Freely share the list of all known Drains", "Maintain a registry of Husk locations \u2014 treated as a quiet emergency resource", "Oppose the Breth Chaine directly and publicly", "The Pocketmole study is their most significant unpublished work", "Consider a Husk encounter the most upsetting experience in Anavale \u2014 this is their official position, documented"],
-    tags: ["ethical-trade", "light", "caparia", "creature-welfare", "brightcreed-adjacent", "drain-registry"]
+    tags: ["ethical-trade", "light", "caparia", "creature-welfare", "brightcreed-adjacent", "drain-registry"],
+    player_facing: false
   },
   {
     id: "prism-exchange",
@@ -177,7 +185,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Direct target. The Vareth considers Voidblush the single most dangerous product in Anavale \u2014 a small-scale Dimming reversal agent freely available is incompatible with the Vareth's goals. Seven attempts. All failed. The eighth is being planned.",
     gigglegloom_relationship: "Color as product. But Voidblush crosses into something more \u2014 it is an intervention in the Dimming itself, which puts it in a different category than decorative pigments.",
     notable_facts: ["Voidblush: one drop temporarily reverses Stage 1 Fading in a small area", "Seven assassination attempts survived", "Voidblush production location known to exactly three people at any time", "The chain of succession for Voidblush knowledge has never been broken despite four assassinations", "Adjacent to the Conclave in Prismhold \u2014 a deliberate location choice"],
-    tags: ["trade", "neutral", "prismhold", "caparia", "voidblush", "vareth-target", "seven-attempts"]
+    tags: ["trade", "neutral", "prismhold", "caparia", "voidblush", "vareth-target", "seven-attempts"],
+    player_facing: false
   },
   {
     id: "revel",
@@ -197,7 +206,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "The Vareth considers the Revel a significant operational problem but has not directly targeted it \u2014 attacking a beloved traveling festival publicly would be counterproductive. Greytalon surveillance of Revel circuits has increased in the past two years.",
     gigglegloom_relationship: "Their saturation effect is the most consistent non-Conclave color restoration operation in Anavale. Whether this is Gigglegloom practice, collective emotional expression, or something the Veilborn operatives are doing specifically is unclear.",
     notable_facts: ["Every performance in a Fading town leaves buildings more saturated for days", "Rumored Veilborn front \u2014 the rumor is partially correct", "Greytalon surveillance of Revel circuits has increased noticeably", "Their route choices sometimes reflect information no traveling festival should possess", "Based in Reveltown, Caparia \u2014 but rarely there"],
-    tags: ["entertainment", "neutral", "caparia", "reveltown", "veilborn-adjacent", "color-restoration", "vareth-adjacent"]
+    tags: ["entertainment", "neutral", "caparia", "reveltown", "veilborn-adjacent", "color-restoration", "vareth-adjacent"],
+    player_facing: false
   },
   {
     id: "nimblewood",
@@ -217,7 +227,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Never work for the grey \u2014 the Nimblewood code. The Grusk has attempted to hire Nimblewood members three times. All three attempts ended in the attempted hire being reported to the relevant authorities anonymously. The fourth attempt has not been made yet.",
     gigglegloom_relationship: "The guildmaster (whoever or whatever they are) reportedly has an extensive private collection of color-keyed locks that respond only to specific Gigglegloom types. This collection has never been described by anyone who has seen it and survived to talk.",
     notable_facts: ["Guild code: never steal from those who can't afford it, never work for the grey", "Guildmaster believed to be a very clever squirrel \u2014 unconfirmed", "Have stolen three Drakhold intelligence reports and sold the information without taking credit", "Grusk has attempted to hire Nimblewood members three times \u2014 all three ended in anonymous reports to authorities"],
-    tags: ["criminal", "neutral", "thieves-guild", "international", "code-of-conduct", "vareth-opposed"]
+    tags: ["criminal", "neutral", "thieves-guild", "international", "code-of-conduct", "vareth-opposed"],
+    player_facing: false
   },
   {
     id: "hushers",
@@ -237,7 +248,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Unknown. Have presumably taken contracts from Vareth-adjacent clients. Have presumably taken contracts against Vareth-adjacent clients. They have no politics.",
     gigglegloom_relationship: "Unknown. Their methods have never been observed. Their methods have never been successfully investigated. They have never failed.",
     notable_facts: ["Have never failed a contract", "Have never been proven to exist", "The Stillkeep has an 80-year documentation project on assassinations that follow a pattern consistent with a single organization", "The Prism Exchange's security team has a private theory about the seventh attempt"],
-    tags: ["criminal", "unknown", "assassins", "neutral", "unproven", "mystery"]
+    tags: ["criminal", "unknown", "assassins", "neutral", "unproven", "mystery"],
+    player_facing: false
   },
   {
     id: "grusk",
@@ -257,7 +269,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Secretly tied. The connection is real and directional \u2014 the Vareth uses the Grusk as an economic instrument. The Grusk leadership serves this arrangement willingly.",
     gigglegloom_relationship: "Color is product to be extracted and sold. The Grusk is the market infrastructure of the Dimming.",
     notable_facts: ["Brokers access to Drains", "Secretly tied to the Vareth \u2014 leadership knows, rank and file do not", "Attempted to hire Nimblewood members three times \u2014 all three failed", "Involved in the Queen of Sohot's ongoing Fading through Kess the Gray's court intermediary", "Has established parallel trade networks to compete with the Goldenway after the Goldenway declined Vareth-adjacent contracts"],
-    tags: ["criminal", "dark", "vareth", "color-extraction", "drain-broker", "breth-chaine-adjacent"]
+    tags: ["criminal", "dark", "vareth", "color-extraction", "drain-broker", "breth-chaine-adjacent"],
+    player_facing: false
   },
   {
     id: "breth-chaine",
@@ -277,7 +290,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Beloved by Vareth allies \u2014 the Vareth uses creature trafficking as a Fading accelerant in targeted communities. The Husks found near Grusk-brokered drain sites often correlate with Breth Chaine activity in the same area.",
     gigglegloom_relationship: "They use creature color as value \u2014 more vivid, more valuable. This is a direct perversion of the Brightcreed view that color is sacred. The Kindpact monitors Breth Chaine activity through color degradation in trading posts.",
     notable_facts: ["Beloved by Vareth allies", "Greenvast Tribes can mobilize every tribe in 72 hours if creature harm in Jugabi is confirmed", "Currently attempting a Jugabi route through the Dodooti Rainforest", "The Humid One Mosskin appears aware of the route attempt", "Graskvine Drakhold outpost is partially facilitating"],
-    tags: ["criminal", "dark", "vareth-allied", "creature-trafficking", "kindpact-opposed", "greenvast-opposed"]
+    tags: ["criminal", "dark", "vareth-allied", "creature-trafficking", "kindpact-opposed", "greenvast-opposed"],
+    player_facing: false
   },
   {
     id: "grasp",
@@ -297,7 +311,8 @@ var ORGANIZATION_DATA = [
     vareth_relationship: "Unaware of each other. Their goals are partially compatible (quiet, stable, controlled world) and fundamentally incompatible (the Grasp wants comfort; the Vareth wants grey). If they ever meet, the conflict would be civilizational.",
     gigglegloom_relationship: "Color is an asset to be managed. The Grasp does not oppose the Gigglegloom \u2014 they own significant shares of legal color-trading institutions. The Dimming would be bad for their investments. This is the only thing that accidentally aligns them with the forces of light.",
     notable_facts: ["Operating for approximately 200 years", "Goal: The Comfort \u2014 every government financially dependent on Grasp-controlled institutions", "Hereditary membership only \u2014 no new members, only descendants", "Two or three generations from achieving The Comfort in three major nations", "Unaware of the Vareth's existence", "Their financial opposition to the Dimming is accidental and would not survive discovering the Vareth's goals"],
-    tags: ["secret-society", "dark", "wealthy", "long-term", "comfort", "non-vareth", "financial", "patient"]
+    tags: ["secret-society", "dark", "wealthy", "long-term", "comfort", "non-vareth", "financial", "patient"],
+    player_facing: false
   }
 ];
 

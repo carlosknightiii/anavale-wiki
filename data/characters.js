@@ -18,7 +18,8 @@ var CHARACTER_DATA = [
     dm_notes: "The Vareth should never appear as a character. It appears as consequence. Events happen because of the Vareth; the Vareth itself is never in the room. The lieutenants are the Vareth's face. The Dimming is the Vareth's voice.",
     gigglegloom_relationship: "The Vareth is the anti-Gigglegloom \u2014 the silence that the Gigglegloom fills. It does not destroy the Gigglegloom so much as remove the conditions the Gigglegloom needs to exist.",
     color: "Flat grey \u2014 the grey that does not shine",
-    tags: ["villain", "no-body", "quietude", "dimming", "grak", "lieutenant-controller", "dm-only"]
+    tags: ["villain", "no-body", "quietude", "dimming", "grak", "lieutenant-controller", "dm-only"],
+    player_facing: false
   },
   {
     id: "strix",
@@ -39,7 +40,8 @@ var CHARACTER_DATA = [
     dm_notes: "Strix's contradiction is her only humanity. Do not play it as weakness \u2014 it is not weakness, it is incompleteness. She is doing something she believes in while keeping something she cannot let go of. These coexist in her without resolution.",
     gigglegloom_relationship: "Antagonist to all types. Her method \u2014 controlling trade \u2014 starves regions of color without direct extraction. Subtler and slower than the other lieutenants.",
     color: "Pale grey-blue \u2014 the color of winter sky before snow",
-    tags: ["villain", "lieutenant", "nombi", "trade-control", "strix", "contradiction"]
+    tags: ["villain", "lieutenant", "nombi", "trade-control", "strix", "contradiction"],
+    player_facing: false
   },
   {
     id: "drak",
@@ -60,7 +62,8 @@ var CHARACTER_DATA = [
     dm_notes: "Drak's archive is a potential major plot resource. Players who find it have to decide who to give it to \u2014 and neither obvious choice is simple. The Conclave would use it defensively. The Vareth would use it offensively. A third option exists that the players would have to invent.",
     gigglegloom_relationship: "He understands it better than anyone alive. He is using that understanding to unmake it. This is either the most villainous thing possible or a very specific kind of tragedy.",
     color: "Deep indigo, darkened past the point of dignity",
-    tags: ["villain", "lieutenant", "caldenmor", "gigglegloom-corruption", "archive", "scholar-villain"]
+    tags: ["villain", "lieutenant", "caldenmor", "gigglegloom-corruption", "archive", "scholar-villain"],
+    player_facing: false
   },
   {
     id: "kess-the-gray",
@@ -81,7 +84,8 @@ var CHARACTER_DATA = [
     dm_notes: "Kess is the most tragic of the lieutenants \u2014 she knows exactly what she lost and continues anyway. Play her flatness as a choice that gets heavier every year, not as natural disposition. Her secret festival designs are her only honesty.",
     gigglegloom_relationship: "She was a Bubbleseed practitioner once. She knows what she is doing. She does it anyway.",
     color: "Deliberate grey \u2014 chosen, not faded",
-    tags: ["villain", "lieutenant", "sohot", "ashenveil", "queen-sarova", "festival-villain", "contradiction"]
+    tags: ["villain", "lieutenant", "sohot", "ashenveil", "queen-sarova", "festival-villain", "contradiction"],
+    player_facing: false
   },
   {
     id: "skiv",
@@ -102,7 +106,8 @@ var CHARACTER_DATA = [
     dm_notes: "Skiv is the most complex character in the campaign. Their revelation \u2014 not a villain at all, a Veilborn operative \u2014 should be a major story beat. The unexamined truth about Sable is the emotional core. Do not rush to either revelation. Let players build an impression of Skiv as villain before any of this becomes available.",
     gigglegloom_relationship: "Skiv lost their partner to an uncontrolled Flamerage surge. Their relationship to all Gigglegloom types since has been complicated. They are competent practitioners when they need to be. They are careful not to need to be often.",
     color: "Unknown. The only confirmed fact about Skiv's personal appearance is that their color is never quite readable.",
-    tags: ["villain", "lieutenant", "spy", "veilborn", "deep-cover", "they-them", "not-actually-villain", "sable", "tragedy"]
+    tags: ["villain", "lieutenant", "spy", "veilborn", "deep-cover", "they-them", "not-actually-villain", "sable", "tragedy"],
+    player_facing: false
   },
   {
     id: "queen-sarova",
@@ -123,7 +128,8 @@ var CHARACTER_DATA = [
     dm_notes: "Queen Sarova is the campaign's most urgent ticking clock. If Kess reaches Stage 2 before the players intervene, the Queen Dims. A Dimmed Queen is not a killed queen \u2014 she still rules, still functions, still makes decisions. But joy is only remembered, not felt. This is worse than death in Anavale's terms.",
     gigglegloom_relationship: "Her Gigglegloom affinity has always been Bubbleseed \u2014 her official color was gold. The Fading is pulling it toward muted amber and increasingly toward grey.",
     color: "Gold, fading toward amber, with three seasons of grey creeping in at the edges",
-    tags: ["ally", "queen", "sohot", "auvari", "fading", "kess-target", "urgent", "seven-who-know"]
+    tags: ["ally", "queen", "sohot", "auvari", "fading", "kess-target", "urgent", "seven-who-know"],
+    player_facing: false
   },
   {
     id: "sable",
@@ -144,7 +150,8 @@ var CHARACTER_DATA = [
     dm_notes: "Sable should be revealed carefully. The emotional weight of this revelation \u2014 that Skiv has been wrong about what they are fighting for \u2014 should be held for the right moment. When players learn the truth about Sable, they have the key to Skiv's redemption arc, if there is one.",
     gigglegloom_relationship: "Sable was Fading. Whether this was natural Stage 1 or early Vareth contact has never been determined. The Wanderkeep did not investigate this; they investigated the surge.",
     color: "Unknown \u2014 no color description survives in any record",
-    tags: ["deceased", "light", "sable", "skiv", "flamerage", "wanderkeep", "fading", "unexamined-truth"]
+    tags: ["deceased", "light", "sable", "skiv", "flamerage", "wanderkeep", "fading", "unexamined-truth"],
+    player_facing: false
   },
   {
     id: "oro",
@@ -165,7 +172,8 @@ var CHARACTER_DATA = [
     dm_notes: "Oro's presence in a scene should feel like the world is paying attention. Not intervention \u2014 attention. A Sparkling landing on someone at the right moment. A Gilded Tortoise appearing where it should not. Never announced, never explained.",
     gigglegloom_relationship: "Oro IS the Gigglegloom's divine origin \u2014 or the Gigglegloom is Oro's expression in the physical world. The Brightcreed does not distinguish between these. The Conclave does.",
     color: "Gold \u2014 the original",
-    tags: ["god", "active", "light", "brightcreed", "joy", "color", "creatures", "cannot-enter-dimmed"]
+    tags: ["god", "active", "light", "brightcreed", "joy", "color", "creatures", "cannot-enter-dimmed"],
+    player_facing: false
   },
   {
     id: "nara",
@@ -186,7 +194,8 @@ var CHARACTER_DATA = [
     dm_notes: "Nara is background. She is the wild Gigglegloom, the old forests, the Rootsingers. Her presence is the world that existed before anyone organized anything. She does not intervene. She persists.",
     gigglegloom_relationship: "The Gigglegloom's most ancient divine connection. The wild Gigglegloom that has no practitioners, no Conclave, no license \u2014 that is Nara.",
     color: "Shifting \u2014 whatever surprises you",
-    tags: ["god", "active", "diminished", "brightcreed", "wild-magic", "partition-origin", "nara"]
+    tags: ["god", "active", "diminished", "brightcreed", "wild-magic", "partition-origin", "nara"],
+    player_facing: false
   },
   {
     id: "thyun",
@@ -207,7 +216,8 @@ var CHARACTER_DATA = [
     dm_notes: "Thyun's worshippers are the record-keepers. If there is a historical fact the players need, the Stillkeep probably has it. If the Stillkeep does not have it, Thyun might, and reaching that would be a quest in itself.",
     gigglegloom_relationship: "Memory and the Gigglegloom are intertwined \u2014 the Solvanu believe color is the world's memory. Thyun and this belief may be more directly connected than the Solvanu know.",
     color: "The color of waiting \u2014 deep, still, not grey",
-    tags: ["god", "active", "stillkeep", "memory", "patience", "partition-born", "thyun"]
+    tags: ["god", "active", "stillkeep", "memory", "patience", "partition-born", "thyun"],
+    player_facing: false
   },
   {
     id: "solvara",
@@ -228,7 +238,8 @@ var CHARACTER_DATA = [
     dm_notes: "Solvara's secret is the campaign's deepest mystery. If the players ever reach it \u2014 through the Veilborn, through the Vaultkeepers, through whatever path you design \u2014 the Partition truth should reframe everything that came before it. Do not decide what it is until you know what would change the most.",
     gigglegloom_relationship: "Shadow and the Gigglegloom \u2014 Solvara's domain includes the places the Gigglegloom does not reach, the gaps between colors, the things that do not show under light. Whether the Dimming is in Solvara's domain or opposed to it is a question the Veilborn considers classified.",
     color: "Not observable \u2014 the color in the gap between colors",
-    tags: ["god", "active", "veilborn", "secrets", "shadow", "partition-born", "partition-truth", "unknowable"]
+    tags: ["god", "active", "veilborn", "secrets", "shadow", "partition-born", "partition-truth", "unknowable"],
+    player_facing: false
   },
   {
     id: "grak",
@@ -249,7 +260,8 @@ var CHARACTER_DATA = [
     dm_notes: "Grak should never be encountered as a character. Grak is the Vareth, which is also not encountered as a character. Grak's fear of The Unseen is a plot tool \u2014 it is the only thing that has ever made the Vareth pause. The players will not have access to this information easily, but when they find it, it is the campaign's most significant tactical discovery.",
     gigglegloom_relationship: "Grak's divine color was The Prior white \u2014 he WAS a Gigglegloom type before the Partition. The Dimming is what happens when Grak's form of order reaches the Gigglegloom and empties it of the joy that makes it possible.",
     color: "Once: The Prior white. Now: flat grey \u2014 the grey that does not shine, ever.",
-    tags: ["god", "fallen", "malevolent", "grak", "vareth", "dimming", "prior-white", "unseen-fears", "order"]
+    tags: ["god", "fallen", "malevolent", "grak", "vareth", "dimming", "prior-white", "unseen-fears", "order"],
+    player_facing: false
   }
 ];
 

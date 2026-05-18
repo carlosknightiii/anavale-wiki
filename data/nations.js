@@ -37,7 +37,8 @@ var NATIONS = [
       "kess",
       "fading",
       "plot-critical"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "vokrath",
@@ -70,7 +71,8 @@ var NATIONS = [
       "desert",
       "honor",
       "vokrath"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "sorvathi-conclave",
@@ -104,7 +106,8 @@ var NATIONS = [
       "bubbleseed",
       "bubblespring",
       "sparked"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "telvari-exchange",
@@ -137,7 +140,8 @@ var NATIONS = [
       "merchants",
       "sunharbor",
       "prism-exchange"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "verdathi",
@@ -171,7 +175,8 @@ var NATIONS = [
       "dratha",
       "ancient",
       "mosskin"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "kalori-republic",
@@ -204,7 +209,8 @@ var NATIONS = [
       "kalori",
       "tanglevine",
       "egalitarian"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "vorrkai",
@@ -238,7 +244,8 @@ var NATIONS = [
       "steelfist",
       "martial",
       "vorrkai"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "solvanu",
@@ -272,7 +279,8 @@ var NATIONS = [
       "color-journals",
       "contemplative",
       "solvanu"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "tekhari",
@@ -306,7 +314,8 @@ var NATIONS = [
       "tekhari",
       "gigglegloom-research",
       "deepworms"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "solenmere",
@@ -339,7 +348,8 @@ var NATIONS = [
       "caldenric",
       "bubbleseed",
       "diplomatic"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "bunari",
@@ -372,7 +382,8 @@ var NATIONS = [
       "bunbun-bay",
       "trade",
       "bunari"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "zippan",
@@ -407,7 +418,8 @@ var NATIONS = [
       "bubbleseed",
       "zippan",
       "guild"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "dingurei",
@@ -441,7 +453,8 @@ var NATIONS = [
       "partition-scar",
       "drak",
       "dingurei"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "janiveth",
@@ -475,7 +488,8 @@ var NATIONS = [
       "winter-count",
       "janiveth",
       "pebblecrown"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "opuri",
@@ -510,6 +524,7 @@ var NATIONS = [
       "all-type",
       "opuri",
       "listeners"
-    ]
+    ],
+    player_facing: false
   }
 ];

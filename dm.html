@@ -757,6 +757,19 @@
           </div>
         </div>
 
+        <div class="field-group">
+          <label class="field-label">Player Facing</label>
+          <span class="field-help">Hidden = DM only. Teaser = name, type, summary. Visible = full entry.</span>
+          <div class="field-toggle">
+            <input type="radio" name="city-pf" id="city-pf-false" value="false" checked>
+            <label for="city-pf-false">🔒 Hidden</label>
+            <input type="radio" name="city-pf" id="city-pf-teaser" value="teaser">
+            <label for="city-pf-teaser">✨ Teaser</label>
+            <input type="radio" name="city-pf" id="city-pf-true" value="true">
+            <label for="city-pf-true">👁 Visible</label>
+          </div>
+        </div>
+
         <div class="dm-form-actions">
           <button class="btn-generate" onclick="generateCity()">✦ Generate Entry</button>
           <button class="btn-clear" onclick="clearForm('city')">Clear Form</button>
@@ -861,12 +874,14 @@
 
         <div class="field-group">
           <label class="field-label">Player Facing</label>
-          <span class="field-help">Can players see this creature's entry in the wiki? Set to No for The Unseen and secret creatures.</span>
+          <span class="field-help">Hidden = DM only. Teaser = name, tier, habitat, first sentence. Visible = full entry.</span>
           <div class="field-toggle">
-            <input type="radio" name="creature-pf" id="creature-pf-yes" value="true" checked>
-            <label for="creature-pf-yes">Yes</label>
-            <input type="radio" name="creature-pf" id="creature-pf-no" value="false">
-            <label for="creature-pf-no">No</label>
+            <input type="radio" name="creature-pf" id="creature-pf-false" value="false" checked>
+            <label for="creature-pf-false">🔒 Hidden</label>
+            <input type="radio" name="creature-pf" id="creature-pf-teaser" value="teaser">
+            <label for="creature-pf-teaser">✨ Teaser</label>
+            <input type="radio" name="creature-pf" id="creature-pf-true" value="true">
+            <label for="creature-pf-true">👁 Visible</label>
           </div>
         </div>
 
@@ -996,12 +1011,14 @@
           </div>
           <div class="field-group">
             <label class="field-label">Player Facing</label>
-            <span class="field-help">Can players read about this location in the wiki?</span>
+            <span class="field-help">Hidden = DM only. Teaser = name, type, summary. Visible = full entry.</span>
             <div class="field-toggle">
-              <input type="radio" name="poi-pf" id="poi-pf-yes" value="true" checked>
-              <label for="poi-pf-yes">Yes</label>
-              <input type="radio" name="poi-pf" id="poi-pf-no" value="false">
-              <label for="poi-pf-no">No</label>
+              <input type="radio" name="poi-pf" id="poi-pf-false" value="false" checked>
+              <label for="poi-pf-false">🔒 Hidden</label>
+              <input type="radio" name="poi-pf" id="poi-pf-teaser" value="teaser">
+              <label for="poi-pf-teaser">✨ Teaser</label>
+              <input type="radio" name="poi-pf" id="poi-pf-true" value="true">
+              <label for="poi-pf-true">👁 Visible</label>
             </div>
           </div>
         </div>
@@ -1178,6 +1195,19 @@
         </div>
 
         <div class="field-group">
+          <label class="field-label">Player Facing</label>
+          <span class="field-help">Hidden = DM only. Teaser = name, role, summary. Visible = full entry.</span>
+          <div class="field-toggle">
+            <input type="radio" name="char-pf" id="char-pf-false" value="false" checked>
+            <label for="char-pf-false">🔒 Hidden</label>
+            <input type="radio" name="char-pf" id="char-pf-teaser" value="teaser">
+            <label for="char-pf-teaser">✨ Teaser</label>
+            <input type="radio" name="char-pf" id="char-pf-true" value="true">
+            <label for="char-pf-true">👁 Visible</label>
+          </div>
+        </div>
+
+        <div class="field-group">
           <label class="field-label" for="char-tags">Tags</label>
           <span class="field-help">Comma-separated keywords for search</span>
           <input class="field-input" type="text" id="char-tags" placeholder="e.g. wanderkeep, caparia, ally, featherflow, active">
@@ -1342,6 +1372,19 @@
           </div>
         </div>
 
+        <div class="field-group">
+          <label class="field-label">Player Facing</label>
+          <span class="field-help">Hidden = DM only. Teaser = name, alignment, summary. Visible = full entry.</span>
+          <div class="field-toggle">
+            <input type="radio" name="org-pf" id="org-pf-false" value="false" checked>
+            <label for="org-pf-false">🔒 Hidden</label>
+            <input type="radio" name="org-pf" id="org-pf-teaser" value="teaser">
+            <label for="org-pf-teaser">✨ Teaser</label>
+            <input type="radio" name="org-pf" id="org-pf-true" value="true">
+            <label for="org-pf-true">👁 Visible</label>
+          </div>
+        </div>
+
         <div class="dm-form-actions">
           <button class="btn-generate" onclick="generateOrganization()">✦ Generate Entry</button>
           <button class="btn-clear" onclick="clearForm('organization')">Clear Form</button>
@@ -1431,12 +1474,14 @@
 
         <div class="field-group">
           <label class="field-label">Player Facing</label>
-          <span class="field-help">Can players read about this item in the wiki? Set to No for secret or undiscovered items.</span>
+          <span class="field-help">Hidden = DM only. Teaser = name, category, summary. Visible = full entry.</span>
           <div class="field-toggle">
-            <input type="radio" name="item-pf" id="item-pf-yes" value="true" checked>
-            <label for="item-pf-yes">Yes</label>
-            <input type="radio" name="item-pf" id="item-pf-no" value="false">
-            <label for="item-pf-no">No</label>
+            <input type="radio" name="item-pf" id="item-pf-false" value="false" checked>
+            <label for="item-pf-false">🔒 Hidden</label>
+            <input type="radio" name="item-pf" id="item-pf-teaser" value="teaser">
+            <label for="item-pf-teaser">✨ Teaser</label>
+            <input type="radio" name="item-pf" id="item-pf-true" value="true">
+            <label for="item-pf-true">👁 Visible</label>
           </div>
         </div>
 
@@ -1724,6 +1769,13 @@ function boolRadio(name) {
   return radioVal(name) === 'true';
 }
 
+function triRadio(name) {
+  var v = radioVal(name);
+  if (v === 'true')   return true;
+  if (v === 'teaser') return 'teaser';
+  return false;
+}
+
 function checkedVals(containerId) {
   var c = document.getElementById(containerId);
   if (!c) return [];
@@ -1811,7 +1863,8 @@ function generateCity() {
     formery_present:      boolRadio('city-formery'),
     vareth_presence:      boolRadio('city-vareth'),
     tone:                 orNull(val('city-tone')),
-    tags:                 tagsArr('city-tags')
+    tags:                 tagsArr('city-tags'),
+    player_facing:        triRadio('city-pf')
   };
   showOutput(entry, 'city');
 }
@@ -1838,7 +1891,7 @@ function generateCreature() {
     gigglegloom_relationship: orNull(val('creature-gigglegloom')),
     dimmed_version:           orNull(val('creature-dimmed')),
     dm_notes:                 orNull(val('creature-dm-notes')),
-    player_facing:            boolRadio('creature-pf'),
+    player_facing:            triRadio('creature-pf'),
     tags:                     tagsArr('creature-tags')
   };
   showOutput(entry, 'creature');
@@ -1867,7 +1920,7 @@ function generatePoi() {
     color_health:         orNull(val('poi-color-health')),
     vareth_presence:      boolRadio('poi-vareth'),
     dm_notes:             orNull(val('poi-dm-notes')),
-    player_facing:        boolRadio('poi-pf'),
+    player_facing:        triRadio('poi-pf'),
     tags:                 tagsArr('poi-tags')
   };
   showOutput(entry, 'poi');
@@ -1900,7 +1953,8 @@ function generateCharacter() {
     dm_notes:                 orNull(val('char-dm-notes')),
     gigglegloom_relationship: orNull(val('char-gigglegloom')),
     color:                    orNull(val('char-color')),
-    tags:                     tagsArr('char-tags')
+    tags:                     tagsArr('char-tags'),
+    player_facing:            triRadio('char-pf')
   };
   showOutput(entry, 'character');
 }
@@ -1939,7 +1993,8 @@ function generateOrganization() {
     vareth_relationship:      orNull(val('org-vareth')),
     gigglegloom_relationship: orNull(val('org-gigglegloom')),
     notable_facts:            facts,
-    tags:                     tagsArr('org-tags')
+    tags:                     tagsArr('org-tags'),
+    player_facing:            triRadio('org-pf')
   };
   showOutput(entry, 'organization');
 }
@@ -1963,7 +2018,7 @@ function generateItem() {
     current_location:         orNull(val('item-location')),
     current_owner:            orNull(val('item-owner')),
     dm_notes:                 orNull(val('item-dm-notes')),
-    player_facing:            boolRadio('item-pf'),
+    player_facing:            triRadio('item-pf'),
     tags:                     tagsArr('item-tags')
   };
   showOutput(entry, 'item');

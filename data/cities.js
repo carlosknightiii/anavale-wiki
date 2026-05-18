@@ -31,7 +31,8 @@ var CITIES = [
       "caldenric",
       "gigglegloom-conclave",
       "formery"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "prismhold",
@@ -60,7 +61,8 @@ var CITIES = [
       "gigglegloom",
       "city-state",
       "formery"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "mirrenport",
@@ -88,7 +90,8 @@ var CITIES = [
       "trade",
       "mirrenflow",
       "salindri"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "reveltown",
@@ -115,7 +118,8 @@ var CITIES = [
       "revel",
       "veilborn",
       "suspected-front"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "bumbleton",
@@ -146,7 +150,8 @@ var CITIES = [
       "food",
       "bubbleseed",
       "formery"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "veilhaven",
@@ -172,7 +177,8 @@ var CITIES = [
       "veilmoot",
       "dingu-forest",
       "solvara"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "pebbleshire",
@@ -197,7 +203,8 @@ var CITIES = [
       "village",
       "bounce-beetle",
       "sillywiggles"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "doopu-station",
@@ -223,7 +230,8 @@ var CITIES = [
       "chroma-bureau",
       "brightwall",
       "doopu-peaks"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "lightcrak",
@@ -252,7 +260,8 @@ var CITIES = [
       "partition-scar",
       "library",
       "scholars"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "inkwell",
@@ -278,7 +287,8 @@ var CITIES = [
       "paper-guild",
       "archive",
       "lightcrak-support"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "pebblecrown",
@@ -310,7 +320,8 @@ var CITIES = [
       "trade",
       "winter-count",
       "formery"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "coldmere",
@@ -337,7 +348,8 @@ var CITIES = [
       "deepchill",
       "coldmere",
       "stew"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "frostgate",
@@ -365,7 +377,8 @@ var CITIES = [
       "fading",
       "trade",
       "vareth"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "tumblesnow",
@@ -391,7 +404,8 @@ var CITIES = [
       "sky-islands",
       "tether",
       "aurora"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "hollowpine",
@@ -417,7 +431,8 @@ var CITIES = [
       "mosskin",
       "ancient-one",
       "endless-forest"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "aurentum-city",
@@ -446,7 +461,8 @@ var CITIES = [
       "kess",
       "monarchy",
       "plot-critical"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "sunharbor",
@@ -475,7 +491,8 @@ var CITIES = [
       "bumti-bay",
       "vareth",
       "trade"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "ashenveil",
@@ -503,7 +520,8 @@ var CITIES = [
       "dimming",
       "vareth",
       "former-festival"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "driprock",
@@ -531,7 +549,8 @@ var CITIES = [
       "neutral",
       "trade",
       "driprock"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "scaldmere",
@@ -557,7 +576,8 @@ var CITIES = [
       "golden-sea",
       "bumti-bay",
       "scaldmere"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "rootdeep",
@@ -585,7 +605,8 @@ var CITIES = [
       "rainforest",
       "mosskin",
       "rootdeep"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "tanglevine",
@@ -612,7 +633,8 @@ var CITIES = [
       "trade",
       "salindri",
       "tanglevine"
-    ]
+    ],
+    player_facing: false
   },
   {
     id: "mumblewump",
@@ -638,27 +660,8 @@ var CITIES = [
       "canopy",
       "hidden",
       "mumblewump"
-    ]
-  },
-  {
-    id: "gobblewump-crossing",
-    name: "Gobblewump Crossing",
-    nation: "solenmere",
-    region: "caparia",
-    continent: "pogglewog",
-    type: "crossroads",
-    summary: "Where the Mirrenflow meets the Tumblerun. Major crossroads. The Formery has an office here for some reason.",
-    description: "The confluence of Caparia's two great rivers — the Mirrenflow (the main east-west trade artery) and the Tumblerun (flowing south from Nombi). As a result, virtually all overland and river trade crossing central Caparia passes through here. The Formery has an office here. Nobody remembers it arriving. Nobody has a record of it being established. It simply has always been here, which is either appropriate or alarming depending on how much you think about it.",
-    landmarks: [
-      { name: "The River Confluence", description: "The meeting point of the Mirrenflow and Tumblerun — marked by a standing stone whose inscription predates any known script." },
-      { name: "The Formery Office", description: "Present for longer than anyone can document. Issues Form 88-C: Transit of Commerce Through a Documented Confluence. Nobody knows what 88-A and 88-B cover." }
     ],
-    strategic_importance: "Primary Caparia river crossroads — all east-west and north-south river trade passes through",
-    color_health: "good — constant trade traffic sustains Gigglegloom health",
-    formery_present: true,
-    vareth_presence: false,
-    tone: "Busy, transactional, always someone new passing through. The Formery has been here longer than the crossing itself.",
-    tags: ["caparia", "solenmere", "crossroads", "mirrenflow", "tumblerun", "trade", "formery"]
+    player_facing: false
   },
   {
     "id": "gobblewump-crossing",
@@ -708,6 +711,7 @@ var CITIES = [
       "trade",
       "bridge",
       "gobblewump-gerald"
-    ]
+    ],
+    player_facing: false
   }
 ];
