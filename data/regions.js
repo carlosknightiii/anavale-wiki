@@ -1,0 +1,82 @@
+// data/regions.js
+// All Pogglewog regions — source of truth for regional data
+// Migrated from Anavale_World_Lore.md
+
+var REGIONS = [
+  {
+    id:               "caparia",
+    name:             "Caparia",
+    continent:        "pogglewog",
+    climate:          "central heartlands",
+    summary:          "Lush meadows, coastal kingdoms, sparkling inland seas. Sun directly overhead. Most colorful region. Named for its role as the heart of Pogglewog — the largest, most diverse, and most politically complex region on the continent.",
+    tone:             "Cheerful and democratic. Market towns. Creature festivals. Color maintenance is law.",
+    gigglegloom_notes:"Warm, flowing, full of color surges. Highest density of visible Gigglegloom activity anywhere on Pogglewog.",
+    color_health:     "excellent",
+    vareth_presence:  "minor — isolated outposts only. Greyveil Hollow fading quietly for two years.",
+    seas:             ["Nabu Sea", "Coldera Sea", "Salindri Sea"],
+    nations:          ["solenmere", "bunari", "zippan", "dingurei", "janiveth", "opuri"],
+    key_geography:    ["Goober Bounce Meadows", "Sillywiggles Meadows", "Zippydoda Hills", "Chaku Meadows", "Dingu Forest", "Doopu Peaks", "Opu Forest", "Jani Forest", "Bunbun Bay", "Rabbit Coast", "Bunari Peninsula"],
+    rivers:           ["The Mirrenflow", "The Tumblerun", "Bumbletrickle", "The Janirun", "Goldenstream"],
+    world_wonders:    ["The Brightwall", "The Prior Stone", "The Partition Scar"],
+    key_sites:        ["The Brightwall", "The Partition Scar", "The Prior Stone", "Gobblewump Crossing", "Greyveil Hollow", "The Grasping Ledge", "Mosswhisper Grove"],
+    cities:           ["solenveil", "prismhold", "mirrenport", "reveltown", "bumbleton", "veilhaven", "pebbleshire", "doopu-station", "lightcrak", "inkwell", "pebblecrown"],
+    tags:             ["caparia", "pogglewog", "confederation", "heartlands", "colorful"]
+  },
+  {
+    id:               "nombi",
+    name:             "Nombi",
+    continent:        "pogglewog",
+    climate:          "frozen north",
+    summary:          "Cold, tree-heavy, and harsh. Dense forests, icy mountains, aurora-lit skies, and floating sky islands. Aurora-touched rivers and deep winter silences.",
+    tone:             "Stoic and resilient. Honor cultures and deep spirituality. Beautiful and dangerous.",
+    gigglegloom_notes:"Aurora-touched — Gigglegloom often manifests visually through the northern lights. Steelfist dominant in western fjords, contemplative Mirren-type in central forests.",
+    color_health:     "moderate — healthy in most areas, Fading near Wraithfell Tundra and Strix-controlled Frostgate",
+    vareth_presence:  "significant — Strix controls northern trade routes. Frostgate being slowly drained. The Dimwall outpost active in Tanaki Mountains.",
+    seas:             ["Glacial Sea", "Nabu Sea"],
+    nations:          ["vorrkai", "solvanu", "tekhari"],
+    key_geography:    ["Icey Mountains", "Endless Forest", "Tanaki Mountains", "Fugi Forest", "Wraithfell Tundra", "Skorra Fjords", "Gloomreach Pass", "The Pale Ring", "The Dimwall"],
+    rivers:           ["The Tumblerun", "Iceveil River"],
+    world_wonders:    [],
+    key_sites:        ["The Pale Ring", "The Dimwall", "The Ancient One glacier", "Sky Islands of Nombi"],
+    cities:           ["coldmere", "frostgate", "tumblesnow", "hollowpine"],
+    tags:             ["nombi", "pogglewog", "frozen", "north", "aurora", "fjords"]
+  },
+  {
+    id:               "sohot",
+    name:             "Sohot",
+    continent:        "pogglewog",
+    climate:          "blazing south",
+    summary:          "Desert dunes, underground cavern networks, ancient ruins, and a mountain border with Caparia. Home of the once-greatest civilization in Anavale — now fragmented into four very different nations.",
+    tone:             "Ancient, layered, ceremonial. The weight of a fallen empire. Vivid festivals in the east, deep silence in the west.",
+    gigglegloom_notes:"Flamerage-dominant in volcanic and desert regions. Bubbleseed surges at the Bubblespring. Ashfall Wastes and Quiet Pillar are zones of total color absence.",
+    color_health:     "variable — excellent near Bubblespring and Sunharbor, dire in Ashfall Wastes",
+    vareth_presence:  "heavy — Kess the Gray seated in Ashenveil, The Quiet Pillar active, Grakstone outpost beneath Desolate Wastes. Queen Sarova the Bright being slowly drained.",
+    seas:             ["Golden Sea", "Bumti Bay"],
+    nations:          ["auvari-remnance", "vokrath", "sorvathi-conclave", "telvari-exchange"],
+    key_geography:    ["Desolate Wastes", "Sizzling Dunes", "Jani Mountains", "Mt. Sumsum", "Ashfall Wastes", "Sunscorch Flats", "The Quiet Pillar", "The Bubblespring", "The Grakstone"],
+    rivers:           ["The Sunslow", "Ashcreek"],
+    world_wonders:    ["The Bubblespring"],
+    key_sites:        ["The Quiet Pillar", "The Bubblespring", "The Grakstone", "Mt. Sumsum", "Ashfall Wastes"],
+    cities:           ["aurentum-city", "sunharbor", "ashenveil", "driprock", "scaldmere"],
+    tags:             ["sohot", "pogglewog", "desert", "south", "ancient", "ruins"]
+  },
+  {
+    id:               "jugabi",
+    name:             "Jugabi",
+    continent:        "pogglewog",
+    climate:          "jungle southwest",
+    summary:          "Ancient rainforest peninsula with dense canopy like a second ocean from above. Extraordinary biodiversity. Two very different nations sharing one forest.",
+    tone:             "Ancient and alive. The forest has opinions. Deep tradition alongside energetic new politics.",
+    gigglegloom_notes:"Bubbleseed dominant — the Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on Pogglewog. Bloom Hollow is the second-holiest Brightcreed site in Anavale.",
+    color_health:     "excellent in core rainforest, deteriorating near The Graskvine outpost",
+    vareth_presence:  "growing — The Graskvine Drakhold outpost causing the Humid One Mosskin visible distress. Nearby trees going grey from roots up.",
+    seas:             ["Salindri Sea"],
+    nations:          ["verdathi", "kalori-republic"],
+    key_geography:    ["Dodooti Rainforest", "The Canopy Sea", "The Greenvast Corridor", "Bloom Hollow", "The Humid One's Heart", "The Graskvine"],
+    rivers:           ["The Dodorun", "Tangletrickle"],
+    world_wonders:    ["Bloom Hollow"],
+    key_sites:        ["Bloom Hollow", "The Humid One's Heart", "The Graskvine", "The Canopy Sea"],
+    cities:           ["rootdeep", "tanglevine", "mumblewump"],
+    tags:             ["jugabi", "pogglewog", "jungle", "rainforest", "southwest", "canopy"]
+  }
+];

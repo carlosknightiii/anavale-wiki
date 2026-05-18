@@ -19,7 +19,14 @@ anavale-wiki/
 │   └── wiki.js             # Navigation, search, wiki-linking, spellbook UI
 │
 ├── data/
-│   └── spells.js           # SPELL_DATA (spell list) + SPELL_STATS (full spell details)
+│   ├── spells.js           # SPELL_DATA (spell list) + SPELL_STATS (full spell details)
+│   ├── regions.js          # REGION_DATA — 4 regions: caparia, nombi, sohot, jugabi
+│   ├── nations.js          # NATION_DATA — 15 nations across all regions
+│   ├── cities.js           # CITY_DATA — 24 settlements across all regions
+│   ├── creatures.js        # CREATURE_DATA — 50 creatures across all tiers and categories
+│   ├── organizations.js    # ORGANIZATION_DATA — 15 organizations (light, neutral, dark)
+│   ├── characters.js       # CHARACTER_DATA — 12 key characters (villains, allies, gods)
+│   └── index.js            # WORLD_DATA unified index + worldSearch() + filter helpers
 │
 ├── assets/
 │   ├── icons/              # SVG icons for the four Gigglegloom types
@@ -45,10 +52,17 @@ anavale-wiki/
 <link rel="stylesheet" href="css/spells.css">
 ...
 <script src="data/spells.js"></script>
+<script src="data/regions.js"></script>
+<script src="data/nations.js"></script>
+<script src="data/cities.js"></script>
+<script src="data/creatures.js"></script>
+<script src="data/organizations.js"></script>
+<script src="data/characters.js"></script>
+<script src="data/index.js"></script>
 <script src="js/wiki.js"></script>
 ```
 
-`data/spells.js` must load before `js/wiki.js` because `wiki.js` reads `SPELL_DATA` and `SPELL_STATS` at DOM-ready time.
+All `data/*.js` files must load before `js/wiki.js`. Each file declares a `var` array. `data/index.js` loads last among the data files and assembles `WORLD_DATA` from all arrays, plus exports `worldSearch()` and filter helpers (`getByRegion`, `getByTag`, `getByAlignment`, `getById`).
 
 ---
 

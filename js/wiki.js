@@ -14,6 +14,7 @@ function show(id) {
     if (oc === "show('" + id + "')") l.classList.add('active');
   });
   clearPageHighlights();
+  if (typeof PAGE_RENDERERS !== 'undefined' && PAGE_RENDERERS[id]) { PAGE_RENDERERS[id](); }
 }
 
 // Navigate to a page AND scroll to the first element containing `term`.
@@ -255,6 +256,357 @@ function applyWikiLinks(container, termMap, re) {
   });
 }
 
+
+// ══ RENDERERS ══
+
+// ── Static config per region ──────────────────────────────────────────────
+var REGION_CONFIG = {
+  caparia: {
+    subtitle: 'The central heartlands of Pogglewog',
+    quote: '"In Caparia, color maintenance is not pride. It is law. The fine for a faded storefront is modest. The social consequences are not."',
+    quoteAttrib: '— A Bunari merchant, describing Solenveil',
+    heroImg: 'assets/images/regions/img-caparia-landscape.png',
+    nationDetailPages: ['solenmere', 'bunari', 'zippan', 'dingurei', 'janiveth', 'opuri']
+  },
+  nombi: {
+    subtitle: 'The frozen north of Pogglewog',
+    quote: '"The aurora does not rise in Nombi. It arrives. There is a difference, and the difference is the Gigglegloom."',
+    quoteAttrib: '— Solvanu color journal, transcribed before burning',
+    heroImg: null,
+    nationDetailPages: []
+  },
+  sohot: {
+    subtitle: 'The blazing south of Pogglewog',
+    quote: '"The desert keeps everything. Memory, color, grief. The heat does not destroy — it preserves. This is why Sohot has not forgotten anything."',
+    quoteAttrib: '— Auvari Remnance oral history',
+    heroImg: null,
+    nationDetailPages: []
+  },
+  jugabi: {
+    subtitle: 'The ancient jungle southwest of Pogglewog',
+    quote: '"The canopy is not above you. You are inside the forest. The forest has been here longer than anyone and is aware of you specifically."',
+    quoteAttrib: '— Verdathi elder, speaking to a Kalori Republic delegation',
+    heroImg: null,
+    nationDetailPages: []
+  }
+};
+
+// ── Gigglegloom type card data ─────────────────────────────────────────────
+var GIGGLEGLOOM_TYPES = [
+  { id: 'bubbleseed', name: 'Bubbleseed', color: '#1a5a28',
+    icon: 'assets/icons/icon-bubbleseed.svg',
+    tag: 'Earth · Growth · Happiness',
+    body: 'Warm golden magic. Generous to a fault. Smells like fresh soil after rain. Tends to overshoot — ask for a flower, receive twelve. Common among healers, farmers, and optimistic people generally.' },
+  { id: 'featherflow', name: 'Featherflow', color: '#1a4f8f',
+    icon: 'assets/icons/icon-featherflow.svg',
+    tag: 'Wind · Water · Freewill',
+    body: 'Sky blues and shifting teals. Never goes straight. Values freedom and will subtly resist instructions that feel like cages. Common among navigators, scouts, and people who are very difficult to pin down.' },
+  { id: 'steelfist', name: 'Steelfist', color: '#6a3aaa',
+    icon: 'assets/icons/icon-steelfist.svg',
+    tag: 'Metal · Resolve · Order',
+    body: 'Cold violets and indigos. Does exactly what it is told. The most reliable and the most terrifying depending on the caster. Common among soldiers, historians, and oracles.' },
+  { id: 'flamerage', name: 'Flamerage', color: '#aa3a1a',
+    icon: 'assets/icons/icon-flamerage.svg',
+    tag: 'Fire · Destruction · Courage',
+    body: 'Deep reds and burning orange. Responds to emotion before intent. Spectacular, excessive, deeply bad at subtlety. Common among warriors, performers, and those described as overconfident.' }
+];
+
+// ── Per-god static display data ───────────────────────────────────────────
+var GODS_META = {
+  oro:     { color: '#1a5a28', domain: 'God of Color, Joy & Laughter',
+             note: 'Worshipped by: The Brightcreed (most widely). Temples: open fields.' },
+  nara:    { color: '#1a4f8f', domain: 'Goddess of Wild Magic & Living Things',
+             note: 'Appears as: different things to different observers. Children usually report bright green.' },
+  thyun:   { color: '#4a5878', domain: 'God of Memory, Deep Time & Patience',
+             note: 'Worshipped by: The Stillkeep. Temples: stone libraries.' },
+  solvara: { color: '#6a3aaa', domain: 'Goddess of Secrets, Shadow & Hidden Truth',
+             note: 'Worshipped by: The Veilborn. Their practices are not public knowledge.' },
+  grak:    { color: '#7a6a60', domain: 'The Fallen — God of Order, now of Silence',
+             note: 'Symbol: a cracked grey circle — once perfect.' }
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function creatureSubtitle(c) {
+  if (!c) return '';
+  var h = (c.habitat || '').split(' — ')[0].split(',')[0];
+  if (h.length > 60) h = h.slice(0, 57) + '…';
+  return (c.tier ? c.tier.charAt(0).toUpperCase() + c.tier.slice(1) : '')
+       + (h ? ' · ' + h : '');
+}
+
+function titleCase(str) {
+  return (str || '').replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+}
+
+// ── Gigglegloom type-cards renderer ──────────────────────────────────────
+
+function renderGigglegloomPage() {
+  var grid = document.getElementById('gigglegloom-types-grid');
+  if (!grid) return;
+  var html = '';
+  GIGGLEGLOOM_TYPES.forEach(function(t) {
+    html += '<div class="entry-card">'
+          + '<div class="entry-name" style="color:' + t.color + ';">'
+          + '<img src="' + esc(t.icon) + '" class="giggle-icon" alt=""> '
+          + esc(t.name) + '</div>'
+          + '<div class="entry-tag">' + t.tag + '</div>'
+          + '<div class="entry-body">' + esc(t.body) + '</div>'
+          + '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+// ── Gods-entries renderer ─────────────────────────────────────────────────
+
+function renderGodsPage() {
+  var wrapper = document.getElementById('gods-entries');
+  if (!wrapper) return;
+  var godOrder = ['oro', 'nara', 'thyun', 'solvara', 'grak'];
+  var chars    = (typeof CHARACTER_DATA !== 'undefined') ? CHARACTER_DATA : [];
+  var html     = '';
+  godOrder.forEach(function(godId) {
+    var c = null;
+    for (var i = 0; i < chars.length; i++) { if (chars[i].id === godId) { c = chars[i]; break; } }
+    if (!c) return;
+    var m = GODS_META[godId] || {};
+    html += '<div class="creature-entry">'
+          + '<div class="creature-header">'
+          + '<div class="creature-name" style="color:' + (m.color || '') + ';">' + esc(c.name) + '</div>'
+          + '<div class="creature-latin">' + esc(m.domain) + '</div>'
+          + '</div>'
+          + '<div class="creature-body">' + esc(c.player_knowledge) + '</div>'
+          + '<div class="creature-note">' + esc(m.note) + '</div>'
+          + '</div>';
+  });
+  wrapper.innerHTML = html;
+}
+
+// ── Region page renderer ──────────────────────────────────────────────────
+
+function renderRegionPage(regionId) {
+  var page = document.getElementById('page-' + regionId);
+  if (!page) return;
+  var regions  = typeof REGIONS        !== 'undefined' ? REGIONS        : [];
+  var region   = null;
+  for (var i = 0; i < regions.length; i++) { if (regions[i].id === regionId) { region = regions[i]; break; } }
+  if (!region) return;
+  var cfg = REGION_CONFIG[regionId] || {};
+
+  var nations   = (typeof NATIONS       !== 'undefined' ? NATIONS       : []).filter(function(n) { return n.region === regionId; });
+  var cities    = (typeof CITIES        !== 'undefined' ? CITIES        : []).filter(function(c) { return c.region === regionId; });
+  var creatures = (typeof CREATURE_DATA !== 'undefined' ? CREATURE_DATA : []).filter(function(c) {
+    return c.player_facing !== false && Array.isArray(c.regions) && c.regions.indexOf(regionId) >= 0;
+  });
+
+  var body = '';
+
+  // Intro paragraph
+  body += '<p>' + esc(region.summary) + '</p>';
+
+  // Pull quote
+  if (cfg.quote) {
+    body += '<div class="pull-quote">' + cfg.quote
+          + ' <cite>' + esc(cfg.quoteAttrib) + '</cite></div>';
+  }
+
+  // At-a-glance info cards
+  body += '<div class="entry-grid">';
+  body += '<div class="entry-card"><div class="entry-name">Gigglegloom</div>'
+        + '<div class="entry-body">' + esc(region.gigglegloom_notes) + '</div></div>';
+  body += '<div class="entry-card"><div class="entry-name">Color Health</div>'
+        + '<div class="entry-tag">' + esc(region.color_health) + '</div>'
+        + '<div class="entry-body">' + esc(region.tone) + '</div></div>';
+  if (region.vareth_presence) {
+    body += '<div class="entry-card"><div class="entry-name" style="color:#7a6a60;">Vareth Presence</div>'
+          + '<div class="entry-body">' + esc(region.vareth_presence) + '</div></div>';
+  }
+  body += '</div>';
+
+  // Nations section
+  if (nations.length) {
+    body += '<div class="region-section"><div class="region-heading">Nations</div>'
+          + '<div class="entry-grid">';
+    nations.forEach(function(n) {
+      var hasPage = cfg.nationDetailPages && cfg.nationDetailPages.indexOf(n.id) >= 0;
+      var nameEl  = hasPage
+        ? '<div class="entry-name"><span class="wiki-link" onclick="show(\'nation-' + n.id + '\')" '
+          + 'title="Go to nation page">' + esc(n.name) + '</span></div>'
+        : '<div class="entry-name">' + esc(n.name) + '</div>';
+      body += '<div class="entry-card">' + nameEl
+            + '<div class="entry-tag">' + esc(n.government_type) + '</div>'
+            + '<div class="entry-body">' + esc(n.summary) + '</div>'
+            + '</div>';
+    });
+    body += '</div></div>';
+  }
+
+  // Key Sites section
+  var sites = region.key_sites || [];
+  if (sites.length) {
+    body += '<div class="region-section"><div class="region-heading">Key Sites</div>'
+          + '<ul class="region-site-list">';
+    sites.forEach(function(s) { body += '<li>' + esc(s) + '</li>'; });
+    body += '</ul></div>';
+  }
+
+  // Settlements section
+  if (cities.length) {
+    body += '<div class="region-section"><div class="region-heading">Settlements</div>'
+          + '<div class="entry-grid">';
+    cities.forEach(function(c) {
+      body += '<div class="entry-card">'
+            + '<div class="entry-name">' + esc(c.name) + '</div>'
+            + '<div class="entry-tag">' + esc(c.type) + '</div>'
+            + '<div class="entry-body">' + esc(c.summary || c.description || '') + '</div>'
+            + '</div>';
+    });
+    body += '</div></div>';
+  }
+
+  // Creatures section
+  if (creatures.length) {
+    body += '<div class="region-section"><div class="region-heading">Creatures Found Here</div>'
+          + '<div class="entry-grid">';
+    creatures.forEach(function(c) {
+      body += '<div class="entry-card">'
+            + '<div class="entry-name">' + esc(c.name) + '</div>'
+            + '<div class="entry-tag">' + esc(creatureSubtitle(c)) + '</div>'
+            + '<div class="entry-body">' + esc(c.description) + '</div>'
+            + '</div>';
+    });
+    body += '</div></div>';
+  }
+
+  // Hero image
+  var heroHtml = cfg.heroImg
+    ? '<img src="' + esc(cfg.heroImg) + '" alt="' + esc(region.name) + '" class="region-hero">' : '';
+
+  page.innerHTML =
+    '<div class="page-header">'
+    + '<div class="page-category">Region</div>'
+    + '<h1 class="page-title">' + esc(region.name) + '</h1>'
+    + '<p class="page-subtitle">' + esc(cfg.subtitle || '') + '</p>'
+    + '</div>'
+    + '<div class="wiki-body">'
+    + heroHtml
+    + body
+    + '</div>';
+}
+
+// ── Creatures page renderer ───────────────────────────────────────────────
+
+function renderCreaturesPage(tier) {
+  var pageId = 'creatures-' + tier;
+  var page   = document.getElementById('page-' + pageId);
+  if (!page) return;
+
+  var COMMON_TIERS = ['merry', 'common'];
+  var RARE_TIERS   = ['dimmed', 'sparked', 'unseen', 'ancient', 'rare', 'unknown', 'corrupted'];
+  var allCreatures = typeof CREATURE_DATA !== 'undefined' ? CREATURE_DATA : [];
+
+  var creatures = allCreatures.filter(function(c) {
+    var allowed   = tier === 'common' ? COMMON_TIERS : RARE_TIERS;
+    var okTier    = allowed.indexOf(c.tier) >= 0;
+    // The Unseen is player_facing:false but shown on the rare page by design
+    var okFacing  = tier === 'rare'
+      ? (c.player_facing !== false || c.id === 'the-unseen')
+      : c.player_facing !== false;
+    return okTier && okFacing;
+  });
+
+  var isCommon  = tier === 'common';
+  var title     = isCommon ? 'Common Creatures'   : 'Rare & Mysterious';
+  var subtitle  = isCommon
+    ? 'Those you are likely to meet on any given afternoon'
+    : 'Those you may meet once, or never, or in dreams';
+  var introText = isCommon
+    ? 'Anavale’s creatures are everywhere, and they are paying attention to you. This is not threatening. It is, in fact, rather wonderful once you get used to it. The following entries cover creatures a traveller on Pogglewog will encounter regularly.'
+    : 'Anavale contains things that resist easy categorization. The following entries are compiled from eyewitness accounts, Stillkeep records, Brightcreed theological texts, and one extremely detailed letter written to the Chroma Bureau that the Bureau declined to respond to.';
+
+  var entriesHtml = '';
+  creatures.forEach(function(c) {
+    var bodyText = c.description + (c.behavior ? ' ' + c.behavior : '');
+    var noteText = c.gigglegloom_relationship || '';
+    entriesHtml += '<div class="creature-entry">'
+                + '<div class="creature-header">'
+                + '<div class="creature-name">' + esc(c.name) + '</div>'
+                + '<div class="creature-latin">' + esc(creatureSubtitle(c)) + '</div>'
+                + '</div>'
+                + '<div class="creature-body">' + esc(bodyText) + '</div>'
+                + (noteText ? '<div class="creature-note">' + esc(noteText) + '</div>' : '')
+                + '</div>';
+  });
+
+  page.innerHTML =
+    '<div class="page-header">'
+    + '<div class="page-category">Bestiary</div>'
+    + '<h1 class="page-title">' + esc(title) + '</h1>'
+    + '<p class="page-subtitle">' + esc(subtitle) + '</p>'
+    + '</div>'
+    + '<div class="wiki-body">'
+    + '<p>' + esc(introText) + '</p>'
+    + entriesHtml
+    + '</div>';
+}
+
+// ── Organizations page renderer ───────────────────────────────────────────
+
+function renderOrganizationsPage() {
+  var page = document.getElementById('page-organizations');
+  if (!page) return;
+
+  var orgs = (typeof ORGANIZATION_DATA !== 'undefined' ? ORGANIZATION_DATA : []).filter(function(o) {
+    return o.alignment !== 'dark';
+  });
+
+  var entriesHtml = '';
+  orgs.forEach(function(o) {
+    var isFormery  = o.id === 'the-formery';
+    var latinLabel = (o.full_name && o.full_name !== o.name) ? o.full_name : titleCase(o.type);
+    var firstFact  = (o.notable_facts && o.notable_facts.length) ? o.notable_facts[0] : '';
+    entriesHtml += '<div class="creature-entry">'
+                + '<div class="creature-header">'
+                + '<div class="creature-name">' + esc(o.name) + '</div>'
+                + '<div class="creature-latin">' + esc(latinLabel) + '</div>'
+                + (isFormery ? '<div class="formery-stamp">FORM 1-A: RECEIVED… EVENTUALLY</div>' : '')
+                + '</div>'
+                + '<div class="creature-body">' + esc(o.summary) + '</div>'
+                + (firstFact ? '<div class="creature-note">' + esc(firstFact) + '</div>' : '')
+                + '</div>';
+  });
+
+  page.innerHTML =
+    '<div class="page-header">'
+    + '<div class="page-category">Society</div>'
+    + '<h1 class="page-title">Notable Organizations</h1>'
+    + '<p class="page-subtitle">Guilds, institutions, and groups worth knowing about</p>'
+    + '</div>'
+    + '<div class="wiki-body">'
+    + entriesHtml
+    + '</div>';
+}
+
+// ── Page renderer dispatch map ────────────────────────────────────────────
+var PAGE_RENDERERS = {
+  gigglegloom:         renderGigglegloomPage,
+  gods:                renderGodsPage,
+  caparia:             function() { renderRegionPage('caparia'); },
+  nombi:               function() { renderRegionPage('nombi'); },
+  sohot:               function() { renderRegionPage('sohot'); },
+  jugabi:              function() { renderRegionPage('jugabi'); },
+  'creatures-common':  function() { renderCreaturesPage('common'); },
+  'creatures-rare':    function() { renderCreaturesPage('rare'); },
+  organizations:       renderOrganizationsPage
+};
+
 // ══ INIT ══
 
 
@@ -437,6 +789,8 @@ function applyWikiLinks(container, termMap, re) {
   });
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Populate all dynamically-rendered pages before search indexing
+  Object.keys(PAGE_RENDERERS).forEach(function(id) { PAGE_RENDERERS[id](); });
   addWikiLinks();
   buildSearchIndex();
   initSpellbook();

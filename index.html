@@ -107,7 +107,7 @@
     </div>
     <p>Practitioners — those who can consciously direct the Gigglegloom — develop a natural affinity for one of four <em>types,</em> each with its own character, color, and personality. Wild Surges — moments when the Gigglegloom does something without being asked — occur occasionally in areas of high concentration and generally produce effects that are dramatic, harmless, and very difficult to explain afterward.</p>
     <div class="ornament">✦</div>
-    <div class="entry-grid">
+    <div class="entry-grid" id="gigglegloom-types-grid">
       <div class="entry-card">
         <div class="entry-name" style="color:#1a5a28;">
           <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" fill="#2a7a3a" class="giggle-icon">
@@ -265,6 +265,7 @@
   </div>
   <div class="wiki-body">
     <p>Anavale has five gods, though theologians will argue at length about whether certain of them are truly independent deities or aspects of others. This argument has been ongoing for three hundred years. It has not reached a conclusion. The gods themselves have not weighed in, which the Veilborn consider significant and everyone else considers inconclusive.</p>
+    <div id="gods-entries">
     <div class="creature-entry">
       <div class="creature-header">
         <div class="creature-name" style="color:#1a5a28;">Oro</div>
@@ -305,174 +306,17 @@
       <div class="creature-body">Once the god of structure and law. Fell during the Partition into obsession with absolute control, then into grief, then into something there is no clean word for. Not publicly worshipped. Those who serve Grak's will call it "order" and "efficiency." They are not incorrect that it produces a kind of order.</div>
       <div class="creature-note">Symbol: a cracked grey circle — once perfect.</div>
     </div>
+    </div><!-- #gods-entries -->
   </div>
 </div>
 
 <!-- CAPARIA -->
+
 <div class="page" id="page-caparia">
-  <div class="page-header">
-    <div class="page-category">Region</div>
-    <h1 class="page-title">Caparia</h1>
-    <p class="page-subtitle">The central heartlands of Pogglewog</p>
-  </div>
-  <div class="caparia-layout">
-
-    <!-- LEFT COLUMN: image, description, quote, notable places -->
-    <div class="caparia-main">
-      <img src="assets/images/regions/img-caparia-landscape.png" alt="Caparia — the central heartlands of Pogglewog" class="region-hero">
-      <p>Caparia is the heart of Pogglewog — the largest, most diverse, and most politically complex region on the continent. It is home to lush meadows, sparkling inland seas, and the most colorful cities in Anavale. The sun is overhead here, which the Brightcreed considers cosmically appropriate.</p>
-      <div class="pull-quote">
-        "In Caparia, color maintenance is not pride. It is law. The fine for a faded storefront is modest. The social consequences are not."
-        <cite>— A Bunari merchant, describing Solenveil</cite>
-      </div>
-      <div class="region-section">
-        <div class="region-heading">Notable Places</div>
-        <div class="entry-grid">
-          <div class="entry-card entry-card-feature">
-            <img src="assets/images/regions/img-caparia-Solenveil.png" alt="Solenveil" class="entry-card-img">
-            <div class="entry-card-text">
-              <div class="entry-name">Solenveil</div>
-              <div class="entry-tag">Capital · Caldenric Accord</div>
-              <div class="entry-body">The most colorful city in Anavale. Color maintenance is legally required. Faded buildings receive restoration crews within a week. Home of the Gigglegloom Conclave's primary offices and the famous Mirrenflow promenade.</div>
-            </div>
-          </div>
-          <div class="entry-card entry-card-feature">
-            <img src="assets/images/regions/img-caparia-Goober-Bounce-Meadows.png" alt="Goober Bounce Meadows" class="entry-card-img">
-            <div class="entry-card-text">
-              <div class="entry-name">Goober Bounce Meadows</div>
-              <div class="entry-tag">Geographic Feature</div>
-              <div class="entry-body">Vast central meadowlands famous for their extraordinary density of Bounce Beetles. The meadows produce a near-constant "boing" sound on warm afternoons. Visitors find this either delightful or deeply disorienting. Usually both.</div>
-            </div>
-          </div>
-          <div class="entry-card entry-card-feature">
-            <img src="assets/images/regions/img-caparia-Sillywiggles-Meadows.png" alt="Sillywiggles Meadows" class="entry-card-img">
-            <div class="entry-card-text">
-              <div class="entry-name">Sillywiggles Meadows</div>
-              <div class="entry-tag">Geographic Feature</div>
-              <div class="entry-body">Rolling southern meadows known for Gigglegloom wildflower surges in spring. During peak season, wildflowers here bloom in colors that technically shouldn't exist. Botanical scholars visit annually. They leave confused and happy.</div>
-            </div>
-          </div>
-          <div class="entry-card entry-card-feature">
-            <img src="assets/images/regions/img-caparia-Prismhold.png" alt="Prismhold" class="entry-card-img">
-            <div class="entry-card-text">
-              <div class="entry-name">Prismhold</div>
-              <div class="entry-tag">City · Chroma Bureau</div>
-              <div class="entry-body">The Chroma Bureau's city-state at the exact geographic center of Caparia. Every Gigglegloom license in Anavale passes through here. Also home to the Prior Stone — a monument of pure white raw Gigglegloom that the Bureau has surrounded with 44 forms' worth of access restrictions.</div>
-            </div>
-          </div>
-          <div class="entry-card entry-card-feature">
-            <img src="assets/images/regions/img-caparia-Doopu-Peaks.png" alt="Doopu Peaks" class="entry-card-img">
-            <div class="entry-card-text">
-              <div class="entry-name">Doopu Peaks</div>
-              <div class="entry-tag">Mountain Range</div>
-              <div class="entry-body">The eastern mountain range, home to the Brightwall — a cliff face where all four Gigglegloom types surge simultaneously at every equinox. The most spectacular natural Gigglegloom event in Anavale. Visible from twenty miles away.</div>
-            </div>
-          </div>
-          <div class="entry-card entry-card-feature">
-            <img src="assets/images/regions/img-caparia-Reveltown.png" alt="Reveltown" class="entry-card-img">
-            <div class="entry-card-text">
-              <div class="entry-name">Reveltown</div>
-              <div class="entry-tag">Town · Northwest Caparia</div>
-              <div class="entry-body">Home base of the traveling festival guild known as The Revel. Perpetually mid-festival. Nobody who lives there knows what day it is. Visitors are welcomed immediately and enthusiastically into whatever is currently happening.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COLUMN: accordion -->
-    <div class="caparia-sidebar">
-      <div class="accordion">
-
-        <details>
-          <summary>🗣️ Languages <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <ul>
-              <li><strong>Commonweave:</strong> The universal trade tongue spoken by almost everyone in Caparia.</li>
-            </ul>
-          </div>
-        </details>
-
-        <details>
-          <summary>👑 Nations &amp; Governments <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <p>Caparia is unified by <strong>The Pogglewog Confederation</strong>, a 300-year-old alliance of six nations that share trade routes, enforce peace, and celebrate Brightcreed festivals together:</p>
-            <ul>
-              <li><strong>The Solenmere:</strong> The central representative democracy (Caldenric Accord) known for highly colorful cities and trained "Color Reader" mediators.</li>
-              <li><strong>The Bunari:</strong> An eastern coastal merchant council where a significant portion of the population lives freely on ships.</li>
-              <li><strong>The Zippan:</strong> A western hill nation run by a Council of Guilds, boasting the absolute best food and undisputed festival champions.</li>
-              <li><strong>The Dingurei:</strong> An eastern forest nation governed by an Assembly of Scribes, organizing their cities around massive libraries.</li>
-              <li><strong>The Janiveth:</strong> A southern mountain nation run by an elder clan assembly that prizes endurance and maintains a 400-year "Winter Count" color record.</li>
-              <li><strong>The Opuri:</strong> A northwestern forest nation guided by a Council of Listeners who live alongside an ancient forest Mosskin.</li>
-            </ul>
-          </div>
-        </details>
-
-        <details>
-          <summary>🏛️ Prominent Organizations <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <ul>
-              <li><strong>The Caldenric Accord:</strong> The beloved, fair, and slightly indecisive representative democracy governing the central Caparian nations.</li>
-              <li><strong>The Chroma Bureau (Gigglegloom Conclave):</strong> The strict arcane theocracy in Prismhold that governs every single magic license in Anavale.</li>
-              <li><strong>The Formery:</strong> The oldest, most delightfully bureaucratic organization in the world — they have an office in Confederation Hall that nobody invited them to set up.</li>
-              <li><strong>The Revel:</strong> A traveling festival guild that operates out of Reveltown.</li>
-            </ul>
-          </div>
-        </details>
-
-        <details>
-          <summary>🐾 Flora &amp; Fauna <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <ul>
-              <li><strong>Cute Companions:</strong> The region is filled with tiny, round pastel squirrels called Fluffets, humming green Bumble Frogs, ricocheting Bounce Beetles, and Pocketmoles — pets that locate sad people and sit on their feet to comfort them.</li>
-              <li><strong>Impossible Flowers:</strong> In the Sillywiggles Meadows, spring Gigglegloom surges cause wildflowers to bloom in vibrant, glowing colors that technically shouldn't exist.</li>
-            </ul>
-          </div>
-        </details>
-
-        <details>
-          <summary>🍭 Food &amp; Drink <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <ul>
-              <li>The Zippan nation creates the best food in Anavale.</li>
-              <li>Festival favorites include <strong>Zippan Fizz-Tarts</strong> (pastries with popping jam), floating mugs of <strong>Cloudwhump Cotton-Cider</strong>, and voice-changing <strong>Gigglegloom Gummies</strong>.</li>
-            </ul>
-          </div>
-        </details>
-
-        <details>
-          <summary>🗺️ Points of Interest <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <ul>
-              <li><strong>Solenveil:</strong> The sprawling capital city where maintaining the color of buildings is legally required.</li>
-              <li><strong>Prismhold &amp; The Prior Stone:</strong> The geographic center of Caparia, housing a restricted monument of pure white, raw Gigglegloom magic.</li>
-              <li><strong>The Brightwall:</strong> A massive cliff in the Doopu Peaks where all four types of magic surge simultaneously at the equinox.</li>
-              <li><strong>Reveltown:</strong> A town perpetually caught mid-festival, where nobody knows what day it is.</li>
-              <li><strong>The Partition Scar:</strong> A crack in the bedrock in Dingu Forest where raw magic seeps into the world.</li>
-            </ul>
-          </div>
-        </details>
-
-        <details>
-          <summary>🌑 The Main Threat <span class="acc-arrow">▼</span></summary>
-          <div class="acc-body">
-            <ul>
-              <li><strong>Drak:</strong> The Vareth's twisted sorcerer lieutenant who operates within Caparia. He obsessively corrupts the Gigglegloom and hides his research in a secret archive.</li>
-              <li><strong>The Dark Zones:</strong> Areas like Greyveil Hollow and The Grasping Ledge are Drakhold outposts where the color has been completely drained, leaving a flat, joyless grey.</li>
-            </ul>
-          </div>
-        </details>
-
-      </div>
-    </div>
-
-  </div>
-
-  <div class="pawprints">
-    <svg viewBox="0 0 24 24"><path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2ZM7 6C5.9 6 5 6.9 5 8C5 9.1 5.9 10 7 10C8.1 10 9 9.1 9 8C9 6.9 8.1 6 7 6ZM17 6C15.9 6 15 6.9 15 8C15 9.1 15.9 10 17 10C18.1 10 19 9.1 19 8C19 6.9 18.1 6 17 6ZM12 8C9.8 8 8 9.8 8 12C8 14.8 12 20 12 20C12 20 16 14.8 16 12C16 9.8 14.2 8 12 8Z"/></svg>
-    <svg viewBox="0 0 24 24" style="margin-top:-10px;"><path d="M12 2C10.9 2 10 2.9 10 4C10 5.1 10.9 6 12 6C13.1 6 14 5.1 14 4C14 2.9 13.1 2 12 2ZM7 6C5.9 6 5 6.9 5 8C5 9.1 5.9 10 7 10C8.1 10 9 9.1 9 8C9 6.9 8.1 6 7 6ZM17 6C15.9 6 15 6.9 15 8C15 9.1 15.9 10 17 10C18.1 10 19 9.1 19 8C19 6.9 18.1 6 17 6ZM12 8C9.8 8 8 9.8 8 12C8 14.8 12 20 12 20C12 20 16 14.8 16 12C16 9.8 14.2 8 12 8Z"/></svg>
-  </div>
+  <!-- Rendered dynamically by renderRegionPage('caparia') in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
+
 
 <!-- THE SOLENMERE -->
 <div class="page" id="page-nation-solenmere">
@@ -823,307 +667,52 @@
 </div>
 
 <!-- NOMBI -->
+
 <div class="page" id="page-nombi">
-  <div class="page-header">
-    <div class="page-category">Region</div>
-    <h1 class="page-title">Nombi</h1>
-    <p class="page-subtitle">The frozen north, where the aurora speaks</p>
-  </div>
-  <div class="wiki-body">
-    <p>Nombi is cold, densely forested, and old. The kind of old that doesn't announce itself but sits quietly in the roots of trees and the cracks of rocks, watching. The aurora lights here — shifting greens and blues and golds — are considered by most Nombi cultures to be a form of divine communication. They disagree about what, specifically, is being communicated, which has produced three distinct religious and philosophical traditions and a great deal of excellent debate.</p>
-    <div class="pull-quote">
-      "The Nombi don't say much. But they are always listening. I have found this more comforting than I expected."
-      <cite>— A Caparian traveller's journal</cite>
-    </div>
-    <div class="region-section">
-      <div class="divider-aurora" style="background-image: url('data:image/svg+xml,%3Csvg width%3D%22100%22 height%3D%2230%22 xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath d%3D%22M0%2C15 Q25%2C0 50%2C15 T100%2C15%22 fill%3D%22none%22 stroke%3D%22%231a8a7a%22 stroke-width%3D%223%22 opacity%3D%220.8%22%2F%3E%3Cpath d%3D%22M0%2C20 Q25%2C5 50%2C20 T100%2C20%22 fill%3D%22none%22 stroke%3D%22%23e8b830%22 stroke-width%3D%222%22 opacity%3D%220.5%22%2F%3E%3C%2Fsvg%3E');"></div>
-      <div class="region-heading">Notable Places</div>
-      <div class="entry-grid">
-        <div class="entry-card">
-          <div class="entry-name">Coldmere</div>
-          <div class="entry-tag">Capital · Deepchill Accord</div>
-          <div class="entry-body">Seat of Nombi's governing clan assembly. Has been deciding its national flag for 60 years. Extremely warm indoors. The best stew in Anavale. Visitors are strongly encouraged to arrive before the first snow.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">The Endless Forest</div>
-          <div class="entry-tag">Geographic Feature</div>
-          <div class="entry-body">A vast central forest that appears to have no edge, despite cartographers' insistence that it must. Creatures here are particularly vivid. The tree density produces a particular quality of light that visitors describe as "like being inside color itself."</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">Sky Islands</div>
-          <div class="entry-tag">Geographic Feature · Above the Glacial Sea</div>
-          <div class="entry-body">Floating islands above the Glacial Sea, accessible only via aurora wind currents that require specific navigational knowledge. Home to Cloudwhumps and various sky-going creatures. The view from the islands is, by all accounts, unreasonable.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">The Pale Ring</div>
-          <div class="entry-tag">Gigglegloom Surge Site</div>
-          <div class="entry-body">A Steelfist surge site in Nombi's interior where cold violet rings appear in the ice each winter. Clan elders read them as messages from Thyun. The Stillkeep sends observers annually. They disagree on the interpretation.</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Rendered dynamically by renderRegionPage('nombi') in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
+
 
 <!-- SOHOT -->
+
 <div class="page" id="page-sohot">
-  <div class="page-header">
-    <div class="page-category">Region</div>
-    <h1 class="page-title">Sohot</h1>
-    <p class="page-subtitle">The blazing south, where ancient things persist</p>
-  </div>
-  <div class="wiki-body">
-    <p>Sohot is a land of extremes — blazing desert, ancient ruins, underground cities of extraordinary complexity, and a monarchy that throws the most lavish parties on the continent while quietly managing a crisis it hasn't named yet. It is also the site of some of Anavale's oldest civilization, and the ruins of that civilization are everywhere, as a constant reminder that even very grand things end.</p>
-    <div class="pull-quote">
-      "The Auvari built everything and then stopped. We live in what they left. This is either humbling or clarifying, depending on how the morning has gone."
-      <cite>— Auvari Remnance elder, Aurentum City</cite>
-    </div>
-    <div class="region-section">
-      <div class="region-heading">Notable Places</div>
-      <div class="entry-grid">
-        <div class="entry-card">
-          <div class="entry-name">Aurentum City</div>
-          <div class="entry-tag">Capital · The Aurentum</div>
-          <div class="entry-body">Seat of Sohot's monarchy. Lavish, colorful, perfumed, and loud. The royal palace has more pets than staff. The court fashion is extraordinary. Something may or may not be wrong with the Queen's gowns. Nobody is discussing this officially.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">Sunharbor</div>
-          <div class="entry-tag">Major Port · Bumti Bay</div>
-          <div class="entry-body">Sohot's largest port. Spice and color trade flows through here. Gerald the Bumti Jelly returns to the harbor every summer without fail. The harbor master has known Gerald for forty years and considers him reliable company.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">The Sizzling Dunes</div>
-          <div class="entry-tag">Geographic Feature</div>
-          <div class="entry-body">The central desert. Extraordinarily hot, home to Sandgliders and Sunslugs, and traversed by the Vokrath people who have been navigating it for generations using methods they find it funny that outsiders cannot replicate.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">The Bubblespring</div>
-          <div class="entry-tag">Sacred Site · Brightcreed</div>
-          <div class="entry-body">A Bubbleseed surge site near Bumti Bay where a hot spring produces faintly gold-tinted water. The second-holiest Brightcreed site in Anavale. Pilgrimage season is crowded but festive.</div>
-        </div>
-      </div>
-    </div>
-    <div class="warning-box">
-      <div class="warning-title">Traveller's Note</div>
-      <div class="warning-body">A location in the Ashfall Wastes called the Quiet Pillar is noted in several travel accounts as a place where color ceases to exist within 100 feet. All compendium editors recommend against visiting it for recreational purposes.</div>
-    </div>
-  </div>
+  <!-- Rendered dynamically by renderRegionPage('sohot') in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
+
 
 <!-- JUGABI -->
+
 <div class="page" id="page-jugabi">
-  <div class="page-header">
-    <div class="page-category">Region</div>
-    <h1 class="page-title">Jugabi</h1>
-    <p class="page-subtitle">The jungle southwest, alive beyond counting</p>
-  </div>
-  <div class="wiki-body">
-    <p>Jugabi is the Dodooti Rainforest, and the Dodooti Rainforest is arguably the most alive place in Anavale. Its canopy, when seen from above, looks like a second ocean. Below that canopy, everything is in conversation with everything else — every creature, every tree, every Gigglegloom surge is part of a system so complex that the scholars who study it agree primarily on this: they do not understand it yet.</p>
-    <p>Two nations share this forest. They have been arguing about the right way to live in it for eighty years. Both are correct about some things. Neither would admit this.</p>
-    <div class="pull-quote">
-      "The forest has an opinion about you. Give it time and you'll figure out what it is."
-      <cite>— Verdathi elder, deep Dodooti</cite>
-    </div>
-    <div class="region-section">
-      <div class="region-heading">Notable Places</div>
-      <div class="entry-grid">
-        <div class="entry-card">
-          <div class="entry-name">Dodooti Rainforest</div>
-          <div class="entry-tag">Geographic Feature</div>
-          <div class="entry-body">Ancient, vast, and alive in ways that exceed easy description. The canopy produces colors not easily named. Rootsingers — ancient creatures that resemble trees until they move — are believed to live here. The Greenvast Tribes will not cut the oldest trees.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">Bloom Hollow</div>
-          <div class="entry-tag">Sacred Site · Gigglegloom Surge</div>
-          <div class="entry-body">A Bubbleseed surge site deep in the Dodooti where flowers bloom in colors without names. The second-holiest Brightcreed site in Anavale, drawing pilgrims annually. The flowers do not survive being picked. This is considered a message.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">Tanglevine</div>
-          <div class="entry-tag">Town · Northern Coast</div>
-          <div class="entry-body">Where Jugabi meets Caparia's trade network. Chaotic, colorful, and extraordinarily fragrant from the combination of jungle flowers and market spices. The best place on Pogglewog to hear three languages spoken simultaneously.</div>
-        </div>
-        <div class="entry-card">
-          <div class="entry-name">Mumblewump</div>
-          <div class="entry-tag">Village · Deep Jungle</div>
-          <div class="entry-body">A village that exists entirely in the jungle canopy, accessible only by rope bridge. People who were not born there rarely find it twice. People who were born there find this fact quietly hilarious.</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Rendered dynamically by renderRegionPage('jugabi') in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
+
 
 <!-- CREATURES COMMON -->
+
 <div class="page" id="page-creatures-common">
-  <div class="page-header">
-    <div class="page-category">Bestiary</div>
-    <h1 class="page-title">Common Creatures</h1>
-    <p class="page-subtitle">Those you are likely to meet on any given afternoon</p>
-  </div>
-  <div class="wiki-body">
-    <p>Anavale's creatures are everywhere, and they are paying attention to you. This is not threatening. It is, in fact, rather wonderful once you get used to it. The following entries cover creatures a traveller on Pogglewog will encounter regularly. They are described here as observed, not as classified — the Chroma Bureau's creature classification system involves forty-seven forms and this compendium does not have the patience for that.</p>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Fluffets</div>
-        <div class="creature-latin">Tiny round squirrels — pastel fur, oversized ears</div>
-      </div>
-      <div class="creature-body">Make a sound described universally as "bwip." Startled by almost everything — loud noises, sudden movements, unexpected kindness, their own reflections. Will bring acorn gifts to people they decide they like. The decision process is opaque but the outcome is unmistakable.</div>
-      <div class="creature-note">Practical note: Fluffet acorn gifts should be accepted graciously. Declining them causes visible distress.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Bumble Frogs</div>
-        <div class="creature-latin">Round green frogs — hum instead of croaking</div>
-      </div>
-      <div class="creature-body">Hum at a frequency that harmonizes naturally with other Bumble Frogs, producing spontaneous choirs in any area with a sufficient population. Will attempt to join any song being sung nearby. Their pitch accuracy is surprisingly good. Their timing is their own business.</div>
-      <div class="creature-note">Warning indicator: if the Bumble Frogs in an area have gone quiet, something is wrong.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Tinywings</div>
-        <div class="creature-latin">Thumb-sized dragons — enormous wings, breathe tiny sparks</div>
-      </div>
-      <div class="creature-body">Cannot fly straight. This is a fact. They are aware of this fact. They disagree with it. If you observe a Tinywing flying in a curve and mention this, expect a heated discussion that will eventually conclude with the Tinywing flying away in a curve while projecting an air of dignity.</div>
-      <div class="creature-note">Do not bet against a Tinywing. They always arrive eventually.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Bounce Beetles</div>
-        <div class="creature-latin">Shiny colorful beetles — ricochet off surfaces</div>
-      </div>
-      <div class="creature-body">Travel in packs. Navigate by ricocheting off walls, trees, people, and each other, producing a constant soft "boing" sound. Their routes are completely chaotic. Their destinations are somehow always correct. Scholars have been studying this for decades and remain unable to explain it.</div>
-      <div class="creature-note">Bounce Beetles in an area indicate good Gigglegloom health. Many Bounce Beetles indicate excellent health and also mild chaos.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Pocketmoles</div>
-        <div class="creature-latin">Small velvet-furred moles — common household companion</div>
-      </div>
-      <div class="creature-body">The most common pet in Caparia. Cannot see well but have extraordinary emotional sensitivity — will locate any sad person in a room and sit on their foot until acknowledged. Collect small colored objects and leave them in their owner's shoes as gifts. Nobody asked for this. Nobody has ever successfully stopped it.</div>
-      <div class="creature-note">Having a Pocketmole sit on your foot is generally considered a kindness, even if it doesn't feel like one.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Sparklings</div>
-        <div class="creature-latin">Tiny hummingbird-like creatures — move as streaks of colored light</div>
-      </div>
-      <div class="creature-body">So fast they are essentially invisible in motion, leaving only color trails — gold for Bubbleseed, teal for Featherflow, violet for Steelfist, red-orange for Flamerage. Where Sparklings cluster, the Gigglegloom is healthy. Where they avoid, it is not. The Wanderkeep uses their distribution as a primary health indicator.</div>
-      <div class="creature-note">A Sparkling that stops moving and hovers directly in front of you is an unusual event. Pay attention to where it goes next.</div>
-    </div>
-  </div>
+  <!-- Rendered dynamically by renderCreaturesPage('common') in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
+
 
 <!-- CREATURES RARE -->
+
 <div class="page" id="page-creatures-rare">
-  <div class="page-header">
-    <div class="page-category">Bestiary</div>
-    <h1 class="page-title">Rare & Mysterious</h1>
-    <p class="page-subtitle">Those you may meet once, or never, or in dreams</p>
-  </div>
-  <div class="wiki-body">
-    <p>Anavale contains things that resist easy categorization. The following entries are compiled from eyewitness accounts, Stillkeep records, Brightcreed theological texts, and one extremely detailed letter written to the Chroma Bureau that the Bureau declined to respond to.</p>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Hollowmoths</div>
-        <div class="creature-latin">Large ash-grey moths — mirror eyes, native to Dimmed places</div>
-      </div>
-      <div class="creature-body">Unlike other grey creatures, Hollowmoths did not fade. They were born grey, in places that had been Dimmed long enough for something new to grow from the absence. They feed on the residual warmth of color that recently left a location. Children are inexplicably unafraid of them. Hollowmoths will land on a child's outstretched hand and sit quietly, wings slowly opening and closing, as if remembering something.</div>
-      <div class="creature-note">If you see a Hollowmoth somewhere it wasn't before: the Dimming has already arrived. The moth is the announcement.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Mirrorwolves</div>
-        <div class="creature-latin">Wolves — fur reflects the observer's strongest emotion</div>
-      </div>
-      <div class="creature-body">A person in grief sees a grey, hollow animal. A person in joy sees something vivid and luminous. A person who is afraid sees something they will not describe afterward. They are the same creature in all cases — ordinary wolves with extraordinary fur. Travel in packs of exactly seven. Have never been recorded attacking a creature that is genuinely happy.</div>
-      <div class="creature-note">The Brightcreed considers this significant. The Mirrorwolves are indifferent to the Brightcreed's opinion.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Gilded Tortoise</div>
-        <div class="creature-latin">Ancient tortoise — trees grow on its shell</div>
-      </div>
-      <div class="creature-body">An ancient tortoise so large that small trees grow on its shell. Walks a route taking approximately forty years to complete, crossing both Sohot and southern Caparia. Finding it is considered the greatest possible omen of good fortune in Brightcreed tradition. Several people have built small seasonal homes on its shell. The Tortoise does not appear to mind.</div>
-      <div class="creature-note">At least one Mosskin accumulation has apparently decided the Tortoise is a valid location. The Tortoise has not commented.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">Loomhares</div>
-        <div class="creature-latin">Rabbits — glowing geometric markings, sometimes phase through walls</div>
-      </div>
-      <div class="creature-body">Overloaded with Gigglegloom — not corrupted, simply overwhelmed. Their markings shift color with their moods. They sometimes pass through solid objects, which they appear not to notice. Behavior is completely unpredictable. May explode with confetti. Have been known to briefly speak. What they say rarely makes sense in the moment and sometimes makes sense later.</div>
-      <div class="creature-note">The Chroma Bureau advises not making eye contact. The compendium editors suggest that is going to be difficult.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Unseen</div>
-        <div class="creature-latin">No confirmed description — ancient beyond memory</div>
-      </div>
-      <div class="creature-body">No confirmed description exists. Witnesses report different things: a warmth, a shape, a feeling of great age. Before an Unseen passes through an area, animals go very still — not frightened, attentive. After, one object in the area is left changed: not damaged, not moved, but somehow different in a way that defies explanation. A door with new grain. A stone geometrically smooth on one face. A child's drawing with one additional figure, always facing away.</div>
-      <div class="creature-note">The Chroma Bureau has filed Form 1-A seventeen times. Each time it is returned stamped: ENTITY DECLINES TO RESPOND.</div>
-    </div>
-  </div>
+  <!-- Rendered dynamically by renderCreaturesPage('rare') in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
 
+
 <!-- ORGANIZATIONS -->
+
 <div class="page" id="page-organizations">
-  <div class="page-header">
-    <div class="page-category">Society</div>
-    <h1 class="page-title">Notable Organizations</h1>
-    <p class="page-subtitle">Guilds, institutions, and groups worth knowing about</p>
-  </div>
-  <div class="wiki-body">
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Gigglegloom Conclave</div>
-        <div class="creature-latin">Magic licensing authority — answers to no government</div>
-      </div>
-      <div class="creature-body">Governs all Gigglegloom use in Anavale. Issues licenses, warnings, and penalties. Answers to no political authority. Enforces Gigglegloom law on anyone, regardless of rank. Its secret military force, the Chromeguard, wears armor that shifts color in patterns unique to each member — impossible to impersonate. The Conclave's city-state, Prismhold, sits at the exact center of Caparia.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Wanderkeep</div>
-        <div class="creature-latin">Wandering protectors of the Gigglegloom</div>
-      </div>
-      <div class="creature-body">Wandering guardians who travel Anavale patching Gigglegloom corruption, monitoring Dimming progression, and generally doing what needs doing in places that have been overlooked. They have no fixed home. They are very tired. They are very committed. They track Sparkling distribution and Bumble Frog behavior as primary health indicators.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Kindpact</div>
-        <div class="creature-latin">Ethical creature traders</div>
-      </div>
-      <div class="creature-body">Ethical traders of creatures, with strict codes of care and transport. Their practitioners can assess a creature's Gigglegloom health by coat, scale, or feather color alone. Maintain a standing bounty on every Breth Chaine operation. Share their list of known color-extraction practitioners freely with anyone who asks.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Revel</div>
-        <div class="creature-latin">Traveling festival guild</div>
-      </div>
-      <div class="creature-body">Traveling circuses, performers, bards, and acrobats. Everywhere there is joy, The Revel is nearby. Every performance in a Fading town leaves the buildings slightly more saturated for days afterward. Some members know this is not a coincidence. All of them feel it. Rumored to have other purposes. Officially denied.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Prism Exchange</div>
-        <div class="creature-latin">Traders of magical pigments and color</div>
-      </div>
-      <div class="creature-body">Traders of rare pigments, dyes, and hues that hold Gigglegloom within them. Their rarest product — Voidblush — can temporarily reverse early-stage Dimming with a single drop. They are very protective of their stock. They have survived seven assassination attempts. They remain open for business.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Formery</div>
-        <div class="creature-latin">Bureau of Thorough Consideration — the oldest organization in Anavale</div>
-        <div class="formery-stamp">FORM 1-A: RECEIVED... EVENTUALLY</div>
-      </div>
-      <div class="creature-body">The oldest organization in Anavale. Not the oldest active organization — the oldest organization, full stop. Its founding predates the Partition, the Auvari empire, every government and religion currently operating in Anavale. Nobody knows what it was originally designed to do. It processes requests, charges modest fees, and issues forms for situations that may never arise. It has been doing this since before memory, which is why everyone tolerates it with the patience one extends to something that has clearly been here longer than everything else and will be here after everything else has gone.</div>
-      <div class="creature-note">The clerks are always polite. They have seen everything before. They will see everything again.</div>
-    </div>
-    <div class="creature-entry">
-      <div class="creature-header">
-        <div class="creature-name">The Nimblewood</div>
-        <div class="creature-latin">International thieves' guild — has a code</div>
-      </div>
-      <div class="creature-body">International thieves' guild with a surprisingly firm code of honor: never steal from those who cannot afford to lose it, never work for the grey. Principled and professional. The current guildmaster is believed to be a very clever squirrel. This has not been confirmed. It has not been denied.</div>
-    </div>
-  </div>
+  <!-- Rendered dynamically by renderOrganizationsPage() in wiki.js -->
+  <!-- Content populated on DOMContentLoaded and on show() -->
 </div>
+
 
 <!-- RUMORS -->
 <div class="page" id="page-rumors">
@@ -1169,6 +758,13 @@
 </div>
 
   <script src="data/spells.js"></script>
+  <script src="data/regions.js"></script>
+  <script src="data/nations.js"></script>
+  <script src="data/cities.js"></script>
+  <script src="data/creatures.js"></script>
+  <script src="data/organizations.js"></script>
+  <script src="data/characters.js"></script>
+  <script src="data/index.js"></script>
   <script src="js/wiki.js"></script>
 
 <div class="spell-modal-overlay" id="spell-modal-overlay" onclick="if(event.target===this)closeSpellModal()">
