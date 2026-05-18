@@ -543,3 +543,209 @@ mark.search-highlight {
 .region-site-list li { margin-bottom: 0.2rem; }
 
 /* ── Spellbook Section ────────────────────────────────────────── */
+
+/* ── B3-A: ACCORDION SIDEBAR ──────────────────────────────────── */
+.nav-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.5rem;
+  color: rgba(200,180,140,0.8);
+  font-size: 1rem;
+  font-family: 'IM Fell English', Georgia, serif;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1.4;
+}
+.nav-accordion-header:hover,
+.nav-accordion-header.active {
+  color: var(--gold-light);
+  background: rgba(200,148,10,0.08);
+}
+.nav-accordion-arrow {
+  font-size: 0.6rem;
+  opacity: 0.5;
+  transition: transform 0.25s;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+.nav-accordion-header.open .nav-accordion-arrow {
+  transform: rotate(90deg);
+  opacity: 0.8;
+}
+.nav-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.nav-accordion-body.open {
+  max-height: 1200px;
+}
+
+/* Nesting indent levels */
+.nav-level-2 { padding-left: 1rem; }
+.nav-level-3 { padding-left: 1.5rem; }
+.nav-level-4 { padding-left: 2rem; }
+
+.nav-level-2 .nav-accordion-header,
+.nav-level-2 .nav-link {
+  font-size: 0.93rem;
+  padding-left: 2.5rem;
+  opacity: 0.9;
+}
+.nav-level-3 .nav-accordion-header,
+.nav-level-3 .nav-link {
+  font-size: 0.87rem;
+  padding-left: 3rem;
+  opacity: 0.8;
+}
+.nav-level-4 .nav-link {
+  font-size: 0.82rem;
+  padding-left: 3.5rem;
+  opacity: 0.75;
+}
+
+/* ── B3-A: BREADCRUMB ─────────────────────────────────────────── */
+.wiki-breadcrumb {
+  font-family: 'Charm', serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 1.5rem;
+}
+.wiki-breadcrumb a,
+.wiki-breadcrumb span[data-nav] {
+  color: var(--amber);
+  text-decoration: none;
+  cursor: pointer;
+}
+.wiki-breadcrumb a:hover,
+.wiki-breadcrumb span[data-nav]:hover {
+  text-decoration: underline;
+}
+.wiki-breadcrumb .sep { margin: 0 0.5rem; opacity: 0.5; }
+
+/* ── B3-A: SECTION HEADING ───────────────────────────────────── */
+.section-heading {
+  font-family: 'Charm', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(200,148,10,0.25);
+  padding-bottom: 0.35rem;
+  margin: 2rem 0 1rem;
+}
+
+/* ── B3-A: WIKI LIST ─────────────────────────────────────────── */
+.wiki-list {
+  margin: 0 0 1.5rem 1.5rem;
+  padding: 0;
+  line-height: 1.9;
+  color: var(--ink-light);
+  font-size: 0.97rem;
+}
+.wiki-list li { margin-bottom: 0.2rem; }
+
+/* ── B3-A: TEASER FOOTER ─────────────────────────────────────── */
+.teaser-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(200,148,10,0.2);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ── B3-A: ENTRY IMAGE (updated) ────────────────────────────── */
+.entry-image {
+  float: right;
+  width: 220px;
+  max-width: 40%;
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(200,148,10,0.2);
+  margin: 0 0 1rem 1.5rem;
+  display: block;
+}
+
+/* ── B3-A: CLICKABLE CARD HOVER ──────────────────────────────── */
+.entry-card[data-nav] {
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.entry-card[data-nav]:hover {
+  border-color: rgba(200,148,10,0.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* ── B3-A: WIKI CONTENT CONTAINER ───────────────────────────── */
+#wiki-content {
+  padding: 3rem 3.5rem 5rem;
+  min-height: 100vh;
+}
+
+/* ── NATION PAGE STYLES (preserved from B1) ──────────────────── */
+.nation-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 2.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .nation-layout { grid-template-columns: 1fr; }
+}
+.nation-facts {
+  background: rgba(200,148,10,0.06);
+  border: 1px solid rgba(200,148,10,0.2);
+  border-radius: var(--card-radius);
+  padding: 1.25rem 1.5rem;
+  position: sticky;
+  top: 1.5rem;
+}
+.nation-facts-title {
+  font-family: 'Charm', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+}
+.nation-fact-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.nation-fact-label {
+  color: var(--amber);
+  font-weight: 700;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.nation-fact-value { color: var(--ink-light); }
+.nation-section-heading {
+  font-family: 'Charm', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 1.5rem 0 0.5rem;
+  border-bottom: 1px solid rgba(200,148,10,0.2);
+  padding-bottom: 0.3rem;
+}
+.nation-body p { margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.85; color: var(--ink-light); }
+.nation-breadcrumb {
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+.nation-breadcrumb button {
+  background: none; border: none; cursor: pointer;
+  color: var(--amber); font-family: inherit; font-size: inherit;
+  text-decoration: underline; padding: 0;
+}
+.dimming-zero  { color: #2a7a3a; font-weight: 600; }
+.dimming-low   { color: #c8940a; font-weight: 600; }
+.dimming-high  { color: #aa3a1a; font-weight: 600; }

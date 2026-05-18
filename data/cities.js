@@ -659,5 +659,55 @@ var CITIES = [
     vareth_presence: false,
     tone: "Busy, transactional, always someone new passing through. The Formery has been here longer than the crossing itself.",
     tags: ["caparia", "solenmere", "crossroads", "mirrenflow", "tumblerun", "trade", "formery"]
+  },
+  {
+    "id": "gobblewump-crossing",
+    "name": "Gobblewump Crossing",
+    "nation": "solenmere",
+    "region": "caparia",
+    "continent": "pogglewog",
+    "type": "town",
+    "summary": "A waypoint settlement at the junction of the Tumblerun and the Mirrenflow, central-north Caparia. The most trafficked river crossing on the continent — not planned, not founded, simply accumulated over centuries wherever two rivers and every road on both sides of them met at the same bridge.",
+    "description": "Nobody planned Gobblewump Crossing. It was not founded by a nation, chartered by the Caldenric Accord, or established by any guild. It simply accumulated — the way things accumulate at the point where two rivers meet and every road on both sides of both rivers eventually leads to the same bridge. The bridge came first. A stone arch crossing the Tumblerun at the point where it meets the Mirrenflow, built by someone whose name nobody recorded because at the time it seemed like a practical decision rather than a historical one. The bridge is still there. It has been repaired seventeen times. The original stones are still in the foundation. Then came the wayhouse, a stall selling food, a stall selling food to people waiting at the first stall, three inns, a stable, and eventually a settlement that nobody named for thirty years because everyone assumed someone else had already done it. The name came from a Zippan farmer's daughter of approximately six years old who watched the churning water where the Tumblerun's cold fast current collided with the Mirrenflow's wide slow one and said it looked like a gobblewump. Nobody present knew what a gobblewump was. The name stuck immediately because it was exactly right in a way nobody could articulate. The junction of the two rivers is genuinely spectacular — the Tumblerun comes in cold, fast, and slightly luminescent from its aurora-touched origins in the Tanaki Mountains, while the Mirrenflow is wide, slow, and amber-warm from its long passage across Caparia's central plains. Where they meet the water churns in patterns that change with the seasons. In spring the Tumblerun overwhelms the Mirrenflow's edge and the junction swirls with competing currents of different colors. In summer the Mirrenflow dominates and the Tumblerun's luminescence spreads in thin aurora-touched threads across the wider river's surface. Gobblewump Gerald — a Bumble Frog of extraordinary size and age who lives under the bridge — glows faintly at night and harmonizes with the river current at dawn in a way that has caused at least three travellers to unexpectedly cry and feel completely fine afterward.",
+    "landmarks": [
+      {
+        "name": "The Bridge",
+        "description": "A stone arch crossing the Tumblerun at the junction with the Mirrenflow. Repaired seventeen times. The original foundation stones are still in place. Ownership is disputed between four individuals and the Formery itself — an arbitration running for twenty-two years. The bridge remains open throughout."
+      },
+      {
+        "name": "The Formery Office",
+        "description": "The oldest Formery office in Caparia that is not located in a capital city. Predates the current bridge, the current settlement, and the settlement's name. During the nameless period it issued forms with the location field reading \"the place where the rivers meet.\" Those forms are still technically valid. Processes Form 6-C (Declaration of Commercial Intent Through a River Crossing), Form 6-D (Non-Commercial Intent), and Form 6-E (Uncertain Intent). The clerks can deploy a redirect to Form 22-B in under four seconds. They have done this 847 times."
+      },
+      {
+        "name": "The Wanderkeep Rest Station",
+        "description": "The only permanent Wanderkeep structure in all of Caparia. Sits on the north bank of the Mirrenflow just east of the bridge. Looks like a modest wayhouse from outside. Has been monitoring the Gigglegloom micro-surge at the river junction longer than the Dingurei have. Current keeper is Pressa Vorn, who has been here eleven years and has been saying she is leaving for eight of them."
+      },
+      {
+        "name": "The Message Board",
+        "description": "An unofficial message board on the eastern wall of the second-oldest inn. Has become the most reliable way to send word across Caparia without using the Goldenway's formal courier service. Nobody maintains it officially. It has never failed."
+      },
+      {
+        "name": "The Forres Brothers Inn",
+        "description": "The legendary-quality inn run by identical twin brothers. Nobody can tell them apart. They may be doing this intentionally. Serves the best breakfast in Caparia, which the Zippan dispute on principle but cannot disprove in practice."
+      }
+    ],
+    "strategic_importance": "Junction of the Tumblerun and the Mirrenflow — the most trafficked river crossing in central Caparia and the primary waypoint between northern and southern trade routes. Every road on both sides of both rivers eventually leads here.",
+    "color_health": "excellent",
+    "formery_present": true,
+    "vareth_presence": false,
+    "tone": "Busy, chaotic, warm, and quietly important. The kind of place where everyone is passing through and nobody quite leaves.",
+    "tags": [
+      "caparia",
+      "solenmere",
+      "waypoint",
+      "river-junction",
+      "mirrenflow",
+      "tumblerun",
+      "formery",
+      "wanderkeep",
+      "trade",
+      "bridge",
+      "gobblewump-gerald"
+    ]
   }
 ];
