@@ -147,8 +147,8 @@ function buildSidebar() {
   var regions   = typeof REGIONS        !== 'undefined' ? REGIONS        : [];
   var nations   = typeof NATIONS        !== 'undefined' ? NATIONS        : [];
   var cities    = typeof CITIES         !== 'undefined' ? CITIES         : [];
-  var creatures = typeof CREATURE_DATA  !== 'undefined' ? CREATURE_DATA  : [];
-  var orgs      = typeof ORGANIZATION_DATA !== 'undefined' ? ORGANIZATION_DATA : [];
+  var creatures = typeof CREATURES  !== 'undefined' ? CREATURES  : [];
+  var orgs      = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
   var items     = typeof ITEMS          !== 'undefined' ? ITEMS          : [];
   var pois      = typeof POIS           !== 'undefined' ? POIS           : [];
 
@@ -341,9 +341,9 @@ function buildSearchIndex() {
   var regions   = typeof REGIONS        !== 'undefined' ? REGIONS        : [];
   var nations   = typeof NATIONS        !== 'undefined' ? NATIONS        : [];
   var cities    = typeof CITIES         !== 'undefined' ? CITIES         : [];
-  var creatures = typeof CREATURE_DATA  !== 'undefined' ? CREATURE_DATA  : [];
-  var orgs      = typeof ORGANIZATION_DATA !== 'undefined' ? ORGANIZATION_DATA : [];
-  var chars     = typeof CHARACTER_DATA !== 'undefined' ? CHARACTER_DATA : [];
+  var creatures = typeof CREATURES  !== 'undefined' ? CREATURES  : [];
+  var orgs      = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
+  var chars     = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
   var items     = typeof ITEMS          !== 'undefined' ? ITEMS          : [];
   var pois      = typeof POIS           !== 'undefined' ? POIS           : [];
 
@@ -451,8 +451,8 @@ function buildWikiLinkMap() {
 
   var nations   = typeof NATIONS        !== 'undefined' ? NATIONS        : [];
   var cities    = typeof CITIES         !== 'undefined' ? CITIES         : [];
-  var creatures = typeof CREATURE_DATA  !== 'undefined' ? CREATURE_DATA  : [];
-  var orgs      = typeof ORGANIZATION_DATA !== 'undefined' ? ORGANIZATION_DATA : [];
+  var creatures = typeof CREATURES  !== 'undefined' ? CREATURES  : [];
+  var orgs      = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
   var items     = typeof ITEMS          !== 'undefined' ? ITEMS          : [];
 
   nations.filter(function(n) { return getVisibility(n) !== 'hidden'; }).forEach(function(n) {
@@ -728,7 +728,7 @@ function renderColor(el) {
 }
 
 function renderGods(el) {
-  var chars    = typeof CHARACTER_DATA !== 'undefined' ? CHARACTER_DATA : [];
+  var chars    = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
   var godOrder = ['oro', 'nara', 'thyun', 'solvara', 'grak'];
   var godsHtml = '';
 
@@ -817,7 +817,7 @@ function renderRegion(id, el) {
   var regions   = typeof REGIONS        !== 'undefined' ? REGIONS        : [];
   var nations   = typeof NATIONS        !== 'undefined' ? NATIONS        : [];
   var cities    = typeof CITIES         !== 'undefined' ? CITIES         : [];
-  var creatures = typeof CREATURE_DATA  !== 'undefined' ? CREATURE_DATA  : [];
+  var creatures = typeof CREATURES  !== 'undefined' ? CREATURES  : [];
 
   var region = null;
   for (var i = 0; i < regions.length; i++) { if (regions[i].id === id) { region = regions[i]; break; } }
@@ -1080,7 +1080,7 @@ function renderCity(id, el) {
 }
 
 function renderCreature(id, el) {
-  var creatures = typeof CREATURE_DATA !== 'undefined' ? CREATURE_DATA : [];
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = null;
   for (var i = 0; i < creatures.length; i++) { if (creatures[i].id === id) { creature = creatures[i]; break; } }
   if (!creature) { renderNotFound(el, 'creature/' + id); return; }
@@ -1143,7 +1143,7 @@ function renderCreature(id, el) {
 }
 
 function renderOrg(id, el) {
-  var orgs = typeof ORGANIZATION_DATA !== 'undefined' ? ORGANIZATION_DATA : [];
+  var orgs = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
   var org  = null;
   for (var i = 0; i < orgs.length; i++) { if (orgs[i].id === id) { org = orgs[i]; break; } }
   if (!org) { renderNotFound(el, 'org/' + id); return; }

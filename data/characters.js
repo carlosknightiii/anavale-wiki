@@ -1,4 +1,4 @@
-var CHARACTER_DATA = [
+var CHARACTERS = [
   {
     id: "the-vareth",
     name: "The Vareth",

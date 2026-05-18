@@ -1,4 +1,4 @@
-var CREATURE_DATA = [
+var CREATURES = [
   {
     id: "fluffets",
     name: "Fluffets",

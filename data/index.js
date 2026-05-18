@@ -9,9 +9,9 @@ var WORLD_DATA = {
   regions:       typeof REGIONS           !== "undefined" ? REGIONS           : [],
   nations:       typeof NATIONS           !== "undefined" ? NATIONS           : [],
   cities:        typeof CITIES            !== "undefined" ? CITIES            : [],
-  creatures:     typeof CREATURE_DATA     !== "undefined" ? CREATURE_DATA     : [],
-  organizations: typeof ORGANIZATION_DATA !== "undefined" ? ORGANIZATION_DATA : [],
-  characters:    typeof CHARACTER_DATA    !== "undefined" ? CHARACTER_DATA    : [],
+  creatures:     typeof CREATURES     !== "undefined" ? CREATURES     : [],
+  organizations: typeof ORGANIZATIONS !== "undefined" ? ORGANIZATIONS : [],
+  characters:    typeof CHARACTERS    !== "undefined" ? CHARACTERS    : [],
   spells:        typeof SPELL_DATA        !== "undefined" ? SPELL_DATA        : []
 };
 

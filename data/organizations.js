@@ -1,4 +1,4 @@
-var ORGANIZATION_DATA = [
+var ORGANIZATIONS = [
   {
     id: "the-formery",
     name: "The Formery",

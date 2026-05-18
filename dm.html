@@ -603,6 +603,7 @@
     <button class="dm-tab"        data-tab="character"    onclick="switchTab('character')">🧙 Character</button>
     <button class="dm-tab"        data-tab="organization" onclick="switchTab('organization')">🏛️ Organization</button>
     <button class="dm-tab"        data-tab="item"         onclick="switchTab('item')">⚔️ Item</button>
+    <button class="dm-tab"        data-tab="manage"       onclick="switchTab('manage')">📋 Manage</button>
   </div>
 
   <div class="dm-main">
@@ -1518,6 +1519,99 @@
       </div>
 
 
+      <!-- ── MANAGE PANEL ──────────────────────── -->
+      <div id="form-manage" class="dm-form">
+
+        <div class="cm-header">
+          <div>
+            <div class="dm-form-title" style="margin-bottom:0">📋 Content Manager</div>
+            <div class="dm-form-subtitle" style="margin-bottom:0">Browse, edit, and manage visibility of all world entries</div>
+          </div>
+          <button class="cm-refresh-btn" onclick="cmRefresh()">↺ Refresh</button>
+        </div>
+
+        <div class="cm-body">
+
+          <!-- Left: filter controls + table -->
+          <div class="cm-left">
+
+            <div class="cm-filter-bar">
+              <input type="text" id="cm-search" class="cm-search" placeholder="Search name, summary, tags…" oninput="cmFilter()">
+              <select id="cm-type-filter" class="cm-select" onchange="cmFilter()">
+                <option value="">All Types</option>
+                <option value="city">🏙️ Cities</option>
+                <option value="creature">🐾 Creatures</option>
+                <option value="poi">📍 POIs</option>
+                <option value="character">🧙 Characters</option>
+                <option value="organization">🏛️ Organizations</option>
+                <option value="item">⚔️ Items</option>
+              </select>
+              <select id="cm-vis-filter" class="cm-select" onchange="cmFilter()">
+                <option value="">All Visibility</option>
+                <option value="hidden">🔒 Hidden</option>
+                <option value="teaser">✨ Teaser</option>
+                <option value="visible">👁 Visible</option>
+              </select>
+              <select id="cm-sort" class="cm-select" onchange="cmApplyFilters()">
+                <option value="name-asc">Name A→Z</option>
+                <option value="name-desc">Name Z→A</option>
+                <option value="type-asc">Type</option>
+                <option value="vis-asc">Visibility</option>
+              </select>
+              <button class="cm-btn" onclick="cmResetFilters()">Reset</button>
+              <span class="cm-count" id="cm-count"></span>
+            </div>
+
+            <div class="cm-bulk-bar" id="cm-bulk-bar">
+              <span class="cm-bulk-count" id="cm-bulk-count">0 selected</span>
+              <button class="cm-btn cm-btn-sm" onclick="cmBulkSetVisibility('hidden')">🔒 Hidden</button>
+              <button class="cm-btn cm-btn-sm" onclick="cmBulkSetVisibility('teaser')">✨ Teaser</button>
+              <button class="cm-btn cm-btn-sm" onclick="cmBulkSetVisibility('visible')">👁 Visible</button>
+              <button class="cm-btn cm-btn-sm cm-btn-danger" onclick="cmBulkDelete()">🗑 Delete</button>
+            </div>
+
+            <div class="cm-table-wrap">
+              <table class="cm-table" id="cm-table">
+                <thead>
+                  <tr>
+                    <th class="cm-th-check"><input type="checkbox" id="cm-select-all" onchange="cmSelectAll(this.checked)"></th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Visibility</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="cm-tbody">
+                  <tr><td colspan="5" style="text-align:center;color:var(--ink-faint);padding:2rem;font-style:italic;">Click ↺ Refresh to load all entries.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div><!-- /cm-left -->
+
+          <!-- Right: output panel -->
+          <div class="cm-right">
+            <div class="cm-output-panel">
+              <div class="cm-output-label">Output</div>
+              <div class="cm-output-info" id="cm-output-info">Select an entry to edit or perform an action.</div>
+              <pre class="cm-json-pre" id="cm-json-output">// No action taken yet.</pre>
+              <div class="cm-output-actions">
+                <button class="cm-btn" onclick="cmCopyOutput()">📋 Copy</button>
+                <button class="cm-btn cm-btn-primary" onclick="cmSaveOutput()">💾 Save to File</button>
+              </div>
+              <div id="cm-save-status" class="dm-save-status"></div>
+              <div class="cm-save-note">
+                <strong>Note:</strong> Visibility changes and deletions modify in-memory data only.
+                Click <em>💾 Save to File</em> to write the changes to the data file on disk.
+                Save works in Chrome/Edge. In VS Code Live Preview, use <em>📋 Copy</em> instead.
+              </div>
+            </div>
+          </div><!-- /cm-right -->
+
+        </div><!-- /cm-body -->
+
+      </div><!-- /form-manage -->
+
     </div><!-- /dm-forms-panel -->
 
     <!-- ════════════════════════════════════════
@@ -1550,10 +1644,320 @@
 </div><!-- /dm-app -->
 
 
-<!-- Data files for dynamic dropdowns -->
+<!-- Data files for dynamic dropdowns and Content Manager -->
 <script src="data/regions.js"></script>
 <script src="data/nations.js"></script>
 <script src="data/cities.js"></script>
+<script src="data/creatures.js"></script>
+<script src="data/pois.js"></script>
+<script src="data/characters.js"></script>
+<script src="data/organizations.js"></script>
+<script src="data/items.js"></script>
+
+<style>
+/* ══════════════════════════════════════════════
+   B3-C — CONTENT MANAGER
+   ══════════════════════════════════════════════ */
+
+/* Hide side panel when manage tab is active */
+.dm-main:has(#form-manage.active) .dm-side-panel {
+  display: none;
+}
+.dm-main:has(#form-manage.active) .dm-forms-panel {
+  border-right: none;
+  padding: 0;
+}
+
+/* Manage form itself: flex column to fill full height */
+#form-manage.active {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Header bar */
+.cm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem 0.75rem;
+  border-bottom: 2px solid var(--gold);
+  flex-shrink: 0;
+  background: var(--parchment);
+}
+
+.cm-refresh-btn {
+  padding: 0.4rem 1.1rem;
+  background: var(--gold);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background 0.18s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cm-refresh-btn:hover { background: var(--gold-light); color: var(--ink); }
+
+/* Two-column body */
+.cm-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left pane: filter bar + bulk bar + table */
+.cm-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border-color);
+}
+
+/* Right pane: output panel */
+.cm-right {
+  width: 300px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+  background: var(--parchment);
+}
+
+/* ── Filter bar ── */
+.cm-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: rgba(0,0,0,0.03);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.cm-search {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: rgba(255,255,255,0.7);
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.cm-search:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(200,148,10,0.15);
+}
+
+.cm-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: rgba(255,255,255,0.7);
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.cm-select:focus { outline: none; border-color: var(--gold); }
+
+.cm-count {
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* ── Bulk action bar ── */
+.cm-bulk-bar {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.25rem;
+  background: rgba(200,148,10,0.1);
+  border-bottom: 1px solid rgba(200,148,10,0.25);
+  flex-shrink: 0;
+}
+.cm-bulk-bar.visible { display: flex; }
+
+.cm-bulk-count {
+  font-size: var(--text-sm);
+  font-weight: bold;
+  color: var(--ink);
+  margin-right: 0.25rem;
+  white-space: nowrap;
+}
+
+/* ── Buttons ── */
+.cm-btn {
+  padding: 0.35rem 0.85rem;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cm-btn:hover { background: var(--gold); color: white; border-color: var(--gold); }
+.cm-btn-primary { background: var(--gold); color: white; border-color: var(--gold); }
+.cm-btn-primary:hover { background: var(--gold-light); color: var(--ink); }
+.cm-btn-sm { padding: 0.22rem 0.6rem; font-size: var(--text-xs); }
+.cm-btn-danger { color: #aa2222; border-color: #cc4444; }
+.cm-btn-danger:hover { background: #aa2222; color: white; border-color: #aa2222; }
+
+/* ── Table ── */
+.cm-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.cm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.cm-table th {
+  position: sticky;
+  top: 0;
+  background: var(--parchment-dark, #e8dcc8);
+  color: var(--ink);
+  font-weight: bold;
+  font-family: var(--font-sans, sans-serif);
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--gold);
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.cm-table td {
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  vertical-align: middle;
+}
+
+.cm-table tbody tr:hover { background: rgba(200,148,10,0.05); }
+.cm-table tbody tr.cm-selected { background: rgba(200,148,10,0.11); }
+
+.cm-th-check { width: 36px; }
+
+.cm-td-name {
+  font-weight: 500;
+  max-width: 220px;
+}
+.cm-td-name span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cm-type-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: rgba(0,0,0,0.06);
+  border-radius: 3px;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.cm-vis-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 3px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  user-select: none;
+}
+.cm-vis-badge:hover { opacity: 0.75; transform: scale(0.97); }
+.cm-vis-hidden  { background: rgba(160,60,30,0.12);  color: #aa3a1a; }
+.cm-vis-teaser  { background: rgba(200,148,10,0.15); color: #8a6800; }
+.cm-vis-visible { background: rgba(26,90,40,0.12);   color: #1a5a28; }
+
+.cm-row-actions { display: flex; gap: 0.3rem; white-space: nowrap; }
+
+.cm-action-btn {
+  padding: 0.2rem 0.6rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ink);
+}
+.cm-action-btn:hover { background: var(--gold); color: white; border-color: var(--gold); }
+.cm-action-btn.delete:hover { background: #aa2222; border-color: #aa2222; color: white; }
+
+/* ── Output panel (right side) ── */
+.cm-output-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cm-output-label {
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-lg);
+  color: var(--gold);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.3rem;
+}
+
+.cm-output-info {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-style: italic;
+  line-height: 1.5;
+  min-height: 2.5em;
+}
+
+.cm-json-pre {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.7rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  overflow: auto;
+  max-height: 280px;
+  white-space: pre;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.cm-output-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cm-save-note {
+  margin-top: 0.5rem;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  font-style: italic;
+  line-height: 1.5;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.5rem;
+}
+</style>
 
 <script>
 /* ══════════════════════════════════════════════
@@ -1578,10 +1982,10 @@ var FILE_TARGETS = {
 // the user opened the correct file before writing anything.
 var ARRAY_NAMES = {
   city:         'CITIES',
-  creature:     'CREATURE_DATA',
+  creature:     'CREATURES',
   poi:          'POIS',
-  character:    'CHARACTER_DATA',
-  organization: 'ORGANIZATION_DATA',
+  character:    'CHARACTERS',
+  organization: 'ORGANIZATIONS',
   item:         'ITEMS'
 };
 
@@ -2318,6 +2722,649 @@ function escHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+</script>
+
+<script>
+/* ══════════════════════════════════════════════
+   B3-C — CONTENT MANAGER
+   ══════════════════════════════════════════════ */
+
+var CM_ALL      = [];   // all entries as {_entry, _type, _array}
+var CM_FILTERED = [];   // currently displayed (after filters + sort)
+var CM_SELECTED = {};   // { "type:id": true }
+var CM_PENDING  = null; // { item, action } — pending save operation
+
+// Getters for in-memory global arrays (corrected variable names)
+var CM_ARRAYS = {
+  city:         function() { return typeof CITIES             !== 'undefined' ? CITIES             : []; },
+  creature:     function() { return typeof CREATURES      !== 'undefined' ? CREATURES      : []; },
+  poi:          function() { return typeof POIS               !== 'undefined' ? POIS               : []; },
+  character:    function() { return typeof CHARACTERS     !== 'undefined' ? CHARACTERS     : []; },
+  organization: function() { return typeof ORGANIZATIONS  !== 'undefined' ? ORGANIZATIONS  : []; },
+  item:         function() { return typeof ITEMS              !== 'undefined' ? ITEMS              : []; }
+};
+
+var CM_ARRAY_NAMES = {
+  city:         'CITIES',
+  creature:     'CREATURES',
+  poi:          'POIS',
+  character:    'CHARACTERS',
+  organization: 'ORGANIZATIONS',
+  item:         'ITEMS'
+};
+
+var CM_ICONS = {
+  city: '🏙️', creature: '🐾', poi: '📍',
+  character: '🧙', organization: '🏛️', item: '⚔️'
+};
+
+/* ── LOAD ALL ENTRIES ────────────────────────── */
+function cmRefresh() {
+  CM_ALL      = [];
+  CM_SELECTED = {};
+  CM_PENDING  = null;
+
+  var types = ['city', 'creature', 'poi', 'character', 'organization', 'item'];
+  types.forEach(function(type) {
+    var arr = CM_ARRAYS[type]();
+    arr.forEach(function(e) {
+      CM_ALL.push({ _entry: e, _type: type, _array: arr });
+    });
+  });
+
+  cmApplyFilters();
+
+  var countEl = document.getElementById('cm-count');
+  if (countEl) countEl.textContent = CM_ALL.length + ' entries loaded';
+}
+
+/* ── VISIBILITY HELPER ───────────────────────── */
+function cmGetVis(entry) {
+  if (entry.player_facing === true)      return 'visible';
+  if (entry.player_facing === 'teaser')  return 'teaser';
+  return 'hidden';
+}
+
+/* ── HTML ESCAPE ─────────────────────────────── */
+function escCM(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ── FILTER ──────────────────────────────────── */
+function cmFilter() {
+  cmApplyFilters();
+}
+
+function cmResetFilters() {
+  var s = document.getElementById('cm-search');
+  var t = document.getElementById('cm-type-filter');
+  var v = document.getElementById('cm-vis-filter');
+  var o = document.getElementById('cm-sort');
+  if (s) s.value = '';
+  if (t) t.value = '';
+  if (v) v.value = '';
+  if (o) o.value = 'name-asc';
+  cmApplyFilters();
+}
+
+function cmApplyFilters() {
+  var searchQ = (document.getElementById('cm-search')      || {}).value || '';
+  var typeF   = (document.getElementById('cm-type-filter') || {}).value || '';
+  var visF    = (document.getElementById('cm-vis-filter')  || {}).value || '';
+  var sortV   = (document.getElementById('cm-sort')        || {}).value || 'name-asc';
+  var q = searchQ.toLowerCase().trim();
+
+  var filtered = CM_ALL.filter(function(item) {
+    var e = item._entry;
+    if (typeF && item._type !== typeF) return false;
+    if (visF  && cmGetVis(e) !== visF)  return false;
+    if (q) {
+      var hay = [
+        e.name        || '',
+        e.summary     || '',
+        e.description || '',
+        e.id          || '',
+        (e.tags || []).join(' ')
+      ].join(' ').toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+
+  CM_FILTERED = cmApplySort(filtered, sortV);
+  renderCMTable();
+
+  var countEl = document.getElementById('cm-count');
+  if (countEl) {
+    countEl.textContent = CM_FILTERED.length + ' of ' + CM_ALL.length + ' entries';
+  }
+}
+
+function cmApplySort(arr, sortV) {
+  var sorted = arr.slice();
+  var vOrder = { hidden: 0, teaser: 1, visible: 2 };
+  sorted.sort(function(a, b) {
+    var ea = a._entry, eb = b._entry;
+    if (sortV === 'name-desc') return (eb.name||'').localeCompare(ea.name||'');
+    if (sortV === 'type-asc')  return a._type.localeCompare(b._type) || (ea.name||'').localeCompare(eb.name||'');
+    if (sortV === 'vis-asc')   return (vOrder[cmGetVis(ea)]||0) - (vOrder[cmGetVis(eb)]||0) || (ea.name||'').localeCompare(eb.name||'');
+    // Default: name-asc
+    return (ea.name||'').localeCompare(eb.name||'');
+  });
+  return sorted;
+}
+
+/* ── SELECTION ───────────────────────────────── */
+function cmSelKey(item) {
+  return item._type + ':' + item._entry.id;
+}
+
+function cmSelectAll(checked) {
+  CM_FILTERED.forEach(function(item) {
+    if (checked) CM_SELECTED[cmSelKey(item)] = true;
+    else delete CM_SELECTED[cmSelKey(item)];
+  });
+  renderCMTable();
+  cmUpdateBulkBar();
+}
+
+function cmToggleSelect(idx, checked) {
+  var item = CM_FILTERED[idx];
+  if (!item) return;
+  if (checked) CM_SELECTED[cmSelKey(item)] = true;
+  else delete CM_SELECTED[cmSelKey(item)];
+  cmUpdateBulkBar();
+}
+
+function cmUpdateBulkBar() {
+  var count = 0;
+  Object.keys(CM_SELECTED).forEach(function(k) { if (CM_SELECTED[k]) count++; });
+  var bar     = document.getElementById('cm-bulk-bar');
+  var countEl = document.getElementById('cm-bulk-count');
+  if (bar)     bar.classList.toggle('visible', count > 0);
+  if (countEl) countEl.textContent = count + ' selected';
+  // Keep select-all checkbox state accurate
+  var selAll = document.getElementById('cm-select-all');
+  if (selAll && CM_FILTERED.length > 0) {
+    selAll.checked = CM_FILTERED.every(function(item) { return CM_SELECTED[cmSelKey(item)]; });
+  }
+}
+
+/* ── RENDER TABLE ────────────────────────────── */
+function renderCMTable() {
+  var tbody = document.getElementById('cm-tbody');
+  if (!tbody) return;
+
+  if (!CM_FILTERED.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-faint);padding:2rem;font-style:italic;">'
+      + (CM_ALL.length ? 'No entries match your filters.' : 'Click ↺ Refresh to load entries.')
+      + '</td></tr>';
+    var selAll = document.getElementById('cm-select-all');
+    if (selAll) selAll.checked = false;
+    return;
+  }
+
+  var allSel = CM_FILTERED.every(function(item) { return CM_SELECTED[cmSelKey(item)]; });
+  var selAll = document.getElementById('cm-select-all');
+  if (selAll) selAll.checked = allSel;
+
+  tbody.innerHTML = CM_FILTERED.map(function(item, idx) {
+    var e    = item._entry;
+    var vis  = cmGetVis(e);
+    var key  = cmSelKey(item);
+    var sel  = CM_SELECTED[key];
+    var rowCls = sel ? ' class="cm-selected"' : '';
+    var visCls = 'cm-vis-badge cm-vis-' + vis;
+    var visLabel = vis === 'visible' ? '👁 Visible'
+                 : vis === 'teaser'  ? '✨ Teaser'
+                 :                    '🔒 Hidden';
+    var icon = CM_ICONS[item._type] || '•';
+    var typeCap = item._type.charAt(0).toUpperCase() + item._type.slice(1);
+
+    return '<tr' + rowCls + '>'
+      + '<td class="cm-th-check"><input type="checkbox"' + (sel ? ' checked' : '')
+      +   ' onchange="cmToggleSelect(' + idx + ', this.checked)"></td>'
+      + '<td class="cm-td-name"><span title="' + escCM(e.name) + '">' + escCM(e.name || '—') + '</span></td>'
+      + '<td><span class="cm-type-badge">' + icon + ' ' + escCM(typeCap) + '</span></td>'
+      + '<td><span class="' + visCls + '" onclick="cmCycleVisibility(' + idx + ')" title="Click to cycle: hidden → teaser → visible">' + visLabel + '</span></td>'
+      + '<td><div class="cm-row-actions">'
+      + '<button class="cm-action-btn" onclick="cmEditEntry(' + idx + ')">✎ Edit</button>'
+      + '<button class="cm-action-btn delete" onclick="cmDeleteEntry(' + idx + ')">🗑</button>'
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+}
+
+/* ── CYCLE VISIBILITY ────────────────────────── */
+function cmCycleVisibility(idx) {
+  var item = CM_FILTERED[idx];
+  if (!item) return;
+  var entry = item._entry;
+  var vis   = cmGetVis(entry);
+  var newPf = (vis === 'hidden') ? 'teaser' : (vis === 'teaser') ? true : false;
+  entry.player_facing = newPf;
+
+  renderCMTable();
+
+  var newVis = cmGetVis(entry);
+  cmSetOutput(
+    '"' + entry.name + '" visibility → ' + newVis.toUpperCase() + '. Click 💾 Save to File to write the change.',
+    JSON.stringify({ id: entry.id, player_facing: newPf }, null, 2),
+    item
+  );
+}
+
+/* ── EDIT ENTRY ──────────────────────────────── */
+function cmEditEntry(idx) {
+  var item = CM_FILTERED[idx];
+  if (!item) return;
+
+  switchTab(item._type);
+  cmPopulateForm(item._entry, item._type);
+  CM_PENDING = { item: item, action: 'edit' };
+
+  cmSetOutput(
+    'Editing: "' + item._entry.name + '" — form loaded above. Modify fields, click ✦ Generate Entry, then 💾 Save to File.',
+    '// Edit the form and click ✦ Generate Entry.\n// The generated JSON will appear in the main output panel.\n// Use the main 💾 Save to Data File button to write changes.',
+    item
+  );
+}
+
+/* ── POPULATE FORM ───────────────────────────── */
+function cmPopulateForm(entry, type) {
+  function sv(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.value = (value !== null && value !== undefined) ? String(value) : '';
+  }
+  function setRadioVal(name, value) {
+    var v = (value === true) ? 'true' : (value === false || value === null || value === undefined) ? 'false' : String(value);
+    document.querySelectorAll('input[name="' + name + '"]').forEach(function(el) {
+      el.checked = (el.value === v);
+    });
+  }
+
+  if (type === 'city') {
+    sv('city-name',       entry.name);
+    sv('city-id',         entry.id);
+    sv('city-summary',    entry.summary);
+    sv('city-description',entry.description);
+    sv('city-strategic',  entry.strategic_importance);
+    sv('city-tone',       entry.tone);
+    sv('city-tags',       (entry.tags || []).join(', '));
+    sv('city-type',       entry.type);
+    sv('city-color-health', entry.color_health);
+    // Region → nation cascade
+    var rSel = document.getElementById('city-region');
+    if (rSel) { rSel.value = entry.region || ''; filterNations('city-nation', 'city-region'); }
+    sv('city-nation', entry.nation);
+    var nSel = document.getElementById('city-nation');
+    if (nSel) nSel.value = entry.nation || '';
+    setRadioVal('city-formery', entry.formery_present ? 'true' : 'false');
+    setRadioVal('city-vareth',  entry.vareth_presence  ? 'true' : 'false');
+    setRadioVal('city-pf',      entry.player_facing);
+    // Landmarks
+    var lmList  = document.getElementById('city-landmarks-list');
+    var lmEmpty = document.getElementById('city-landmarks-empty');
+    if (lmList) lmList.innerHTML = '';
+    _landmarkN = 0;
+    var lms = entry.landmarks || [];
+    if (lmEmpty) lmEmpty.style.display = lms.length ? 'none' : '';
+    lms.forEach(function(lm) {
+      addLandmark();
+      sv('lm-' + _landmarkN + '-name', lm.name);
+      var descEl = document.getElementById('lm-' + _landmarkN + '-desc');
+      if (descEl) descEl.value = lm.description || '';
+    });
+
+  } else if (type === 'creature') {
+    sv('creature-name',        entry.name);
+    sv('creature-id',          entry.id);
+    sv('creature-description', entry.description);
+    sv('creature-behavior',    entry.behavior);
+    sv('creature-habitat',     entry.habitat);
+    sv('creature-gigglegloom', entry.gigglegloom_relationship);
+    sv('creature-dimmed',      entry.dimmed_version);
+    sv('creature-dm-notes',    entry.dm_notes);
+    sv('creature-tags',        (entry.tags || []).join(', '));
+    sv('creature-tier',        entry.tier);
+    sv('creature-category',    entry.category);
+    // Region checkboxes (no name attr — select by container + value)
+    var regions = entry.regions || [];
+    document.querySelectorAll('#creature-regions input[type=checkbox]').forEach(function(cb) {
+      cb.checked = regions.indexOf(cb.value) >= 0;
+    });
+    setRadioVal('creature-pf', entry.player_facing);
+
+  } else if (type === 'poi') {
+    sv('poi-name',        entry.name);
+    sv('poi-id',          entry.id);
+    sv('poi-summary',     entry.summary);
+    sv('poi-description', entry.description);
+    sv('poi-gigglegloom', entry.gigglegloom_notes);
+    sv('poi-dm-notes',    entry.dm_notes);
+    sv('poi-tags',        (entry.tags || []).join(', '));
+    sv('poi-type',        entry.type);
+    sv('poi-color-health', entry.color_health);
+    var prSel = document.getElementById('poi-region');
+    if (prSel) { prSel.value = entry.region || ''; filterNations('poi-nation', 'poi-region'); }
+    sv('poi-nation', entry.nation);
+    var pnSel = document.getElementById('poi-nation');
+    if (pnSel) pnSel.value = entry.nation || '';
+    setRadioVal('poi-vareth', entry.vareth_presence ? 'true' : 'false');
+    setRadioVal('poi-pf',     entry.player_facing);
+
+  } else if (type === 'character') {
+    sv('char-name',           entry.name);
+    sv('char-id',             entry.id);
+    sv('char-role',           entry.role);
+    sv('char-summary',        entry.summary);
+    sv('char-appearance',     entry.appearance);
+    sv('char-personality',    entry.personality);
+    sv('char-motivation',     entry.motivation);
+    sv('char-contradiction',  entry.contradiction);
+    sv('char-secret',         entry.secret);
+    sv('char-player-knowledge', entry.player_knowledge);
+    sv('char-dm-notes',       entry.dm_notes);
+    sv('char-gigglegloom',    entry.gigglegloom_relationship);
+    sv('char-color',          entry.color);
+    sv('char-location',       entry.location);
+    sv('char-affiliation',    entry.affiliation);
+    sv('char-pronouns',       entry.pronouns);
+    sv('char-tags',           (entry.tags || []).join(', '));
+    sv('char-category',       entry.category);
+    sv('char-status',         entry.status);
+    setRadioVal('char-pf',    entry.player_facing);
+
+  } else if (type === 'organization') {
+    sv('org-name',          entry.name);
+    sv('org-id',            entry.id);
+    sv('org-full-name',     (entry.full_name && entry.full_name !== entry.name) ? entry.full_name : '');
+    sv('org-summary',       entry.summary);
+    sv('org-purpose',       entry.purpose);
+    sv('org-public-perception', entry.public_perception);
+    sv('org-secret',        entry.secret);
+    sv('org-session-role',  entry.session_role);
+    sv('org-vareth',        entry.vareth_relationship);
+    sv('org-gigglegloom',   entry.gigglegloom_relationship);
+    sv('org-age',           entry.age);
+    sv('org-headquarters',  entry.headquarters);
+    sv('org-leadership',    entry.leadership);
+    sv('org-membership',    entry.membership);
+    sv('org-tags',          (entry.tags || []).join(', '));
+    sv('org-alignment',     entry.alignment);
+    sv('org-type',          entry.type);
+    // Notable facts
+    var fList  = document.getElementById('org-facts-list');
+    var fEmpty = document.getElementById('org-facts-empty');
+    if (fList) fList.innerHTML = '';
+    _factN = 0;
+    var facts = entry.notable_facts || [];
+    if (fEmpty) fEmpty.style.display = facts.length ? 'none' : '';
+    facts.forEach(function(f) {
+      addNotableFact();
+      var fEl = document.getElementById('fact-' + _factN + '-text');
+      if (fEl) fEl.value = f;
+    });
+    setRadioVal('org-pf', entry.player_facing);
+
+  } else if (type === 'item') {
+    sv('item-name',        entry.name);
+    sv('item-id',          entry.id);
+    sv('item-description', entry.description);
+    sv('item-history',     entry.history);
+    sv('item-gigglegloom', entry.gigglegloom_relationship);
+    sv('item-location',    entry.current_location);
+    sv('item-owner',       entry.current_owner);
+    sv('item-dm-notes',    entry.dm_notes);
+    sv('item-tags',        (entry.tags || []).join(', '));
+    sv('item-type',        entry.type);
+    sv('item-rarity',      entry.rarity);
+    setRadioVal('item-pf', entry.player_facing);
+  }
+}
+
+/* ── DELETE ENTRY ────────────────────────────── */
+function cmDeleteEntry(idx) {
+  var item = CM_FILTERED[idx];
+  if (!item) return;
+  var entry = item._entry;
+  var name  = entry.name || entry.id;
+
+  if (!confirm('Delete "' + name + '" from memory?\n\nThis removes it from the in-memory data. Click 💾 Save to File to write the change permanently.')) return;
+
+  // Remove from in-memory array
+  var arr = item._array;
+  var pos = arr.indexOf(entry);
+  if (pos >= 0) arr.splice(pos, 1);
+
+  // Remove from selection
+  delete CM_SELECTED[cmSelKey(item)];
+  CM_PENDING = { item: item, action: 'delete' };
+
+  cmSetOutput(
+    'Deleted "' + name + '" from memory. Click 💾 Save to File to write the change to ' + FILE_TARGETS[item._type] + '.',
+    JSON.stringify({ id: entry.id, name: name, _action: 'deleted' }, null, 2),
+    item
+  );
+
+  // Rebuild and re-filter
+  cmRefreshFromArrays();
+}
+
+/* Re-sync CM_ALL from live arrays (after delete/bulk delete) */
+function cmRefreshFromArrays() {
+  var types = ['city', 'creature', 'poi', 'character', 'organization', 'item'];
+  CM_ALL = [];
+  types.forEach(function(type) {
+    var arr = CM_ARRAYS[type]();
+    arr.forEach(function(e) {
+      CM_ALL.push({ _entry: e, _type: type, _array: arr });
+    });
+  });
+  cmApplyFilters();
+  cmUpdateBulkBar();
+}
+
+/* ── BULK ACTIONS ────────────────────────────── */
+function cmBulkSetVisibility(newVis) {
+  var selected = CM_FILTERED.filter(function(item) { return CM_SELECTED[cmSelKey(item)]; });
+  if (!selected.length) { alert('Select at least one entry first.'); return; }
+  var newPf = (newVis === 'visible') ? true : (newVis === 'teaser') ? 'teaser' : false;
+  selected.forEach(function(item) { item._entry.player_facing = newPf; });
+  renderCMTable();
+  // Group by type for the save note
+  var typeGroups = {};
+  selected.forEach(function(item) {
+    if (!typeGroups[item._type]) typeGroups[item._type] = 0;
+    typeGroups[item._type]++;
+  });
+  var typeList = Object.keys(typeGroups).map(function(t) {
+    return typeGroups[t] + ' ' + t + (typeGroups[t] > 1 ? 's' : '');
+  }).join(', ');
+  cmSetOutput(
+    'Set ' + selected.length + ' entries to ' + newVis.toUpperCase() + ' (' + typeList + '). Click 💾 Save to File — save each file type separately.',
+    JSON.stringify({ action: 'bulk_visibility', count: selected.length, new_player_facing: newPf, types: Object.keys(typeGroups) }, null, 2),
+    null
+  );
+  CM_PENDING = { action: 'bulk', items: selected };
+}
+
+function cmBulkDelete() {
+  var selected = CM_FILTERED.filter(function(item) { return CM_SELECTED[cmSelKey(item)]; });
+  if (!selected.length) { alert('Select at least one entry first.'); return; }
+  if (!confirm('Delete ' + selected.length + ' selected entries from memory?\n\nClick 💾 Save to File to write each affected data file.')) return;
+
+  selected.forEach(function(item) {
+    var arr = item._array;
+    var pos = arr.indexOf(item._entry);
+    if (pos >= 0) arr.splice(pos, 1);
+    delete CM_SELECTED[cmSelKey(item)];
+  });
+
+  var count = selected.length;
+  CM_PENDING = { action: 'bulk-delete', items: selected };
+  cmSetOutput(
+    'Deleted ' + count + ' entries from memory. Click 💾 Save to File for each affected type.',
+    JSON.stringify({ action: 'bulk_delete', count: count }, null, 2),
+    null
+  );
+  cmRefreshFromArrays();
+}
+
+/* ── OUTPUT PANEL HELPERS ────────────────────── */
+function cmSetOutput(info, json, item) {
+  var infoEl = document.getElementById('cm-output-info');
+  var jsonEl = document.getElementById('cm-json-output');
+  if (infoEl) infoEl.textContent = info || '';
+  if (jsonEl) jsonEl.textContent = json || '';
+  if (item && !CM_PENDING) CM_PENDING = { item: item };
+}
+
+function cmCopyOutput() {
+  var text = (document.getElementById('cm-json-output') || {}).textContent || '';
+  if (!text || text === '// No action taken yet.') { alert('No output to copy.'); return; }
+  function afterCopy() {
+    showCMStatus('success', '✓ Copied!');
+    setTimeout(function() { showCMStatus('', ''); }, 2200);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(afterCopy).catch(function() { fallbackCMCopy(text, afterCopy); });
+  } else {
+    fallbackCMCopy(text, afterCopy);
+  }
+}
+function fallbackCMCopy(text, cb) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (cb) cb();
+}
+
+/* ── SAVE TO FILE ────────────────────────────── */
+async function cmSaveOutput() {
+  if (!CM_PENDING) { showCMStatus('error', '⚠ Perform an action first (cycle visibility, delete, etc.)'); return; }
+
+  if (!window.showOpenFilePicker) {
+    cmCopyOutput();
+    showCMStatus('error', '⚠ Direct file saving not supported here. Content copied to clipboard.');
+    return;
+  }
+
+  // Determine which type to save
+  var type = null;
+  if (CM_PENDING.item) {
+    type = CM_PENDING.item._type;
+  } else if (CM_PENDING.items && CM_PENDING.items.length) {
+    // For bulk: collect unique types
+    var typeSet = {};
+    CM_PENDING.items.forEach(function(item) { typeSet[item._type] = true; });
+    var types = Object.keys(typeSet);
+    if (types.length > 1) {
+      showCMStatus('error', '⚠ Multiple types affected (' + types.join(', ') + '). Save each type one at a time by clicking 💾 Save to File for each.');
+      return;
+    }
+    type = types[0];
+  }
+
+  if (!type) { showCMStatus('error', '⚠ Could not determine which file to save.'); return; }
+
+  var arrayName  = CM_ARRAY_NAMES[type];
+  var targetFile = FILE_TARGETS[type];
+  var arr        = CM_ARRAYS[type]();
+
+  await cmWriteArrayToFile(arrayName, arr, targetFile);
+}
+
+async function cmWriteArrayToFile(arrayName, arr, targetFile) {
+  try {
+    showCMStatus('pending', '⏳ Select ' + targetFile + ' in the file picker…');
+
+    var [fileHandle] = await window.showOpenFilePicker({
+      types: [{ description: 'JavaScript Data File', accept: { 'text/javascript': ['.js'] } }],
+      multiple: false
+    });
+
+    var file     = await fileHandle.getFile();
+    var existing = await file.text();
+
+    // Validate correct file
+    if (!existing.includes('var ' + arrayName)) {
+      showCMStatus('error',
+        '⚠ Wrong file selected. Please open the file containing var ' + arrayName + ' (' + targetFile + '). Nothing was written.');
+      return false;
+    }
+
+    // Find array bounds: keep the header (var X = [) and footer (];)
+    var arrStart = existing.indexOf('[');
+    var arrEnd   = existing.lastIndexOf('];');
+    if (arrStart === -1 || arrEnd === -1) {
+      showCMStatus('error', '⚠ Could not locate array boundaries in the file. Nothing was written.');
+      return false;
+    }
+
+    var header = existing.slice(0, arrStart + 1);
+    var footer = existing.slice(arrEnd);
+
+    // Serialize entries using JSON format (quoted keys — valid JS, consistent with saveToFile)
+    var entries = arr.map(function(e) {
+      return JSON.stringify(e, null, 2)
+        .split('\n')
+        .map(function(l) { return '  ' + l; })
+        .join('\n');
+    }).join(',\n');
+
+    var updated = header + (arr.length ? '\n' + entries + '\n' : '') + footer;
+
+    // Sanity check — don't silently truncate a file (allow if we just deleted entries)
+    if (updated.length < existing.length * 0.5 && arr.length > 0) {
+      if (!confirm(
+        'The updated file is significantly shorter than the original.\n' +
+        'Updated: ' + updated.length + ' chars  |  Original: ' + existing.length + ' chars\n\n' +
+        'Proceed anyway?'
+      )) {
+        showCMStatus('', '');
+        return false;
+      }
+    }
+
+    showCMStatus('pending', '⏳ Writing ' + arr.length + ' entries to ' + targetFile + '…');
+
+    var writable = await fileHandle.createWritable();
+    await writable.write(updated);
+    await writable.close();
+
+    showCMStatus('success', '✓ Saved ' + arr.length + ' entries to ' + targetFile);
+    CM_PENDING = null;
+    return true;
+
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      showCMStatus('', '');
+      return false;
+    }
+    console.error('CM write failed:', e);
+    showCMStatus('error', '⚠ Save failed: ' + e.message);
+    return false;
+  }
+}
+
+/* ── STATUS DISPLAY ──────────────────────────── */
+function showCMStatus(state, msg) {
+  var el = document.getElementById('cm-save-status');
+  if (!el) return;
+  el.className = 'dm-save-status' + (state ? ' ' + state : '');
+  el.textContent = msg || '';
+  if (state === 'success') {
+    setTimeout(function() {
+      el.className = 'dm-save-status';
+      el.textContent = '';
+    }, 5000);
+  }
 }
 </script>
 </body>
