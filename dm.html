@@ -750,11 +750,12 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save the file to assets/images/regions/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('city-img-input').click()">
-            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path')">
+            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/regions/','city-id','city-name')">
             <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
             <br>
             <img id="city-img-preview" class="image-preview" src="" alt="Preview">
             <div id="city-img-path" class="image-path-hint"></div>
+            <div id="city-img-size" class="image-path-hint"></div>
           </div>
         </div>
 
@@ -896,11 +897,12 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save to assets/images/creatures/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('creature-img-input').click()">
-            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path')">
+            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
             <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
             <br>
             <img id="creature-img-preview" class="image-preview" src="" alt="Preview">
             <div id="creature-img-path" class="image-path-hint"></div>
+            <div id="creature-img-size" class="image-path-hint"></div>
           </div>
         </div>
 
@@ -1042,11 +1044,12 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save to assets/images/regions/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('poi-img-input').click()">
-            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path')">
+            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/regions/','poi-id','poi-name')">
             <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
             <br>
             <img id="poi-img-preview" class="image-preview" src="" alt="Preview">
             <div id="poi-img-path" class="image-path-hint"></div>
+            <div id="poi-img-size" class="image-path-hint"></div>
           </div>
         </div>
 
@@ -1218,11 +1221,12 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save to assets/images/characters/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('char-img-input').click()">
-            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path')">
+            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
             <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
             <br>
             <img id="char-img-preview" class="image-preview" src="" alt="Preview">
             <div id="char-img-path" class="image-path-hint"></div>
+            <div id="char-img-size" class="image-path-hint"></div>
           </div>
         </div>
 
@@ -1365,11 +1369,12 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload a sigil, seal, or image — save to assets/images/organizations/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('org-img-input').click()">
-            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path')">
+            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
             <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
             <br>
             <img id="org-img-preview" class="image-preview" src="" alt="Preview">
             <div id="org-img-path" class="image-path-hint"></div>
+            <div id="org-img-size" class="image-path-hint"></div>
           </div>
         </div>
 
@@ -1504,11 +1509,12 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save to assets/images/items/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('item-img-input').click()">
-            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path')">
+            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
             <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
             <br>
             <img id="item-img-preview" class="image-preview" src="" alt="Preview">
             <div id="item-img-path" class="image-path-hint"></div>
+            <div id="item-img-size" class="image-path-hint"></div>
           </div>
         </div>
 
@@ -1966,9 +1972,10 @@
    ══════════════════════════════════════════════ */
 
 var CURRENT_TAB    = 'city';
-var LAST_GENERATED  = null;
-var PENDING_EDIT_ID = null;  // set by cmEditEntry() so saveToFile() knows to replace, not append
-var RECENT_KEY      = 'anavale_dm_recent';
+var LAST_GENERATED   = null;
+var PENDING_EDIT_ID  = null;  // set by cmEditEntry() so saveToFile() knows to replace, not append
+var PENDING_EDIT_IMAGE = null; // preserves existing image path through the edit → generate cycle
+var RECENT_KEY       = 'anavale_dm_recent';
 var RECENT_ITEMS   = [];
 
 var FILE_TARGETS = {
@@ -2090,18 +2097,88 @@ function filterNations(nationSelectId, regionSelectId) {
 }
 
 /* ── IMAGE UPLOAD PREVIEW ────────────────────── */
-function previewImage(input, previewId, pathId) {
+// folder    : e.g. 'assets/images/regions/'
+// idFieldId : form ID field (e.g. 'city-id')
+// nameField : form Name field (e.g. 'city-name')
+function previewImage(input, previewId, pathId, sizeId, folder, idFieldId, nameFieldId) {
   var file = input.files && input.files[0];
   if (!file) return;
   var preview  = document.getElementById(previewId);
   var pathHint = document.getElementById(pathId);
+  var sizeHint = document.getElementById(sizeId);
+
+  // Derive entry id from form fields at this moment
+  var idEl    = document.getElementById(idFieldId);
+  var nameEl  = document.getElementById(nameFieldId);
+  var entryId = (idEl && idEl.value.trim()) || slugify((nameEl && nameEl.value.trim()) || '');
+  var ext     = file.name.split('.').pop().toLowerCase();
+  var fullPath = folder + (entryId || '<entry-id>') + '.' + ext;
+
+  if (pathHint) pathHint.textContent = '📁 Will be saved as: ' + fullPath;
+
+  var origKB = Math.round(file.size / 1024);
+
   var reader = new FileReader();
   reader.onload = function(e) {
     preview.src = e.target.result;
     preview.classList.add('visible');
+
+    // Already optimal: WebP and under 200 KB
+    if (file.type === 'image/webp' && file.size < 204800) {
+      if (sizeHint) {
+        sizeHint.textContent = '✓ Already optimized (' + origKB + ' KB — WebP, under 200 KB)';
+        sizeHint.style.color = '#2a7a3a';
+      }
+      return;
+    }
+
+    // Attempt canvas → WebP conversion for a size estimate
+    var tempImg = new Image();
+    tempImg.onload = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width  = tempImg.naturalWidth;
+      canvas.height = tempImg.naturalHeight;
+      canvas.getContext('2d').drawImage(tempImg, 0, 0);
+      if (typeof canvas.toBlob === 'function') {
+        canvas.toBlob(function(blob) {
+          if (sizeHint) {
+            sizeHint.style.color = '';
+            if (blob) {
+              var compKB = Math.round(blob.size / 1024);
+              if (compKB < origKB) {
+                sizeHint.innerHTML = '📐 Original: ' + origKB + ' KB → WebP estimate: ~' + compKB + ' KB'
+                  + (compKB < 200
+                    ? ' <span style="color:#2a7a3a">✓ under 200 KB</span>'
+                    : ' <span style="color:#aa3a1a">⚠ over 200 KB</span>');
+              } else {
+                sizeHint.textContent = '📐 File size: ' + origKB + ' KB';
+              }
+            } else {
+              sizeHint.textContent = '📐 File size: ' + origKB + ' KB (WebP conversion unavailable)';
+            }
+          }
+        }, 'image/webp', 0.85);
+      } else {
+        if (sizeHint) sizeHint.textContent = '📐 File size: ' + origKB + ' KB';
+      }
+    };
+    tempImg.src = e.target.result;
   };
   reader.readAsDataURL(file);
-  pathHint.textContent = '📸 Filename: ' + file.name + ' — copy to the appropriate assets/images/ folder';
+}
+
+/* ── READ IMAGE PATH ─────────────────────────── */
+// Returns the full relative path for the image field, or null if no image.
+// If a file is uploaded: assets/images/<folder>/<entryId>.<ext>
+// If no file uploaded:   returns fallback (the existing image from an edit), or null
+function readImagePath(inputId, folder, entryId, fallback) {
+  var fileInput = document.getElementById(inputId);
+  var file = fileInput && fileInput.files && fileInput.files[0];
+  if (file) {
+    var ext = file.name.split('.').pop().toLowerCase();
+    return (entryId && entryId.length) ? (folder + entryId + '.' + ext) : null;
+  }
+  return (typeof fallback === 'string' && fallback.length > 0) ? fallback : null;
 }
 
 /* ── REPEATING GROUP — LANDMARKS ─────────────── */
@@ -2255,8 +2332,9 @@ function generateCity() {
     if (lname.trim()) landmarks.push({ name: lname.trim(), description: ldesc.trim() });
   });
 
+  var entryId = val('city-id') || slugify(name);
   var entry = {
-    id:                   val('city-id') || slugify(name),
+    id:                   entryId,
     name:                 name,
     nation:               orNull(val('city-nation')),
     region:               region,
@@ -2270,9 +2348,11 @@ function generateCity() {
     formery_present:      boolRadio('city-formery'),
     vareth_presence:      boolRadio('city-vareth'),
     tone:                 orNull(val('city-tone')),
-    tags:                 tagsArr('city-tags'),
-    player_facing:        triRadio('city-pf')
+    tags:                 tagsArr('city-tags')
   };
+  var imgPath = readImagePath('city-img-input', 'assets/images/regions/', entryId, PENDING_EDIT_IMAGE);
+  if (imgPath) entry.image = imgPath;
+  entry.player_facing = triRadio('city-pf');
   showOutput(entry, 'city');
 }
 
@@ -2286,8 +2366,9 @@ function generateCreature() {
   var regions = checkedVals('creature-regions');
   if (!regions.length) { alert('Select at least one region (✦).'); return; }
 
+  var entryId = val('creature-id') || slugify(name);
   var entry = {
-    id:                       val('creature-id') || slugify(name),
+    id:                       entryId,
     name:                     name,
     tier:                     tier,
     category:                 orNull(val('creature-category')),
@@ -2298,9 +2379,11 @@ function generateCreature() {
     gigglegloom_relationship: orNull(val('creature-gigglegloom')),
     dimmed_version:           orNull(val('creature-dimmed')),
     dm_notes:                 orNull(val('creature-dm-notes')),
-    player_facing:            triRadio('creature-pf'),
     tags:                     tagsArr('creature-tags')
   };
+  var imgPath = readImagePath('creature-img-input', 'assets/images/creatures/', entryId, PENDING_EDIT_IMAGE);
+  if (imgPath) entry.image = imgPath;
+  entry.player_facing = triRadio('creature-pf');
   showOutput(entry, 'creature');
 }
 
@@ -2314,8 +2397,9 @@ function generatePoi() {
   var summary = val('poi-summary');
   if (!summary){ alert('Summary is required (✦).'); return; }
 
+  var entryId = val('poi-id') || slugify(name);
   var entry = {
-    id:                   val('poi-id') || slugify(name),
+    id:                   entryId,
     name:                 name,
     nation:               orNull(val('poi-nation')),
     region:               region,
@@ -2327,9 +2411,11 @@ function generatePoi() {
     color_health:         orNull(val('poi-color-health')),
     vareth_presence:      boolRadio('poi-vareth'),
     dm_notes:             orNull(val('poi-dm-notes')),
-    player_facing:        triRadio('poi-pf'),
     tags:                 tagsArr('poi-tags')
   };
+  var imgPath = readImagePath('poi-img-input', 'assets/images/regions/', entryId, PENDING_EDIT_IMAGE);
+  if (imgPath) entry.image = imgPath;
+  entry.player_facing = triRadio('poi-pf');
   showOutput(entry, 'poi');
 }
 
@@ -2341,8 +2427,9 @@ function generateCharacter() {
   var summary = val('char-summary');
   if (!summary)   { alert('Summary is required (✦).'); return; }
 
+  var entryId = val('char-id') || slugify(name);
   var entry = {
-    id:                       val('char-id') || slugify(name),
+    id:                       entryId,
     name:                     name,
     role:                     orNull(val('char-role')),
     category:                 category,
@@ -2360,9 +2447,11 @@ function generateCharacter() {
     dm_notes:                 orNull(val('char-dm-notes')),
     gigglegloom_relationship: orNull(val('char-gigglegloom')),
     color:                    orNull(val('char-color')),
-    tags:                     tagsArr('char-tags'),
-    player_facing:            triRadio('char-pf')
+    tags:                     tagsArr('char-tags')
   };
+  var imgPath = readImagePath('char-img-input', 'assets/images/characters/', entryId, PENDING_EDIT_IMAGE);
+  if (imgPath) entry.image = imgPath;
+  entry.player_facing = triRadio('char-pf');
   showOutput(entry, 'character');
 }
 
@@ -2382,8 +2471,9 @@ function generateOrganization() {
   });
 
   var fullName = val('org-full-name');
+  var entryId  = val('org-id') || slugify(name);
   var entry = {
-    id:                       val('org-id') || slugify(name),
+    id:                       entryId,
     name:                     name,
     full_name:                fullName || name,
     alignment:                alignment,
@@ -2400,9 +2490,11 @@ function generateOrganization() {
     vareth_relationship:      orNull(val('org-vareth')),
     gigglegloom_relationship: orNull(val('org-gigglegloom')),
     notable_facts:            facts,
-    tags:                     tagsArr('org-tags'),
-    player_facing:            triRadio('org-pf')
+    tags:                     tagsArr('org-tags')
   };
+  var imgPath = readImagePath('org-img-input', 'assets/images/organizations/', entryId, PENDING_EDIT_IMAGE);
+  if (imgPath) entry.image = imgPath;
+  entry.player_facing = triRadio('org-pf');
   showOutput(entry, 'organization');
 }
 
@@ -2414,8 +2506,9 @@ function generateItem() {
   var desc = val('item-description');
   if (!desc)  { alert('Description is required (✦).'); return; }
 
+  var entryId = val('item-id') || slugify(name);
   var entry = {
-    id:                       val('item-id') || slugify(name),
+    id:                       entryId,
     name:                     name,
     type:                     type,
     rarity:                   orNull(val('item-rarity')),
@@ -2425,17 +2518,20 @@ function generateItem() {
     current_location:         orNull(val('item-location')),
     current_owner:            orNull(val('item-owner')),
     dm_notes:                 orNull(val('item-dm-notes')),
-    player_facing:            triRadio('item-pf'),
     tags:                     tagsArr('item-tags')
   };
+  var imgPath = readImagePath('item-img-input', 'assets/images/items/', entryId, PENDING_EDIT_IMAGE);
+  if (imgPath) entry.image = imgPath;
+  entry.player_facing = triRadio('item-pf');
   showOutput(entry, 'item');
 }
 
 /* ── SHOW OUTPUT ─────────────────────────────── */
 function showOutput(entry, type) {
   // Capture any pending edit context before clearing it
-  var editId = PENDING_EDIT_ID;
-  PENDING_EDIT_ID = null;
+  var editId  = PENDING_EDIT_ID;
+  PENDING_EDIT_ID    = null;
+  PENDING_EDIT_IMAGE = null; // generators have already consumed this before calling showOutput
 
   LAST_GENERATED = { entry: entry, type: type, isEdit: !!editId, editId: editId || null };
 
@@ -2708,12 +2804,13 @@ function clearForm(formType) {
     var fEmpty = document.getElementById('org-facts-empty');
     if (fEmpty) fEmpty.style.display = '';
   }
-  // Clear image previews
+  // Clear image previews and reset edit image state
   form.querySelectorAll('.image-preview').forEach(function(img) {
     img.src = ''; img.classList.remove('visible');
   });
-  form.querySelectorAll('.image-path-hint').forEach(function(el) { el.textContent = ''; });
+  form.querySelectorAll('.image-path-hint').forEach(function(el) { el.textContent = ''; el.style.color = ''; });
   form.querySelectorAll('input[type=file]').forEach(function(el) { el.value = ''; });
+  PENDING_EDIT_IMAGE = null;
   // Reset nation dropdowns
   form.querySelectorAll('select[id$="-nation"]').forEach(function(sel) {
     sel.innerHTML = '<option value="">— Select region first —</option>';
@@ -3031,7 +3128,8 @@ function cmEditEntry(idx) {
   if (!item) return;
 
   // Signal to showOutput() / saveToFile() that the next Generate+Save is a replace, not an append
-  PENDING_EDIT_ID = item._entry.id;
+  PENDING_EDIT_ID    = item._entry.id;
+  PENDING_EDIT_IMAGE = item._entry.image || null; // preserve existing image through the edit cycle
 
   switchTab(item._type);
   cmPopulateForm(item._entry, item._type);
@@ -3055,6 +3153,18 @@ function cmPopulateForm(entry, type) {
     document.querySelectorAll('input[name="' + name + '"]').forEach(function(el) {
       el.checked = (el.value === v);
     });
+  }
+  // Show existing image path and thumbnail for edit flow
+  function showExistingImage(previewId, pathId) {
+    if (!entry.image) return;
+    var pathHint = document.getElementById(pathId);
+    if (pathHint) pathHint.innerHTML = '🖼 Current: <code>' + escHtml(entry.image) + '</code> — upload a new image to replace';
+    var prev = document.getElementById(previewId);
+    if (prev) {
+      prev.src = entry.image;
+      prev.classList.add('visible');
+      prev.onerror = function() { prev.classList.remove('visible'); };
+    }
   }
 
   if (type === 'city') {
@@ -3089,6 +3199,7 @@ function cmPopulateForm(entry, type) {
       var descEl = document.getElementById('lm-' + _landmarkN + '-desc');
       if (descEl) descEl.value = lm.description || '';
     });
+    showExistingImage('city-img-preview', 'city-img-path');
 
   } else if (type === 'creature') {
     sv('creature-name',        entry.name);
@@ -3108,6 +3219,7 @@ function cmPopulateForm(entry, type) {
       cb.checked = regions.indexOf(cb.value) >= 0;
     });
     setRadioVal('creature-pf', entry.player_facing);
+    showExistingImage('creature-img-preview', 'creature-img-path');
 
   } else if (type === 'poi') {
     sv('poi-name',        entry.name);
@@ -3126,6 +3238,7 @@ function cmPopulateForm(entry, type) {
     if (pnSel) pnSel.value = entry.nation || '';
     setRadioVal('poi-vareth', entry.vareth_presence ? 'true' : 'false');
     setRadioVal('poi-pf',     entry.player_facing);
+    showExistingImage('poi-img-preview', 'poi-img-path');
 
   } else if (type === 'character') {
     sv('char-name',           entry.name);
@@ -3148,6 +3261,7 @@ function cmPopulateForm(entry, type) {
     sv('char-category',       entry.category);
     sv('char-status',         entry.status);
     setRadioVal('char-pf',    entry.player_facing);
+    showExistingImage('char-img-preview', 'char-img-path');
 
   } else if (type === 'organization') {
     sv('org-name',          entry.name);
@@ -3180,6 +3294,7 @@ function cmPopulateForm(entry, type) {
       if (fEl) fEl.value = f;
     });
     setRadioVal('org-pf', entry.player_facing);
+    showExistingImage('org-img-preview', 'org-img-path');
 
   } else if (type === 'item') {
     sv('item-name',        entry.name);
@@ -3194,6 +3309,7 @@ function cmPopulateForm(entry, type) {
     sv('item-type',        entry.type);
     sv('item-rarity',      entry.rarity);
     setRadioVal('item-pf', entry.player_facing);
+    showExistingImage('item-img-preview', 'item-img-path');
   }
 }
 

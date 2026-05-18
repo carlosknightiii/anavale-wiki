@@ -124,6 +124,30 @@ Existing folders: `assets/images/regions/` and `assets/images/creatures/`.
 
 ---
 
+## Image Workflow
+
+When adding an image to an entry:
+
+1. Upload image in DM Tools form — it will be auto-compressed to WebP if possible
+2. Generate Entry — the image field will be included automatically
+3. Save to Data File — saves the entry with the image path
+4. Copy the image file to the correct assets subfolder:
+   - Cities, Nations, POIs → `assets/images/regions/`
+   - Creatures → `assets/images/creatures/`
+   - Characters → `assets/images/characters/`
+   - Organizations → `assets/images/organizations/`
+   - Items → `assets/images/items/`
+5. Commit and push both the data file change and the image file
+
+**Image naming:** always name the file to match the entry id.
+e.g. `gobblewump-crossing.webp` for `id: "gobblewump-crossing"`
+
+The DM form shows a preview of the full save path ("Will be saved as: assets/images/regions/gobblewump-crossing.webp") and an estimated compressed size using canvas WebP conversion. If the uploaded file is already WebP and under 200 KB, it shows "✓ Already optimized".
+
+When **editing** an existing entry that already has an image, the form shows the current image path and thumbnail. If you don't upload a new image, the existing path is preserved in the generated JSON — it will not be stripped.
+
+---
+
 ## Campaign Notes
 
 - **Ruleset:** 2024 D&D 5e Player's Handbook

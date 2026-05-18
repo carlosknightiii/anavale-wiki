@@ -712,6 +712,7 @@ var CITIES = [
       "bridge",
       "gobblewump-gerald"
     ],
+    "image": "assets/images/regions/gobblewump-crossing.webp", // file needs to be added to this path
     "player_facing": "teaser"
   }
 ];

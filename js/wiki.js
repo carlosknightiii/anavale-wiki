@@ -997,6 +997,7 @@ function renderNation(id, el) {
       ])
       + pageHeader(titleCase(nation.region) + ' · Nation', nation.name, nation.summary)
       + '<div class="wiki-body">'
+      + entryImage(nation.image, nation.name)
       + '<p>' + esc(nation.summary) + '</p>'
       + teaserFooter('nation')
       + '</div>';
@@ -1053,6 +1054,7 @@ function renderNation(id, el) {
       { label: nation.name, hash: 'nation/' + id }
     ])
     + pageHeader(titleCase(nation.region) + ' · Nation', nation.name, nation.summary)
+    + entryImage(nation.image, nation.name)
     + '<div class="nation-layout">'
     + '<div class="nation-body">'
     + '<p>' + esc(nation.culture) + '</p>'
@@ -1089,6 +1091,7 @@ function renderCity(id, el) {
       ])
       + pageHeader(titleCase(city.region) + ' · ' + titleCase(city.type), city.name, city.summary)
       + '<div class="wiki-body">'
+      + entryImage(city.image, city.name)
       + '<p>' + esc(city.summary || '') + '</p>'
       + teaserFooter('settlement')
       + '</div>';
@@ -1127,6 +1130,7 @@ function renderCity(id, el) {
       { label: city.name, hash: 'city/' + id }
     ])
     + pageHeader(titleCase(city.region) + ' · ' + titleCase(city.type), city.name, city.summary)
+    + entryImage(city.image, city.name)
     + '<div class="nation-layout">'
     + '<div class="nation-body">'
     + '<p>' + esc(city.description || city.summary || '') + '</p>'
@@ -1220,6 +1224,7 @@ function renderOrg(id, el) {
           org.name,
           (org.full_name && org.full_name !== org.name) ? org.full_name : titleCase(org.type))
       + '<div class="wiki-body">'
+      + entryImage(org.image, org.name)
       + '<p>' + esc(org.summary) + '</p>'
       + teaserFooter('organization')
       + '</div>';
@@ -1258,6 +1263,7 @@ function renderOrg(id, el) {
     + pageHeader('Organization · <span style="color:' + alignColor + '">' + titleCase(org.alignment) + '</span>',
         org.name,
         (org.full_name && org.full_name !== org.name) ? org.full_name : titleCase(org.type))
+    + entryImage(org.image, org.name)
     + '<div class="nation-layout">'
     + '<div class="nation-body">'
     + formeryStamp
