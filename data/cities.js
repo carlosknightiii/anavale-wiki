@@ -181,30 +181,33 @@ var CITIES = [
     player_facing: false
   },
   {
-    id: "pebbleshire",
-    name: "Pebbleshire",
-    nation: "solenmere",
-    region: "caparia",
-    continent: "pogglewog",
-    type: "village",
-    summary: "Sillywiggles Meadows. Home of the annual Bounce Beetle race.",
-    description: "A quiet village in the Sillywiggles Meadows best known for hosting the annual Bounce Beetle race — the most chaotic officially sanctioned sporting event in Caparia. No Bounce Beetle has ever completed the intended course. This has never been considered grounds for cancellation.",
-    landmarks: [
-      { name: "The Bounce Course", description: "A meandering series of painted flags through the meadows. Bounce Beetles arrive at the finish line through a combination of ricocheting, accident, and apparent spite." }
+    "id": "pebbleshire",
+    "name": "Pebbleshire",
+    "nation": "solenmere",
+    "region": "caparia",
+    "continent": "pogglewog",
+    "type": "village",
+    "summary": "A quiet farming village in Sillywiggles Meadows, primary food supply for Pebblecrown, and home to two of the most important days in Caparia's calendar: The Wiggle and the Bounce Beetle Race. Neither event has ever been cancelled. One of them almost was this spring.",
+    "description": "Pebbleshire is the primary farming settlement of Sillywiggles Meadows and the agricultural heart that quietly sustains Pebblecrown. The Janiveth control Gloomreach Pass and carry considerable political weight in the Pogglewog Confederation — but you cannot eat a mountain. Pebbleshire and the surrounding meadow farms have fed Pebblecrown for generations, a fact the farmers are cheerfully aware of and the Janiveth court finds mildly embarrassing to acknowledge.\n\nIt is not a powerful place. It has no garrison, no Gigglegloom practitioners of note, no representation in the Confederation. What it has is extremely good soil, an unbroken streak of abundant harvests going back two hundred years, and a deep collective contentment that visitors find either charming or unsettling depending on their disposition.\n\nThe Wiggle\nEvery spring, when the first warm rains arrive, the Gigglegloom stored in the soil over winter releases in small involuntary bursts — and for approximately one hour, everything alive in the meadow wiggles. Livestock. Wildflowers. The farmers themselves. Children fall over laughing. Elderly residents wiggle with great dignity. Nothing can stop it. Nobody tries anymore.\nPebbleshire throws a festival around it called The Wiggle — the most important day of their calendar, marked by terrible dancing, competitive pie judging, and the annual reading of The Wiggle Ledger, a document maintained since the village's founding that records, in solemn bureaucratic language, exactly how many things wiggled and for how long. Pebblecrown's official position is that The Wiggle is a minor geological curiosity beneath formal comment. Pebblecrown representatives have been seen wiggling at it for centuries. The Wiggle Ledger has a dedicated section for visiting dignitaries.\nThe Wiggle did not happen this spring. The rains came. The soil was wet. Nothing wiggled. The village has not spoken about it directly — not because they are afraid, but because none of them have the language for what it means when the thing that has happened every year of their lives simply doesn't. The Wiggle Ledger entry for this year reads, in the careful hand of the village recorder: \"First rain — [blank] — pending.\" The page has not been turned.\n\nThe Bounce Beetle Race\nThe second most important day of Pebbleshire's calendar and the most chaotic officially sanctioned sporting event in Caparia. The course — called The Bounce Course — is a meandering series of painted flags through the meadows. Bounce Beetles arrive at the finish line through a combination of ricocheting, accident, and apparent spite. No Bounce Beetle has ever completed the intended course. This has never been considered grounds for cancellation. Pebblecrown sends a representative every year. The representative has never successfully explained the results to the Janiveth court.\n\nThe Vareth Thread (DM Only — Hidden)\nThe harvests of Sillywiggles Meadows have been abundant for two hundred years without exception — longer than any agricultural region in Caparia. The Chroma Bureau made a note of it forty years ago, filed it under Benign Anomalies, and moved on.\nThe eastern boundary of the meadows tells a different story. Beyond a precise line on the eastern edge, three smaller farms over the past decade have gone quietly grey. Not dramatically. Not overnight. Crops that yield a little less each season. Colors in the soil slightly muted. One farmer who sold and left without explanation. Two who stayed and have grown quieter every year.\n\nThe grey edge is moving west. Slowly — approximately ten feet a season. At current pace it reaches Pebbleshire's easternmost fields in about four years. Nobody in Pebbleshire has connected these facts yet. The Chroma Bureau's Benign Anomalies file has not been reopened. The Kindpact has noticed that Pocketmoles in the eastern meadow have stopped visiting the two farms that stayed.\nKess the Gray has never been confirmed in Caparia. Her methods do not require her presence.",
+    "landmarks": [
+      {
+        "name": "The Bounce Course",
+        "description": "A meandering series of painted flags through the meadows. Bounce Beetles arrive at the finish line through a combination of ricocheting, accident, and apparent spite."
+      }
     ],
-    strategic_importance: "None — beloved for the race",
-    color_health: "excellent",
-    formery_present: false,
-    vareth_presence: false,
-    tone: "Cheerful, pastoral, slightly chaotic on race days.",
-    tags: [
+    "strategic_importance": "None — beloved for the race",
+    "color_health": "excellent",
+    "formery_present": false,
+    "vareth_presence": false,
+    "tone": "Cheerful, pastoral, slightly chaotic on race days.",
+    "tags": [
       "caparia",
       "solenmere",
       "village",
       "bounce-beetle",
       "sillywiggles"
     ],
-    player_facing: false
+    "player_facing": "teaser"
   },
   {
     id: "doopu-station",
