@@ -1218,6 +1218,16 @@
           <input class="field-input" type="text" id="char-tags" placeholder="e.g. wanderkeep, caparia, ally, featherflow, active">
         </div>
 
+        <div class="repeating-group">
+          <div class="repeating-group-title">
+            World Associations
+            <button class="btn-add" onclick="addAssociation()">+ Add Association</button>
+          </div>
+          <span class="field-help" style="display:block;margin-bottom:0.75rem">Link this character to cities, nations, regions, organizations, POIs, creatures, or items. Used to display this character on those wiki pages.</span>
+          <div id="char-assoc-list"></div>
+          <div id="char-assoc-empty" class="repeating-empty">No associations added yet.</div>
+        </div>
+
         <div class="field-group">
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save to assets/images/characters/ after generating</span>
@@ -2256,6 +2266,85 @@ function addLandmark() {
   document.getElementById('city-landmarks-empty').style.display = 'none';
 }
 
+/* ── REPEATING GROUP — WORLD ASSOCIATIONS ────── */
+var _assocN = 0;
+var ASSOC_COLLECTIONS = [
+  { value: 'cities',        label: 'City / Settlement' },
+  { value: 'creatures',     label: 'Creature' },
+  { value: 'items',         label: 'Item' },
+  { value: 'nations',       label: 'Nation' },
+  { value: 'organizations', label: 'Organization' },
+  { value: 'pois',          label: 'Point of Interest' },
+  { value: 'regions',       label: 'Region' },
+  { value: 'religions',     label: 'Religion' }
+];
+
+var ASSOC_ENTRIES = {
+  cities:        typeof CITIES        !== 'undefined' ? CITIES        : [],
+  creatures:     typeof CREATURES     !== 'undefined' ? CREATURES     : [],
+  items:         typeof ITEMS         !== 'undefined' ? ITEMS         : [],
+  nations:       typeof NATIONS       !== 'undefined' ? NATIONS       : [],
+  organizations: typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [],
+  pois:          typeof POIS          !== 'undefined' ? POIS          : [],
+  regions:       typeof REGIONS       !== 'undefined' ? REGIONS       : [],
+  religions:     typeof RELIGIONS     !== 'undefined' ? RELIGIONS     : []
+};
+
+function assocCollectionOptions() {
+  return '<option value="">— Select type —</option>'
+    + ASSOC_COLLECTIONS.map(function(c) {
+        return '<option value="' + c.value + '">' + c.label + '</option>';
+      }).join('');
+}
+
+function assocEntryOptions(collection) {
+  var entries = ASSOC_ENTRIES[collection] || [];
+  var sorted  = entries.slice().sort(function(a, b) {
+    return (a.name || '').localeCompare(b.name || '');
+  });
+  return '<option value="">— Select entry —</option>'
+    + sorted.map(function(e) {
+        return '<option value="' + e.id + '">' + (e.name || e.id) + '</option>';
+      }).join('');
+}
+
+function addAssociation() {
+  _assocN++;
+  var rowId = 'assoc-' + _assocN;
+  var colSelId  = rowId + '-col';
+  var entSelId  = rowId + '-ent';
+  var div = document.createElement('div');
+  div.className = 'repeating-item';
+  div.id = rowId;
+  div.innerHTML =
+    '<button class="btn-remove" onclick="removeRepeat(\'' + rowId + '\')" title="Remove">✕</button>' +
+    '<div class="field-row" style="margin-bottom:0">' +
+      '<div class="field-group" style="margin-bottom:0">' +
+        '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Type</label>' +
+        '<select class="field-select" id="' + colSelId + '" onchange="refreshAssocEntries(\'' + colSelId + '\',\'' + entSelId + '\')">' +
+          assocCollectionOptions() +
+        '</select>' +
+      '</div>' +
+      '<div class="field-group" style="margin-bottom:0">' +
+        '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Entry</label>' +
+        '<select class="field-select" id="' + entSelId + '">' +
+          '<option value="">— Select type first —</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>';
+  var list = document.getElementById('char-assoc-list');
+  list.appendChild(div);
+  document.getElementById('char-assoc-empty').style.display = 'none';
+}
+
+function refreshAssocEntries(colSelId, entSelId) {
+  var collection = document.getElementById(colSelId).value;
+  var entSel     = document.getElementById(entSelId);
+  entSel.innerHTML = collection
+    ? assocEntryOptions(collection)
+    : '<option value="">— Select type first —</option>';
+}
+
 /* ── REPEATING GROUP — NOTABLE FACTS ─────────── */
 var _factN = 0;
 function addNotableFact() {
@@ -2501,6 +2590,15 @@ function generateCharacter() {
     color:                    orNull(val('char-color')),
     tags:                     tagsArr('char-tags')
   };
+  var associated = [];
+  document.querySelectorAll('#char-assoc-list .repeating-item').forEach(function(item) {
+    var colSel = item.querySelector('select:nth-of-type(1)');
+    var entSel = item.querySelector('select:nth-of-type(2)');
+    var col = colSel ? colSel.value : '';
+    var ent = entSel ? entSel.value : '';
+    if (col && ent) associated.push({ collection: col, id: ent });
+  });
+  entry.associated = associated;
   var imgPath = readImagePath('char-img-input', 'assets/images/characters/', entryId, PENDING_EDIT_IMAGE);
   if (imgPath) entry.image = imgPath;
   entry.player_facing = triRadio('char-pf');
@@ -2855,6 +2953,13 @@ function clearForm(formType) {
     fList.innerHTML = '';
     var fEmpty = document.getElementById('org-facts-empty');
     if (fEmpty) fEmpty.style.display = '';
+  }
+  var aList = document.getElementById('char-assoc-list');
+  if (aList) {
+    aList.innerHTML = '';
+    _assocN = 0;
+    var aEmpty = document.getElementById('char-assoc-empty');
+    if (aEmpty) aEmpty.style.display = '';
   }
   // Clear image previews and reset edit image state
   form.querySelectorAll('.image-preview').forEach(function(img) {
@@ -3366,6 +3471,24 @@ function cmPopulateForm(entry, type) {
     sv('char-status',         entry.status);
     setRadioVal('char-pf',    entry.player_facing);
     showExistingImage('char-img-preview', 'char-img-path');
+      // Populate world associations
+      var assocList = document.getElementById('char-assoc-list');
+      var assocEmpty = document.getElementById('char-assoc-empty');
+      if (assocList && entry.associated && entry.associated.length) {
+        entry.associated.forEach(function(a) {
+          addAssociation();
+          var lastRow = assocList.lastElementChild;
+          if (!lastRow) return;
+          var colSel = lastRow.querySelector('select:nth-of-type(1)');
+          var entSel = lastRow.querySelector('select:nth-of-type(2)');
+          if (colSel) {
+            colSel.value = a.collection;
+            refreshAssocEntries(colSel.id, entSel ? entSel.id : '');
+          }
+          if (entSel) entSel.value = a.id;
+        });
+        if (assocEmpty) assocEmpty.style.display = 'none';
+      }
 
   } else if (type === 'organization') {
     sv('org-name',          entry.name);

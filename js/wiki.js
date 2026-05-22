@@ -89,6 +89,36 @@ function isPlayerFacing(entry) {
   return entry && (entry.player_facing === true || entry.player_facing === 'teaser');
 }
 
+// Returns visible characters associated with a given collection + id pair.
+// Respects player_facing — hidden characters are excluded for players.
+function getAssociatedCharacters(collection, id) {
+  var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  return chars.filter(function(c) {
+    if (!c.associated || !c.associated.length) return false;
+    if (getVisibility(c) === 'hidden') return false;
+    return c.associated.some(function(a) {
+      return a.collection === collection && a.id === id;
+    });
+  }).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
+}
+
+// Renders a "Characters" section given a list of character entries.
+function renderAssociatedCharacters(chars) {
+  if (!chars || !chars.length) return '';
+  var html = '<div class="section-heading">Characters</div><div class="entry-grid">';
+  chars.forEach(function(c) {
+    var cVis = getVisibility(c);
+    html += '<div class="entry-card" data-nav="character/' + c.id + '" onclick="navigate(\'character/' + c.id + '\')">'
+      + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
+      + '<div class="entry-tag">' + esc(c.role || c.category || '') + '</div>'
+      + '<div class="entry-body">' + esc(c.summary || '') + '</div>'
+      + (cVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
+      + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 // Content-type word for the universal teaser footer
 function teaserFooter(type) {
   return '<div class="teaser-footer">✦ The full story of this ' + type + ' has not yet been discovered.</div>';
@@ -1315,6 +1345,7 @@ function renderRegion(id, el) {
   var heroHtml = cfg.heroImg
     ? '<img src="' + esc(cfg.heroImg) + '" alt="' + esc(region.name) + '" class="region-hero">' : '';
 
+    body += renderAssociatedCharacters(getAssociatedCharacters('regions', id));
   el.innerHTML = pageHeader('Region', region.name, cfg.subtitle || '')
     + '<div class="wiki-body">'
     + heroHtml
@@ -1409,7 +1440,8 @@ function renderNation(id, el) {
     + '<div class="nation-facts">'
     + '<div class="nation-facts-title">⚑ Quick Facts</div>'
     + factsHtml
-    + '</div></div>';
+    + '</div></div>'
+    + renderAssociatedCharacters(getAssociatedCharacters('nations', id));
 }
 
 function renderCity(id, el) {
@@ -1480,7 +1512,8 @@ function renderCity(id, el) {
     + landmarksHtml
     + '</div>'
     + '<div class="nation-facts"><div class="nation-facts-title">⚑ Quick Facts</div>' + factsHtml + '</div>'
-    + '</div>';
+    + '</div>'
+    + renderAssociatedCharacters(getAssociatedCharacters('cities', id));
 }
 
 function renderCreature(id, el) {
@@ -1750,7 +1783,8 @@ function renderOrg(id, el) {
     + factsListHtml
     + '</div>'
     + '<div class="nation-facts"><div class="nation-facts-title">⚑ Quick Facts</div>' + factsHtml + '</div>'
-    + '</div>';
+    + '</div>'
+    + renderAssociatedCharacters(getAssociatedCharacters('organizations', id));
 }
 
 function renderItem(id, el) {
@@ -1814,6 +1848,7 @@ function renderPOI(id, el) {
     + entryImage(poi.image, poi.name)
     + '<p>' + esc(poi.description || poi.summary || '') + '</p>'
     + (poi.gigglegloom_notes ? '<p><em>' + esc(poi.gigglegloom_notes) + '</em></p>' : '')
+    + renderAssociatedCharacters(getAssociatedCharacters('pois', id))
     + '</div>';
 }
 

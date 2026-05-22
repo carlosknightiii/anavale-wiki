@@ -19,6 +19,7 @@ var CHARACTERS = [
     gigglegloom_relationship: "The Vareth is the anti-Gigglegloom \u2014 the silence that the Gigglegloom fills. It does not destroy the Gigglegloom so much as remove the conditions the Gigglegloom needs to exist.",
     color: "Flat grey \u2014 the grey that does not shine",
     tags: ["villain", "no-body", "quietude", "dimming", "grak", "lieutenant-controller", "dm-only"],
+    associated: [],
     player_facing: false
   },
   {
@@ -41,6 +42,10 @@ var CHARACTERS = [
     gigglegloom_relationship: "Antagonist to all types. Her method \u2014 controlling trade \u2014 starves regions of color without direct extraction. Subtler and slower than the other lieutenants.",
     color: "Pale grey-blue \u2014 the color of winter sky before snow",
     tags: ["villain", "lieutenant", "nombi", "trade-control", "strix", "contradiction"],
+    associated: [
+      { collection: "regions",   id: "nombi" },
+      { collection: "cities",    id: "frostgate" }
+    ],
     player_facing: false
   },
   {
@@ -63,6 +68,11 @@ var CHARACTERS = [
     gigglegloom_relationship: "He understands it better than anyone alive. He is using that understanding to unmake it. This is either the most villainous thing possible or a very specific kind of tragedy.",
     color: "Deep indigo, darkened past the point of dignity",
     tags: ["villain", "lieutenant", "caldenmor", "gigglegloom-corruption", "archive", "scholar-villain"],
+    associated: [
+      { collection: "nations",   id: "dingurei" },
+      { collection: "cities",    id: "lightcrak" },
+      { collection: "cities",    id: "inkwell" }
+    ],
     player_facing: false
   },
   {
@@ -85,6 +95,11 @@ var CHARACTERS = [
     gigglegloom_relationship: "She was a Bubbleseed practitioner once. She knows what she is doing. She does it anyway.",
     color: "Deliberate grey \u2014 chosen, not faded",
     tags: ["villain", "lieutenant", "sohot", "ashenveil", "queen-sarova", "festival-villain", "contradiction"],
+    associated: [
+      { collection: "regions",       id: "sohot" },
+      { collection: "cities",        id: "ashenveil" },
+      { collection: "characters",    id: "queen-sarova" }
+    ],
     player_facing: false
   },
   {
@@ -107,6 +122,10 @@ var CHARACTERS = [
     gigglegloom_relationship: "Skiv lost their partner to an uncontrolled Flamerage surge. Their relationship to all Gigglegloom types since has been complicated. They are competent practitioners when they need to be. They are careful not to need to be often.",
     color: "Unknown. The only confirmed fact about Skiv's personal appearance is that their color is never quite readable.",
     tags: ["villain", "lieutenant", "spy", "veilborn", "deep-cover", "they-them", "not-actually-villain", "sable", "tragedy"],
+    associated: [
+      { collection: "organizations", id: "veilborn" },
+      { collection: "characters",    id: "sable" }
+    ],
     player_facing: false
   },
   {
@@ -129,6 +148,11 @@ var CHARACTERS = [
     gigglegloom_relationship: "Her Gigglegloom affinity has always been Bubbleseed \u2014 her official color was gold. The Fading is pulling it toward muted amber and increasingly toward grey.",
     color: "Gold, fading toward amber, with three seasons of grey creeping in at the edges",
     tags: ["ally", "queen", "sohot", "auvari", "fading", "kess-target", "urgent", "seven-who-know"],
+    associated: [
+      { collection: "regions",   id: "sohot" },
+      { collection: "cities",    id: "aurentum-city" },
+      { collection: "nations",   id: "auvari-remnance" }
+    ],
     player_facing: false
   },
   {
@@ -151,6 +175,9 @@ var CHARACTERS = [
     gigglegloom_relationship: "Sable was Fading. Whether this was natural Stage 1 or early Vareth contact has never been determined. The Wanderkeep did not investigate this; they investigated the surge.",
     color: "Unknown \u2014 no color description survives in any record",
     tags: ["deceased", "light", "sable", "skiv", "flamerage", "wanderkeep", "fading", "unexamined-truth"],
+    associated: [
+      { collection: "characters", id: "skiv" }
+    ],
     player_facing: false
   },
   {
@@ -174,6 +201,9 @@ var CHARACTERS = [
     gigglegloom_relationship: "Oro IS the Gigglegloom's divine origin \u2014 or the Gigglegloom is Oro's expression in the physical world. The Brightcreed does not distinguish between these. The Conclave does.",
     color: "Gold \u2014 the original",
     tags: ["god", "active", "light", "brightcreed", "joy", "color", "creatures", "cannot-enter-dimmed"],
+    associated: [
+      { collection: "religions",  id: "brightcreed" }
+    ],
     player_facing: false
   },
   {
@@ -197,6 +227,9 @@ var CHARACTERS = [
     gigglegloom_relationship: "The Gigglegloom's most ancient divine connection. The wild Gigglegloom that has no practitioners, no Conclave, no license \u2014 that is Nara.",
     color: "Shifting \u2014 whatever surprises you",
     tags: ["god", "active", "diminished", "brightcreed", "wild-magic", "partition-origin", "nara"],
+    associated: [
+      { collection: "religions",  id: "brightcreed" }
+    ],
     player_facing: false
   },
   {
@@ -220,6 +253,9 @@ var CHARACTERS = [
     gigglegloom_relationship: "Memory and the Gigglegloom are intertwined \u2014 the Solvanu believe color is the world's memory. Thyun and this belief may be more directly connected than the Solvanu know.",
     color: "The color of waiting \u2014 deep, still, not grey",
     tags: ["god", "active", "stillkeep", "memory", "patience", "partition-born", "thyun"],
+    associated: [
+      { collection: "religions",  id: "stillkeep" }
+    ],
     player_facing: false
   },
   {
@@ -243,6 +279,9 @@ var CHARACTERS = [
     gigglegloom_relationship: "Shadow and the Gigglegloom \u2014 Solvara's domain includes the places the Gigglegloom does not reach, the gaps between colors, the things that do not show under light. Whether the Dimming is in Solvara's domain or opposed to it is a question the Veilborn considers classified.",
     color: "Not observable \u2014 the color in the gap between colors",
     tags: ["god", "active", "veilborn", "secrets", "shadow", "partition-born", "partition-truth", "unknowable"],
+    associated: [
+      { collection: "religions",  id: "veilborn" }
+    ],
     player_facing: false
   },
   {
@@ -266,6 +305,9 @@ var CHARACTERS = [
     gigglegloom_relationship: "Grak's divine color was The Prior white \u2014 he WAS a Gigglegloom type before the Partition. The Dimming is what happens when Grak's form of order reaches the Gigglegloom and empties it of the joy that makes it possible.",
     color: "Once: The Prior white. Now: flat grey \u2014 the grey that does not shine, ever.",
     tags: ["god", "fallen", "malevolent", "grak", "vareth", "dimming", "prior-white", "unseen-fears", "order"],
+    associated: [
+      { collection: "organizations", id: "the-vareth" }
+    ],
     player_facing: false
   }
 ];
