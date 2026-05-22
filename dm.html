@@ -1560,6 +1560,50 @@
                 <option value="teaser">✨ Teaser</option>
                 <option value="visible">👁 Visible</option>
               </select>
+              <select id="cm-continent-filter" class="cm-select" onchange="cmApplyFilters()">
+                <option value="">All Continents</option>
+                <option value="pogglewog">Pogglewog</option>
+              </select>
+              <select id="cm-region-filter" class="cm-select" onchange="cmApplyFilters()">
+                <option value="">All Regions</option>
+                <option value="caparia">Caparia</option>
+                <option value="nombi">Nombi</option>
+                <option value="sohot">Sohot</option>
+                <option value="jugabi">Jugabi</option>
+              </select>
+              <select id="cm-nation-filter" class="cm-select" onchange="cmApplyFilters()">
+                <option value="">All Nations</option>
+              </select>
+              <select id="cm-settlement-filter" class="cm-select" onchange="cmApplyFilters()">
+                <option value="">All Types</option>
+                <option value="capital">capital</option>
+                <option value="city">city</option>
+                <option value="town">town</option>
+                <option value="village">village</option>
+                <option value="outpost">outpost</option>
+                <option value="port">port</option>
+                <option value="major-port">major-port</option>
+                <option value="city-state">city-state</option>
+                <option value="hidden-settlement">hidden-settlement</option>
+                <option value="desert-town">desert-town</option>
+                <option value="outpost-town">outpost-town</option>
+                <option value="major-settlement">major-settlement</option>
+                <option value="ruin">ruin</option>
+              </select>
+              <select id="cm-vareth-filter" class="cm-select" onchange="cmApplyFilters()">
+                <option value="">All Vareth</option>
+                <option value="present">Vareth Present</option>
+                <option value="none">No Vareth</option>
+              </select>
+              <select id="cm-colorhealth-filter" class="cm-select" onchange="cmApplyFilters()">
+                <option value="">All Color Health</option>
+                <option value="excellent">Excellent</option>
+                <option value="good">Good</option>
+                <option value="moderate">Moderate</option>
+                <option value="dire">Dire</option>
+                <option value="unknown">Unknown</option>
+                <option value="compromised">Compromised</option>
+              </select>
               <select id="cm-sort" class="cm-select" onchange="cmApplyFilters()">
                 <option value="name-asc">Name A→Z</option>
                 <option value="name-desc">Name Z→A</option>
@@ -2943,6 +2987,26 @@ function cmRefresh() {
     });
   });
 
+  // Populate nation filter dynamically from loaded entries
+  var nationSel = document.getElementById('cm-nation-filter');
+  if (nationSel) {
+    var nations = [];
+    CM_ALL.forEach(function(item) {
+      var n = item._entry.nation;
+      if (n && nations.indexOf(n) === -1) nations.push(n);
+    });
+    nations.sort();
+    var currentNation = nationSel.value;
+    nationSel.innerHTML = '<option value="">All Nations</option>';
+    nations.forEach(function(n) {
+      var opt = document.createElement('option');
+      opt.value = n;
+      opt.textContent = n;
+      if (n === currentNation) opt.selected = true;
+      nationSel.appendChild(opt);
+    });
+  }
+
   cmApplyFilters();
 
   var countEl = document.getElementById('cm-count');
@@ -2969,28 +3033,60 @@ function cmFilter() {
 }
 
 function cmResetFilters() {
-  var s = document.getElementById('cm-search');
-  var t = document.getElementById('cm-type-filter');
-  var v = document.getElementById('cm-vis-filter');
-  var o = document.getElementById('cm-sort');
-  if (s) s.value = '';
-  if (t) t.value = '';
-  if (v) v.value = '';
-  if (o) o.value = 'name-asc';
+  var s  = document.getElementById('cm-search');
+  var t  = document.getElementById('cm-type-filter');
+  var v  = document.getElementById('cm-vis-filter');
+  var o  = document.getElementById('cm-sort');
+  var co = document.getElementById('cm-continent-filter');
+  var re = document.getElementById('cm-region-filter');
+  var na = document.getElementById('cm-nation-filter');
+  var se = document.getElementById('cm-settlement-filter');
+  var va = document.getElementById('cm-vareth-filter');
+  var ch = document.getElementById('cm-colorhealth-filter');
+  if (s)  s.value  = '';
+  if (t)  t.value  = '';
+  if (v)  v.value  = '';
+  if (o)  o.value  = 'name-asc';
+  if (co) co.value = '';
+  if (re) re.value = '';
+  if (na) na.value = '';
+  if (se) se.value = '';
+  if (va) va.value = '';
+  if (ch) ch.value = '';
   cmApplyFilters();
 }
 
 function cmApplyFilters() {
-  var searchQ = (document.getElementById('cm-search')      || {}).value || '';
-  var typeF   = (document.getElementById('cm-type-filter') || {}).value || '';
-  var visF    = (document.getElementById('cm-vis-filter')  || {}).value || '';
-  var sortV   = (document.getElementById('cm-sort')        || {}).value || 'name-asc';
+  var searchQ  = (document.getElementById('cm-search')           || {}).value || '';
+  var typeF    = (document.getElementById('cm-type-filter')      || {}).value || '';
+  var visF     = (document.getElementById('cm-vis-filter')       || {}).value || '';
+  var sortV    = (document.getElementById('cm-sort')             || {}).value || 'name-asc';
+  var contF    = (document.getElementById('cm-continent-filter') || {}).value || '';
+  var regionF  = (document.getElementById('cm-region-filter')    || {}).value || '';
+  var nationF  = (document.getElementById('cm-nation-filter')    || {}).value || '';
+  var settlF   = (document.getElementById('cm-settlement-filter')|| {}).value || '';
+  var varethF  = (document.getElementById('cm-vareth-filter')    || {}).value || '';
+  var colorF   = (document.getElementById('cm-colorhealth-filter')|| {}).value || '';
   var q = searchQ.toLowerCase().trim();
 
   var filtered = CM_ALL.filter(function(item) {
     var e = item._entry;
-    if (typeF && item._type !== typeF) return false;
-    if (visF  && cmGetVis(e) !== visF)  return false;
+    if (typeF    && item._type !== typeF)           return false;
+    if (visF     && cmGetVis(e) !== visF)           return false;
+    if (contF    && (e.continent || '') !== contF)  return false;
+    if (regionF  && (e.region    || '') !== regionF) return false;
+    if (nationF  && (e.nation    || '') !== nationF) return false;
+    if (settlF   && (e.type      || '') !== settlF)  return false;
+    if (varethF) {
+      var vp = e.vareth_presence;
+      var hasVareth = (vp !== false && vp !== undefined && vp !== null && vp !== '' && vp !== 'none' && vp !== 'false');
+      if (varethF === 'present' && !hasVareth) return false;
+      if (varethF === 'none'    &&  hasVareth) return false;
+    }
+    if (colorF) {
+      var ch = (e.color_health || '').toLowerCase();
+      if (ch.indexOf(colorF.toLowerCase()) === -1) return false;
+    }
     if (q) {
       var hay = [
         e.name        || '',
