@@ -2042,6 +2042,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('gate-input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') checkPassword();
   });
+  var cmSearchEl = document.getElementById('cm-search');
+  if (cmSearchEl) {
+    cmSearchEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') cmRefresh();
+    });
+  }
 });
 
 /* ── TAB SWITCHING ───────────────────────────── */
@@ -2057,6 +2063,7 @@ function switchTab(tab) {
   if (formEl) formEl.classList.add('active');
   updateFileTarget();
   resetOutput();
+  if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
 }
 
 function updateFileTarget() {
