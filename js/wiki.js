@@ -55,9 +55,12 @@ function pageHeader(category, title, subtitle) {
 
 // Render a "not found" state
 function renderNotFound(el, hash) {
-  el.innerHTML = pageHeader('Error', 'Page Not Found', null)
-    + '<div class="wiki-body"><p>No entry found for: <em>' + esc(hash) + '</em>.</p>'
-    + '<p>Use the navigation on the left to find what you are looking for.</p></div>';
+  el.innerHTML = pageHeader('The Compendium Stirs…', 'This Page Has Not Been Discovered', null)
+    + '<div class="wiki-body">'
+    + '<p>The entry <em>' + esc(hash) + '</em> exists in no archive the Compendium can reach — either it has not yet been found, or its story has not yet been written.</p>'
+    + '<p>Perhaps the Formery has misfiled it. Perhaps it is hidden. Perhaps it is waiting.</p>'
+    + '<p>Use the navigation on the left to find what you are looking for.</p>'
+    + '</div>';
 }
 
 // Render an optional entry image as a full-width hero below the page header
