@@ -3149,6 +3149,8 @@ async function saveToFile() {
   var targetFile = FILE_TARGETS[type];
   var arrayName  = ARRAY_NAMES[type];
   var entryName  = entry.name || 'Entry';
+
+  try {
     // 1. Ask the user to select the file
     var [fileHandle] = await window.showOpenFilePicker({
       types: [{ description: 'JavaScript Data File', accept: { 'text/javascript': ['.js'] } }],
