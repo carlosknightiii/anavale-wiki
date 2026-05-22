@@ -1,7 +1,7 @@
 // ══ WIKI.JS — Anavale Wiki ═══════════════════════════════════════════════════
 // Navigation, sidebar, renderers, search, wiki-links, spellbook.
 // Requires: data/regions.js, nations.js, cities.js, creatures.js,
-//           organizations.js, characters.js, pois.js, items.js, index.js
+//           organizations.js, characters.js, pois.js, items.js, religions.js, index.js
 //           js/router.js (loaded before this file)
 // ═════════════════════════════════════════════════════════════════════════════
 
@@ -349,6 +349,23 @@ function buildSidebar() {
     + makeSectionAccordion('society-section', '⚑ Society', societyContent, societyActive)
     + '</div>';
 
+  // ── Faiths (religions, visibility-filtered) ──────────────────────
+  var religions = typeof RELIGIONS !== 'undefined' ? RELIGIONS : [];
+  var visReligions = religions.filter(function(r) { return getVisibility(r) !== 'hidden'; })
+    .sort(function(a,b) { return a.name.localeCompare(b.name); });
+  if (visReligions.length) {
+    var faithContent = '';
+    visReligions.forEach(function(r) {
+      var rVis   = getVisibility(r);
+      var rLabel = rVis === 'teaser' ? '✨ ' + r.name : r.name;
+      faithContent += navLink(rLabel, 'religion/' + r.id, currentHash);
+    });
+    var faithActive = currentHash.indexOf('religion/') === 0;
+    html += '<div class="nav-section">'
+      + makeSectionAccordion('faiths-section', '✦ Faiths', faithContent, faithActive)
+      + '</div>';
+  }
+
   nav.innerHTML = html;
 }
 
@@ -436,6 +453,9 @@ function buildSearchIndex() {
     { hash: 'gigglegloom', title: 'The Gigglegloom',    text: 'gigglegloom magic bubbleseed featherflow steelfist flamerage prior conclave',   player_facing: true },
     { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey vareth quietude',                              player_facing: true },
     { hash: 'gods',        title: 'The Gods',           text: 'gods oro nara thyun solvara grak partition brightcreed stillkeep veilborn',     player_facing: true },
+    { hash: 'religion/brightcreed', title: 'The Brightcreed', text: 'brightcreed oro nara faith color festivals joy practices lumenites wardens',  player_facing: true },
+    { hash: 'religion/stillkeep',   title: 'The Stillkeep',   text: 'stillkeep thyun memory records archive monastic patience partition history',   player_facing: true },
+    { hash: 'religion/veilborn',    title: 'The Veilborn',     text: 'veilborn solvara secrets shadow partition truth veilmoot hidden faith',        player_facing: true },
     { hash: 'rumors',      title: 'Rumours & Hearsay',  text: 'rumors hearsay rumours',                                                       player_facing: true },
     { hash: 'spells',      title: 'Spellbook',          text: 'spells spellbook gigglegloom cast',                                            player_facing: true }
   ].forEach(function(p) { allData.push(p); });
@@ -579,9 +599,9 @@ function buildWikiLinkMap() {
     { term: 'the Partition',    hash: 'gods' },
     { term: 'The Partition',    hash: 'gods' },
     { term: 'Partition',        hash: 'gods' },
-    { term: 'Brightcreed',      hash: 'gods' },
-    { term: 'Stillkeep',        hash: 'gods' },
-    { term: 'Veilborn',         hash: 'gods' },
+    { term: 'Brightcreed',      hash: 'religion/brightcreed' },
+    { term: 'Stillkeep',        hash: 'religion/stillkeep' },
+    { term: 'Veilborn',         hash: 'religion/veilborn' },
     { term: 'Oro',              hash: 'gods' },
     { term: 'Nara',             hash: 'gods' },
     { term: 'Thyun',            hash: 'gods' },
@@ -1523,6 +1543,140 @@ function renderCreature(id, el) {
     + (creature.behavior ? '<div class="section-heading">Behavior</div><p>' + esc(creature.behavior) + '</p>' : '')
     + (creature.gigglegloom_relationship ? '<div class="section-heading">Gigglegloom Relationship</div><p>' + esc(creature.gigglegloom_relationship) + '</p>' : '')
     + dimmedHtml
+    + '</div>';
+}
+
+function renderReligion(id, el) {
+  var data = getReligionData(id);
+  var religion = data.religion;
+  if (!religion) { renderNotFound(el, 'religion/' + id); return; }
+
+  var vis = getVisibility(religion);
+  if (vis === 'hidden') { renderNotFound(el, 'religion/' + id); return; }
+
+  // Teaser — name + summary only
+  if (vis === 'teaser') {
+    el.innerHTML = breadcrumb([{ label: 'Faiths', hash: 'religion/' + id }, { label: religion.name, hash: 'religion/' + id }])
+      + pageHeader('Faith', religion.name, religion.summary)
+      + '<div class="wiki-body"><p>' + esc(religion.summary || '') + '</p>' + teaserFooter('faith') + '</div>';
+    return;
+  }
+
+  // Visible — full dynamic render
+  var accentColor = religion.color || 'var(--gold)';
+
+  // ── Gods section ──
+  var godsHtml = '';
+  if (data.gods && data.gods.length) {
+    godsHtml = '<div class="section-heading">Gods</div><div class="entry-grid">';
+    data.gods.forEach(function(g) {
+      godsHtml += '<div class="entry-card" onclick="navigate(\'gods\')" style="cursor:pointer">'
+        + '<div class="entry-name"><span class="wiki-link">' + esc(g.name) + '</span></div>'
+        + '<div class="entry-body">' + esc(g.player_knowledge || g.summary || '') + '</div>'
+        + '</div>';
+    });
+    godsHtml += '</div>';
+  }
+
+  // ── Practices section ──
+  var practicesHtml = '';
+  if (religion.practices && religion.practices.length) {
+    practicesHtml = '<div class="section-heading">Practices</div><ul class="wiki-list">'
+      + religion.practices.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('')
+      + '</ul>';
+  }
+
+  // ── Structure section ──
+  var structureHtml = religion.structure
+    ? '<div class="section-heading">Structure</div><p>' + esc(religion.structure) + '</p>'
+    : '';
+
+  // ── Holy Sites section ──
+  var sitesHtml = '';
+  if (data.holy_sites && data.holy_sites.length) {
+    sitesHtml = '<div class="section-heading">Holy Sites</div><div class="entry-grid">';
+    data.holy_sites.forEach(function(p) {
+      sitesHtml += '<div class="entry-card" onclick="navigate(\'poi/' + esc(p.id) + '\')" style="cursor:pointer">'
+        + '<div class="entry-name"><span class="wiki-link">' + esc(p.name) + '</span></div>'
+        + '<div class="entry-tag">' + esc(titleCase(p.type || '')) + '</div>'
+        + '<div class="entry-body">' + esc(p.summary || '') + '</div>'
+        + '</div>';
+    });
+    sitesHtml += '</div>';
+  }
+
+  // ── Organizations section ──
+  var orgsHtml = '';
+  if (data.organizations && data.organizations.length) {
+    orgsHtml = '<div class="section-heading">Associated Organizations</div><div class="entry-grid">';
+    data.organizations.forEach(function(o) {
+      orgsHtml += '<div class="entry-card" onclick="navigate(\'org/' + esc(o.id) + '\')" style="cursor:pointer">'
+        + '<div class="entry-name"><span class="wiki-link">' + esc(o.name) + '</span></div>'
+        + '<div class="entry-tag">' + esc(titleCase(o.type || '')) + '</div>'
+        + '<div class="entry-body">' + esc(o.summary || '') + '</div>'
+        + '</div>';
+    });
+    orgsHtml += '</div>';
+  }
+
+  // ── Nations section ──
+  var nationsHtml = '';
+  if (data.nations && data.nations.length) {
+    nationsHtml = '<div class="section-heading">Nations of the Faith</div><div class="entry-grid">';
+    data.nations.forEach(function(n) {
+      nationsHtml += '<div class="entry-card" onclick="navigate(\'nation/' + esc(n.id) + '\')" style="cursor:pointer">'
+        + '<div class="entry-name"><span class="wiki-link">' + esc(n.name) + '</span></div>'
+        + '<div class="entry-tag">' + esc(titleCase(n.region || '')) + '</div>'
+        + '<div class="entry-body">' + esc(n.summary || '') + '</div>'
+        + '</div>';
+    });
+    nationsHtml += '</div>';
+  }
+
+  // ── Creatures section ──
+  var creaturesHtml = '';
+  if (data.creatures && data.creatures.length) {
+    creaturesHtml = '<div class="section-heading">Sacred & Associated Creatures</div><div class="entry-grid">';
+    data.creatures.forEach(function(c) {
+      creaturesHtml += '<div class="entry-card" onclick="navigate(\'creature/' + esc(c.id) + '\')" style="cursor:pointer">'
+        + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
+        + '<div class="entry-tag">' + esc(creatureSubtitle(c)) + '</div>'
+        + '<div class="entry-body">' + esc(c.description ? c.description.split('.')[0] + '.' : '') + '</div>'
+        + '</div>';
+    });
+    creaturesHtml += '</div>';
+  }
+
+  // ── Facts sidebar ──
+  var factsHtml = [
+    ['Symbol',   religion.symbol],
+    ['Deity',    data.gods.map(function(g){ return g.name; }).join(', ') || null],
+    ['Spread',   (data.nations && data.nations.length) ? data.nations.length + ' nations' : null]
+  ].filter(function(r){ return r[1]; }).map(function(r) {
+    return '<div class="nation-fact-row">'
+      + '<div class="nation-fact-label">' + esc(r[0]) + '</div>'
+      + '<div class="nation-fact-value">' + esc(r[1]) + '</div>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML = breadcrumb([{ label: 'Faiths', hash: 'religion/' + id }, { label: religion.name, hash: 'religion/' + id }])
+    + pageHeader('Faith', religion.name, religion.summary)
+    + '<div class="nation-layout">'
+    + '<div class="nation-body">'
+    + (religion.core_belief ? '<div class="nation-section-heading">Core Belief</div><p>' + esc(religion.core_belief) + '</p>' : '')
+    + (religion.partition_account ? '<div class="nation-section-heading">The Partition — Their Account</div><p>' + esc(religion.partition_account) + '</p>' : '')
+    + practicesHtml
+    + structureHtml
+    + (religion.relationship_to_gigglegloom ? '<div class="nation-section-heading">Relationship to the Gigglegloom</div><p>' + esc(religion.relationship_to_gigglegloom) + '</p>' : '')
+    + (religion.relationship_to_vareth ? '<div class="nation-section-heading">Relationship to the Vareth</div><p>' + esc(religion.relationship_to_vareth) + '</p>' : '')
+    + (religion.relationship_to_other_faiths ? '<div class="nation-section-heading">Other Faiths</div><p>' + esc(religion.relationship_to_other_faiths) + '</p>' : '')
+    + godsHtml
+    + sitesHtml
+    + orgsHtml
+    + nationsHtml
+    + creaturesHtml
+    + '</div>'
+    + '<div class="nation-facts"><div class="nation-facts-title">⚑ Quick Facts</div>' + factsHtml + '</div>'
     + '</div>';
 }
 

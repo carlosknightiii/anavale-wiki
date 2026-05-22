@@ -41,6 +41,7 @@ var CITIES = [
     region: "caparia",
     continent: "pogglewog",
     type: "city-state",
+    religion: ["brightcreed"],
     summary: "Geographic and magical center of Caldenmor. Every Gigglegloom license in Anavale passes through here. Home of the Prior Stone.",
     description: "The Chroma Bureau's seat of power — an arcane city-state that answers to no government. Every Gigglegloom license issued anywhere in Anavale requires Prismhold's seal. Home of the Prior Stone, the holiest Brightcreed site in Anavale. 44 Bureau forms govern who may approach the Stone. The Formery is always somehow involved.",
     landmarks: [
@@ -100,6 +101,7 @@ var CITIES = [
     region: "caparia",
     continent: "pogglewog",
     type: "town",
+    religion: ["brightcreed", "veilborn"],
     summary: "Home base of The Revel. Perpetually mid-festival. Nobody knows what day it is. Suspected Veilborn front.",
     description: "A town that has been in the middle of a festival for as long as anyone can remember. The Revel's traveling guild uses it as a permanent base. Buildings are more saturated with color than anywhere outside Prismhold. The Veilborn are rumored to use it as a front — the chaos of constant celebration makes surveillance nearly impossible.",
     landmarks: [
@@ -160,6 +162,7 @@ var CITIES = [
     region: "caparia",
     continent: "pogglewog",
     type: "hidden-settlement",
+    religion: ["veilborn"],
     summary: "Deep Dingu Forest. Secret seat of the Veilmoot. Does not appear on any official map.",
     description: "The hidden seat of the Veilmoot — the Veilborn's governing council. Location is not officially known. Does not appear on any Chroma Bureau, Caldenric Accord, or Goldenway map. The Stillkeep has been searching for it for forty years. The Vaultkeeper owls are always watching something in that direction.",
     landmarks: [
@@ -216,6 +219,7 @@ var CITIES = [
     region: "caparia",
     continent: "pogglewog",
     type: "outpost",
+    religion: ["brightcreed"],
     summary: "Base of Doopu Peaks. Chroma Bureau monitoring post.",
     description: "An outpost at the base of the Doopu Peaks maintained by the Chroma Bureau as a monitoring station for the Brightwall — the world wonder where all four Gigglegloom types surge simultaneously at every equinox. Also monitors The Grasping Ledge, the Drakhold outpost hidden in the eastern peaks.",
     landmarks: [
@@ -444,6 +448,7 @@ var CITIES = [
     region: "sohot",
     continent: "pogglewog",
     type: "capital",
+    religion: ["brightcreed"],
     summary: "Seat of the Aurentum monarchy. Lavish and quietly anxious. The Queen's Fading is a closely guarded secret.",
     description: "The most lavish city in Sohot and the seat of the Aurentum hereditary monarchy. Magnificent ruins of the old empire serve as foundations and sometimes walls for newer construction. The Queen's Fading is known to only seven people — and the Chromeguard, who detected it three months before the court did and has not yet reported it publicly.",
     landmarks: [
