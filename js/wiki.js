@@ -158,12 +158,12 @@ function buildSidebar() {
   // ── Introduction ──────────────────────────────────
   html += '<div class="nav-section">'
     + '<div class="nav-section-title">✦ Introduction</div>'
-    + navLink('Welcome, Traveller', 'home', currentHash)
+    + navLink('Welcome, To  Anavale', 'home', currentHash)
     + '</div>';
 
   // ── The World ──────────────────────────────────────
   html += '<div class="nav-section">'
-    + '<div class="nav-section-title">✧ The World</div>'
+    + '<div class="nav-section-title">◯ The World</div>'
     + navLink('The Gigglegloom', 'gigglegloom', currentHash)
     + navLink('Color & The Dimming', 'color', currentHash)
     + navLink('The Gods', 'gods', currentHash)
@@ -231,7 +231,7 @@ function buildSidebar() {
 
   if (regionAccordions) {
     html += '<div class="nav-section">'
-      + '<div class="nav-section-title">◈ Regions</div>'
+      + '<div class="nav-section-title">⛰ Regions</div>'
       + regionAccordions
       + '</div>';
   }
@@ -266,7 +266,7 @@ function buildSidebar() {
       + '</div>';
   });
   if (hasCreatures) {
-    html += '<div class="nav-section"><div class="nav-section-title">✿ Creatures</div>'
+    html += '<div class="nav-section"><div class="nav-section-title">𓃠 Creatures</div>'
       + makeAccordion('creatures', 'All Creatures', creatureInner)
       + '</div>';
   }
@@ -410,7 +410,7 @@ function buildSearchIndex() {
 
   // Static pages — always player-facing
   [
-    { hash: 'home',        title: 'Welcome, Traveller', text: 'welcome home introduction anavale pogglewog',                                  player_facing: true },
+    { hash: 'home',        title: 'Welcome, To Anavale', text: 'welcome home introduction anavale pogglewog',                                  player_facing: true },
     { hash: 'gigglegloom', title: 'The Gigglegloom',    text: 'gigglegloom magic bubbleseed featherflow steelfist flamerage prior conclave',   player_facing: true },
     { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey vareth quietude',                              player_facing: true },
     { hash: 'gods',        title: 'The Gods',           text: 'gods oro nara thyun solvara grak partition brightcreed stillkeep veilborn',     player_facing: true },
@@ -856,12 +856,10 @@ function renderHome(el) {
     + '<div class="home-hero-overlay"></div>'
     + '<div class="home-particles-container" id="home-particles-container"></div>'
     + '<div class="home-hero-content">'
-      + '<div class="home-hero-eyebrow">✦ THE ANAVALE TRAVELLER\'S COMPENDIUM ✦</div>'
-      + '<h1 class="home-hero-title home-tagline-line" style="animation-delay:0.3s">Welcome, Traveller</h1>'
+      + '<div class="home-hero-eyebrow">✦ THE TRAVELLER\'S COMPENDIUM ✦</div>'
+      + '<h1 class="home-hero-title home-tagline-line" style="animation-delay:0.3s">Welcome To Anavale</h1>'
       + '<div class="home-hero-taglines">'
-        + '<p class="home-tagline-line" style="animation-delay:0.6s">A world of color, magic, and quiet shadow.</p>'
-        + '<p class="home-tagline-line" style="animation-delay:0.9s">Everything that glows has a name.</p>'
-        + '<p class="home-tagline-line" style="animation-delay:1.2s">Everything grey was once something else.</p>'
+        + '<p class="home-tagline-line" style="animation-delay:0.6s">A world of color and happiness where cute creatures roam and play.</p>'
       + '</div>'
       + '<button class="home-explore-btn"'
         + ' onclick="document.getElementById(\'home-section-2\').scrollIntoView({behavior:\'smooth\'})">'
@@ -874,7 +872,7 @@ function renderHome(el) {
   // ── Section 2: World at a Glance ─────────────────────────────────────────
   + '<section class="home-section home-glance-section" id="home-section-2">'
     + '<div class="home-section-inner">'
-      + '<h2 class="home-section-heading home-section-heading-light reveal">The World of Anavale</h2>'
+      + '<h2 class="home-section-heading home-section-heading-light reveal">Core Concepts</h2>'
       + '<div class="glance-grid">'
 
         + '<div class="glance-card reveal reveal-delay-1"'
@@ -976,8 +974,8 @@ function renderHome(el) {
   // ── Section 5: Dark Whisper ───────────────────────────────────────────────
   + '<section class="home-dark-section" id="home-dark-whisper">'
     + '<div class="home-dark-inner">'
-      + '<div class="dark-line dark-ornament" data-color="#c8940a">✦ · · ·</div>'
-      + '<p class="dark-line dark-large" data-color="#e8b830">Something is changing.</p>'
+      + '<div class="dark-line dark-ornament" data-color="#c8940a">· · · ·</div>'
+      + '<p class="dark-line dark-large" data-color="#e8b830">Something is changing...</p>'
       + '<p class="dark-line dark-body" data-color="#c8d4f0">In the far reaches of every region, travellers report the same thing.</p>'
       + '<p class="dark-line dark-body" data-color="#a8d4b8">Colours that seem thinner than they used to be.</p>'
       + '<p class="dark-line dark-body" data-color="#d4b8e8">Laughter that arrives a moment late.</p>'
@@ -989,7 +987,7 @@ function renderHome(el) {
       + '<div class="dark-line dark-ornament" data-color="#666666">· · ·</div>'
       + '<p class="dark-line dark-large" data-color="#707070">The forms are in order.</p>'
       + '<p class="dark-line dark-large dark-final" data-color="#505050">The world is not.</p>'
-      + '<div class="dark-line dark-ornament" data-color="#404040">· · · ✦</div>'
+      + '<div class="dark-line dark-ornament" data-color="#404040">· · · ·</div>'
     + '</div>'
   + '</section>'
 

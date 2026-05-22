@@ -59,6 +59,9 @@
                                     Used for tags, labels, links in body text */
   --white:            #ffffff;
 
+  /* ── Gradients ────────────────────────────────── */
+  --gradient-colorful:linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+
   /* ── Supporting accent colors ───────────────────────────── */
   --teal:             #1a6a5a;
   --violet:           #4a2878;
@@ -140,6 +143,16 @@ body {
   display: flex;
   min-height: 100vh;
 }
+.text-gradient {
+  background-image: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  
+  /* Optional: makes the gradient pop a bit more */
+  font-weight: bold; 
+}
 
 
 /* ============================================================
@@ -202,8 +215,11 @@ body {
 }
 .nav-link:hover,
 .nav-link.active {
-  color: var(--gold-light);
-  background: rgba(200,148,10,0.08);
+  background-image: var(--gradient-colorful);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 
@@ -233,8 +249,11 @@ body {
 }
 .nav-accordion-header:hover,
 .nav-accordion-header.active {
-  color: var(--gold-light);
-  background: rgba(200,148,10,0.08);
+background-image: var(--gradient-colorful);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 /* Chevron arrow — rotates 90° when section is open */
@@ -291,6 +310,19 @@ body {
   vertical-align: middle;
 }
 
+.gradient-text {
+  /* 1. Apply your gradient as a background */
+  background-image: var(--gradient-colorful);
+  
+  /* 2. Clip the background so it only fills the shape of the letters */
+  -webkit-background-clip: text;
+  background-clip: text;
+  
+  /* 3. Make the actual text color transparent so the background shows through */
+  -webkit-text-fill-color: transparent;
+  color: transparent; 
+}
+
 
 /* ============================================================
    6. SEARCH
@@ -313,22 +345,22 @@ body {
 /* The text input itself */
 .wiki-search-input {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(200,148,10,0.3);
-  border-radius: 3px;
-  color: rgba(220,200,160,0.95);
-  font-family: 'IM Fell English', Georgia, serif;
+  background: var(--parchment-light);
+  border: 1px solid var(--border-color);
+  border-radius: 0px;
+  color: var(--ink);
+  font-family: var(--font-sans);
   font-size: 0.88rem;
   padding: 0.45rem 2rem 0.45rem 0.75rem;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .wiki-search-input::placeholder {
-  color: rgba(200,170,110,0.45);
+  color: var(--ink-faint);
 }
 .wiki-search-input:focus {
   border-color: rgba(200,148,10,0.65);
-  background: rgba(255,255,255,0.08);
+  background: var(--parchment-light);
 }
 
 /* Search icon — decorative, non-interactive */
@@ -337,8 +369,8 @@ body {
   right: 0.55rem;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(200,148,10,0.5);
-  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 2rem;
   pointer-events: none;
 }
 
@@ -349,9 +381,9 @@ body {
   left: 1rem;
   right: 1rem;
   z-index: 200;
-  background: #0e0c08;
-  border: 1px solid rgba(200,148,10,0.3);
-  border-top: 1px solid rgba(200,148,10,0.15);
+  background: var(--parchment-light);
+  border: 1px solid var(--ink);
+  border-top: var(--ink);
   border-radius: 0 0 4px 4px;
   max-height: 55vh;
   overflow-y: auto;
@@ -376,24 +408,25 @@ body {
 
 /* Result entry name */
 .search-result-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 0.9rem;
-  color: var(--gold-light);
+  font-weight: 600;
+  color: var(--ink);
   margin-bottom: 0.2rem;
 }
 
 /* Result summary excerpt */
 .search-result-excerpt {
   font-size: 0.76rem;
-  color: rgba(200,180,140,0.6);
+  color: var(--ink-light);
   line-height: 1.5;
   font-family: 'IM Fell English', Georgia, serif;
 }
 
 /* Highlighted matching text within excerpts */
 .search-result-excerpt mark {
-  background: rgba(200,148,10,0.3);
-  color: rgba(230,210,160,0.95);
+  background: var(--ink);
+  color: var(--parchment-light);
   border-radius: 2px;
   padding: 0 1px;
 }
@@ -402,7 +435,7 @@ body {
 .search-no-results {
   padding: 0.75rem 1.5rem;
   font-size: 0.82rem;
-  color: rgba(200,170,110,0.5);
+  color: var(--ink);
   font-style: italic;
   font-family: 'IM Fell English', Georgia, serif;
 }
@@ -1318,7 +1351,7 @@ mark.search-highlight {
 /* ── Section base ─────────────────────────────────────────────────────────── */
 .home-section {
   width: 100%;
-  padding: 6rem 0;
+  padding: 2rem 0;
 }
 .home-section-inner {
   max-width: 1200px;
@@ -1333,7 +1366,7 @@ mark.search-highlight {
   text-align: center;
   margin-bottom: 3rem;
 }
-.home-section-heading-light { color: var(--gold-light); }
+.home-section-heading-light { color: var(--parchment); }
 
 /* ── HERO ─────────────────────────────────────────────────────────────────── */
 .home-hero {
@@ -1509,12 +1542,12 @@ mark.search-highlight {
   margin: 3rem 0;
 }
 .glance-card {
-  --card-accent:      #c8940a;
-  --card-accent-glow: rgba(200,148,10,0.25);
+  --card-accent: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+  --card-accent-glow: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
   position: relative;
-  background: rgba(10,6,2,0.85);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-top: 3px solid var(--card-accent, var(--gold));
+  background: linear-gradient(135deg, #e8c84a 0%, #f8e888 10%, #e87a8a 40%, #9a70e8 70%, #4ac8b8 100%);
+  border: 4px solid rgba(255,255,255,0.08);
+  border-image: var(--card-accent) 1;
   border-radius: var(--card-radius);
   padding: 2rem 1.75rem;
   cursor: pointer;
@@ -1533,7 +1566,7 @@ mark.search-highlight {
 }
 .glance-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+  box-shadow: 0 12px 36px rgba(255, 255, 255, 0.6);
 }
 .glance-card:hover::before {
   opacity: 0.3;
@@ -1552,24 +1585,25 @@ mark.search-highlight {
 .glance-card-subhead {
   font-family: var(--font-sans);
   font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--card-accent, var(--gold));
+  color: var(--ink);
   margin-bottom: 0.5rem;
   opacity: 0.8;
 }
 .glance-card-title {
   font-family: var(--font-serif);
   font-size: 1.4rem;
-  font-weight: 400;
-  color: #ffffff;
+  font-weight: 700;
+  color: var(--ink);
   margin-bottom: 0.8rem;
 }
 .glance-card-body {
   font-family: var(--font-sans);
   font-size: 0.93rem;
   line-height: 1.7;
-  color: rgba(220,200,170,0.78);
+  color: var(--ink);
   margin-bottom: 1rem;
 }
 .glance-card-link {
@@ -1866,7 +1900,7 @@ mark.search-highlight {
   transition: color 1.8s ease;
 }
 .dark-line.dimmed {
-  color: #4a4a4a !important;
+  color: #777777 !important;
 }
 .dark-large {
   font-family: var(--font-serif);
