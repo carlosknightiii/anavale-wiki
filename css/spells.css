@@ -43,7 +43,7 @@
 .spell-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
 .spell-type-btn, .spell-lvl-btn {
   border: none; border-radius: 20px; padding: 0.25rem 0.8rem;
-  font-family: 'Crimson Text', serif; font-size: 0.88rem; font-weight: 600;
+  font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600;
   cursor: pointer; transition: opacity 0.15s, transform 0.1s;
   opacity: 0.55;
 }
@@ -60,7 +60,7 @@
 .spell-search-bar {
   width: 100%; box-sizing: border-box;
   padding: 0.45rem 0.85rem;
-  font-family: 'Crimson Text', serif; font-size: 1rem; color: var(--ink);
+  font-family: var(--font-sans); font-size: 1rem; color: var(--ink);
   background: var(--parchment); border: 1.5px solid var(--border);
   border-radius: 6px; margin-bottom: 0.6rem; outline: none;
 }
@@ -74,7 +74,7 @@
   gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap;
 }
 .sb-page-btn {
-  font-family: 'Crimson Text', serif; font-size: 0.9rem; font-weight: 600;
+  font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600;
   border: 1.5px solid var(--border); border-radius: 6px;
   padding: 0.3rem 0.9rem; background: var(--parchment);
   color: var(--ink); cursor: pointer; transition: background 0.15s, border-color 0.15s;
@@ -83,7 +83,7 @@
 .sb-page-btn:disabled { opacity: 0.35; cursor: default; }
 .sb-page-btn.active { background: var(--ink); color: var(--parchment); border-color: var(--ink); }
 .sb-page-info {
-  font-family: 'Crimson Text', serif; font-size: 0.85rem;
+  font-family: var(--font-sans); font-size: 0.85rem;
   color: var(--ink-light); font-style: italic;
 }
 .spell-card { display: flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; transition: box-shadow 0.15s; background-color: var(--parchment-light); cursor: pointer; }
@@ -96,7 +96,7 @@
 .sc-tab-icon { font-size: 0.82rem; color: rgba(255,255,255,0.93); line-height: 1; }
 .sc-tab-label {
   writing-mode: vertical-rl; transform: rotate(180deg);
-  font-family: 'Crimson Text', serif; font-size: 0.56rem;
+  font-family: var(--font-sans); font-size: 0.56rem;
   font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   color: rgba(255,255,255,0.82);
 }
@@ -109,17 +109,16 @@
 .sc-tab-Freeweave .sc-tab-label { color: rgba(0,0,0,0.55); }
 .sc-tab-multi       { background: linear-gradient(180deg,#2a7a3a 25%,#2266b8 75%); }
 .sc-body { flex: 1; padding: 0.52rem 0.75rem; min-width: 0; transition: background 0.12s; }
-.sc-name { font-family: var(--font-sans); font-size: 0.97rem; color: var(--ink); margin-bottom: 0.12rem; }
-.sc-desc { font-size: 0.875rem; color: var(--ink-light); line-height: 1.35; }
+.sc-name { font-family: var(--font-sans); font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: 0.12rem; }
+.sc-desc { font-size: 0.875rem; color: var(--ink); line-height: 1.35; }
 .sc-meta {
   flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;
   justify-content: center; gap: 0.28rem; padding: 0.52rem 0.7rem 0.52rem 0.3rem;
   transition: background 0.12s;
 }
-.sc-lvl-label { font-family: var
-  ; font-size: 1.7; color: var(--font-sans); white-space: nowrap; }
+.sc-lvl-label { font-family: var(--font-sans); font-size: 1.7; color: var(--ink); white-space: nowrap; }
 .sc-read-more {
-  font-family: 'Crimson Text', serif; font-size: 0.78rem; font-weight: 600;
+  font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600;
   color: var(--ink); cursor: pointer; white-space: nowrap;
   text-decoration: underline; text-decoration-style: dotted;
   background: none; border: none; padding: 0;
@@ -133,22 +132,36 @@
 }
 .spell-modal-overlay.open { display: flex; }
 .spell-modal {
-  background: var(--parchment); border-radius: 10px;
+  /* 1. Keep your max-width/heights, but use a transparent border to make space for the gradient */
+  border: 6px solid transparent;
+  border-radius: 10px;
+  
+  /* 2. Layer two backgrounds: 
+     The first is your parchment color.
+     The second is your colorful gradient variable. */
+  background-image: 
+    linear-gradient(var(--parchment), var(--parchment)), 
+    var(--gradient-colorful);
+    
+  /* 3. Clip them so the parchment stays inside, and the gradient only peeks through the border */
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
   box-shadow: 0 10px 50px rgba(0,0,0,0.5);
   max-width: 560px; width: 92vw; max-height: 88vh; overflow-y: auto;
 }
 .spell-modal-close {
   position: sticky; top: 0; float: right; margin: 0.6rem 0.6rem 0 0;
-  background: var(--parchment-dark); border: 1.5px solid var(--border);
+  background: var(--ink); border: 1.5px solid var(--border);
   border-radius: 50%; width: 28px; height: 28px; font-size: 0.8rem;
-  cursor: pointer; color: var(--ink); display: inline-flex;
+  cursor: pointer; color: var(--parchment-light); display: inline-flex;
   align-items: center; justify-content: center; z-index: 1;
 }
-.spell-modal-close:hover { background: var(--border); }
+.spell-modal-close:hover { background: var(--ink-light); }
 .spell-modal-header { padding: 1rem 1.2rem 0.8rem; border-bottom: 1.5px solid var(--border); }
 .spell-modal-type-row { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
 .sm-type-badge {
-  font-family: 'Crimson Text', serif; font-size: 0.73rem; font-weight: 700;
+  font-family: var(--font-sans); font-size: 0.73rem; font-weight: 700;
   padding: 0.12rem 0.55rem; border-radius: 20px; color: #fff;
   display: inline-flex; align-items: center; gap: 0.22rem;
 }
@@ -158,24 +171,24 @@
 .sm-type-badge.Flamerage   { background: #aa3a1a; }
 .sm-type-badge.Freeweave   { background: #f0ede6; color: var(--ink) !important; border: 1.5px solid var(--border); }
 .sm-lvl-badge {
-  font-family: 'Crimson Text', serif; font-size: 0.73rem; font-weight: 600;
+  font-family: var(--font-sans); font-size: 0.73rem; font-weight: 600;
   padding: 0.12rem 0.55rem; border-radius: 20px;
   background: var(--parchment-dark); color: var(--ink-light); border: 1px solid var(--border);
 }
-.spell-modal-name { font-family: 'IM Fell English', serif; font-size: 1.5rem; color: var(--ink); margin: 0; }
-.spell-modal-school { font-family: 'Crimson Text', serif; font-size: 0.88rem; color: var(--ink-light); font-style: italic; margin-top: 0.18rem; }
+.spell-modal-name { font-family: var(--font-sans); font-size: 1.5rem; color: var(--ink); margin: 0; }
+.spell-modal-school { font-family: var(--font-sans); font-size: 0.88rem; color: var(--ink-light); font-style: italic; margin-top: 0.18rem; }
 .spell-modal-stats {
   display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.2rem;
   padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--border);
 }
 .sm-stat { display: flex; flex-direction: column; }
-.sm-stat-label { font-family: 'Crimson Text', serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 0.06rem; }
-.sm-stat-value { font-family: 'Crimson Text', serif; font-size: 0.93rem; color: var(--ink); }
+.sm-stat-label { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink); margin-bottom: 0.06rem; }
+.sm-stat-value { font-family: var(--font-sans); font-size: 0.93rem; color: var(--ink); }
 .spell-modal-body { padding: 0.8rem 1.2rem 1.1rem; }
-.spell-modal-desc { font-family: 'Crimson Text', serif; font-size: 0.97rem; color: var(--ink); line-height: 1.6; }
-.spell-modal-higher { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px solid var(--border); font-family: 'Crimson Text', serif; font-size: 0.92rem; color: var(--ink); line-height: 1.5; }
-.spell-modal-higher strong { color: var(--amber); font-style: italic; }
-.spell-modal-flavor { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed var(--border); font-family: 'Crimson Text', serif; font-size: 0.875rem; color: var(--ink-light); font-style: italic; line-height: 1.5; }
+.spell-modal-desc { font-family: var(--font-sans); font-size: 0.97rem; color: var(--ink); line-height: 1.2; }
+.spell-modal-higher { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px solid var(--border); font-family: var(--font-sans); font-size: 0.92rem; color: var(--ink); line-height: 1.5; }
+.spell-modal-higher strong { color: var(--ink); font-style: italic; }
+.spell-modal-flavor { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed var(--border); font-family: var(--font-sans); font-size: 0.875rem; color: var(--ink-light); font-style: italic; line-height: 1.5; }
 .spell-label { font-style: italic; font-weight: 700; color: var(--ink); }
 .spell-modal-desc p, .spell-modal-higher p { margin: 0 0 0.6rem; }
 .spell-modal-desc p:last-child, .spell-modal-higher p:last-child { margin-bottom: 0; }
@@ -256,7 +269,7 @@
   background: none; border: none;
   padding: 0.3rem 0.75rem 0.3rem 1.6rem;
   text-align: left; cursor: pointer;
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 0.88rem;
   color: rgba(200,148,10,0.72);
   border-radius: 4px;
@@ -280,7 +293,7 @@
   margin-top: 1.5rem;
 }
 .nation-breadcrumb {
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 0.9rem;
   font-weight: 700;
   color: #2a1a06;
@@ -293,7 +306,7 @@
 }
 .nation-breadcrumb button:hover { opacity: 0.65; }
 .nation-tagline {
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-style: italic;
   font-size: 1.15rem;
   color: var(--ink-light);
@@ -310,7 +323,7 @@
   letter-spacing: 0.03em;
 }
 .nation-body p {
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 1.05rem;
   color: var(--ink);
   line-height: 1.65;
@@ -336,7 +349,7 @@
 .nation-fact-row {
   display: flex;
   border-bottom: 1px solid var(--border);
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 0.95rem;
 }
 .nation-fact-row:last-child { border-bottom: none; }
@@ -365,7 +378,7 @@
 .accordion summary {
   display: flex; align-items: center; gap: 0.6rem;
   padding: 0.85rem 1.1rem;
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 1.08rem;
   font-weight: 700;
   color: var(--ink);
@@ -395,7 +408,7 @@
   padding-left: 1.3rem;
 }
 .accordion .acc-body li {
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 1.0rem;
   color: var(--ink);
   line-height: 1.55;
@@ -403,7 +416,7 @@
 }
 .accordion .acc-body li:last-child { margin-bottom: 0; }
 .accordion .acc-body p {
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-sans);
   font-size: 1.0rem;
   color: var(--ink);
   margin: 0 0 0.5rem;
