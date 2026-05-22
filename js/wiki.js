@@ -134,6 +134,20 @@ function makeAccordion(key, label, childrenHtml, defaultOpen) {
     + '</div>';
 }
 
+// Like makeAccordion but styled as a top-level section title (larger, less indented)
+function makeSectionAccordion(key, label, childrenHtml, defaultOpen) {
+  var stored = getAccState(key);
+  var open   = stored !== null ? stored === '1' : !!defaultOpen;
+  var openCls = open ? ' open' : '';
+  return '<button class="nav-section-accordion-header' + openCls + '" data-key="' + esc(key) + '" onclick="toggleAccordion(this)">'
+    + '<span>' + label + '</span>'
+    + '<span class="nav-accordion-arrow">▶</span>'
+    + '</button>'
+    + '<div class="nav-accordion-body' + openCls + '">'
+    + childrenHtml
+    + '</div>';
+}
+
 function navLink(label, hash, activeHash) {
   var isActive = (hash === activeHash) ? ' active' : '';
   return '<button class="nav-link' + isActive + '" data-hash="' + esc(hash) + '" onclick="navigate(\'' + esc(hash) + '\')">'
@@ -156,17 +170,19 @@ function buildSidebar() {
   var html = '';
 
   // ── Introduction ──────────────────────────────────
+  var introActive = (currentHash === 'home');
   html += '<div class="nav-section">'
-    + '<div class="nav-section-title">✦ Introduction</div>'
-    + navLink('Welcome, To  Anavale', 'home', currentHash)
+    + makeSectionAccordion('intro', '✦ Introduction',
+        navLink('Welcome, To  Anavale', 'home', currentHash), introActive)
     + '</div>';
 
   // ── The World ──────────────────────────────────────
+  var worldActive = ['gigglegloom','color','gods'].indexOf(currentHash) >= 0;
   html += '<div class="nav-section">'
-    + '<div class="nav-section-title">◯ The World</div>'
-    + navLink('The Gigglegloom', 'gigglegloom', currentHash)
-    + navLink('Color & The Dimming', 'color', currentHash)
-    + navLink('The Gods', 'gods', currentHash)
+    + makeSectionAccordion('world', '◯ The World',
+        navLink('The Gigglegloom', 'gigglegloom', currentHash)
+        + navLink('Color & The Dimming', 'color', currentHash)
+        + navLink('The Gods', 'gods', currentHash), worldActive)
     + '</div>';
 
   // ── Regions (only show if at least one visible/teaser entry beneath) ──
@@ -230,9 +246,9 @@ function buildSidebar() {
   });
 
   if (regionAccordions) {
+    var regActive = currentHash.indexOf('region/') === 0 || currentHash.indexOf('nation/') === 0 || currentHash.indexOf('city/') === 0;
     html += '<div class="nav-section">'
-      + '<div class="nav-section-title">⛰ Regions</div>'
-      + regionAccordions
+      + makeSectionAccordion('regions-section', '⛰ Regions', regionAccordions, regActive)
       + '</div>';
   }
 
@@ -266,13 +282,14 @@ function buildSidebar() {
       + '</div>';
   });
   if (hasCreatures) {
-    html += '<div class="nav-section"><div class="nav-section-title">𓃠 Creatures</div>'
-      + makeAccordion('creatures', 'All Creatures', creatureInner)
+    var creatActive = currentHash.indexOf('creature/') === 0;
+    html += '<div class="nav-section">'
+      + makeSectionAccordion('creatures-section', '𓃠 Creatures', creatureInner, creatActive)
       + '</div>';
   }
 
   // ── Society (orgs, items, pois, rumors) ──────────
-  html += '<div class="nav-section"><div class="nav-section-title">⚑ Society</div>';
+  var societyContent = '';
 
   // Organizations — filtered by visibility
   var ORG_CATS = [
@@ -296,7 +313,7 @@ function buildSidebar() {
       + '</div>';
   });
   if (orgInner) {
-    html += makeAccordion('organizations', 'Organizations', orgInner);
+    societyContent += makeAccordion('organizations', 'Organizations', orgInner);
   }
 
   // Items — filtered by visibility
@@ -308,7 +325,7 @@ function buildSidebar() {
       var itLabel = itVis === 'teaser' ? '✨ ' + it.name : it.name;
       return '<div class="nav-level-2">' + navLink(itLabel, 'item/' + it.id, currentHash) + '</div>';
     }).join('');
-    html += makeAccordion('items', 'Notable Items', itemLinks);
+    societyContent += makeAccordion('items', 'Notable Items', itemLinks);
   }
 
   // POIs — filtered by visibility
@@ -320,12 +337,17 @@ function buildSidebar() {
       var pLabel = pVis === 'teaser' ? '✨ ' + p.name : p.name;
       return '<div class="nav-level-2">' + navLink(pLabel, 'poi/' + p.id, currentHash) + '</div>';
     }).join('');
-    html += makeAccordion('pois', 'Points of Interest', poiLinks);
+    societyContent += makeAccordion('pois', 'Points of Interest', poiLinks);
   }
 
-  // Rumors always shown
-  html += navLink('Rumours & Hearsay', 'rumors', currentHash);
-  html += '</div>';
+  // Rumors — direct link (no extra accordion wrapper needed)
+  societyContent += navLink('Rumours & Hearsay', 'rumors', currentHash);
+
+  var societyActive = currentHash.indexOf('org/') === 0 || currentHash.indexOf('item/') === 0
+    || currentHash.indexOf('poi/') === 0 || currentHash === 'rumors';
+  html += '<div class="nav-section">'
+    + makeSectionAccordion('society-section', '⚑ Society', societyContent, societyActive)
+    + '</div>';
 
   nav.innerHTML = html;
 }
