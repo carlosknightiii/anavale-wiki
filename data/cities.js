@@ -243,25 +243,34 @@ var CITIES = [
     player_facing: false
   },
   {
-    id: "inkwell",
-    name: "Inkwell",
-    nation: "dingurei",
-    region: "caparia",
-    continent: "pogglewog",
-    type: "town",
-    summary: "Two miles east of Lightcrak. Dedicated entirely to producing paper, binding materials, ink, and preservation supplies for the Great Index. Built around a dark, faintly luminous freshwater spring — source of its name, its best ink, and its only unsolved mystery.",
-    description: "Inkwell sits two miles east of Lightcrak along a well-maintained road the Dingurei resurface every three years and have documented doing so since the city's founding. The town smells like paper, wet clay, iron gall, and the faint herbal sweetness of Bubbleseed-treated binding glue. Visitors always mention the smell. Residents stopped noticing it thirty years ago.\n\nThe Paper Guild is not a craft guild in the Zippan sense. They have standards. The standards are 847 pages long and were last revised eleven years ago. The revision took four years. A third of it concerns paper.\n\nWhat they make: archival paper that resists fading, moisture, and minor Gigglegloom surges; seventeen standardized ink formulations; Bubbleseed-treated binding materials; and preservation supplies distributed across Anavale. Their most expensive product is Goldfast Ink — a deep amber-gold that retains its color under surge conditions that would bleach ordinary inks to nothing. Goldfast uses trace Voidblush pigment in its formulation, too diluted to function as a Fading reversal, but enough that the Prism Exchange monitors Inkwell's production quietly.\n\nThey are not members of the Zippan's Council of Guilds. They find this clarification necessary to make regularly.\n\nThe town has three notable people. Pell (she/her), the Guildmaster — sixties, compact, dry, precise, hands permanently stained deep indigo from decades of Goldfast Ink. Has never raised her voice in a professional context and considers volume a form of imprecision. Has noticed the spring's frogs are glowing slightly dimmer than two years ago. Has not told anyone. Does not have data yet. Is quietly scared. Osric (he/him), Pell's research partner and the town's only full-time Gigglegloom assessor — forties, lanky, perpetually ink-stained. Chose to stay in Inkwell rather than pursue academic credentials in Lightcrak. Most likely to ask a question out loud and answer it himself, incorrectly, in front of you. Has noticed Gigglegloom anomalies in materials going to an unknown archive and filed it as Anomaly 7-C (Unexplained Variance, Non-Urgent). Has not escalated. Brindle (they/them), ink formulation specialist — twenties, enthusiastic, talks faster than they should. The only person in Inkwell who actively likes visitors. Recently developed an experimental ink called Inkwell Deep that resists Gigglegloom surges entirely — texts written with it cannot be altered by Gigglegloom corruption. Brindle thinks it is a defect and has been trying to fix it for six months. It is not a defect.\n\nDrak is placing supply orders through three intermediaries, none of whom know the end destination. Archival paper from Inkwell is being used to house corrupted Gigglegloom records in his hidden archive. Pell does not know. Osric is starting to wonder.",
-    landmarks: [
-      { name: "The Paper Guild Hall", description: "Home of Inkwell's most technically specialized craftspeople. Formulations for archival paper that resist fading, moisture, and Gigglegloom surges developed here. Outside the entrance, the Correction Shelf — a public wooden shelf protected by a small overhang — allows anyone to leave a written formal challenge to any Guild publication. Responses posted within thirty days. The current oldest unanswered challenge has sat there six years. It concerns the fiber ratio of the paper used in the Third Revised Archival Standards. Neither party will move." },
-      { name: "The Spring Chamber", description: "A low stone building built around the Inkwell spring itself — dark, still, and faintly luminous. Officially a water quality monitoring station, operational for two centuries. Three faintly glowing frogs live in the spring. They have been documented in seventeen papers. None of the papers agree on what they are. The Gigglegloom Conclave sent an assessor forty years ago. The report was returned stamped: FINDINGS INCONCLUSIVE. FROGS DECLINED TO COOPERATE." },
-      { name: "The Drying Towers", description: "Tall thin structures on the eastern edge of town where paper sheets hang in long pale rows to dry. On windy days the sheets ripple together and make a sound locals call the pages turning. First-time visitors sometimes stop walking and stare. Locals wait patiently for this to finish." }
+    "id": "inkwell",
+    "name": "Inkwell",
+    "nation": "dingurei",
+    "region": "caparia",
+    "continent": "pogglewog",
+    "type": "town",
+    "summary": "Two miles east of Lightcrak. Dedicated entirely to producing paper, binding materials, ink, and preservation supplies for the Great Index. Built around a dark, faintly luminous freshwater spring — source of its name, its best ink, and its only unsolved mystery.",
+    "description": "Inkwell sits two miles east of Lightcrak along a well-maintained road the Dingurei resurface every three years and have documented doing so since the city's founding. The town smells like paper, wet clay, iron gall, and the faint herbal sweetness of Bubbleseed-treated binding glue. Visitors always mention the smell. Residents stopped noticing it thirty years ago.\n\nThe Paper Guild is not a craft guild in the Zippan sense. They have standards. The standards are 847 pages long and were last revised eleven years ago. The revision took four years. A third of it concerns paper.\n\nWhat they make: archival paper that resists fading, moisture, and minor Gigglegloom surges; seventeen standardized ink formulations; Bubbleseed-treated binding materials; and preservation supplies distributed across Anavale. Their most expensive product is Goldfast Ink — a deep amber-gold that retains its color under surge conditions that would bleach ordinary inks to nothing. Goldfast uses trace Voidblush pigment in its formulation, too diluted to function as a Fading reversal, but enough that the Prism Exchange monitors Inkwell's production quietly.\n\nThey are not members of the Zippan's Council of Guilds. They find this clarification necessary to make regularly.\n\nThe town has three notable people. Pell (she/her), the Guildmaster — sixties, compact, dry, precise, hands permanently stained deep indigo from decades of Goldfast Ink. Has never raised her voice in a professional context and considers volume a form of imprecision. Has noticed the spring's frogs are glowing slightly dimmer than two years ago. Has not told anyone. Does not have data yet. Is quietly scared. Osric (he/him), Pell's research partner and the town's only full-time Gigglegloom assessor — forties, lanky, perpetually ink-stained. Chose to stay in Inkwell rather than pursue academic credentials in Lightcrak. Most likely to ask a question out loud and answer it himself, incorrectly, in front of you. Has noticed Gigglegloom anomalies in materials going to an unknown archive and filed it as Anomaly 7-C (Unexplained Variance, Non-Urgent). Has not escalated. Brindle (they/them), ink formulation specialist — twenties, enthusiastic, talks faster than they should. The only person in Inkwell who actively likes visitors. Recently developed an experimental ink called Inkwell Deep that resists Gigglegloom surges entirely — texts written with it cannot be altered by Gigglegloom corruption. Brindle thinks it is a defect and has been trying to fix it for six months. It is not a defect.\n\nDrak is placing supply orders through three intermediaries, none of whom know the end destination. Archival paper from Inkwell is being used to house corrupted Gigglegloom records in his hidden archive. Pell does not know. Osric is starting to wonder.",
+    "landmarks": [
+      {
+        "name": "The Paper Guild Hall",
+        "description": "Home of Inkwell's most technically specialized craftspeople. Formulations for archival paper that resist fading, moisture, and Gigglegloom surges developed here. Outside the entrance, the Correction Shelf — a public wooden shelf protected by a small overhang — allows anyone to leave a written formal challenge to any Guild publication. Responses posted within thirty days. The current oldest unanswered challenge has sat there six years. It concerns the fiber ratio of the paper used in the Third Revised Archival Standards. Neither party will move."
+      },
+      {
+        "name": "The Spring Chamber",
+        "description": "A low stone building built around the Inkwell spring itself — dark, still, and faintly luminous. Officially a water quality monitoring station, operational for two centuries. Three faintly glowing frogs live in the spring. They have been documented in seventeen papers. None of the papers agree on what they are. The Gigglegloom Conclave sent an assessor forty years ago. The report was returned stamped: FINDINGS INCONCLUSIVE. FROGS DECLINED TO COOPERATE."
+      },
+      {
+        "name": "The Drying Towers",
+        "description": "Tall thin structures on the eastern edge of town where paper sheets hang in long pale rows to dry. On windy days the sheets ripple together and make a sound locals call the pages turning. First-time visitors sometimes stop walking and stare. Locals wait patiently for this to finish."
+      }
     ],
-    strategic_importance: "Supplies all archival materials for the Great Index and Lightcrak's tower collections. Goldfast Ink uses trace Voidblush pigment. Inkwell Deep — an experimental ink formulation by the specialist Brindle — may be the most tamper-proof writing medium in Anavale and is of significant unknown interest to Drak.",
-    color_health: "excellent — though the spring's glow is very slightly dimmer than two years ago. Only Pell has noticed.",
-    formery_present: false,
-    vareth_presence: true,
-    tone: "Industrious, precise, quietly proud. Not Zippan. Very different from Zippan. A place that takes small things seriously and turns out to be right to do so.",
-    tags: [
+    "strategic_importance": "Supplies all archival materials for the Great Index and Lightcrak's tower collections. Goldfast Ink uses trace Voidblush pigment. Inkwell Deep — an experimental ink formulation by the specialist Brindle — may be the most tamper-proof writing medium in Anavale and is of significant unknown interest to Drak.",
+    "color_health": null,
+    "formery_present": false,
+    "vareth_presence": true,
+    "tone": "Industrious, precise, quietly proud. Not Zippan. Very different from Zippan. A place that takes small things seriously and turns out to be right to do so.",
+    "tags": [
       "caparia",
       "dingurei",
       "town",
@@ -275,7 +284,7 @@ var CITIES = [
       "spring",
       "vareth"
     ],
-    player_facing: false
+    "player_facing": "teaser"
   },
   {
     id: "pebblecrown",
