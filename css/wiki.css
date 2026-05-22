@@ -541,7 +541,7 @@ background-image: var(--gradient-colorful);
   margin: 2rem 0;
   padding: 1.5rem 2rem;
   border-left: 4px solid var(--ink);
-  background: var(--parchment-dark);
+  background-image: var(--gradient-colorful);
   font-style: italic;
   font-size: 1.25rem;
   color: var(--ink);
@@ -664,8 +664,12 @@ background-image: var(--gradient-colorful);
 .entry-card:hover .creature-latin,
 .entry-card:hover .creature-note,
 .entry-card:hover .wiki-body,
-.entry-card:hover p {
-  color: #ffffff;
+.entry-card:hover p,
+.entry-card:hover svg,
+.entry-card:hover img {
+  filter: brightness(0) invert(1);
+} {
+  color: #ffffff!important;
 }
 
 /* Secondary text — tags, labels, citations.
@@ -870,7 +874,7 @@ background-image: var(--gradient-colorful);
 
 /* Amber-tinted box for warnings, cautions, and important notes */
 .warning-box {
-  background: rgba(122,82,0,0.07);
+  background: var(--white);
   border: 1px solid rgba(122,82,0,0.25);
   border-radius: 4px;
   padding: 1.2rem 1.5rem;
@@ -879,14 +883,14 @@ background-image: var(--gradient-colorful);
 .warning-title {
   font-family: var(--font-serif);
   font-size: 1rem;
-  color: var(--amber);
+  color: var(--ink);
   margin-bottom: 0.5rem;
   font-weight: 400;
 }
 .warning-body {
   font-size: 0.92rem;
   line-height: 1.7;
-  color: var(--ink-faint);
+  color: var(--ink);
 }
 
 /* Decorative divider — centered gold symbols, e.g. "✦ · ✦ · ✦" */
@@ -1545,7 +1549,7 @@ mark.search-highlight {
   --card-accent: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
   --card-accent-glow: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
   position: relative;
-  background: linear-gradient(135deg, #e8c84a 0%, #f8e888 10%, #e87a8a 40%, #9a70e8 70%, #4ac8b8 100%);
+  background: var(--parchment-light);
   border: 4px solid rgba(255,255,255,0.08);
   border-image: var(--card-accent) 1;
   border-radius: var(--card-radius);
@@ -1567,9 +1571,10 @@ mark.search-highlight {
 .glance-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 12px 36px rgba(255, 255, 255, 0.6);
+  background-image: var(--gradient-colorful);
 }
 .glance-card:hover::before {
-  opacity: 0.3;
+  opacity: 1;
   transform: scale(1.4);
 }
 .glance-card::after {

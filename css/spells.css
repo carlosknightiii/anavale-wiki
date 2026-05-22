@@ -1,6 +1,39 @@
+:root {
+    
+    /* ── Parchment palette — warm cream background tones ───── */
+  --parchment:        #f5ead4;   /* main content background */
+  --parchment-light:  #f8f1e2;   /* card backgrounds, slightly lighter */
+  --parchment-dark:   #e8d4a8;   /* pull quotes, darker parchment areas */
+  --ink:             #2a1a06;   /* primary text color, dark brown */
+  --ink-light:       #5a3a0a;   /* secondary text,
+
+  /* ── Typography ─────────────────────────────────────────── 
+     Cinzel Decorative: display/heading font — ornate, fantasy feel
+     Roboto: sans-serif body — clean, readable at small sizes
+     Courier New: monospaced — used in Formery stamps, code */
+  --font-serif:       'Cinzel Decorative', Georgia, serif;
+  --font-sans:        'Roboto', system-ui, sans-serif;
+  --font-mono:        'Courier New', Courier, monospace;
+
+  /* ── Gradients ────────────────────────────────── */
+  --gradient-colorful:linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+
+}
+
+.text-gradient {
+  background-image: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  
+  /* Optional: makes the gradient pop a bit more */
+  font-weight: bold; 
+}
+
 .spellbook-section { margin-top: 2.5rem; }
 .spellbook-heading {
-  font-family: 'IM Fell English', serif;
+  font-family: var(--font-serif);
   font-size: 1.45rem;
   color: var(--ink);
   margin-bottom: 1rem;
@@ -53,9 +86,8 @@
   font-family: 'Crimson Text', serif; font-size: 0.85rem;
   color: var(--ink-light); font-style: italic;
 }
-.spell-card { display: flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; transition: box-shadow 0.15s; background: var(--parchment); cursor: pointer; }
-.spell-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-color: var(--gold); }
-.spell-card:hover .sc-body, .spell-card:hover .sc-meta { background: var(--parchment-dark); }
+.spell-card { display: flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; transition: box-shadow 0.15s; background-color: var(--parchment-light); cursor: pointer; }
+.spell-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-color: var(--gold);background-image: var(--gradient-colorful); }
 .sc-type-tab {
   width: 26px; flex-shrink: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -84,14 +116,15 @@
   justify-content: center; gap: 0.28rem; padding: 0.52rem 0.7rem 0.52rem 0.3rem;
   transition: background 0.12s;
 }
-.sc-lvl-label { font-family: 'Crimson Text', serif; font-size: 0.7rem; color: var(--ink-light); white-space: nowrap; }
+.sc-lvl-label { font-family: var
+  ; font-size: 1.7; color: var(--font-sans); white-space: nowrap; }
 .sc-read-more {
   font-family: 'Crimson Text', serif; font-size: 0.78rem; font-weight: 600;
-  color: var(--gold); cursor: pointer; white-space: nowrap;
+  color: var(--ink); cursor: pointer; white-space: nowrap;
   text-decoration: underline; text-decoration-style: dotted;
   background: none; border: none; padding: 0;
 }
-.sc-read-more:hover { color: var(--amber); }
+.sc-read-more:hover { color: var(--ink); }
 /* ── Spell Modal ─────────────────────────────────────── */
 .spell-modal-overlay {
   display: none; position: fixed; inset: 0;
