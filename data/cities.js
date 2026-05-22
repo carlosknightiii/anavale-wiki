@@ -213,34 +213,6 @@ var CITIES = [
     "player_facing": "teaser"
   },
   {
-    id: "doopu-station",
-    name: "Doopu Station",
-    nation: "solenmere",
-    region: "caparia",
-    continent: "pogglewog",
-    type: "outpost",
-    religion: ["brightcreed"],
-    summary: "Base of Doopu Peaks. Chroma Bureau monitoring post.",
-    description: "An outpost at the base of the Doopu Peaks maintained by the Chroma Bureau as a monitoring station for the Brightwall — the world wonder where all four Gigglegloom types surge simultaneously at every equinox. Also monitors The Grasping Ledge, the Drakhold outpost hidden in the eastern peaks.",
-    landmarks: [
-      { name: "The Monitoring Station", description: "Chroma Bureau instruments tracking Gigglegloom surge patterns from the Brightwall and surrounding peaks." }
-    ],
-    strategic_importance: "Chroma Bureau observation post — monitors Brightwall and watches for Grasping Ledge Drakhold activity",
-    color_health: "excellent near station, compromised near The Grasping Ledge",
-    formery_present: false,
-    vareth_presence: false,
-    tone: "Professional, alert, slightly anxious about what is in the eastern peaks.",
-    tags: [
-      "caparia",
-      "solenmere",
-      "outpost",
-      "chroma-bureau",
-      "brightwall",
-      "doopu-peaks"
-    ],
-    player_facing: false
-  },
-  {
     id: "lightcrak",
     name: "Lightcrak",
     nation: "dingurei",

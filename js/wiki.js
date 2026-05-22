@@ -453,9 +453,9 @@ function buildSearchIndex() {
     { hash: 'gigglegloom', title: 'The Gigglegloom',    text: 'gigglegloom magic bubbleseed featherflow steelfist flamerage prior conclave',   player_facing: true },
     { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey vareth quietude',                              player_facing: true },
     { hash: 'gods',        title: 'The Gods',           text: 'gods oro nara thyun solvara grak partition brightcreed stillkeep veilborn',     player_facing: true },
-    { hash: 'religion/brightcreed', title: 'The Brightcreed', text: 'brightcreed oro nara faith color festivals joy practices lumenites wardens',  player_facing: true },
-    { hash: 'religion/stillkeep',   title: 'The Stillkeep',   text: 'stillkeep thyun memory records archive monastic patience partition history',   player_facing: true },
-    { hash: 'religion/veilborn',    title: 'The Veilborn',     text: 'veilborn solvara secrets shadow partition truth veilmoot hidden faith',        player_facing: true },
+    { hash: 'religion/brightcreed', title: 'The Brightcreed', text: 'The Brightcreed brightcreed oro nara faith color festivals joy practices lumenites wardens',  player_facing: true },
+    { hash: 'religion/stillkeep',   title: 'The Stillkeep',   text: 'The Stillkeep stillkeep thyun memory records archive monastic patience partition history',   player_facing: true },
+    { hash: 'religion/veilborn',    title: 'The Veilborn',     text: 'The Veilborn veilborn solvara secrets shadow partition truth veilmoot hidden faith',        player_facing: true },
     { hash: 'rumors',      title: 'Rumours & Hearsay',  text: 'rumors hearsay rumours',                                                       player_facing: true },
     { hash: 'spells',      title: 'Spellbook',          text: 'spells spellbook gigglegloom cast',                                            player_facing: true }
   ].forEach(function(p) { allData.push(p); });

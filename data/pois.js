@@ -7,7 +7,7 @@ var POIS = [
     name:             "Doopu Station",
     region:           "caparia",
     nation:           "janiveth",
-    type:             "outpost",
+    type:             "town",
     summary:          "The last outpost before the Brightwall, and the first place travelers feel it. Not quite a city — more like a held breath. Every door is painted a different color. Every traveler is at a turning point.",
     description:      `Doopu Station exists for one reason: the Brightwall. Every pilgrim, Brightcreed cleric, Conclave researcher, and color-sick traveler hoping to be healed passes through here before ascending the Doopu Peaks. The town grew up around that foot traffic — inns, gear traders, guides-for-hire, and a surprising number of people who came for the Brightwall and simply never left.
 
@@ -28,6 +28,6 @@ The Station is built low and sturdy against the mountain wind. Stone buildings, 
     formery_notes:    "Maintains the mandatory Ascent Registry desk. Form 7-G (Non-Commercial) requires six copies. Form 7-G (Commercial) has never been successfully filed. The Formery considers this a point of institutional pride.",
     color_health:     "excellent — Brightwall proximity keeps color vibrant and surges gentle",
     tone:             "Quiet in the way places near something holy are quiet. Not somber — people laugh, the Goldenstream is beautiful, festivals happen. But conversations tend toward sincerity. One of the few places in Caparia where a Brightcreed pilgrim and a Stillkeep monk might share breakfast without argument.",
-    tags:             ["caparia", "janiveth", "doopu-peaks", "brightwall", "outpost", "pilgrimage", "goldenstream", "formery", "wanderkeep", "brightcreed"]
+    tags:             ["caparia", "janiveth", "doopu-peaks", "brightwall", "town", "pilgrimage", "goldenstream", "formery", "wanderkeep", "brightcreed"]
   }
 ];
