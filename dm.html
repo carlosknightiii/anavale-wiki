@@ -159,6 +159,29 @@
 .dm-form { display: none; }
 .dm-form.active { display: block; }
 
+/* Sub-forms inside the Add wrapper */
+.dm-subform { display: none; }
+.dm-subform.active { display: block; }
+
+/* Add type selector bar at top of Add panel */
+.add-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.75rem;
+}
+.add-type-label {
+  font-weight: bold;
+  color: var(--ink);
+  white-space: nowrap;
+  font-size: var(--text-base);
+}
+.add-type-dropdown {
+  max-width: 280px;
+}
+
 .dm-form-title {
   font-family: 'Charm', Georgia, serif;
   font-size: var(--text-2xl);
@@ -598,13 +621,9 @@
   </div>
 
   <div class="dm-tabs">
-    <button class="dm-tab active" data-tab="city"         onclick="switchTab('city')">🏙️ City</button>
-    <button class="dm-tab"        data-tab="creature"     onclick="switchTab('creature')">🐾 Creature</button>
-    <button class="dm-tab"        data-tab="poi"          onclick="switchTab('poi')">📍 Point of Interest</button>
-    <button class="dm-tab"        data-tab="character"    onclick="switchTab('character')">🧙 Character</button>
-    <button class="dm-tab"        data-tab="organization" onclick="switchTab('organization')">🏛️ Organization</button>
-    <button class="dm-tab"        data-tab="item"         onclick="switchTab('item')">⚔️ Item</button>
-    <button class="dm-tab"        data-tab="manage"       onclick="switchTab('manage')">📋 Manage</button>
+    <button class="dm-tab active" data-tab="add"    onclick="switchTab('add')">➕ Add</button>
+    <button class="dm-tab"        data-tab="manage" onclick="switchTab('manage')">📋 Manage</button>
+    <button class="dm-tab"        data-tab="quests" onclick="switchTab('quests')">⚔️ Quests</button>
   </div>
 
   <div class="dm-main">
@@ -614,9 +633,24 @@
          ════════════════════════════════════════ -->
     <div class="dm-forms-panel">
 
+      <!-- ── ADD WRAPPER ──────────────────────── -->
+      <div id="form-add" class="dm-form active">
 
-      <!-- ── CITY FORM ───────────────────────── -->
-      <div id="form-city" class="dm-form active">
+        <!-- Type selector at top of Add panel -->
+        <div class="add-type-selector">
+          <label class="add-type-label" for="add-type-select">Add new entry:</label>
+          <select id="add-type-select" class="field-select add-type-dropdown" onchange="switchAddType(this.value)">
+            <option value="city">🏙️ City or Settlement</option>
+            <option value="creature">🐾 Creature</option>
+            <option value="poi">📍 Point of Interest</option>
+            <option value="character">🧙 Character</option>
+            <option value="organization">🏛️ Organization</option>
+            <option value="item">⚔️ Item</option>
+          </select>
+        </div>
+
+        <!-- ── CITY FORM ───────────────────────── -->
+        <div id="form-city" class="dm-subform active">
         <div class="dm-form-title">🏙️ New City or Settlement</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/cities.js</strong> — city, town, village, port, outpost, or ruin</div>
 
@@ -781,7 +815,7 @@
 
 
       <!-- ── CREATURE FORM ──────────────────── -->
-      <div id="form-creature" class="dm-form">
+      <div id="form-creature" class="dm-subform">
         <div class="dm-form-title">🐾 New Creature</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/creatures.js</strong></div>
 
@@ -915,7 +949,7 @@
 
 
       <!-- ── POI FORM ───────────────────────── -->
-      <div id="form-poi" class="dm-form">
+      <div id="form-poi" class="dm-subform">
         <div class="dm-form-title">📍 New Point of Interest</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/pois.js</strong> — landmark, sacred site, ruin, dark zone, or Drakhold outpost</div>
 
@@ -1062,7 +1096,7 @@
 
 
       <!-- ── CHARACTER FORM ─────────────────── -->
-      <div id="form-character" class="dm-form">
+      <div id="form-character" class="dm-subform">
         <div class="dm-form-title">🧙 New Character</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/characters.js</strong> — NPC, ally, villain, god, or faction leader</div>
 
@@ -1249,7 +1283,7 @@
 
 
       <!-- ── ORGANIZATION FORM ───────────────── -->
-      <div id="form-organization" class="dm-form">
+      <div id="form-organization" class="dm-subform">
         <div class="dm-form-title">🏛️ New Organization</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/organizations.js</strong> — guild, faction, government body, or criminal syndicate</div>
 
@@ -1410,7 +1444,7 @@
 
 
       <!-- ── ITEM FORM ───────────────────────── -->
-      <div id="form-item" class="dm-form">
+      <div id="form-item" class="dm-subform">
         <div class="dm-form-title">⚔️ New Item</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/items.js</strong> — weapon, artifact, potion, document, or treasure</div>
 
@@ -1533,7 +1567,71 @@
           <button class="btn-generate" onclick="generateItem()">✦ Generate Entry</button>
           <button class="btn-clear" onclick="clearForm('item')">Clear Form</button>
         </div>
-      </div>
+      </div><!-- /form-item subform -->
+
+      </div><!-- /form-add wrapper -->
+
+
+      <!-- ── QUESTS PANEL ─────────────────────── -->
+      <div id="form-quests" class="dm-form">
+
+        <div class="cm-header">
+          <div>
+            <div class="dm-form-title" style="margin-bottom:0">⚔️ Quest Dashboard</div>
+            <div class="dm-form-subtitle" style="margin-bottom:0">Track active quests, beats, and reveals — DM eyes only</div>
+          </div>
+          <button class="cm-refresh-btn" onclick="questsRefresh()">↺ Refresh</button>
+        </div>
+
+        <div class="quests-body">
+
+          <!-- Filter bar -->
+          <div class="quests-filter-bar">
+            <input type="text" id="q-search" class="cm-search" placeholder="Search quests…" oninput="questsFilter()">
+            <select id="q-status-filter" class="cm-select" onchange="questsFilter()">
+              <option value="">All Statuses</option>
+              <option value="active">🔥 Active</option>
+              <option value="available">✦ Available</option>
+              <option value="dormant">💤 Dormant</option>
+              <option value="completed">✓ Completed</option>
+            </select>
+            <select id="q-stakes-filter" class="cm-select" onchange="questsFilter()">
+              <option value="">All Stakes</option>
+              <option value="low">Low</option>
+              <option value="mid">Mid</option>
+              <option value="high">High</option>
+              <option value="campaign">Campaign</option>
+            </select>
+            <select id="q-session-filter" class="cm-select" onchange="questsFilter()">
+              <option value="">All Sessions</option>
+              <option value="session-1">Session 1</option>
+              <option value="session-2">Session 2</option>
+              <option value="session-3">Session 3</option>
+            </select>
+            <button class="cm-btn" onclick="questsResetFilters()">Reset</button>
+            <span class="cm-count" id="q-count"></span>
+          </div>
+
+          <!-- Quest list + detail two-column -->
+          <div class="quests-columns">
+
+            <!-- Left: quest list -->
+            <div class="quests-list-col">
+              <div id="quests-list">
+                <div style="text-align:center;color:var(--ink-faint);padding:2rem;font-style:italic;">Click ↺ Refresh to load quests.</div>
+              </div>
+            </div>
+
+            <!-- Right: quest detail -->
+            <div class="quests-detail-col" id="quests-detail">
+              <div class="quests-detail-empty">Select a quest to view details.</div>
+            </div>
+
+          </div><!-- /quests-columns -->
+
+        </div><!-- /quests-body -->
+
+      </div><!-- /form-quests -->
 
 
       <!-- ── MANAGE PANEL ──────────────────────── -->
@@ -1563,6 +1661,7 @@
                 <option value="character">🧙 Characters</option>
                 <option value="organization">🏛️ Organizations</option>
                 <option value="item">⚔️ Items</option>
+                <option value="quest">📜 Quests</option>
               </select>
               <select id="cm-vis-filter" class="cm-select" onchange="cmFilter()">
                 <option value="">All Visibility</option>
@@ -1715,6 +1814,232 @@
 <script src="data/characters.js"></script>
 <script src="data/organizations.js"></script>
 <script src="data/items.js"></script>
+<script src="data/quests.js"></script>
+
+<style>
+/* ══════════════════════════════════════════════
+   QUESTS DASHBOARD
+   ══════════════════════════════════════════════ */
+
+/* Hide side panel when quests tab is active */
+.dm-main:has(#form-quests.active) .dm-side-panel {
+  display: none;
+}
+.dm-main:has(#form-quests.active) .dm-forms-panel {
+  border-right: none;
+  padding: 0;
+}
+
+#form-quests.active {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.quests-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.quests-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--parchment);
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.quests-columns {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left column: quest cards */
+.quests-list-col {
+  width: 340px;
+  min-width: 260px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--parchment);
+}
+
+/* Right column: quest detail */
+.quests-detail-col {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+  background: var(--parchment);
+}
+
+.quests-detail-empty {
+  color: var(--ink-faint);
+  font-style: italic;
+  text-align: center;
+  padding: 3rem 0;
+}
+
+/* Quest card in left column */
+.quest-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: rgba(255,255,255,0.4);
+}
+.quest-card:hover { border-color: var(--gold); background: rgba(200,148,10,0.05); }
+.quest-card.selected { border-color: var(--gold); background: rgba(200,148,10,0.1); }
+
+.quest-card-name {
+  font-family: var(--font-serif);
+  font-weight: bold;
+  color: var(--ink);
+  font-size: var(--text-base);
+  margin-bottom: 0.25rem;
+}
+.quest-card-meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.quest-card-hook {
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  font-style: italic;
+  margin-top: 0.35rem;
+  line-height: 1.4;
+}
+
+/* Status badges */
+.q-badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 3px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.q-status-active    { background: rgba(200,60,30,0.12);  color: #aa2200; }
+.q-status-available { background: rgba(200,148,10,0.15); color: #7a5800; }
+.q-status-dormant   { background: rgba(100,100,120,0.12); color: #555566; }
+.q-status-completed { background: rgba(26,90,40,0.12);   color: #1a5a28; }
+.q-stakes-low       { background: rgba(200,148,10,0.08); color: #7a5800; }
+.q-stakes-mid       { background: rgba(80,100,200,0.1);  color: #334499; }
+.q-stakes-high      { background: rgba(160,60,160,0.1);  color: #661166; }
+.q-stakes-campaign  { background: rgba(200,30,30,0.12);  color: #880000; }
+
+/* Quest detail panel */
+.quest-detail-title {
+  font-family: 'Charm', Georgia, serif;
+  font-size: var(--text-2xl);
+  color: var(--gold);
+  margin-bottom: 0.4rem;
+}
+.quest-detail-meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.quest-section-label {
+  font-weight: bold;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 1.25rem 0 0.4rem;
+}
+.quest-text {
+  color: var(--ink);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+.quest-beats-list, .quest-reveals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.quest-beat-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--ink);
+}
+.quest-beat-num {
+  flex-shrink: 0;
+  font-family: 'Charm', Georgia, serif;
+  color: var(--gold);
+  font-size: var(--text-lg);
+  line-height: 1.2;
+  min-width: 1.4rem;
+  text-align: center;
+}
+.quest-reveal-item {
+  padding: 0.5rem 0.75rem;
+  background: rgba(160,60,30,0.05);
+  border-left: 3px solid rgba(160,60,30,0.3);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  margin-bottom: 0.4rem;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--ink);
+}
+.quest-dm-notes {
+  background: rgba(200,148,10,0.06);
+  border: 1px solid rgba(200,148,10,0.2);
+  border-radius: var(--card-radius);
+  padding: 0.75rem 1rem;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  line-height: 1.6;
+  font-style: italic;
+}
+.quest-related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.quest-related-tag {
+  background: rgba(80,100,200,0.08);
+  border: 1px solid rgba(80,100,200,0.18);
+  color: #334499;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+}
+.quest-status-select {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.quest-status-select label {
+  font-weight: bold;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+</style>
 
 <style>
 /* ══════════════════════════════════════════════
@@ -2026,7 +2351,8 @@
    ANAVALE DM TOOLS — Core Logic
    ══════════════════════════════════════════════ */
 
-var CURRENT_TAB    = 'city';
+var CURRENT_TAB    = 'add';
+var CURRENT_ADD_TYPE = 'city'; // tracks which subform is active inside the Add tab
 var LAST_GENERATED   = null;
 var PENDING_EDIT_ID  = null;  // set by cmEditEntry() so saveToFile() knows to replace, not append
 var PENDING_EDIT_IMAGE = null; // preserves existing image path through the edit → generate cycle
@@ -2040,7 +2366,8 @@ var FILE_TARGETS = {
   poi:          'data/pois.js',
   character:    'data/characters.js',
   organization: 'data/organizations.js',
-  item:         'data/items.js'
+  item:         'data/items.js',
+  quest:        'data/quests.js'
 };
 
 // The array variable name inside each target file — used to validate
@@ -2051,7 +2378,8 @@ var ARRAY_NAMES = {
   poi:          'POIS',
   character:    'CHARACTERS',
   organization: 'ORGANIZATIONS',
-  item:         'ITEMS'
+  item:         'ITEMS',
+  quest:        'QUESTS'
 };
 
 var TAB_ICONS = {
@@ -2118,10 +2446,24 @@ function switchTab(tab) {
   updateFileTarget();
   resetOutput();
   if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
+  if (tab === 'quests') questsRefresh();
+}
+
+/* ── ADD TYPE SWITCHING ──────────────────────── */
+function switchAddType(type) {
+  CURRENT_ADD_TYPE = type;
+  document.querySelectorAll('.dm-subform').forEach(function(f) {
+    f.classList.remove('active');
+  });
+  var sub = document.getElementById('form-' + type);
+  if (sub) sub.classList.add('active');
+  updateFileTarget();
+  resetOutput();
 }
 
 function updateFileTarget() {
-  var target = FILE_TARGETS[CURRENT_TAB] || '—';
+  var type = (CURRENT_TAB === 'add') ? CURRENT_ADD_TYPE : CURRENT_TAB;
+  var target = FILE_TARGETS[type] || '—';
   document.getElementById('file-target').innerHTML =
     '📁 Add this entry to: <strong>' + target + '</strong>';
 }
@@ -2807,8 +3149,6 @@ async function saveToFile() {
   var targetFile = FILE_TARGETS[type];
   var arrayName  = ARRAY_NAMES[type];
   var entryName  = entry.name || 'Entry';
-
-  try {
     // 1. Ask the user to select the file
     var [fileHandle] = await window.showOpenFilePicker({
       types: [{ description: 'JavaScript Data File', accept: { 'text/javascript': ['.js'] } }],
@@ -3016,7 +3356,8 @@ function renderRecent() {
 function restoreEntry(index) {
   var item = RECENT_ITEMS[index];
   if (!item) return;
-  switchTab(item.type);
+  switchTab('add');
+  switchAddType(item.type);
   var jsStr = formatJsObj(item.entry, 0);
   document.getElementById('json-output').textContent = jsStr;
   document.getElementById('file-target').innerHTML =
@@ -3060,7 +3401,8 @@ var CM_ARRAYS = {
   poi:          function() { return typeof POIS               !== 'undefined' ? POIS               : []; },
   character:    function() { return typeof CHARACTERS         !== 'undefined' ? CHARACTERS         : []; },
   organization: function() { return typeof ORGANIZATIONS      !== 'undefined' ? ORGANIZATIONS      : []; },
-  item:         function() { return typeof ITEMS              !== 'undefined' ? ITEMS              : []; }
+  item:         function() { return typeof ITEMS              !== 'undefined' ? ITEMS              : []; },
+  quest:        function() { return typeof QUESTS             !== 'undefined' ? QUESTS             : []; }
 };
 
 var CM_ARRAY_NAMES = {
@@ -3070,12 +3412,13 @@ var CM_ARRAY_NAMES = {
   poi:          'POIS',
   character:    'CHARACTERS',
   organization: 'ORGANIZATIONS',
-  item:         'ITEMS'
+  item:         'ITEMS',
+  quest:        'QUESTS'
 };
 
 var CM_ICONS = {
   region: '🗺️', city: '🏙️', creature: '🐾', poi: '📍',
-  character: '🧙', organization: '🏛️', item: '⚔️'
+  character: '🧙', organization: '🏛️', item: '⚔️', quest: '📜'
 };
 
 /* ── LOAD ALL ENTRIES ────────────────────────── */
@@ -3084,7 +3427,7 @@ function cmRefresh() {
   CM_SELECTED = {};
   CM_PENDING  = null;
 
-  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item'];
+  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item', 'quest'];
   types.forEach(function(type) {
     var arr = CM_ARRAYS[type]();
     arr.forEach(function(e) {
@@ -3340,7 +3683,8 @@ function cmEditEntry(idx) {
   PENDING_EDIT_ID    = item._entry.id;
   PENDING_EDIT_IMAGE = item._entry.image || null; // preserve existing image through the edit cycle
 
-  switchTab(item._type);
+  switchTab('add');
+  switchAddType(item._type);
   cmPopulateForm(item._entry, item._type);
   CM_PENDING = { item: item, action: 'edit' };
 
@@ -3570,7 +3914,7 @@ function cmDeleteEntry(idx) {
 
 /* Re-sync CM_ALL from live arrays (after delete/bulk delete) */
 function cmRefreshFromArrays() {
-  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item'];
+  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item', 'quest'];
   CM_ALL = [];
   types.forEach(function(type) {
     var arr = CM_ARRAYS[type]();
@@ -3779,6 +4123,160 @@ function showCMStatus(state, msg) {
       el.textContent = '';
     }, 5000);
   }
+}
+
+/* ══════════════════════════════════════════════
+   QUEST DASHBOARD
+   ══════════════════════════════════════════════ */
+
+var QUESTS_FILTERED = [];
+var SELECTED_QUEST_ID = null;
+
+function questsRefresh() {
+  questsFilter();
+}
+
+function questsFilter() {
+  var q      = ((document.getElementById('q-search')         || {}).value || '').toLowerCase().trim();
+  var status = (document.getElementById('q-status-filter')   || {}).value || '';
+  var stakes = (document.getElementById('q-stakes-filter')   || {}).value || '';
+  var sess   = (document.getElementById('q-session-filter')  || {}).value || '';
+
+  var all = typeof QUESTS !== 'undefined' ? QUESTS : [];
+
+  QUESTS_FILTERED = all.filter(function(quest) {
+    if (status && quest.status !== status) return false;
+    if (stakes && quest.stakes !== stakes) return false;
+    if (sess   && quest.first_available !== sess) return false;
+    if (q) {
+      var hay = [quest.name, quest.hook, quest.summary, quest.id].join(' ').toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+
+  var countEl = document.getElementById('q-count');
+  if (countEl) countEl.textContent = QUESTS_FILTERED.length + ' quest' + (QUESTS_FILTERED.length !== 1 ? 's' : '');
+
+  renderQuestsList();
+}
+
+function questsResetFilters() {
+  var fields = ['q-search', 'q-status-filter', 'q-stakes-filter', 'q-session-filter'];
+  fields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  questsFilter();
+}
+
+function renderQuestsList() {
+  var el = document.getElementById('quests-list');
+  if (!el) return;
+
+  if (!QUESTS_FILTERED.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--ink-faint);padding:2rem;font-style:italic;">No quests match the current filters.</div>';
+    return;
+  }
+
+  el.innerHTML = QUESTS_FILTERED.map(function(quest) {
+    var sel = quest.id === SELECTED_QUEST_ID ? ' selected' : '';
+    return '<div class="quest-card' + sel + '" onclick="selectQuest(\'' + quest.id + '\')">'
+      + '<div class="quest-card-name">' + escQ(quest.name) + '</div>'
+      + '<div class="quest-card-meta">'
+      + '<span class="q-badge q-status-' + (quest.status || 'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
+      + '<span class="q-badge q-stakes-' + (quest.stakes || 'low') + '">' + escQ(quest.stakes || '') + '</span>'
+      + (quest.first_available ? '<span class="q-badge" style="background:rgba(0,0,0,0.05);color:var(--ink-faint);">' + escQ(quest.first_available) + '</span>' : '')
+      + '</div>'
+      + (quest.hook ? '<div class="quest-card-hook">' + escQ(quest.hook) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function selectQuest(id) {
+  SELECTED_QUEST_ID = id;
+  renderQuestsList(); // re-render to update selected state
+  renderQuestDetail(id);
+}
+
+function renderQuestDetail(id) {
+  var el = document.getElementById('quests-detail');
+  if (!el) return;
+
+  var quest = (typeof QUESTS !== 'undefined' ? QUESTS : []).find(function(q) { return q.id === id; });
+  if (!quest) { el.innerHTML = '<div class="quests-detail-empty">Quest not found.</div>'; return; }
+
+  var beatsHtml = '';
+  if (quest.beats && quest.beats.length) {
+    beatsHtml = '<div class="quest-section-label">Beats</div>'
+      + '<ul class="quest-beats-list">'
+      + quest.beats.map(function(b) {
+          return '<li class="quest-beat-item"><span class="quest-beat-num">' + b.order + '</span><span>' + escQ(b.description) + '</span></li>';
+        }).join('')
+      + '</ul>';
+  }
+
+  var revealsHtml = '';
+  if (quest.reveals && quest.reveals.length) {
+    revealsHtml = '<div class="quest-section-label">Reveals <span style="font-size:var(--text-xs);color:var(--ink-faint);text-transform:none;letter-spacing:0;font-weight:normal;">(DM eyes only)</span></div>'
+      + quest.reveals.map(function(r) {
+          return '<div class="quest-reveal-item">' + escQ(r) + '</div>';
+        }).join('');
+  }
+
+  var relatedHtml = '';
+  if (quest.related && quest.related.length) {
+    relatedHtml = '<div class="quest-section-label">Related Entries</div>'
+      + '<div class="quest-related-list">'
+      + quest.related.map(function(r) {
+          return '<span class="quest-related-tag">' + escQ(r.collection) + ': ' + escQ(r.id) + '</span>';
+        }).join('')
+      + '</div>';
+  }
+
+  var statusOptions = ['available','active','dormant','completed'].map(function(s) {
+    return '<option value="' + s + '"' + (quest.status === s ? ' selected' : '') + '>' + statusLabel(s) + '</option>';
+  }).join('');
+
+  el.innerHTML = '<div class="quest-detail-title">' + escQ(quest.name) + '</div>'
+    + '<div class="quest-detail-meta">'
+    + '<span class="q-badge q-status-' + (quest.status||'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
+    + '<span class="q-badge q-stakes-' + (quest.stakes||'low') + '">' + escQ(quest.stakes||'') + ' stakes</span>'
+    + (quest.first_available ? '<span class="q-badge" style="background:rgba(0,0,0,0.05);color:var(--ink-faint);">First available: ' + escQ(quest.first_available) + '</span>' : '')
+    + '</div>'
+    + '<div class="quest-section-label">Hook</div>'
+    + '<div class="quest-text">' + escQ(quest.hook || '') + '</div>'
+    + '<div class="quest-section-label">Summary</div>'
+    + '<div class="quest-text">' + escQ(quest.summary || '') + '</div>'
+    + beatsHtml
+    + revealsHtml
+    + (quest.dm_notes ? '<div class="quest-section-label">DM Notes</div><div class="quest-dm-notes">' + escQ(quest.dm_notes) + '</div>' : '')
+    + relatedHtml
+    + '<div class="quest-status-select">'
+    + '<label for="q-status-' + escQ(id) + '">Status:</label>'
+    + '<select id="q-status-' + escQ(id) + '" class="cm-select" onchange="setQuestStatus(\'' + escQ(id) + '\', this.value)">'
+    + statusOptions
+    + '</select>'
+    + '<span style="color:var(--ink-faint);font-size:var(--text-xs);font-style:italic;">Changes are in-memory. Save quests.js via Manage tab.</span>'
+    + '</div>';
+}
+
+function setQuestStatus(id, newStatus) {
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var quest = quests.find(function(q) { return q.id === id; });
+  if (quest) {
+    quest.status = newStatus;
+    renderQuestsList();
+  }
+}
+
+function statusLabel(status) {
+  var labels = { active: '🔥 Active', available: '✦ Available', dormant: '💤 Dormant', completed: '✓ Completed' };
+  return labels[status] || status || 'Unknown';
+}
+
+function escQ(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 </script>
 </body>
