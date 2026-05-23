@@ -773,19 +773,19 @@ var REGION_CONFIG = {
     subtitle: 'The frozen north of Pogglewog',
     quote: '"The aurora does not rise in Nombi. It arrives. There is a difference, and the difference is the Gigglegloom."',
     quoteAttrib: '— Solvanu color journal, transcribed before burning',
-    heroImg: null
+    heroImg: 'assets/images/regions/img-nombi-landscape.webp'
   },
   sohot: {
     subtitle: 'The blazing south of Pogglewog',
     quote: '"The desert keeps everything. Memory, color, grief. The heat does not destroy — it preserves. This is why Sohot has not forgotten anything."',
     quoteAttrib: '— Auvari Remnance oral history',
-    heroImg: null
+    heroImg: 'assets/images/regions/img-sohot-landscape.png'
   },
   jugabi: {
     subtitle: 'The ancient jungle southwest of Pogglewog',
     quote: '"The canopy is not above you. You are inside the forest. The forest has been here longer than anyone and is aware of you specifically."',
     quoteAttrib: '— Verdathi elder, speaking to a Kalori Republic delegation',
-    heroImg: null
+    heroImg: 'assets/images/regions/img-jugabi-landscape.png'
   }
 };
 
