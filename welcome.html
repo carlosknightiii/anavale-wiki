@@ -388,7 +388,31 @@
     border-color: rgba(232,200,74,0.3);
   }
 
-  .creature-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
+  .creature-card-img {
+    width: calc(100% + 3rem);
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    object-position: center;
+    padding: 1rem;
+    border-radius: 10px 10px 0 0;
+    display: block;
+  }
+  .creature-card-img-placeholder {
+    width: calc(100% + 3rem);
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px 10px 0 0;
+    background: rgba(253,246,232,0.04);
+    border-bottom: 1px solid rgba(232,200,74,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(253,246,232,0.2);
+  }
   .creature-name {
     font-family: 'Charm', serif;
     font-size: 1.3rem;
@@ -680,32 +704,32 @@
   </p>
   <div class="creature-grid">
     <div class="creature-card">
-      <span class="creature-icon">🐸</span>
+      <img class="creature-card-img" src="assets/images/creatures/bumble-frogs.webp" alt="Bumble Frogs">
       <div class="creature-name">Bumble Frogs</div>
       <div class="creature-desc">Hum constantly. Harmonize with each other accidentally. Will harmonize with rivers, wind, and one very famous bridge.</div>
     </div>
     <div class="creature-card">
-      <span class="creature-icon">🐿️</span>
+      <img class="creature-card-img" src="assets/images/creatures/fluffets.webp" alt="Fluffets">
       <div class="creature-name">Fluffets</div>
       <div class="creature-desc">Tiny squirrels. Say "bwip." Leave acorn gifts for people they like. Consider this a formal gesture of alliance.</div>
     </div>
     <div class="creature-card">
-      <span class="creature-icon">🐉</span>
+      <img class="creature-card-img" src="assets/images/creatures/tinywings.webp" alt="Tinywings">
       <div class="creature-name">Tinywings</div>
       <div class="creature-desc">Thumb-sized dragons. Cannot fly straight. Extraordinarily proud. Will attempt to fly straight again immediately after crashing.</div>
     </div>
     <div class="creature-card">
-      <span class="creature-icon">🪲</span>
+      <img class="creature-card-img" src="assets/images/creatures/bounce-beetles.webp" alt="Bounce Beetles">
       <div class="creature-name">Bounce Beetles</div>
       <div class="creature-desc">Ricochet off surfaces with a "boing" sound. Always arrive at the correct destination. Nobody knows how.</div>
     </div>
     <div class="creature-card">
-      <span class="creature-icon">🦔</span>
+      <div class="creature-card-img-placeholder">art coming soon</div>
       <div class="creature-name">Pocketmoles</div>
       <div class="creature-desc">The most common pet in Caparia. Finds sad people and sits on their foot. Stays until things are better.</div>
     </div>
     <div class="creature-card">
-      <span class="creature-icon">🦋</span>
+      <div class="creature-card-img-placeholder">art coming soon</div>
       <div class="creature-name">Hollowmoths</div>
       <div class="creature-desc">Large. Ash-grey. Native to Dimmed territory. If you see one somewhere new — the Dimming has already arrived.</div>
     </div>
@@ -804,6 +828,7 @@ const tw2El     = document.getElementById('tinywings2');
 
 fluffetEl.src = FLUFFET_SRC;
 bf1El.src = bf2El.src = bf3El.src = BUMBLEFROG_SRC;
+const BOUNCEBEETLE_SRC = 'assets/images/creatures/bounce-beetles.webp';
 tw1El.src = tw2El.src = TINYWINGS_SRC;
 
 // ── CANVAS SETUP ─────────────────────────────────────────────
@@ -1076,57 +1101,38 @@ function animateFluffet() {
 }
 
 // ── BUMBLE FROGS ─────────────────────────────────────────────
-function makeFrog(xFrac, yFrac, vx, bobOffset, size) {
+function makeFrog(xFrac, yFrac, bobOffset, size) {
   return {
     x: 0, y: 0,
     xFrac, yFrac,
-    vx,
-    vy: (Math.random()-0.5) * 0.3,
-    dir: vx > 0 ? 1 : -1,
-    bobPhase: bobOffset,
-    bobAmp: 28 + Math.random()*16,
-    bobSpeed: 0.10 + Math.random()*0.05,
-    squash: 1,
-    squashFrames: 0,
-    yMin: 0.60, yMax: 0.76,
+    swayPhase: bobOffset,
+    swayAmp: 4 + Math.random() * 3,
+    swaySpeed: 0.018 + Math.random() * 0.008,
+    breathPhase: bobOffset * 0.5,
+    breathAmp: 2 + Math.random() * 2,
+    breathSpeed: 0.012 + Math.random() * 0.006,
     size,
   };
 }
 
 const frogs = [
-  makeFrog(0.20, 0.66, 0.9,  0.0,  68),
-  makeFrog(0.55, 0.70, -0.6, 1.8,  58),
-  makeFrog(0.78, 0.64, 0.75, 3.5,  76),
+  makeFrog(0.18, 0.68, 0.0,  68),
+  makeFrog(0.50, 0.72, 1.8,  58),
+  makeFrog(0.76, 0.65, 3.5,  76),
 ];
 const frogEls = [bf1El, bf2El, bf3El];
 
 function animateFrog(f, el) {
-  f.x   += f.vx * f.dir;
-  f.bobPhase += f.bobSpeed;
+  f.swayPhase   += f.swaySpeed;
+  f.breathPhase += f.breathSpeed;
 
-  f.y += Math.sin(f.bobPhase * 0.31) * 0.4;
-  if (f.y > H * f.yMax) { f.y = H * f.yMax; }
-  if (f.y < H * f.yMin) { f.y = H * f.yMin; }
-
-  if (f.x > W * 0.90) { f.x = W * 0.90; f.dir = -1; }
-  if (f.x < W * 0.05) { f.x = W * 0.05; f.dir =  1; }
-
-  const bobRaw = Math.sin(f.bobPhase);
-  const bob    = Math.abs(bobRaw) * f.bobAmp;
-  const atLand = bobRaw > 0.90 && f.squashFrames === 0;
-  if (atLand) { f.squash = 1.35; f.squashFrames = 8; }
-  if (f.squashFrames > 0) { f.squashFrames--; f.squash = 1 + 0.35*(f.squashFrames/8); }
-  else { f.squash = 1; }
-
-  const stretchY = bobRaw < -0.5 ? 1 - 0.12 * Math.abs(bobRaw) : 1;
-
-  const displayY = f.y - bob;
-  const scaleX   = f.dir * (1 / f.squash);
-  const scaleY   = f.squash * stretchY;
+  const sway   = Math.sin(f.swayPhase) * f.swayAmp;
+  const breathY = Math.sin(f.breathPhase) * f.breathAmp;
+  const squash  = 1 + Math.sin(f.swayPhase * 2) * 0.03;
 
   el.style.left            = f.x + 'px';
-  el.style.top             = displayY + 'px';
-  el.style.transform       = `scaleX(${scaleX}) scaleY(${scaleY})`;
+  el.style.top             = (f.y + breathY) + 'px';
+  el.style.transform       = `rotate(${sway}deg) scaleY(${squash})`;
   el.style.transformOrigin = 'center bottom';
 }
 
@@ -1158,6 +1164,73 @@ function animateTW(t, el, W_el) {
   el.style.transform = `scaleX(${t.dir}) scaleY(${flapSc})`;
 }
 
+// ── BOUNCE BEETLES ───────────────────────────────────────────
+function makeBeetle(xFrac, yFrac, vx, vy) {
+  return {
+    x: 0, y: 0,
+    xFrac, yFrac,
+    vx, vy,
+    colorHue: Math.random() * 360,
+    hueSpeed: 0.5 + Math.random() * 0.4,
+    size: 48 + Math.random() * 18,
+    squash: 1,
+    squashFrames: 0,
+    stretchFrames: 0,
+  };
+}
+
+const beetles = [
+  makeBeetle(0.15, 0.55,  1.4,  1.0),
+  makeBeetle(0.70, 0.40, -1.2,  0.9),
+  makeBeetle(0.45, 0.65,  1.0, -1.1),
+  makeBeetle(0.85, 0.30, -1.3,  1.2),
+];
+
+const beetleEls = [];
+beetles.forEach((b) => {
+  const el = document.createElement('img');
+  el.src = BOUNCEBEETLE_SRC;
+  el.className = 'creature';
+  el.style.cssText = `width:${Math.round(b.size)}px; z-index:1; opacity:0; position:absolute; pointer-events:none; will-change:transform;`;
+  document.querySelector('.hero').appendChild(el);
+  beetleEls.push(el);
+});
+
+function animateBeetle(b, el) {
+  b.x += b.vx;
+  b.y += b.vy;
+  b.colorHue += b.hueSpeed;
+
+  if (b.x > W * 0.94 || b.x < W * 0.02) {
+    b.vx *= -1;
+    b.x = Math.max(W * 0.02, Math.min(W * 0.94, b.x));
+    b.squash = 2.0; b.squashFrames = 10; b.stretchFrames = 0;
+  }
+  if (b.y > H * 0.88 || b.y < H * 0.05) {
+    b.vy *= -1;
+    b.y = Math.max(H * 0.05, Math.min(H * 0.88, b.y));
+    b.squash = 2.0; b.squashFrames = 10; b.stretchFrames = 0;
+  }
+
+  if (b.squashFrames > 0) {
+    b.squashFrames--;
+    b.squash = 1 + 1.0 * (b.squashFrames / 10);
+    if (b.squashFrames === 0) b.stretchFrames = 8;
+  } else if (b.stretchFrames > 0) {
+    b.stretchFrames--;
+    b.squash = 1 - 0.35 * (b.stretchFrames / 8);
+  } else {
+    b.squash = 1;
+  }
+
+  const angle = Math.atan2(b.vy, b.vx) * (180 / Math.PI);
+
+  el.style.left      = b.x + 'px';
+  el.style.top       = b.y + 'px';
+  el.style.transform = `rotate(${angle}deg) scaleX(${1 / b.squash}) scaleY(${b.squash})`;
+  el.style.filter    = `hue-rotate(${b.colorHue}deg) saturate(1.4) drop-shadow(0 2px 6px rgba(255,255,255,0.3))`;
+}
+
 // ── INIT ─────────────────────────────────────────────────────
 function initCreaturePositions() {
   fluffet.facingDir = 1;
@@ -1175,6 +1248,11 @@ function initCreaturePositions() {
 
   tw2.baseY = H * 0.22;
   tw2.x     = W * 0.65;
+
+  beetles.forEach(b => {
+    b.x = W * b.xFrac;
+    b.y = H * b.yFrac;
+  });
 }
 
 // ── MAIN LOOP ────────────────────────────────────────────────
@@ -1193,6 +1271,7 @@ function tick() {
     frogs.forEach((f,i) => animateFrog(f, frogEls[i]));
     animateTW(tw1, tw1El, 155);
     animateTW(tw2, tw2El, 120);
+    beetles.forEach((b, i) => animateBeetle(b, beetleEls[i]));
   }
 }
 
@@ -1206,7 +1285,7 @@ uniqueEls.forEach(el => {
     if (srcLoaded === 3) {
       initCreaturePositions();
       setTimeout(() => {
-        [fluffetEl, bf1El, bf2El, bf3El, tw1El, tw2El].forEach(el => {
+        [...beetleEls, fluffetEl, bf1El, bf2El, bf3El, tw1El, tw2El].forEach(el => {
           el.style.transition = 'opacity 0.4s ease';
           el.style.opacity = '1';
         });
