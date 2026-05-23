@@ -776,10 +776,11 @@ background-image: var(--gradient-colorful);
   width: calc(100% + 3rem);        /* cancel 1.5rem left + right padding */
   margin: -1.5rem -1.5rem 1rem -1.5rem;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center top;
   border-radius: 7px 7px 0 0;     /* match card radius, minus border width */
   display: block;
+  padding: 8px;
 }
 
 /* Placeholder — shown when no art exists yet.
