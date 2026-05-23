@@ -1,18 +1,30 @@
 var CREATURES = [
   {
-    id: "fluffets",
-    name: "Fluffets",
-    tier: "merry",
-    category: "the-merry",
-    regions: ["caparia", "nombi", "sohot", "jugabi"],
-    habitat: "Anywhere with high Gigglegloom saturation \u2014 meadows, forests, market squares, sunny windowsills",
-    description: "Tiny round squirrels with pastel fur the color of fresh spring blooms. They say 'bwip' and mean it sincerely. Each one has a favorite color that corresponds faintly to their Gigglegloom affinity.",
-    behavior: "Bring acorn gifts to people they like. Will not stop until the gift is accepted. Have never successfully explained why the acorn specifically. Travel in loose groups of three to seven and make group decisions by collective 'bwip' volume.",
-    gigglegloom_relationship: "Living saturation indicators \u2014 the more colorful their fur, the healthier the local Gigglegloom. Wanderkeep rangers track Fluffet population color as a primary health metric.",
-    dimmed_version: "grey-fluffets",
-    dm_notes: "If Fluffets are present, the area is safe. If they are absent where they should be, something is wrong. Players should learn this instinctively.",
-    player_facing: true,
-    tags: ["merry", "common", "wanderkeep-indicator", "brightcreed-beloved", "saturation-indicator"]
+    "id": "fluffets",
+    "name": "Fluffets",
+    "tier": "merry",
+    "category": "the-merry",
+    "regions": [
+      "caparia",
+      "nombi",
+      "sohot",
+      "jugabi"
+    ],
+    "habitat": "Anywhere with high Gigglegloom saturation — meadows, forests, market squares, sunny windowsills",
+    "description": "Tiny round squirrels with pastel fur the color of fresh spring blooms. They say 'bwip' and mean it sincerely. Each one has a favorite color that corresponds faintly to their Gigglegloom affinity.",
+    "behavior": "Bring acorn gifts to people they like. Will not stop until the gift is accepted. Have never successfully explained why the acorn specifically. Travel in loose groups of three to seven and make group decisions by collective 'bwip' volume.",
+    "gigglegloom_relationship": "Living saturation indicators — the more colorful their fur, the healthier the local Gigglegloom. Wanderkeep rangers track Fluffet population color as a primary health metric.",
+    "dimmed_version": "grey-fluffets",
+    "dm_notes": "If Fluffets are present, the area is safe. If they are absent where they should be, something is wrong. Players should learn this instinctively.",
+    "tags": [
+      "merry",
+      "common",
+      "wanderkeep-indicator",
+      "brightcreed-beloved",
+      "saturation-indicator"
+    ],
+    "image": "assets/images/creatures/fluffets.webp",
+    "player_facing": true
   },
   {
     id: "bumble-frogs",
