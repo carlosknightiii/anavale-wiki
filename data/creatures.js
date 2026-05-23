@@ -137,6 +137,7 @@ var CREATURES = [
   {
     id: "hollowmoths",
     name: "Hollowmoths",
+    image: "assets/images/creatures/hollowmoths.webp",
     tier: "dimmed",
     category: "the-dimmed",
     regions: ["caparia", "nombi", "sohot", "jugabi"],
@@ -439,6 +440,7 @@ var CREATURES = [
   {
     id: "pocketmoles",
     name: "Pocketmoles",
+    image: "assets/images/creatures/pocketmoles.webp",
     tier: "common",
     category: "domestic",
     regions: ["caparia"],

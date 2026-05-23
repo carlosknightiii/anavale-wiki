@@ -17,6 +17,16 @@
     --dark: #0a0e18;
     --dark2: #12182a;
     --ink: #1a1428;
+    --white: #fff;
+  
+    /* ── Typography ─────────────────────────────────────────── 
+     Cinzel Decorative: display/heading font — ornate, fantasy feel
+     Roboto: sans-serif body — clean, readable at small sizes
+     Courier New: monospaced — used in Formery stamps, code */
+    --font-serif:       'Cinzel Decorative', Georgia, serif;
+    --font-sans:        'Roboto', system-ui, sans-serif;
+    --font-mono:        'Courier New', Courier, monospace;
+  
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -109,9 +119,9 @@
 
   .hero-eyebrow {
     font-family: 'Lora', serif; font-style: italic;
-    font-size: clamp(0.65rem, 1.2vw, 0.85rem);
+    font-size: clamp(0.95rem, 1.2vw, 0.85rem);
     letter-spacing: 0.5em; text-transform: uppercase;
-    color: rgba(232,200,74,0.6); margin-bottom: 1.6rem;
+    color: var(--white); margin-bottom: 1.6rem;
     opacity: 0; animation: riseIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s forwards;
   }
 
@@ -143,10 +153,10 @@
   @keyframes expandRule { to { width: clamp(200px, 40vw, 420px); } }
 
   .hero-sub {
-    font-family: 'Lora', serif; font-style: italic;
+    font-family: var(--font-sans);
     font-size: clamp(0.9rem, 2vw, 1.2rem);
-    color: rgba(253,246,232,0.6); letter-spacing: 0.04em;
-    max-width: 520px; line-height: 1.75; margin-top: 1.8rem;
+    color: var(--white); letter-spacing: 0.04em;
+    max-width: 520px; line-height: 1.75; margin-top: 0.8rem;
     opacity: 0; animation: riseIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.75s forwards;
   }
 
@@ -155,7 +165,7 @@
     display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
     z-index: 3; opacity: 0; animation: fadeIn 1.2s ease 1.6s forwards;
   }
-  .scroll-hint p { font-family: 'Lora', serif; font-style: italic; font-size: 0.72rem; letter-spacing: 0.25em; color: rgba(253,246,232,0.3); }
+  .scroll-hint p { font-family: var(--font-serif); font-size: 0.92rem; letter-spacing: 0.25em; color: rgba(253,246,232,0.3); }
   .scroll-arrow { width: 1px; height: 48px; background: linear-gradient(to bottom, rgba(232,200,74,0.55), transparent); animation: arrowPulse 2.5s ease-in-out 1.8s infinite; }
   @keyframes arrowPulse { 0%, 100% { opacity: 0.4; transform: scaleY(1); } 50% { opacity: 1; transform: scaleY(1.14); } }
 
@@ -172,7 +182,7 @@
   }
 
   .section-label {
-    font-family: 'Charm', serif;
+    font-family: var(--font-sans);
     font-size: 0.85rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -186,7 +196,7 @@
 
   .section-title {
     font-family: 'Charm', serif;
-    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-size: clamp(3rem, 5vw, 3.5rem);
     font-weight: 700;
     line-height: 1.1;
     margin-bottom: 1.5rem;
@@ -636,7 +646,7 @@
 <!-- ══ GIGGLEGLOOM ══ -->
 <section>
   <p class="section-label">The Magic of Anavale</p>
-  <h2 class="section-title" style="background: linear-gradient(135deg, #e8c84a, #4ac8b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">The Gigglegloom</h2>
+  <h2 class="section-title">The Gigglegloom</h2>
   <p class="section-body">
     Magic in Anavale isn't a tool. It's alive. The <em>Gigglegloom</em> runs through the soil and the sky and the river water and the fur of small animals who hum. It responds to emotion. It has opinions. It occasionally does things nobody asked it to do, and the results are almost always <strong>absurd</strong> and almost never deadly.
     <br><br>
@@ -698,7 +708,7 @@
 <!-- ══ CREATURES ══ -->
 <section class="creatures-section">
   <p class="section-label">The Living World</p>
-  <h2 class="section-title" style="color: var(--green);">The Creatures of Anavale</h2>
+  <h2 class="section-title" style="color: var(--white);">The Creatures of Anavale</h2>
   <p class="section-body">
     Anavale is loud. Its creatures are everywhere, and they have feelings about things. Harming one unprovoked will unite the Greenvast Tribes against you within 72 hours. This is considered a reasonable policy by most of the continent.
   </p>
@@ -724,12 +734,12 @@
       <div class="creature-desc">Ricochet off surfaces with a "boing" sound. Always arrive at the correct destination. Nobody knows how.</div>
     </div>
     <div class="creature-card">
-      <div class="creature-card-img-placeholder">art coming soon</div>
+      <img class="creature-card-img" src="assets/images/creatures/pocketmoles.webp" alt="Pocketmoles">
       <div class="creature-name">Pocketmoles</div>
       <div class="creature-desc">The most common pet in Caparia. Finds sad people and sits on their foot. Stays until things are better.</div>
     </div>
     <div class="creature-card">
-      <div class="creature-card-img-placeholder">art coming soon</div>
+      <img class="creature-card-img" src="assets/images/creatures/hollowmoths.webp" alt="Hollowmoths">
       <div class="creature-name">Hollowmoths</div>
       <div class="creature-desc">Large. Ash-grey. Native to Dimmed territory. If you see one somewhere new — the Dimming has already arrived.</div>
     </div>
@@ -739,7 +749,7 @@
 <!-- ══ REGIONS ══ -->
 <section>
   <p class="section-label">The Continent of Pogglewog</p>
-  <h2 class="section-title" style="color: var(--teal);">Four Regions, One World</h2>
+  <h2 class="section-title">Four Regions, One World</h2>
   <p class="section-body">
     Anavale spans the continent of Pogglewog: lush central meadows, frozen northern wastes, blazing southern deserts, and a jungle so alive it has opinions. Each region has its own colors, its own magic, and its own complicated relationship with the Gigglegloom.
   </p>
