@@ -998,7 +998,7 @@ function renderHome(el) {
         { id: 'nombi', name: 'Nombi', label: 'Region',
           climate: 'The frozen, aurora-lit north',
           blurb: 'Dense forests, icy mountains, and skies painted by the aurora. The north is stoic and beautiful and dangerous in equal measure. Honor is currency here.',
-          image: 'assets/images/regions/img-nombi-landscape.png' },
+          image: 'assets/images/regions/img-nombi-landscape.webp' },
         { id: 'sohot', name: 'Sohot', label: 'Region',
           climate: 'The ancient, blazing south',
           blurb: 'Desert dunes, ancient ruins, and the weight of a fallen empire. The south remembers everything. The south is also on fire, mostly.',
