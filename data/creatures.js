@@ -101,7 +101,7 @@ var CREATURES = [
       "brightcreed",
       "navigation"
     ],
-    "image": "assets/images/creatures/bounce-beetles.png",
+    "image": "assets/images/creatures/bounce-beetles.webp",
     "player_facing": true
   },
   {
