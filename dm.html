@@ -368,21 +368,75 @@
   font-style: italic;
   font-size: var(--text-sm);
 }
-.image-preview {
-  max-width: 180px;
-  max-height: 180px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-  margin-top: 0.5rem;
-  display: none;
-}
-.image-preview.visible { display: inline-block; }
 .image-path-hint {
   font-size: var(--text-xs);
   color: var(--ink-faint);
   font-style: italic;
   margin-top: 0.4rem;
 }
+
+/* ── IMAGE COMPRESS PANEL ──────────────────── */
+/* Hidden until an image is selected; revealed via JS */
+.img-compress-panel {
+  display: none;
+  margin-top: 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  background: rgba(255,255,255,0.35);
+  padding: 0.75rem;
+}
+.img-compress-inner {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+/* 16:9 thumbnail */
+.img-compress-thumb {
+  width: 128px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: var(--parchment-dark);
+}
+.img-compress-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.img-compress-size {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.4;
+}
+.img-compress-error {
+  font-size: var(--text-sm);
+  color: #cc3333;
+  font-style: italic;
+  line-height: 1.4;
+  display: none;
+}
+.img-save-btn {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  padding: 0.35rem 0.9rem;
+  background: var(--gold);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.img-save-btn:hover:not(:disabled) { background: var(--gold-light); color: var(--ink); }
+.img-save-btn:disabled { opacity: 0.45; cursor: default; }
+.img-path-input { margin-top: 0.5rem; }
 
 /* ── SECTION DIVIDER ───────────────────────── */
 .form-section-divider {
@@ -785,13 +839,20 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save the file to assets/images/regions/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('city-img-input').click()">
-            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/regions/','city-id','city-name')">
-            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
-            <br>
-            <img id="city-img-preview" class="image-preview" src="" alt="Preview">
-            <div id="city-img-path" class="image-path-hint"></div>
-            <div id="city-img-size" class="image-path-hint"></div>
+            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
+            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
           </div>
+          <div id="city-img-panel" class="img-compress-panel">
+            <div class="img-compress-inner">
+              <img id="city-img-preview" class="img-compress-thumb" src="" alt="Preview">
+              <div class="img-compress-meta">
+                <div id="city-img-size" class="img-compress-size"></div>
+                <div id="city-img-path" class="img-compress-error"></div>
+                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('city')">⬇ Save Image</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
         </div>
 
         <div class="field-group">
@@ -933,12 +994,19 @@
           <span class="field-help">Upload an image — save to assets/images/creatures/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('creature-img-input').click()">
             <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
-            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
-            <br>
-            <img id="creature-img-preview" class="image-preview" src="" alt="Preview">
-            <div id="creature-img-path" class="image-path-hint"></div>
-            <div id="creature-img-size" class="image-path-hint"></div>
+            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
           </div>
+          <div id="creature-img-panel" class="img-compress-panel">
+            <div class="img-compress-inner">
+              <img id="creature-img-preview" class="img-compress-thumb" src="" alt="Preview">
+              <div class="img-compress-meta">
+                <div id="creature-img-size" class="img-compress-size"></div>
+                <div id="creature-img-path" class="img-compress-error"></div>
+                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('creature')">⬇ Save Image</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
         </div>
 
         <div class="dm-form-actions">
@@ -1079,13 +1147,20 @@
           <label class="field-label">Image</label>
           <span class="field-help">Upload an image — save to assets/images/regions/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('poi-img-input').click()">
-            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/regions/','poi-id','poi-name')">
-            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
-            <br>
-            <img id="poi-img-preview" class="image-preview" src="" alt="Preview">
-            <div id="poi-img-path" class="image-path-hint"></div>
-            <div id="poi-img-size" class="image-path-hint"></div>
+            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
+            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
           </div>
+          <div id="poi-img-panel" class="img-compress-panel">
+            <div class="img-compress-inner">
+              <img id="poi-img-preview" class="img-compress-thumb" src="" alt="Preview">
+              <div class="img-compress-meta">
+                <div id="poi-img-size" class="img-compress-size"></div>
+                <div id="poi-img-path" class="img-compress-error"></div>
+                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('poi')">⬇ Save Image</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
         </div>
 
         <div class="dm-form-actions">
@@ -1267,12 +1342,19 @@
           <span class="field-help">Upload an image — save to assets/images/characters/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('char-img-input').click()">
             <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
-            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
-            <br>
-            <img id="char-img-preview" class="image-preview" src="" alt="Preview">
-            <div id="char-img-path" class="image-path-hint"></div>
-            <div id="char-img-size" class="image-path-hint"></div>
+            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
           </div>
+          <div id="char-img-panel" class="img-compress-panel">
+            <div class="img-compress-inner">
+              <img id="char-img-preview" class="img-compress-thumb" src="" alt="Preview">
+              <div class="img-compress-meta">
+                <div id="char-img-size" class="img-compress-size"></div>
+                <div id="char-img-path" class="img-compress-error"></div>
+                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('char')">⬇ Save Image</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
         </div>
 
         <div class="dm-form-actions">
@@ -1415,12 +1497,19 @@
           <span class="field-help">Upload a sigil, seal, or image — save to assets/images/organizations/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('org-img-input').click()">
             <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
-            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
-            <br>
-            <img id="org-img-preview" class="image-preview" src="" alt="Preview">
-            <div id="org-img-path" class="image-path-hint"></div>
-            <div id="org-img-size" class="image-path-hint"></div>
+            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
           </div>
+          <div id="org-img-panel" class="img-compress-panel">
+            <div class="img-compress-inner">
+              <img id="org-img-preview" class="img-compress-thumb" src="" alt="Preview">
+              <div class="img-compress-meta">
+                <div id="org-img-size" class="img-compress-size"></div>
+                <div id="org-img-path" class="img-compress-error"></div>
+                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('org')">⬇ Save Image</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
         </div>
 
         <div class="field-group">
@@ -1555,12 +1644,19 @@
           <span class="field-help">Upload an image — save to assets/images/items/ after generating</span>
           <div class="image-upload-area" onclick="document.getElementById('item-img-input').click()">
             <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
-            <label class="image-upload-label">Click to upload image (JPG, PNG, WebP)</label>
-            <br>
-            <img id="item-img-preview" class="image-preview" src="" alt="Preview">
-            <div id="item-img-path" class="image-path-hint"></div>
-            <div id="item-img-size" class="image-path-hint"></div>
+            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
           </div>
+          <div id="item-img-panel" class="img-compress-panel">
+            <div class="img-compress-inner">
+              <img id="item-img-preview" class="img-compress-thumb" src="" alt="Preview">
+              <div class="img-compress-meta">
+                <div id="item-img-size" class="img-compress-size"></div>
+                <div id="item-img-path" class="img-compress-error"></div>
+                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('item')">⬇ Save Image</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
         </div>
 
         <div class="dm-form-actions">
@@ -2500,82 +2596,218 @@ function filterNations(nationSelectId, regionSelectId) {
     });
 }
 
+/* ── IMAGE COMPRESSION ───────────────────────── */
+// Draws the image onto an off-screen canvas scaled to maxDimension on the
+// longest side, then exports as WebP, stepping quality 0.9→0.1 until the
+// blob is under maxKB. Returns a Promise<Blob>.
+function compressToWebP(file, maxKB, maxDimension) {
+  maxKB        = (maxKB        === undefined) ? 200  : maxKB;
+  maxDimension = (maxDimension === undefined) ? 1200 : maxDimension;
+
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+
+    img.onerror = function() {
+      URL.revokeObjectURL(url);
+      var err = new Error('decode');
+      err.decodeError = true;
+      reject(err);
+    };
+
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+
+      // Scale to fit within maxDimension on the longest side
+      var w = img.naturalWidth;
+      var h = img.naturalHeight;
+      if (w > maxDimension || h > maxDimension) {
+        if (w >= h) { h = Math.round(h * maxDimension / w); w = maxDimension; }
+        else        { w = Math.round(w * maxDimension / h); h = maxDimension; }
+      }
+
+      var canvas = document.createElement('canvas');
+      canvas.width  = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      // Iteratively step quality down until under maxKB
+      var quality  = 0.9;
+      var lastBlob = null;
+
+      function tryQuality() {
+        canvas.toBlob(function(blob) {
+          if (!blob) { reject(new Error('Canvas toBlob returned null')); return; }
+          lastBlob = blob;
+          if (blob.size <= maxKB * 1024 || quality <= 0.1) {
+            resolve(blob);
+          } else {
+            quality = Math.round((quality - 0.1) * 10) / 10;
+            tryQuality();
+          }
+        }, 'image/webp', quality);
+      }
+      tryQuality();
+    };
+
+    img.src = url;
+  });
+}
+
+/* ── SAVE IMAGE TO FOLDER ────────────────────── */
+// Uses the File System Access API. Prompts the user to pick the wiki root
+// folder, navigates into assets/images/<subfolder>/, writes the blob, and
+// returns the relative path string (e.g. "assets/images/creatures/foo.webp").
+// Returns null if the user cancelled the picker.
+var IMG_SUBFOLDER_MAP = {
+  creature: 'creatures',
+  city:     'cities',
+  char:     'characters',
+  org:      'organizations',
+  poi:      'pois',
+  item:     'items'
+};
+
+async function saveImageToFolder(blob, filename, type) {
+  var subfolder    = IMG_SUBFOLDER_MAP[type] || type;
+  var relativePath = 'assets/images/' + subfolder + '/' + filename;
+
+  try {
+    var rootHandle   = await window.showDirectoryPicker({ mode: 'readwrite' });
+    var assetsHandle = await rootHandle.getDirectoryHandle('assets',  { create: true });
+    var imagesHandle = await assetsHandle.getDirectoryHandle('images', { create: true });
+    var typeHandle   = await imagesHandle.getDirectoryHandle(subfolder, { create: true });
+    var fileHandle   = await typeHandle.getFileHandle(filename, { create: true });
+    var writable     = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return relativePath;
+  } catch (e) {
+    if (e && e.name === 'AbortError') return null; // user cancelled picker
+    throw e;
+  }
+}
+
+/* ── HANDLE SAVE IMAGE BUTTON ────────────────── */
+// Called from the "Save Image" button in each form's compress panel.
+// prefix is the form prefix: 'creature', 'city', 'char', 'org', 'poi', 'item'.
+async function handleSaveImage(prefix) {
+  var thumb = document.getElementById(prefix + '-img-preview');
+  var blob  = thumb && thumb._blob;
+  if (!blob) { alert('No compressed image ready. Select an image first.'); return; }
+
+  // Build filename from the entry ID field (or name, as fallback)
+  var idEl    = document.getElementById(prefix + '-id');
+  var nameEl  = document.getElementById(prefix + '-name');
+  var entryId = (idEl && idEl.value.trim()) || slugify((nameEl && nameEl.value.trim()) || '');
+  if (!entryId) {
+    alert('Please fill in the entry Name or ID before saving the image — the filename is derived from it.');
+    return;
+  }
+  var filename = entryId + '.webp';
+
+  var panel   = document.getElementById(prefix + '-img-panel');
+  var saveBtn = panel && panel.querySelector('.img-save-btn');
+
+  try {
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+    var relativePath = await saveImageToFolder(blob, filename, prefix);
+
+    if (relativePath) {
+      // Populate the image path text input
+      var pathInput = document.getElementById(prefix + '-img-field');
+      if (pathInput) pathInput.value = relativePath;
+      // Momentary success state on the button
+      if (saveBtn) {
+        saveBtn.textContent      = '✓ Saved';
+        saveBtn.style.background = '#2a7a3a';
+        saveBtn.disabled         = false;
+        setTimeout(function() {
+          saveBtn.textContent      = '⬇ Save Image';
+          saveBtn.style.background = '';
+        }, 3000);
+      }
+    } else {
+      // User cancelled the picker — re-enable button quietly
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '⬇ Save Image'; }
+    }
+  } catch (e) {
+    alert('Save failed: ' + ((e && e.message) || 'unknown error'));
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '⬇ Save Image'; }
+  }
+}
+
 /* ── IMAGE UPLOAD PREVIEW ────────────────────── */
-// folder    : e.g. 'assets/images/regions/'
-// idFieldId : form ID field (e.g. 'city-id')
-// nameField : form Name field (e.g. 'city-name')
-function previewImage(input, previewId, pathId, sizeId, folder, idFieldId, nameFieldId) {
+// folder    : e.g. 'assets/images/creatures/' (kept for signature compat)
+// idFieldId : form ID field — no longer used here; used by handleSaveImage
+// nameField : form Name field — no longer used here; used by handleSaveImage
+function previewImage(input, previewId, errorId, sizeId, folder, idFieldId, nameFieldId) {
   var file = input.files && input.files[0];
   if (!file) return;
+
+  // Derive the form prefix from previewId (e.g. 'creature-img-preview' → 'creature')
+  var prefix   = previewId.replace('-img-preview', '');
   var preview  = document.getElementById(previewId);
-  var pathHint = document.getElementById(pathId);
-  var sizeHint = document.getElementById(sizeId);
+  var sizeEl   = document.getElementById(sizeId);
+  var errorEl  = document.getElementById(errorId);
+  var panel    = document.getElementById(prefix + '-img-panel');
+  var saveBtn  = panel && panel.querySelector('.img-save-btn');
 
-  // Derive entry id from form fields at this moment
-  var idEl    = document.getElementById(idFieldId);
-  var nameEl  = document.getElementById(nameFieldId);
-  var entryId = (idEl && idEl.value.trim()) || slugify((nameEl && nameEl.value.trim()) || '');
-  var ext     = file.name.split('.').pop().toLowerCase();
-  var fullPath = folder + (entryId || '<entry-id>') + '.' + ext;
-
-  if (pathHint) pathHint.textContent = '📁 Will be saved as: ' + fullPath;
+  // Reset UI to loading state
+  if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
+  if (sizeEl)  { sizeEl.textContent  = 'Compressing…'; }
+  if (panel)   { panel.style.display = 'block'; }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⬇ Save Image'; saveBtn.style.background = ''; }
 
   var origKB = Math.round(file.size / 1024);
 
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    preview.src = e.target.result;
-    preview.classList.add('visible');
+  compressToWebP(file)
+    .then(function(blob) {
+      // Attach blob to the thumbnail element so handleSaveImage can reach it
+      if (preview._blobUrl) URL.revokeObjectURL(preview._blobUrl);
+      preview._blobUrl = URL.createObjectURL(blob);
+      preview._blob    = blob;
+      preview.src      = preview._blobUrl;
 
-    // Already optimal: WebP and under 200 KB
-    if (file.type === 'image/webp' && file.size < 204800) {
-      if (sizeHint) {
-        sizeHint.textContent = '✓ Already optimized (' + origKB + ' KB — WebP, under 200 KB)';
-        sizeHint.style.color = '#2a7a3a';
+      var compKB = Math.round(blob.size / 1024);
+      var over   = compKB > 200;
+      if (sizeEl) {
+        sizeEl.innerHTML = origKB !== compKB
+          ? 'Original: ' + origKB + ' KB &rarr; Compressed: <strong>' + compKB + ' KB WebP</strong>'
+              + (over ? ' <span style="color:#aa3a1a">⚠ still over 200 KB</span>'
+                      : ' <span style="color:#2a7a3a">✓</span>')
+          : compKB + ' KB WebP'
+              + (over ? ' <span style="color:#aa3a1a">⚠ over 200 KB</span>'
+                      : ' <span style="color:#2a7a3a">✓</span>');
+        if (over) sizeEl.innerHTML += ' — lowest quality used, file is still large';
       }
-      return;
-    }
-
-    // Attempt canvas → WebP conversion for a size estimate
-    var tempImg = new Image();
-    tempImg.onload = function() {
-      var canvas = document.createElement('canvas');
-      canvas.width  = tempImg.naturalWidth;
-      canvas.height = tempImg.naturalHeight;
-      canvas.getContext('2d').drawImage(tempImg, 0, 0);
-      if (typeof canvas.toBlob === 'function') {
-        canvas.toBlob(function(blob) {
-          if (sizeHint) {
-            sizeHint.style.color = '';
-            if (blob) {
-              var compKB = Math.round(blob.size / 1024);
-              if (compKB < origKB) {
-                sizeHint.innerHTML = '📐 Original: ' + origKB + ' KB → WebP estimate: ~' + compKB + ' KB'
-                  + (compKB < 200
-                    ? ' <span style="color:#2a7a3a">✓ under 200 KB</span>'
-                    : ' <span style="color:#aa3a1a">⚠ over 200 KB</span>');
-              } else {
-                sizeHint.textContent = '📐 File size: ' + origKB + ' KB';
-              }
-            } else {
-              sizeHint.textContent = '📐 File size: ' + origKB + ' KB (WebP conversion unavailable)';
-            }
-          }
-        }, 'image/webp', 0.85);
-      } else {
-        if (sizeHint) sizeHint.textContent = '📐 File size: ' + origKB + ' KB';
+      if (saveBtn) saveBtn.disabled = false;
+    })
+    .catch(function(err) {
+      if (panel)   panel.style.display = 'block';
+      if (sizeEl)  sizeEl.textContent  = '';
+      if (saveBtn) saveBtn.disabled     = true;
+      if (errorEl) {
+        errorEl.style.display = 'block';
+        errorEl.textContent   = (err && err.decodeError)
+          ? 'This file format isn\'t supported in your browser. Try converting to JPG first.'
+          : 'Compression failed: ' + ((err && err.message) || 'unknown error');
       }
-    };
-    tempImg.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    });
 }
 
 /* ── READ IMAGE PATH ─────────────────────────── */
-// Returns the full relative path for the image field, or null if no image.
-// If a file is uploaded: assets/images/<folder>/<entryId>.<ext>
-// If no file uploaded:   returns fallback (the existing image from an edit), or null
+// Priority order:
+//   1. The image path text input (populated by Save Image or typed manually)
+//   2. A file in the file input (fallback for when Save hasn't been clicked)
+//   3. The PENDING_EDIT_IMAGE fallback (for edits)
 function readImagePath(inputId, folder, entryId, fallback) {
+  // Check the saved/manual path text input first
+  var prefix     = inputId.replace('-img-input', '');
+  var pathInput  = document.getElementById(prefix + '-img-field');
+  if (pathInput && pathInput.value.trim()) return pathInput.value.trim();
+
+  // Fall back to deriving path from the raw file input
   var fileInput = document.getElementById(inputId);
   var file = fileInput && fileInput.files && fileInput.files[0];
   if (file) {
@@ -3303,11 +3535,19 @@ function clearForm(formType) {
     var aEmpty = document.getElementById('char-assoc-empty');
     if (aEmpty) aEmpty.style.display = '';
   }
-  // Clear image previews and reset edit image state
-  form.querySelectorAll('.image-preview').forEach(function(img) {
-    img.src = ''; img.classList.remove('visible');
+  // Clear image compress panels and path text inputs
+  form.querySelectorAll('.img-compress-panel').forEach(function(el) { el.style.display = 'none'; });
+  form.querySelectorAll('.img-compress-thumb').forEach(function(img) {
+    if (img._blobUrl) { URL.revokeObjectURL(img._blobUrl); img._blobUrl = null; }
+    img._blob = null;
+    img.src = '';
   });
-  form.querySelectorAll('.image-path-hint').forEach(function(el) { el.textContent = ''; el.style.color = ''; });
+  form.querySelectorAll('.img-compress-size, .img-compress-error').forEach(function(el) {
+    el.textContent = ''; el.style.display = '';
+  });
+  form.querySelectorAll('.img-save-btn').forEach(function(btn) {
+    btn.disabled = true; btn.textContent = '⬇ Save Image'; btn.style.background = '';
+  });
   form.querySelectorAll('input[type=file]').forEach(function(el) { el.value = ''; });
   PENDING_EDIT_IMAGE = null;
   // Reset nation dropdowns

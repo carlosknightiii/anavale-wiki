@@ -53,19 +53,30 @@ var CREATURES = [
     "player_facing": true
   },
   {
-    id: "tinywings",
-    name: "Tinywings",
-    tier: "merry",
-    category: "the-merry",
-    regions: ["caparia", "nombi", "jugabi"],
-    habitat: "Warm updrafts, market rafters, cliff faces with good wind, anywhere with a view",
-    description: "Thumb-sized dragons with wings slightly too large for their bodies and scales in shifting warm tones \u2014 orange, gold, ember. Cannot actually fly straight. Very proud. Will argue about this.",
-    behavior: "Insist they are going exactly where they intended. Declare diagonal arrivals intentional. Form fierce opinions about interior decor and will rearrange small objects while you sleep. Bond with one person per season and follow them everywhere (erratically).",
-    gigglegloom_relationship: "Faintly Flamerage-aligned \u2014 they generate tiny sparks when genuinely excited. Not dangerous. Mostly just startling to furniture.",
-    dimmed_version: null,
-    dm_notes: "Tinywings make excellent comic relief. Their pride is absolute. A Dimmed Tinywing simply stops arguing \u2014 which is the saddest possible version of them.",
-    player_facing: true,
-    tags: ["merry", "uncommon", "flamerage-affinity", "comic", "bondable"]
+    "id": "tinywings",
+    "name": "Tinywings",
+    "tier": "merry",
+    "category": "the-merry",
+    "regions": [
+      "caparia",
+      "nombi",
+      "jugabi"
+    ],
+    "habitat": "Warm updrafts, market rafters, cliff faces with good wind, anywhere with a view",
+    "description": "Thumb-sized dragons with wings slightly too large for their bodies and scales in shifting warm tones — orange, gold, ember. Cannot actually fly straight. Very proud. Will argue about this.",
+    "behavior": "Insist they are going exactly where they intended. Declare diagonal arrivals intentional. Form fierce opinions about interior decor and will rearrange small objects while you sleep. Bond with one person per season and follow them everywhere (erratically).",
+    "gigglegloom_relationship": "Faintly Flamerage-aligned — they generate tiny sparks when genuinely excited. Not dangerous. Mostly just startling to furniture.",
+    "dimmed_version": null,
+    "dm_notes": "Tinywings make excellent comic relief. Their pride is absolute. A Dimmed Tinywing simply stops arguing — which is the saddest possible version of them.",
+    "tags": [
+      "merry",
+      "uncommon",
+      "flamerage-affinity",
+      "comic",
+      "bondable"
+    ],
+    "image": "assets/images/creatures/tinywings.webp",
+    "player_facing": true
   },
   {
     id: "bounce-beetles",
