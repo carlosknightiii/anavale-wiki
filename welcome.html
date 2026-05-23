@@ -1495,6 +1495,13 @@ function initDarkWhisperEffect() {
     return Math.max(0, Math.min(1, scrolled / total));
   }
 
+  // Returns 0→1 as the section's top edge travels from the bottom of the
+  // viewport down to the top — i.e. the moment it first appears on screen.
+  function getApproachProgress() {
+    var rect = darkSection.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (window.innerHeight - rect.top) / window.innerHeight));
+  }
+
   function zoneRadius(z) {
     if (prog < z.start) return 0;
     var t = Math.min(1, (prog - z.start) / (0.55 * z.speed));
@@ -1518,10 +1525,10 @@ function initDarkWhisperEffect() {
       vy: (Math.random() - 0.5) * 0.25,
       angle: Math.random() * Math.PI * 2,
       turnSpeed: (Math.random() - 0.5) * 0.008,
-      size: 8 + Math.random() * 10,
+      size: 5 + Math.random() * 6,
       wingPhase: Math.random() * Math.PI * 2,
-      wingSpeed: 0.02 + Math.random() * 0.025,
-      brightness: 70 + Math.floor(Math.random() * 10),
+      wingSpeed: 0.055 + Math.random() * 0.040,
+      brightness: 158 + Math.floor(Math.random() * 28),
       alpha: 0
     });
   }
@@ -1545,56 +1552,188 @@ function initDarkWhisperEffect() {
     ctx.save();
     ctx.globalAlpha = m.alpha;
     ctx.translate(m.x, m.y);
-    var b = m.brightness, s = m.size;
-    var wingOpen = Math.abs(Math.sin(m.wingPhase)) * 0.85 + 0.15;
-    // Left wing
-    ctx.save();
-    ctx.scale(1 + wingOpen * 0.45, 1);
+
+    var s = m.size, b = m.brightness;
+    // Visible wing flap — 0.35 (folded) to 1.0 (fully spread)
+    var fl = Math.abs(Math.sin(m.wingPhase)) * 0.65 + 0.35;
+
+    function mc(dr, dg, db, a) {
+      return 'rgba('+Math.round(b+dr)+','+Math.round(b+dg)+','+Math.round(b+db)+','+a+')';
+    }
+
+    // ── FOREWINGS ──────────────────────────────────────────────────────────────
+    // Drawn before body so body sits on top
+    function drawForewing(side) {
+      ctx.save();
+      ctx.scale(side * fl, 1);
+      // Wing shape: large triangular forewing sweeping up and out
+      ctx.beginPath();
+      ctx.moveTo(s*0.12,  s*0.05);
+      ctx.bezierCurveTo(s*0.5, -s*1.85, s*2.1, -s*1.95, s*2.95, -s*0.9);
+      ctx.bezierCurveTo(s*3.1,  s*0.05, s*2.5,  s*0.95, s*1.6,  s*1.05);
+      ctx.bezierCurveTo(s*0.8,  s*1.12, s*0.2,  s*0.55, s*0.0,  s*0.1);
+      ctx.closePath();
+      ctx.fillStyle = mc(0, -4, +3, 0.80);
+      ctx.fill();
+      // Dark border margin (characteristic moth feature)
+      ctx.strokeStyle = mc(-28, -31, -23, 0.65);
+      ctx.lineWidth = s * 0.15;
+      ctx.stroke();
+      // Clean inner edge line
+      ctx.strokeStyle = mc(-14, -16, -8, 0.55);
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      // Inner pale discal patch — lighter central area like the reference
+      ctx.beginPath();
+      ctx.moveTo(s*0.28, -s*0.25);
+      ctx.bezierCurveTo(s*0.65,-s*1.45, s*1.85,-s*1.45, s*2.15,-s*0.48);
+      ctx.bezierCurveTo(s*2.3,  s*0.12, s*1.82, s*0.52, s*1.0,  s*0.57);
+      ctx.bezierCurveTo(s*0.48, s*0.62, s*0.08, s*0.22, s*0.0,  s*0.1);
+      ctx.fillStyle = mc(+14, +9, +16, 0.18);
+      ctx.fill();
+      // Wing venation — costal, radials, medial, cubital
+      ctx.strokeStyle = mc(-20, -22, -14, 0.42);
+      ctx.lineWidth = 0.58;
+      [
+        [[s*.12, s*.05], [s*2.95,-s*.9 ]],   // costal vein
+        [[s*.12, s*.05], [s*1.72,-s*1.88]],  // R1
+        [[s*.12, s*.05], [s*2.32,-s*1.42]],  // R2
+        [[s*.12, s*.05], [s*2.85,-s*.38]],   // R3/R4
+        [[s*.06, s*.18], [s*2.3,  s*.48]],   // M1
+        [[s*.06, s*.30], [s*1.55, s*.98]],   // Cu
+      ].forEach(function(v) {
+        ctx.beginPath(); ctx.moveTo(v[0][0],v[0][1]); ctx.lineTo(v[1][0],v[1][1]); ctx.stroke();
+      });
+      // Cross-veins (discal cell walls)
+      ctx.strokeStyle = mc(-20, -22, -14, 0.22);
+      ctx.lineWidth = 0.38;
+      ctx.beginPath(); ctx.moveTo(s*0.98,-s*1.62); ctx.lineTo(s*1.12,-s*0.82); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(s*1.78,-s*1.32); ctx.lineTo(s*2.02,-s*0.48); ctx.stroke();
+      ctx.restore();
+    }
+
+    drawForewing( 1);  // left
+    drawForewing(-1);  // right
+
+    // ── HINDWINGS ───────────────────────────────────────────────────────────────
+    function drawHindwing(side) {
+      ctx.save();
+      ctx.scale(side * fl * 0.80, 1);
+      ctx.beginPath();
+      ctx.moveTo(s*0.08,  s*0.22);
+      ctx.bezierCurveTo(s*0.6,  s*0.48, s*2.05, s*0.52, s*2.48, s*1.38);
+      ctx.bezierCurveTo(s*2.68, s*2.08, s*1.88, s*2.68, s*0.88, s*2.58);
+      ctx.bezierCurveTo(s*0.22, s*2.48, s*0.0,  s*1.78, s*0.0,  s*0.88);
+      ctx.closePath();
+      ctx.fillStyle = mc(-5, -9, -2, 0.74);
+      ctx.fill();
+      ctx.strokeStyle = mc(-28, -31, -23, 0.50);
+      ctx.lineWidth = s * 0.11;
+      ctx.stroke();
+      // Hindwing veins
+      ctx.strokeStyle = mc(-18, -20, -12, 0.30);
+      ctx.lineWidth = 0.48;
+      ctx.beginPath(); ctx.moveTo(s*.08,s*.28); ctx.quadraticCurveTo(s*1.22,s*1.02,s*2.12,s*1.62); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(s*.06,s*.48); ctx.quadraticCurveTo(s*0.92,s*1.62,s*1.42,s*2.32); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(s*.04,s*.78); ctx.quadraticCurveTo(s*0.42,s*1.92,s*0.72,s*2.48); ctx.stroke();
+      ctx.restore();
+    }
+
+    drawHindwing( 1);
+    drawHindwing(-1);
+
+    // ── ABDOMEN (segmented, tapered) ────────────────────────────────────────────
+    for (var seg = 0; seg < 5; seg++) {
+      var sy = s*0.42 + seg * s*0.30;
+      var sw = s * (0.22 - seg * 0.027);
+      var sb = -28 - seg * 5;
+      ctx.beginPath();
+      ctx.ellipse(0, sy, sw, s*0.18, 0, 0, Math.PI*2);
+      ctx.fillStyle = mc(sb, sb-3, sb+5, 0.91);
+      ctx.fill();
+      // Segment groove line
+      if (seg > 0) {
+        ctx.strokeStyle = mc(sb-16, sb-18, sb-10, 0.26);
+        ctx.lineWidth = 0.38;
+        ctx.beginPath();
+        ctx.ellipse(0, sy - s*0.16, sw*0.88, s*0.055, 0, 0, Math.PI);
+        ctx.stroke();
+      }
+    }
+
+    // ── THORAX (thick, fuzzy) ────────────────────────────────────────────────────
     ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.bezierCurveTo(-s*1.8,-s*1.1,-s*2.6,s*0.2,-s*2.0,s*1.2);
-    ctx.bezierCurveTo(-s*1.0,s*1.8,-s*0.1,s*0.8,0,s*0.3);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba('+b+','+(b-3)+','+(b+5)+',0.78)';
+    ctx.ellipse(0, s*0.02, s*0.30, s*0.44, 0, 0, Math.PI*2);
+    ctx.fillStyle = mc(-24, -27, -18, 0.93);
     ctx.fill();
-    ctx.strokeStyle = 'rgba('+(b+22)+','+(b+20)+','+(b+26)+',0.3)';
-    ctx.lineWidth = 0.6; ctx.stroke();
+    // Fur texture — fine radial strokes
+    for (var fi = -3; fi <= 3; fi++) {
+      ctx.strokeStyle = mc(+6, +4, +11, 0.13 + Math.abs(fi)*0.02);
+      ctx.lineWidth = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(fi * s*0.08, -s*0.38);
+      ctx.lineTo(fi * s*0.05,  s*0.24);
+      ctx.stroke();
+    }
+
+    // ── HEAD ────────────────────────────────────────────────────────────────────
     ctx.beginPath();
-    ctx.ellipse(-s*1.35,s*0.35,s*0.32,s*0.26,0.25,0,Math.PI*2);
-    ctx.strokeStyle = 'rgba('+(b+30)+','+(b+28)+','+(b+35)+',0.38)';
-    ctx.lineWidth = 0.7; ctx.stroke();
-    ctx.restore();
-    // Right wing
-    ctx.save();
-    ctx.scale(-(1 + wingOpen * 0.45), 1);
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.bezierCurveTo(-s*1.8,-s*1.1,-s*2.6,s*0.2,-s*2.0,s*1.2);
-    ctx.bezierCurveTo(-s*1.0,s*1.8,-s*0.1,s*0.8,0,s*0.3);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba('+b+','+(b-3)+','+(b+5)+',0.78)';
+    ctx.ellipse(0, -s*0.54, s*0.21, s*0.21, 0, 0, Math.PI*2);
+    ctx.fillStyle = mc(-30, -32, -24, 0.94);
     ctx.fill();
-    ctx.strokeStyle = 'rgba('+(b+22)+','+(b+20)+','+(b+26)+',0.3)';
-    ctx.lineWidth = 0.6; ctx.stroke();
-    ctx.restore();
-    // Body
-    ctx.beginPath();
-    ctx.ellipse(0,s*0.22,s*0.18,s*0.72,0,0,Math.PI*2);
-    ctx.fillStyle = 'rgba('+(b-12)+','+(b-12)+','+(b-8)+',0.88)';
-    ctx.fill();
-    // Head
-    ctx.beginPath();
-    ctx.arc(0,-s*0.32,s*0.2,0,Math.PI*2);
-    ctx.fillStyle = 'rgba('+(b-10)+','+(b-10)+','+(b-6)+',0.88)';
-    ctx.fill();
-    // Antennae
-    ctx.beginPath();
-    ctx.moveTo(-s*0.08,-s*0.45);
-    ctx.quadraticCurveTo(-s*0.7,-s*1.4,-s*1.0,-s*1.85);
-    ctx.moveTo(s*0.08,-s*0.45);
-    ctx.quadraticCurveTo(s*0.7,-s*1.4,s*1.0,-s*1.85);
-    ctx.strokeStyle = 'rgba('+(b+10)+','+(b+8)+','+(b+14)+',0.5)';
-    ctx.lineWidth = 0.8; ctx.stroke();
+
+    // ── MIRROR EYES (radial gradient for the reflective look) ───────────────────
+    var eR = s * 0.11;
+    [-1, 1].forEach(function(side) {
+      var ex = side * s * 0.12, ey = -s * 0.54;
+      var eg = ctx.createRadialGradient(ex - eR*0.3, ey - eR*0.3, 0, ex, ey, eR);
+      eg.addColorStop(0,   'rgba(240,237,250,0.97)');
+      eg.addColorStop(0.28,'rgba(192,187,208,0.91)');
+      eg.addColorStop(0.68,'rgba(120,115,138,0.84)');
+      eg.addColorStop(1.0, 'rgba(52,48,70,0.76)');
+      ctx.beginPath();
+      ctx.arc(ex, ey, eR, 0, Math.PI*2);
+      ctx.fillStyle = eg;
+      ctx.fill();
+      // Specular highlight
+      ctx.beginPath();
+      ctx.arc(ex - eR*0.33, ey - eR*0.33, eR*0.28, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,254,255,0.65)';
+      ctx.fill();
+    });
+
+    // ── FEATHERED ANTENNAE ───────────────────────────────────────────────────────
+    [-1, 1].forEach(function(side) {
+      var ax0 = side * s*0.09, ay0 = -s*0.70;
+      var axm = side * s*0.52, aym = -s*1.48;
+      var ax1 = side * s*0.90, ay1 = -s*2.02;
+      // Main shaft
+      ctx.beginPath();
+      ctx.moveTo(ax0, ay0);
+      ctx.quadraticCurveTo(axm, aym, ax1, ay1);
+      ctx.strokeStyle = mc(-10, -12, -4, 0.54);
+      ctx.lineWidth = 0.72;
+      ctx.stroke();
+      // Feather barbs (5 pairs along shaft)
+      for (var k = 1; k <= 5; k++) {
+        var t  = k / 6;
+        var px = ax0 + (ax1 - ax0) * t;
+        var py = ay0 + (ay1 - ay0) * t;
+        var bl = s * 0.14 * (1 - t * 0.52);
+        ctx.beginPath();
+        ctx.moveTo(px - bl*0.58, py - bl*0.22);
+        ctx.lineTo(px + bl*0.58, py + bl*0.22);
+        ctx.strokeStyle = mc(-14, -16, -8, 0.26);
+        ctx.lineWidth = 0.38;
+        ctx.stroke();
+      }
+      // Club tip
+      ctx.beginPath();
+      ctx.arc(ax1, ay1, s*0.056, 0, Math.PI*2);
+      ctx.fillStyle = mc(-16, -18, -10, 0.60);
+      ctx.fill();
+    });
+
     ctx.restore();
   }
 
@@ -1651,8 +1790,9 @@ function initDarkWhisperEffect() {
     prog = getProgress();
     ctx.clearRect(0, 0, W, H);
 
-    // Map fade in — ease-out over 10% so it appears gracefully rather than popping
-    var mapT = Math.min(1, prog / 0.10);
+    // Map fade in — starts the moment the section enters the bottom of the screen,
+    // completes by the time it pins to the top. Uses approach progress, not scroll progress.
+    var mapT = getApproachProgress();
     mapImg.style.opacity = 1 - (1 - mapT) * (1 - mapT);
 
     // Prism
