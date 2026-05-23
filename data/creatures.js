@@ -79,19 +79,30 @@ var CREATURES = [
     "player_facing": true
   },
   {
-    id: "bounce-beetles",
-    name: "Bounce Beetles",
-    tier: "merry",
-    category: "the-merry",
-    regions: ["caparia", "sohot", "jugabi"],
-    habitat: "Stone corridors, cave entrances, busy streets \u2014 anywhere with solid surfaces to ricochet off",
-    description: "Colorful beetles the size of a walnut that navigate by bouncing. Their shells come in every color, shifting slightly each time they hit a surface. They make a satisfying 'boing' sound on impact.",
-    behavior: "Navigate entirely by accident and always arrive correctly. Have never been observed going directly anywhere. Travel between locations by bouncing off walls, ceilings, passersby, and occasionally each other. Seem unbothered by this.",
-    gigglegloom_relationship: "Their shell color shifts correspond to local Gigglegloom type. In mixed-type areas, they display all four colors in rotation.",
-    dimmed_version: null,
-    dm_notes: "Bounce Beetles arriving somewhere before a player is a reliable omen of good fortune in Brightcreed tradition. Whether this is real is left to the DM.",
-    player_facing: true,
-    tags: ["merry", "common", "omen", "brightcreed", "navigation"]
+    "id": "bounce-beetles",
+    "name": "Bounce Beetles",
+    "tier": "merry",
+    "category": "the-merry",
+    "regions": [
+      "caparia",
+      "sohot",
+      "jugabi"
+    ],
+    "habitat": "Stone corridors, cave entrances, busy streets — anywhere with solid surfaces to ricochet off",
+    "description": "Colorful beetles the size of a walnut that navigate by bouncing. Their shells come in every color, shifting slightly each time they hit a surface. They make a satisfying 'boing' sound on impact.",
+    "behavior": "Navigate entirely by accident and always arrive correctly. Have never been observed going directly anywhere. Travel between locations by bouncing off walls, ceilings, passersby, and occasionally each other. Seem unbothered by this.",
+    "gigglegloom_relationship": "Their shell color shifts correspond to local Gigglegloom type. In mixed-type areas, they display all four colors in rotation.",
+    "dimmed_version": null,
+    "dm_notes": "Bounce Beetles arriving somewhere before a player is a reliable omen of good fortune in Brightcreed tradition. Whether this is real is left to the DM.",
+    "tags": [
+      "merry",
+      "common",
+      "omen",
+      "brightcreed",
+      "navigation"
+    ],
+    "image": "assets/images/creatures/bounce-beetles.png",
+    "player_facing": true
   },
   {
     id: "grey-fluffets",

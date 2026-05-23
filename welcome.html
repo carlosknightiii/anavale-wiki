@@ -112,7 +112,7 @@
     font-size: clamp(0.65rem, 1.2vw, 0.85rem);
     letter-spacing: 0.5em; text-transform: uppercase;
     color: rgba(232,200,74,0.6); margin-bottom: 1.6rem;
-    opacity: 0; animation: riseIn 1.4s cubic-bezier(0.22,1,0.36,1) 0.4s forwards;
+    opacity: 0; animation: riseIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s forwards;
   }
 
   .hero-title {
@@ -125,7 +125,7 @@
     background-size: 300% 300%;
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     opacity: 0;
-    animation: riseIn 1.6s cubic-bezier(0.22,1,0.36,1) 0.7s forwards, shimmer 10s ease-in-out 2.5s infinite;
+    animation: riseIn 1.0s cubic-bezier(0.22,1,0.36,1) 0.3s forwards, shimmer 10s ease-in-out 1.5s infinite;
     filter: drop-shadow(0 0 40px rgba(232,200,74,0.4)) drop-shadow(0 0 100px rgba(154,112,232,0.2));
   }
   @keyframes shimmer {
@@ -138,7 +138,7 @@
     width: 0; height: 1px;
     background: linear-gradient(90deg, transparent, rgba(232,200,74,0.5) 30%, rgba(253,246,232,0.8) 50%, rgba(232,200,74,0.5) 70%, transparent);
     margin-top: 1.6rem;
-    animation: expandRule 1.2s cubic-bezier(0.22,1,0.36,1) 1.6s forwards;
+    animation: expandRule 0.9s cubic-bezier(0.22,1,0.36,1) 0.8s forwards;
   }
   @keyframes expandRule { to { width: clamp(200px, 40vw, 420px); } }
 
@@ -147,16 +147,16 @@
     font-size: clamp(0.9rem, 2vw, 1.2rem);
     color: rgba(253,246,232,0.6); letter-spacing: 0.04em;
     max-width: 520px; line-height: 1.75; margin-top: 1.8rem;
-    opacity: 0; animation: riseIn 1.2s cubic-bezier(0.22,1,0.36,1) 1.5s forwards;
+    opacity: 0; animation: riseIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.75s forwards;
   }
 
   .scroll-hint {
     position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
-    z-index: 3; opacity: 0; animation: fadeIn 2s ease 3.2s forwards;
+    z-index: 3; opacity: 0; animation: fadeIn 1.2s ease 1.6s forwards;
   }
   .scroll-hint p { font-family: 'Lora', serif; font-style: italic; font-size: 0.72rem; letter-spacing: 0.25em; color: rgba(253,246,232,0.3); }
-  .scroll-arrow { width: 1px; height: 48px; background: linear-gradient(to bottom, rgba(232,200,74,0.55), transparent); animation: arrowPulse 2.5s ease-in-out 3.5s infinite; }
+  .scroll-arrow { width: 1px; height: 48px; background: linear-gradient(to bottom, rgba(232,200,74,0.55), transparent); animation: arrowPulse 2.5s ease-in-out 1.8s infinite; }
   @keyframes arrowPulse { 0%, 100% { opacity: 0.4; transform: scaleY(1); } 50% { opacity: 1; transform: scaleY(1.14); } }
 
   @keyframes riseIn { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
@@ -283,6 +283,91 @@
     opacity: 0.8;
   }
 
+  /* ── CREATURES SECTION — no entrance animation ── */
+  .creatures-section .section-label,
+  .creatures-section .section-title,
+  .creatures-section .section-body {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  /* ── TYPE CARDS ── */
+  .home-types-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 2rem 3rem;
+  }
+  .type-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--type-color) 35%, transparent);
+    background: color-mix(in srgb, var(--type-color) 8%, #0d0d12);
+    cursor: default;
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+    transition: opacity 0.6s ease, transform 0.6s ease,
+                box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .type-card.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .type-card:hover {
+    box-shadow: 0 8px 40px color-mix(in srgb, var(--type-color) 30%, transparent);
+    border-color: color-mix(in srgb, var(--type-color) 60%, transparent);
+  }
+  .type-card-video-wrap {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+  }
+  .type-card-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .type-card-video-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+      transparent 40%,
+      color-mix(in srgb, var(--type-color) 10%, #0d0d12) 100%);
+  }
+  .type-card-content {
+    padding: 1.25rem 1.5rem 1.5rem;
+  }
+  .type-card-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .type-card-name {
+    font-family: 'Charm', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--type-color) 90%, #fff);
+    margin-bottom: 0.3rem;
+  }
+  .type-card-element {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--type-color) 70%, #fff);
+    opacity: 0.8;
+    margin-bottom: 0.75rem;
+  }
+  .type-card-desc {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    opacity: 0.75;
+  }
+
   /* ── CREATURE GRID ── */
   .creature-grid {
     display: grid;
@@ -295,21 +380,13 @@
     border: 1px solid rgba(253,246,232,0.1);
     border-radius: 12px;
     padding: 1.8rem;
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease, background 0.3s ease;
+    transition: border-color 0.3s ease, background 0.3s ease;
     cursor: default;
   }
   .creature-card:hover {
     background: rgba(253,246,232,0.07);
     border-color: rgba(232,200,74,0.3);
   }
-  .creature-card.visible { opacity: 1; transform: none; }
-  .creature-card:nth-child(2) { transition-delay: 0.1s; }
-  .creature-card:nth-child(3) { transition-delay: 0.2s; }
-  .creature-card:nth-child(4) { transition-delay: 0.3s; }
-  .creature-card:nth-child(5) { transition-delay: 0.4s; }
-  .creature-card:nth-child(6) { transition-delay: 0.5s; }
 
   .creature-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
   .creature-name {
@@ -543,37 +620,59 @@
   </p>
 </section>
 
-<div class="color-band">
-  <div class="color-band-inner">
-    <div class="color-card bubbleseed">
-      <div class="color-dot"></div>
-      <div class="color-name">Bubbleseed</div>
-      <div class="color-element">Earth · Growth · Joy</div>
-      <div class="color-desc">Warm and generous and slightly too much. Smells like soil after rain. Emotionally attached to whoever uses it. Will overshoot.</div>
+<div class="home-types-list" style="max-width:1100px; margin:0 auto 0; padding:0 2rem;">
+  <div class="type-card reveal reveal-delay-1" style="--type-color:#c8a83a" onclick="">
+    <div class="type-card-video-wrap">
+      <video class="type-card-video" src="assets/videos/anim-bubbleseed.mp4" autoplay muted loop playsinline preload="auto"></video>
+      <div class="type-card-video-overlay"></div>
     </div>
-    <div class="color-card featherflow">
-      <div class="color-dot"></div>
-      <div class="color-name">Featherflow</div>
-      <div class="color-element">Wind · Water · Freedom</div>
-      <div class="color-desc">Never goes in a straight line. Resists being caged. Has been known to counteract early Fading, though it won't admit that's what it's doing.</div>
+    <div class="type-card-content">
+      <img class="type-card-icon" src="assets/icons/icon-bubbleseed.svg" alt="Bubbleseed">
+      <div class="type-card-name">Bubbleseed</div>
+      <div class="type-card-element">Earth · Growth · Joy</div>
+      <div class="type-card-desc">Warm and generous and slightly too much. Smells like soil after rain. Emotionally attached to whoever uses it. Will overshoot.</div>
     </div>
-    <div class="color-card steelfist">
-      <div class="color-dot"></div>
-      <div class="color-name">Steelfist</div>
-      <div class="color-element">Metal · Resolve · Order</div>
-      <div class="color-desc">Does exactly what it's told. Rewards discipline. Punishes sloppiness. Its grey shines — don't confuse it with the other kind of grey.</div>
+  </div>
+  <div class="type-card reveal reveal-delay-2" style="--type-color:#2266b8" onclick="">
+    <div class="type-card-video-wrap">
+      <video class="type-card-video" src="assets/videos/anim-featherflow.mp4" autoplay muted loop playsinline preload="auto"></video>
+      <div class="type-card-video-overlay"></div>
     </div>
-    <div class="color-card flamerage">
-      <div class="color-dot"></div>
-      <div class="color-name">Flamerage</div>
-      <div class="color-element">Fire · Destruction · Fury</div>
-      <div class="color-desc">Responds to emotion before intent. Spectacular. The only type that can temporarily overpower Stage 1 Fading. Use carefully. Or don't.</div>
+    <div class="type-card-content">
+      <img class="type-card-icon" src="assets/icons/icon-featherflow.svg" alt="Featherflow">
+      <div class="type-card-name">Featherflow</div>
+      <div class="type-card-element">Wind · Water · Freedom</div>
+      <div class="type-card-desc">Never goes in a straight line. Resists being caged. Has been known to counteract early Fading, though it won't admit that's what it's doing.</div>
+    </div>
+  </div>
+  <div class="type-card reveal reveal-delay-3" style="--type-color:#6a3aaa" onclick="">
+    <div class="type-card-video-wrap">
+      <video class="type-card-video" src="assets/videos/anim-steelfist.mp4" autoplay muted loop playsinline preload="auto"></video>
+      <div class="type-card-video-overlay"></div>
+    </div>
+    <div class="type-card-content">
+      <img class="type-card-icon" src="assets/icons/icon-steelfist.svg" alt="Steelfist">
+      <div class="type-card-name">Steelfist</div>
+      <div class="type-card-element">Metal · Resolve · Order</div>
+      <div class="type-card-desc">Does exactly what it's told. Rewards discipline. Punishes sloppiness. Its grey shines — don't confuse it with the other kind of grey.</div>
+    </div>
+  </div>
+  <div class="type-card reveal reveal-delay-4" style="--type-color:#aa3a1a" onclick="">
+    <div class="type-card-video-wrap">
+      <video class="type-card-video" src="assets/videos/anim-flamerage.mp4" autoplay muted loop playsinline preload="auto"></video>
+      <div class="type-card-video-overlay"></div>
+    </div>
+    <div class="type-card-content">
+      <img class="type-card-icon" src="assets/icons/icon-flamerage.svg" alt="Flamerage">
+      <div class="type-card-name">Flamerage</div>
+      <div class="type-card-element">Fire · Destruction · Fury</div>
+      <div class="type-card-desc">Responds to emotion before intent. Spectacular. The only type that can temporarily overpower Stage 1 Fading. Use carefully. Or don't.</div>
     </div>
   </div>
 </div>
 
 <!-- ══ CREATURES ══ -->
-<section>
+<section class="creatures-section">
   <p class="section-label">The Living World</p>
   <h2 class="section-title" style="color: var(--green);">The Creatures of Anavale</h2>
   <p class="section-body">
@@ -1108,11 +1207,11 @@ uniqueEls.forEach(el => {
       initCreaturePositions();
       setTimeout(() => {
         [fluffetEl, bf1El, bf2El, bf3El, tw1El, tw2El].forEach(el => {
-          el.style.transition = 'opacity 1.2s ease';
+          el.style.transition = 'opacity 0.4s ease';
           el.style.opacity = '1';
         });
         creaturesReady = true;
-      }, 2500);
+      }, 100);
     }
   });
 });
@@ -1122,8 +1221,8 @@ tick();
 
 // ── SCROLL REVEAL ────────────────────────────────────────────
 const revealEls = document.querySelectorAll(
-  '.section-label, .section-title, .section-body, .color-card, ' +
-  '.creature-card, .region-card, .rumor, .dark-ornament, .dark-title, ' +
+  '.section-label, .section-title, .section-body, .color-card, .type-card, ' +
+  '.region-card, .rumor, .dark-ornament, .dark-title, ' +
   '.dark-body, .closing-title, .closing-body, .closing-sig, .fancy-divider'
 );
 
@@ -1137,6 +1236,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.12 });
 
 revealEls.forEach(el => observer.observe(el));
+
 </script>
 </body>
 </html>
