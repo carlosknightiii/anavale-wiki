@@ -63,10 +63,13 @@ function renderNotFound(el, hash) {
     + '</div>';
 }
 
-// Render an optional entry image as a full-width hero below the page header
-function entryImage(src, alt) {
+// Render an optional entry image as a full-width hero below the page header.
+// Pass an optional extraClass (e.g. 'entry-hero-image--creature') to apply
+// page-type-specific sizing without one-off inline styles.
+function entryImage(src, alt, extraClass) {
   if (!src) return '';
-  return '<img class="entry-hero-image" src="' + esc(src)
+  var cls = 'entry-hero-image' + (extraClass ? ' ' + extraClass : '');
+  return '<img class="' + cls + '" src="' + esc(src)
     + '" alt="' + esc(alt || '') + '">';
 }
 
@@ -1541,7 +1544,7 @@ function renderCreature(id, el) {
       ])
       + pageHeader('Bestiary · ' + tierLabel, creature.name, creatureSubtitle(creature))
       + '<div class="wiki-body">'
-      + entryImage(creature.image, creature.name)
+      + entryImage(creature.image, creature.name, 'entry-hero-image--creature')
       + '<p>' + esc(firstSentence) + '</p>'
       + teaserFooter('creature')
       + '</div>';
@@ -1573,7 +1576,7 @@ function renderCreature(id, el) {
     ])
     + pageHeader('Bestiary · ' + tierLabel, creature.name, creatureSubtitle(creature))
     + '<div class="wiki-body">'
-    + entryImage(creature.image, creature.name)
+    + entryImage(creature.image, creature.name, 'entry-hero-image--creature')
     + (regionTagsHtml ? '<div style="margin-bottom:1rem;">' + regionTagsHtml + '</div>' : '')
     + '<p>' + esc(creature.description) + '</p>'
     + (creature.behavior ? '<div class="section-heading">Behavior</div><p>' + esc(creature.behavior) + '</p>' : '')
