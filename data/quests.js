@@ -157,6 +157,124 @@ var QUESTS = [
     dm_notes: "This quest is a payoff quest — it only becomes available after the players have engaged with at least two of the first three Inkwell quests and accumulated enough threads to see the pattern. Osric should be rewarded for his thoroughness by being right about everything and wrong only about the urgency. He filed it correctly. He just didn't know what he was filing. The moment the players tell him what Anomaly 7-C actually means, let it land. He will need a moment. Then he will ask if there is a form for this.",
 
     player_facing: false
-  }
+  },
+
+  // ── REVELTOWN QUEST 1 ───────────────────────────────────────────────────────
+  {
+    id: "the-anomaly-reports",
+    name: "The Anomaly Reports",
+    status: "available",
+    stakes: "low",
+    first_available: "session-1",
+
+    hook: "A Conclave observer named Pellwick Thorune has been filing anomaly reports about Reveltown's Gigglegloom for seventeen years. None have received a response. He has heard the players might be trustworthy. He would very much like someone to look at Report 612.",
+
+    summary: "Pellwick Thorune has accumulated seventeen years of Gigglegloom observation data in Reveltown that the Conclave has never read. Report 612 documents a Featherflow surge pattern identical to pre-Fading readings from the Jani Forest. He is not saying Reveltown is Fading — but he would like to know what it means. What's actually happening: the pattern comes from Veilborn operatives performing deliberate color restoration work disguised as festival surges. The pattern looks like early Fading because a skilled Fading reversal uses the same Gigglegloom frequencies in reverse.",
+
+    related: [
+      { collection: "cities",        id: "reveltown"           },
+      { collection: "characters",    id: "pellwick-thorune"    },
+      { collection: "characters",    id: "marro-fenn"          },
+      { collection: "organizations", id: "gigglegloom-conclave" },
+      { collection: "organizations", id: "revel"               }
+    ],
+
+    beats: [
+      { order: 1, description: "Players meet Pellwick at The Fortunate Collapse, where he eats dinner every night, or at his monitoring station. He asks a simple favor: look at Report 612. He has seventeen years of data and nobody has read any of it." },
+      { order: 2, description: "Report 612 documents a Featherflow surge pattern matching pre-Fading readings from the Jani Forest. Pellwick is methodical and correct. The pattern is real. He wants to know the source." },
+      { order: 3, description: "Investigating the surge timing against Revel performance schedules — Pellwick has this data — reveals that two specific troupes produce the pattern every time, regardless of what they perform or how large the audience is." },
+      { order: 4, description: "Confronting or closely observing one of the two troupes during a performance reveals deliberate Gigglegloom work — skilled, controlled, not incidental. The saturation effect is not an accident." }
+    ],
+
+    reveals: [
+      "The Featherflow pattern is not a Fading warning — it is the residual trace of a Fading reversal. Skilled practice in the opposite direction produces the same frequency signature.",
+      "Two Revel troupes are producing the surges deliberately. They are Veilborn operatives. They are not hiding what they do — just what it means.",
+      "The Revel's color restoration effect across Pogglewog is not accidental collective joy. It is a coordinated operation.",
+      "Pellwick's 847 reports, read together, form the most complete non-Conclave Gigglegloom dataset in Caparia. He will share all of it with players who treat his work seriously."
+    ],
+
+    dm_notes: "This quest is a warm, funny entry point with a genuine discovery underneath. Pellwick should be rewarded for seventeen years of careful work by being right about everything. The Formery beat: getting a counter-signature on Report 612 requires Form 3-B (Field Observer, Temporary Status, Non-Conclave). The Reveltown branch has it. Seventeen pieces of supporting documentation required. One requires a notarized statement from the nearest Brightcreed temple, which is currently hosting a three-day Oro celebration. The notary is at The Fortunate Collapse tonight.",
+
+    player_facing: false
+  },
+
+  // ── REVELTOWN QUEST 2 ───────────────────────────────────────────────────────
+  {
+    id: "something-in-the-archives",
+    name: "Something in the Archives",
+    status: "available",
+    stakes: "mid",
+    first_available: "session-1",
+
+    hook: "A village two days east of Reveltown has written to The Revel asking why a troupe visited them without advance notice, performed without charging, and left before sunrise. The Revel has no record of this troupe. The description matches three different documented troupes, none of which were scheduled for that route.",
+
+    summary: "Marro Fenn asks the players to investigate an unscheduled Revel performance at a village east of Reveltown. The performance left the village visibly more saturated. A festival program was left behind — real Revel stock, correct printing, dated eleven years ago. The date is not an error. It is a Veilborn operational marker indicating a deliberate color restoration working. The village was experiencing early Fading that no official report had yet documented.",
+
+    related: [
+      { collection: "cities",        id: "reveltown"        },
+      { collection: "characters",    id: "marro-fenn"       },
+      { collection: "characters",    id: "wix"              },
+      { collection: "organizations", id: "revel"            },
+      { collection: "organizations", id: "veilborn"         }
+    ],
+
+    beats: [
+      { order: 1, description: "Marro Fenn asks the players to look into it — she wants to know, and she wants someone to look who doesn't already work for her. The village's letter is warm, grateful, and confused." },
+      { order: 2, description: "At the Festival Archives, Wix confirms no troupe was scheduled for the eastern route. The physical evidence: a festival program left at the village, real Revel stock, correct printing, dated eleven years ago." },
+      { order: 3, description: "Investigating the village: it is genuinely brighter than four weeks ago. Residents describe the performance with warmth and slightly uncertain detail — like remembering a dream. One resident kept a Tinywing that appeared during the performance and hasn't left." },
+      { order: 4, description: "Cross-referencing the program date against Revel operational records reveals it is one of several identically-dated programs associated with unscheduled performances in communities that later showed no Fading progression. The pattern spans at least fifteen years." }
+    ],
+
+    reveals: [
+      "The eleven-year-old date is not an error. It is a Veilborn operational marker indicating a specific type of intervention.",
+      "The village had early Fading that no official report had captured. The performance was a targeted color restoration working.",
+      "Wix knows what the date marker means and will not say so unless directly and correctly asked.",
+      "This is evidence of a sophisticated, long-running, anonymous color restoration operation that predates any organization the players currently know about."
+    ],
+
+    dm_notes: "This is the players' first clear Veilborn thread if they pull it. Let the village discovery breathe — the Tinywing that stayed is the emotional beat. Wix's silence is not hostile; it is professional. Players who earn trust through this quest gain their first real indication that the Veilborn is not what the rumors say. Do not confirm the Veilborn connection here. Let players build the picture.",
+
+    player_facing: false
+  },
+
+  // ── REVELTOWN QUEST 3 ───────────────────────────────────────────────────────
+  {
+    id: "the-greytalon",
+    name: "The Greytalon",
+    status: "available",
+    stakes: "mid",
+    first_available: "session-1",
+
+    hook: "Torv Bassle, proprietor of The Fortunate Collapse, has been watching a grey corvid with pale eyes sitting on the post outside his inn for six days. It watches the crowd. It does not move like birds move. He is keeping a private log. He does not know what it is.",
+
+    summary: "A Greytalon — a corvid bred by the Vareth's Drakhold operation as a surveillance creature — has been roosting outside The Fortunate Collapse for six days. Its presence means the Vareth is watching Reveltown. Drak's operation has been mapping Gigglegloom patterns across Caparia and the Revel's unexplained surges have appeared in his documentation. This is reconnaissance. Players must decide whether to remove it, ignore it, or follow it.",
+
+    related: [
+      { collection: "cities",        id: "reveltown"        },
+      { collection: "characters",    id: "torv-bassle"      },
+      { collection: "characters",    id: "drak"             },
+      { collection: "characters",    id: "pellwick-thorune" },
+      { collection: "creatures",     id: "greytalons"       },
+      { collection: "organizations", id: "revel"            }
+    ],
+
+    beats: [
+      { order: 1, description: "Torv shares his private log with players he has decided to trust. The log is meticulous. Six days of observations. The bird has a route — it moves between three points in Reveltown at consistent intervals." },
+      { order: 2, description: "Players who investigate the three points find: the Revel Stage, the entrance to the Wandering Quarter, and the Conclave observer's monitoring station. The Vareth is watching all three." },
+      { order: 3, description: "Players choose: remove the Greytalon, follow it, or leave it. Each choice has different consequences. Removing it tells the Vareth something noticed and acted. Following it leads to a relay point outside Reveltown where observations are collected." },
+      { order: 4, description: "The relay point — if found — contains logged observations in Drak's documentation format. The observations are analytical: surge timing, troupe correlations, a note reading 'source unidentified, pattern deliberate.' Drak knows the Revel's saturation effect is intentional. He does not yet know how." }
+    ],
+
+    reveals: [
+      "The Vareth is actively surveilling Reveltown. This is not random — Drak's documentation has flagged the Revel as an operational concern.",
+      "Drak knows the surge effect is deliberate. He does not know the mechanism. This makes Pellwick's troupe correlation data (Report 847) extremely sensitive.",
+      "The three surveillance points — Stage, Wandering Quarter, monitoring station — tell players exactly what the Vareth considers important about Reveltown.",
+      "If the Greytalon is removed, it will be missed. The Vareth will send another. If it is followed, the relay point can be used as a disinformation channel — but only once before Drak notices the reports are wrong."
+    ],
+
+    dm_notes: "This quest plays completely straight — no jokes, no whimsy. The Vareth dark thread for Reveltown. The Greytalon itself is not dangerous; it is a consequence waiting to become a threat. The players' choice at Beat 3 is genuinely meaningful. The disinformation option — feeding false reports through the relay — is an advanced play that first-time players may not think of, but should be rewarded if they do. The Formery beat: Form 19-W (Wildlife, Anomalous Behavior, Suspected Vareth Affiliation) must be filed with the nearest Chromeguard outpost in person by a licensed Conclave observer or their designated agent. Pellwick has the license. He has never used it. He is not sure he wants to go to Prismhold.",
+
+    player_facing: false
+  },
 
 ];

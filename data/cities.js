@@ -103,23 +103,43 @@ var CITIES = [
     type: "town",
     religion: ["brightcreed", "veilborn"],
     summary: "Home base of The Revel. Perpetually mid-festival. Nobody knows what day it is. Suspected Veilborn front.",
-    description: "A town that has been in the middle of a festival for as long as anyone can remember. The Revel's traveling guild uses it as a permanent base. Buildings are more saturated with color than anywhere outside Prismhold. The Veilborn are rumored to use it as a front — the chaos of constant celebration makes surveillance nearly impossible.",
+    description: `A town that has been in the middle of a festival for as long as anyone can remember. The Revel's traveling guild uses it as a permanent base. Buildings are more saturated with color than anywhere outside Prismhold — walls painted in layered hues that shift depending on which performance troupe is currently in residence. Banners hang from every post and window. Music is always audible from somewhere. The streets smell like spun sugar and woodsmoke and something floral that nobody has ever successfully identified.
+
+Nobody knows what day it is. This is not considered a problem. If pressed, a local will give you a day and be entirely confident — but ask two locals and you will get two different answers. The Formery branch office here accepts all dates on submitted forms without comment, which locals consider proof that the Formery understands them.
+
+The Veilborn are rumored to use Reveltown as a front. The chaos of constant celebration makes surveillance nearly impossible. Conversations vanish into music. Strangers are unremarkable. Information passes through festival crowds the way smoke passes through leaves — completely and without leaving evidence. Whether this is coincidence or architecture is the kind of question nobody in Reveltown will answer directly.`,
     landmarks: [
-      { name: "The Revel Stage", description: "A permanent performance platform that has hosted continuous entertainment for years." },
-      { name: "The Festival Archives", description: "Records of every performance The Revel has ever staged — written, if the rumors are true, in two languages, only one of which is readable." }
+      {
+        name: "The Revel Stage",
+        description: "A permanent performance platform at the center of town that has hosted continuous entertainment for as long as the oldest resident can remember. The stage itself has been rebuilt seven times — always overnight, always while a performance was somehow still happening."
+      },
+      {
+        name: "The Festival Archives",
+        description: "Records of every performance The Revel has ever staged. Written, if the rumors are true, in two languages — one readable, one not. The unreadable language predates The Revel's founding. The archivist says this is a clerical error and has been saying so for forty years."
+      },
+      {
+        name: "The Wandering Quarter",
+        description: "A section of Reveltown where the buildings themselves are semi-permanent — structures that can be broken down and moved when a Revel circuit departs and reassembled when it returns. Nothing in the Wandering Quarter is where it was last season. Maps of it are considered decorative."
+      },
+      {
+        name: "The Formery Branch Office",
+        description: "Technically one of the smallest Formery offices in Caparia. Operates out of a converted hat stall. Accepts all submitted dates without comment. Has processed 1,400 festival-related regulatory filings this year alone, all of them on Form 7-P (Temporary Gathering, Recurring, Indefinite Duration)."
+      }
     ],
-    strategic_importance: "Revel headquarters — cultural and suspected intelligence hub",
-    color_health: "exceptional — surges frequently during performances",
-    formery_present: false,
+    strategic_importance: "Revel headquarters — cultural hub, color restoration base, and suspected Veilborn intelligence node",
+    color_health: "exceptional — surges frequently during performances, highest sustained saturation of any non-magical-regulatory settlement in Caparia",
+    formery_present: true,
     vareth_presence: false,
-    tone: "Chaotic, joyful, impossible to get a straight answer from anyone.",
+    tone: "Chaotic, joyful, impossible to get a straight answer from anyone. The kind of place where everyone seems to know something and no one will say what it is, but you don't mind because the food is extraordinary.",
     tags: [
       "caparia",
       "solenmere",
       "festival",
       "revel",
       "veilborn",
-      "suspected-front"
+      "suspected-front",
+      "formery",
+      "color-exceptional"
     ],
     player_facing: false
   },

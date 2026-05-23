@@ -310,6 +310,117 @@ var CHARACTERS = [
     ],
     player_facing: false
   }
+  {
+    id: "marro-fenn",
+    name: "Marro Fenn",
+    role: "Grand Reveler",
+    category: "faction-leader",
+    pronouns: "she/her",
+    status: "active",
+    location: "Reveltown — or wherever the current Revel circuit is",
+    affiliation: "The Revel (public); The Veilborn (known only to the Veilmoot)",
+    religion: ["veilborn"],
+    summary: "Current Grand Reveler of The Revel. Warm, funny, and nearly impossible to read. Her colors never fade the way other people's do. She asks questions that seem personal and reveal nothing about what she thinks of the answers.",
+    appearance: "Small and compact. Her clothing is always the most saturated thing in any room she enters — not from dramatic dressing, but because her colors don't fade the way others' do. The Conclave observer has noted this in three separate anomaly reports.",
+    personality: "Warm in exactly the way that makes you feel welcome without giving you anything. Laughs easily and genuinely. Will not tell a direct lie but will let you draw the wrong conclusion and thank you for your time.",
+    motivation: "The Revel's mission is sincere — color every community, leave places more vivid than you found them. She believes this completely. The Veilborn's mission is also sincere. She has never experienced these as being in conflict because she does not believe they are.",
+    contradiction: "She has not been back to Veilhaven in four years. She tells herself she doesn't need to be debriefed because there is nothing to report that hasn't gone through the proper channels. The actual reason is that she doesn't want to be told to do something she would have to do.",
+    secret: "She knows about the Hollowmoth sighting in Reveltown three years ago. She knows which direction it came from. She has not filed the full report because filing it would require disclosing a location she was not supposed to know the Veilborn uses — Greyveil Hollow, the quiet Fading site in southwest Caparia that has had no official report filed in two years. She is waiting to see if someone else notices.",
+    player_knowledge: "Current Grand Reveler of The Revel. Warm, funny, impossible to get a straight answer from. Genuinely seems to care about festival-goers. Very hard to tell if she likes you or is simply very good at seeming like she does.",
+    dm_notes: "Marro is the players' primary Revel contact. She is an ally — but an ally with a hidden agenda and a piece of information she is sitting on. If players pursue the Greyveil Hollow thread and reach her, she will eventually tell them what she knows. She will not volunteer it. Do not play her as suspicious — play her as genuinely warm and genuinely careful.",
+    gigglegloom_relationship: "Her personal color saturation is anomalous — the Conclave observer has documented it three times. Whether this is a Veilborn technique, a natural gift, or something Solvara's domain touches is unconfirmed.",
+    color: "Unusually saturated — holds color better than physics should allow",
+    tags: ["reveltown", "caparia", "revel", "veilborn", "faction-leader", "grand-reveler", "greyveil-hollow", "dm-only"],
+    associated: [
+      { collection: "cities",        id: "reveltown" },
+      { collection: "organizations", id: "revel" }
+    ],
+    player_facing: false
+  },
+
+  {
+    id: "pellwick-thorune",
+    name: "Pellwick Thorune",
+    role: "Chroma Bureau Observer",
+    category: "npc-ally",
+    pronouns: "he/him",
+    status: "active",
+    location: "Reveltown monitoring station — permanently, at this point",
+    affiliation: "The Gigglegloom Conclave",
+    religion: ["brightcreed"],
+    summary: "A Conclave observer on a six-month assignment that has lasted seventeen years. Has filed 847 meticulous anomaly reports. None have received a response. Has made peace with this. Has not stopped filing.",
+    appearance: "Middling height, comfortable clothes, the specific expression of someone who has given up on urgency without giving up on care. Always has tea. Has three cats named after Gigglegloom surge types.",
+    personality: "Gentle in the way that comes from having given up on urgency. Will tell you everything he knows in the most organized possible way and then offer you tea. Not incurious — just no longer in a hurry about the answers.",
+    motivation: "He genuinely wants to understand the Reveltown Gigglegloom anomalies. He has accumulated more data on them than any single person in Anavale. He believes that if someone read his reports, they would answer at least three open Conclave questions. He has been thinking about compiling them into a thesis for about four years.",
+    contradiction: "He has not reported his anomalies to anyone outside the official channel — not to the Wanderkeep, not to the Brightcreed, not to anyone who might act on them. The official channel is clearly not working. He knows this. He keeps using it.",
+    secret: "Anomaly Report 847, filed three months ago and not yet processed, documents a new pattern: the Revel's color surges correlate with specific performance troupes, not with performance content or audience size. Two troupes produce surges every time. He has identified both rosters. He does not yet know what this means.",
+    player_knowledge: "A Conclave observer who has been posted here too long and knows more about this town's Gigglegloom than anyone. Makes excellent tea. Will talk for a very long time if you let him.",
+    dm_notes: "Pellwick is a warm, low-stakes entry point to both the Revel's secret and the broader Vareth surveillance thread. Players who earn his trust gain access to 17 years of Gigglegloom data — including the troupe correlation (Report 847) and the earlier Featherflow pattern that matches pre-Fading readings in the Jani Forest. He is not in danger unless players make him relevant to the Vareth, at which point Drak's surveillance apparatus will notice him.",
+    gigglegloom_relationship: "Theoretical expertise accumulated through observation. Can identify surge types, correlate patterns, and cross-reference seventeen years of data. Has never been formally licensed to practice.",
+    color: "Soft, unhurried amber — the color of someone comfortable with waiting",
+    tags: ["reveltown", "caparia", "conclave", "observer", "anomaly-reports", "ally", "gigglegloom-data"],
+    associated: [
+      { collection: "cities",        id: "reveltown" },
+      { collection: "organizations", id: "gigglegloom-conclave" }
+    ],
+    player_facing: false
+  },
+
+  {
+    id: "torv-bassle",
+    name: "Torv Bassle",
+    role: "Innkeeper, The Fortunate Collapse",
+    category: "npc-ally",
+    pronouns: "he/him",
+    status: "active",
+    location: "The Fortunate Collapse, Reveltown — has not left in twenty-two years",
+    affiliation: "None official. Deeply unofficial ties to the Nimblewood.",
+    religion: ["brightcreed"],
+    summary: "Proprietor of Reveltown's best inn. Has been here twenty-two years. Knows everyone who passes through. Has a casual color-reading ability he has never formally studied and would be embarrassed to name. Has not left Reveltown once.",
+    appearance: "Large, cheerful, the specific kind of solid that comes from decades of carrying things. Always seems to have just finished laughing at something.",
+    personality: "Uncomplicated in the best possible way — warm, generous, curious about people without being intrusive. Asks follow-up questions that show he actually listened to your previous answer. Laughs at things that are only a little funny.",
+    motivation: "He likes his town, his inn, and his regulars, and has a talent for noticing things and a strong interest in not seeing bad things happen to people he likes. This has made him quietly useful to the Nimblewood on a very arms-length basis.",
+    contradiction: "He has never once left Reveltown in twenty-two years. Thousands of people come to him every season, and he knows the world through them without having to enter it. He tells himself this is efficiency. The actual reason involves a road, a direction, and something he is not ready to go back to.",
+    secret: "There is a Greytalon — a grey corvid with pale eyes — roosting on the post outside The Fortunate Collapse. It has been there for six days. He has been watching it. It has been watching the crowd. He mentioned it to someone with Nimblewood connections and received no response, which in his experience means 'do not ask again.' He is keeping a private log.",
+    player_knowledge: "Innkeeper. Knows everything. Will tell you almost none of it unless you give him a reason to trust you. Excellent food.",
+    dm_notes: "Torv is the players' best source of quiet local intelligence once they earn his trust. He will not volunteer the Greytalon information immediately — he needs to assess whether the players are the kind of people who can be trusted with it. The Greytalon is the Vareth dark thread for Reveltown. If players investigate and remove it, the Vareth notices something removed it. If they follow it, it has a route that reveals which parts of Reveltown the Vareth is watching.",
+    gigglegloom_relationship: "No formal training. A casual, accumulated color-reading ability from seventeen years of watching festival crowds. He can guess your dominant Gigglegloom type with reasonable accuracy. He has never put a name to this.",
+    color: "Warm brown-gold — festival-adjacent, comfortable, not flashy",
+    tags: ["reveltown", "caparia", "innkeeper", "nimblewood", "ally", "greytalon", "color-reader-untrained"],
+    associated: [
+      { collection: "cities",        id: "reveltown" },
+      { collection: "organizations", id: "nimblewood" }
+    ],
+    player_facing: false
+  },
+
+  {
+    id: "wix",
+    name: "Wix",
+    role: "Archivist, The Festival Archives",
+    category: "npc-ally",
+    pronouns: "they/them",
+    status: "active",
+    location: "The Festival Archives, Reveltown",
+    affiliation: "The Revel (officially); The Veilborn (confirmed to no one)",
+    religion: ["veilborn"],
+    summary: "Archivist of The Festival Archives for thirty-one years. Elderly, small, extremely precise. Can answer any question about The Revel's history. The Archives contain a second record set in a cipher script predating The Revel's founding. Wix can read it. Wix has been able to read it since they were twelve.",
+    appearance: "Small, elderly, methodical. The specific manner of someone who has answered the same question ten thousand times and is willing to answer it ten thousand more because the question deserves a good answer.",
+    personality: "Patient, precise, slightly amused by almost everything. Does not volunteer information but will answer any question directly if asked correctly. 'Correctly' means without an agenda, which they can detect immediately.",
+    motivation: "The records exist and must be maintained accurately. Both sets. This is not ideological — it is professional.",
+    contradiction: "They have not used the second language in six years. It is easier not to. The records it accesses are not records that make their days easier to live.",
+    secret: "The second language in the Archives is a Veilborn cipher system predating the current Veilmoot by at least two centuries. The records Wix can access are operational logs — Veilborn intelligence work conducted through the Revel across generations. Including the full log of a deep-cover operative who has fed false intelligence to the Vareth for eleven years. Wix does not know the operative's name. They know the operative exists and that the Vareth trusts them absolutely.",
+    player_knowledge: "Extremely precise archivist with thirty-one years of institutional knowledge. Will answer any direct question accurately. The answer will be accurate and will not be the whole story.",
+    dm_notes: "Wix is a late-campaign resource. Players who have been following Veilborn threads and earn Wix's trust — by demonstrating they can be trusted with the second language's existence — gain access to operational logs that recontextualize everything. Do not give this away early. Wix is friendly and useful long before this becomes relevant; the depth of what they hold should come as a surprise.",
+    gigglegloom_relationship: "The Festival Archives' oldest physical materials contain residual Gigglegloom — Bubbleseed mostly, pressed into paper and ink over generations. Being in the Archives long enough feels like being somewhere that has been happy for a very long time.",
+    color: "Quiet grey-lavender — the color of old paper and patience",
+    tags: ["reveltown", "caparia", "revel", "veilborn", "archivist", "cipher", "late-campaign", "dm-only"],
+    associated: [
+      { collection: "cities",        id: "reveltown" },
+      { collection: "organizations", id: "revel" }
+    ],
+    player_facing: false
+  },
 ];
 
-// Total: 12 entries
+// Total: 16 entries
