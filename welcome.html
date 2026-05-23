@@ -532,53 +532,88 @@
     .home-region-row-name { font-size: 1.5rem; }
   }
 
-  /* ── DARK SECTION ── */
-  .dark-section {
+  /* ── DARK SECTION (MAP ANIMATION) ── */
+  #vareth-dark-section {
     position: relative;
-    z-index: 1;
-    padding: 8rem 2rem;
-    text-align: center;
-    overflow: hidden;
+    height: 480vh;
   }
-  .dark-section::before {
-    content: '';
+  #vareth-sticky {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: #050208;
+  }
+  #vareth-map-img {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(20,10,40,0.8) 0%, transparent 70%);
-    z-index: -1;
-  }
-  .dark-ornament {
-    font-size: 2rem;
-    color: rgba(154,112,232,0.3);
-    letter-spacing: 1em;
-    margin-bottom: 3rem;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
     display: block;
     opacity: 0;
-    transition: opacity 1s ease;
   }
-  .dark-ornament.visible { opacity: 1; }
-  .dark-title {
-    font-family: 'Charm', serif;
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 700;
-    color: rgba(154,112,232,0.85);
-    margin-bottom: 2rem;
+  #vareth-fx-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  #vareth-prism-wrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 1s ease 0.2s, transform 1s ease 0.2s;
+    pointer-events: none;
+    z-index: 10;
   }
-  .dark-title.visible { opacity: 1; transform: none; }
-  .dark-body {
-    font-size: clamp(1rem, 2vw, 1.15rem);
-    line-height: 2;
-    color: rgba(253,246,232,0.6);
-    max-width: 680px;
-    margin: 0 auto;
+  #vareth-black-fade {
+    position: absolute;
+    inset: 0;
+    background: #000;
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 1s ease 0.4s, transform 1s ease 0.4s;
+    pointer-events: none;
+    z-index: 20;
   }
-  .dark-body.visible { opacity: 1; transform: none; }
+  #vareth-text-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #vareth-text-inner {
+    max-width: 640px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+    text-align: center;
+  }
+  .vtl {
+    font-family: 'Lora', serif;
+    display: block;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+    line-height: 1.55;
+  }
+  .vtl.show { opacity: 1; transform: none; }
+  .vtl-lg   { font-size: clamp(1.4rem,3vw,1.9rem); font-weight: 400; color: #cbbef0; }
+  .vtl-md   { font-size: clamp(1rem,2.2vw,1.3rem); font-weight: 400; font-style: italic; color: rgba(188,192,218,.88); }
+  .vtl-sm   { font-family: 'Inter', sans-serif; font-size: clamp(.85rem,1.8vw,1.05rem); font-weight: 300; color: rgba(158,152,175,.72); letter-spacing: .025em; line-height: 1.85; }
+  .vtl-name { font-family: 'Charm', serif; font-size: clamp(.7rem,1.5vw,.88rem); letter-spacing: .6em; text-transform: uppercase; color: rgba(120,100,160,.5); margin: .4rem 0; }
+  .vtl-final{ font-size: clamp(1.4rem,3.2vw,2rem); font-weight: 600; color: rgba(210,205,222,.94); margin-top: .5rem; }
+  .vtl-gap  { display: block; height: 1rem; }
 
   /* ── RUMORS ── */
   .rumor-list {
@@ -859,19 +894,45 @@
   </div>
 </section>
 
-<!-- ══ DARK SECTION ══ -->
-<div class="dark-section">
-  <span class="dark-ornament">▲</span>
-  <h2 class="dark-title">Something is eating the color.</h2>
-  <p class="dark-body">
-    It has no face. No throne. No name it answers to. It leaves behind a small black prism, point down, and moves on.
-    <br><br>
-    The grey spreads slowly. Towns fade. Animals go quiet. People stop laughing — not because they're sad, exactly, but because they've forgotten what it felt like to want to.
-    <br><br>
-    It's called the Dimming. The force behind it is called the Vareth. Its goal isn't conquest. It's quietude.
-    <br><br>
-    And somewhere in Anavale, right now, someone needs help stopping it.
-  </p>
+<!-- ══ DARK SECTION (MAP ANIMATION) ══ -->
+<div id="vareth-dark-section">
+  <div id="vareth-sticky">
+
+    <img id="vareth-map-img"
+         src="assets/images/pogglewog-map.webp"
+         alt="The continent of Pogglewog">
+
+    <canvas id="vareth-fx-canvas"></canvas>
+
+    <div id="vareth-prism-wrap">
+      <svg width="90" height="110" viewBox="0 0 90 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="45" cy="55" rx="42" ry="48" fill="url(#vPrismGlow)" opacity="0.5"/>
+        <polygon points="45,106 4,10 86,10" fill="url(#vPrismBody)" stroke="rgba(154,112,232,0.6)" stroke-width="1.4"/>
+        <polygon points="45,106 4,10 45,10" fill="rgba(15,6,45,0.55)"/>
+        <line x1="45" y1="10" x2="45" y2="106" stroke="rgba(180,140,255,0.2)" stroke-width="0.8"/>
+        <line x1="4" y1="10" x2="86" y2="10" stroke="rgba(210,180,255,0.4)" stroke-width="1.2"/>
+        <circle cx="45" cy="105" r="2.5" fill="rgba(180,140,255,0.45)"/>
+        <defs>
+          <radialGradient id="vPrismGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="rgba(90,45,180,0.5)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </radialGradient>
+          <linearGradient id="vPrismBody" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stop-color="rgba(20,8,55,0.97)"/>
+            <stop offset="50%"  stop-color="rgba(40,16,90,0.93)"/>
+            <stop offset="100%" stop-color="rgba(10,4,30,0.99)"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <div id="vareth-black-fade"></div>
+
+    <div id="vareth-text-panel">
+      <div id="vareth-text-inner"></div>
+    </div>
+
+  </div>
 </div>
 
 <!-- ══ RUMORS ══ -->
@@ -1389,6 +1450,271 @@ uniqueEls.forEach(el => {
 [bf2El, bf3El, tw2El].forEach(el => { el.style.opacity = '0'; });
 
 tick();
+
+// ── VARETH MAP ANIMATION ─────────────────────────────────────────────────────
+function initDarkWhisperEffect() {
+  // Legacy function name kept so existing setTimeout call still works.
+  // Full animation is self-initialising below.
+}
+
+(function initVarethMapAnimation() {
+  var darkSection = document.getElementById('vareth-dark-section');
+  var stickyWrap  = document.getElementById('vareth-sticky');
+  var canvas      = document.getElementById('vareth-fx-canvas');
+  if (!darkSection || !canvas) return;
+  var ctx         = canvas.getContext('2d');
+  var prismWrap   = document.getElementById('vareth-prism-wrap');
+  var blackFade   = document.getElementById('vareth-black-fade');
+  var textPanel   = document.getElementById('vareth-text-panel');
+  var textInner   = document.getElementById('vareth-text-inner');
+  var mapImg      = document.getElementById('vareth-map-img');
+
+  var W = 0, H = 0, frame = 0, prog = 0;
+
+  var ZONES = [
+    { xF:0.72, yF:0.68, maxRF:0.75, start:0.06, speed:1.0  },
+    { xF:0.18, yF:0.22, maxRF:0.58, start:0.10, speed:0.85 },
+    { xF:0.55, yF:0.15, maxRF:0.52, start:0.14, speed:0.9  },
+    { xF:0.12, yF:0.72, maxRF:0.60, start:0.18, speed:0.78 },
+    { xF:0.42, yF:0.58, maxRF:0.55, start:0.22, speed:1.05 }
+  ];
+
+  var moths = [];
+
+  function resize() {
+    W = stickyWrap.offsetWidth;
+    H = stickyWrap.offsetHeight;
+    canvas.width  = W;
+    canvas.height = H;
+  }
+
+  function getProgress() {
+    var rect    = darkSection.getBoundingClientRect();
+    var total   = darkSection.offsetHeight - window.innerHeight;
+    var scrolled = -rect.top;
+    return Math.max(0, Math.min(1, scrolled / total));
+  }
+
+  function zoneRadius(z) {
+    if (prog < z.start) return 0;
+    var t = Math.min(1, (prog - z.start) / (0.55 * z.speed));
+    var ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    return ease * z.maxRF * Math.min(W, H);
+  }
+
+  function maybeSpawnMoth(z, cx, cy, r) {
+    if (r < 30) return;
+    var zoneMoths = moths.filter(function(m){ return m.zone === z; });
+    var maxForZone = Math.floor(r / 90) + 1;
+    if (zoneMoths.length >= maxForZone) return;
+    if (Math.random() > 0.012) return;
+    var angle = Math.random() * Math.PI * 2;
+    var dist  = 0.2 * r + Math.random() * 0.65 * r;
+    moths.push({
+      zone: z, cx: cx, cy: cy, r: r,
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.25,
+      angle: Math.random() * Math.PI * 2,
+      turnSpeed: (Math.random() - 0.5) * 0.008,
+      size: 8 + Math.random() * 10,
+      wingPhase: Math.random() * Math.PI * 2,
+      wingSpeed: 0.02 + Math.random() * 0.025,
+      brightness: 70 + Math.floor(Math.random() * 10),
+      alpha: 0
+    });
+  }
+
+  function updateMoth(m, cx, cy, r) {
+    m.alpha = Math.min(0.75, m.alpha + 0.008);
+    m.cx = cx; m.cy = cy; m.r = r;
+    m.angle += m.turnSpeed + (Math.random() - 0.5) * 0.004;
+    m.vx = m.vx * 0.97 + Math.cos(m.angle) * 0.04;
+    m.vy = m.vy * 0.97 + Math.sin(m.angle) * 0.04;
+    m.x += m.vx;
+    m.y += m.vy;
+    var dx = m.x - cx, dy = m.y - cy;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > r * 0.85) { m.vx -= dx/dist * 0.15; m.vy -= dy/dist * 0.15; }
+    m.wingPhase += m.wingSpeed;
+  }
+
+  function drawMoth(m) {
+    if (m.alpha < 0.01) return;
+    ctx.save();
+    ctx.globalAlpha = m.alpha;
+    ctx.translate(m.x, m.y);
+    var b = m.brightness, s = m.size;
+    var wingOpen = Math.abs(Math.sin(m.wingPhase)) * 0.85 + 0.15;
+    // Left wing
+    ctx.save();
+    ctx.scale(1 + wingOpen * 0.45, 1);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(-s*1.8,-s*1.1,-s*2.6,s*0.2,-s*2.0,s*1.2);
+    ctx.bezierCurveTo(-s*1.0,s*1.8,-s*0.1,s*0.8,0,s*0.3);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba('+b+','+(b-3)+','+(b+5)+',0.78)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba('+(b+22)+','+(b+20)+','+(b+26)+',0.3)';
+    ctx.lineWidth = 0.6; ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(-s*1.35,s*0.35,s*0.32,s*0.26,0.25,0,Math.PI*2);
+    ctx.strokeStyle = 'rgba('+(b+30)+','+(b+28)+','+(b+35)+',0.38)';
+    ctx.lineWidth = 0.7; ctx.stroke();
+    ctx.restore();
+    // Right wing
+    ctx.save();
+    ctx.scale(-(1 + wingOpen * 0.45), 1);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(-s*1.8,-s*1.1,-s*2.6,s*0.2,-s*2.0,s*1.2);
+    ctx.bezierCurveTo(-s*1.0,s*1.8,-s*0.1,s*0.8,0,s*0.3);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba('+b+','+(b-3)+','+(b+5)+',0.78)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba('+(b+22)+','+(b+20)+','+(b+26)+',0.3)';
+    ctx.lineWidth = 0.6; ctx.stroke();
+    ctx.restore();
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(0,s*0.22,s*0.18,s*0.72,0,0,Math.PI*2);
+    ctx.fillStyle = 'rgba('+(b-12)+','+(b-12)+','+(b-8)+',0.88)';
+    ctx.fill();
+    // Head
+    ctx.beginPath();
+    ctx.arc(0,-s*0.32,s*0.2,0,Math.PI*2);
+    ctx.fillStyle = 'rgba('+(b-10)+','+(b-10)+','+(b-6)+',0.88)';
+    ctx.fill();
+    // Antennae
+    ctx.beginPath();
+    ctx.moveTo(-s*0.08,-s*0.45);
+    ctx.quadraticCurveTo(-s*0.7,-s*1.4,-s*1.0,-s*1.85);
+    ctx.moveTo(s*0.08,-s*0.45);
+    ctx.quadraticCurveTo(s*0.7,-s*1.4,s*1.0,-s*1.85);
+    ctx.strokeStyle = 'rgba('+(b+10)+','+(b+8)+','+(b+14)+',0.5)';
+    ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.restore();
+  }
+
+  var TEXT_LINES = [
+    ['vtl vtl-md',   'The Bumble Frogs went quiet first.'],
+    ['vtl vtl-md',   'Then the paint.'],
+    ['vtl vtl-gap',  ''],
+    ['vtl vtl-sm',   'Then the laughter — not because people were sad,'],
+    ['vtl vtl-sm',   'but because they’d forgotten what it felt like to want to.'],
+    ['vtl vtl-gap',  ''],
+    ['vtl vtl-lg',   'It’s called the Dimming.'],
+    ['vtl vtl-gap',  ''],
+    ['vtl vtl-sm',   'It has no face. No throne. No name it answers to.'],
+    ['vtl vtl-sm',   'It leaves a small black prism, point down, and moves on.'],
+    ['vtl vtl-gap',  ''],
+    ['vtl vtl-name', 'The Vareth'],
+    ['vtl vtl-sm',   'Its goal is not conquest.'],
+    ['vtl vtl-lg',   'Its goal is quietude.'],
+    ['vtl vtl-gap',  ''],
+    ['vtl vtl-sm',   'And somewhere in Anavale, right now,'],
+    ['vtl vtl-final','someone needs to stop it.']
+  ];
+
+  var cachedLines = null, LINE_IN = null;
+
+  function buildText() {
+    textInner.innerHTML = '';
+    TEXT_LINES.forEach(function(item) {
+      var el = document.createElement('span');
+      el.className = item[0];
+      el.innerHTML = item[1];
+      textInner.appendChild(el);
+    });
+    // Cache line elements and assign each a scroll-progress threshold
+    cachedLines = Array.prototype.slice.call(textInner.querySelectorAll('.vtl'));
+    LINE_IN = cachedLines.map(function(_, i) {
+      return 0.75 + (i / Math.max(cachedLines.length - 1, 1)) * 0.18;
+    });
+  }
+
+  function animatePrism() {
+    var glow = 8 + 6 * Math.sin(frame * 0.03);
+    var bob  = Math.sin(frame * 0.018) * 6;
+    var svg = prismWrap.querySelector('svg');
+    if (svg) {
+      svg.style.filter = 'drop-shadow(0 0 '+glow+'px rgba(100,60,200,0.55)) drop-shadow(0 0 '+(glow*2)+'px rgba(70,30,160,0.25))';
+      svg.style.transform = 'translateY('+bob+'px)';
+    }
+  }
+
+  function render() {
+    requestAnimationFrame(render);
+    frame++;
+    prog = getProgress();
+    ctx.clearRect(0, 0, W, H);
+
+    // Map fade in — ease-out over 10% so it appears gracefully rather than popping
+    var mapT = Math.min(1, prog / 0.10);
+    mapImg.style.opacity = 1 - (1 - mapT) * (1 - mapT);
+
+    // Prism
+    if (prog >= 0.10) {
+      prismWrap.style.opacity = Math.min(1, (prog - 0.10) / 0.08);
+      animatePrism();
+      var prismScale = 1 + Math.min(prog - 0.10, 0.5) * 0.6;
+      prismWrap.style.transform = 'translate(-50%,-50%) scale('+prismScale+')';
+    }
+
+    // Desaturation zones + moths
+    if (prog >= 0.14) {
+      ZONES.forEach(function(z) {
+        var cx = z.xF * W, cy = z.yF * H;
+        var r  = zoneRadius(z);
+        if (r < 1) return;
+        var grad = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+        grad.addColorStop(0,   'rgba(28,24,35,0.82)');
+        grad.addColorStop(0.45,'rgba(38,34,46,0.72)');
+        grad.addColorStop(0.78,'rgba(50,46,58,0.52)');
+        grad.addColorStop(0.92,'rgba(60,56,68,0.28)');
+        grad.addColorStop(1,   'rgba(70,65,78,0.0)');
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        maybeSpawnMoth(z, cx, cy, r);
+      });
+      moths.forEach(function(m) {
+        var cx = m.zone.xF * W, cy = m.zone.yF * H;
+        var r  = zoneRadius(m.zone);
+        updateMoth(m, cx, cy, r);
+        drawMoth(m);
+      });
+    }
+
+    // Black fade — moved earlier (0.62→0.76) so text has room to breathe afterwards
+    if (prog >= 0.62) {
+      var blackP = Math.min(1, (prog - 0.62) / 0.14);
+      blackFade.style.opacity = blackP;
+      prismWrap.style.opacity = Math.max(0, 1 - blackP * 3);
+    }
+
+    // Text panel + line reveal — scroll-driven; lines appear/disappear with scroll direction.
+    // Panel fades in as black settles (0.72→0.76); lines spread from 0.75→0.93; barely fades at end.
+    var panelIn  = Math.max(0, Math.min(1, (prog - 0.72) / 0.04));
+    var panelOut = Math.max(0, Math.min(1, (prog - 0.975) / 0.025));
+    textPanel.style.opacity = String(panelIn * (1 - panelOut));
+    if (cachedLines && LINE_IN) {
+      cachedLines.forEach(function(line, i) {
+        if (prog >= LINE_IN[i]) line.classList.add('show');
+        else line.classList.remove('show');
+      });
+    }
+  }
+
+  buildText();
+  mapImg.style.opacity = '0';
+  resize();
+  window.addEventListener('resize', resize);
+  requestAnimationFrame(render);
+})();
 
 // ── SCROLL REVEAL ────────────────────────────────────────────
 const revealEls = document.querySelectorAll(
