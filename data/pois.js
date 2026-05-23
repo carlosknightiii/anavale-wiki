@@ -110,4 +110,72 @@ Helda accepts all submitted dates without comment. She has processed forms dated
     tone: "Efficient, cheerful, operating under conditions that would defeat most bureaucracies. The hat hooks are not going anywhere.",
     tags: ["reveltown", "caparia", "solenmere", "formery", "helda-rimm", "form-7p", "recurring-filing"]
   },
+  {
+  id: "greyveil-hollow",
+  name: "Greyveil Hollow",
+  region: "caparia",
+  nation: "solenmere",
+  continent: "pogglewog",
+  type: "dark-zone",
+
+  summary: "A shallow wooded depression in the Chaku Meadows, southwest Caparia. Once a Veilborn dead-drop and rest site. Fading quietly for two years. No official report has been filed.",
+
+  description: "Greyveil Hollow is not dramatic. That is the problem.\n\nIt is a natural bowl in the earth — an old stream depression, long dry, filled in over centuries by grass and low trees that bent inward over the hollow and made a kind of accidental canopy. The Chaku Meadows surrounding it are some of the most colorful in Caparia: bright green grasses, gold-flowering clover, the occasional Fluffet colony dotting the hillsides with cheerful motion. The Hollow sits in the middle of all this and is a little quieter. A little greener — but a flat green, not a living one. The kind of green that is not quite wrong until you have stood in it for a few minutes and realized you cannot hear any Fluffets and the air does not smell like soil.\n\nThe Veilborn have used it for thirty years. Not as a major site — no Veilmoot meetings, no significant operations. A dead-drop. A rest stop on the courier route between Veilhaven and the western border. A place to leave sealed messages in a hollow root, retrieve them two days later, and move on. Eleven operatives have used it over three decades. None of them stayed more than a night.\n\nThe Vareth did not target it. The Vareth found it.\n\nThe Dimming does not require targeting — it requires exposure. Thirty years of Veilborn traffic meant thirty years of operatives carrying intelligence about Vareth movements, Vareth methods, and Vareth weak points. Something in the Gigglegloom at the Hollow absorbed the shape of what passed through it. The Vareth noticed. It did not send a lieutenant. It did not need to. It simply settled into the space the way cold settles into a room after the fire goes out.\n\nThat was two years ago.\n\nToday, Greyveil Hollow is Stage 1 Fading — not yet Dimmed, still reversible, but moving. The grass in the bowl has lost its yellow. The trees do not bend inward anymore — they list. The courier route has been silently rerouted. Three Veilborn operatives who passed through before the reroute were debriefed and cleared, but the Veilmoot has not filed an external report because filing a report would require explaining what they were doing there. They are monitoring it themselves. They believe they have time.\n\nMarro knows about the Hollow. She learned its location as part of her Veilborn induction, a piece of operational knowledge she was never supposed to need. Three years ago, a Hollowmoth appeared in Reveltown coming from the direction of Chaku Meadows. She knew immediately what it meant. She has not filed the full report. She is waiting to see if the Veilmoot acts first.\n\nThe Solenmere has noted the name in regional records as an area of possible Gigglegloom monitoring interest. They have not followed up. The file is two years old. The Chroma Bureau has not been notified.",
+
+  current_state: "Stage 1 Fading — reversible. Approximately 40-meter radius of color loss centered on the old stream bowl. Expanding slowly — roughly 5 meters per season. At current pace, reaches the nearest meadow farm in three seasons.",
+
+  landmarks: [
+    {
+      name: "The Root Cache",
+      description: "A hollow in the largest bent tree at the bowl's center. Veilborn dead-drop for thirty years. Currently empty. The wood around the opening has gone grey from the inside out."
+    },
+    {
+      name: "The Listing Trees",
+      description: "Six low trees that once bent inward over the hollow to form a natural canopy. They now list outward, away from the bowl's center, as if slowly pulling back."
+    },
+    {
+      name: "The Silence Line",
+      description: "Not a physical marker — a behavioral one. Fluffets, Pocketmoles, and Bounce Beetles stop at a precise boundary approximately 40 meters from the bowl's center. They do not cross it. The Wanderkeep would recognize this pattern immediately."
+    }
+  ],
+
+  vareth_presence: true,
+  vareth_notes: "Passive Dimming only — no lieutenant presence, no Drain infrastructure, no active operation. The Vareth does not need to maintain it. It is sustaining itself.",
+
+  veilborn_connection: "Former operational dead-drop. The Vareth's presence here is a direct consequence of Veilborn use — thirty years of intelligence traffic left an imprint the Dimming followed in. The Veilmoot knows. They have not told anyone. They believe this is their responsibility to resolve quietly. They may be wrong about the timeline.",
+
+  who_knows: [
+    "The Veilmoot — full knowledge, monitoring internally, no external report filed",
+    "Marro (Grand Reveler) — knows the location was Veilborn-used, has seen the Hollowmoth evidence, has not reported fully",
+    "The Solenmere — regional file entry only, no follow-up, two years dormant",
+    "The Chroma Bureau — not notified"
+  ],
+
+  discovery_hooks: [
+    "A Wanderkeep ranger passing through the Chaku Meadows notices the Silence Line and files an anomaly report — the first external documentation",
+    "Players following the Hollowmoth sighting in Reveltown trace it west to the Hollow",
+    "A Chaku Meadows farmer mentions to anyone who will listen that the Fluffets stopped coming to the eastern edge of her land two years ago",
+    "Marro, if players earn her trust, eventually discloses what she has been sitting on"
+  ],
+
+  dm_notes: "Greyveil Hollow is not a dungeon. Do not put a monster in it. Its horror is that it is a quiet meadow bowl with flat green grass and no birdsong, and the players will feel that before they understand it.\n\nThis is the proof that the Vareth has a foothold in Caparia — not through conquest, not through a lieutenant, but through patience and the unintended consequences of a counter-operation. The Veilborn's secrecy, which is usually a strength, is the thing that let this happen and is now the thing preventing it from being addressed.\n\nIf players reach it before the Veilmoot acts: the Root Cache is empty, but the grey wood around its opening will be recognizable to anyone who has seen Stage 1 Fading up close. A Conclave-trained character can identify the Dimming immediately. A Wanderkeep character will recognize the Silence Line as an emergency indicator.\n\nThe emotional beat: it is small. It is contained. It could still be healed. The tragedy is not that it exists — it is that it has existed for two years and everyone who knew chose silence for reasons that each individually made sense.",
+
+  color_health: "stage-1-fading",
+  formery_present: false,
+  player_facing: false,
+
+  tags: [
+    "caparia",
+    "solenmere",
+    "dark-zone",
+    "veilborn",
+    "vareth",
+    "fading",
+    "chaku-meadows",
+    "marro",
+    "hollowmoth",
+    "dm-only",
+    "no-report-filed"
+  ]
+}
 ];
