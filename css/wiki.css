@@ -764,6 +764,59 @@ background-image: var(--gradient-colorful);
   color: var(--ink);
 }
 
+/* ============================================================
+   13b. CREATURE CARD IMAGE SLOT (region "Creatures Found Here")
+   Image or placeholder bleeds edge-to-edge at the top of the
+   card by cancelling the card's 1.5rem padding on three sides.
+   Top corners match the card's border-radius.
+   ============================================================ */
+
+/* Actual creature art — shown when image field is populated */
+.creature-card-image {
+  width: calc(100% + 3rem);        /* cancel 1.5rem left + right padding */
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 7px 7px 0 0;     /* match card radius, minus border width */
+  display: block;
+}
+
+/* Placeholder — shown when no art exists yet.
+   Flex-centered label keeps it clearly intentional rather than broken. */
+.creature-card-image-placeholder {
+  width: calc(100% + 3rem);
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  aspect-ratio: 16 / 9;
+  border-radius: 7px 7px 0 0;
+  background: var(--parchment-dark);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.creature-card-image-placeholder span {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.35;
+}
+
+/* Keep the placeholder label readable when the card is hovered
+   (the default hover rule inverts all text inside .entry-card) */
+.entry-card:hover .creature-card-image-placeholder {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+.entry-card:hover .creature-card-image-placeholder span {
+  opacity: 0.45;
+  color: #ffffff;
+}
+
 
 /* ============================================================
    14. CREATURE ENTRIES

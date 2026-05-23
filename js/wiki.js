@@ -1338,7 +1338,11 @@ function renderRegion(id, el) {
       var desc = cVis === 'teaser'
         ? (function() { var d = c.description || ''; var dot = d.search(/[.!?]/); return dot >= 0 ? d.slice(0, dot + 1) : d; })()
         : c.description;
+      var cImgHtml = c.image
+        ? '<img class="creature-card-image" src="' + esc(c.image) + '" alt="' + esc(c.name) + '">'
+        : '<div class="creature-card-image-placeholder"><span>Illustration Reserved</span></div>';
       body += '<div class="entry-card" data-nav="creature/' + c.id + '" onclick="navigate(\'creature/' + c.id + '\')">'
+        + cImgHtml
         + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
         + '<div class="entry-tag">' + esc(creatureSubtitle(c)) + '</div>'
         + '<div class="entry-body">' + esc(desc) + '</div>'

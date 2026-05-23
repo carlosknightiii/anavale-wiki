@@ -27,19 +27,30 @@ var CREATURES = [
     "player_facing": true
   },
   {
-    id: "bumble-frogs",
-    name: "Bumble Frogs",
-    tier: "merry",
-    category: "the-merry",
-    regions: ["caparia", "jugabi", "sohot"],
-    habitat: "Riverbanks, pond edges, rain-soaked meadows, anywhere music is made regularly",
-    description: "Round green frogs the size of a closed fist. Their coloring deepens toward teal near Featherflow-saturated waterways. They hum constantly at a low, pleasant frequency.",
-    behavior: "Harmonize accidentally with any nearby music. Will join any song within earshot without being invited. Cannot match pitch but somehow always sound right. Sit companionably near sad people without humming.",
-    gigglegloom_relationship: "Particularly responsive to Featherflow. Their hum harmonizes differently in each Gigglegloom type's presence \u2014 experienced Wanderkeep can read local magic conditions from a frog chorus.",
-    dimmed_version: "still-frogs",
-    dm_notes: "A Bumble Frog chorus going silent is a Stage 1 Fading warning sign. The Wanderkeep know this. Players can learn it through observation.",
-    player_facing: true,
-    tags: ["merry", "common", "featherflow-affinity", "wanderkeep-indicator", "musical"]
+    "id": "bumble-frogs",
+    "name": "Bumble Frogs",
+    "tier": "merry",
+    "category": "the-merry",
+    "regions": [
+      "caparia",
+      "sohot",
+      "jugabi"
+    ],
+    "habitat": "Riverbanks, pond edges, rain-soaked meadows, anywhere music is made regularly",
+    "description": "Round green frogs the size of a closed fist. Their coloring deepens toward teal near Featherflow-saturated waterways. They hum constantly at a low, pleasant frequency.",
+    "behavior": "Harmonize accidentally with any nearby music. Will join any song within earshot without being invited. Cannot match pitch but somehow always sound right. Sit companionably near sad people without humming.",
+    "gigglegloom_relationship": "Particularly responsive to Featherflow. Their hum harmonizes differently in each Gigglegloom type's presence — experienced Wanderkeep can read local magic conditions from a frog chorus.",
+    "dimmed_version": "still-frogs",
+    "dm_notes": "A Bumble Frog chorus going silent is a Stage 1 Fading warning sign. The Wanderkeep know this. Players can learn it through observation.",
+    "tags": [
+      "merry",
+      "common",
+      "featherflow-affinity",
+      "wanderkeep-indicator",
+      "musical"
+    ],
+    "image": "assets/images/creatures/bumble-frogs.webp",
+    "player_facing": true
   },
   {
     id: "tinywings",
