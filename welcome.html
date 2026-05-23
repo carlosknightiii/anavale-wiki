@@ -433,42 +433,104 @@
   .creature-desc { font-size: 0.92rem; line-height: 1.7; opacity: 0.75; }
 
   /* ── REGIONS ── */
-  .region-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  .home-regions-list {
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
-    margin-top: 3rem;
+    margin: 2rem 0;
   }
-  .region-card {
-    border-radius: 12px;
-    padding: 2rem;
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
+  .home-region-row {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-  .region-card.visible { opacity: 1; transform: none; }
-  .region-card:nth-child(2) { transition-delay: 0.15s; }
-  .region-card:nth-child(3) { transition-delay: 0.3s; }
-  .region-card:nth-child(4) { transition-delay: 0.45s; }
-  .region-card.caparia { background: linear-gradient(135deg, rgba(106,200,74,0.12), rgba(74,200,74,0.06)); border: 1px solid rgba(106,200,74,0.2); }
-  .region-card.nombi { background: linear-gradient(135deg, rgba(74,140,232,0.12), rgba(74,200,184,0.06)); border: 1px solid rgba(74,140,232,0.2); }
-  .region-card.sohot { background: linear-gradient(135deg, rgba(232,200,74,0.12), rgba(232,122,74,0.06)); border: 1px solid rgba(232,200,74,0.2); }
-  .region-card.jugabi { background: linear-gradient(135deg, rgba(106,200,74,0.12), rgba(74,200,184,0.06)); border: 1px solid rgba(106,200,74,0.2); }
-
-  .region-name {
-    font-family: 'Charm', serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin-bottom: 0.4rem;
+  .home-region-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
   }
-  .region-tag {
-    font-size: 0.75rem;
-    letter-spacing: 0.2em;
+  .home-region-row-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.6s ease;
+    z-index: 0;
+  }
+  .home-region-row:hover .home-region-row-bg { transform: scale(1.04); }
+  .home-region-row-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .home-region-row-content {
+    position: relative;
+    z-index: 2;
+    padding: 2.5rem 3rem;
+    max-width: 480px;
+  }
+  .home-region-row:nth-child(odd) .home-region-row-overlay {
+    background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.1) 100%);
+  }
+  .home-region-row:nth-child(odd) .home-region-row-content { margin-right: auto; text-align: left; }
+  .home-region-row:nth-child(even) .home-region-row-overlay {
+    background: linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.1) 100%);
+  }
+  .home-region-row:nth-child(even) .home-region-row-content { margin-left: auto; text-align: right; }
+  .home-region-row-label {
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
     text-transform: uppercase;
-    opacity: 0.5;
+    color: var(--gold-light);
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+  }
+  .home-region-row-name {
+    font-family: 'Charm', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.6rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    line-height: 1.1;
+  }
+  .home-region-row-climate {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.75);
+    font-style: italic;
     margin-bottom: 1rem;
   }
-  .region-desc { font-size: 0.95rem; line-height: 1.75; opacity: 0.8; }
+  .home-region-row-blurb {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.85);
+  }
+  .home-region-row::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%);
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .home-region-row:hover::after { opacity: 1; }
+  @media (max-width: 600px) {
+    .home-region-row { height: 220px; }
+    .home-region-row-content { padding: 1.5rem; }
+    .home-region-row:nth-child(even) .home-region-row-overlay {
+      background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.1) 100%);
+    }
+    .home-region-row:nth-child(even) .home-region-row-content { margin-left: 0; margin-right: auto; text-align: left; }
+    .home-region-row-name { font-size: 1.5rem; }
+  }
 
   /* ── DARK SECTION ── */
   .dark-section {
@@ -753,26 +815,46 @@
   <p class="section-body">
     Anavale spans the continent of Pogglewog: lush central meadows, frozen northern wastes, blazing southern deserts, and a jungle so alive it has opinions. Each region has its own colors, its own magic, and its own complicated relationship with the Gigglegloom.
   </p>
-  <div class="region-list">
-    <div class="region-card caparia">
-      <div class="region-name" style="color: var(--green);">Caparia</div>
-      <div class="region-tag">The Central Region</div>
-      <div class="region-desc">Lush meadows, sparkling rivers, painted cities. The most colorful region. Sun directly overhead. Where the story begins.</div>
+  <div class="home-regions-list">
+    <div class="home-region-row">
+      <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-caparia-landscape.png')"></div>
+      <div class="home-region-row-overlay"></div>
+      <div class="home-region-row-content">
+        <div class="home-region-row-label">Region</div>
+        <div class="home-region-row-name">Caparia</div>
+        <div class="home-region-row-climate">The colorful heartlands</div>
+        <div class="home-region-row-blurb">Lush meadows, sparkling rivers, and the most colorful cities in Anavale. The Confederation was built here. Color maintenance is not a tradition — it is law.</div>
+      </div>
     </div>
-    <div class="region-card nombi">
-      <div class="region-name" style="color: #4a90d8;">Nombi</div>
-      <div class="region-tag">The Frozen North</div>
-      <div class="region-desc">Aurora skies and ancient glaciers. The Tumblerun river flows south carrying their light. Something is wrong in Frostgate.</div>
+    <div class="home-region-row">
+      <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-nombi-landscape.webp')"></div>
+      <div class="home-region-row-overlay"></div>
+      <div class="home-region-row-content">
+        <div class="home-region-row-label">Region</div>
+        <div class="home-region-row-name">Nombi</div>
+        <div class="home-region-row-climate">The frozen, aurora-lit north</div>
+        <div class="home-region-row-blurb">Dense forests, icy mountains, and skies painted by the aurora. The north is stoic and beautiful and dangerous in equal measure. Honor is currency here.</div>
+      </div>
     </div>
-    <div class="region-card sohot">
-      <div class="region-name" style="color: var(--gold);">Sohot</div>
-      <div class="region-tag">The Blazing South</div>
-      <div class="region-desc">Hot and bright and full of festivals. The Queen's court glitters. But her robes have been looking a little muted lately.</div>
+    <div class="home-region-row">
+      <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-sohot-landscape.png')"></div>
+      <div class="home-region-row-overlay"></div>
+      <div class="home-region-row-content">
+        <div class="home-region-row-label">Region</div>
+        <div class="home-region-row-name">Sohot</div>
+        <div class="home-region-row-climate">The ancient, blazing south</div>
+        <div class="home-region-row-blurb">Desert dunes, ancient ruins, and the weight of a fallen empire. The south remembers everything. The south is also on fire, mostly.</div>
+      </div>
     </div>
-    <div class="region-card jugabi">
-      <div class="region-name" style="color: var(--teal);">Jugabi</div>
-      <div class="region-tag">The Jungle Southwest</div>
-      <div class="region-desc">The Dodooti Rainforest breathes. The Mosskin here is in distress. Something has moved in from the south.</div>
+    <div class="home-region-row">
+      <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-jugabi-landscape.png')"></div>
+      <div class="home-region-row-overlay"></div>
+      <div class="home-region-row-content">
+        <div class="home-region-row-label">Region</div>
+        <div class="home-region-row-name">Jugabi</div>
+        <div class="home-region-row-climate">The living jungle southwest</div>
+        <div class="home-region-row-blurb">The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on the continent. The jungle has opinions. The jungle is always right.</div>
+      </div>
     </div>
   </div>
 </section>
