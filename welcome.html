@@ -331,21 +331,7 @@
     pointer-events: none;
     z-index: 1;
   }
-  #partition-text-panel {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 6vh;
-    z-index: 9999;
-    text-align: center;
-    padding: 0 max(2rem, 8vw);
-    pointer-events: none;
-    box-sizing: border-box;
-    display: none;
-  }
-  #partition-text-panel.active {
-    display: block;
-  }
+  #partition-text-panel { display: none; }
   #partition-text-inner {
     max-width: min(480px, 84vw);
     width: 100%;
@@ -1036,12 +1022,10 @@
 <div id="partition-section">
   <div id="partition-sticky">
     <canvas id="partition-canvas"></canvas>
-    <div id="partition-text-panel">
-      <div id="partition-text-inner"></div>
-    </div>
     <div id="partition-bottom-fade"></div>
   </div>
 </div>
+<div id="partition-text-panel" style="display:none"></div>
 
 <!-- ══ GOD CARDS ══ -->
 <section>
@@ -1628,6 +1612,7 @@ function initDarkWhisperEffect() {}
   const section   = document.getElementById('partition-section');
   const canvas    = document.getElementById('partition-canvas');
   const textInner = document.getElementById('partition-text-inner');
+  const textPanelEl = document.getElementById('partition-text-panel');
   if (!section || !canvas) return;
 
   const ctx = canvas.getContext('2d');
@@ -1664,6 +1649,7 @@ function initDarkWhisperEffect() {}
     }
   }
   window.addEventListener('scroll', updatePanelVisibility, { passive: true });
+  updatePanelVisibility();
 
   // God light state
   const G = {
@@ -1717,11 +1703,69 @@ function initDarkWhisperEffect() {}
     { cls:'ptl ptl-md ptl-grak',    text:'The fifth is what the world needs saving from.',   in:0.75, out:0.79 },
   ];
 
-  // Build DOM
-  textInner.innerHTML = LINES.map((l, i) =>
-    `<span class="${l.cls}" data-i="${i}">${l.text}</span>`
-  ).join('');
-  const lineEls = Array.from(textInner.querySelectorAll('span'));
+  // Canvas text rendering — bypasses all HTML positioning issues
+  const FONT_STACK = "'Lora', Georgia, serif";
+  const CHARM_STACK = "'Charm', serif";
+
+  function drawText(p) {
+    const bottomY = H - H * 0.08;
+    const lineH = H * 0.045;
+
+    // Collect visible lines
+    const visible = [];
+    LINES.forEach(function(l) {
+      const inT  = Math.max(0, Math.min(1, (p - l.in)  / 0.015));
+      const outT = Math.max(0, Math.min(1, (p - l.out) / 0.015));
+      const alpha = inT * (1 - outT);
+      if (alpha > 0 && l.text !== '') {
+        visible.push({ l, alpha });
+      }
+    });
+
+    if (visible.length === 0) return;
+
+    // Draw from bottom up
+    let y = bottomY;
+    for (let i = visible.length - 1; i >= 0; i--) {
+      const { l, alpha } = visible[i];
+      const isGap = l.cls.includes('ptl-gap');
+      if (isGap) { y -= lineH * 0.5; continue; }
+
+      const isLg = l.cls.includes('ptl-lg');
+      const isMd = l.cls.includes('ptl-md');
+
+      // Font size
+      const basePx = isLg ? H * 0.038 : isMd ? H * 0.026 : H * 0.022;
+      const maxPx  = isLg ? 42 : isMd ? 28 : 22;
+      const px = Math.min(basePx, maxPx);
+
+      // Color
+      let color = `rgba(253,246,232,${alpha})`;
+      if (l.cls.includes('ptl-oro'))     color = `rgba(248,224,112,${alpha})`;
+      if (l.cls.includes('ptl-nara'))    color = `rgba(106,200,138,${alpha})`;
+      if (l.cls.includes('ptl-thyun'))   color = `rgba(138,184,248,${alpha})`;
+      if (l.cls.includes('ptl-solvara')) color = `rgba(192,152,248,${alpha})`;
+      if (l.cls.includes('ptl-grak'))    color = `rgba(208,204,216,${alpha})`;
+
+      const font = isLg
+        ? `700 ${px}px ${CHARM_STACK}`
+        : `400 ${px}px ${FONT_STACK}`;
+
+      ctx.save();
+      ctx.font = font;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+
+      // Fade in with slight upward drift
+      const drift = (1 - alpha) * 8;
+      ctx.globalAlpha = Math.min(1, alpha);
+      ctx.fillText(l.text, W / 2, y + drift, W * 0.82);
+      ctx.restore();
+
+      y -= lineH * (isLg ? 1.1 : 1.0);
+    }
+  }
 
   function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
   function ease(t) { t = Math.max(0,Math.min(1,t)); return t<0.5?2*t*t:-1+(4-2*t)*t; }
@@ -1967,18 +2011,8 @@ function initDarkWhisperEffect() {}
       ctx.restore();
     }
 
-    // ── Text line reveals ──
-    LINES.forEach(function(l, i) {
-      const el = lineEls[i];
-      if (!el) return;
-      const inT  = prog(p, l.in,  l.in  + 0.015);
-      const outT = prog(p, l.out, l.out + 0.015);
-      if (inT > 0 && outT < 1) {
-        el.classList.add('show');
-      } else {
-        el.classList.remove('show');
-      }
-    });
+    // ── Canvas text rendering ──
+    drawText(p);
   }
 
   resize();
