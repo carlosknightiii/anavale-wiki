@@ -1122,7 +1122,7 @@
   <img id="tinywings2"  class="creature" alt="Tinywings 2">
 
   <div class="hero-content">
-    <p class="hero-eyebrow">✦ &nbsp; On the continent of Pogglewog &nbsp; ✦</p>
+    <p class="hero-eyebrow">On the continent of Pogglewog</p>
     <h1 class="hero-title">Anavale</h1>
     <div class="hero-rule"></div>
     <p class="hero-sub">A world of color, wild magic, and the ancient struggle between joy and silence</p>
@@ -1534,7 +1534,18 @@ function resize() {
   H = canvas.height = window.innerHeight;
 }
 resize();
-window.addEventListener('resize', () => { resize(); initCreaturePositions(); });
+let _mobileH = IS_MOBILE ? window.innerHeight : 0;
+window.addEventListener('resize', () => {
+  resize();
+  if (IS_MOBILE) {
+    // iOS Safari fires resize on scroll when the browser chrome shows/hides.
+    // Only re-init if the WIDTH changed — height-only changes are chrome toggling.
+    const newH = window.innerHeight;
+    if (Math.abs(newH - _mobileH) < 80) return;
+    _mobileH = newH;
+  }
+  initCreaturePositions();
+});
 
 // ── STARS ────────────────────────────────────────────────────
 const STAR_COUNT = 220;
@@ -1939,11 +1950,11 @@ function initCreaturePositions() {
     fluffet.baseY     = H * 0.82;   // bottom strip, below all text
     resetSequence();
 
-    // Three frogs: left corner, right corner, bottom-centre
-    // xFrac kept wide apart so they don't cluster
-    frogs[0].x = W * 0.08;   frogs[0].y = H * 0.74;
-    frogs[1].x = W * 0.78;   frogs[1].y = H * 0.76;
-    frogs[2].x = W * 0.44;   frogs[2].y = H * 0.80;
+    // Three frogs: left corner, right corner, bottom-centre.
+    // Pulled up from previous values to avoid overlapping the Fluffet.
+    frogs[0].x = W * 0.08;   frogs[0].y = H * 0.65;
+    frogs[1].x = W * 0.76;   frogs[1].y = H * 0.65;
+    frogs[2].x = W * 0.42;   frogs[2].y = H * 0.70;
 
     // Tinywings: fly across top of screen, well above the title
     tw1.baseY = H * 0.08;
@@ -1952,8 +1963,9 @@ function initCreaturePositions() {
     tw2.baseY = H * 0.16;
     tw2.x     = W * 0.65;
 
-    // Beetles skipped on mobile (already excluded from tick loop)
-    beetles.forEach(b => { b.x = -500; b.y = -500; });
+    // Hide beetle elements entirely on mobile — parking at -500/-500
+    // isn't enough since the load gate already made them opacity:1.
+    beetleEls.forEach(el => { el.style.display = 'none'; });
 
   } else {
     // ── DESKTOP LAYOUT (original) ─────────────────────────────
