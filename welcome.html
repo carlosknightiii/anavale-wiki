@@ -1104,25 +1104,42 @@ function tick() {
   }
 }
 // ── IMAGE LOAD GATE ──────────────────────────────────────────
+// Watch 4 unique image sources: fluffet, bumblefrog, tinywings, bouncebeetle
 let srcLoaded = 0;
+const TOTAL_TO_LOAD = 4;
+
+function onImgLoaded() {
+  srcLoaded++;
+  if (srcLoaded >= TOTAL_TO_LOAD) {
+    initCreaturePositions();
+    setTimeout(() => {
+      [...beetleEls, fluffetEl, bf1El, bf2El, bf3El, tw1El, tw2El].forEach(el => {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '1';
+      });
+      creaturesReady = true;
+    }, 100);
+  }
+}
+
+// Track the 4 unique image sources
 const uniqueEls = [fluffetEl, bf1El, tw1El];
 uniqueEls.forEach(el => {
   el.style.opacity = '0';
-  el.addEventListener('load', () => {
-    srcLoaded++;
-    if (srcLoaded === 3) {
-      initCreaturePositions();
-      setTimeout(() => {
-        [...beetleEls, fluffetEl, bf1El, bf2El, bf3El, tw1El, tw2El].forEach(el => {
-          el.style.transition = 'opacity 0.4s ease';
-          el.style.opacity = '1';
-        });
-        creaturesReady = true;
-      }, 100);
-    }
-  });
+  el.addEventListener('load',  onImgLoaded);
+  el.addEventListener('error', onImgLoaded); // don't hang if an image 404s
 });
+
+// Beetle image — track one representative beetle element
 [bf2El, bf3El, tw2El].forEach(el => { el.style.opacity = '0'; });
+
+if (beetleEls.length > 0) {
+  beetleEls[0].addEventListener('load',  onImgLoaded);
+  beetleEls[0].addEventListener('error', onImgLoaded); // reveal even if image is missing
+} else {
+  // No beetles created — still count that slot as done
+  onImgLoaded();
+}
 tick();
 // ── VARETH MAP ANIMATION ─────────────────────────────────────
 function initDarkWhisperEffect() {}
