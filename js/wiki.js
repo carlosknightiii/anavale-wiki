@@ -750,16 +750,21 @@ var GIGGLEGLOOM_TYPES = [
 ];
 
 var GODS_META = {
-  oro:     { color: '#1a5a28', domain: 'God of Color, Joy & Laughter',
-             note: 'Worshipped by: The Brightcreed (most widely). Temples: open fields.' },
-  nara:    { color: '#1a4f8f', domain: 'Goddess of Wild Magic & Living Things',
-             note: 'Appears as: different things to different observers. Children usually report bright green.' },
-  thyun:   { color: '#4a5878', domain: 'God of Memory, Deep Time & Patience',
-             note: 'Worshipped by: The Stillkeep. Temples: stone libraries.' },
-  solvara: { color: '#6a3aaa', domain: 'Goddess of Secrets, Shadow & Hidden Truth',
-             note: 'Worshipped by: The Veilborn. Their practices are not public knowledge.' },
-  grak:    { color: '#7a6a60', domain: 'The Fallen — God of Order, now of Silence',
-             note: 'Symbol: a cracked grey circle — once perfect.' }
+  oro:     { color: '#e8c84a', domain: 'God of Color · Joy · Laughter',
+             faith: 'The Brightcreed',
+             note: 'His presence is felt as attention, not intervention — a Sparkling landing at the right moment, a Gilded Tortoise somewhere it should not be.' },
+  nara:    { color: '#6ac88a', domain: 'Goddess of Wild Magic · Living Things',
+             faith: 'The Brightcreed',
+             note: 'Appears differently to every observer. Children usually report bright green. She does not intervene. She persists.' },
+  thyun:   { color: '#8ab8f8', domain: 'God of Memory · Deep Time · Patience',
+             faith: 'The Stillkeep',
+             note: 'The Stillkeep has been trying to transcribe one of his thoughts for eight hundred years. They are close. Probably.' },
+  solvara: { color: '#c098f8', domain: 'Goddess of Secrets · Shadow · Hidden Truth',
+             faith: 'The Veilborn',
+             note: 'Knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.' },
+  grak:    { color: '#888888', domain: 'The Fallen — Once: Order. Now: Silence.',
+             faith: null,
+             note: 'Once The Prior white — the color of all Gigglegloom before differentiation. Now flat grey. The grey that does not shine.' }
 };
 
 var REGION_CONFIG = {
@@ -1150,26 +1155,41 @@ function renderGods(el) {
   var chars    = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
   var godOrder = ['oro', 'nara', 'thyun', 'solvara', 'grak'];
   var godsHtml = '';
-
   godOrder.forEach(function(godId) {
     var c = null;
     for (var i = 0; i < chars.length; i++) { if (chars[i].id === godId) { c = chars[i]; break; } }
     if (!c) return;
     var m = GODS_META[godId] || {};
+    var faithHtml = m.faith
+      ? '<div class="creature-note" style="color:var(--amber);margin-top:0.2rem;margin-bottom:0.8rem;font-style:normal;letter-spacing:0.05em;">' + esc(m.faith) + '</div>'
+      : '<div class="creature-note" style="color:#888;margin-top:0.2rem;margin-bottom:0.8rem;font-style:normal;letter-spacing:0.05em;">No worshippers</div>';
+    var imgHtml = c.image
+      ? '<img src="' + esc(c.image) + '" alt="' + esc(c.name) + '" style="width:100%;max-height:280px;object-fit:cover;object-position:center top;border-radius:6px;margin-bottom:1.25rem;" onerror="this.style.display=\'none\'">'
+      : '';
     godsHtml += '<div class="creature-entry">'
+      + imgHtml
       + '<div class="creature-header">'
       + '<div class="creature-name" style="color:' + (m.color || '') + ';">' + esc(c.name) + '</div>'
       + '<div class="creature-latin">' + esc(m.domain) + '</div>'
       + '</div>'
-      + '<div class="creature-body">' + esc(c.player_knowledge) + '</div>'
-      + '<div class="creature-note">' + esc(m.note) + '</div>'
+      + faithHtml
+      + '<div class="creature-body">' + esc(c.player_knowledge || c.summary || '') + '</div>'
+      + (c.appearance ? '<div class="section-heading" style="margin-top:1rem;">Appearance</div><div class="creature-body">' + esc(c.appearance) + '</div>' : '')
+      + (c.gigglegloom_relationship ? '<div class="section-heading" style="margin-top:1rem;">Gigglegloom</div><div class="creature-body">' + esc(c.gigglegloom_relationship) + '</div>' : '')
+      + '<div class="creature-note" style="margin-top:0.75rem;">' + esc(m.note) + '</div>'
       + '</div>';
   });
-
   el.innerHTML = pageHeader('Theology', 'The Gods', 'As understood by the faithful, the scholars, and those caught in between')
     + '<div class="wiki-body">'
-    + '<p>Anavale has five gods, though theologians will argue at length about whether certain of them are truly independent deities or aspects of others. This argument has been ongoing for three hundred years. It has not reached a conclusion.</p>'
+    + '<p>Anavale has five gods. Four of them are doing something about the fact that the world is in trouble. The fifth is what the trouble is.</p>'
+    + '<div class="pull-quote">"The gods are real. This is not a matter of faith in Anavale — it is a matter of whether you have paid attention."<cite>— Brightcreed catechism, Caparia</cite></div>'
+    + '<p>Three faiths have formed around them. The Brightcreed worships Oro and Nara. The Stillkeep worships Thyun. The Veilborn worships Solvara. Grak has no worshippers — only the Vareth, which is what Grak became.</p>'
+    + '<div class="section-heading">The Five</div>'
     + godsHtml
+    + '<div class="section-heading" style="margin-top:2rem;">The Partition</div>'
+    + '<p>The central divine event of Anavale\'s history. Oro, Nara, and Grak were the original three. Grak developed grief over impermanence and confronted Nara. The collision fractured Nara — Thyun and Solvara were sheared free as fully independent gods. Nara survived but smaller. Grak was emptied of everything except hunger for control. What remained became the Vareth.</p>'
+    + '<p>Three faiths, three accounts: <strong>The Brightcreed</strong> holds that Grak\'s grief was always a flaw waiting to surface. <strong>The Stillkeep</strong> holds that the Partition was preventable — Grak\'s grief was legitimate, and Oro and Nara did not listen carefully enough. <strong>The Veilborn</strong> holds that Solvara knows what actually happened and has told no one, and that this truth, when it arrives, will change everything that came before it.</p>'
+    + '<p>All three accounts agree on one thing: the world changed permanently, color is now something that must be protected, and the grey spreading at the edges of the map is the proof.</p>'
     + '</div>';
 }
 

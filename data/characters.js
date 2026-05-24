@@ -200,11 +200,12 @@ var CHARACTERS = [
     dm_notes: "Oro's presence in a scene should feel like the world is paying attention. Not intervention \u2014 attention. A Sparkling landing on someone at the right moment. A Gilded Tortoise appearing where it should not. Never announced, never explained.",
     gigglegloom_relationship: "Oro IS the Gigglegloom's divine origin \u2014 or the Gigglegloom is Oro's expression in the physical world. The Brightcreed does not distinguish between these. The Conclave does.",
     color: "Gold \u2014 the original",
+    image: "assets/images/characters/oro.webp",
     tags: ["god", "active", "light", "brightcreed", "joy", "color", "creatures", "cannot-enter-dimmed"],
     associated: [
       { collection: "religions",  id: "brightcreed" }
     ],
-    player_facing: false
+    player_facing: true
   },
   {
     id: "nara",
@@ -226,11 +227,12 @@ var CHARACTERS = [
     dm_notes: "Nara is background. She is the wild Gigglegloom, the old forests, the Rootsingers. Her presence is the world that existed before anyone organized anything. She does not intervene. She persists.",
     gigglegloom_relationship: "The Gigglegloom's most ancient divine connection. The wild Gigglegloom that has no practitioners, no Conclave, no license \u2014 that is Nara.",
     color: "Shifting \u2014 whatever surprises you",
+    image: "assets/images/characters/nara.webp",
     tags: ["god", "active", "diminished", "brightcreed", "wild-magic", "partition-origin", "nara"],
     associated: [
       { collection: "religions",  id: "brightcreed" }
     ],
-    player_facing: false
+    player_facing: true
   },
   {
     id: "thyun",
@@ -252,11 +254,12 @@ var CHARACTERS = [
     dm_notes: "Thyun's worshippers are the record-keepers. If there is a historical fact the players need, the Stillkeep probably has it. If the Stillkeep does not have it, Thyun might, and reaching that would be a quest in itself.",
     gigglegloom_relationship: "Memory and the Gigglegloom are intertwined \u2014 the Solvanu believe color is the world's memory. Thyun and this belief may be more directly connected than the Solvanu know.",
     color: "The color of waiting \u2014 deep, still, not grey",
+    image: "assets/images/characters/thyun.webp",
     tags: ["god", "active", "stillkeep", "memory", "patience", "partition-born", "thyun"],
     associated: [
       { collection: "religions",  id: "stillkeep" }
     ],
-    player_facing: false
+    player_facing: true
   },
   {
     id: "solvara",
@@ -278,11 +281,12 @@ var CHARACTERS = [
     dm_notes: "Solvara's secret is the campaign's deepest mystery. If the players ever reach it \u2014 through the Veilborn, through the Vaultkeepers, through whatever path you design \u2014 the Partition truth should reframe everything that came before it. Do not decide what it is until you know what would change the most.",
     gigglegloom_relationship: "Shadow and the Gigglegloom \u2014 Solvara's domain includes the places the Gigglegloom does not reach, the gaps between colors, the things that do not show under light. Whether the Dimming is in Solvara's domain or opposed to it is a question the Veilborn considers classified.",
     color: "Not observable \u2014 the color in the gap between colors",
+    image: "assets/images/characters/solvara.webp",
     tags: ["god", "active", "veilborn", "secrets", "shadow", "partition-born", "partition-truth", "unknowable"],
     associated: [
       { collection: "religions",  id: "veilborn" }
     ],
-    player_facing: false
+    player_facing: true
   },
   {
     id: "grak",
@@ -304,11 +308,12 @@ var CHARACTERS = [
     dm_notes: "Grak should never be encountered as a character. Grak is the Vareth, which is also not encountered as a character. Grak's fear of The Unseen is a plot tool \u2014 it is the only thing that has ever made the Vareth pause. The players will not have access to this information easily, but when they find it, it is the campaign's most significant tactical discovery.",
     gigglegloom_relationship: "Grak's divine color was The Prior white \u2014 he WAS a Gigglegloom type before the Partition. The Dimming is what happens when Grak's form of order reaches the Gigglegloom and empties it of the joy that makes it possible.",
     color: "Once: The Prior white. Now: flat grey \u2014 the grey that does not shine, ever.",
+    image: "assets/images/characters/grak.webp",
     tags: ["god", "fallen", "malevolent", "grak", "vareth", "dimming", "prior-white", "unseen-fears", "order"],
     associated: [
       { collection: "organizations", id: "the-vareth" }
     ],
-    player_facing: false
+    player_facing: true
   }
   {
     id: "marro-fenn",
