@@ -937,7 +937,7 @@ function renderHome(el) {
       + '<div class="home-hero-eyebrow">✦ THE TRAVELLER\'S COMPENDIUM ✦</div>'
       + '<h1 class="home-hero-title home-tagline-line" style="animation-delay:0.3s">Welcome To Anavale</h1>'
       + '<div class="home-hero-taglines">'
-        + '<p class="home-tagline-line" style="animation-delay:0.6s">A world of color and happiness where cute creatures roam and play.</p>'
+        + '<p class="home-tagline-line" style="animation-delay:0.6s">A world of color, wild magic, and the ancient struggle between joy and silence.</p>'
       + '</div>'
       + '<button class="home-explore-btn"'
         + ' onclick="document.getElementById(\'home-section-2\').scrollIntoView({behavior:\'smooth\'})">'
