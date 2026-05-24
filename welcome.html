@@ -710,6 +710,112 @@
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: #03040c; }
   ::-webkit-scrollbar-thumb { background: rgba(232,200,74,0.2); border-radius: 3px; }
+  /* ── GODS SECTION ── */
+  .gods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .god-card {
+    border-radius: 14px;
+    padding: 2rem 1.75rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(12,10,22,0.7);
+  }
+  .god-card.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .god-card:nth-child(2) { transition-delay: 0.08s; }
+  .god-card:nth-child(3) { transition-delay: 0.16s; }
+  .god-card:nth-child(4) { transition-delay: 0.24s; }
+  .god-card:nth-child(5) { transition-delay: 0.32s; }
+
+  /* Ambient glow orb behind each card */
+  .god-orb {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    opacity: 0.12;
+    filter: blur(40px);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .god-card:hover .god-orb { opacity: 0.22; }
+
+  /* Per-god color theming */
+  .god-oro   { border-color: rgba(232,200,74,0.18); }
+  .god-oro   .god-orb { background: #e8c84a; }
+  .god-oro   .god-name { color: #f5d96a; }
+  .god-oro   .god-faith { color: rgba(245,217,106,0.6); }
+
+  .god-nara  { border-color: rgba(106,200,106,0.15); }
+  .god-nara  .god-orb { background: #6ac86a; }
+  .god-nara  .god-name { color: #8adda0; }
+  .god-nara  .god-faith { color: rgba(138,221,160,0.6); }
+
+  .god-thyun { border-color: rgba(100,120,180,0.18); }
+  .god-thyun .god-orb { background: #6478b4; }
+  .god-thyun .god-name { color: #8aa0d8; }
+  .god-thyun .god-faith { color: rgba(138,160,216,0.6); }
+
+  .god-solvara { border-color: rgba(154,112,232,0.18); }
+  .god-solvara .god-orb { background: #9a70e8; }
+  .god-solvara .god-name { color: #b890f0; }
+  .god-solvara .god-faith { color: rgba(184,144,240,0.6); }
+
+  .god-grak { border-color: rgba(120,110,130,0.15); background: rgba(8,6,12,0.85); }
+  .god-grak .god-orb { background: #585060; opacity: 0.08; }
+  .god-grak .god-name { color: #a09aa8; }
+  .god-grak .god-domain { color: rgba(160,154,168,0.55); }
+  .god-grak .god-desc { color: rgba(200,196,210,0.55); }
+  .god-grak .god-faith--fallen { color: rgba(120,110,130,0.4); font-style: italic; }
+
+  .god-name {
+    font-family: 'Charm', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    position: relative;
+    z-index: 1;
+  }
+  .god-domain {
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(253,246,232,0.38);
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+  .god-desc {
+    font-size: 0.96rem;
+    line-height: 1.75;
+    color: rgba(253,246,232,0.72);
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.25rem;
+  }
+  .god-faith {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 0.85rem;
+  }
+
   /* ── VOICES SECTION ── */
   .voices-list {
     display: flex;
@@ -820,6 +926,134 @@
       border-top: 3px solid var(--voice-accent, rgba(232,200,74,0.25));
       padding-left: 0;
       padding-top: 1rem;
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     MOBILE RESPONSIVE — welcome.html
+     Added May 2026
+     ══════════════════════════════════════════════════════════ */
+
+  /* ── iOS fix: background-attachment: fixed causes rendering
+     bugs on iOS Safari. Switch to scroll on touch devices. ── */
+  @media (hover: none) {
+    body {
+      background-attachment: scroll;
+    }
+  }
+
+  /* ── Tablet (≤ 900px) ─────────────────────────────────────── */
+  @media (max-width: 900px) {
+
+    /* Hero */
+    .hero {
+      height: 100svh; /* svh = small viewport height, avoids mobile browser chrome overlap */
+      min-height: 600px;
+      background-attachment: scroll; /* iOS fix */
+    }
+
+    /* Sections: reduce excessive vertical padding */
+    section {
+      padding: 4rem 1.5rem;
+    }
+
+    /* Vareth dark section: reduce the very tall scroll-pinned area */
+    #vareth-dark-section {
+      height: 200vh; /* reduce from desktop ~300vh */
+    }
+    #vareth-sticky {
+      height: 100svh;
+    }
+    #vareth-map-img {
+      opacity: 0.25; /* dim map more so text stays readable */
+    }
+    #vareth-text-panel {
+      padding: 0 1.5rem;
+    }
+
+    /* Voices section: remove fixed background for iOS */
+    section[style*="background-image"] {
+      background-attachment: scroll !important;
+    }
+  }
+
+  /* ── Mobile (≤ 600px) ─────────────────────────────────────── */
+  @media (max-width: 600px) {
+
+    /* Hero title — clamp already handles intermediate sizes,
+       but we need a hard floor on very small screens */
+    .hero-title {
+      font-size: clamp(2.8rem, 12vw, 4.5rem);
+    }
+
+    .hero-sub {
+      font-size: 0.95rem;
+      padding: 0 0.5rem;
+    }
+
+    .hero-content {
+      padding: 1rem 1.25rem;
+    }
+
+    /* Creature images: scale down and reposition so they don't
+       overflow on narrow screens. JS sets positions — these
+       CSS overrides constrain max sizes as a safety net. */
+    .creature {
+      max-width: 80px !important;
+      max-height: 80px !important;
+    }
+
+    /* Sections */
+    section {
+      padding: 3rem 1.25rem;
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 9vw, 3rem);
+    }
+
+    /* Gigglegloom type cards — reduce height */
+    .type-row {
+      height: 180px;
+    }
+
+    /* Vareth section — further reduce on small phones */
+    #vareth-dark-section {
+      height: 180vh;
+    }
+
+    /* Text panel: ensure it's readable, not clipped */
+    #vareth-text-panel {
+      padding: 0 1.25rem;
+      max-width: 100%;
+    }
+
+    /* VTL text sizes: scale down the dramatic Vareth lines */
+    .vtl-lg   { font-size: clamp(1.6rem, 7vw, 2.4rem); }
+    .vtl-final { font-size: clamp(2rem, 9vw, 3rem); }
+    .vtl-name  { font-size: clamp(1.2rem, 6vw, 1.8rem); }
+
+    /* Enter button at the end of the page */
+    .enter-btn, .cta-btn {
+      font-size: 1rem;
+      padding: 1rem 2rem;
+      width: 90%;
+      max-width: 360px;
+    }
+
+    /* Scroll hint */
+    .scroll-hint {
+      bottom: 1.5rem;
+    }
+  }
+
+  /* ── Very small phones (≤ 380px) ─────────────────────────── */
+  @media (max-width: 380px) {
+    .hero-title {
+      font-size: 2.4rem;
+    }
+    .section-title {
+      font-size: 1.8rem;
     }
   }
 
@@ -1147,6 +1381,63 @@
         <div class="voice-title">Bureau of Thorough Consideration · All Regions · Est. Before Anyone Can Confirm</div>
         <blockquote class="voice-quote">"This office has, on seventeen separate occasions, filed Form 1-A (Entity Classification) in connection with entities referred to internally as <em>The Unseen</em>. On each occasion, the completed form was returned to this office stamped: <span class="voice-stamp">ENTITY DECLINES TO RESPOND</span>. This office has processed each return in accordance with standard procedure and filed Form 1-B (Acknowledgment of Non-Response) accordingly. A further Form 1-A is currently in preparation. The process continues."</blockquote>
       </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ GODS ══ -->
+<section>
+  <p class="section-label">The Ones Who Were Here First</p>
+  <h2 class="section-title">The Five Gods of Anavale</h2>
+  <p class="section-body">
+    They are real. Not distant myths, not metaphors for natural forces — real, present, and aware that the world is in trouble. Four of them are doing something about it. The fifth is what the trouble is.
+  </p>
+  <div class="gods-grid">
+
+    <!-- ORO -->
+    <div class="god-card god-oro reveal">
+      <div class="god-orb"></div>
+      <div class="god-name">Oro</div>
+      <div class="god-domain">Color · Joy · Laughter</div>
+      <div class="god-desc">The most widely worshipped god in Anavale. Active and embarrassingly invested in the wellbeing of creatures. Cannot enter Dimmed territory — which means the Vareth has already taken places from him. This is not defeat. But it is a real boundary.</div>
+      <div class="god-faith">The Brightcreed</div>
+    </div>
+
+    <!-- NARA -->
+    <div class="god-card god-nara reveal">
+      <div class="god-orb"></div>
+      <div class="god-name">Nara</div>
+      <div class="god-domain">Wild Magic · Living Things</div>
+      <div class="god-desc">God of the wild Gigglegloom — the kind that grows from old forests without anyone's help. Diminished by the Partition. Thyun and Solvara were sheared from her in the collision and became their own gods. She survived. She is still a river.</div>
+      <div class="god-faith">The Brightcreed</div>
+    </div>
+
+    <!-- THYUN -->
+    <div class="god-card god-thyun reveal">
+      <div class="god-orb"></div>
+      <div class="god-name">Thyun</div>
+      <div class="god-domain">Memory · Deep Time · Patience</div>
+      <div class="god-desc">Born from the Partition — sheared from Nara as an independent god. Worshipped by the Stillkeep, who have been trying to transcribe one of Thyun's thoughts for eight hundred years. They are close. Probably.</div>
+      <div class="god-faith">The Stillkeep</div>
+    </div>
+
+    <!-- SOLVARA -->
+    <div class="god-card god-solvara reveal">
+      <div class="god-orb"></div>
+      <div class="god-name">Solvara</div>
+      <div class="god-domain">Secrets · Shadow · Hidden Truth</div>
+      <div class="god-desc">Born from the Partition — Nara's shadow-self, sheared into full separate divinity. Worshipped by the Veilborn, whose practices are not public knowledge. Solvara knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.</div>
+      <div class="god-faith">The Veilborn</div>
+    </div>
+
+    <!-- GRAK -->
+    <div class="god-card god-grak reveal">
+      <div class="god-orb"></div>
+      <div class="god-name">Grak</div>
+      <div class="god-domain">Once: Order. Now: Silence.</div>
+      <div class="god-desc">The fallen god. Emptied of everything by the Partition except hunger for control. The Vareth is what remained. Grak has no throne, no face, no voice — only the grey that spreads from his absence outward. He does not want conquest. He wants Quietude.</div>
+      <div class="god-faith god-faith--fallen">No worshippers</div>
     </div>
 
   </div>
@@ -2063,7 +2354,7 @@ function initDarkWhisperEffect() {
 // ── SCROLL REVEAL ────────────────────────────────────────────
 const revealEls = document.querySelectorAll(
   '.section-label, .section-title, .section-body, .color-card, .type-card, ' +
-  '.region-card, .rumor, .voice-card, .dark-ornament, .dark-title, ' +
+  '.region-card, .rumor, .voice-card, .god-card, .dark-ornament, .dark-title, ' +
   '.dark-body, .closing-title, .closing-body, .closing-sig, .fancy-divider'
 );
 
