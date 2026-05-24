@@ -1164,9 +1164,11 @@ function renderGods(el) {
   };
 
   var cardsHtml = '';
+  console.log('[renderGods] CHARACTERS length:', chars.length, 'ids:', chars.map(function(c){return c.id;}).join(','));
   godOrder.forEach(function(godId) {
     var c = null;
     for (var i = 0; i < chars.length; i++) { if (chars[i].id === godId) { c = chars[i]; break; } }
+    console.log('[renderGods] looking for', godId, '→', c ? 'FOUND player_facing=' + c.player_facing : 'NOT FOUND');
     if (!c) return;
     var cfg    = GOD_CFG[godId] || {};
     var accent = cfg.accent || 'var(--gold)';

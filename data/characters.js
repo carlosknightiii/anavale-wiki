@@ -314,7 +314,7 @@ var CHARACTERS = [
       { collection: "organizations", id: "the-vareth" }
     ],
     player_facing: true
-  }
+  },
   {
     id: "marro-fenn",
     name: "Marro Fenn",
