@@ -245,7 +245,7 @@ var CHARACTERS = [
     affiliation: "The Stillkeep (primary worship)",
     religion: ["stillkeep"],
     summary: "God of memory, deep time, and patience. Born as an independent god from the Partition \u2014 sheared from Nara by the collision into full separate divinity. Worshipped by the Stillkeep, a monastic order of record-keepers and patient observers.",
-    appearance: "The color of something that has waited a very long time and knows it will wait longer.",
+    appearance: "A scholar in repose — seated cross-legged on a stone floor, robes of deep royal blue trimmed in gold. A tall crown of blue and gold, a single emerald at its center. Silver-white hair falls to the ground around him. He is surrounded by floating books that turn their own pages, hourglasses running in every direction, clocks that do not agree on the time. He is smiling. He has read all of them. He has time to read them again.",
     personality: "Contemplative. Patient beyond human comprehension. Has a view on the Partition that the Stillkeep has been trying to transcribe for eight hundred years and has not captured.",
     motivation: "Memory. The continued existence and accuracy of what has happened. Thyun does not want to change the past \u2014 Thyun wants the past to be known.",
     contradiction: "Holds Grak's grief as legitimate \u2014 the Stillkeep's account says the Partition was preventable if Oro and Nara had listened. Whether Thyun shares this view, or whether the Stillkeep arrived at it through contact with Thyun or through their own reasoning, has not been confirmed.",
@@ -253,7 +253,7 @@ var CHARACTERS = [
     player_knowledge: "God of memory and patience. Born from the Partition. Worshipped by the Stillkeep.",
     dm_notes: "Thyun's worshippers are the record-keepers. If there is a historical fact the players need, the Stillkeep probably has it. If the Stillkeep does not have it, Thyun might, and reaching that would be a quest in itself.",
     gigglegloom_relationship: "Memory and the Gigglegloom are intertwined \u2014 the Solvanu believe color is the world's memory. Thyun and this belief may be more directly connected than the Solvanu know.",
-    color: "The color of waiting \u2014 deep, still, not grey",
+    color: "Royal blue \u2014 deep and still, the color of a library at midnight",
     image: "assets/images/characters/thyun.webp",
     tags: ["god", "active", "stillkeep", "memory", "patience", "partition-born", "thyun"],
     associated: [
