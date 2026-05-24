@@ -334,24 +334,25 @@
   #partition-text-panel {
     position: absolute;
     left: 0; right: 0;
-    bottom: 10vh;
+    bottom: 8vh;
     z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 2.5rem;
+    padding: 0 max(2rem, 8vw);
     pointer-events: none;
     box-sizing: border-box;
   }
   #partition-text-inner {
-    max-width: min(560px, 90vw);
+    max-width: min(480px, 84vw);
     width: 100%;
     text-align: center;
     font-family: 'Lora', Georgia, serif;
     color: var(--cream);
     word-break: break-word;
     overflow-wrap: break-word;
+    hyphens: auto;
   }
   .ptl {
     display: block;
@@ -1759,19 +1760,16 @@ function initDarkWhisperEffect() {}
     const ap = getApproach();
     const t  = performance.now() / 1000;
     const cx = W * 0.5;
-    const cy = H * 0.42; // gods sit in upper portion, text at bottom
+    const cy = H * 0.32; // gods sit in upper third, text safely at bottom
 
-    // Fade entire canvas in as section approaches
     const globalAlpha = Math.min(1, ap * 2);
     if (globalAlpha <= 0) return;
 
-    // Float helpers
     const fl = (i, amp) => Math.sin(t * 0.55 + i * 2.1) * amp * (1 - Math.min(1, p * 4));
 
-    // ── Base positions ──
-    const oroBase  = { x: cx - W*0.20, y: cy + H*0.08 };
-    const naraBase = { x: cx,           y: cy - H*0.12 };
-    const grakBase = { x: cx + W*0.20,  y: cy + H*0.08 };
+    const oroBase  = { x: cx - W*0.20, y: cy + H*0.06 };
+    const naraBase = { x: cx,           y: cy - H*0.10 };
+    const grakBase = { x: cx + W*0.20,  y: cy + H*0.06 };
 
     // ── PHASE 0: Fade in, balance (0 → 0.15) ──
     const fadeIn = ease(prog(p, 0, 0.06));
@@ -1786,7 +1784,6 @@ function initDarkWhisperEffect() {}
     G.grak.x = grakBase.x + fl(4, 9);
     G.grak.y = grakBase.y + fl(5, 7);
 
-    // Connection lines
     const lineA = ease(prog(p, 0.04, 0.10)) * (1 - ease(prog(p, 0.13, 0.17)));
     drawConnector(G.oro,  G.nara, '#e8c84a', lineA * 0.35);
     drawConnector(G.nara, G.grak, '#6ac88a', lineA * 0.35);
@@ -1797,14 +1794,13 @@ function initDarkWhisperEffect() {}
       const apT = ease(prog(p, 0.15, 0.33));
       G.grak.x = lerp(grakBase.x, naraBase.x + W*0.02, apT) + fl(4, 9) * (1-apT);
       G.grak.y = lerp(grakBase.y, naraBase.y + H*0.02, apT) + fl(5, 7) * (1-apT);
-      // Grak desaturates as he approaches
       const gv = Math.round(lerp(200, 120, ease(prog(p, 0.22, 0.34))));
       G.grak.color = `rgb(${gv},${gv},${gv})`;
       G.grak.glow  = `rgba(${gv},${gv},${gv},`;
     }
 
-    // ── PHASE 2: Collision flash (0.33 → 0.45) ──
-    const collT = prog(p, 0.33, 0.45);
+    // ── PHASE 2: Collision flash (0.33 → 0.50) ──
+    const collT = prog(p, 0.33, 0.50);
     if (collT > 0) {
       const flashPeak = prog(p, 0.34, 0.37);
       const flashFade = 1 - prog(p, 0.37, 0.44);
@@ -1821,41 +1817,57 @@ function initDarkWhisperEffect() {}
         ctx.restore();
       }
 
-      // Thyun and Solvara emerge
       const emergeT = ease(prog(p, 0.38, 0.50));
       G.thyun.alpha   = emergeT;
       G.thyun.r       = lerp(0, 20, emergeT);
-      G.thyun.x       = lerp(naraBase.x, naraBase.x - W*0.16, emergeT);
-      G.thyun.y       = lerp(naraBase.y, naraBase.y + H*0.20, emergeT);
+      G.thyun.x       = lerp(naraBase.x, naraBase.x - W*0.18, emergeT);
+      G.thyun.y       = lerp(naraBase.y, naraBase.y + H*0.22, emergeT);
 
       G.solvara.alpha = emergeT;
       G.solvara.r     = lerp(0, 20, emergeT);
-      G.solvara.x     = lerp(naraBase.x, naraBase.x + W*0.16, emergeT);
-      G.solvara.y     = lerp(naraBase.y, naraBase.y + H*0.20, emergeT);
+      G.solvara.x     = lerp(naraBase.x, naraBase.x + W*0.18, emergeT);
+      G.solvara.y     = lerp(naraBase.y, naraBase.y + H*0.22, emergeT);
 
-      // Nara shrinks
       G.nara.r = lerp(26, 16, ease(prog(p, 0.38, 0.50)));
 
-      // Grak drifts away, draining to flat grey
       const driftT = ease(prog(p, 0.38, 0.52));
-      G.grak.x = lerp(naraBase.x + W*0.02, cx + W*0.32, driftT);
-      G.grak.y = lerp(naraBase.y + H*0.02, cy + H*0.22, driftT);
+      G.grak.x = lerp(naraBase.x + W*0.02, cx + W*0.28, driftT);
+      G.grak.y = lerp(naraBase.y + H*0.02, cy + H*0.18, driftT);
       const gv2 = Math.round(lerp(120, 70, ease(prog(p, 0.40, 0.56))));
       G.grak.color = `rgb(${gv2},${gv2},${gv2})`;
       G.grak.glow  = `rgba(${gv2},${gv2},${gv2},`;
       G.grak.r     = lerp(26, 18, ease(prog(p, 0.40, 0.58)));
     }
 
-    // ── PHASE 3: Five gods settle (0.68 → 0.82) ──
+    // ── PHASE 3: Grak drain animation (0.58 → 0.68) ──
+    // Grak pulses and flickers visibly while his text appears
+    if (p >= 0.58 && p <= 0.72) {
+      const drainT  = prog(p, 0.58, 0.68);
+      // Slow throb — radius pulses smaller
+      const throb   = Math.sin(t * 3.5) * 0.18 + Math.sin(t * 7.1) * 0.08;
+      const flicker = Math.sin(t * 14.0) * 0.12;
+      G.grak.r = G.grak.r * (1 + throb * (1 - drainT));
+      // Alpha flickers more as drain progresses
+      G.grak.alpha = 1 - drainT * 0.3 + flicker * drainT;
+      // Color drains further
+      const gv3 = Math.round(lerp(70, 45, ease(drainT)));
+      G.grak.color = `rgb(${gv3},${gv3},${gv3})`;
+      G.grak.glow  = `rgba(${gv3},${gv3},${gv3},`;
+      // Grak drifts very slightly — unsettled
+      G.grak.x += Math.sin(t * 4.2) * 1.5 * drainT;
+      G.grak.y += Math.cos(t * 3.8) * 1.0 * drainT;
+    }
+
+    // ── PHASE 4: Five gods settle (0.68 → 0.82) ──
     if (p > 0.68) {
+      G.grak.alpha = 1; // restore after drain phase
       const sT = ease(prog(p, 0.68, 0.80));
-      // Pentagon final positions
       const fp = [
-        { x: cx - W*0.24, y: cy - H*0.05 },  // Oro
-        { x: cx,           y: cy - H*0.18 },  // Nara
-        { x: cx - W*0.12, y: cy + H*0.14 },  // Thyun
-        { x: cx + W*0.12, y: cy + H*0.14 },  // Solvara
-        { x: cx + W*0.24, y: cy - H*0.05 },  // Grak
+        { x: cx - W*0.24, y: cy - H*0.02 },  // Oro
+        { x: cx,           y: cy - H*0.16 },  // Nara
+        { x: cx - W*0.12, y: cy + H*0.12 },  // Thyun
+        { x: cx + W*0.12, y: cy + H*0.12 },  // Solvara
+        { x: cx + W*0.24, y: cy - H*0.02 },  // Grak
       ];
       G.oro.x    = lerp(G.oro.x,    fp[0].x, sT * 0.08);
       G.oro.y    = lerp(G.oro.y,    fp[0].y, sT * 0.08);
@@ -1869,47 +1881,42 @@ function initDarkWhisperEffect() {}
       G.grak.y   = lerp(G.grak.y,   fp[4].y, sT * 0.08);
     }
 
-    // ── PHASE 4: Orbs fly toward viewer (0.82 → 1.0) ──
-    // Each orb scales up enormously, centered, then fades out in sequence
+    // ── PHASE 5: Orbs fly toward viewer (0.82 → 0.97) ──
     if (p > 0.82) {
-      const flyT = prog(p, 0.82, 1.0);
       const ORDER = ['oro','nara','thyun','solvara','grak'];
       ORDER.forEach(function(key, i) {
         const g = G[key];
-        // Each god gets a staggered window
-        const start = 0.82 + i * 0.03;
-        const peak  = start + 0.05;
-        const end   = peak  + 0.06;
+        const start  = 0.82 + i * 0.025;
+        const peak   = start + 0.04;
+        const fadeEnd= peak  + 0.05;
         const scaleT = ease(prog(p, start, peak));
-        const fadeT  = ease(prog(p, peak,  end));
-
+        const fadeT  = ease(prog(p, peak, fadeEnd));
         if (scaleT <= 0) return;
 
-        // Pull toward center as it grows
-        const giantX = lerp(g.x, cx, scaleT * 0.6);
-        const giantY = lerp(g.y, cy, scaleT * 0.6);
-        const giantR = lerp(g.r, Math.max(W, H) * 0.85, scaleT);
-        const giantAlpha = (g.alpha || 1) * (1 - fadeT);
+        const giantX = lerp(g.x, cx, scaleT * 0.65);
+        const giantY = lerp(g.y, cy, scaleT * 0.65);
+        const giantR = lerp(g.r, Math.max(W, H) * 0.9, scaleT);
+        const alpha  = (1 - fadeT) * globalAlpha;
+        if (alpha <= 0) return;
 
         ctx.save();
-        ctx.globalAlpha = Math.min(1, giantAlpha * globalAlpha);
+        ctx.globalAlpha = Math.min(1, alpha);
         const gr = ctx.createRadialGradient(giantX, giantY, 0, giantX, giantY, giantR);
-        gr.addColorStop(0,    g.glow + '0.35)');
-        gr.addColorStop(0.15, g.glow + '0.15)');
-        gr.addColorStop(0.5,  g.glow + '0.05)');
+        gr.addColorStop(0,    g.glow + '0.4)');
+        gr.addColorStop(0.12, g.glow + '0.18)');
+        gr.addColorStop(0.45, g.glow + '0.06)');
         gr.addColorStop(1,    g.glow + '0)');
         ctx.beginPath();
         ctx.arc(giantX, giantY, giantR, 0, Math.PI*2);
         ctx.fillStyle = gr;
         ctx.fill();
 
-        // Small bright core still visible
-        const coreR = lerp(g.r, g.r * 2, scaleT) * (1 - fadeT * 0.7);
-        if (coreR > 0) {
+        const coreR = lerp(g.r, g.r * 1.8, scaleT * (1 - fadeT));
+        if (coreR > 1) {
           const cg = ctx.createRadialGradient(giantX, giantY, 0, giantX, giantY, coreR);
-          cg.addColorStop(0, '#ffffff');
-          cg.addColorStop(0.4, g.color);
-          cg.addColorStop(1, g.glow + '0)');
+          cg.addColorStop(0,   '#ffffff');
+          cg.addColorStop(0.35, g.color);
+          cg.addColorStop(1,   g.glow + '0)');
           ctx.beginPath();
           ctx.arc(giantX, giantY, coreR, 0, Math.PI*2);
           ctx.fillStyle = cg;
@@ -1918,24 +1925,28 @@ function initDarkWhisperEffect() {}
         ctx.restore();
       });
 
-      // Hide normal god rendering during fly phase
-      // by reducing their draw alpha
+      // Suppress normal orb drawing during fly phase
       Object.values(G).forEach(function(g) {
-        g._flyAlpha = Math.max(0, 1 - ease(prog(p, 0.82, 0.88)));
+        g._flyAlpha = Math.max(0, 1 - ease(prog(p, 0.82, 0.87)));
       });
     } else {
       Object.values(G).forEach(function(g) { g._flyAlpha = undefined; });
     }
 
-    // ── Draw normal gods (suppressed during fly phase) ──
-    if (p <= 0.88) {
+    // ── PHASE 6: All remaining orbs fade to nothing (0.95 → 1.0) ──
+    const finalFade = ease(prog(p, 0.95, 1.0));
+
+    // ── Draw normal gods ──
+    if (p <= 0.90) {
+      const baseAlpha = (1 - finalFade) * globalAlpha;
       ctx.save();
-      ctx.globalAlpha = globalAlpha;
-      drawGod(G.oro,    G._flyAlpha !== undefined ? G._flyAlpha : G.oro.alpha);
-      drawGod(G.nara,   G._flyAlpha !== undefined ? G._flyAlpha : G.nara.alpha);
-      drawGod(G.grak,   G._flyAlpha !== undefined ? G._flyAlpha : G.grak.alpha);
-      drawGod(G.thyun,  G._flyAlpha !== undefined ? G._flyAlpha : G.thyun.alpha);
-      drawGod(G.solvara,G._flyAlpha !== undefined ? G._flyAlpha : G.solvara.alpha);
+      ctx.globalAlpha = baseAlpha;
+      const fa = G._flyAlpha;
+      drawGod(G.oro,    fa !== undefined ? fa : G.oro.alpha);
+      drawGod(G.nara,   fa !== undefined ? fa : G.nara.alpha);
+      drawGod(G.grak,   fa !== undefined ? fa : G.grak.alpha);
+      drawGod(G.thyun,  fa !== undefined ? fa : G.thyun.alpha);
+      drawGod(G.solvara,fa !== undefined ? fa : G.solvara.alpha);
       ctx.restore();
     }
 
@@ -1943,8 +1954,8 @@ function initDarkWhisperEffect() {}
     LINES.forEach(function(l, i) {
       const el = lineEls[i];
       if (!el) return;
-      const inT  = prog(p, l.in,       l.in  + 0.015);
-      const outT = prog(p, l.out,      l.out + 0.015);
+      const inT  = prog(p, l.in,  l.in  + 0.015);
+      const outT = prog(p, l.out, l.out + 0.015);
       if (inT > 0 && outT < 1) {
         el.classList.add('show');
       } else {
