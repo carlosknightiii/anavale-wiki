@@ -1235,7 +1235,8 @@ function initDarkWhisperEffect() {}
     ];
     textInner.innerHTML = lines.map(l => `<div class="vtl-line ${l.cls}">${l.text}</div>`).join('');
     cachedLines = Array.from(textInner.querySelectorAll('.vtl-line'));
-    LINE_IN = cachedLines.map((_, i) => 0.75 + i * (0.18 / cachedLines.length));
+    // Lines stagger from 0.73 to ~0.81, leaving room to read before panel fades at 0.84
+    LINE_IN = cachedLines.map((_, i) => 0.73 + i * (0.08 / cachedLines.length));
   }
   function render() {
     requestAnimationFrame(render);
@@ -1279,12 +1280,16 @@ function initDarkWhisperEffect() {}
       });
     }
     if (prog >= 0.62) {
-      const blackP = Math.min(1, (prog - 0.62) / 0.14);
+      // Black fades IN over 0.62–0.76, then fades back OUT over 0.91–1.0
+      // so the map of Pogglewog is visible as the section exits (no blank black void).
+      let blackP = Math.min(1, (prog - 0.62) / 0.14);
+      if (prog >= 0.91) blackP = Math.max(0, 1 - (prog - 0.91) / 0.09);
       blackFade.style.opacity = blackP;
-      prismWrap.style.opacity = Math.max(0, 1 - blackP * 3);
+      const prismFadeP = Math.min(1, (prog - 0.62) / 0.14);
+      prismWrap.style.opacity = Math.max(0, 1 - prismFadeP * 3);
     }
     const panelIn  = Math.max(0, Math.min(1, (prog - 0.72) / 0.04));
-    const panelOut = Math.max(0, Math.min(1, (prog - 0.975) / 0.025));
+    const panelOut = Math.max(0, Math.min(1, (prog - 0.84) / 0.07));
     textPanel.style.opacity = String(panelIn * (1 - panelOut));
     if (cachedLines && LINE_IN) {
       cachedLines.forEach(function(line, i) {
