@@ -1535,41 +1535,46 @@
       <!-- ── ITEM FORM ───────────────────────── -->
       <div id="form-item" class="dm-subform">
         <div class="dm-form-title">⚔️ New Item</div>
-        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/items.js</strong> — weapon, artifact, potion, document, or treasure</div>
+        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/items.js</strong> — weapon, armor, shield, consumable, tool, accessory, or quest item</div>
 
+        <!-- ── UNIVERSAL FIELDS (always visible) ── -->
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="item-name">Name <span class="req">✦</span></label>
-            <span class="field-help">Name of the item as it would appear in an inventory, tale, or museum plaque</span>
-            <input class="field-input" type="text" id="item-name" oninput="autoId('item-name','item-id')" placeholder="e.g. The Voidblush Vial">
+            <span class="field-help">Item name as it appears in inventory and wiki</span>
+            <input class="field-input" type="text" id="item-name" oninput="autoId('item-name','item-id')" placeholder="e.g. Health Potion">
           </div>
           <div class="field-group">
             <label class="field-label" for="item-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier</span>
-            <input class="field-input" type="text" id="item-id" placeholder="e.g. voidblush-vial">
+            <span class="field-help">Lowercase kebab-case identifier (auto-filled)</span>
+            <input class="field-input" type="text" id="item-id" placeholder="e.g. health-potion">
           </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-summary">Summary <span class="req">✦</span></label>
+          <span class="field-help">One sentence — shown in search results and inventory list</span>
+          <input class="field-input" type="text" id="item-summary" placeholder="e.g. Restores HP when consumed.">
         </div>
 
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label" for="item-type">Type <span class="req">✦</span></label>
-            <span class="field-help">The general category of this item</span>
-            <select class="field-select" id="item-type">
-              <option value="">— Select type —</option>
-              <option value="weapon">Weapon</option>
-              <option value="armor">Armor</option>
-              <option value="artifact">Artifact</option>
-              <option value="tool">Tool</option>
-              <option value="potion">Potion / Consumable</option>
-              <option value="document">Document / Tome</option>
-              <option value="treasure">Treasure</option>
-              <option value="reagent">Magical Reagent</option>
-              <option value="other">Other</option>
+            <label class="field-label" for="item-category">Category <span class="req">✦</span></label>
+            <span class="field-help">Determines which fields appear below</span>
+            <select class="field-select" id="item-category" onchange="itemCategoryChanged()">
+              <option value="">— Select category —</option>
+              <option value="weapon">⚔️ Weapon</option>
+              <option value="armor">🛡 Armor</option>
+              <option value="shield">🔰 Shield</option>
+              <option value="consumable">⚗️ Consumable</option>
+              <option value="tool">🔧 Tool</option>
+              <option value="accessory">💍 Accessory</option>
+              <option value="quest_item">📜 Quest Item</option>
             </select>
           </div>
           <div class="field-group">
             <label class="field-label" for="item-rarity">Rarity</label>
-            <span class="field-help">How difficult this item is to find or acquire in Anavale</span>
+            <span class="field-help">How difficult to find or acquire</span>
             <select class="field-select" id="item-rarity">
               <option value="">— Select —</option>
               <option value="common">Common</option>
@@ -1581,22 +1586,320 @@
           </div>
         </div>
 
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="item-cost-gp">Cost (gp)</label>
+            <span class="field-help">Cost in gold pieces — enter a number (e.g. 50 or 0.5)</span>
+            <input class="field-input" type="number" id="item-cost-gp" min="0" step="0.01" placeholder="e.g. 50">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-weight-lb">Weight (lb)</label>
+            <span class="field-help">Weight in pounds — enter a number (e.g. 2 or 0.25)</span>
+            <input class="field-input" type="number" id="item-weight-lb" min="0" step="0.01" placeholder="e.g. 1">
+          </div>
+        </div>
+
+        <!-- ── WEAPON FIELDS ── -->
+        <div id="item-fields-weapon" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Weapon Stats</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-damage-dice">Damage Dice <span class="req">✦</span></label>
+              <span class="field-help">Format: NdN (e.g. 1d8, 2d6)</span>
+              <input class="field-input" type="text" id="item-damage-dice" placeholder="e.g. 1d8">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-damage-type">Damage Type <span class="req">✦</span></label>
+              <span class="field-help">Physical damage type</span>
+              <select class="field-select" id="item-damage-type">
+                <option value="">— Select —</option>
+                <option value="slashing">Slashing</option>
+                <option value="piercing">Piercing</option>
+                <option value="bludgeoning">Bludgeoning</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-versatile-dice">Versatile Dice</label>
+              <span class="field-help">Two-handed damage if versatile (e.g. 1d10). Leave blank if not versatile.</span>
+              <input class="field-input" type="text" id="item-versatile-dice" placeholder="e.g. 1d10">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-magic-bonus-weapon">Magic Bonus</label>
+              <span class="field-help">+1, +2, or +3 magical enhancement</span>
+              <select class="field-select" id="item-magic-bonus-weapon">
+                <option value="0">None</option>
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+                <option value="3">+3</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-range-normal">Normal Range (ft)</label>
+              <span class="field-help">Leave blank for melee weapons</span>
+              <input class="field-input" type="number" id="item-range-normal" min="0" placeholder="e.g. 80">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-range-long">Long Range (ft)</label>
+              <span class="field-help">Leave blank for melee weapons</span>
+              <input class="field-input" type="number" id="item-range-long" min="0" placeholder="e.g. 320">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-str-requirement-weapon">Strength Requirement</label>
+              <span class="field-help">Minimum Strength score needed (leave blank if none)</span>
+              <input class="field-input" type="number" id="item-str-requirement-weapon" min="0" placeholder="e.g. 13">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Properties</label>
+              <span class="field-help">Select all that apply</span>
+              <div class="field-checkboxes" id="item-weapon-properties">
+                <label><input type="checkbox" value="finesse"><span>Finesse</span></label>
+                <label><input type="checkbox" value="light"><span>Light</span></label>
+                <label><input type="checkbox" value="heavy"><span>Heavy</span></label>
+                <label><input type="checkbox" value="versatile"><span>Versatile</span></label>
+                <label><input type="checkbox" value="two-handed"><span>Two-Handed</span></label>
+                <label><input type="checkbox" value="thrown"><span>Thrown</span></label>
+                <label><input type="checkbox" value="reach"><span>Reach</span></label>
+                <label><input type="checkbox" value="loading"><span>Loading</span></label>
+                <label><input type="checkbox" value="ammunition"><span>Ammunition</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Named / Legendary Item</label>
+            <span class="field-help">Toggle on for unique named weapons with their own history</span>
+            <div class="field-toggle">
+              <input type="radio" name="item-named" id="item-named-false" value="false" checked>
+              <label for="item-named-false">Standard</label>
+              <input type="radio" name="item-named" id="item-named-true" value="true">
+              <label for="item-named-true">Named / Legendary</label>
+            </div>
+          </div>
+        </div><!-- /weapon fields -->
+
+        <!-- ── ARMOR FIELDS ── -->
+        <div id="item-fields-armor" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Armor Stats</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-base-ac">Base AC <span class="req">✦</span></label>
+              <span class="field-help">The armor's base AC value as a number (e.g. 16 for Chain Mail)</span>
+              <input class="field-input" type="number" id="item-base-ac" min="0" placeholder="e.g. 16">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-armor-weight-class">Armor Class <span class="req">✦</span></label>
+              <span class="field-help">Determines how Dexterity applies to AC</span>
+              <select class="field-select" id="item-armor-weight-class">
+                <option value="">— Select —</option>
+                <option value="light">Light — full Dex bonus applies</option>
+                <option value="medium">Medium — max +2 Dex bonus</option>
+                <option value="heavy">Heavy — no Dex bonus</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-magic-bonus-armor">Magic Bonus</label>
+              <span class="field-help">+1, +2, or +3 magical enhancement to AC</span>
+              <select class="field-select" id="item-magic-bonus-armor">
+                <option value="0">None</option>
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+                <option value="3">+3</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-str-requirement-armor">Strength Requirement</label>
+              <span class="field-help">Minimum Strength score needed (leave blank if none)</span>
+              <input class="field-input" type="number" id="item-str-requirement-armor" min="0" placeholder="e.g. 15">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Stealth Disadvantage</label>
+              <span class="field-help">Does this armor impose disadvantage on Stealth checks?</span>
+              <div class="field-toggle">
+                <input type="radio" name="item-stealth-disadvantage" id="item-stealth-false" value="false" checked>
+                <label for="item-stealth-false">No</label>
+                <input type="radio" name="item-stealth-disadvantage" id="item-stealth-true" value="true">
+                <label for="item-stealth-true">Yes</label>
+              </div>
+            </div>
+          </div>
+        </div><!-- /armor fields -->
+
+        <!-- ── SHIELD FIELDS ── -->
+        <div id="item-fields-shield" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Shield Stats</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-ac-bonus">AC Bonus</label>
+              <span class="field-help">AC bonus granted — standard shield is +2</span>
+              <input class="field-input" type="number" id="item-ac-bonus" value="2" min="0">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-magic-bonus-shield">Magic Bonus</label>
+              <span class="field-help">+1, +2, or +3 magical enhancement</span>
+              <select class="field-select" id="item-magic-bonus-shield">
+                <option value="0">None</option>
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+                <option value="3">+3</option>
+              </select>
+            </div>
+          </div>
+        </div><!-- /shield fields -->
+
+        <!-- ── CONSUMABLE FIELDS ── -->
+        <div id="item-fields-consumable" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Consumable Stats</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-effect-type">Effect Type <span class="req">✦</span></label>
+              <span class="field-help">What this consumable does when used</span>
+              <select class="field-select" id="item-effect-type">
+                <option value="">— Select —</option>
+                <option value="heal">Heal HP</option>
+                <option value="buff">Buff (temporary bonus)</option>
+                <option value="condition_remove">Remove Condition</option>
+                <option value="damage">Deal Damage</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-gigglegloom-type">Gigglegloom Type</label>
+              <span class="field-help">Magic type this consumable channels (if any)</span>
+              <select class="field-select" id="item-gigglegloom-type">
+                <option value="">None</option>
+                <option value="Bubbleseed">Bubbleseed</option>
+                <option value="Featherflow">Featherflow</option>
+                <option value="Steelfist">Steelfist</option>
+                <option value="Flamerage">Flamerage</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-effect-dice">Effect Dice</label>
+              <span class="field-help">Format: NdN (e.g. 2d4). Leave blank if flat value only.</span>
+              <input class="field-input" type="text" id="item-effect-dice" placeholder="e.g. 2d4">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-effect-flat">Effect Flat Bonus</label>
+              <span class="field-help">Flat number added to dice roll (e.g. 2 for "2d4+2")</span>
+              <input class="field-input" type="number" id="item-effect-flat" min="0" placeholder="e.g. 2">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-uses-max">Uses</label>
+              <span class="field-help">Total uses (1 for a potion, 10 for a healer's kit)</span>
+              <input class="field-input" type="number" id="item-uses-max" min="1" value="1">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-effect-duration">Effect Duration</label>
+              <span class="field-help">Leave blank for instant. Otherwise: "1 hour", "10 minutes", etc.</span>
+              <input class="field-input" type="text" id="item-effect-duration" placeholder="e.g. 1 hour">
+            </div>
+          </div>
+        </div><!-- /consumable fields -->
+
+        <!-- ── TOOL FIELDS ── -->
+        <div id="item-fields-tool" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Tool Stats</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-proficiency-name">Proficiency Name</label>
+              <span class="field-help">The proficiency this tool grants or requires (e.g. "Thieves' tools")</span>
+              <input class="field-input" type="text" id="item-proficiency-name" placeholder="e.g. Thieves' tools">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-tool-uses">Uses</label>
+              <span class="field-help">Number of uses if limited (e.g. 10 for Healer's Kit). Leave blank for unlimited.</span>
+              <input class="field-input" type="number" id="item-tool-uses" min="1" placeholder="blank = unlimited">
+            </div>
+          </div>
+        </div><!-- /tool fields -->
+
+        <!-- ── ACCESSORY FIELDS ── -->
+        <div id="item-fields-accessory" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Accessory Stats</div>
+          <div class="field-group">
+            <label class="field-label" for="item-effect-accessory">Effect</label>
+            <span class="field-help">What this accessory does when carried or worn</span>
+            <textarea class="field-textarea" id="item-effect-accessory" placeholder="e.g. Advantage on Religion checks. Recognized by Brightcreed communities as a mark of faith."></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-equip-slot-accessory">Equip Slot</label>
+              <span class="field-help">Where this item is worn or carried</span>
+              <select class="field-select" id="item-equip-slot-accessory">
+                <option value="accessory">Accessory slot (worn)</option>
+                <option value="none">Carried — no slot</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-magic-bonus-accessory">Magic Bonus</label>
+              <span class="field-help">+1, +2, or +3 if this accessory grants a magical bonus</span>
+              <select class="field-select" id="item-magic-bonus-accessory">
+                <option value="0">None</option>
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+                <option value="3">+3</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-grants-proficiency">Grants Proficiency</label>
+              <span class="field-help">Comma-separated skills or tools this item grants proficiency in (leave blank if none)</span>
+              <input class="field-input" type="text" id="item-grants-proficiency" placeholder="e.g. Survival, Animal Handling">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-grants-advantage">Grants Advantage On</label>
+              <span class="field-help">Comma-separated checks this item grants advantage on (leave blank if none)</span>
+              <input class="field-input" type="text" id="item-grants-advantage" placeholder="e.g. Religion, Perception">
+            </div>
+          </div>
+        </div><!-- /accessory fields -->
+
+        <!-- ── QUEST ITEM FIELDS ── -->
+        <div id="item-fields-quest_item" class="item-category-fields" style="display:none">
+          <div class="form-section-divider">Quest Item</div>
+          <div class="field-group">
+            <label class="field-label" for="item-story-note">Story Note</label>
+            <span class="field-help">What this item means narratively — DM reference for when and how it matters</span>
+            <textarea class="field-textarea" id="item-story-note" placeholder="e.g. The scroll Skiv left behind. Contains a single line in Veilborn cipher. Players won't be able to read it until Session 3."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-associated-quest">Associated Quest</label>
+            <span class="field-help">Quest ID this item belongs to (e.g. the-missing-shipment)</span>
+            <input class="field-input" type="text" id="item-associated-quest" placeholder="e.g. the-missing-shipment">
+          </div>
+        </div><!-- /quest item fields -->
+
+        <!-- ── UNIVERSAL LOWER FIELDS (always visible) ── -->
         <div class="field-group">
           <label class="field-label" for="item-description">Description <span class="req">✦</span></label>
           <span class="field-help">Physical appearance, feel, and properties — what it looks like and what it does</span>
-          <textarea class="field-textarea tall" id="item-description" placeholder="Appearance, magical properties, and effects…"></textarea>
+          <textarea class="field-textarea tall" id="item-description" placeholder="Appearance, properties, and effects…"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="item-gigglegloom">Gigglegloom Relationship</label>
+          <span class="field-help">How this item interacts with the Gigglegloom — channels, absorbs, suppresses, or responds to specific types?</span>
+          <textarea class="field-textarea" id="item-gigglegloom" placeholder="e.g. Bubbleseed-infused. Glows faintly gold near healthy color zones."></textarea>
         </div>
 
         <div class="field-group">
           <label class="field-label" for="item-history">History</label>
           <span class="field-help">Where this item came from — who made it, how it was found, what events shaped it</span>
           <textarea class="field-textarea" id="item-history" placeholder="Origin, creation, notable past events…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="item-gigglegloom">Gigglegloom Relationship</label>
-          <span class="field-help">How this item interacts with the Gigglegloom — channels, absorbs, suppresses, or responds to specific types?</span>
-          <textarea class="field-textarea" id="item-gigglegloom" placeholder="e.g. One drop temporarily reverses Stage 1 Fading in a small area. The Vareth wants it eradicated."></textarea>
         </div>
 
         <div class="field-row">
@@ -1607,21 +1910,33 @@
           </div>
           <div class="field-group">
             <label class="field-label" for="item-owner">Current Owner</label>
-            <span class="field-help">Who currently possesses or controls this item, if known</span>
-            <input class="field-input" type="text" id="item-owner" placeholder="e.g. Unknown. Seven assassination attempts to recover it.">
+            <span class="field-help">Who currently possesses this item, if known</span>
+            <input class="field-input" type="text" id="item-owner" placeholder="e.g. Unknown — seven assassination attempts to recover it">
           </div>
         </div>
 
-        <div class="field-group">
-          <label class="field-label">Player Facing</label>
-          <span class="field-help">Hidden = DM only. Teaser = name, category, summary. Visible = full entry.</span>
-          <div class="field-toggle">
-            <input type="radio" name="item-pf" id="item-pf-false" value="false" checked>
-            <label for="item-pf-false">🔒 Hidden</label>
-            <input type="radio" name="item-pf" id="item-pf-teaser" value="teaser">
-            <label for="item-pf-teaser">✨ Teaser</label>
-            <input type="radio" name="item-pf" id="item-pf-true" value="true">
-            <label for="item-pf-true">👁 Visible</label>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Player Facing</label>
+            <span class="field-help">Hidden = DM only. Teaser = name + summary. Visible = full entry.</span>
+            <div class="field-toggle">
+              <input type="radio" name="item-pf" id="item-pf-false" value="false" checked>
+              <label for="item-pf-false">🔒 Hidden</label>
+              <input type="radio" name="item-pf" id="item-pf-teaser" value="teaser">
+              <label for="item-pf-teaser">✨ Teaser</label>
+              <input type="radio" name="item-pf" id="item-pf-true" value="true">
+              <label for="item-pf-true">👁 Visible</label>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Player Addable</label>
+            <span class="field-help">Can players add this to their own sheet? No = DM places only.</span>
+            <div class="field-toggle">
+              <input type="radio" name="item-addable" id="item-addable-true" value="true" checked>
+              <label for="item-addable-true">✅ Yes</label>
+              <input type="radio" name="item-addable" id="item-addable-false" value="false">
+              <label for="item-addable-false">🔒 DM Only</label>
+            </div>
           </div>
         </div>
 
@@ -1629,14 +1944,14 @@
 
         <div class="field-group">
           <label class="field-label" for="item-dm-notes">DM Notes</label>
-          <span class="field-help">Private notes — plot hooks, mechanical effects, secrets players haven't uncovered yet</span>
+          <span class="field-help">Private notes — plot hooks, mechanical effects, secrets players haven't uncovered</span>
           <textarea class="field-textarea" id="item-dm-notes" placeholder="Private DM information…"></textarea>
         </div>
 
         <div class="field-group">
           <label class="field-label" for="item-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords for search</span>
-          <input class="field-input" type="text" id="item-tags" placeholder="e.g. artifact, gigglegloom, prism-exchange, legendary, voidblush">
+          <span class="field-help">Comma-separated keywords for search and filtering</span>
+          <input class="field-input" type="text" id="item-tags" placeholder="e.g. weapon, caparia, common, shortsword">
         </div>
 
         <div class="field-group">
@@ -3222,31 +3537,175 @@ function generateOrganization() {
   showOutput(entry, 'organization');
 }
 
+function itemCategoryChanged() {
+  var cat = val('item-category');
+  // Hide all category panels
+  document.querySelectorAll('.item-category-fields').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  // Show the matching panel
+  if (cat) {
+    var panel = document.getElementById('item-fields-' + cat);
+    if (panel) panel.style.display = 'block';
+  }
+  // Quest items are always DM-only / not player-addable
+  if (cat === 'quest_item') {
+    var addableFalse = document.getElementById('item-addable-false');
+    if (addableFalse) { addableFalse.checked = true; }
+  }
+}
+
 function generateItem() {
   var name = val('item-name');
-  if (!name)  { alert('Name is required (✦).'); return; }
-  var type = val('item-type');
-  if (!type)  { alert('Type is required (✦).'); return; }
+  if (!name) { alert('Name is required (✦).'); return; }
+  var category = val('item-category');
+  if (!category) { alert('Category is required (✦).'); return; }
+  var summary = val('item-summary');
+  if (!summary) { alert('Summary is required (✦).'); return; }
   var desc = val('item-description');
-  if (!desc)  { alert('Description is required (✦).'); return; }
+  if (!desc) { alert('Description is required (✦).'); return; }
 
   var entryId = val('item-id') || slugify(name);
+
+  // Parse numeric fields safely
+  var costRaw = document.getElementById('item-cost-gp').value;
+  var weightRaw = document.getElementById('item-weight-lb').value;
+  var costGp = costRaw !== '' ? parseFloat(costRaw) : null;
+  var weightLb = weightRaw !== '' ? parseFloat(weightRaw) : null;
+
+  // Determine equip slot by category
+  var equipSlotMap = {
+    weapon: 'weapon',
+    armor: 'armor',
+    shield: 'offhand',
+    consumable: null,
+    tool: null,
+    accessory: null,
+    quest_item: null
+  };
+  var equipSlot = equipSlotMap[category] || null;
+
+  // Build base entry
   var entry = {
     id:                       entryId,
     name:                     name,
-    type:                     type,
+    category:                 category,
+    equip_slot:               equipSlot,
     rarity:                   orNull(val('item-rarity')),
+    cost_gp:                  costGp,
+    weight_lb:                weightLb,
+    summary:                  summary,
     description:              desc,
-    history:                  orNull(val('item-history')),
     gigglegloom_relationship: orNull(val('item-gigglegloom')),
+    gigglegloom_type:         null,
+    history:                  orNull(val('item-history')),
     current_location:         orNull(val('item-location')),
     current_owner:            orNull(val('item-owner')),
     dm_notes:                 orNull(val('item-dm-notes')),
-    tags:                     tagsArr('item-tags')
+    tags:                     tagsArr('item-tags'),
+    player_facing:            triRadio('item-pf'),
+    player_addable:           radioVal('item-addable') === 'true',
+    named:                    false,
+
+    // All mechanical fields default to null / empty
+    damage_dice:              null,
+    damage_type:              null,
+    versatile_dice:           null,
+    properties:               [],
+    range_normal:             null,
+    range_long:               null,
+    magic_bonus:              0,
+    str_requirement:          null,
+    base_ac:                  null,
+    armor_weight_class:       null,
+    max_dex_bonus:            null,
+    stealth_disadvantage:     false,
+    ac_bonus:                 null,
+    effect_type:              null,
+    effect_dice:              null,
+    effect_flat:              null,
+    effect_duration:          null,
+    uses_max:                 null,
+    proficiency_name:         null,
+    grants_proficiency:       [],
+    grants_advantage:         [],
+    associated_quest:         null,
+    story_note:               null
   };
+
+  // Category-specific field population
+  if (category === 'weapon') {
+    entry.damage_dice     = orNull(val('item-damage-dice'));
+    entry.damage_type     = orNull(val('item-damage-type'));
+    entry.versatile_dice  = orNull(val('item-versatile-dice'));
+    entry.magic_bonus     = parseInt(val('item-magic-bonus-weapon')) || 0;
+    var rn = document.getElementById('item-range-normal').value;
+    var rl = document.getElementById('item-range-long').value;
+    entry.range_normal    = rn !== '' ? parseInt(rn) : null;
+    entry.range_long      = rl !== '' ? parseInt(rl) : null;
+    var strReqW = document.getElementById('item-str-requirement-weapon').value;
+    entry.str_requirement = strReqW !== '' ? parseInt(strReqW) : null;
+    entry.properties      = checkedVals('item-weapon-properties');
+    entry.named           = radioVal('item-named') === 'true';
+  }
+
+  if (category === 'armor') {
+    var baseAc = document.getElementById('item-base-ac').value;
+    entry.base_ac              = baseAc !== '' ? parseInt(baseAc) : null;
+    entry.armor_weight_class   = orNull(val('item-armor-weight-class'));
+    entry.magic_bonus          = parseInt(val('item-magic-bonus-armor')) || 0;
+    var strReqA = document.getElementById('item-str-requirement-armor').value;
+    entry.str_requirement      = strReqA !== '' ? parseInt(strReqA) : null;
+    entry.stealth_disadvantage = radioVal('item-stealth-disadvantage') === 'true';
+    // max_dex_bonus derived from weight class
+    entry.max_dex_bonus = entry.armor_weight_class === 'medium' ? 2
+                        : entry.armor_weight_class === 'heavy'  ? 0
+                        : null; // light = unlimited
+  }
+
+  if (category === 'shield') {
+    var acBonusVal = document.getElementById('item-ac-bonus').value;
+    entry.ac_bonus    = acBonusVal !== '' ? parseInt(acBonusVal) : 2;
+    entry.magic_bonus = parseInt(val('item-magic-bonus-shield')) || 0;
+    entry.equip_slot  = 'offhand';
+  }
+
+  if (category === 'consumable') {
+    entry.effect_type     = orNull(val('item-effect-type'));
+    entry.gigglegloom_type = orNull(val('item-gigglegloom-type'));
+    entry.effect_dice     = orNull(val('item-effect-dice'));
+    var flatVal = document.getElementById('item-effect-flat').value;
+    entry.effect_flat     = flatVal !== '' ? parseInt(flatVal) : null;
+    entry.effect_duration = orNull(val('item-effect-duration'));
+    var usesVal = document.getElementById('item-uses-max').value;
+    entry.uses_max        = usesVal !== '' ? parseInt(usesVal) : 1;
+  }
+
+  if (category === 'tool') {
+    entry.proficiency_name = orNull(val('item-proficiency-name'));
+    var toolUses = document.getElementById('item-tool-uses').value;
+    entry.uses_max = toolUses !== '' ? parseInt(toolUses) : null;
+  }
+
+  if (category === 'accessory') {
+    var accSlot = val('item-equip-slot-accessory');
+    entry.equip_slot        = accSlot === 'none' ? null : accSlot;
+    entry.magic_bonus       = parseInt(val('item-magic-bonus-accessory')) || 0;
+    var gpRaw = val('item-grants-proficiency');
+    var gaRaw = val('item-grants-advantage');
+    entry.grants_proficiency = gpRaw ? gpRaw.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+    entry.grants_advantage   = gaRaw ? gaRaw.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+  }
+
+  if (category === 'quest_item') {
+    entry.story_note       = orNull(val('item-story-note'));
+    entry.associated_quest = orNull(val('item-associated-quest'));
+    entry.player_addable   = false; // always DM-only
+  }
+
   var imgPath = readImagePath('item-img-input', 'assets/images/items/', entryId, PENDING_EDIT_IMAGE);
   if (imgPath) entry.image = imgPath;
-  entry.player_facing = triRadio('item-pf');
+
   showOutput(entry, 'item');
 }
 
@@ -4112,6 +4571,7 @@ function cmPopulateForm(entry, type) {
   } else if (type === 'item') {
     sv('item-name',        entry.name);
     sv('item-id',          entry.id);
+    sv('item-summary',     entry.summary);
     sv('item-description', entry.description);
     sv('item-history',     entry.history);
     sv('item-gigglegloom', entry.gigglegloom_relationship);
@@ -4119,9 +4579,83 @@ function cmPopulateForm(entry, type) {
     sv('item-owner',       entry.current_owner);
     sv('item-dm-notes',    entry.dm_notes);
     sv('item-tags',        (entry.tags || []).join(', '));
-    sv('item-type',        entry.type);
+    sv('item-category',    entry.category);
     sv('item-rarity',      entry.rarity);
+    // Numeric fields
+    var costEl = document.getElementById('item-cost-gp');
+    if (costEl) costEl.value = entry.cost_gp !== null && entry.cost_gp !== undefined ? entry.cost_gp : '';
+    var weightEl = document.getElementById('item-weight-lb');
+    if (weightEl) weightEl.value = entry.weight_lb !== null && entry.weight_lb !== undefined ? entry.weight_lb : '';
+    // Trigger contextual fields
+    itemCategoryChanged();
+    // Weapon fields
+    if (entry.category === 'weapon') {
+      sv('item-damage-dice', entry.damage_dice);
+      sv('item-damage-type', entry.damage_type);
+      sv('item-versatile-dice', entry.versatile_dice);
+      sv('item-magic-bonus-weapon', entry.magic_bonus || 0);
+      var rnEl = document.getElementById('item-range-normal');
+      var rlEl = document.getElementById('item-range-long');
+      if (rnEl) rnEl.value = entry.range_normal !== null ? entry.range_normal : '';
+      if (rlEl) rlEl.value = entry.range_long !== null ? entry.range_long : '';
+      var strWEl = document.getElementById('item-str-requirement-weapon');
+      if (strWEl) strWEl.value = entry.str_requirement !== null ? entry.str_requirement : '';
+      if (entry.properties && entry.properties.length) {
+        document.querySelectorAll('#item-weapon-properties input[type=checkbox]').forEach(function(cb) {
+          cb.checked = entry.properties.indexOf(cb.value) >= 0;
+        });
+      }
+      setRadioVal('item-named', entry.named ? 'true' : 'false');
+    }
+    // Armor fields
+    if (entry.category === 'armor') {
+      var acEl = document.getElementById('item-base-ac');
+      if (acEl) acEl.value = entry.base_ac !== null ? entry.base_ac : '';
+      sv('item-armor-weight-class', entry.armor_weight_class);
+      sv('item-magic-bonus-armor', entry.magic_bonus || 0);
+      var strAEl = document.getElementById('item-str-requirement-armor');
+      if (strAEl) strAEl.value = entry.str_requirement !== null ? entry.str_requirement : '';
+      setRadioVal('item-stealth-disadvantage', entry.stealth_disadvantage ? 'true' : 'false');
+    }
+    // Shield fields
+    if (entry.category === 'shield') {
+      var acBEl = document.getElementById('item-ac-bonus');
+      if (acBEl) acBEl.value = entry.ac_bonus !== null ? entry.ac_bonus : 2;
+      sv('item-magic-bonus-shield', entry.magic_bonus || 0);
+    }
+    // Consumable fields
+    if (entry.category === 'consumable') {
+      sv('item-effect-type', entry.effect_type);
+      sv('item-gigglegloom-type', entry.gigglegloom_type);
+      sv('item-effect-dice', entry.effect_dice);
+      var efEl = document.getElementById('item-effect-flat');
+      if (efEl) efEl.value = entry.effect_flat !== null ? entry.effect_flat : '';
+      sv('item-effect-duration', entry.effect_duration);
+      var umEl = document.getElementById('item-uses-max');
+      if (umEl) umEl.value = entry.uses_max !== null ? entry.uses_max : 1;
+    }
+    // Tool fields
+    if (entry.category === 'tool') {
+      sv('item-proficiency-name', entry.proficiency_name);
+      var tuEl = document.getElementById('item-tool-uses');
+      if (tuEl) tuEl.value = entry.uses_max !== null ? entry.uses_max : '';
+    }
+    // Accessory fields
+    if (entry.category === 'accessory') {
+      sv('item-equip-slot-accessory', entry.equip_slot || 'none');
+      sv('item-magic-bonus-accessory', entry.magic_bonus || 0);
+      var gpEl = document.getElementById('item-grants-proficiency');
+      if (gpEl) gpEl.value = (entry.grants_proficiency || []).join(', ');
+      var gaEl = document.getElementById('item-grants-advantage');
+      if (gaEl) gaEl.value = (entry.grants_advantage || []).join(', ');
+    }
+    // Quest item fields
+    if (entry.category === 'quest_item') {
+      sv('item-story-note', entry.story_note);
+      sv('item-associated-quest', entry.associated_quest);
+    }
     setRadioVal('item-pf', entry.player_facing);
+    setRadioVal('item-addable', entry.player_addable === false ? 'false' : 'true');
     showExistingImage('item-img-preview', 'item-img-path');
   }
 }
