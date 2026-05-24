@@ -1242,8 +1242,12 @@ function initDarkWhisperEffect() {}
     resize();
     fxCtx.clearRect(0, 0, VW, VH);
     const prog = getScrollProgress();
-    if (prog <= 0) { mapImg.style.opacity = '0'; return; }
-    mapImg.style.opacity = 1 - (1 - getApproachProgress()) * (1 - getApproachProgress());
+    const approachProg = getApproachProgress();
+    // Fade the map in as soon as the section enters the viewport —
+    // don't wait for prog > 0 (which requires a full screen-height of scrolling first).
+    if (approachProg <= 0) { mapImg.style.opacity = '0'; return; }
+    mapImg.style.opacity = 1 - (1 - approachProg) * (1 - approachProg);
+    if (prog <= 0) return; // prism/zones/text wait until sticky phase begins
     if (prog >= 0.10) {
       prismWrap.style.opacity = Math.min(1, (prog - 0.10) / 0.08);
       animatePrism();
