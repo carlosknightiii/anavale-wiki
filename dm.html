@@ -2063,7 +2063,7 @@
 
             <div class="cm-filter-bar">
               <input type="text" id="cm-search" class="cm-search" placeholder="Search name, summary, tags…" oninput="cmFilter()">
-              <select id="cm-type-filter" class="cm-select" onchange="cmFilter()">
+              <select id="cm-type-filter" class="cm-select" onchange="cmTypeFilterChanged()">
                 <option value="">All Types</option>
                 <option value="region">🗺️ Regions</option>
                 <option value="city">🏙️ Cities</option>
@@ -2093,6 +2093,29 @@
               </select>
               <select id="cm-nation-filter" class="cm-select" onchange="cmApplyFilters()">
                 <option value="">All Nations</option>
+              </select>
+              <select id="cm-item-category-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                <option value="">All Categories</option>
+                <option value="weapon">⚔️ Weapon</option>
+                <option value="armor">🛡 Armor</option>
+                <option value="shield">🔰 Shield</option>
+                <option value="consumable">⚗️ Consumable</option>
+                <option value="tool">🔧 Tool</option>
+                <option value="accessory">💍 Accessory</option>
+                <option value="quest_item">📜 Quest Item</option>
+              </select>
+              <select id="cm-item-rarity-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                <option value="">All Rarities</option>
+                <option value="common">Common</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="rare">Rare</option>
+                <option value="legendary">Legendary</option>
+                <option value="unique">Unique</option>
+              </select>
+              <select id="cm-item-addable-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                <option value="">All Addability</option>
+                <option value="true">✅ Player Addable</option>
+                <option value="false">🔒 DM Only</option>
               </select>
               <select id="cm-settlement-filter" class="cm-select" onchange="cmApplyFilters()">
                 <option value="">All Types</option>
@@ -4181,6 +4204,24 @@ function cmFilter() {
   cmApplyFilters();
 }
 
+function cmTypeFilterChanged() {
+  var typeF = (document.getElementById('cm-type-filter') || {}).value || '';
+  var isItem = typeF === 'item';
+  var catFilter     = document.getElementById('cm-item-category-filter');
+  var rarFilter     = document.getElementById('cm-item-rarity-filter');
+  var addFilter     = document.getElementById('cm-item-addable-filter');
+  if (catFilter) catFilter.style.display = isItem ? '' : 'none';
+  if (rarFilter) rarFilter.style.display = isItem ? '' : 'none';
+  if (addFilter) addFilter.style.display = isItem ? '' : 'none';
+  // Reset item filters when switching away from items
+  if (!isItem) {
+    if (catFilter) catFilter.value = '';
+    if (rarFilter) rarFilter.value = '';
+    if (addFilter) addFilter.value = '';
+  }
+  cmApplyFilters();
+}
+
 function cmResetFilters() {
   var s  = document.getElementById('cm-search');
   var t  = document.getElementById('cm-type-filter');
@@ -4202,6 +4243,12 @@ function cmResetFilters() {
   if (se) se.value = '';
   if (va) va.value = '';
   if (ch) ch.value = '';
+  var ic = document.getElementById('cm-item-category-filter');
+  var ir = document.getElementById('cm-item-rarity-filter');
+  var ia = document.getElementById('cm-item-addable-filter');
+  if (ic) { ic.value = ''; ic.style.display = 'none'; }
+  if (ir) { ir.value = ''; ir.style.display = 'none'; }
+  if (ia) { ia.value = ''; ia.style.display = 'none'; }
   cmApplyFilters();
 }
 
@@ -4216,12 +4263,21 @@ function cmApplyFilters() {
   var settlF   = (document.getElementById('cm-settlement-filter')|| {}).value || '';
   var varethF  = (document.getElementById('cm-vareth-filter')    || {}).value || '';
   var colorF   = (document.getElementById('cm-colorhealth-filter')|| {}).value || '';
+  var itemCatF    = (document.getElementById('cm-item-category-filter') || {}).value || '';
+  var itemRarF    = (document.getElementById('cm-item-rarity-filter')   || {}).value || '';
+  var itemAddF    = (document.getElementById('cm-item-addable-filter')  || {}).value || '';
   var q = searchQ.toLowerCase().trim();
 
   var filtered = CM_ALL.filter(function(item) {
     var e = item._entry;
     if (typeF    && item._type !== typeF)           return false;
     if (visF     && cmGetVis(e) !== visF)           return false;
+    if (itemCatF && item._type === 'item' && (e.category || '') !== itemCatF)  return false;
+    if (itemRarF && item._type === 'item' && (e.rarity   || '') !== itemRarF)  return false;
+    if (itemAddF && item._type === 'item') {
+      var addable = e.player_addable === false ? 'false' : 'true';
+      if (addable !== itemAddF) return false;
+    }
     if (contF    && (e.continent || '') !== contF)  return false;
     if (regionF  && (e.region    || '') !== regionF) return false;
     if (nationF  && (e.nation    || '') !== nationF) return false;
@@ -4345,11 +4401,26 @@ function renderCMTable() {
       : '<button class="cm-action-btn" onclick="cmEditEntry(' + idx + ')">✎ Edit</button>'
         + '<button class="cm-action-btn delete" onclick="cmDeleteEntry(' + idx + ')">🗑</button>';
 
+    // Build item-specific extra cell
+    var extraCell = '';
+    if (item._type === 'item') {
+      var catLabel = e.category ? e.category.replace('_', ' ') : '—';
+      var costLabel = e.cost_gp !== null && e.cost_gp !== undefined ? e.cost_gp + ' gp' : '—';
+      var weightLabel = e.weight_lb !== null && e.weight_lb !== undefined ? e.weight_lb + ' lb' : '—';
+      var addableLabel = e.player_addable === false ? '<span style="color:#aa3a1a;font-size:var(--text-xs);">🔒 DM</span>' : '<span style="color:#1a5a28;font-size:var(--text-xs);">✅ Player</span>';
+      extraCell = '<td style="font-size:var(--text-xs);color:var(--ink-faint);white-space:nowrap;">'
+        + '<strong>' + escCM(catLabel) + '</strong> · ' + escCM(costLabel) + ' · ' + escCM(weightLabel) + ' · ' + addableLabel
+        + '</td>';
+    } else {
+      extraCell = '<td></td>';
+    }
+
     return '<tr' + rowCls + '>'
       + '<td class="cm-th-check"><input type="checkbox"' + (sel ? ' checked' : '')
       +   ' onchange="cmToggleSelect(' + idx + ', this.checked)"></td>'
       + '<td class="cm-td-name"><span title="' + escCM(e.name) + '">' + escCM(e.name || '—') + '</span></td>'
       + '<td><span class="cm-type-badge">' + icon + ' ' + escCM(typeCap) + '</span></td>'
+      + extraCell
       + '<td><span class="' + visCls + '" onclick="cmCycleVisibility(' + idx + ')" title="Click to cycle: hidden → teaser → visible">' + visLabel + '</span></td>'
       + '<td><div class="cm-row-actions">' + actions + '</div></td>'
       + '</tr>';
