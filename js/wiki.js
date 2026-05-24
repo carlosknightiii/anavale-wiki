@@ -1155,12 +1155,12 @@ function renderGods(el) {
   var chars    = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
   var godOrder = ['oro', 'nara', 'thyun', 'solvara', 'grak'];
 
-  var GOD_CFG = {
-    oro:     { accent: '#f8e070', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
-    nara:    { accent: '#6ac88a', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
-    thyun:   { accent: '#8ab8f8', faith: 'The Stillkeep',   faithHash: 'religion/stillkeep'   },
-    solvara: { accent: '#c098f8', faith: 'The Veilborn',    faithHash: 'religion/veilborn'    },
-    grak:    { accent: '#909090', faith: null,               faithHash: null                   },
+    var GOD_CFG = {
+    oro:     { accent: '#7a5200', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
+    nara:    { accent: '#1a5c30', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
+    thyun:   { accent: '#1a3a6a', faith: 'The Stillkeep',   faithHash: 'religion/stillkeep'   },
+    solvara: { accent: '#4a2070', faith: 'The Veilborn',    faithHash: 'religion/veilborn'    },
+    grak:    { accent: '#444444', faith: null,               faithHash: null                   },
   };
 
   var cardsHtml = '';
@@ -1224,7 +1224,7 @@ function renderGods(el) {
 
   el.innerHTML = pageHeader('Theology', 'The Gods of Anavale', 'Five gods shaped this world. Four of them are still trying to save it.')
     + '<div class="wiki-body">' + partitionHtml + '</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;padding:1.5rem 2rem 2.5rem;">' + cardsHtml + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;padding:1.5rem 2rem 2.5rem;">' + cardsHtml + '</div>'
     + '<div class="wiki-body"><div class="section-heading">Three Ways of Understanding</div><p>The gods are real. The disagreement is about what that means.</p>' + religionCardsHtml + '</div>';
 }
 
