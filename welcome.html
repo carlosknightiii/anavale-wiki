@@ -950,13 +950,11 @@
       background-position: center, 50% 50%;
     }
 
-    /* 3. Kill shimmer on hero title — background-position animation on gradient
-          clipped text with drop-shadow forces off the GPU compositing path.
-          Replace with a single static gold color, still looks great. */
+    /* 3. Keep gradient title but kill the shimmer background-position animation —
+          that animation forces off the GPU compositing path on mobile.
+          The gradient still renders; it just doesn't animate. Also remove the
+          double drop-shadow filter which adds two extra composite layers. */
     .hero-title {
-      background: none;
-      -webkit-text-fill-color: var(--gold);
-      color: var(--gold);
       animation: riseIn 1.0s cubic-bezier(0.22,1,0.36,1) 0.3s forwards;
       filter: none;
     }
@@ -1919,17 +1917,22 @@ function animateBeetle(b, el) {
 
 // ── INIT ─────────────────────────────────────────────────────
 function initCreaturePositions() {
+  // On mobile, H includes browser chrome and the hero uses 100svh visually,
+  // so creatures placed at H * 0.76 land below the visible fold.
+  // Cap all Y positions to 55% of H on touch devices.
+  const yScale = IS_MOBILE ? 0.72 : 1.0;
+
   fluffet.facingDir = 1;
   fluffet.x         = 80;
-  fluffet.baseY     = H * 0.76;
+  fluffet.baseY     = H * 0.76 * yScale;
   resetSequence();
 
   frogs.forEach(f => {
     f.x = W * f.xFrac;
-    f.y = H * f.yFrac;
+    f.y = H * f.yFrac * yScale;
   });
 
-  tw1.baseY = H * 0.12;
+  tw1.baseY = H * 0.12;  // Tinywings fly near top — no adjustment needed
   tw1.x     = -200;
 
   tw2.baseY = H * 0.22;
@@ -1937,7 +1940,7 @@ function initCreaturePositions() {
 
   beetles.forEach(b => {
     b.x = W * b.xFrac;
-    b.y = H * b.yFrac;
+    b.y = H * b.yFrac * yScale;
   });
 }
 
@@ -1953,7 +1956,7 @@ function tick() {
   if (IS_MOBILE) {
     // ── MOBILE: lightweight loop ─────────────────────────────
     // Run at ~20fps (every 3rd frame) to stay well under budget.
-    if (frame % 3 !== 0) return;
+    if (frame % 2 !== 0) return;
 
     // Dark fill only — no nebulae (5x createRadialGradient per frame),
     // no shooting stars (gradient stroke), reduced star count handled below.
