@@ -710,6 +710,119 @@
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: #03040c; }
   ::-webkit-scrollbar-thumb { background: rgba(232,200,74,0.2); border-radius: 3px; }
+  /* ── VOICES SECTION ── */
+  .voices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    margin-top: 3rem;
+    max-width: 860px;
+  }
+
+  .voice-card {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .voice-card.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .voice-card:nth-child(2) { transition-delay: 0.08s; }
+  .voice-card:nth-child(3) { transition-delay: 0.16s; }
+  .voice-card:nth-child(4) { transition-delay: 0.24s; }
+  .voice-card:nth-child(5) { transition-delay: 0.32s; }
+
+  .voice-portrait-wrap {
+    flex-shrink: 0;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--voice-color, rgba(232,200,74,0.4));
+    box-shadow: 0 0 20px var(--voice-color, rgba(232,200,74,0.15));
+    background: rgba(10,14,24,0.6);
+  }
+  .voice-portrait-wrap.voice-portrait-missing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+  }
+  .voice-portrait-wrap.voice-portrait-missing::after {
+    content: '✦';
+    color: rgba(232,200,74,0.3);
+  }
+  .voice-portrait {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  .voice-content {
+    flex: 1;
+    border-left: 3px solid var(--voice-accent, rgba(232,200,74,0.25));
+    padding-left: 1.5rem;
+  }
+
+  .voice-name {
+    font-family: 'Charm', serif;
+    font-size: 1.25rem;
+    color: var(--cream);
+    margin-bottom: 0.15rem;
+  }
+
+  .voice-title {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(253,246,232,0.45);
+    margin-bottom: 0.9rem;
+  }
+
+  .voice-quote {
+    margin: 0;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: rgba(253,246,232,0.72);
+    font-family: 'Lora', Georgia, serif;
+  }
+
+  .voice-stamp {
+    font-family: 'Courier New', Courier, monospace;
+    font-style: normal;
+    font-size: 0.82rem;
+    font-weight: bold;
+    color: rgba(180,80,80,0.85);
+    letter-spacing: 0.05em;
+    border: 1.5px solid rgba(180,80,80,0.5);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    margin-left: 0.3rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    .voice-card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .voice-content {
+      border-left: none;
+      border-top: 3px solid var(--voice-accent, rgba(232,200,74,0.25));
+      padding-left: 0;
+      padding-top: 1rem;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -937,19 +1050,75 @@
   </div>
 </div>
 
-<!-- ══ RUMORS ══ -->
+<!-- ══ VOICES ══ -->
 <section>
-  <p class="section-label">Things People Are Saying</p>
-  <h2 class="section-title" style="color: var(--violet);">Rumors from across Anavale</h2>
+  <p class="section-label">The People of Anavale</p>
+  <h2 class="section-title" style="color: var(--violet);">Voices from across the world</h2>
   <p class="section-body">
-    Gathered from taverns, market stalls, and the kind of conversations that stop when a stranger walks in.
+    Anavale is full of people who are funny and complicated and trying their best. Some of them are in charge of things. Some of them are very famous frogs. All of them have something to say about what's happening out there.
   </p>
-  <div class="rumor-list">
-    <div class="rumor">"<span>The Queen of Sohot's robes have been looking a little… muted lately.</span> The court says it's the dye. Three seamstresses have been dismissed this month. The dye is fine."</div>
-    <div class="rumor">"Someone left a <span>black prism</span> carved into the doorframe of the old mill on the east road. Nobody knows who. The miller moved out the next morning. Didn't take anything with him."</div>
-    <div class="rumor">"The <span>Bumble Frogs in the Jani Forest</span> have gone quiet. All of them. Bumble Frogs don't go quiet. That's not a thing they do."</div>
-    <div class="rumor">"My cousin works at the Formery and says they received a form this week that was filed in a <span>script no one alive can read.</span> The date on it predates the current calendar system by several centuries. They processed it anyway. Apparently it was a renewal."</div>
-    <div class="rumor">"A <span>Hollowmoth</span> was spotted in Reveltown last week. In the middle of the festival district. In full daylight. It landed on a child's shoulder and sat there for an hour. The child said it felt sad. The child was right."</div>
+  <div class="voices-list">
+
+    <!-- Chancellor Mira Voss -->
+    <div class="voice-card reveal">
+      <div class="voice-portrait-wrap" style="--voice-color: rgba(74,200,184,0.5);">
+        <img class="voice-portrait" src="assets/images/characters/chancellor-mira-voss.webp" alt="Chancellor Mira Voss" onerror="this.parentElement.classList.add('voice-portrait-missing')">
+      </div>
+      <div class="voice-content" style="--voice-accent: rgba(74,200,184,0.35);">
+        <div class="voice-name">Chancellor Mira Voss</div>
+        <div class="voice-title">Rotating Chancellor · The Caldenric Accord · Solenveil</div>
+        <blockquote class="voice-quote">"The Confederation has received seventeen incident reports from the Wanderkeep this year. We have acknowledged all seventeen. I would like to note, for the record, that acknowledging a report and doing nothing about it are not the same thing. I would also like to note that I am currently being prevented from doing something about it by Forms 12-G through 12-K."</blockquote>
+      </div>
+    </div>
+
+    <!-- Archivist Pellum -->
+    <div class="voice-card reveal">
+      <div class="voice-portrait-wrap" style="--voice-color: rgba(106,58,170,0.5);">
+        <img class="voice-portrait" src="assets/images/characters/archivist-pellum.webp" alt="Archivist Pellum" onerror="this.parentElement.classList.add('voice-portrait-missing')">
+      </div>
+      <div class="voice-content" style="--voice-accent: rgba(106,58,170,0.35);">
+        <div class="voice-name">Archivist Pellum</div>
+        <div class="voice-title">Grand Archivist · The Stillkeep · Lightcrak</div>
+        <blockquote class="voice-quote">"The Stillkeep has been searching for Veilhaven for forty years. We have not found it. I want to be clear that this is not because we have been looking in the wrong place. We have been looking in the right place. The right place simply does not wish to be found yet, and we have decided to respect that. We are patient people."</blockquote>
+      </div>
+    </div>
+
+    <!-- Headmistress Sova Drin -->
+    <div class="voice-card reveal">
+      <div class="voice-portrait-wrap" style="--voice-color: rgba(90,45,160,0.5);">
+        <img class="voice-portrait" src="assets/images/characters/headmistress-sova-drin.webp" alt="Headmistress Sova Drin" onerror="this.parentElement.classList.add('voice-portrait-missing')">
+      </div>
+      <div class="voice-content" style="--voice-accent: rgba(90,45,160,0.35);">
+        <div class="voice-name">Headmistress Sova Drin</div>
+        <div class="voice-title">Director-General · The Gigglegloom Conclave · Prismhold</div>
+        <blockquote class="voice-quote">"The Gigglegloom Conclave detected an anomaly in the southern color-health readings fourteen weeks ago. We are currently completing the required internal review before any external communication is appropriate. The process has seventeen steps. We are on step four. I am aware of how that sounds."</blockquote>
+      </div>
+    </div>
+
+    <!-- Strix -->
+    <div class="voice-card reveal">
+      <div class="voice-portrait-wrap" style="--voice-color: rgba(120,130,160,0.4);">
+        <img class="voice-portrait" src="assets/images/characters/strix.webp" alt="Strix" onerror="this.parentElement.classList.add('voice-portrait-missing')">
+      </div>
+      <div class="voice-content" style="--voice-accent: rgba(120,130,160,0.25);">
+        <div class="voice-name">Strix</div>
+        <div class="voice-title">Northern Trade Controller · Frostgate · Nombi</div>
+        <blockquote class="voice-quote">"Northern trade has never been more stable. I want the southern merchants to understand that. The routes are open, the tolls are fair, and Frostgate has never been quieter. Everyone should find that reassuring."</blockquote>
+      </div>
+    </div>
+
+    <!-- Petra Kindwell -->
+    <div class="voice-card reveal">
+      <div class="voice-portrait-wrap" style="--voice-color: rgba(106,200,74,0.45);">
+        <img class="voice-portrait" src="assets/images/characters/petra-kindwell.webp" alt="Petra Kindwell" onerror="this.parentElement.classList.add('voice-portrait-missing')">
+      </div>
+      <div class="voice-content" style="--voice-accent: rgba(106,200,74,0.3);">
+        <div class="voice-name">Petra Kindwell</div>
+        <div class="voice-title">Senior Field Assessor · The Kindpact · Caparia</div>
+        <blockquote class="voice-quote">"We maintain a registry of every known Husk location in Anavale. It is not a short list. We update it every month. People ask us why we keep track when there is nothing to be done for a Husk. We keep track because someone should. Because if nobody counts the losses, it becomes very easy to pretend they are not happening."</blockquote>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -1861,7 +2030,7 @@ function initDarkWhisperEffect() {
 // ── SCROLL REVEAL ────────────────────────────────────────────
 const revealEls = document.querySelectorAll(
   '.section-label, .section-title, .section-body, .color-card, .type-card, ' +
-  '.region-card, .rumor, .dark-ornament, .dark-title, ' +
+  '.region-card, .rumor, .voice-card, .dark-ornament, .dark-title, ' +
   '.dark-body, .closing-title, .closing-body, .closing-sig, .fancy-divider'
 );
 
