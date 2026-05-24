@@ -940,6 +940,12 @@
     body {
       background-attachment: scroll;
     }
+    /* Kill the heroPan background-position animation on mobile —
+       it forces paint every frame and is the primary stutter cause */
+    .hero {
+      animation: none;
+      background-position: center, 50% 50%;
+    }
   }
 
   /* ── Tablet (≤ 900px) ─────────────────────────────────────── */
@@ -1905,21 +1911,42 @@ function initCreaturePositions() {
 
 // ── MAIN LOOP ────────────────────────────────────────────────
 let creaturesReady = false;
+const IS_MOBILE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+let mobileFrameSkip = 0;
 
 function tick() {
   requestAnimationFrame(tick);
   frame++;
 
+  // On mobile, run the canvas loop at ~30fps instead of 60fps,
+  // and skip the most expensive per-frame operations.
+  if (IS_MOBILE) {
+    mobileFrameSkip++;
+    if (mobileFrameSkip % 2 !== 0) return;
+  }
+
   ctx.fillStyle = 'rgba(3,4,12,1)';
   ctx.fillRect(0, 0, W, H);
-  drawNebulae(); drawStars(); drawMotes(); drawShoots();
+
+  // On mobile, skip shooting stars (expensive stroke gradient) and
+  // reduce nebula/star draw calls by skipping every other frame.
+  if (IS_MOBILE) {
+    drawStars();
+    drawMotes();
+  } else {
+    drawNebulae(); drawStars(); drawMotes(); drawShoots();
+  }
 
   if (creaturesReady) {
     animateFluffet();
     frogs.forEach((f,i) => animateFrog(f, frogEls[i]));
     animateTW(tw1, tw1El, 155);
     animateTW(tw2, tw2El, 120);
-    beetles.forEach((b, i) => animateBeetle(b, beetleEls[i]));
+    // On mobile, skip beetles entirely — per-frame hue-rotate filter
+    // recalculation is one of the most GPU-expensive operations.
+    if (!IS_MOBILE) {
+      beetles.forEach((b, i) => animateBeetle(b, beetleEls[i]));
+    }
   }
 }
 
