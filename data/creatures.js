@@ -328,6 +328,7 @@ var CREATURES = [
     gigglegloom_relationship: "Living expressions of each type. Their distribution is the most accurate real-time map of Gigglegloom health in any given area. The Wanderkeep's most experienced rangers can read a region's state from five minutes of observation.",
     dimmed_version: null,
     dm_notes: "Show Sparklings in healthy areas. Show their absence in Fading areas. If Greytalons show up where Sparklings were, the players should understand what has happened.",
+    image: "assets/images/creatures/sparklings.webp",
     player_facing: true,
     tags: ["sky", "common", "gigglegloom-indicator", "wanderkeep", "all-types", "greytalon-adverse"]
   },
