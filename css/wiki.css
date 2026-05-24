@@ -60,7 +60,7 @@
   --white:            #ffffff;
 
   /* ── Gradients ────────────────────────────────── */
-  --gradient-colorful:linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+  --gradient-colorful: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
 
   /* ── Supporting accent colors ───────────────────────────── */
   --teal:             #1a6a5a;
@@ -82,10 +82,13 @@
   --card-radius:      6px;       /* corner radius for cards and images */
   --border-radius:    4px;       /* corner radius for smaller elements */
 
-  /* ── Typography ─────────────────────────────────────────── 
-     Cinzel Decorative: display/heading font — ornate, fantasy feel
+  /* ── Typography ───────────────────────────────────────────
+     Charm: decorative headings — warm, fantasy, expressive
+     Cinzel Decorative: display/wiki titles — ornate, formal
      Roboto: sans-serif body — clean, readable at small sizes
-     Courier New: monospaced — used in Formery stamps, code */
+     Courier New: monospaced — used in Formery stamps, code
+     RULE: Always use variables. Never use hardcoded font names. */
+  --font-headers:     'Charm', serif;
   --font-serif:       'Cinzel Decorative', Georgia, serif;
   --font-sans:        'Roboto', system-ui, sans-serif;
   --font-mono:        'Courier New', Courier, monospace;
@@ -457,7 +460,7 @@ background-image: var(--gradient-colorful);
   font-size: 0.76rem;
   color: var(--ink-light);
   line-height: 1.5;
-  font-family: 'IM Fell English', Georgia, serif;
+  font-family: var(--font-sans);
 }
 
 /* Highlighted matching text within excerpts */
@@ -474,7 +477,7 @@ background-image: var(--gradient-colorful);
   font-size: 0.82rem;
   color: var(--ink);
   font-style: italic;
-  font-family: 'IM Fell English', Georgia, serif;
+  font-family: var(--font-sans);
 }
 
 

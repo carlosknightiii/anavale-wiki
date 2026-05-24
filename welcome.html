@@ -5,7 +5,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to Anavale</title>
-<link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Roboto:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --gold: #e8c84a;
@@ -18,6 +18,7 @@
     --dark2: #12182a;
     --ink: #1a1428;
     --white: #fff;
+    --font-headers:     'Charm', serif;
     --font-serif:       'Cinzel Decorative', Georgia, serif;
     --font-sans:        'Roboto', system-ui, sans-serif;
     --font-mono:        'Courier New', Courier, monospace;
@@ -29,7 +30,7 @@
       linear-gradient(rgba(3,4,12,0.78), rgba(3,4,12,0.78)),
       url('assets/images/regions/tavern-market-disctrict.webp') center/cover fixed;
     color: var(--cream);
-    font-family: 'Lora', Georgia, serif;
+    font-family: var(--font-sans);
     overflow-x: hidden;
     cursor: default;
   }
@@ -100,14 +101,14 @@
     display: flex; flex-direction: column; align-items: center; padding: 2rem;
   }
   .hero-eyebrow {
-    font-family: 'Lora', serif; font-style: italic;
+    font-family: var(--font-sans); font-style: italic;
     font-size: clamp(0.95rem, 1.2vw, 0.85rem);
     letter-spacing: 0.5em; text-transform: uppercase;
     color: var(--white); margin-bottom: 1.6rem;
     opacity: 0; animation: riseIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s forwards;
   }
   .hero-title {
-    font-family: 'Charm', serif;
+    font-family: var(--font-headers);
     font-size: clamp(5.5rem, 18vw, 13rem);
     font-weight: 700; line-height: 0.88; letter-spacing: 0.06em;
     background: linear-gradient(145deg,
@@ -169,7 +170,7 @@
   }
   .section-label.visible { opacity: 1; transform: none; }
   .section-title {
-    font-family: 'Charm', serif;
+    font-family: var(--font-headers);
     font-size: clamp(3rem, 5vw, 3.5rem);
     font-weight: 700;
     line-height: 1.1;
@@ -237,7 +238,7 @@
   .featherflow .color-dot { background: radial-gradient(circle, #a8f0e8, #4ac8b8, #4a90d8); }
   .steelfist .color-dot { background: radial-gradient(circle, #d8b8ff, #9a70e8, #5040a8); }
   .flamerage .color-dot { background: radial-gradient(circle, #fff0a8, #f8a840, #e84040); }
-  .color-name { font-family: 'Charm', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .color-name { font-family: var(--font-headers); font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; }
   .color-element { font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.6; margin-bottom: 0.8rem; }
   .color-desc { font-size: 0.95rem; line-height: 1.7; opacity: 0.8; }
   /* ── TYPE CARDS ── */
@@ -271,7 +272,7 @@
   }
   .type-card-content { padding: 1.25rem 1.5rem 1.5rem; }
   .type-card-icon { width: 40px; height: 40px; margin-bottom: 0.75rem; display: block; }
-  .type-card-name { font-family: 'Charm', serif; font-size: 1.4rem; font-weight: 700; color: color-mix(in srgb, var(--type-color) 90%, #fff); margin-bottom: 0.3rem; }
+  .type-card-name { font-family: var(--font-headers); font-size: 1.4rem; font-weight: 700; color: color-mix(in srgb, var(--type-color) 90%, #fff); margin-bottom: 0.3rem; }
   .type-card-element { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: color-mix(in srgb, var(--type-color) 70%, #fff); opacity: 0.8; margin-bottom: 0.75rem; }
   .type-card-desc { font-size: 0.9rem; line-height: 1.7; opacity: 0.75; }
   /* ── CREATURE GRID ── */
@@ -306,7 +307,7 @@
     border-radius: 10px 10px 0 0;
     display: block;
   }
-  .creature-name { font-family: 'Charm', serif; font-size: 1.3rem; font-weight: 700; color: var(--gold); margin-bottom: 0.5rem; }
+  .creature-name { font-family: var(--font-headers); font-size: 1.3rem; font-weight: 700; color: var(--gold); margin-bottom: 0.5rem; }
   .creature-desc { font-size: 0.92rem; line-height: 1.7; opacity: 0.75; }
   /* ── PARTITION ANIMATION ── */
   #partition-section {
@@ -336,7 +337,7 @@
     max-width: min(480px, 84vw);
     width: 100%;
     text-align: center;
-    font-family: 'Lora', Georgia, serif;
+    font-family: var(--font-sans);
     color: var(--cream);
     word-break: break-word;
     overflow-wrap: break-word;
@@ -352,7 +353,7 @@
   }
   .ptl.show { opacity: 1; transform: none; }
   .ptl-lg {
-    font-family: 'Charm', serif;
+    font-family: var(--font-headers);
     font-size: clamp(1.4rem, 5vw, 2.4rem);
     font-weight: 700;
     color: var(--cream);
@@ -458,7 +459,7 @@
   }
   .religion-content { flex: 1; position: relative; z-index: 1; }
   .religion-name {
-    font-family: 'Charm', serif;
+    font-family: var(--font-headers);
     font-size: 1.6rem;
     font-weight: 700;
     margin-bottom: 0.3rem;
@@ -554,7 +555,7 @@
   .god-solvara .god-orb { background: radial-gradient(circle, #d8b8f8, #9a70e8); }
   .god-grak .god-orb  { background: radial-gradient(circle, #888888, #444444); }
   .god-name {
-    font-family: 'Charm', serif; font-size: 1.8rem; font-weight: 700;
+    font-family: var(--font-headers); font-size: 1.8rem; font-weight: 700;
     margin-bottom: 0.3rem; position: relative; z-index: 1;
   }
   .god-oro .god-name    { color: #f8e070; }
@@ -604,9 +605,9 @@
     border-left: 3px solid var(--voice-accent, rgba(232,200,74,0.25));
     padding-left: 1.5rem;
   }
-  .voice-name { font-family: 'Charm', serif; font-size: 1.825rem; color: var(--cream); margin-bottom: 0.15rem; }
+  .voice-name { font-family: var(--font-headers); font-size: 1.825rem; color: var(--cream); margin-bottom: 0.15rem; }
   .voice-title { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.9rem; }
-  .voice-quote { margin: 0; font-style: italic; font-size: 1rem; line-height: 1.75; color: rgba(253,246,232,0.72); font-family: 'Lora', Georgia, serif; }
+  .voice-quote { margin: 0; font-style: italic; font-size: 1rem; line-height: 1.75; color: rgba(253,246,232,0.72); font-family: var(--font-sans); }
   .voice-stamp {
     font-family: 'Courier New', Courier, monospace; font-style: normal; font-size: 0.82rem;
     font-weight: bold; color: rgba(180,80,80,0.85); letter-spacing: 0.05em;
@@ -619,7 +620,7 @@
     padding: 6rem 2rem 8rem; max-width: 800px; margin: 0 auto;
   }
   .closing-title {
-    font-family: 'Charm', serif; font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 700;
+    font-family: var(--font-headers); font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 700;
     line-height: 1.1;
     background: linear-gradient(135deg, #e8c84a, #e87a8a, #9a70e8, #4ac8b8);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -634,7 +635,7 @@
     transition: opacity 1s ease 0.2s, transform 1s ease 0.2s;
   }
   .closing-body.visible { opacity: 1; transform: none; }
-  .closing-sig { font-family: 'Charm', serif; font-size: 1.1rem; color: var(--gold); font-style: italic; opacity: 0; transition: opacity 1s ease 0.4s; }
+  .closing-sig { font-family: var(--font-headers); font-size: 1.1rem; color: var(--gold); font-style: italic; opacity: 0; transition: opacity 1s ease 0.4s; }
   .closing-sig.visible { opacity: 1; }
   .cta-btn {
     display: inline-block; margin-top: 2.5rem;
@@ -712,7 +713,7 @@
     opacity: 0.9;
   }
   .home-region-row-name {
-    font-family: 'Charm', serif;
+    font-family: var(--font-headers);
     font-size: 2rem;
     font-weight: 700;
     color: #ffffff;
@@ -785,15 +786,15 @@
   }
   #vareth-text-inner {
     text-align: center; color: var(--cream);
-    font-family: 'Lora', Georgia, serif;
+    font-family: var(--font-sans);
   }
   .vtl-lg { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 400; line-height: 1.3; margin: 0.6rem 0; opacity: 0; transition: opacity 0.8s ease; }
   .vtl-lg.show { opacity: 1; }
   .vtl-sm { font-size: clamp(0.9rem, 1.8vw, 1.2rem); letter-spacing: 0.08em; margin: 0.4rem 0; opacity: 0; transition: opacity 0.8s ease; color: rgba(253,246,232,0.6); }
   .vtl-sm.show { opacity: 1; }
-  .vtl-name { font-family: 'Charm', serif; font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 700; margin: 0.8rem 0 0.2rem; opacity: 0; transition: opacity 0.8s ease; }
+  .vtl-name { font-family: var(--font-headers); font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 700; margin: 0.8rem 0 0.2rem; opacity: 0; transition: opacity 0.8s ease; }
   .vtl-name.show { opacity: 1; }
-  .vtl-final { font-family: 'Charm', serif; font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 700; margin: 1.2rem 0 0; opacity: 0; transition: opacity 0.8s ease; color: rgba(180,140,255,0.9); }
+  .vtl-final { font-family: var(--font-headers); font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 700; margin: 1.2rem 0 0; opacity: 0; transition: opacity 0.8s ease; color: rgba(180,140,255,0.9); }
   .vtl-final.show { opacity: 1; }
   /* ── REVEAL ── */
   .reveal {
@@ -935,7 +936,7 @@
   </div>
 </div>
 <div class="color-thesis reveal" style="text-align:center; padding: 4rem 2rem; max-width: 680px; margin: 0 auto;">
-  <p style="font-family:'Lora',Georgia,serif; font-size:1.4rem; font-style:italic; line-height:1.8; color:var(--cream); opacity:0.9;">
+  <p style="font-family:var(--font-sans); font-size:1.4rem; font-style:italic; line-height:1.8; color:var(--cream); opacity:0.9;">
     Every colorful thing is an act of defiance.<br>Every grey thing is a loss.
   </p>
 </div>
