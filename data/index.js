@@ -2,7 +2,7 @@
 // Unified index of all Anavale world data.
 // Each collection references the var arrays defined in the individual data files.
 // Load order in index.html: regions.js → nations.js → cities.js → creatures.js
-//   → organizations.js → characters.js → pois.js → items.js → religions.js → index.js
+//   → organizations.js → characters.js → pois.js → items.js → backgrounds.js → religions.js → index.js
 // ─────────────────────────────────────────────────────────────────────────────
 
 var WORLD_DATA = {
@@ -14,6 +14,7 @@ var WORLD_DATA = {
   characters:    typeof CHARACTERS    !== "undefined" ? CHARACTERS    : [],
   pois:          typeof POIS          !== "undefined" ? POIS          : [],
   religions:     typeof RELIGIONS     !== "undefined" ? RELIGIONS     : [],
+  backgrounds:   typeof BACKGROUNDS   !== "undefined" ? BACKGROUNDS   : [],
   spells:        typeof SPELL_DATA    !== "undefined" ? SPELL_DATA    : []
 };
 
