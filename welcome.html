@@ -937,14 +937,46 @@
   /* ── iOS fix: background-attachment: fixed causes rendering
      bugs on iOS Safari. Switch to scroll on touch devices. ── */
   @media (hover: none) {
+    /* ── MOBILE PERFORMANCE: eliminate all per-frame paint work ── */
+
+    /* 1. iOS fixed-background repaint bug */
     body {
       background-attachment: scroll;
     }
-    /* Kill the heroPan background-position animation on mobile —
-       it forces paint every frame and is the primary stutter cause */
+
+    /* 2. Kill heroPan — animates background-position, forces repaint every frame */
     .hero {
       animation: none;
       background-position: center, 50% 50%;
+    }
+
+    /* 3. Kill shimmer on hero title — background-position animation on gradient
+          clipped text with drop-shadow forces off the GPU compositing path.
+          Replace with a single static gold color, still looks great. */
+    .hero-title {
+      background: none;
+      -webkit-text-fill-color: var(--gold);
+      color: var(--gold);
+      animation: riseIn 1.0s cubic-bezier(0.22,1,0.36,1) 0.3s forwards;
+      filter: none;
+    }
+
+    /* 4. Remove drop-shadow filters from creature images — combined with
+          will-change:transform these create too many compositor layers on mobile.
+          Keep will-change so transforms stay GPU-accelerated. */
+    #bumblefrog, #bumblefrog2, #bumblefrog3 {
+      filter: none;
+    }
+    #fluffet {
+      filter: none;
+    }
+    #tinywings, #tinywings2 {
+      filter: none;
+    }
+
+    /* 5. Remove blur filter from color card pseudo-elements */
+    .color-card::before {
+      filter: none;
     }
   }
 
@@ -1911,42 +1943,45 @@ function initCreaturePositions() {
 
 // ── MAIN LOOP ────────────────────────────────────────────────
 let creaturesReady = false;
+// Detect touch/mobile devices to run a lightweight canvas loop
 const IS_MOBILE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-let mobileFrameSkip = 0;
 
 function tick() {
   requestAnimationFrame(tick);
   frame++;
 
-  // On mobile, run the canvas loop at ~30fps instead of 60fps,
-  // and skip the most expensive per-frame operations.
   if (IS_MOBILE) {
-    mobileFrameSkip++;
-    if (mobileFrameSkip % 2 !== 0) return;
+    // ── MOBILE: lightweight loop ─────────────────────────────
+    // Run at ~20fps (every 3rd frame) to stay well under budget.
+    if (frame % 3 !== 0) return;
+
+    // Dark fill only — no nebulae (5x createRadialGradient per frame),
+    // no shooting stars (gradient stroke), reduced star count handled below.
+    ctx.fillStyle = 'rgba(3,4,12,1)';
+    ctx.fillRect(0, 0, W, H);
+    drawMotes(); // motes only — simple arc fills, cheap
+
+    if (creaturesReady) {
+      animateFluffet();
+      frogs.forEach((f,i) => animateFrog(f, frogEls[i]));
+      animateTW(tw1, tw1El, 155);
+      animateTW(tw2, tw2El, 120);
+      // Beetles skipped — per-frame hue-rotate filter is too expensive
+    }
+    return;
   }
 
+  // ── DESKTOP: full loop ───────────────────────────────────
   ctx.fillStyle = 'rgba(3,4,12,1)';
   ctx.fillRect(0, 0, W, H);
-
-  // On mobile, skip shooting stars (expensive stroke gradient) and
-  // reduce nebula/star draw calls by skipping every other frame.
-  if (IS_MOBILE) {
-    drawStars();
-    drawMotes();
-  } else {
-    drawNebulae(); drawStars(); drawMotes(); drawShoots();
-  }
+  drawNebulae(); drawStars(); drawMotes(); drawShoots();
 
   if (creaturesReady) {
     animateFluffet();
     frogs.forEach((f,i) => animateFrog(f, frogEls[i]));
     animateTW(tw1, tw1El, 155);
     animateTW(tw2, tw2El, 120);
-    // On mobile, skip beetles entirely — per-frame hue-rotate filter
-    // recalculation is one of the most GPU-expensive operations.
-    if (!IS_MOBILE) {
-      beetles.forEach((b, i) => animateBeetle(b, beetleEls[i]));
-    }
+    beetles.forEach((b, i) => animateBeetle(b, beetleEls[i]));
   }
 }
 
