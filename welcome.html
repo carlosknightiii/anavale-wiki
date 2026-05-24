@@ -312,7 +312,7 @@
   #partition-section {
     position: relative;
     z-index: 1;
-    height: 500vh;
+    height: 650vh;
     background: #03040c;
   }
   #partition-sticky {
@@ -333,21 +333,25 @@
   }
   #partition-text-panel {
     position: absolute;
-    inset: 0;
+    left: 0; right: 0;
+    bottom: 10vh;
     z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 3rem 2rem;
+    justify-content: flex-end;
+    padding: 0 2.5rem;
     pointer-events: none;
+    box-sizing: border-box;
   }
   #partition-text-inner {
-    max-width: 680px;
+    max-width: min(560px, 90vw);
     width: 100%;
     text-align: center;
     font-family: 'Lora', Georgia, serif;
     color: var(--cream);
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   .ptl {
     display: block;
@@ -355,31 +359,31 @@
     transform: translateY(10px);
     transition: opacity 0.7s ease, transform 0.7s ease;
     line-height: 1.6;
-    margin: 0.5rem 0;
+    margin: 0.35rem 0;
   }
   .ptl.show { opacity: 1; transform: none; }
   .ptl-lg {
     font-family: 'Charm', serif;
-    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-size: clamp(1.4rem, 5vw, 2.4rem);
     font-weight: 700;
     color: var(--cream);
   }
   .ptl-md {
-    font-size: clamp(1rem, 2.2vw, 1.3rem);
+    font-size: clamp(0.9rem, 3vw, 1.15rem);
     font-style: italic;
-    color: rgba(253,246,232,0.82);
+    color: rgba(253,246,232,0.9);
   }
   .ptl-sm {
-    font-size: clamp(0.85rem, 1.6vw, 1rem);
-    letter-spacing: 0.06em;
-    color: rgba(253,246,232,0.55);
+    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+    letter-spacing: 0.04em;
+    color: rgba(253,246,232,0.75);
   }
-  .ptl-gap { display: block; height: 1.2rem; }
-  .ptl-oro     { color: #f8e070; }
-  .ptl-nara    { color: #6ac88a; }
-  .ptl-thyun   { color: #8ab8f8; }
-  .ptl-solvara { color: #c098f8; }
-  .ptl-grak    { color: #909090; }
+  .ptl-gap { display: block; height: 0.6rem; }
+  .ptl-oro     { color: #f8e070; text-shadow: 0 0 20px rgba(248,224,112,0.5); }
+  .ptl-nara    { color: #6ac88a; text-shadow: 0 0 20px rgba(106,200,138,0.5); }
+  .ptl-thyun   { color: #8ab8f8; text-shadow: 0 0 20px rgba(138,184,248,0.5); }
+  .ptl-solvara { color: #c098f8; text-shadow: 0 0 20px rgba(192,152,248,0.5); }
+  .ptl-grak    { color: #d0ccd8; text-shadow: 0 0 20px rgba(200,196,220,0.4); }
   #partition-bottom-fade {
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -1618,8 +1622,8 @@ function initDarkWhisperEffect() {}
 })();
 // ── PARTITION ANIMATION ──────────────────────────────────────
 (function() {
-  const section  = document.getElementById('partition-section');
-  const canvas   = document.getElementById('partition-canvas');
+  const section   = document.getElementById('partition-section');
+  const canvas    = document.getElementById('partition-canvas');
   const textInner = document.getElementById('partition-text-inner');
   if (!section || !canvas) return;
 
@@ -1627,8 +1631,9 @@ function initDarkWhisperEffect() {}
   let W, H;
 
   function resize() {
-    W = canvas.width  = section.querySelector('#partition-sticky').offsetWidth;
-    H = canvas.height = section.querySelector('#partition-sticky').offsetHeight;
+    const sticky = section.querySelector('#partition-sticky');
+    W = canvas.width  = sticky ? sticky.offsetWidth  : window.innerWidth;
+    H = canvas.height = sticky ? sticky.offsetHeight : window.innerHeight;
   }
 
   function getProgress() {
@@ -1637,235 +1642,309 @@ function initDarkWhisperEffect() {}
     return Math.max(0, Math.min(1, -rect.top / total));
   }
 
-  // ── God light definitions ──
-  const GODS = [
-    { id:'oro',     color:'#e8c84a', glow:'rgba(248,224,112,',  label:'Oro',     x:0, y:0, r:28 },
-    { id:'nara',    color:'#6ac88a', glow:'rgba(106,200,138,',  label:'Nara',    x:0, y:0, r:28 },
-    { id:'grak',    color:'#c8c8c8', glow:'rgba(200,200,200,',  label:'Grak',    x:0, y:0, r:28 },
-    { id:'thyun',   color:'#8ab8f8', glow:'rgba(138,184,248,',  label:'Thyun',   x:0, y:0, r:0,  alpha:0 },
-    { id:'solvara', color:'#c098f8', glow:'rgba(192,152,248,',  label:'Solvara', x:0, y:0, r:0,  alpha:0 },
-  ];
+  function getApproach() {
+    const rect = section.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (window.innerHeight * 1.2)));
+  }
 
-  // ── Text lines ──
+  // God light state
+  const G = {
+    oro:     { color:'#e8c84a', glow:'rgba(248,224,112,', r:0, x:0, y:0, alpha:1 },
+    nara:    { color:'#6ac88a', glow:'rgba(106,200,138,', r:0, x:0, y:0, alpha:1 },
+    grak:    { color:'#c8c8c8', glow:'rgba(200,200,200,', r:0, x:0, y:0, alpha:1 },
+    thyun:   { color:'#8ab8f8', glow:'rgba(138,184,248,', r:0, x:0, y:0, alpha:0 },
+    solvara: { color:'#c098f8', glow:'rgba(192,152,248,', r:0, x:0, y:0, alpha:0 },
+  };
+
+  // Text lines — all keyed to scroll progress
+  // in/out are scroll progress values [0..1]
   const LINES = [
-    { cls:'ptl ptl-lg',              text:'Before the world had color,',         in:0.05, out:0.18 },
-    { cls:'ptl ptl-lg',              text:'there were three.',                    in:0.07, out:0.18 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.07, out:0.18 },
-    { cls:'ptl ptl-md ptl-oro',      text:'Oro — color, joy, laughter.',         in:0.09, out:0.18 },
-    { cls:'ptl ptl-md ptl-nara',     text:'Nara — wild magic, living things.',   in:0.11, out:0.18 },
-    { cls:'ptl ptl-md ptl-grak',     text:'Grak — order, balance, control.',     in:0.13, out:0.18 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.13, out:0.18 },
-    { cls:'ptl ptl-sm',              text:'They were balanced. For a long time.', in:0.15, out:0.18 },
-
-    { cls:'ptl ptl-lg',              text:'Then Grak developed grief.',           in:0.22, out:0.36 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.22, out:0.36 },
-    { cls:'ptl ptl-md',              text:'Grief over impermanence.',             in:0.24, out:0.36 },
-    { cls:'ptl ptl-md',              text:'Grief over things that changed',       in:0.26, out:0.36 },
-    { cls:'ptl ptl-md',              text:'and could not be returned to.',        in:0.28, out:0.36 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.28, out:0.36 },
-    { cls:'ptl ptl-sm',              text:'He confronted Nara. She would not give him what he wanted.', in:0.30, out:0.36 },
-    { cls:'ptl ptl-sm',              text:'Nobody could.',                        in:0.32, out:0.36 },
-
-    { cls:'ptl ptl-lg',              text:'The collision.',                       in:0.42, out:0.55 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.42, out:0.55 },
-    { cls:'ptl ptl-md ptl-thyun',    text:'Thyun was sheared from Nara —',       in:0.45, out:0.55 },
-    { cls:'ptl ptl-md ptl-thyun',    text:'born as a full independent god.',      in:0.47, out:0.55 },
-    { cls:'ptl ptl-md ptl-solvara',  text:'Solvara was sheared from Nara —',     in:0.49, out:0.55 },
-    { cls:'ptl ptl-md ptl-solvara',  text:'Nara\'s shadow-self, set free.',       in:0.51, out:0.55 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.51, out:0.55 },
-    { cls:'ptl ptl-sm',              text:'Nara survived. Smaller.',              in:0.53, out:0.55 },
-
-    { cls:'ptl ptl-lg ptl-grak',     text:'Grak was emptied.',                   in:0.60, out:0.75 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.60, out:0.75 },
-    { cls:'ptl ptl-md',              text:'Everything he was — drained away.',   in:0.62, out:0.75 },
-    { cls:'ptl ptl-md',              text:'What remained was hunger.',            in:0.64, out:0.75 },
-    { cls:'ptl ptl-gap',             text:'',                                     in:0.64, out:0.75 },
-    { cls:'ptl ptl-sm ptl-grak',     text:'The Vareth is what remained of Grak after the Partition.', in:0.66, out:0.75 },
-    { cls:'ptl ptl-sm ptl-grak',     text:'Not a creation. A remainder.',        in:0.68, out:0.75 },
-
-    { cls:'ptl ptl-lg',              text:'Five gods.',                           in:0.80, out:0.95 },
-    { cls:'ptl ptl-md',              text:'Four of them are trying to save the world.', in:0.83, out:0.95 },
-    { cls:'ptl ptl-md ptl-grak',     text:'The fifth is what the world needs saving from.', in:0.86, out:0.95 },
+    // Phase 0 — balance
+    { cls:'ptl ptl-lg',             text:'Before the world had color,',                      in:0.02, out:0.13 },
+    { cls:'ptl ptl-lg',             text:'there were three.',                                 in:0.03, out:0.13 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.03, out:0.13 },
+    { cls:'ptl ptl-md ptl-oro',     text:'Oro — color, joy, laughter.',                      in:0.04, out:0.13 },
+    { cls:'ptl ptl-md ptl-nara',    text:'Nara — wild magic, living things.',                in:0.05, out:0.13 },
+    { cls:'ptl ptl-md ptl-grak',    text:'Grak — order, balance, control.',                  in:0.06, out:0.13 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.06, out:0.13 },
+    { cls:'ptl ptl-sm',             text:'They were balanced. For a long time.',              in:0.08, out:0.13 },
+    // Phase 1 — grief
+    { cls:'ptl ptl-lg',             text:'Then Grak developed grief.',                       in:0.17, out:0.27 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.17, out:0.27 },
+    { cls:'ptl ptl-md',             text:'Grief over impermanence.',                          in:0.19, out:0.27 },
+    { cls:'ptl ptl-md',             text:'Grief over things that changed',                    in:0.20, out:0.27 },
+    { cls:'ptl ptl-md',             text:'and could not be returned to.',                     in:0.21, out:0.27 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.21, out:0.27 },
+    { cls:'ptl ptl-sm',             text:'He confronted Nara. She would not give him what he wanted.', in:0.23, out:0.27 },
+    { cls:'ptl ptl-sm',             text:'Nobody could.',                                     in:0.24, out:0.27 },
+    // Phase 2 — collision (text minimal so gods visible)
+    { cls:'ptl ptl-lg',             text:'The collision.',                                    in:0.32, out:0.42 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.32, out:0.42 },
+    { cls:'ptl ptl-sm',             text:'Nara survived. Smaller.',                           in:0.38, out:0.42 },
+    // Phase 3 — born
+    { cls:'ptl ptl-md ptl-thyun',   text:'Thyun — born from the collision.',                 in:0.46, out:0.54 },
+    { cls:'ptl ptl-md ptl-solvara', text:'Solvara — Nara\'s shadow-self, set free.',         in:0.48, out:0.54 },
+    { cls:'ptl ptl-sm',             text:'Full gods. Not aspects. Not echoes. Gods.',         in:0.50, out:0.54 },
+    // Phase 4 — Grak drains
+    { cls:'ptl ptl-lg ptl-grak',    text:'Grak was emptied.',                                in:0.58, out:0.68 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.58, out:0.68 },
+    { cls:'ptl ptl-md ptl-grak',    text:'Everything he was — drained away.',                in:0.60, out:0.68 },
+    { cls:'ptl ptl-md ptl-grak',    text:'What remained was hunger.',                        in:0.61, out:0.68 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.61, out:0.68 },
+    { cls:'ptl ptl-sm ptl-grak',    text:'The Vareth is what remained of Grak after the Partition.', in:0.63, out:0.68 },
+    { cls:'ptl ptl-sm ptl-grak',    text:'Not a creation. A remainder.',                     in:0.64, out:0.68 },
+    // Phase 5 — five gods
+    { cls:'ptl ptl-lg',             text:'Five gods.',                                        in:0.72, out:0.79 },
+    { cls:'ptl ptl-md',             text:'Four of them are trying to save the world.',        in:0.73, out:0.79 },
+    { cls:'ptl ptl-md ptl-grak',    text:'The fifth is what the world needs saving from.',   in:0.75, out:0.79 },
   ];
 
-  // Build text DOM
-  textInner.innerHTML = LINES.map((l,i) =>
-    `<span class="ptl ${l.cls.replace('ptl ','')}" data-i="${i}">${l.text}</span>`
+  // Build DOM
+  textInner.innerHTML = LINES.map((l, i) =>
+    `<span class="${l.cls}" data-i="${i}">${l.text}</span>`
   ).join('');
-  const lineEls = Array.from(textInner.querySelectorAll('.ptl'));
+  const lineEls = Array.from(textInner.querySelectorAll('span'));
 
-  function drawGod(g, alpha) {
-    if (!alpha || g.r <= 0) return;
+  function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
+  function ease(t) { t = Math.max(0,Math.min(1,t)); return t<0.5?2*t*t:-1+(4-2*t)*t; }
+  function prog(p, a, b) { return Math.max(0, Math.min(1, (p-a)/(b-a))); }
+
+  function drawGod(g, overrideAlpha) {
+    const alpha = overrideAlpha !== undefined ? overrideAlpha : g.alpha;
+    if (alpha <= 0 || g.r <= 0) return;
     ctx.save();
     ctx.globalAlpha = Math.min(1, alpha);
-
-    // Outer glow
-    const grad = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, g.r * 4);
-    grad.addColorStop(0,   g.glow + '0.5)');
-    grad.addColorStop(0.4, g.glow + '0.15)');
-    grad.addColorStop(1,   g.glow + '0)');
+    // Glow
+    const grd = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, g.r * 4.5);
+    grd.addColorStop(0,   g.glow + '0.55)');
+    grd.addColorStop(0.35,g.glow + '0.18)');
+    grd.addColorStop(1,   g.glow + '0)');
     ctx.beginPath();
-    ctx.arc(g.x, g.y, g.r * 4, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
+    ctx.arc(g.x, g.y, g.r * 4.5, 0, Math.PI*2);
+    ctx.fillStyle = grd;
     ctx.fill();
-
     // Core
     const core = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, g.r);
     core.addColorStop(0,   '#ffffff');
-    core.addColorStop(0.3, g.color);
+    core.addColorStop(0.25, g.color);
     core.addColorStop(1,   g.glow + '0)');
     ctx.beginPath();
-    ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+    ctx.arc(g.x, g.y, g.r, 0, Math.PI*2);
     ctx.fillStyle = core;
     ctx.fill();
-
     ctx.restore();
   }
 
-  function drawLine(x1, y1, x2, y2, color, alpha) {
+  function drawConnector(g1, g2, color, alpha) {
+    if (alpha <= 0) return;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = color;
     ctx.lineWidth = 1;
-    ctx.setLineDash([4, 6]);
+    ctx.setLineDash([4,7]);
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(g1.x, g1.y);
+    ctx.lineTo(g2.x, g2.y);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
   }
-
-  function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
-  function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-  function progress(t, a, b) { return Math.max(0, Math.min(1, (t - a) / (b - a))); }
 
   function render() {
     requestAnimationFrame(render);
     resize();
     ctx.clearRect(0, 0, W, H);
 
-    const p = getProgress();
-    const cx = W / 2, cy = H / 2;
-    const t = performance.now() / 1000;
+    const p  = getProgress();
+    const ap = getApproach();
+    const t  = performance.now() / 1000;
+    const cx = W * 0.5;
+    const cy = H * 0.42; // gods sit in upper portion, text at bottom
 
-    // ── Phase 0: Three gods in balance (0 → 0.20) ──
-    // Oro left, Nara center-right, Grak right — triangle formation
-    const balanceT = progress(p, 0, 0.20);
-    const fadeInT  = progress(p, 0, 0.08);
+    // Fade entire canvas in as section approaches
+    const globalAlpha = Math.min(1, ap * 2);
+    if (globalAlpha <= 0) return;
 
-    const oroBase  = { x: cx - W*0.22, y: cy + H*0.06 };
-    const naraBase = { x: cx,           y: cy - H*0.10 };
-    const grakBase = { x: cx + W*0.22,  y: cy + H*0.06 };
+    // Float helpers
+    const fl = (i, amp) => Math.sin(t * 0.55 + i * 2.1) * amp * (1 - Math.min(1, p * 4));
 
-    // Gentle float
-    const float = (i, amp) => Math.sin(t * 0.6 + i * 2.1) * amp;
+    // ── Base positions ──
+    const oroBase  = { x: cx - W*0.20, y: cy + H*0.08 };
+    const naraBase = { x: cx,           y: cy - H*0.12 };
+    const grakBase = { x: cx + W*0.20,  y: cy + H*0.08 };
 
-    GODS[0].x = oroBase.x  + float(0, 8);
-    GODS[0].y = oroBase.y  + float(1, 6);
-    GODS[1].x = naraBase.x + float(2, 7);
-    GODS[1].y = naraBase.y + float(3, 8);
-    GODS[2].x = grakBase.x + float(4, 6);
-    GODS[2].y = grakBase.y + float(5, 7);
-    GODS[0].r = GODS[1].r = GODS[2].r = lerp(0, 28, ease(fadeInT));
+    // ── PHASE 0: Fade in, balance (0 → 0.15) ──
+    const fadeIn = ease(prog(p, 0, 0.06));
+    G.oro.r  = lerp(0, 26, fadeIn);
+    G.nara.r = lerp(0, 26, fadeIn);
+    G.grak.r = lerp(0, 26, fadeIn);
 
-    // Connection lines in balance phase
-    const lineAlpha = progress(p, 0.05, 0.15) * (1 - progress(p, 0.17, 0.22));
-    if (lineAlpha > 0) {
-      drawLine(GODS[0].x, GODS[0].y, GODS[1].x, GODS[1].y, '#e8c84a', lineAlpha * 0.3);
-      drawLine(GODS[1].x, GODS[1].y, GODS[2].x, GODS[2].y, '#6ac88a', lineAlpha * 0.3);
-      drawLine(GODS[0].x, GODS[0].y, GODS[2].x, GODS[2].y, '#c8c8c8', lineAlpha * 0.2);
+    G.oro.x  = oroBase.x  + fl(0, 10);
+    G.oro.y  = oroBase.y  + fl(1, 7);
+    G.nara.x = naraBase.x + fl(2, 8);
+    G.nara.y = naraBase.y + fl(3, 9);
+    G.grak.x = grakBase.x + fl(4, 9);
+    G.grak.y = grakBase.y + fl(5, 7);
+
+    // Connection lines
+    const lineA = ease(prog(p, 0.04, 0.10)) * (1 - ease(prog(p, 0.13, 0.17)));
+    drawConnector(G.oro,  G.nara, '#e8c84a', lineA * 0.35);
+    drawConnector(G.nara, G.grak, '#6ac88a', lineA * 0.35);
+    drawConnector(G.oro,  G.grak, '#c8c8c8', lineA * 0.25);
+
+    // ── PHASE 1: Grak approaches Nara (0.15 → 0.35) ──
+    if (p > 0.15) {
+      const apT = ease(prog(p, 0.15, 0.33));
+      G.grak.x = lerp(grakBase.x, naraBase.x + W*0.02, apT) + fl(4, 9) * (1-apT);
+      G.grak.y = lerp(grakBase.y, naraBase.y + H*0.02, apT) + fl(5, 7) * (1-apT);
+      // Grak desaturates as he approaches
+      const gv = Math.round(lerp(200, 120, ease(prog(p, 0.22, 0.34))));
+      G.grak.color = `rgb(${gv},${gv},${gv})`;
+      G.grak.glow  = `rgba(${gv},${gv},${gv},`;
     }
 
-    // ── Phase 1: Grak moves toward Nara (0.22 → 0.42) ──
-    const approachT = ease(progress(p, 0.22, 0.40));
-    if (p > 0.22) {
-      // Grak drifts toward Nara
-      GODS[2].x = lerp(grakBase.x, naraBase.x + 15, approachT) + float(4, 6) * (1 - approachT);
-      GODS[2].y = lerp(grakBase.y, naraBase.y + 10, approachT) + float(5, 7) * (1 - approachT);
-      // Grak starts desaturating
-      const greyT = progress(p, 0.28, 0.42);
-      GODS[2].color = `rgb(${lerp(200,160,greyT)},${lerp(200,160,greyT)},${lerp(200,160,greyT)})`;
-      GODS[2].glow  = `rgba(${Math.round(lerp(200,140,greyT))},${Math.round(lerp(200,140,greyT))},${Math.round(lerp(200,140,greyT))},`;
-    }
-
-    // ── Phase 2: Collision flash (0.40 → 0.52) ──
-    const collisionT = progress(p, 0.40, 0.52);
-    if (collisionT > 0 && collisionT < 1) {
-      // White flash at peak
-      const flashPeak = progress(p, 0.42, 0.46);
-      const flashFade = 1 - progress(p, 0.46, 0.54);
+    // ── PHASE 2: Collision flash (0.33 → 0.45) ──
+    const collT = prog(p, 0.33, 0.45);
+    if (collT > 0) {
+      const flashPeak = prog(p, 0.34, 0.37);
+      const flashFade = 1 - prog(p, 0.37, 0.44);
       const flash = Math.min(flashPeak, flashFade);
       if (flash > 0) {
         ctx.save();
-        ctx.globalAlpha = flash * 0.85;
-        const flashGrad = ctx.createRadialGradient(naraBase.x, naraBase.y, 0, naraBase.x, naraBase.y, W * 0.5);
-        flashGrad.addColorStop(0,   'rgba(255,255,255,1)');
-        flashGrad.addColorStop(0.3, 'rgba(240,230,200,0.6)');
-        flashGrad.addColorStop(1,   'rgba(255,255,255,0)');
-        ctx.fillStyle = flashGrad;
+        ctx.globalAlpha = flash * 0.9 * globalAlpha;
+        const fg = ctx.createRadialGradient(naraBase.x, naraBase.y, 0, naraBase.x, naraBase.y, W*0.6);
+        fg.addColorStop(0,   'rgba(255,255,255,1)');
+        fg.addColorStop(0.2, 'rgba(240,230,210,0.7)');
+        fg.addColorStop(1,   'rgba(255,255,255,0)');
+        ctx.fillStyle = fg;
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
       }
 
-      // Thyun and Solvara emerge from collision point
-      const emergeT = ease(progress(p, 0.46, 0.58));
-      GODS[3].alpha = emergeT;
-      GODS[3].r     = lerp(0, 22, emergeT);
-      GODS[3].x     = lerp(naraBase.x, naraBase.x - W*0.18, emergeT);
-      GODS[3].y     = lerp(naraBase.y, naraBase.y + H*0.18, emergeT);
+      // Thyun and Solvara emerge
+      const emergeT = ease(prog(p, 0.38, 0.50));
+      G.thyun.alpha   = emergeT;
+      G.thyun.r       = lerp(0, 20, emergeT);
+      G.thyun.x       = lerp(naraBase.x, naraBase.x - W*0.16, emergeT);
+      G.thyun.y       = lerp(naraBase.y, naraBase.y + H*0.20, emergeT);
 
-      GODS[4].alpha = emergeT;
-      GODS[4].r     = lerp(0, 22, emergeT);
-      GODS[4].x     = lerp(naraBase.x, naraBase.x + W*0.18, emergeT);
-      GODS[4].y     = lerp(naraBase.y, naraBase.y + H*0.18, emergeT);
+      G.solvara.alpha = emergeT;
+      G.solvara.r     = lerp(0, 20, emergeT);
+      G.solvara.x     = lerp(naraBase.x, naraBase.x + W*0.16, emergeT);
+      G.solvara.y     = lerp(naraBase.y, naraBase.y + H*0.20, emergeT);
 
       // Nara shrinks
-      GODS[1].r = lerp(28, 18, ease(progress(p, 0.46, 0.58)));
+      G.nara.r = lerp(26, 16, ease(prog(p, 0.38, 0.50)));
+
+      // Grak drifts away, draining to flat grey
+      const driftT = ease(prog(p, 0.38, 0.52));
+      G.grak.x = lerp(naraBase.x + W*0.02, cx + W*0.32, driftT);
+      G.grak.y = lerp(naraBase.y + H*0.02, cy + H*0.22, driftT);
+      const gv2 = Math.round(lerp(120, 70, ease(prog(p, 0.40, 0.56))));
+      G.grak.color = `rgb(${gv2},${gv2},${gv2})`;
+      G.grak.glow  = `rgba(${gv2},${gv2},${gv2},`;
+      G.grak.r     = lerp(26, 18, ease(prog(p, 0.40, 0.58)));
     }
 
-    // ── Phase 3: Grak drains to flat grey (0.52 → 0.72) ──
-    if (p > 0.52) {
-      const drainT = ease(progress(p, 0.52, 0.70));
-      const gv = Math.round(lerp(140, 80, drainT));
-      GODS[2].color = `rgb(${gv},${gv},${gv})`;
-      GODS[2].glow  = `rgba(${gv},${gv},${gv},`;
-      GODS[2].r     = lerp(28, 20, drainT);
-      // Grak drifts away to edge
-      GODS[2].x = lerp(naraBase.x + 15, cx + W*0.35, ease(progress(p, 0.54, 0.72)));
-      GODS[2].y = lerp(naraBase.y + 10, cy + H*0.25, ease(progress(p, 0.54, 0.72)));
-    }
-
-    // ── Phase 4: Five gods settle (0.70 → 0.90) ──
-    if (p > 0.70) {
-      const settleT = ease(progress(p, 0.70, 0.88));
-      // Final positions — pentagon arrangement
-      const finalPositions = [
-        { x: cx - W*0.28, y: cy - H*0.08 }, // Oro
-        { x: cx,           y: cy - H*0.20 }, // Nara
-        { x: cx - W*0.14, y: cy + H*0.18 }, // Thyun
-        { x: cx + W*0.14, y: cy + H*0.18 }, // Solvara
-        { x: cx + W*0.28, y: cy - H*0.08 }, // Grak
+    // ── PHASE 3: Five gods settle (0.68 → 0.82) ──
+    if (p > 0.68) {
+      const sT = ease(prog(p, 0.68, 0.80));
+      // Pentagon final positions
+      const fp = [
+        { x: cx - W*0.24, y: cy - H*0.05 },  // Oro
+        { x: cx,           y: cy - H*0.18 },  // Nara
+        { x: cx - W*0.12, y: cy + H*0.14 },  // Thyun
+        { x: cx + W*0.12, y: cy + H*0.14 },  // Solvara
+        { x: cx + W*0.24, y: cy - H*0.05 },  // Grak
       ];
-      GODS[0].x = lerp(GODS[0].x, finalPositions[0].x, settleT * 0.1);
-      GODS[0].y = lerp(GODS[0].y, finalPositions[0].y, settleT * 0.1);
-      GODS[1].x = lerp(GODS[1].x, finalPositions[1].x, settleT * 0.1);
-      GODS[1].y = lerp(GODS[1].y, finalPositions[1].y, settleT * 0.1);
+      G.oro.x    = lerp(G.oro.x,    fp[0].x, sT * 0.08);
+      G.oro.y    = lerp(G.oro.y,    fp[0].y, sT * 0.08);
+      G.nara.x   = lerp(G.nara.x,   fp[1].x, sT * 0.08);
+      G.nara.y   = lerp(G.nara.y,   fp[1].y, sT * 0.08);
+      G.thyun.x  = lerp(G.thyun.x,  fp[2].x, sT * 0.08);
+      G.thyun.y  = lerp(G.thyun.y,  fp[2].y, sT * 0.08);
+      G.solvara.x= lerp(G.solvara.x,fp[3].x, sT * 0.08);
+      G.solvara.y= lerp(G.solvara.y,fp[3].y, sT * 0.08);
+      G.grak.x   = lerp(G.grak.x,   fp[4].x, sT * 0.08);
+      G.grak.y   = lerp(G.grak.y,   fp[4].y, sT * 0.08);
     }
 
-    // Draw all five gods
-    drawGod(GODS[0], fadeInT);                              // Oro
-    drawGod(GODS[1], fadeInT);                              // Nara
-    drawGod(GODS[2], fadeInT);                              // Grak
-    drawGod(GODS[3], GODS[3].alpha || 0);                  // Thyun
-    drawGod(GODS[4], GODS[4].alpha || 0);                  // Solvara
+    // ── PHASE 4: Orbs fly toward viewer (0.82 → 1.0) ──
+    // Each orb scales up enormously, centered, then fades out in sequence
+    if (p > 0.82) {
+      const flyT = prog(p, 0.82, 1.0);
+      const ORDER = ['oro','nara','thyun','solvara','grak'];
+      ORDER.forEach(function(key, i) {
+        const g = G[key];
+        // Each god gets a staggered window
+        const start = 0.82 + i * 0.03;
+        const peak  = start + 0.05;
+        const end   = peak  + 0.06;
+        const scaleT = ease(prog(p, start, peak));
+        const fadeT  = ease(prog(p, peak,  end));
+
+        if (scaleT <= 0) return;
+
+        // Pull toward center as it grows
+        const giantX = lerp(g.x, cx, scaleT * 0.6);
+        const giantY = lerp(g.y, cy, scaleT * 0.6);
+        const giantR = lerp(g.r, Math.max(W, H) * 0.85, scaleT);
+        const giantAlpha = (g.alpha || 1) * (1 - fadeT);
+
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, giantAlpha * globalAlpha);
+        const gr = ctx.createRadialGradient(giantX, giantY, 0, giantX, giantY, giantR);
+        gr.addColorStop(0,    g.glow + '0.35)');
+        gr.addColorStop(0.15, g.glow + '0.15)');
+        gr.addColorStop(0.5,  g.glow + '0.05)');
+        gr.addColorStop(1,    g.glow + '0)');
+        ctx.beginPath();
+        ctx.arc(giantX, giantY, giantR, 0, Math.PI*2);
+        ctx.fillStyle = gr;
+        ctx.fill();
+
+        // Small bright core still visible
+        const coreR = lerp(g.r, g.r * 2, scaleT) * (1 - fadeT * 0.7);
+        if (coreR > 0) {
+          const cg = ctx.createRadialGradient(giantX, giantY, 0, giantX, giantY, coreR);
+          cg.addColorStop(0, '#ffffff');
+          cg.addColorStop(0.4, g.color);
+          cg.addColorStop(1, g.glow + '0)');
+          ctx.beginPath();
+          ctx.arc(giantX, giantY, coreR, 0, Math.PI*2);
+          ctx.fillStyle = cg;
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      // Hide normal god rendering during fly phase
+      // by reducing their draw alpha
+      Object.values(G).forEach(function(g) {
+        g._flyAlpha = Math.max(0, 1 - ease(prog(p, 0.82, 0.88)));
+      });
+    } else {
+      Object.values(G).forEach(function(g) { g._flyAlpha = undefined; });
+    }
+
+    // ── Draw normal gods (suppressed during fly phase) ──
+    if (p <= 0.88) {
+      ctx.save();
+      ctx.globalAlpha = globalAlpha;
+      drawGod(G.oro,    G._flyAlpha !== undefined ? G._flyAlpha : G.oro.alpha);
+      drawGod(G.nara,   G._flyAlpha !== undefined ? G._flyAlpha : G.nara.alpha);
+      drawGod(G.grak,   G._flyAlpha !== undefined ? G._flyAlpha : G.grak.alpha);
+      drawGod(G.thyun,  G._flyAlpha !== undefined ? G._flyAlpha : G.thyun.alpha);
+      drawGod(G.solvara,G._flyAlpha !== undefined ? G._flyAlpha : G.solvara.alpha);
+      ctx.restore();
+    }
 
     // ── Text line reveals ──
     LINES.forEach(function(l, i) {
       const el = lineEls[i];
       if (!el) return;
-      const inT  = progress(p, l.in,  l.in  + 0.02);
-      const outT = progress(p, l.out, l.out + 0.02);
+      const inT  = prog(p, l.in,       l.in  + 0.015);
+      const outT = prog(p, l.out,      l.out + 0.015);
       if (inT > 0 && outT < 1) {
         el.classList.add('show');
       } else {
