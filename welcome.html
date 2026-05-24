@@ -332,17 +332,19 @@
     z-index: 1;
   }
   #partition-text-panel {
-    position: absolute;
-    left: 0; right: 0;
-    top: 58vh;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 6vh;
+    z-index: 9999;
+    text-align: center;
     padding: 0 max(2rem, 8vw);
     pointer-events: none;
     box-sizing: border-box;
+    display: none;
+  }
+  #partition-text-panel.active {
+    display: block;
   }
   #partition-text-inner {
     max-width: min(480px, 84vw);
@@ -1648,6 +1650,21 @@ function initDarkWhisperEffect() {}
     return Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (window.innerHeight * 1.2)));
   }
 
+  // Get the text panel element and show/hide it based on whether
+  // the partition section is currently in its sticky scroll phase
+  const textPanel = document.getElementById('partition-text-panel');
+  function updatePanelVisibility() {
+    const rect = section.getBoundingClientRect();
+    const total = section.offsetHeight - window.innerHeight;
+    const p = -rect.top / total;
+    if (p > 0 && p < 1) {
+      textPanel.classList.add('active');
+    } else {
+      textPanel.classList.remove('active');
+    }
+  }
+  window.addEventListener('scroll', updatePanelVisibility, { passive: true });
+
   // God light state
   const G = {
     oro:     { color:'#e8c84a', glow:'rgba(248,224,112,', r:0, x:0, y:0, alpha:1 },
@@ -1661,14 +1678,14 @@ function initDarkWhisperEffect() {}
   // in/out are scroll progress values [0..1]
   const LINES = [
     // Phase 0 — balance
-    { cls:'ptl ptl-lg',             text:'Before the world had color,',                      in:0.02, out:0.13 },
-    { cls:'ptl ptl-lg',             text:'there were three.',                                 in:0.03, out:0.13 },
-    { cls:'ptl ptl-gap',            text:'',                                                  in:0.03, out:0.13 },
-    { cls:'ptl ptl-md ptl-oro',     text:'Oro — color, joy, laughter.',                      in:0.04, out:0.13 },
-    { cls:'ptl ptl-md ptl-nara',    text:'Nara — wild magic, living things.',                in:0.05, out:0.13 },
-    { cls:'ptl ptl-md ptl-grak',    text:'Grak — order, balance, control.',                  in:0.06, out:0.13 },
-    { cls:'ptl ptl-gap',            text:'',                                                  in:0.06, out:0.13 },
-    { cls:'ptl ptl-sm',             text:'They were balanced. For a long time.',              in:0.08, out:0.13 },
+    { cls:'ptl ptl-lg',             text:'Before the world had color,',                      in:0.06, out:0.14 },
+    { cls:'ptl ptl-lg',             text:'there were three.',                                 in:0.07, out:0.14 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.07, out:0.14 },
+    { cls:'ptl ptl-md ptl-oro',     text:'Oro — color, joy, laughter.',                      in:0.08, out:0.14 },
+    { cls:'ptl ptl-md ptl-nara',    text:'Nara — wild magic, living things.',                in:0.09, out:0.14 },
+    { cls:'ptl ptl-md ptl-grak',    text:'Grak — order, balance, control.',                  in:0.10, out:0.14 },
+    { cls:'ptl ptl-gap',            text:'',                                                  in:0.10, out:0.14 },
+    { cls:'ptl ptl-sm',             text:'They were balanced. For a long time.',              in:0.11, out:0.14 },
     // Phase 1 — grief
     { cls:'ptl ptl-lg',             text:'Then Grak developed grief.',                       in:0.17, out:0.27 },
     { cls:'ptl ptl-gap',            text:'',                                                  in:0.17, out:0.27 },
