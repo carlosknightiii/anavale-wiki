@@ -1154,42 +1154,104 @@ function renderColor(el) {
 function renderGods(el) {
   var chars    = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
   var godOrder = ['oro', 'nara', 'thyun', 'solvara', 'grak'];
-  var godsHtml = '';
+
+  var GOD_COLORS = {
+    oro:     { accent: '#f8e070', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
+    nara:    { accent: '#6ac88a', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
+    thyun:   { accent: '#8ab8f8', faith: 'The Stillkeep',   faithHash: 'religion/stillkeep'   },
+    solvara: { accent: '#c098f8', faith: 'The Veilborn',    faithHash: 'religion/veilborn'    },
+    grak:    { accent: '#909090', faith: null,               faithHash: null                   },
+  };
+
+  var cardsHtml = '';
   godOrder.forEach(function(godId) {
     var c = null;
     for (var i = 0; i < chars.length; i++) { if (chars[i].id === godId) { c = chars[i]; break; } }
     if (!c) return;
-    var m = GODS_META[godId] || {};
-    var faithHtml = m.faith
-      ? '<div class="creature-note" style="color:var(--amber);margin-top:0.2rem;margin-bottom:0.8rem;font-style:normal;letter-spacing:0.05em;">' + esc(m.faith) + '</div>'
-      : '<div class="creature-note" style="color:#888;margin-top:0.2rem;margin-bottom:0.8rem;font-style:normal;letter-spacing:0.05em;">No worshippers</div>';
+
+    var cfg     = GOD_COLORS[godId] || {};
+    var accent  = cfg.accent  || 'var(--gold)';
+    var m       = GODS_META[godId] || {};
+    var isGrak  = godId === 'grak';
+
     var imgHtml = c.image
-      ? '<img src="' + esc(c.image) + '" alt="' + esc(c.name) + '" style="width:100%;max-height:280px;object-fit:cover;object-position:center top;border-radius:6px;margin-bottom:1.25rem;" onerror="this.style.display=\'none\'">'
+      ? '<div style="width:100%;border-radius:10px 10px 0 0;overflow:hidden;margin-bottom:1.25rem;">'
+        + '<img src="' + esc(c.image) + '" alt="' + esc(c.name) + '" '
+        + 'style="width:100%;aspect-ratio:4/3;object-fit:cover;object-position:center top;display:block;" '
+        + 'onerror="this.parentElement.style.display=\'none\'">'
+        + '</div>'
       : '';
-    godsHtml += '<div class="creature-entry">'
+
+    var faithHtml = cfg.faith
+      ? '<div style="margin-top:1rem;padding-top:0.85rem;border-top:1px solid rgba(255,255,255,0.07);'
+        + 'font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:' + accent + ';opacity:0.7;cursor:pointer;" '
+        + 'onclick="navigate(\'' + esc(cfg.faithHash) + '\')">' + esc(cfg.faith) + '</div>'
+      : '<div style="margin-top:1rem;padding-top:0.85rem;border-top:1px solid rgba(255,255,255,0.07);'
+        + 'font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:#666;font-style:italic;">No worshippers</div>';
+
+    var appearanceHtml = c.appearance
+      ? '<div style="margin-top:0.9rem;"><div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;'
+        + 'color:' + accent + ';opacity:0.55;margin-bottom:0.4rem;">Appearance</div>'
+        + '<p style="font-size:0.9rem;line-height:1.7;color:rgba(253,246,232,0.65);">' + esc(c.appearance) + '</p></div>'
+      : '';
+
+    var gigHtml = c.gigglegloom_relationship
+      ? '<div style="margin-top:0.9rem;"><div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;'
+        + 'color:' + accent + ';opacity:0.55;margin-bottom:0.4rem;">Gigglegloom</div>'
+        + '<p style="font-size:0.9rem;line-height:1.7;color:rgba(253,246,232,0.65);">' + esc(c.gigglegloom_relationship) + '</p></div>'
+      : '';
+
+    var cardBg = isGrak
+      ? 'background:rgba(8,6,12,0.9);border:1px solid rgba(100,100,110,0.18);'
+      : 'background:rgba(12,10,22,0.75);border:1px solid rgba(255,255,255,0.07);';
+
+    cardsHtml += '<div style="border-radius:14px;overflow:hidden;' + cardBg + 'display:flex;flex-direction:column;">'
       + imgHtml
-      + '<div class="creature-header">'
-      + '<div class="creature-name" style="color:' + (m.color || '') + ';">' + esc(c.name) + '</div>'
-      + '<div class="creature-latin">' + esc(m.domain) + '</div>'
-      + '</div>'
+      + '<div style="padding:0 1.75rem 1.5rem;flex:1;display:flex;flex-direction:column;">'
+      + '<div style="font-family:\'Charm\',serif;font-size:1.7rem;font-weight:700;color:' + accent + ';margin-bottom:0.25rem;">' + esc(c.name) + '</div>'
+      + '<div style="font-size:0.78rem;letter-spacing:0.15em;text-transform:uppercase;opacity:0.45;margin-bottom:0.9rem;">' + esc(m.domain || '') + '</div>'
+      + '<p style="font-size:0.95rem;line-height:1.78;color:rgba(253,246,232,0.82);">' + esc(c.player_knowledge || c.summary || '') + '</p>'
+      + appearanceHtml
+      + gigHtml
       + faithHtml
-      + '<div class="creature-body">' + esc(c.player_knowledge || c.summary || '') + '</div>'
-      + (c.appearance ? '<div class="section-heading" style="margin-top:1rem;">Appearance</div><div class="creature-body">' + esc(c.appearance) + '</div>' : '')
-      + (c.gigglegloom_relationship ? '<div class="section-heading" style="margin-top:1rem;">Gigglegloom</div><div class="creature-body">' + esc(c.gigglegloom_relationship) + '</div>' : '')
-      + '<div class="creature-note" style="margin-top:0.75rem;">' + esc(m.note) + '</div>'
+      + '</div>'
       + '</div>';
   });
-  el.innerHTML = pageHeader('Theology', 'The Gods', 'As understood by the faithful, the scholars, and those caught in between')
+
+  var partitionHtml = '<div class="pull-quote">'
+    + '"Before the world had color, there were three gods. Then came the Partition — and there were five. One of them is what the trouble is."'
+    + '<cite>— The Stillkeep, opening meditation</cite>'
+    + '</div>'
+    + '<p>The <strong>Partition</strong> is the central divine event of Anavale. Oro, Nara, and Grak were balanced — until Grak developed grief over impermanence and confronted Nara. Their collision fractured everything: Thyun and Solvara were sheared from Nara as fully independent gods. Nara survived, smaller. Grak was emptied of everything except hunger for control. What remained of Grak became the Vareth.</p>'
+    + '<p>Three faiths have built their entire understanding of the world around this event — and reached very different conclusions about what it means.</p>';
+
+  el.innerHTML = pageHeader('Theology', 'The Gods of Anavale', 'Five gods shaped this world. Four of them are still trying to save it.')
     + '<div class="wiki-body">'
-    + '<p>Anavale has five gods. Four of them are doing something about the fact that the world is in trouble. The fifth is what the trouble is.</p>'
-    + '<div class="pull-quote">"The gods are real. This is not a matter of faith in Anavale — it is a matter of whether you have paid attention."<cite>— Brightcreed catechism, Caparia</cite></div>'
-    + '<p>Three faiths have formed around them. The Brightcreed worships Oro and Nara. The Stillkeep worships Thyun. The Veilborn worships Solvara. Grak has no worshippers — only the Vareth, which is what Grak became.</p>'
-    + '<div class="section-heading">The Five</div>'
-    + godsHtml
-    + '<div class="section-heading" style="margin-top:2rem;">The Partition</div>'
-    + '<p>The central divine event of Anavale\'s history. Oro, Nara, and Grak were the original three. Grak developed grief over impermanence and confronted Nara. The collision fractured Nara — Thyun and Solvara were sheared free as fully independent gods. Nara survived but smaller. Grak was emptied of everything except hunger for control. What remained became the Vareth.</p>'
-    + '<p>Three faiths, three accounts: <strong>The Brightcreed</strong> holds that Grak\'s grief was always a flaw waiting to surface. <strong>The Stillkeep</strong> holds that the Partition was preventable — Grak\'s grief was legitimate, and Oro and Nara did not listen carefully enough. <strong>The Veilborn</strong> holds that Solvara knows what actually happened and has told no one, and that this truth, when it arrives, will change everything that came before it.</p>'
-    + '<p>All three accounts agree on one thing: the world changed permanently, color is now something that must be protected, and the grey spreading at the edges of the map is the proof.</p>'
+    + partitionHtml
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin:2rem 0 3rem;">'
+    + cardsHtml
+    + '</div>'
+    + '<div class="wiki-body">'
+    + '<div class="section-heading">Three Ways of Understanding</div>'
+    + '<p>The gods are real. The disagreement is about what that means.</p>'
+    + '<div class="entry-grid" style="margin-top:1rem;">'
+    + '<div class="entry-card" onclick="navigate(\'religion/brightcreed\')" style="cursor:pointer;border-left:3px solid #f8e070;">'
+    + '<div class="entry-name" style="color:#c8940a;">The Brightcreed</div>'
+    + '<div class="entry-tag">Oro · Nara · The Light of the World</div>'
+    + '<div class="entry-body">Joy is an act of defiance. Color is proof the world is still alive. Grak\'s jealousy was always its weakness — the Partition was inevitable.</div>'
+    + '</div>'
+    + '<div class="entry-card" onclick="navigate(\'religion/stillkeep\')" style="cursor:pointer;border-left:3px solid #8ab8f8;">'
+    + '<div class="entry-name" style="color:#4a5878;">The Stillkeep</div>'
+    + '<div class="entry-tag">Thyun · Memory · The Long View</div>'
+    + '<div class="entry-body">The Partition was preventable. Grak\'s grief was legitimate. The world that exists now is the result of a failure to listen — and we must remember that.</div>'
+    + '</div>'
+    + '<div class="entry-card" onclick="navigate(\'religion/veilborn\')" style="cursor:pointer;border-left:3px solid #c098f8;">'
+    + '<div class="entry-name" style="color:#6a3aaa;">The Veilborn</div>'
+    + '<div class="entry-tag">Solvara · Shadow · Hidden Truth</div>'
+    + '<div class="entry-body">Solvara knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.</div>'
+    + '</div>'
+    + '</div>'
     + '</div>';
 }
 
