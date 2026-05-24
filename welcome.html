@@ -317,7 +317,7 @@
   }
   .god-card {
     border-radius: 14px;
-    padding: 2rem 1.75rem 1.5rem;
+    padding: 0 0 1.5rem;
     position: relative;
     overflow: hidden;
     opacity: 0;
@@ -331,6 +331,37 @@
   .god-card:nth-child(3) { transition-delay: 0.16s; }
   .god-card:nth-child(4) { transition-delay: 0.24s; }
   .god-card:nth-child(5) { transition-delay: 0.32s; }
+  .god-portrait {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center top;
+    border-radius: 10px 10px 0 0;
+    display: block;
+    margin-bottom: 1.25rem;
+  }
+  .god-portrait-wrap {
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .god-portrait-wrap::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, rgba(12,10,22,0.85));
+    pointer-events: none;
+  }
+  .god-oro .god-portrait-wrap     { box-shadow: 0 0 0 1px rgba(248,224,112,0.25); }
+  .god-nara .god-portrait-wrap    { box-shadow: 0 0 0 1px rgba(106,200,138,0.25); }
+  .god-thyun .god-portrait-wrap   { box-shadow: 0 0 0 1px rgba(138,184,248,0.25); }
+  .god-solvara .god-portrait-wrap { box-shadow: 0 0 0 1px rgba(192,152,248,0.25); }
+  .god-grak .god-portrait-wrap    { box-shadow: 0 0 0 1px rgba(120,120,120,0.2); }
+  .god-card-body {
+    padding: 0 1.75rem;
+  }
   .god-orb {
     position: absolute; top: -40px; right: -40px; width: 160px; height: 160px;
     border-radius: 50%; filter: blur(40px); opacity: 0.25; z-index: 0;
@@ -802,41 +833,77 @@
     They are real. Not distant myths, not metaphors for natural forces — real, present, and aware that the world is in trouble. Four of them are doing something about it. The fifth is what the trouble is.
   </p>
   <div class="gods-grid">
+
+    <!-- ORO -->
     <div class="god-card god-oro reveal">
       <div class="god-orb"></div>
-      <div class="god-name">Oro</div>
-      <div class="god-domain">Color · Joy · Laughter</div>
-      <div class="god-desc">The most widely worshipped god in Anavale. Active and embarrassingly invested in the wellbeing of creatures. Cannot enter Dimmed territory — which means the Vareth has already taken places from him. This is not defeat. But it is a real boundary.</div>
-      <div class="god-faith">The Brightcreed</div>
+      <div class="god-portrait-wrap">
+        <img class="god-portrait" src="assets/images/characters/oro.webp" alt="Oro" onerror="this.parentElement.style.display='none'">
+      </div>
+      <div class="god-card-body">
+        <div class="god-name">Oro</div>
+        <div class="god-domain">Color · Joy · Laughter</div>
+        <div class="god-desc">The most widely worshipped god in Anavale. Active and embarrassingly invested in the wellbeing of creatures. Cannot enter Dimmed territory — which means the Vareth has already taken places from him. This is not defeat. But it is a real boundary.</div>
+        <div class="god-faith">The Brightcreed</div>
+      </div>
     </div>
+
+    <!-- NARA -->
     <div class="god-card god-nara reveal">
       <div class="god-orb"></div>
-      <div class="god-name">Nara</div>
-      <div class="god-domain">Wild Magic · Living Things</div>
-      <div class="god-desc">God of the wild Gigglegloom — the kind that grows from old forests without anyone's help. Diminished by the Partition. Thyun and Solvara were sheared from her in the collision and became their own gods. She survived. She is still a river.</div>
-      <div class="god-faith">The Brightcreed</div>
+      <div class="god-portrait-wrap">
+        <img class="god-portrait" src="assets/images/characters/nara.webp" alt="Nara" onerror="this.parentElement.style.display='none'">
+      </div>
+      <div class="god-card-body">
+        <div class="god-name">Nara</div>
+        <div class="god-domain">Wild Magic · Living Things</div>
+        <div class="god-desc">God of the wild Gigglegloom — the kind that grows from old forests without anyone's help. Diminished by the Partition. Thyun and Solvara were sheared from her in the collision and became their own gods. She survived. She is still a river.</div>
+        <div class="god-faith">The Brightcreed</div>
+      </div>
     </div>
+
+    <!-- THYUN -->
     <div class="god-card god-thyun reveal">
       <div class="god-orb"></div>
-      <div class="god-name">Thyun</div>
-      <div class="god-domain">Memory · Deep Time · Patience</div>
-      <div class="god-desc">Born from the Partition — sheared from Nara as an independent god. Worshipped by the Stillkeep, who have been trying to transcribe one of Thyun's thoughts for eight hundred years. They are close. Probably.</div>
-      <div class="god-faith">The Stillkeep</div>
+      <div class="god-portrait-wrap">
+        <img class="god-portrait" src="assets/images/characters/thyun.webp" alt="Thyun" onerror="this.parentElement.style.display='none'">
+      </div>
+      <div class="god-card-body">
+        <div class="god-name">Thyun</div>
+        <div class="god-domain">Memory · Deep Time · Patience</div>
+        <div class="god-desc">Born from the Partition — sheared from Nara as an independent god. Worshipped by the Stillkeep, who have been trying to transcribe one of Thyun's thoughts for eight hundred years. They are close. Probably.</div>
+        <div class="god-faith">The Stillkeep</div>
+      </div>
     </div>
+
+    <!-- SOLVARA -->
     <div class="god-card god-solvara reveal">
       <div class="god-orb"></div>
-      <div class="god-name">Solvara</div>
-      <div class="god-domain">Secrets · Shadow · Hidden Truth</div>
-      <div class="god-desc">Born from the Partition — Nara's shadow-self, sheared into full separate divinity. Worshipped by the Veilborn, whose practices are not public knowledge. Solvara knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.</div>
-      <div class="god-faith">The Veilborn</div>
+      <div class="god-portrait-wrap">
+        <img class="god-portrait" src="assets/images/characters/solvara.webp" alt="Solvara" onerror="this.parentElement.style.display='none'">
+      </div>
+      <div class="god-card-body">
+        <div class="god-name">Solvara</div>
+        <div class="god-domain">Secrets · Shadow · Hidden Truth</div>
+        <div class="god-desc">Born from the Partition — Nara's shadow-self, sheared into full separate divinity. Worshipped by the Veilborn, whose practices are not public knowledge. Solvara knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.</div>
+        <div class="god-faith">The Veilborn</div>
+      </div>
     </div>
+
+    <!-- GRAK -->
     <div class="god-card god-grak reveal">
       <div class="god-orb"></div>
-      <div class="god-name">Grak</div>
-      <div class="god-domain">Once: Order. Now: Silence.</div>
-      <div class="god-desc">The fallen god. Emptied of everything by the Partition except hunger for control. The Vareth is what remained. Grak has no throne, no face, no voice — only the grey that spreads from his absence outward. He does not want conquest. He wants Quietude.</div>
-      <div class="god-faith god-faith--fallen">No worshippers</div>
+      <div class="god-portrait-wrap">
+        <img class="god-portrait" src="assets/images/characters/grak.webp" alt="Grak" onerror="this.parentElement.style.display='none'">
+      </div>
+      <div class="god-card-body">
+        <div class="god-name">Grak</div>
+        <div class="god-domain">Once: Order. Now: Silence.</div>
+        <div class="god-desc">The fallen god. Emptied of everything by the Partition except hunger for control. The Vareth is what remained. Grak has no throne, no face, no voice — only the grey that spreads from his absence outward. He does not want conquest. He wants Quietude.</div>
+        <div class="god-faith god-faith--fallen">No worshippers</div>
+      </div>
     </div>
+
   </div>
 </section>
 <!-- ══ CLOSING ══ -->
