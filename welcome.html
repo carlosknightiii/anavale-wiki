@@ -1064,7 +1064,7 @@ function initCreaturePositions() {
     frogs[2].x = W * 0.44; frogs[2].y = H * 0.80;
     tw1.baseY = H * 0.08; tw1.x = -200;
     tw2.baseY = H * 0.16; tw2.x = W * 0.65;
-    beetles.forEach(b => { b.x = -500; b.y = -500; });
+    beetles.forEach(b => { b.x = W * b.xFrac; b.y = H * b.yFrac; });
   } else {
     fluffet.facingDir = 1; fluffet.x = 80; fluffet.baseY = H * 0.76; resetSequence();
     frogs.forEach(f => { f.x = W * f.xFrac; f.y = H * f.yFrac; });
@@ -1089,6 +1089,7 @@ function tick() {
       frogs.forEach((f,i) => animateFrog(f, frogEls[i]));
       animateTW(tw1, tw1El, 155);
       animateTW(tw2, tw2El, 120);
+      beetles.forEach((b, i) => animateBeetle(b, beetleEls[i]));
     }
     return;
   }
