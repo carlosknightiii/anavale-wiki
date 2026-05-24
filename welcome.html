@@ -653,6 +653,95 @@
     border-color: rgba(232,200,74,0.7);
     transform: translateY(-2px);
   }
+  /* ── REGIONS SECTION ── */
+  .home-regions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+  .home-region-row {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .home-region-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+  }
+  .home-region-row-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.6s ease;
+    z-index: 0;
+  }
+  .home-region-row:hover .home-region-row-bg { transform: scale(1.04); }
+  .home-region-row-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .home-region-row:nth-child(odd) .home-region-row-overlay {
+    background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.1) 100%);
+  }
+  .home-region-row:nth-child(even) .home-region-row-overlay {
+    background: linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.1) 100%);
+  }
+  .home-region-row-content {
+    position: relative;
+    z-index: 2;
+    padding: 2.5rem 3rem;
+    max-width: 480px;
+  }
+  .home-region-row:nth-child(odd) .home-region-row-content  { margin-right: auto; text-align: left; }
+  .home-region-row:nth-child(even) .home-region-row-content { margin-left: auto;  text-align: right; }
+  .home-region-row-label {
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+  }
+  .home-region-row-name {
+    font-family: 'Charm', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.6rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    line-height: 1.1;
+  }
+  .home-region-row-climate {
+    font-size: 0.85rem;
+    color: rgba(253,246,232,0.75);
+    font-style: italic;
+    margin-bottom: 1rem;
+  }
+  .home-region-row-blurb {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: rgba(253,246,232,0.85);
+  }
+  @media (max-width: 768px) {
+    .home-region-row { height: 220px; }
+    .home-region-row-content {
+      margin-left: 0 !important; margin-right: auto !important;
+      text-align: left !important; padding: 1.5rem 2rem;
+    }
+    .home-region-row:nth-child(even) .home-region-row-overlay {
+      background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.1) 100%);
+    }
+    .home-region-row-name { font-size: 1.5rem; }
+  }
   /* ── DIVIDER ── */
   .fancy-divider {
     position: relative; z-index: 1; text-align: center; padding: 1rem 0;
@@ -895,6 +984,60 @@
     </div>
   </div>
 </section>
+<!-- ══ REGIONS ══ -->
+<div style="position:relative; z-index:1; padding: 5rem 0; background:#0a0806;">
+  <div style="max-width:1100px; margin:0 auto; padding:0 2rem;">
+    <p class="section-label" style="text-align:center; opacity:1; transform:none;">The World of Pogglewog</p>
+    <h2 class="section-title" style="text-align:center; color:var(--white); opacity:1; transform:none;">Four Regions</h2>
+    <p class="section-body" style="margin:0 auto 3rem; text-align:center; opacity:1; transform:none;">
+      Pogglewog is a continent of four great regions — each shaped by its climate, its magic, and the
+      nations that call it home. Every region tells a different story. Every story is still being written.
+    </p>
+    <div class="home-regions-list">
+      <div class="home-region-row reveal reveal-delay-1">
+        <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-caparia-landscape.png')"></div>
+        <div class="home-region-row-overlay"></div>
+        <div class="home-region-row-content">
+          <div class="home-region-row-label">Region</div>
+          <div class="home-region-row-name">Caparia</div>
+          <div class="home-region-row-climate">The colorful heartlands</div>
+          <div class="home-region-row-blurb">Lush meadows, sparkling rivers, and the most colorful cities in Anavale. The Confederation was built here. Color maintenance is not a tradition — it is law.</div>
+        </div>
+      </div>
+      <div class="home-region-row reveal reveal-delay-2">
+        <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-nombi-landscape.webp')"></div>
+        <div class="home-region-row-overlay"></div>
+        <div class="home-region-row-content">
+          <div class="home-region-row-label">Region</div>
+          <div class="home-region-row-name">Nombi</div>
+          <div class="home-region-row-climate">The frozen, aurora-lit north</div>
+          <div class="home-region-row-blurb">Dense forests, icy mountains, and skies painted by the aurora. The north is stoic and beautiful and dangerous in equal measure. Honor is currency here.</div>
+        </div>
+      </div>
+      <div class="home-region-row reveal reveal-delay-3">
+        <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-sohot-landscape.png')"></div>
+        <div class="home-region-row-overlay"></div>
+        <div class="home-region-row-content">
+          <div class="home-region-row-label">Region</div>
+          <div class="home-region-row-name">Sohot</div>
+          <div class="home-region-row-climate">The ancient, blazing south</div>
+          <div class="home-region-row-blurb">Desert dunes, ancient ceremony, and the weight of a kingdom that has never forgotten a single thing. The south's colors have always been vivid. They have been looking slightly less so, lately.</div>
+        </div>
+      </div>
+      <div class="home-region-row reveal reveal-delay-4">
+        <div class="home-region-row-bg" style="background-image:url('assets/images/regions/img-jugabi-landscape.png')"></div>
+        <div class="home-region-row-overlay"></div>
+        <div class="home-region-row-content">
+          <div class="home-region-row-label">Region</div>
+          <div class="home-region-row-name">Jugabi</div>
+          <div class="home-region-row-climate">The living jungle southwest</div>
+          <div class="home-region-row-blurb">The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on the continent. The jungle has opinions. The jungle is always right.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="fancy-divider" style="position:relative;z-index:1;"><span>✦ ✦ ✦</span></div>
 <!-- ══ DARK SECTION (VARETH MAP ANIMATION) ══ -->
 <div id="vareth-dark-section">
   <div id="vareth-sticky">
@@ -1151,8 +1294,6 @@
     <br><br>
     And at the edges of the map, where the grey is arriving, something needs to be done about that.
   </p>
-  <p class="closing-sig">— The Traveller's Compendium, Third Edition</p>
-  <a class="cta-btn" href="index.html">✦ · ENTER THE COMPENDIUM · ✦</a>
 </div>
 <script>
 // ── IMAGE SOURCES (base64-embedded stubs replaced with asset paths) ─────────
