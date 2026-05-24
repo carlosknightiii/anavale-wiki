@@ -944,6 +944,15 @@
       background-attachment: scroll;
     }
 
+    /* 6. Eyebrow line — 0.5em letter-spacing makes "On the continent of
+          Pogglewog ✦" too wide for mobile. Reduce spacing and size so it
+          fits on one line. white-space: nowrap prevents mid-word breaks. */
+    .hero-eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      white-space: nowrap;
+    }
+
     /* 2. Kill heroPan — animates background-position, forces repaint every frame */
     .hero {
       animation: none;
@@ -1917,31 +1926,58 @@ function animateBeetle(b, el) {
 
 // ── INIT ─────────────────────────────────────────────────────
 function initCreaturePositions() {
-  // On mobile, H includes browser chrome and the hero uses 100svh visually,
-  // so creatures placed at H * 0.76 land below the visible fold.
-  // Cap all Y positions to 55% of H on touch devices.
-  const yScale = IS_MOBILE ? 0.72 : 1.0;
+  if (IS_MOBILE) {
+    // ── MOBILE LAYOUT ────────────────────────────────────────
+    // The hero text (eyebrow, title, subtitle) occupies roughly
+    // 30%–65% of the screen height. Creatures are placed in the
+    // safe zones: top strip (0%–22%) and bottom strip (72%–88%).
+    // One frog per bottom-left/right corner, one small frog mid-bottom.
+    // Fluffet hops along the very bottom. Tinywings in the top zone.
 
-  fluffet.facingDir = 1;
-  fluffet.x         = 80;
-  fluffet.baseY     = H * 0.76 * yScale;
-  resetSequence();
+    fluffet.facingDir = 1;
+    fluffet.x         = 40;
+    fluffet.baseY     = H * 0.82;   // bottom strip, below all text
+    resetSequence();
 
-  frogs.forEach(f => {
-    f.x = W * f.xFrac;
-    f.y = H * f.yFrac * yScale;
-  });
+    // Three frogs: left corner, right corner, bottom-centre
+    // xFrac kept wide apart so they don't cluster
+    frogs[0].x = W * 0.08;   frogs[0].y = H * 0.74;
+    frogs[1].x = W * 0.78;   frogs[1].y = H * 0.76;
+    frogs[2].x = W * 0.44;   frogs[2].y = H * 0.80;
 
-  tw1.baseY = H * 0.12;  // Tinywings fly near top — no adjustment needed
-  tw1.x     = -200;
+    // Tinywings: fly across top of screen, well above the title
+    tw1.baseY = H * 0.08;
+    tw1.x     = -200;
 
-  tw2.baseY = H * 0.22;
-  tw2.x     = W * 0.65;
+    tw2.baseY = H * 0.16;
+    tw2.x     = W * 0.65;
 
-  beetles.forEach(b => {
-    b.x = W * b.xFrac;
-    b.y = H * b.yFrac * yScale;
-  });
+    // Beetles skipped on mobile (already excluded from tick loop)
+    beetles.forEach(b => { b.x = -500; b.y = -500; });
+
+  } else {
+    // ── DESKTOP LAYOUT (original) ─────────────────────────────
+    fluffet.facingDir = 1;
+    fluffet.x         = 80;
+    fluffet.baseY     = H * 0.76;
+    resetSequence();
+
+    frogs.forEach(f => {
+      f.x = W * f.xFrac;
+      f.y = H * f.yFrac;
+    });
+
+    tw1.baseY = H * 0.12;
+    tw1.x     = -200;
+
+    tw2.baseY = H * 0.22;
+    tw2.x     = W * 0.65;
+
+    beetles.forEach(b => {
+      b.x = W * b.xFrac;
+      b.y = H * b.yFrac;
+    });
+  }
 }
 
 // ── MAIN LOOP ────────────────────────────────────────────────
