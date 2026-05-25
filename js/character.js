@@ -931,52 +931,62 @@ function showToast(msg) {
 
 // ── TOOLTIP SYSTEM ────────────────────────────────────────────────
 function initTooltips() {
-  var tips = document.querySelectorAll('.char-field-tooltip[data-tip]');
-  tips.forEach(function(el) {
-    var box = null;
-
-    el.addEventListener('mouseenter', function() {
-      box = document.createElement('div');
-      box.className = 'char-tooltip-box char-tooltip-box--active';
-      box.textContent = el.getAttribute('data-tip');
-      document.body.appendChild(box);
-      positionTooltip(el, box);
-    });
-
-    el.addEventListener('mouseleave', function() {
-      if (box) { box.remove(); box = null; }
-    });
-
-    // Touch support
+  var activeEl  = null;
+  var activeBox = null;
+  function destroy() {
+    if (activeBox) { activeBox.remove(); activeBox = null; }
+    activeEl = null;
+  }
+  function create(el) {
+    destroy();
+    activeEl = el;
+    var box = document.createElement('div');
+    box.textContent = el.getAttribute('data-tip');
+    // All positioning inline — do NOT rely on .char-tooltip-box CSS position/opacity
+    box.style.cssText = [
+      'position:fixed',
+      'z-index:99999',
+      'width:220px',
+      'max-width:calc(100vw - 24px)',
+      'background:rgba(10,14,24,0.96)',
+      'border:1px solid rgba(200,148,10,0.6)',
+      'border-radius:6px',
+      'padding:0.6rem 0.9rem',
+      'font-family:var(--font-sans)',
+      'font-size:0.78rem',
+      'line-height:1.55',
+      'color:rgba(245,234,212,0.85)',
+      'white-space:normal',
+      'pointer-events:none',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.6)',
+      'opacity:0',
+      'transition:opacity 0.12s ease',
+      // Place off-screen first so we can measure height
+      'top:-9999px',
+      'left:-9999px'
+    ].join(';');
+    document.body.appendChild(box);
+    activeBox = box;
+    // Measure after append (height is available once in DOM, even off-screen)
+    var bh   = box.getBoundingClientRect().height || 60;
+    var rect = el.getBoundingClientRect();
+    var left = rect.left + rect.width / 2 - 110; // 110 = half of 220px
+    left = Math.max(8, Math.min(left, window.innerWidth - 228));
+    var top  = rect.top - bh - 10;
+    if (top < 8) top = rect.bottom + 8;
+    box.style.left = left + 'px';
+    box.style.top  = top  + 'px';
+    box.style.opacity = '1';
+  }
+  document.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(el) {
+    el.addEventListener('mouseenter', function() { create(el); });
+    el.addEventListener('mouseleave', destroy);
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (box) { box.remove(); box = null; return; }
-      box = document.createElement('div');
-      box.className = 'char-tooltip-box char-tooltip-box--active';
-      box.textContent = el.getAttribute('data-tip');
-      document.body.appendChild(box);
-      positionTooltip(el, box);
-      setTimeout(function() { if (box) { box.remove(); box = null; } }, 4000);
+      if (activeEl === el) { destroy(); } else { create(el); }
     });
   });
-
-  document.addEventListener('click', function() {
-    var active = document.querySelector('.char-tooltip-box--active');
-    if (active) active.remove();
-  });
-}
-
-function positionTooltip(anchor, box) {
-  var rect = anchor.getBoundingClientRect();
-  box.style.position = 'fixed';
-  box.style.zIndex = '999';
-  var left = rect.left + rect.width / 2 - box.offsetWidth / 2;
-  // Clamp to viewport
-  left = Math.max(8, Math.min(left, window.innerWidth - box.offsetWidth - 8));
-  var top = rect.top - box.offsetHeight - 10;
-  if (top < 8) top = rect.bottom + 8;
-  box.style.left = left + 'px';
-  box.style.top  = top  + 'px';
+  document.addEventListener('click', destroy);
 }
 
 // ── TOAST STYLES (injected) ────────────────────────────────────────
