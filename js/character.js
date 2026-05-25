@@ -11,12 +11,19 @@
 // ── CONFIGURATION ─────────────────────────────────────────────────
 var CHAR_CONFIG = {
   formspree:    'https://formspree.io/f/xzdwaveg',
-  github_token: '', // Token set at runtime via DM setup — never stored in repo
+  github_token: '', // Injected at runtime from localStorage — never stored in repo
   github_repo:  'carlosknightiii/anavale-wiki',
   draft_key:    'anavale_char_draft',
   created_key:  'anavale_character_created',
+  token_key:    'anavale_github_token',
   total_stages: 5
 };
+
+// Inject GitHub token from localStorage at runtime — set via DM Tools → Setup tab
+(function() {
+  var t = localStorage.getItem('anavale_github_token');
+  if (t) CHAR_CONFIG.github_token = t;
+})();
 
 // ── STATE ──────────────────────────────────────────────────────────
 var CHAR_STATE = {

@@ -678,6 +678,7 @@
     <button class="dm-tab active" data-tab="add"    onclick="switchTab('add')">➕ Add</button>
     <button class="dm-tab"        data-tab="manage" onclick="switchTab('manage')">📋 Manage</button>
     <button class="dm-tab"        data-tab="quests" onclick="switchTab('quests')">⚔️ Quests</button>
+    <button class="dm-tab"        data-tab="setup"  onclick="switchTab('setup')">⚙️ Setup</button>
   </div>
 
   <div class="dm-main">
@@ -1983,6 +1984,33 @@
       </div><!-- /form-add wrapper -->
 
 
+      <!-- ══ SETUP TAB ══ -->
+      <div id="form-setup" class="dm-form">
+        <div class="dm-form-title">⚙️ DM Setup</div>
+        <div class="dm-form-subtitle">Store your GitHub token securely in your browser. Never committed to the repo.</div>
+
+        <div class="setup-token-status" id="setup-status-bar"></div>
+
+        <div class="field-group" style="margin-top:1.5rem; max-width:560px;">
+          <label class="field-label" for="setup-token-input">GitHub Personal Access Token</label>
+          <span class="field-help">Fine-grained token with Contents: Read+Write scope on the anavale-wiki repo only. Generate at github.com → Settings → Developer settings → Fine-grained tokens.</span>
+          <input class="field-input" type="password" id="setup-token-input" placeholder="github_pat_…" autocomplete="off" style="font-family:var(--font-mono); font-size:0.78rem; letter-spacing:0.04em;">
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+          <button class="btn-primary" onclick="setupSaveToken()">💾 Save Token</button>
+          <button class="btn-clear"   onclick="setupClearToken()">✕ Clear Saved Token</button>
+        </div>
+
+        <div class="setup-token-note" style="margin-top:2rem; max-width:560px;">
+          <strong>How this works:</strong> Your token is saved to this browser's localStorage only — it never touches the repo or leaves your machine. When a player submits their character on this device, the token is read at runtime and used to write their entry to <code>data/characters.js</code> via the GitHub API. You only need to do this once per browser.
+          <br><br>
+          <strong>Token scope required:</strong> Repository: <code>carlosknightiii/anavale-wiki</code> · Permissions: Contents — Read and Write.
+          <br><br>
+          <strong>If submissions stop working:</strong> Your token may have expired. Generate a new one and save it here.
+        </div>
+      </div><!-- /form-setup -->
+
       <!-- ── QUESTS PANEL ─────────────────────── -->
       <div id="form-quests" class="dm-form">
 
@@ -2249,6 +2277,62 @@
 <script src="data/organizations.js"></script>
 <script src="data/items.js"></script>
 <script src="data/quests.js"></script>
+<style>
+/* ── SETUP TAB ─────────────────────────────────────────────────── */
+.setup-token-status {
+  padding: 0.6rem 1rem;
+  border-radius: var(--border-radius);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  margin-top: 1rem;
+  display: none;
+  max-width: 560px;
+  line-height: 1.5;
+}
+.setup-token-status.has-token {
+  display: block;
+  background: rgba(0,150,80,0.12);
+  border: 1px solid rgba(0,200,100,0.35);
+  color: #2a7a4a;
+}
+.setup-token-status.no-token {
+  display: block;
+  background: rgba(200,100,10,0.08);
+  border: 1px solid rgba(200,100,10,0.3);
+  color: #8a5010;
+}
+.setup-token-note {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  line-height: 1.7;
+  padding: 1.25rem;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+.setup-token-note code {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  background: rgba(0,0,0,0.07);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  color: var(--ink);
+}
+.btn-primary {
+  padding: 0.65rem 1.5rem;
+  background: var(--gold);
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--gold-light); color: var(--ink); }
+</style>
 
 <style>
 /* ══════════════════════════════════════════════
@@ -2881,6 +2965,7 @@ function switchTab(tab) {
   resetOutput();
   if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
   if (tab === 'quests') questsRefresh();
+  if (tab === 'setup')  setupRenderStatus();
 }
 
 /* ── ADD TYPE SWITCHING ──────────────────────── */
@@ -4978,6 +5063,42 @@ function showCMStatus(state, msg) {
 
 var QUESTS_FILTERED = [];
 var SELECTED_QUEST_ID = null;
+
+/* ── SETUP TAB ─────────────────────────────────────────────────── */
+function setupRenderStatus() {
+  var bar = document.getElementById('setup-status-bar');
+  if (!bar) return;
+  var existing = localStorage.getItem('anavale_github_token');
+  if (existing) {
+    bar.className = 'setup-token-status has-token';
+    bar.textContent = '✓ Token saved — submissions are active. Last 6 characters: …' + existing.slice(-6);
+  } else {
+    bar.className = 'setup-token-status no-token';
+    bar.textContent = '⚠ No token saved. Player submissions will fail until a token is stored here.';
+  }
+}
+
+function setupSaveToken() {
+  var input = document.getElementById('setup-token-input');
+  if (!input) return;
+  var val = input.value.trim();
+  if (!val) {
+    alert('Please paste your GitHub token before saving.');
+    return;
+  }
+  if (!val.startsWith('github_pat_') && !val.startsWith('ghp_')) {
+    if (!confirm('This doesn\'t look like a GitHub token (expected to start with github_pat_ or ghp_). Save anyway?')) return;
+  }
+  localStorage.setItem('anavale_github_token', val);
+  input.value = '';
+  setupRenderStatus();
+}
+
+function setupClearToken() {
+  if (!confirm('Remove the saved GitHub token? Player submissions will stop working until you save a new one.')) return;
+  localStorage.removeItem('anavale_github_token');
+  setupRenderStatus();
+}
 
 function questsRefresh() {
   questsFilter();
