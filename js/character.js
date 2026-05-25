@@ -238,97 +238,97 @@ function renderSidebar() {
 // ── BACKGROUND DATA ────────────────────────────────────────────────
 var ANAVALE_BACKGROUNDS = [
   {
-    id: 'faithful', name: 'The Faithful', phb: 'Acolyte',
+    id: 'faithful', name: 'Faithful', phb: 'Acolyte',
     lore: 'You grew up inside one of Anavale\'s three faiths — the Brightcreed\'s color festivals, the Stillkeep\'s stone libraries, or the Veilborn\'s careful silences. You know the prayers, the practices, and the politics. You can also read pre-Partition script, which more people want than will admit it.',
     skills: ['Insight', 'Religion'],
     bonuses: ['+2 Int', '+1 Wis', 'Magic Initiate']
   },
   {
-    id: 'streetwise', name: 'The Streetwise', phb: 'Criminal',
+    id: 'streetwise', name: 'Streetwise', phb: 'Criminal',
     lore: 'You learned what you know in places that don\'t appear on official maps — back alleys, Grusk-adjacent markets, Nimblewood-adjacent neighborhoods. Not necessarily a bad person. Just someone who understands how the world actually moves when the Formery isn\'t watching.',
     skills: ['Deception', 'Stealth'],
     bonuses: ['+2 Dex', '+1 Int', 'Alert']
   },
   {
-    id: 'learned', name: 'The Learned', phb: 'Sage',
+    id: 'learned', name: 'Learned', phb: 'Sage',
     lore: 'You spent years in one of Anavale\'s great collections of knowledge — the Great Index in Lightcrak, a Stillkeep archive, the Chroma Bureau\'s public records. You know more than most people want to know about things most people have never heard of. This has been both useful and isolating.',
     skills: ['Arcana', 'History'],
     bonuses: ['+2 Int', '+1 Wis', 'Keen Mind']
   },
   {
-    id: 'tested', name: 'The Tested', phb: 'Soldier',
+    id: 'tested', name: 'Tested', phb: 'Soldier',
     lore: 'You served — in a Confederation guard company, a Nombi honor corps, a Sohot desert patrol, or a fighting company attached to the Wanderkeep. You know how to follow orders, how to give them, and exactly which situations require which. The grey you\'ve seen may or may not have been the Vareth kind.',
     skills: ['Athletics', 'Intimidation'],
     bonuses: ['+2 Str', '+1 Con', 'Savage Attacker']
   },
   {
-    id: 'wellborn', name: 'The Wellborn', phb: 'Noble',
+    id: 'wellborn', name: 'Wellborn', phb: 'Noble',
     lore: 'You come from one of Anavale\'s established families — a Confederation merchant house, a Sohot ceremonial lineage, a Nombi honor clan. You know how rooms full of powerful people work. You also know exactly what those people are willing to do to stay powerful, which is information the Formery would file under Form 9-C (Societal Leverage, Observed).',
     skills: ['History', 'Persuasion'],
     bonuses: ['+2 Cha', '+1 Int', 'Skilled']
   },
   {
-    id: 'rootborn', name: 'The Rootborn', phb: 'Folk Hero',
+    id: 'rootborn', name: 'Rootborn', phb: 'Folk Hero',
     lore: 'You\'re from a small place — Pebbleshire, a Bunari fishing village, a Zippydoda Hills farm — and something happened there that made people look at you differently. You didn\'t ask for it. You\'re not sure you deserved it. But the Pocketmoles have always found you specifically, and you\'ve stopped pretending that doesn\'t mean something.',
     skills: ['Animal Handling', 'Survival'],
     bonuses: ['+2 Con', '+1 Cha', 'Tough']
   },
   {
-    id: 'masquerader', name: 'The Masquerader', phb: 'Charlatan',
+    id: 'masquerader', name: 'Masquerader', phb: 'Charlatan',
     lore: 'You\'ve worn more faces than you\'ve had homes — not because you\'re dishonest, exactly, but because the truth has never been your most useful tool. You know how documents are forged, how confidence works, and which Formery office is least likely to verify anything. The Nimblewood finds your skills interesting. You haven\'t decided how you feel about that.',
     skills: ['Deception', 'Sleight of Hand'],
     bonuses: ['+2 Cha', '+1 Dex', 'Skilled']
   },
   {
-    id: 'reveler', name: 'The Reveler', phb: 'Entertainer',
+    id: 'reveler', name: 'Reveler', phb: 'Entertainer',
     lore: 'You grew up in The Revel, in a traveling troupe, or in Reveltown itself — surrounded by performance, color, and the particular chaos of people trying to make other people feel something. You know how to read a crowd, fill a silence, and make a room forget the grey for one night. Whether you\'re Veilborn-adjacent is something you\'ve stopped asking yourself.',
     skills: ['Acrobatics', 'Performance'],
     bonuses: ['+2 Cha', '+1 Dex', 'Inspiring Leader']
   },
   {
-    id: 'craftborn', name: 'The Craftborn', phb: 'Guild Artisan',
+    id: 'craftborn', name: 'Craftborn', phb: 'Guild Artisan',
     lore: 'You trained under a master in one of the Zippan guilds, a Dingurei paper house, or a Stonemarked workshop in the Jani Mountains. You know how to make something from nothing, how guild politics work, and that the difference between a good piece and a great one is always the part nobody sees.',
     skills: ['Insight', 'Persuasion'],
     bonuses: ['+2 Int', '+1 Cha', 'Skilled']
   },
   {
-    id: 'stillsought', name: 'The Stillsought', phb: 'Hermit',
+    id: 'stillsought', name: 'Stillsought', phb: 'Hermit',
     lore: 'You spent a significant portion of your life alone — in a Stillkeep mountain retreat, in the deep Opu Forest near the Patient One, in a Nombi winter with only the aurora for company. You were looking for something. You may have found it. What you found has made you either very calm or very certain about something nobody else seems certain about yet.',
     skills: ['Medicine', 'Religion'],
     bonuses: ['+2 Wis', '+1 Con', 'Magic Initiate']
   },
   {
-    id: 'wildborn', name: 'The Wildborn', phb: 'Outlander',
+    id: 'wildborn', name: 'Wildborn', phb: 'Outlander',
     lore: 'The Dodooti Rainforest, the Nombi deep forest, the Wraithfell Tundra, the Jani Mountain passes — you grew up in one of these, or spent enough time there to change how you think. The Gigglegloom reads differently in the wild. Purer. Louder. You know what it sounds like when it\'s healthy and you know what the silence means when it isn\'t.',
     skills: ['Athletics', 'Survival'],
     bonuses: ['+2 Str', '+1 Wis', 'Tough']
   },
   {
-    id: 'tidemarked', name: 'The Tidemarked', phb: 'Sailor',
+    id: 'tidemarked', name: 'Tidemarked', phb: 'Sailor',
     lore: 'You know the Bunbun Bay, the Salindri Sea, the Glacial Sea off Nombi\'s coast, or the Golden Sea south of Sohot. Ships, currents, weather, the way Shimmer Rays surface before a storm and what that means. The Bunari consider the sea a living thing and treat it accordingly. You may not be Bunari, but you\'ve spent enough time on their ships to understand why.',
     skills: ['Athletics', 'Perception'],
     bonuses: ['+2 Str', '+1 Dex', 'Tavern Brawler']
   },
   {
-    id: 'cobblewise', name: 'The Cobblewise', phb: 'Urchin',
+    id: 'cobblewise', name: 'Cobblewise', phb: 'Urchin',
     lore: 'You grew up in the margins of one of Anavale\'s cities — Mirrenport\'s lower docks, Bumbleton\'s market back-alleys, the parts of Solenveil that don\'t appear in the Formery\'s official maps. You know how a city actually works, where to sleep when you have nothing, and which doors to knock on when you need help. A Pocketmole found you every time you were at your lowest. You still don\'t know what to make of that.',
     skills: ['Sleight of Hand', 'Stealth'],
     bonuses: ['+2 Dex', '+1 Wis', 'Lucky']
   },
   {
-    id: 'greywitnessed', name: 'The Greywitnessed', phb: 'Haunted One',
+    id: 'greywitnessed', name: 'Greywitnessed', phb: 'Haunted One',
     lore: 'You were there when the grey arrived somewhere it shouldn\'t have been. A town that was fine last season. A creature that stopped humming. A person you loved who started forgetting why things were worth caring about. You didn\'t cause it. You couldn\'t stop it. But you saw it, and seeing it changed what you\'re willing to do. The Hollowmoth appeared. You remember exactly what it looked like.',
     skills: ['Arcana', 'Survival'],
     bonuses: ['+2 Wis', '+1 Str', 'Alert']
   },
   {
-    id: 'threadpuller', name: 'The Threadpuller', phb: 'Investigator',
+    id: 'threadpuller', name: 'Threadpuller', phb: 'Investigator',
     lore: 'You worked for the Chroma Bureau, the Dingurei Great Index, a Wanderkeep anomaly division, or simply had a mind that couldn\'t leave an unanswered question alone. You notice what\'s missing from a scene as readily as what\'s present. The Gigglegloom leaves traces everywhere, and you\'ve learned to read them like a language most people don\'t know exists.',
     skills: ['Insight', 'Investigation'],
     bonuses: ['+2 Int', '+1 Wis', 'Keen Mind']
   },
   {
-    id: 'ringscarred', name: 'The Ringscarred', phb: 'Gladiator',
+    id: 'ringscarred', name: 'Ringscarred', phb: 'Gladiator',
     lore: 'You fought in the arenas — the Vokrath fighting pits in Sohot, the honor-bout circles of Nombi, the Caparia traveling tournaments that follow the festival circuit. You know how to perform violence and how to make it look like something else entirely. The crowd\'s color surges when you win. You\'ve noticed it dims slightly when you lose — not much, but enough to notice. You think about that.',
     skills: ['Athletics', 'Performance'],
     bonuses: ['+2 Str', '+1 Cha', 'Savage Attacker']
