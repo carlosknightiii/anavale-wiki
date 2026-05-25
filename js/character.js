@@ -516,12 +516,119 @@ function toggleBgCard(btn) {
   btn.textContent = expanding ? 'Collapse' : 'Expand';
 }
 
+// ── SPECIES DATA ───────────────────────────────────────────────────
+var ANAVALE_SPECIES = [
+  {
+    id: 'solmeri', name: 'Solmeri', phb: 'Human',
+    region: 'Everywhere',
+    affinity: 'Adaptable — no dominant type',
+    desc: 'Solmeri are found in every corner of Anavale, shaped by wherever they were born rather than any single magical tradition. They carry the Gigglegloom lightly, which means it fits them in whatever way they need it to.'
+  },
+  {
+    id: 'verdathi', name: 'Verdathi', phb: 'Elf',
+    region: 'Dingu, Opu & Dodooti Forests',
+    affinity: 'Featherflow, Bubbleseed',
+    desc: 'Verdathi grow up in the old forests where the Gigglegloom pools deepest. They move like they have time — because in the forests, they do. Most are unhurried in a way that others sometimes mistake for indifference.'
+  },
+  {
+    id: 'stonemarked', name: 'Stonemarked', phb: 'Dwarf',
+    region: 'Jani Mountains, Tanaki Peaks',
+    affinity: 'Steelfist',
+    desc: 'Stonemarked are carved from the same stubbornness as the mountains they come from. Their Gigglegloom runs in straight lines and holds its shape under pressure. They find this satisfying. Others find it occasionally alarming.'
+  },
+  {
+    id: 'glimmerkin', name: 'Glimmerkin', phb: 'Gnome',
+    region: 'Bumbleton, Prismhold, Zippydoda Hills',
+    affinity: 'Bubbleseed, Steelfist',
+    desc: 'Glimmerkin are the reason half the Conclave\'s safety protocols exist. Their magic is precise and enthusiastic simultaneously, which produces results that are either brilliant or spectacular, sometimes both at once.'
+  },
+  {
+    id: 'hearthbound', name: 'Hearthbound', phb: 'Halfling',
+    region: 'Pebbleshire, Mirrenport, Caparia',
+    affinity: 'Bubbleseed',
+    desc: 'Hearthbound carry warmth the way other people carry weapons — automatically and without thinking much about it. Their Gigglegloom responds to belonging and comfort. They are very difficult to discourage.'
+  },
+  {
+    id: 'duskborn', name: 'Duskborn', phb: 'Tiefling',
+    region: 'Veilhaven, Reveltown, scattered',
+    affinity: 'Flamerage, shadow-adjacent',
+    desc: 'Duskborn carry something old in their blood — a resonance with the edges of the Gigglegloom that most people never touch. This makes them interesting at parties and occasionally unsettling in quiet rooms.'
+  },
+  {
+    id: 'brightblood', name: 'Brightblood', phb: 'Aasimar',
+    region: 'Brightcreed temples, Solenveil',
+    affinity: 'Bubbleseed, Oro resonance',
+    desc: 'Brightblood carry a trace of Oro\'s attention — not a blessing exactly, more like being quietly watched by something that loves you. Their Gigglegloom is warm and difficult to extinguish, even when they are.'
+  },
+  {
+    id: 'scalegrace', name: 'Scalegrace', phb: 'Dragonborn',
+    region: 'Sohot volcanic, Caparia trade cities',
+    affinity: 'Flamerage',
+    desc: 'Scalegrace come from a tradition that treats fire as a conversation rather than a weapon. Their Gigglegloom runs hot and expressive. They are rarely subtle and have mostly made peace with this.'
+  },
+  {
+    id: 'tallwalker', name: 'Tallwalker', phb: 'Goliath',
+    region: 'Doopu Peaks, Tanaki, Jani Mountains',
+    affinity: 'Steelfist, Flamerage',
+    desc: 'Tallwalkers grow up where the weather is a daily negotiation and the ground does not forgive mistakes. Their magic reflects this — solid, purposeful, and with very little patience for anything decorative.'
+  },
+  {
+    id: 'rootwalker', name: 'Rootwalker', phb: 'Orc',
+    region: 'Jugabi, outer Dingu Forest',
+    affinity: 'Bubbleseed, Flamerage',
+    desc: 'Rootwalkers carry two currents that most people assume cancel each other out. They do not. The result is someone who grows things and protects them with the same intensity, which the Jugabi rainforest finds completely reasonable.'
+  },
+  {
+    id: 'veilstepped', name: 'Veilstepped', phb: 'Changeling',
+    region: 'Everywhere, documented nowhere',
+    affinity: 'Featherflow, Solvara-adjacent',
+    desc: 'Veilstepped are the only species that the Chroma Bureau has consistently failed to count. Their Gigglegloom moves like water around whatever shape is needed. They are not hiding. They are simply not particularly invested in being found.'
+  },
+  {
+    id: 'gloomtouched', name: 'Gloomtouched', phb: 'Warforged',
+    region: 'Prismhold, Conclave sites',
+    affinity: 'Steelfist',
+    desc: 'Gloomtouched were made rather than born, constructed at Conclave sites where Steelfist magic runs deep. They experience the Gigglegloom as something woven into their structure rather than something they carry. The distinction matters to them.'
+  }
+];
+
 function renderSpeciesCards() {
-  // Placeholder — species cards will be wired in a follow-up. Guarded so
-  // calling initStage2() today is safe.
   if (typeof window.renderSpeciesCardsImpl === 'function') {
     window.renderSpeciesCardsImpl();
   }
+}
+
+window.renderSpeciesCardsImpl = function() {
+  var grid = document.getElementById('char-species-grid');
+  if (!grid) return;
+  grid.innerHTML = ANAVALE_SPECIES.map(function(sp) {
+    return '<div class="char-bg-card" data-species="' + sp.id + '" onclick="selectSpecies(\'' + sp.id + '\')">'
+      + '<div class="char-bg-check">✓</div>'
+      + '<div class="char-bg-name">' + sp.name + '</div>'
+      + '<div class="char-bg-phb">' + sp.phb + '</div>'
+      + '<div class="char-bg-lore">' + sp.desc + '</div>'
+      + '<div class="char-bg-skills">'
+      + '<span class="char-bg-skill-label">Region</span> ' + sp.region
+      + '</div>'
+      + '<div class="char-bg-bonuses">'
+      + '<span class="char-bg-bonus-pill">' + sp.affinity + '</span>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+};
+
+function selectSpecies(speciesId) {
+  document.querySelectorAll('#char-species-grid .char-bg-card').forEach(function(c) {
+    c.classList.toggle('selected', c.dataset.species === speciesId);
+  });
+  CHAR_STATE.draft.species_id = speciesId;
+  var hidden = document.getElementById('char-species');
+  if (hidden) hidden.value = speciesId;
+  saveDraftToStorage();
+  setTimeout(function() {
+    var target = document.getElementById('char-language-section') || document.getElementById('char-language');
+    scrollToField(target);
+  }, 80);
 }
 
 function selectBackground(bgId) {

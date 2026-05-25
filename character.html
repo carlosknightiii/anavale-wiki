@@ -164,28 +164,12 @@
       <div id="char-background-grid" class="char-bg-grid"></div>
 
       <!-- Species -->
-      <div class="char-field-group">
-        <label class="char-field-label" for="char-species">
-          Species
-          <span class="char-field-tooltip" data-tip="Your species is what you are — it affects some of your natural abilities and where you come from in the world.">What's this?</span>
-        </label>
-        <span class="char-field-help">What are you?</span>
-        <select class="char-select" id="char-species">
-          <option value="">— Choose your species —</option>
-          <option value="solmeri">Solmeri (Human) — Adaptable, found everywhere</option>
-          <option value="verdathi">Verdathi (Elf) — Ancient, forest-rooted, sharp-sensed</option>
-          <option value="stonemarked">Stonemarked (Dwarf) — Hardy, mountain-born, Steelfist-aligned</option>
-          <option value="glimmerkin">Glimmerkin (Gnome) — Quick-minded, inventive, magic-intuitive</option>
-          <option value="hearthbound">Hearthbound (Halfling) — Warm, lucky, hard to rattle</option>
-          <option value="duskborn">Duskborn (Tiefling) — Old ancestry, fire-resistant, misunderstood</option>
-          <option value="brightblood">Brightblood (Aasimar) — Carries divine light, Oro-adjacent</option>
-          <option value="scalegrace">Scalegrace (Dragonborn) — Draconic lineage, breath weapon, Flamerage-aligned</option>
-          <option value="tallwalker">Goliath (Tallwalker) — Enormous, enduring, mountain-born</option>
-          <option value="rootwalker">Rootwalker (Orc) — Powerful, resilient, stays standing</option>
-          <option value="veilstepped">Veilstepped (Changeling) — Can alter appearance at will</option>
-          <option value="gloomtouched">Gloomtouched (Warforged) — Constructed, doesn't sleep, Steelfist-aligned</option>
-        </select>
+      <div id="char-species-section" class="char-section-header">
+        <div class="char-section-header-title">Choose your species</div>
+        <div class="char-section-header-desc">Your species shapes where you come from and what you carry in your blood. It affects some of your natural abilities — but never your story.</div>
       </div>
+      <div id="char-species-grid" class="char-bg-grid"></div>
+      <input type="hidden" id="char-species" name="char-species" value="">
 
       <!-- Home Region -->
       <div class="char-field-group">
