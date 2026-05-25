@@ -38,7 +38,7 @@
 
   <!-- SIDEBAR -->
   <aside class="char-sidebar">
-    <div class="char-sidebar-title">✦ Create Your Character</div>
+    <div class="char-sidebar-title">Stages</div>
     <div class="char-sidebar-meta">5 stages · about 15–20 minutes</div>
     <div class="char-sidebar-stages">
 
@@ -118,17 +118,17 @@
       <div class="char-stage-header">
         <div class="char-stage-eyebrow">Stage 1 of 5 · <span style="color:#e8c84a;">Choose a Class</span></div>
         <h2 class="char-stage-title">Your Gift</h2>
-        <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom. But some people carry more than a trace. Which kind of magic feels like home?</p>
+        <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom. </p>
       </div>
 
-      <p class="char-type-instruction">↓ Select a magic type to begin — then choose your specific role within it</p>
+      <p class="char-type-instruction">1. Select a magic type to begin!</p>
 
       <div id="char-type-grid" class="char-type-grid">
         <!-- Rendered by character.js initStage1() -->
       </div>
 
       <div id="char-class-panel" class="char-class-panel">
-        <div class="char-class-heading">Now choose your role within that magic —</div>
+        <div class="char-class-heading">2. Now choose your role within that magic.</div>
         <div id="char-class-grid" class="char-class-grid">
           <!-- Rendered by character.js selectType() -->
         </div>
@@ -136,11 +136,9 @@
 
       <div class="char-nav">
         <span></span>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
-          <div style="display:flex; align-items:center; gap:1rem;">
-            <button class="char-save-draft" onclick="generateResumeLink()" title="Generates a link you can bookmark or save to continue later on any device">💾 Save My Progress</button>
-            <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
-          </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1.5rem;">
+          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+          <button class="char-save-draft" onclick="copyResumeLink()" title="Generates a link you can bookmark or save to continue later on any device">💾 Save My Progress</button>
           <span style="font-family:var(--font-sans); font-size:0.72rem; color:rgba(255,255,255,0.45);">💾 copies a link you can bookmark to continue later on any device</span>
         </div>
       </div>

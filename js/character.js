@@ -262,10 +262,14 @@ function initStage1() {
   typeGrid.innerHTML = Object.keys(GIGGLEGLOOM_TYPES).map(function(typeId) {
     var t = GIGGLEGLOOM_TYPES[typeId];
     return '<div class="char-type-card" data-type="' + typeId + '" onclick="selectType(\'' + typeId + '\')">'
-      + '<img class="char-type-icon" src="assets/icons/icon-' + typeId + '.svg" alt="' + t.name + '">'
       + '<div class="char-type-check">✓</div>'
+      + '<div class="char-type-header">'
+      + '<img class="char-type-icon" src="assets/icons/icon-' + typeId + '.svg" alt="' + t.name + '">'
+      + '<div class="char-type-meta">'
       + '<div class="char-type-name">' + t.name + '</div>'
       + '<div class="char-type-element">' + t.element + '</div>'
+      + '</div>'
+      + '</div>'
       + '<div class="char-type-desc">' + t.desc + '</div>'
       + '</div>';
   }).join('');

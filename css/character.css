@@ -38,7 +38,7 @@
   /* Character creation specific */
   --char-bg:          #0a0e18;
   --char-panel:       rgba(10, 14, 24, 0.85);
-  --char-border:      rgba(200, 148, 10, 0.25);
+  --char-border:      rgba(119, 119, 119, 0.25);
   --char-border-gold: rgba(200, 148, 10, 0.6);
   --char-radius:      12px;
   --char-sidebar-w:   240px;
@@ -153,13 +153,12 @@ body.char-page {
 }
 
 .char-sidebar-title {
-  font-family: var(--font-headers);
-  font-size: 1rem;
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
   color: #ffffff;
-  padding: 1.5rem 1.25rem 1.25rem;
+  padding: 1rem;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   margin-bottom: 0.5rem;
-  letter-spacing: 0.08em;
   background: rgba(255,255,255,0.03);
 }
 
@@ -167,7 +166,7 @@ body.char-page {
   padding: 0.6rem 1.25rem 1rem;
   font-family: var(--font-sans);
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--ink-faint);
   line-height: 1.5;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   margin-bottom: 0.75rem;
@@ -305,7 +304,7 @@ body.char-page {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - var(--char-progress-h));
-  padding: 3rem 2rem 5rem;
+  padding: 2rem 2rem 5rem 1rem;
   max-width: 860px;
   margin: 0 auto;
   width: 100%;
@@ -342,11 +341,6 @@ body.char-page {
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1.1;
   margin-bottom: 0.75rem;
-  background: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200% 100%;
 }
 .char-stage-intro {
   font-family: var(--font-sans);
@@ -361,14 +355,13 @@ body.char-page {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: var(--char-radius);
-  padding: 1.5rem 1.75rem;
+  padding: 1rem 1rem;
   margin-bottom: 2.5rem;
 }
 .char-welcome-panel-title {
-  font-family: var(--font-headers);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
   color: #ffffff;
-  margin-bottom: 1rem;
 }
 .char-welcome-steps {
   display: flex;
@@ -412,8 +405,8 @@ body.char-page {
 /* ── TYPE GRID INSTRUCTION ─────────────────────────────────────── */
 .char-type-instruction {
   font-family: var(--font-sans);
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.85);
+  font-size: 1.125rem;
+  color: #ffffff;
   margin-bottom: 1.25rem;
   letter-spacing: 0.01em;
   font-weight: 500;
@@ -454,6 +447,7 @@ body.char-page {
   border-color: #ffffff;
   color: #0a0e18;
   font-weight: 600;
+  text-transform: uppercase;
 }
 .char-btn-next:hover {
   background: rgba(255,255,255,0.9);
@@ -505,19 +499,19 @@ body.char-page {
 /* ── GIGGLEGLOOM TYPE CARDS (Stage 1) ──────────────────────────── */
 .char-type-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.5rem;
   margin-bottom: 2rem;
 }
 
 .char-type-card {
   position: relative;
-  border: 2px solid rgba(255,255,255,0.12);
+  border: 2px solid var(--char-border);
   border-radius: var(--char-radius);
-  padding: 1.75rem 1.5rem;
+  padding: 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
-  background: rgba(8,12,28,0.92);
+  background: var(--char-bg);
   overflow: hidden;
   backdrop-filter: blur(8px);
 }
@@ -533,7 +527,6 @@ body.char-page {
 .char-type-card:hover::before { opacity: 0.08; }
 .char-type-card.selected {
   border-color: var(--type-color, var(--gold));
-  background: rgba(255,255,255,0.06);
   transform: translateY(-3px);
 }
 .char-type-card.selected::before { opacity: 0.12; }
@@ -548,10 +541,19 @@ body.char-page {
 .char-type-card[data-type="flamerage"] { --type-color: var(--flamerage); }
 .char-type-card[data-type="flamerage"]::before { background: var(--flamerage); }
 
+.char-type-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.char-type-meta {
+  flex: 1;
+  min-width: 0;
+}
 .char-type-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 1rem;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
 }
 .char-type-name {
   font-family: var(--font-headers);
@@ -564,14 +566,14 @@ body.char-page {
   font-size: 0.75rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(245,234,212,0.4);
-  margin-bottom: 0.85rem;
+  color: var(--type-color, rgba(255,255,255,0.6));
+  margin-bottom: 0;
 }
 .char-type-desc {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.7;
-  color: rgba(255,255,255,0.82);
+  color: rgba(255,255,255,1);
 }
 .char-type-card.selected .char-type-desc { color: #ffffff; }
 
@@ -600,7 +602,7 @@ body.char-page {
 
 /* ── CLASS PICKER (Stage 1, sub-selection) ─────────────────────── */
 .char-class-panel {
-  margin-top: 2rem;
+  margin-top: 1rem;
   display: none;
   animation: stageIn 0.3s ease forwards;
 }
@@ -608,34 +610,32 @@ body.char-page {
 
 .char-class-heading {
   font-family: var(--font-sans);
-  font-size: 0.8rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(200,148,10,0.6);
-  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #ffffff;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.01em;
+  font-weight: 500;
 }
 
 .char-class-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat((1), 1fr);
   gap: 0.75rem;
 }
 
 .char-class-card {
-  border: 1px solid var(--char-border);
-  border-radius: 8px;
-  padding: 1.25rem;
+  border: 2px solid var(--char-border);
+  border-radius: var(--char-radius);
+  padding: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgba(255,255,255,0.02);
+  background: var(--char-bg);
 }
 .char-class-card:hover {
   border-color: rgba(200,148,10,0.4);
-  background: rgba(200,148,10,0.05);
 }
 .char-class-card.selected {
   border-color: var(--gold);
-  background: rgba(200,148,10,0.1);
 }
 .char-class-name {
   font-family: var(--font-headers);
@@ -654,7 +654,7 @@ body.char-page {
   font-family: var(--font-sans);
   font-size: 0.75rem;
   font-style: italic;
-  color: rgba(255,255,255,0.6);
+  color: var(--gold);
   margin-top: 0.5rem;
   line-height: 1.5;
 }
@@ -1114,9 +1114,8 @@ body.char-page {
 /* ── PAGE TITLE ────────────────────────────────────────────────── */
 .char-page-title {
   font-family: var(--font-headers);
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: clamp(1.5rem, 5vw, 4rem);
   color: #ffffff;
-  margin-bottom: 2rem;
   letter-spacing: 0.04em;
 }
 
@@ -1125,7 +1124,6 @@ body.char-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
 }
 .char-welcome-collapse-btn {
   font-family: var(--font-sans);
