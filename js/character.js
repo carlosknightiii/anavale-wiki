@@ -679,6 +679,62 @@ function restoreStage2Selections() {
   if (CHAR_STATE.draft.species_id) {
     if (typeof selectSpecies === 'function') selectSpecies(CHAR_STATE.draft.species_id);
   }
+
+  // Restore simple option cards (region, language)
+  var simpleFields = [
+    { field: 'char-home-region', saveKey: 'home_region' },
+    { field: 'char-language',    saveKey: 'language'    }
+  ];
+  simpleFields.forEach(function(f) {
+    var val = CHAR_STATE.draft[f.saveKey];
+    if (!val) return;
+    var hidden = document.getElementById(f.field);
+    if (hidden) hidden.value = val;
+    var container = document.querySelector('.char-option-cards[data-field="' + f.field + '"]');
+    if (!container) return;
+    container.querySelectorAll('.char-option-card').forEach(function(card) {
+      card.classList.toggle('selected', card.dataset.value === val);
+    });
+  });
+
+  // Restore past question cards
+  var pastFields = [
+    { past: 'raised',       draftKey: 'past_raised'       },
+    { past: 'friend',       draftKey: 'past_friend'       },
+    { past: 'pet',          draftKey: 'past_pet'          },
+    { past: 'love',         draftKey: 'past_love'         },
+    { past: 'org',          draftKey: 'past_org'          },
+    { past: 'left-behind',  draftKey: 'past_left-behind'  },
+    { past: 'why-left',     draftKey: 'past_why-left'     }
+  ];
+  pastFields.forEach(function(f) {
+    var val = CHAR_STATE.draft[f.draftKey];
+    if (!val) return;
+    var container = document.querySelector('.char-option-cards[data-past="' + f.past + '"]');
+    if (!container) return;
+    var matched = null;
+    container.querySelectorAll('.char-option-card').forEach(function(card) {
+      var isMatch = card.dataset.value === val;
+      card.classList.toggle('selected', isMatch);
+      if (isMatch) matched = card;
+    });
+    // Restore hidden input
+    var fieldId = container.dataset.field;
+    var hidden = document.getElementById(fieldId);
+    if (hidden) hidden.value = val;
+    // Restore effect preview
+    if (matched) {
+      var effect = matched.dataset.effect || '';
+      var preview = document.getElementById('effect-' + f.past);
+      if (preview && effect) {
+        preview.textContent = '✦ ' + effect;
+        preview.classList.add('visible');
+      }
+      // Mark question answered
+      var questionEl = document.getElementById('past-q-' + f.past);
+      if (questionEl) questionEl.classList.add('answered');
+    }
+  });
 }
 
 // ── STAGE VALIDATION ───────────────────────────────────────────────
