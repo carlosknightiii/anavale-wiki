@@ -97,43 +97,31 @@
   <!-- MAIN -->
   <main class="char-main">
 
+    <h1 class="char-page-title">Character Creator</h1>
+
     <!-- ══ STAGE 1 — YOUR GIFT ══ -->
     <div id="char-stage-1" class="char-stage active">
+
+      <!-- Welcome panel comes first — sets context before the stage content -->
+      <div class="char-welcome-panel">
+        <div class="char-welcome-panel-header">
+          <div class="char-welcome-panel-title">What You'll Do Here</div>
+          <button class="char-welcome-collapse-btn" aria-expanded="true" onclick="toggleWelcomePanel(this)">
+            <span class="char-collapse-icon">▲</span> Collapse
+          </button>
+        </div>
+        <div class="char-welcome-body" id="char-welcome-body">
+          <p style="font-family:var(--font-sans); font-size:0.85rem; line-height:1.7; color:rgba(255,255,255,0.8);">Over five stages you'll choose your magic type and class, build your background and origin story, assign your ability scores and describe your appearance, set your moral compass, and give your character a name. About 15–20 minutes total — your progress saves automatically, so you can pause and come back any time.</p>
+        </div>
+      </div>
+
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 1 of 5 · Choose a Class</div>
-        <h1 class="char-stage-title">Your Gift</h1>
+        <div class="char-stage-eyebrow">Stage 1 of 5 · <span style="color:#e8c84a;">Choose a Class</span></div>
+        <h2 class="char-stage-title">Your Gift</h2>
         <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom. But some people carry more than a trace. Which kind of magic feels like home?</p>
       </div>
 
-      <!-- Welcome panel — explains what character creation is -->
-      <div class="char-welcome-panel">
-        <div class="char-welcome-panel-title">Here's what you're about to do</div>
-        <div class="char-welcome-steps">
-          <div class="char-welcome-step">
-            <div class="char-welcome-step-num">1</div>
-            <span>Choose the kind of magic that feels like home — this determines your role in the adventure</span>
-          </div>
-          <div class="char-welcome-step">
-            <div class="char-welcome-step-num">2</div>
-            <span>Tell us where you came from and what shaped you — your past gives you skills and a personal quest</span>
-          </div>
-          <div class="char-welcome-step">
-            <div class="char-welcome-step-num">3</div>
-            <span>Assign your strengths and describe what you look like — we'll use this to create your portrait</span>
-          </div>
-          <div class="char-welcome-step">
-            <div class="char-welcome-step-num">4</div>
-            <span>Choose your compass — how your character makes decisions when nobody's watching</span>
-          </div>
-          <div class="char-welcome-step">
-            <div class="char-welcome-step-num">5</div>
-            <span>Name your character and answer three final questions — then you're done</span>
-          </div>
-        </div>
-        <div class="char-welcome-time">⏱ Takes about 15–20 minutes · Your progress saves automatically · You can pause and come back</div>
-      </div>
-
-      <p class="char-type-instruction">Click a card below to choose your magic type — then pick your specific role within it.</p>
+      <p class="char-type-instruction">↓ Select a magic type to begin — then choose your specific role within it</p>
 
       <div id="char-type-grid" class="char-type-grid">
         <!-- Rendered by character.js initStage1() -->
@@ -148,9 +136,12 @@
 
       <div class="char-nav">
         <span></span>
-        <div style="display:flex; align-items:center; gap:1.5rem;">
-          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
-          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <button class="char-save-draft" onclick="generateResumeLink()" title="Generates a link you can bookmark or save to continue later on any device">💾 Save My Progress</button>
+            <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+          </div>
+          <span style="font-family:var(--font-sans); font-size:0.72rem; color:rgba(255,255,255,0.45);">💾 copies a link you can bookmark to continue later on any device</span>
         </div>
       </div>
     </div>
@@ -158,7 +149,7 @@
     <!-- ══ STAGE 2 — YOUR STORY ══ -->
     <div id="char-stage-2" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 2 of 5 · Origin</div>
+        <div class="char-stage-eyebrow">Stage 2 of 5 · <span style="color:#e8c84a;">Origin</span></div>
         <h1 class="char-stage-title">Your Story</h1>
         <p class="char-stage-intro">Where you came from shapes what you can do — and what you carry with you. Take your time with this one.</p>
       </div>
@@ -350,9 +341,9 @@
 
       <div class="char-nav">
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
-        <div style="display:flex; align-items:center; gap:1.5rem;">
-          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
           <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+          <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
         </div>
       </div>
     </div>
@@ -360,7 +351,7 @@
     <!-- ══ STAGE 3 — YOUR STRENGTHS ══ -->
     <div id="char-stage-3" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 3 of 5 · Ability Scores & Appearance</div>
+        <div class="char-stage-eyebrow">Stage 3 of 5 · <span style="color:#e8c84a;">Ability Scores & Appearance</span></div>
         <h1 class="char-stage-title">Your Strengths</h1>
         <p class="char-stage-intro">Assign your six core abilities and describe what you look like. The appearance details will be used to create your character portrait later.</p>
       </div>
@@ -386,9 +377,9 @@
 
       <div class="char-nav">
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
-        <div style="display:flex; align-items:center; gap:1.5rem;">
-          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
           <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+          <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
         </div>
       </div>
     </div>
@@ -396,7 +387,7 @@
     <!-- ══ STAGE 4 — YOUR COMPASS ══ -->
     <div id="char-stage-4" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 4 of 5 · Alignment</div>
+        <div class="char-stage-eyebrow">Stage 4 of 5 · <span style="color:#e8c84a;">Alignment</span></div>
         <h1 class="char-stage-title">Your Compass</h1>
         <p class="char-stage-intro">Not a cage. Think of it as the compass your character tends to follow when nobody's watching. It can shift over time.</p>
       </div>
@@ -467,9 +458,9 @@
 
       <div class="char-nav">
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
-        <div style="display:flex; align-items:center; gap:1.5rem;">
-          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
           <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+          <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
         </div>
       </div>
     </div>
@@ -477,7 +468,7 @@
     <!-- ══ STAGE 5 — WHO YOU ARE ══ -->
     <div id="char-stage-5" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 5 of 5 · Summary & Name</div>
+        <div class="char-stage-eyebrow">Stage 5 of 5 · <span style="color:#e8c84a;">Summary & Name</span></div>
         <h1 class="char-stage-title">Who You Are</h1>
         <p class="char-stage-intro">Almost there. Give your character a name, answer three final questions, and review your character summary before submitting.</p>
       </div>

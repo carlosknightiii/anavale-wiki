@@ -120,6 +120,21 @@ function initAutoSave() {
   });
 }
 
+// ── WELCOME PANEL COLLAPSE ──────────────────────────────────────────
+function toggleWelcomePanel(btn) {
+  var body = document.getElementById('char-welcome-body');
+  if (!body) return;
+  var isCollapsed = body.classList.toggle('collapsed');
+  var icon = btn.querySelector('.char-collapse-icon');
+  if (isCollapsed) {
+    btn.innerHTML = '<span class="char-collapse-icon">▼</span> Expand';
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    btn.innerHTML = '<span class="char-collapse-icon">▲</span> Collapse';
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+
 // ── STAGE NAVIGATION ───────────────────────────────────────────────
 function showStage(n) {
   var stages = document.querySelectorAll('.char-stage');
