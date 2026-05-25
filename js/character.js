@@ -645,7 +645,7 @@ function selectSpecies(speciesId) {
   if (hidden) hidden.value = speciesId;
   saveDraftToStorage();
   setTimeout(function() {
-    var target = document.getElementById('char-language-section') || document.getElementById('char-language');
+    var target = document.getElementById('char-home-region-section') || document.getElementById('char-home-region');
     scrollToField(target);
   }, 80);
 }
