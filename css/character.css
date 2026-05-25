@@ -1233,13 +1233,14 @@ body.char-page {
 
 /* ── SECTION HEADER (within-stage subheadings) — subordinate to stage header */
 .char-section-header {
-  margin-top: 3rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem 0.85rem;
+  background: rgba(10,14,24,0.75);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
   scroll-margin-top: 6rem;
 }
-.char-section-header:first-child { margin-top: 1.5rem; }
 .char-section-header-eyebrow {
   font-family: var(--font-sans);
   font-size: 0.62rem;
@@ -1263,6 +1264,56 @@ body.char-page {
   font-size: 0.78rem;
   color: #ffffff;
   line-height: 1.55;
+}
+
+/* ── IMAGINED PAST DIVIDER ─────────────────────────────────────── */
+.char-past-divider {
+  margin-top: 3.5rem;
+  margin-bottom: 2.75rem;
+  margin-left: -2rem;
+  margin-right: -2rem;
+  padding: 2rem 2rem 2.25rem;
+  background: linear-gradient(135deg, #0d1225 0%, #110e20 100%);
+  border-top: 1px solid rgba(200,148,10,0.2);
+  border-bottom: 1px solid rgba(200,148,10,0.2);
+  scroll-margin-top: 6rem;
+}
+.char-past-divider-inner {
+  max-width: 680px;
+}
+.char-past-divider-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(200,148,10,0.6);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+.char-past-divider-title {
+  font-family: var(--font-headers);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  line-height: 1.15;
+}
+.char-past-divider-desc {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: rgba(245,234,212,0.65);
+  line-height: 1.7;
+  max-width: 560px;
+}
+.char-past-questions-wrap {
+  padding-top: 0.5rem;
+}
+
+/* Part 4 of Stage 2 — Imagine Your Past title */
+.char-past-header-title {
+  font-family: var(--font-headers) !important;
+  font-size: clamp(1.4rem, 3vw, 1.9rem) !important;
+  font-weight: 400 !important;
+  line-height: 1.15 !important;
 }
 
 /* ── IMAGINED PAST SECTION ─────────────────────────────────────── */

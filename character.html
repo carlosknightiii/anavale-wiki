@@ -157,6 +157,7 @@
 
       <!-- Background -->
       <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 1 of 4</div>
         <div class="char-section-header-title">Choose your background</div>
         <div class="char-section-header-desc">Your background shapes your skills, your habits, and how the world sees you — choose the one that fits who you were before this began.</div>
       </div>
@@ -165,14 +166,21 @@
 
       <!-- Species -->
       <div id="char-species-section" class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 2 of 4</div>
         <div class="char-section-header-title">Choose your species</div>
         <div class="char-section-header-desc">Your species shapes where you come from and what you carry in your blood. It affects some of your natural abilities — but never your story.</div>
       </div>
       <div id="char-species-grid" class="char-bg-grid"></div>
       <input type="hidden" id="char-species" name="char-species" value="">
 
-      <!-- Home Region -->
-      <div class="char-field-group" id="char-home-region-section">
+      <!-- Where You Come From -->
+      <div class="char-section-header" id="char-home-region-section">
+        <div class="char-section-header-eyebrow">Part 3 of 4</div>
+        <div class="char-section-header-title">Where you come from</div>
+        <div class="char-section-header-desc">Two quick details about the world you grew up in — your home region and a second language you picked up along the way.</div>
+      </div>
+
+      <div class="char-field-group">
         <label class="char-field-label" for="char-home-region">Where are you from?</label>
         <span class="char-field-help">The region of Pogglewog you call home — you may not know all the cities yet, but you know which part of the world shaped you.</span>
         <select class="char-select" id="char-home-region" onchange="CHAR_STATE.draft.home_region = this.value">
@@ -184,7 +192,6 @@
         </select>
       </div>
 
-      <!-- Language -->
       <div class="char-field-group" id="char-language-section">
         <label class="char-field-label" for="char-language">
           Additional Language
@@ -203,8 +210,12 @@
       </div>
 
       <!-- Imagined Past -->
-      <div style="margin-top:2.5rem;">
-        <div class="char-stage-eyebrow" style="margin-bottom:1.25rem;">Imagine Your Past</div>
+      <div class="char-section-header char-section-header--past">
+        <div class="char-section-header-eyebrow">Part 4 of 4</div>
+        <div class="char-section-header-title char-past-header-title">Imagine your past</div>
+        <div class="char-section-header-desc">Before you left, there was a life. These questions aren't about what you can do — they're about who you were. Your answers will surface during play.</div>
+      </div>
+      <div class="char-past-questions-wrap">
 
         <div class="char-past-question" id="past-q-raised">
           <div class="char-past-q-label">Who raised you?</div>
@@ -321,20 +332,33 @@
         <p class="char-stage-intro">Assign your six core abilities and describe what you look like. The appearance details will be used to create your character portrait later.</p>
       </div>
 
-      <!-- Ability Scores placeholder — full implementation in Phase 2 -->
+      <!-- Ability Scores -->
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 1 of 3</div>
+        <div class="char-section-header-title">Ability scores</div>
+        <div class="char-section-header-desc">Your six core abilities — Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma. Drag and drop to assign them.</div>
+      </div>
       <div style="padding:2rem; border:1px dashed rgba(200,148,10,0.2); border-radius:10px; text-align:center; color:rgba(245,234,212,0.4); font-family:var(--font-sans); font-size:0.875rem; margin-bottom:2rem;">
         ✦ Ability score drag-and-drop — coming in Phase 2
       </div>
 
-      <!-- Appearance placeholder — full implementation in Phase 2 -->
+      <!-- Appearance -->
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 2 of 3</div>
+        <div class="char-section-header-title">Your appearance</div>
+        <div class="char-section-header-desc">Describe what you look like. These details will be used to generate your character portrait.</div>
+      </div>
       <div style="padding:2rem; border:1px dashed rgba(200,148,10,0.2); border-radius:10px; text-align:center; color:rgba(245,234,212,0.4); font-family:var(--font-sans); font-size:0.875rem; margin-bottom:2rem;">
         ✦ Appearance builder — coming in Phase 2
       </div>
 
       <!-- Personality -->
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 3 of 3</div>
+        <div class="char-section-header-title">Your personality</div>
+        <div class="char-section-header-desc">Three short answers — these help define how your character moves through the world.</div>
+      </div>
       <div class="char-field-group">
-        <label class="char-field-label">Your Personality</label>
-        <span class="char-field-help">Three short answers — these help define how your character moves through the world.</span>
         <input class="char-input" id="char-personality-1" type="text" placeholder="One thing people notice about you immediately." style="margin-bottom:0.75rem;">
         <input class="char-input" id="char-personality-2" type="text" placeholder="One thing people get wrong about you." style="margin-bottom:0.75rem;">
         <input class="char-input" id="char-personality-3" type="text" placeholder="One thing that always makes you laugh.">
@@ -355,6 +379,12 @@
         <div class="char-stage-eyebrow">Stage 4 of 5 · <span style="color:#e8c84a;">Alignment</span></div>
         <h1 class="char-stage-title">Your Compass</h1>
         <p class="char-stage-intro">Not a cage. Think of it as the compass your character tends to follow when nobody's watching. It can shift over time.</p>
+      </div>
+
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Choose one</div>
+        <div class="char-section-header-title">Which compass do you follow?</div>
+        <div class="char-section-header-desc">Pick the one that fits — then choose a personal trait inside it that sounds most like you.</div>
       </div>
 
       <div class="char-alignment-grid">
@@ -438,16 +468,24 @@
         <p class="char-stage-intro">Almost there. Give your character a name, answer three final questions, and review your character summary before submitting.</p>
       </div>
 
-      <!-- Auto-generated summary -->
+      <!-- Summary -->
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 1 of 3</div>
+        <div class="char-section-header-title">Your character summary</div>
+        <div class="char-section-header-desc">Generated from your choices. This will appear on your character sheet.</div>
+      </div>
       <div class="char-summary-card" style="margin-bottom:2rem;">
-        <div style="font-family:var(--font-sans); font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; color:rgba(200,148,10,0.5); margin-bottom:0.75rem;">Your Character Summary</div>
         <p id="char-auto-summary" class="char-summary-body" style="font-style:italic;">Your summary will appear here based on your choices.</p>
       </div>
 
       <!-- Name -->
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 2 of 3</div>
+        <div class="char-section-header-title">Your name</div>
+        <div class="char-section-header-desc">Choose any name — or use the suggestions below for inspiration.</div>
+      </div>
       <div class="char-field-group">
         <label class="char-field-label" for="char-final-name">Your Character's Name</label>
-        <span class="char-field-help">Choose any name — or use the suggestions below for inspiration.</span>
         <input class="char-input" id="char-final-name" type="text" placeholder="Enter a name…">
         <div style="margin-top:0.75rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
           <button class="char-save-draft" onclick="suggestNames()">✦ Suggest names</button>
@@ -456,14 +494,18 @@
         <div id="char-name-suggestions" class="char-name-suggestions"></div>
       </div>
 
-      <!-- Gender -->
       <div class="char-field-group">
         <label class="char-field-label" for="char-gender">Gender</label>
         <span class="char-field-help">Describe however feels right, or leave blank.</span>
         <input class="char-input" id="char-gender" type="text" placeholder="e.g. she/her, he/him, they/them, or leave blank">
       </div>
 
-      <!-- Three closing questions -->
+      <!-- Final questions -->
+      <div class="char-section-header">
+        <div class="char-section-header-eyebrow">Part 3 of 3</div>
+        <div class="char-section-header-title">Three last things</div>
+        <div class="char-section-header-desc">Short answers — these shape how your character is written up and how your DM brings you into the story.</div>
+      </div>
       <div class="char-field-group">
         <label class="char-field-label" for="char-cares-about">The person or people you care most about</label>
         <textarea class="char-textarea" id="char-cares-about" placeholder="Who matters most to you?"></textarea>
