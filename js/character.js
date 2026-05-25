@@ -931,59 +931,54 @@ function showToast(msg) {
 
 // ── TOOLTIP SYSTEM ────────────────────────────────────────────────
 function initTooltips() {
-  var activeEl  = null;
-  var activeBox = null;
+  var active = null; // { el, box }
   function destroy() {
-    if (activeBox) { activeBox.remove(); activeBox = null; }
-    activeEl = null;
+    if (active) { active.box.remove(); active = null; }
   }
   function create(el) {
     destroy();
-    activeEl = el;
     var box = document.createElement('div');
     box.textContent = el.getAttribute('data-tip');
-    // All positioning inline — do NOT rely on .char-tooltip-box CSS position/opacity
-    box.style.cssText = [
-      'position:fixed',
-      'z-index:99999',
-      'width:220px',
-      'max-width:calc(100vw - 24px)',
-      'background:rgba(10,14,24,0.96)',
-      'border:1px solid rgba(200,148,10,0.6)',
-      'border-radius:6px',
-      'padding:0.6rem 0.9rem',
-      'font-family:var(--font-sans)',
-      'font-size:0.78rem',
-      'line-height:1.55',
-      'color:rgba(245,234,212,0.85)',
-      'white-space:normal',
-      'pointer-events:none',
-      'box-shadow:0 4px 16px rgba(0,0,0,0.6)',
-      'opacity:0',
-      'transition:opacity 0.12s ease',
-      // Place off-screen first so we can measure height
-      'top:-9999px',
-      'left:-9999px'
-    ].join(';');
+    var styles = {
+      position:         'fixed',
+      zIndex:           '99999',
+      width:            '220px',
+      maxWidth:         'calc(100vw - 24px)',
+      background:       'rgba(10,14,24,0.96)',
+      border:           '1px solid rgba(200,148,10,0.6)',
+      borderRadius:     '6px',
+      padding:          '0.6rem 0.9rem',
+      fontFamily:       'Roboto, system-ui, sans-serif',
+      fontSize:         '0.78rem',
+      lineHeight:       '1.55',
+      color:            'rgba(245,234,212,0.85)',
+      whiteSpace:       'normal',
+      pointerEvents:    'none',
+      boxShadow:        '0 4px 16px rgba(0,0,0,0.6)',
+      visibility:       'hidden',  // hidden but laid out — so we can measure height
+      top:              '0',
+      left:             '0'
+    };
+    Object.keys(styles).forEach(function(k) { box.style[k] = styles[k]; });
     document.body.appendChild(box);
-    activeBox = box;
-    // Measure after append (height is available once in DOM, even off-screen)
-    var bh   = box.getBoundingClientRect().height || 60;
+    // Measure real height now that element is in DOM and laid out
+    var bh   = box.offsetHeight || 56;
     var rect = el.getBoundingClientRect();
-    var left = rect.left + rect.width / 2 - 110; // 110 = half of 220px
+    var left = rect.left + rect.width / 2 - 110;
     left = Math.max(8, Math.min(left, window.innerWidth - 228));
     var top  = rect.top - bh - 10;
     if (top < 8) top = rect.bottom + 8;
-    box.style.left = left + 'px';
-    box.style.top  = top  + 'px';
-    box.style.opacity = '1';
+    box.style.top        = top  + 'px';
+    box.style.left       = left + 'px';
+    box.style.visibility = 'visible';
+    active = { el: el, box: box };
   }
   document.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(el) {
     el.addEventListener('mouseenter', function() { create(el); });
     el.addEventListener('mouseleave', destroy);
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (activeEl === el) { destroy(); } else { create(el); }
+      if (active && active.el === el) { destroy(); } else { create(el); }
     });
   });
   document.addEventListener('click', destroy);
