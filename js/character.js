@@ -101,12 +101,34 @@ function generateResumeLink() {
 
 function showReturnBanner() {
   var banner = document.getElementById('char-return-banner');
-  if (banner) {
-    banner.classList.add('visible');
-    // Shift progress bar down to account for banner height
+  if (!banner) return;
+  banner.classList.add('visible');
+  requestAnimationFrame(function() {
+    var h = banner.offsetHeight;
     var prog = document.getElementById('char-progress-wrap');
-    if (prog) prog.style.top = banner.offsetHeight + 'px';
-  }
+    if (prog) prog.style.top = h + 'px';
+    var layout = document.querySelector('.char-layout');
+    if (layout) layout.style.paddingTop = (h + 16) + 'px';
+  });
+}
+
+function dismissReturnBanner() {
+  var banner = document.getElementById('char-return-banner');
+  if (!banner) return;
+  banner.classList.remove('visible');
+  var prog = document.getElementById('char-progress-wrap');
+  if (prog) prog.style.top = '0';
+  var layout = document.querySelector('.char-layout');
+  if (layout) layout.style.paddingTop = '';
+}
+
+function resumeDraft() {
+  var stage = (CHAR_STATE.draft._stage && CHAR_STATE.draft._stage > 1)
+    ? CHAR_STATE.draft._stage
+    : CHAR_STATE.current_stage;
+  dismissReturnBanner();
+  showStage(stage);
+  initStageOnEnter(stage);
 }
 
 function initAutoSave() {

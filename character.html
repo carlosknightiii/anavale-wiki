@@ -21,10 +21,13 @@
 </div>
 
 <!-- ── RETURN BANNER ── -->
-<div id="char-return-banner" class="char-return-banner">
-  <span>Welcome back — your draft is saved.</span>
-  <button onclick="showStage(parseInt(localStorage.getItem('anavale_char_draft') ? JSON.parse(localStorage.getItem('anavale_char_draft'))._stage || 1 : 1))">Resume where I left off</button>
-</div>
+<div id="char-return-banner" class="char-return-banner" role="alert" aria-live="polite">
+    <span class="char-return-banner-text">✦ Welcome back — your draft is saved.</span>
+    <div class="char-return-banner-actions">
+      <button type="button" onclick="resumeDraft()">Resume Where I Left Off</button>
+      <button type="button" class="char-return-dismiss" onclick="dismissReturnBanner()" aria-label="Dismiss">✕</button>
+    </div>
+  </div>
 
 <!-- ── PROGRESS BAR ── -->
 <div id="char-progress-wrap" class="char-progress-wrap">
@@ -158,6 +161,8 @@
           <span class="char-field-tooltip" data-tip="Background — how you spent your years before this adventure. It shapes your skills and your story.">What's this?</span>
         </label>
         <p class="char-field-help">Where did you come from? Choose the background that fits your character's past.</p>
+        <div class="char-stage-eyebrow" style="margin-bottom:0.5rem;">Your Background</div>
+        <p style="font-family:var(--font-sans);font-size:0.9rem;color:rgba(255,255,255,0.75);margin-bottom:1.25rem;line-height:1.6;">Where did you come from? What did the world make of you before you decided to go somewhere else?</p>
         <div id="char-background-grid" class="char-bg-grid"></div>
         <input type="hidden" id="char-background" value="">
       </div>
