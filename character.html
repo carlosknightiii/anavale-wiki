@@ -28,48 +28,69 @@
 
 <!-- ── PROGRESS BAR ── -->
 <div id="char-progress-wrap" class="char-progress-wrap">
-  <div id="char-progress-bar" class="char-progress-bar" style="width:10%"></div>
+  <div id="char-progress-bar" class="char-progress-bar" style="width:10%">
+    <div id="char-progress-label" class="char-progress-label">Progress 10%</div>
+  </div>
 </div>
-<div id="char-progress-label" class="char-progress-label">Stage 1 of 5</div>
 
 <!-- ── LAYOUT ── -->
 <div class="char-layout">
 
   <!-- SIDEBAR -->
   <aside class="char-sidebar">
-    <div class="char-sidebar-title">✦ Your Story</div>
+    <div class="char-sidebar-title">✦ Create Your Character</div>
+    <div class="char-sidebar-meta">5 stages · about 15–20 minutes</div>
     <div class="char-sidebar-stages">
 
       <div id="char-sidebar-stage-1" class="char-sidebar-stage active" onclick="jumpToStage(1)">
         <div class="char-stage-num">1</div>
-        <span>Your Gift</span>
+        <div class="char-stage-label">
+          Your Gift
+          <span class="char-stage-sublabel">Choose a class</span>
+        </div>
         <span class="char-stage-check">✓</span>
       </div>
 
       <div id="char-sidebar-stage-2" class="char-sidebar-stage" onclick="jumpToStage(2)">
         <div class="char-stage-num">2</div>
-        <span>Your Story</span>
+        <div class="char-stage-label">
+          Your Story
+          <span class="char-stage-sublabel">Background & origin</span>
+        </div>
         <span class="char-stage-check">✓</span>
       </div>
 
       <div id="char-sidebar-stage-3" class="char-sidebar-stage" onclick="jumpToStage(3)">
         <div class="char-stage-num">3</div>
-        <span>Your Strengths</span>
+        <div class="char-stage-label">
+          Your Strengths
+          <span class="char-stage-sublabel">Abilities & appearance</span>
+        </div>
         <span class="char-stage-check">✓</span>
       </div>
 
       <div id="char-sidebar-stage-4" class="char-sidebar-stage" onclick="jumpToStage(4)">
         <div class="char-stage-num">4</div>
-        <span>Your Compass</span>
+        <div class="char-stage-label">
+          Your Compass
+          <span class="char-stage-sublabel">Alignment</span>
+        </div>
         <span class="char-stage-check">✓</span>
       </div>
 
       <div id="char-sidebar-stage-5" class="char-sidebar-stage" onclick="jumpToStage(5)">
         <div class="char-stage-num">5</div>
-        <span>Who You Are</span>
+        <div class="char-stage-label">
+          Who You Are
+          <span class="char-stage-sublabel">Name & final details</span>
+        </div>
         <span class="char-stage-check">✓</span>
       </div>
 
+    </div>
+    <div class="char-sidebar-footer">
+      Your progress saves automatically.<br>
+      Completed stages are clickable.
     </div>
   </aside>
 
@@ -83,6 +104,36 @@
         <h1 class="char-stage-title">Your Gift</h1>
         <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom. But some people carry more than a trace. Which kind of magic feels like home?</p>
       </div>
+
+      <!-- Welcome panel — explains what character creation is -->
+      <div class="char-welcome-panel">
+        <div class="char-welcome-panel-title">Here's what you're about to do</div>
+        <div class="char-welcome-steps">
+          <div class="char-welcome-step">
+            <div class="char-welcome-step-num">1</div>
+            <span>Choose the kind of magic that feels like home — this determines your role in the adventure</span>
+          </div>
+          <div class="char-welcome-step">
+            <div class="char-welcome-step-num">2</div>
+            <span>Tell us where you came from and what shaped you — your past gives you skills and a personal quest</span>
+          </div>
+          <div class="char-welcome-step">
+            <div class="char-welcome-step-num">3</div>
+            <span>Assign your strengths and describe what you look like — we'll use this to create your portrait</span>
+          </div>
+          <div class="char-welcome-step">
+            <div class="char-welcome-step-num">4</div>
+            <span>Choose your compass — how your character makes decisions when nobody's watching</span>
+          </div>
+          <div class="char-welcome-step">
+            <div class="char-welcome-step-num">5</div>
+            <span>Name your character and answer three final questions — then you're done</span>
+          </div>
+        </div>
+        <div class="char-welcome-time">⏱ Takes about 15–20 minutes · Your progress saves automatically · You can pause and come back</div>
+      </div>
+
+      <p class="char-type-instruction">Click a card below to choose your magic type — then pick your specific role within it.</p>
 
       <div id="char-type-grid" class="char-type-grid">
         <!-- Rendered by character.js initStage1() -->
@@ -496,6 +547,19 @@
 </div>
 
 <script>
+// Patch renderProgress to also update label text after the bar width is set
+document.addEventListener('DOMContentLoaded', function() {
+  var orig = window.renderProgress;
+  if (orig) {
+    window.renderProgress = function() {
+      orig.call(this);
+      var pct = Math.max(10, ((CHAR_STATE.current_stage - 1) / (CHAR_CONFIG.total_stages - 1)) * 100);
+      var label = document.getElementById('char-progress-label');
+      if (label) label.textContent = 'Progress ' + Math.round(pct) + '%';
+    };
+  }
+});
+
 // Imagined Past effect preview
 function showPastEffect(question, select) {
   var opt = select.options[select.selectedIndex];
