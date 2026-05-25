@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Character — Anavale</title>
+<link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Roboto:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/character.css">
+</head>
+<body class="char-page">
+
+<!-- ── TOAST ── -->
+<div id="char-toast"></div>
+
+<!-- ── ALREADY EXISTS BANNER ── -->
+<div id="char-already-exists" style="display:none; position:fixed; inset:0; z-index:500; background:rgba(3,4,12,0.97); align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:2rem;">
+  <div style="font-family:var(--font-headers); font-size:2rem; color:var(--gold); margin-bottom:1rem;">✦ Your character already exists</div>
+  <p style="font-family:var(--font-sans); color:rgba(245,234,212,0.65); max-width:440px; line-height:1.7; margin-bottom:2rem;">You've already created a character for this campaign. Visit your character sheet to view your stats, manage your inventory, and take notes.</p>
+  <a class="char-sheet-link" href="#" style="display:inline-block; padding:0.85rem 2.5rem; border:1px solid rgba(200,148,10,0.5); border-radius:8px; color:var(--gold); font-family:var(--font-sans); font-size:0.875rem; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none;">View My Character Sheet →</a>
+</div>
+
+<!-- ── RETURN BANNER ── -->
+<div id="char-return-banner" class="char-return-banner">
+  <span>Welcome back — your draft is saved.</span>
+  <button onclick="showStage(parseInt(localStorage.getItem('anavale_char_draft') ? JSON.parse(localStorage.getItem('anavale_char_draft'))._stage || 1 : 1))">Resume where I left off</button>
+</div>
+
+<!-- ── PROGRESS BAR ── -->
+<div id="char-progress-wrap" class="char-progress-wrap">
+  <div id="char-progress-bar" class="char-progress-bar" style="width:10%"></div>
+</div>
+<div id="char-progress-label" class="char-progress-label">Stage 1 of 5</div>
+
+<!-- ── LAYOUT ── -->
+<div class="char-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="char-sidebar">
+    <div class="char-sidebar-title">✦ Your Story</div>
+    <div class="char-sidebar-stages">
+
+      <div id="char-sidebar-stage-1" class="char-sidebar-stage active" onclick="jumpToStage(1)">
+        <div class="char-stage-num">1</div>
+        <span>Your Gift</span>
+        <span class="char-stage-check">✓</span>
+      </div>
+
+      <div id="char-sidebar-stage-2" class="char-sidebar-stage" onclick="jumpToStage(2)">
+        <div class="char-stage-num">2</div>
+        <span>Your Story</span>
+        <span class="char-stage-check">✓</span>
+      </div>
+
+      <div id="char-sidebar-stage-3" class="char-sidebar-stage" onclick="jumpToStage(3)">
+        <div class="char-stage-num">3</div>
+        <span>Your Strengths</span>
+        <span class="char-stage-check">✓</span>
+      </div>
+
+      <div id="char-sidebar-stage-4" class="char-sidebar-stage" onclick="jumpToStage(4)">
+        <div class="char-stage-num">4</div>
+        <span>Your Compass</span>
+        <span class="char-stage-check">✓</span>
+      </div>
+
+      <div id="char-sidebar-stage-5" class="char-sidebar-stage" onclick="jumpToStage(5)">
+        <div class="char-stage-num">5</div>
+        <span>Who You Are</span>
+        <span class="char-stage-check">✓</span>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="char-main">
+
+    <!-- ══ STAGE 1 — YOUR GIFT ══ -->
+    <div id="char-stage-1" class="char-stage active">
+      <div class="char-stage-header">
+        <div class="char-stage-eyebrow">Stage 1 of 5 · Choose a Class</div>
+        <h1 class="char-stage-title">Your Gift</h1>
+        <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom. But some people carry more than a trace. Which kind of magic feels like home?</p>
+      </div>
+
+      <div id="char-type-grid" class="char-type-grid">
+        <!-- Rendered by character.js initStage1() -->
+      </div>
+
+      <div id="char-class-panel" class="char-class-panel">
+        <div class="char-class-heading">Now choose your role within that magic —</div>
+        <div id="char-class-grid" class="char-class-grid">
+          <!-- Rendered by character.js selectType() -->
+        </div>
+      </div>
+
+      <div class="char-nav">
+        <span></span>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STAGE 2 — YOUR STORY ══ -->
+    <div id="char-stage-2" class="char-stage">
+      <div class="char-stage-header">
+        <div class="char-stage-eyebrow">Stage 2 of 5 · Origin</div>
+        <h1 class="char-stage-title">Your Story</h1>
+        <p class="char-stage-intro">Where you came from shapes what you can do — and what you carry with you. Take your time with this one.</p>
+      </div>
+
+      <!-- Background -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-background">
+          Background
+          <span class="char-field-tooltip" title="Your background is how you spent your years before this adventure began. It determines some of your skills and starting bonuses.">What's this?</span>
+        </label>
+        <span class="char-field-help">How did you spend your years before your story began?</span>
+        <select class="char-select" id="char-background">
+          <option value="">— Choose your background —</option>
+          <option value="the-faithful">The Faithful (Acolyte) — +2 Int, +1 Wis</option>
+          <option value="the-streetwise">The Streetwise (Criminal) — +2 Dex, +1 Int</option>
+          <option value="the-learned">The Learned (Sage) — +2 Int, +1 Wis</option>
+          <option value="the-tested">The Tested (Soldier) — +2 Str, +1 Con</option>
+          <option value="the-wellborn">The Wellborn (Noble) — +2 Cha, +1 Int</option>
+          <option value="the-rootborn">The Rootborn (Folk Hero) — +2 Con, +1 Cha</option>
+          <option value="the-masquerader">The Masquerader (Charlatan) — +2 Cha, +1 Dex</option>
+          <option value="the-reveler">The Reveler (Entertainer) — +2 Cha, +1 Dex</option>
+          <option value="the-craftborn">The Craftborn (Guild Artisan) — +2 Int, +1 Cha</option>
+          <option value="the-stillsought">The Stillsought (Hermit) — +2 Wis, +1 Con</option>
+          <option value="the-wildborn">The Wildborn (Outlander) — +2 Str, +1 Wis</option>
+          <option value="the-tidemarked">The Tidemarked (Sailor) — +2 Str, +1 Dex</option>
+          <option value="the-cobblewise">The Cobblewise (Urchin) — +2 Dex, +1 Wis</option>
+          <option value="the-greywitnessed">The Greywitnessed (Haunted One) — +2 Wis, +1 Str</option>
+          <option value="the-threadpuller">The Threadpuller (Investigator) — +2 Int, +1 Wis</option>
+          <option value="the-ringscarred">The Ringscarred (Gladiator) — +2 Str, +1 Cha</option>
+        </select>
+      </div>
+
+      <!-- Species -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-species">
+          Species
+          <span class="char-field-tooltip" title="Your species is what you are — it affects some of your natural abilities and where you come from in the world.">What's this?</span>
+        </label>
+        <span class="char-field-help">What are you?</span>
+        <select class="char-select" id="char-species">
+          <option value="">— Choose your species —</option>
+          <option value="solmeri">Solmeri (Human) — Adaptable, found everywhere</option>
+          <option value="verdathi">Verdathi (Elf) — Ancient, forest-rooted, sharp-sensed</option>
+          <option value="stonemarked">Stonemarked (Dwarf) — Hardy, mountain-born, Steelfist-aligned</option>
+          <option value="glimmerkin">Glimmerkin (Gnome) — Quick-minded, inventive, magic-intuitive</option>
+          <option value="hearthbound">Hearthbound (Halfling) — Warm, lucky, hard to rattle</option>
+          <option value="duskborn">Duskborn (Tiefling) — Old ancestry, fire-resistant, misunderstood</option>
+          <option value="brightblood">Brightblood (Aasimar) — Carries divine light, Oro-adjacent</option>
+          <option value="scalegrace">Scalegrace (Dragonborn) — Draconic lineage, breath weapon, Flamerage-aligned</option>
+          <option value="tallwalker">Goliath (Tallwalker) — Enormous, enduring, mountain-born</option>
+          <option value="rootwalker">Rootwalker (Orc) — Powerful, resilient, stays standing</option>
+          <option value="veilstepped">Veilstepped (Changeling) — Can alter appearance at will</option>
+          <option value="gloomtouched">Gloomtouched (Warforged) — Constructed, doesn't sleep, Steelfist-aligned</option>
+        </select>
+      </div>
+
+      <!-- Home Region -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-home-region">Where are you from?</label>
+        <span class="char-field-help">The region of Pogglewog you call home — you may not know all the cities yet, but you know which part of the world shaped you.</span>
+        <select class="char-select" id="char-home-region" onchange="CHAR_STATE.draft.home_region = this.value">
+          <option value="">— Choose a region —</option>
+          <option value="Caparia">Caparia — the colorful heartlands</option>
+          <option value="Nombi">Nombi — the frozen, aurora-lit north</option>
+          <option value="Sohot">Sohot — the ancient, blazing south</option>
+          <option value="Jugabi">Jugabi — the living jungle southwest</option>
+        </select>
+      </div>
+
+      <!-- Language -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-language">
+          Additional Language
+          <span class="char-field-tooltip" title="All characters speak Common automatically. You can also speak one regional language — useful for navigating different parts of Pogglewog.">What's this?</span>
+        </label>
+        <span class="char-field-help">You already speak Common. Choose one additional language.</span>
+        <select class="char-select" id="char-language">
+          <option value="">— Choose a language —</option>
+          <option value="caparian-deep">Caparian Deep — spoken in the Opu Forest and Dingu territories</option>
+          <option value="nombi-frost">Nombi Frost — spoken across the northern fjords and forests</option>
+          <option value="sohot-old">Sohot Old Tongue — ceremonial language of the southern kingdoms</option>
+          <option value="jugabi-canopy">Jugabi Canopy — spoken by the Greenvast Tribes and Verdathi</option>
+          <option value="conclave-script">Conclave Script — the Gigglegloom Conclave's written technical language</option>
+          <option value="pre-partition">Pre-Partition Script — ancient, mostly unreadable, occasionally useful</option>
+        </select>
+      </div>
+
+      <!-- Imagined Past -->
+      <div style="margin-top:2.5rem;">
+        <div class="char-stage-eyebrow" style="margin-bottom:1.25rem;">Imagine Your Past</div>
+
+        <div class="char-past-question" id="past-q-raised">
+          <div class="char-past-q-label">Who raised you?</div>
+          <div class="char-past-q-hint">Select one — you'll see what it means for your character before committing.</div>
+          <select class="char-select" id="char-raised" onchange="showPastEffect('raised', this)">
+            <option value="">— Choose —</option>
+            <option value="kind-parents" data-effect="+1 Wisdom, free Insight proficiency">Kind, loving parents</option>
+            <option value="the-streets" data-effect="+1 Dexterity, +1 Sleight of Hand, -1 Wisdom">The streets — no one, really</option>
+            <option value="strict-religious" data-effect="+1 Intelligence, +1 Religion proficiency, -1 Charisma">A strict religious household</option>
+            <option value="single-parent" data-effect="+1 Constitution, +1 Athletics proficiency">A single parent working too hard</option>
+            <option value="grandparent" data-effect="+1 Wisdom, +1 History proficiency">A grandparent or elder</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-raised"></div>
+        </div>
+
+        <div class="char-past-question" id="past-q-friend">
+          <div class="char-past-q-label">Who was your dearest childhood friend?</div>
+          <div class="char-past-q-hint">This shaped how you connect with others.</div>
+          <select class="char-select" id="char-friend" onchange="showPastEffect('friend', this)">
+            <option value="">— Choose —</option>
+            <option value="neighbor" data-effect="+1 Insight">A neighbor kid</option>
+            <option value="animal" data-effect="+1 Animal Handling">An animal — wild or domestic</option>
+            <option value="imaginary" data-effect="+1 Perception">An imaginary one</option>
+            <option value="no-one" data-effect="+1 Survival">Honestly, no one</option>
+            <option value="mentor" data-effect="+1 History or Medicine (your choice)">An older mentor figure</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-friend"></div>
+        </div>
+
+        <div class="char-past-question" id="past-q-pet">
+          <div class="char-past-q-label">Did you grow up with a pet?</div>
+          <div class="char-past-q-hint">This affects how creatures respond to you in the world.</div>
+          <select class="char-select" id="char-pet" onchange="showPastEffect('pet', this)">
+            <option value="">— Choose —</option>
+            <option value="loyal-animal" data-effect="Creatures that protect tend to trust you faster">Yes — a dog or similar loyal animal</option>
+            <option value="unusual" data-effect="You have patience with strange things that most people don't">Yes — something unusual</option>
+            <option value="wanted-one" data-effect="You notice animals. They sometimes notice back.">No, but I wanted one</option>
+            <option value="never-wanted" data-effect="Neutral. The Fluffets don't take it personally.">No — never wanted one</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-pet"></div>
+        </div>
+
+        <div class="char-past-question" id="past-q-love">
+          <div class="char-past-q-label">Have you ever fallen in love?</div>
+          <div class="char-past-q-hint">This shapes how you build trust with others during play.</div>
+          <select class="char-select" id="char-love" onchange="showPastEffect('love', this)">
+            <option value="">— Choose —</option>
+            <option value="ended-well" data-effect="You know what it's like when it works. You're still looking for it.">Yes — and it ended well</option>
+            <option value="ended-badly" data-effect="You're not closed. You're careful. There's a difference.">Yes — and it ended badly</option>
+            <option value="complicated" data-effect="Some threads are still attached. That's not always a bad thing.">Yes — and it's complicated</option>
+            <option value="not-yet" data-effect="You think about it sometimes. It seems like something that happens to other people.">Not yet</option>
+            <option value="not-for-me" data-effect="You've built something else instead. It's solid.">I don't think that's for me</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-love"></div>
+        </div>
+
+        <div class="char-past-question" id="past-q-org">
+          <div class="char-past-q-label">Did you join an organization?</div>
+          <div class="char-past-q-hint">Organizations give you contacts, skills, and sometimes starting equipment.</div>
+          <select class="char-select" id="char-org" onchange="showPastEffect('org', this)">
+            <option value="">— Choose —</option>
+            <option value="wanderkeep" data-effect="Wanderkeep Field Kit (DM adds), +1 Survival">The Wanderkeep</option>
+            <option value="merchant-guild" data-effect="+50gp starting gold, +1 Persuasion">A merchant guild</option>
+            <option value="brightcreed" data-effect="Brightcreed Token (DM adds), +1 Religion">A religious order (Brightcreed)</option>
+            <option value="fighting-company" data-effect="Common weapon of choice (DM adds), +1 Athletics">A fighting company</option>
+            <option value="kept-to-myself" data-effect="+1 Stealth, +1 any skill of your choice">No — I kept to myself</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-org"></div>
+        </div>
+
+        <div class="char-past-question" id="past-q-left-behind">
+          <div class="char-past-q-label">What is one thing you left behind?</div>
+          <div class="char-past-q-hint">This becomes a memory your character carries — it may surface during play.</div>
+          <select class="char-select" id="char-left-behind" onchange="showPastEffect('left-behind', this)">
+            <option value="">— Choose —</option>
+            <option value="person" data-effect="There's a name you don't say out loud in crowds.">A person I loved</option>
+            <option value="promise" data-effect="You think about it in quiet moments. Sometimes you think about going back.">A promise I didn't keep</option>
+            <option value="self" data-effect="You changed. You're still deciding if that was good.">A version of myself I can't return to</option>
+            <option value="place" data-effect="A place the Dimming took. This is why the grey is personal.">A place that no longer exists</option>
+            <option value="nothing" data-effect="You don't look back. You've decided that's a strength.">Nothing — I travel light</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-left-behind"></div>
+        </div>
+
+        <div class="char-past-question" id="past-q-why-left">
+          <div class="char-past-q-label">What finally made you leave home?</div>
+          <div class="char-past-q-hint">This becomes your personal overarching quest — the thread that runs through your whole story.</div>
+          <select class="char-select" id="char-why-left" onchange="showPastEffect('why-left', this)">
+            <option value="">— Choose —</option>
+            <option value="someone-disappeared" data-effect="Personal quest: Find them, or find out what happened.">Someone I loved disappeared</option>
+            <option value="saw-the-grey" data-effect="Personal quest: Push the grey back.">I saw the grey arrive somewhere I thought was safe</option>
+            <option value="received-message" data-effect="Personal quest: Follow the thread.">Someone sent me — a letter, a message, a dream</option>
+            <option value="ran-from-something" data-effect="Personal quest: Figure out if you can stop running.">I ran from something</option>
+            <option value="restlessness" data-effect="Personal quest: Discover something worth staying for.">Pure restlessness — I needed to see what was out there</option>
+          </select>
+          <div class="char-past-effect-preview" id="effect-why-left"></div>
+        </div>
+      </div>
+
+      <div class="char-nav">
+        <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STAGE 3 — YOUR STRENGTHS ══ -->
+    <div id="char-stage-3" class="char-stage">
+      <div class="char-stage-header">
+        <div class="char-stage-eyebrow">Stage 3 of 5 · Ability Scores & Appearance</div>
+        <h1 class="char-stage-title">Your Strengths</h1>
+        <p class="char-stage-intro">Assign your six core abilities and describe what you look like. The appearance details will be used to create your character portrait later.</p>
+      </div>
+
+      <!-- Ability Scores placeholder — full implementation in Phase 2 -->
+      <div style="padding:2rem; border:1px dashed rgba(200,148,10,0.2); border-radius:10px; text-align:center; color:rgba(245,234,212,0.4); font-family:var(--font-sans); font-size:0.875rem; margin-bottom:2rem;">
+        ✦ Ability score drag-and-drop — coming in Phase 2
+      </div>
+
+      <!-- Appearance placeholder — full implementation in Phase 2 -->
+      <div style="padding:2rem; border:1px dashed rgba(200,148,10,0.2); border-radius:10px; text-align:center; color:rgba(245,234,212,0.4); font-family:var(--font-sans); font-size:0.875rem; margin-bottom:2rem;">
+        ✦ Appearance builder — coming in Phase 2
+      </div>
+
+      <!-- Personality -->
+      <div class="char-field-group">
+        <label class="char-field-label">Your Personality</label>
+        <span class="char-field-help">Three short answers — these help define how your character moves through the world.</span>
+        <input class="char-input" id="char-personality-1" type="text" placeholder="One thing people notice about you immediately." style="margin-bottom:0.75rem;">
+        <input class="char-input" id="char-personality-2" type="text" placeholder="One thing people get wrong about you." style="margin-bottom:0.75rem;">
+        <input class="char-input" id="char-personality-3" type="text" placeholder="One thing that always makes you laugh.">
+      </div>
+
+      <div class="char-nav">
+        <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STAGE 4 — YOUR COMPASS ══ -->
+    <div id="char-stage-4" class="char-stage">
+      <div class="char-stage-header">
+        <div class="char-stage-eyebrow">Stage 4 of 5 · Alignment</div>
+        <h1 class="char-stage-title">Your Compass</h1>
+        <p class="char-stage-intro">Not a cage. Think of it as the compass your character tends to follow when nobody's watching. It can shift over time.</p>
+      </div>
+
+      <div class="char-alignment-grid">
+
+        <div class="char-alignment-card" data-alignment="brightward" onclick="selectAlignment('brightward')">
+          <div class="char-alignment-name">Brightward</div>
+          <div class="char-alignment-phb">Lawful Good in the Player's Handbook</div>
+          <div class="char-alignment-desc">You believe the world is worth protecting and that the best way to protect it is to be someone others can count on. Rules matter because they keep people safe.</div>
+          <div class="char-alignment-traits">
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I keep my word even when it costs me something. Especially then.')">"I keep my word even when it costs me something. Especially then."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I believe most people are trying their best. I\'ve been wrong about this. I still believe it.')">"I believe most people are trying their best. I've been wrong about this. I still believe it."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'When something bad happens, my first question is: what can I do?')">"When something bad happens, my first question is: what can I do?"</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I find it genuinely hard to understand people who don\'t care whether they\'re good.')">"I find it genuinely hard to understand people who don't care whether they're good."</div>
+          </div>
+        </div>
+
+        <div class="char-alignment-card" data-alignment="colorful" onclick="selectAlignment('colorful')">
+          <div class="char-alignment-name">Colorful</div>
+          <div class="char-alignment-phb">Chaotic Good in the Player's Handbook</div>
+          <div class="char-alignment-desc">You want to do right by people but you've never been very good at following someone else's idea of how. Rules feel like cages even when they're sensible ones.</div>
+          <div class="char-alignment-traits">
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I make decisions fast and feel bad about the wrong ones later. This is a feature, not a bug.')">"I make decisions fast and feel bad about the wrong ones later. This is a feature, not a bug."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I don\'t think the rules were written for situations like this one.')">"I don't think the rules were written for situations like this one."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I care deeply about people and very little about systems.')">"I care deeply about people and very little about systems."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve been told I\'m a lot. I\'ve decided to take that as a compliment.')">"I've been told I'm a lot. I've decided to take that as a compliment."</div>
+          </div>
+        </div>
+
+        <div class="char-alignment-card" data-alignment="greywarden" onclick="selectAlignment('greywarden')">
+          <div class="char-alignment-name">Greywarden</div>
+          <div class="char-alignment-phb">True Neutral in the Player's Handbook</div>
+          <div class="char-alignment-desc">You see all sides. You weigh things carefully. You don't think the world is simple enough to be neatly divided into light and dark.</div>
+          <div class="char-alignment-traits">
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I try to understand a situation fully before deciding what I think about it.')">"I try to understand a situation fully before deciding what I think about it."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I don\'t owe anyone my loyalty just because they asked for it.')">"I don't owe anyone my loyalty just because they asked for it."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve seen good people do terrible things for good reasons. I try to remember that.')">"I've seen good people do terrible things for good reasons. I try to remember that."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'m not disengaged. I\'m careful. There\'s a difference.')">"I'm not disengaged. I'm careful. There's a difference."</div>
+          </div>
+        </div>
+
+        <div class="char-alignment-card" data-alignment="steelbound" onclick="selectAlignment('steelbound')">
+          <div class="char-alignment-name">Steelbound</div>
+          <div class="char-alignment-phb">Lawful Neutral in the Player's Handbook</div>
+          <div class="char-alignment-desc">Order is not a cage. Order is how things work. You respect hierarchies, honor agreements, and follow through on commitments.</div>
+          <div class="char-alignment-traits">
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I do what I said I would do. This is not complicated.')">"I do what I said I would do. This is not complicated."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I respect authority when it earns respect. I follow it even when it hasn\'t, because the alternative is worse.')">"I respect authority when it earns respect. I follow it even when it hasn't, because the alternative is worse."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I believe in fairness more than I believe in kindness. Fairness is consistent. Kindness is situational.')">"I believe in fairness more than I believe in kindness."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve been told I\'m inflexible. I prefer: reliable.')">"I've been told I'm inflexible. I prefer: reliable."</div>
+          </div>
+        </div>
+
+        <div class="char-alignment-card" data-alignment="ashwalker" onclick="selectAlignment('ashwalker')">
+          <div class="char-alignment-name">Ashwalker</div>
+          <div class="char-alignment-phb">Chaotic Neutral in the Player's Handbook</div>
+          <div class="char-alignment-desc">You do what works for you, and you try to be honest about that. You're not cruel — but you don't pretend to have obligations you don't feel.</div>
+          <div class="char-alignment-traits">
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I make decisions based on what\'s actually in front of me, not principles I agreed to in better circumstances.')">"I make decisions based on what's actually in front of me."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'m loyal to people I\'ve chosen to be loyal to. That list is short and carefully maintained.')">"I'm loyal to people I've chosen to be loyal to. That list is short and carefully maintained."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I don\'t think I owe the world anything it hasn\'t given me first.')">"I don't think I owe the world anything it hasn't given me first."</div>
+            <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve done things I\'m not proud of. I\'d probably do them again.')">"I've done things I'm not proud of. I'd probably do them again."</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="char-nav">
+        <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+          <button class="char-save-draft" onclick="generateResumeLink()">Copy resume link</button>
+          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STAGE 5 — WHO YOU ARE ══ -->
+    <div id="char-stage-5" class="char-stage">
+      <div class="char-stage-header">
+        <div class="char-stage-eyebrow">Stage 5 of 5 · Summary & Name</div>
+        <h1 class="char-stage-title">Who You Are</h1>
+        <p class="char-stage-intro">Almost there. Give your character a name, answer three final questions, and review your character summary before submitting.</p>
+      </div>
+
+      <!-- Auto-generated summary -->
+      <div class="char-summary-card" style="margin-bottom:2rem;">
+        <div style="font-family:var(--font-sans); font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; color:rgba(200,148,10,0.5); margin-bottom:0.75rem;">Your Character Summary</div>
+        <p id="char-auto-summary" class="char-summary-body" style="font-style:italic;">Your summary will appear here based on your choices.</p>
+      </div>
+
+      <!-- Name -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-final-name">Your Character's Name</label>
+        <span class="char-field-help">Choose any name — or use the suggestions below for inspiration.</span>
+        <input class="char-input" id="char-final-name" type="text" placeholder="Enter a name…">
+        <div style="margin-top:0.75rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+          <button class="char-save-draft" onclick="suggestNames()">✦ Suggest names</button>
+          <button class="char-save-draft" onclick="suggestNames()">Generate New</button>
+        </div>
+        <div id="char-name-suggestions" class="char-name-suggestions"></div>
+      </div>
+
+      <!-- Gender -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-gender">Gender</label>
+        <span class="char-field-help">Describe however feels right, or leave blank.</span>
+        <input class="char-input" id="char-gender" type="text" placeholder="e.g. she/her, he/him, they/them, or leave blank">
+      </div>
+
+      <!-- Three closing questions -->
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-cares-about">The person or people you care most about</label>
+        <textarea class="char-textarea" id="char-cares-about" placeholder="Who matters most to you?"></textarea>
+      </div>
+
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-fear">Your deepest fear</label>
+        <textarea class="char-textarea" id="char-fear" placeholder="What are you most afraid of?"></textarea>
+      </div>
+
+      <div class="char-field-group">
+        <label class="char-field-label" for="char-seeking">What you are seeking</label>
+        <textarea class="char-textarea" id="char-seeking" placeholder="What are you looking for out there?"></textarea>
+      </div>
+
+      <!-- Submit error fallback -->
+      <div id="char-submit-error" style="display:none; padding:1.25rem; border:1px solid rgba(170,58,26,0.4); border-radius:8px; background:rgba(170,58,26,0.06); margin-bottom:1.5rem;">
+        <div style="font-family:var(--font-sans); font-size:0.875rem; color:rgba(245,234,212,0.7); margin-bottom:0.75rem;">Something went wrong sending your character. Your answers are safe — copy them and send to your DM directly.</div>
+        <button class="char-save-draft char-copy-answers">Copy my answers as text</button>
+      </div>
+
+      <div class="char-nav">
+        <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
+        <button id="char-submit-btn" class="char-btn char-btn-submit" onclick="submitCharacter()">✦ · BEGIN YOUR STORY · ✦</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ CONFIRMATION SCREEN ══ -->
+<div id="char-confirmation" class="char-confirmation">
+  <div class="char-confirmation-glow">✦</div>
+  <h1 class="char-confirmation-title" id="char-confirm-name">Your character</h1>
+  <p class="char-confirmation-subtitle">Your name has been recorded in the Traveller's Compendium. Your DM will review your character and send you your character sheet link shortly.</p>
+  <a id="char-confirm-sheet-link" class="char-confirmation-wiki-link" href="index.html">Visit the Compendium →</a>
+</div>
+
+<script>
+// Imagined Past effect preview
+function showPastEffect(question, select) {
+  var opt = select.options[select.selectedIndex];
+  var effect = opt ? opt.getAttribute('data-effect') : '';
+  var preview = document.getElementById('effect-' + question);
+  if (preview) {
+    if (effect) {
+      preview.textContent = '✦ ' + effect;
+      preview.classList.add('visible');
+      var question_el = document.getElementById('past-q-' + question);
+      if (question_el) question_el.classList.add('answered');
+    } else {
+      preview.classList.remove('visible');
+    }
+  }
+  // Save to draft
+  CHAR_STATE.draft['past_' + question] = select.value;
+  saveDraftToStorage();
+}
+</script>
+
+<script src="js/character.js"></script>
+</body>
+</html>
