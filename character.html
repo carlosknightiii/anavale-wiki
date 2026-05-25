@@ -154,30 +154,12 @@
 
       <!-- Background -->
       <div class="char-field-group">
-        <label class="char-field-label" for="char-background">
-          Background
-          <span class="char-field-tooltip" title="Your background is how you spent your years before this adventure began. It determines some of your skills and starting bonuses.">What's this?</span>
+        <label class="char-field-label">Your Background
+          <span class="char-field-tooltip" data-tip="Background — how you spent your years before this adventure. It shapes your skills and your story.">What's this?</span>
         </label>
-        <span class="char-field-help">How did you spend your years before your story began?</span>
-        <select class="char-select" id="char-background">
-          <option value="">— Choose your background —</option>
-          <option value="the-faithful">The Faithful (Acolyte) — +2 Int, +1 Wis</option>
-          <option value="the-streetwise">The Streetwise (Criminal) — +2 Dex, +1 Int</option>
-          <option value="the-learned">The Learned (Sage) — +2 Int, +1 Wis</option>
-          <option value="the-tested">The Tested (Soldier) — +2 Str, +1 Con</option>
-          <option value="the-wellborn">The Wellborn (Noble) — +2 Cha, +1 Int</option>
-          <option value="the-rootborn">The Rootborn (Folk Hero) — +2 Con, +1 Cha</option>
-          <option value="the-masquerader">The Masquerader (Charlatan) — +2 Cha, +1 Dex</option>
-          <option value="the-reveler">The Reveler (Entertainer) — +2 Cha, +1 Dex</option>
-          <option value="the-craftborn">The Craftborn (Guild Artisan) — +2 Int, +1 Cha</option>
-          <option value="the-stillsought">The Stillsought (Hermit) — +2 Wis, +1 Con</option>
-          <option value="the-wildborn">The Wildborn (Outlander) — +2 Str, +1 Wis</option>
-          <option value="the-tidemarked">The Tidemarked (Sailor) — +2 Str, +1 Dex</option>
-          <option value="the-cobblewise">The Cobblewise (Urchin) — +2 Dex, +1 Wis</option>
-          <option value="the-greywitnessed">The Greywitnessed (Haunted One) — +2 Wis, +1 Str</option>
-          <option value="the-threadpuller">The Threadpuller (Investigator) — +2 Int, +1 Wis</option>
-          <option value="the-ringscarred">The Ringscarred (Gladiator) — +2 Str, +1 Cha</option>
-        </select>
+        <p class="char-field-help">Where did you come from? Choose the background that fits your character's past.</p>
+        <div id="char-background-grid" class="char-bg-grid"></div>
+        <input type="hidden" id="char-background" value="">
       </div>
 
       <!-- Species -->
