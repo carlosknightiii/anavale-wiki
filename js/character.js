@@ -484,20 +484,36 @@ function renderBackgroundCards() {
   var grid = document.getElementById('char-background-grid');
   if (!grid) return;
   grid.innerHTML = ANAVALE_BACKGROUNDS.map(function(bg) {
-    return '<div class="char-bg-card" data-bg="' + bg.id + '" onclick="selectBackground(\'' + bg.id + '\')">'
-      + '<div class="char-bg-check">✓</div>'
-      + '<div class="char-bg-name">' + bg.name + '</div>'
-      + '<div class="char-bg-phb">' + bg.phb + '</div>'
-      + '<div class="char-bg-lore">' + bg.lore + '</div>'
-      + '<div class="char-bg-skills">'
-      + '<span class="char-bg-skill-label">Skills</span> '
-      + bg.skills.join(' · ')
+    var bonusHtml = bg.bonuses.map(function(b) {
+      return '<span class="char-bg-bonus-pill">' + b + '</span>';
+    }).join('');
+    return '<div class="char-bg-card" data-bg="' + bg.id + '">'
+      + '<div class="char-bg-header" onclick="selectBackground(\'' + bg.id + '\')">'
+      +   '<div class="char-bg-header-info">'
+      +     '<div class="char-bg-name">' + bg.name + '</div>'
+      +     '<div class="char-bg-phb">' + bg.phb + '</div>'
+      +   '</div>'
+      +   '<div class="char-bg-header-right">'
+      +     '<div class="char-bg-bonuses">' + bonusHtml + '</div>'
+      +     '<div class="char-bg-check">✓</div>'
+      +     '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleBgCard(this)" aria-label="Toggle details">Expand</button>'
+      +   '</div>'
       + '</div>'
-      + '<div class="char-bg-bonuses">'
-      + bg.bonuses.map(function(b) { return '<span class="char-bg-bonus-pill">' + b + '</span>'; }).join('')
+      + '<div class="char-bg-body">'
+      +   '<div class="char-bg-lore">' + bg.lore + '</div>'
+      +   '<div class="char-bg-skills"><span class="char-bg-skill-label">Skills</span> ' + bg.skills.join(' · ') + '</div>'
       + '</div>'
       + '</div>';
   }).join('');
+}
+
+function toggleBgCard(btn) {
+  var card = btn.closest('.char-bg-card');
+  if (!card) return;
+  var expanding = !card.classList.contains('expanded');
+  card.classList.toggle('expanded');
+  btn.classList.toggle('open');
+  btn.textContent = expanding ? 'Collapse' : 'Expand';
 }
 
 function renderSpeciesCards() {
@@ -512,6 +528,13 @@ function selectBackground(bgId) {
   document.querySelectorAll('.char-bg-card').forEach(function(c) {
     c.classList.toggle('selected', c.dataset.bg === bgId);
   });
+  // Auto-expand the selected card if it isn't already open
+  var selectedCard = document.querySelector('.char-bg-card[data-bg="' + bgId + '"]');
+  if (selectedCard && !selectedCard.classList.contains('expanded')) {
+    selectedCard.classList.add('expanded');
+    var toggleBtn = selectedCard.querySelector('.char-bg-toggle');
+    if (toggleBtn) { toggleBtn.classList.add('open'); toggleBtn.textContent = 'Collapse'; }
+  }
   CHAR_STATE.draft.background_id = bgId;
   var hidden = document.getElementById('char-background');
   if (hidden) hidden.value = bgId;

@@ -320,31 +320,37 @@ body.char-page {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Stage header */
+/* Stage header — primary landmark, gold left bar */
 .char-stage-header {
-  margin-bottom: 2.5rem;
+  padding: 1.75rem 0 1.75rem 1.5rem;
+  border-left: 3px solid var(--gold);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 2.75rem;
 }
 .char-stage-eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
-  letter-spacing: 0.2em;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--gold);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
   font-weight: 600;
+  opacity: 0.85;
 }
 .char-stage-title {
   font-family: var(--font-headers);
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  line-height: 1.1;
-  margin-bottom: 0.75rem;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  line-height: 1.05;
+  margin-bottom: 0.6rem;
+  color: #ffffff;
 }
 .char-stage-intro {
   font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.8;
-  color: #ffffff;
-  max-width: 780px;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.7);
+  max-width: 680px;
+  margin-top: 0.25rem;
 }
 
 /* ── WELCOME PANEL (Stage 1 only) ─────────────────────────────── */
@@ -431,12 +437,13 @@ body.char-page {
   border: 1px solid transparent;
 }
 .char-btn-back {
-  background: transparent;
-  border-color: rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.8);
 }
 .char-btn-back:hover {
-  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.55);
   color: #ffffff;
 }
 .char-btn-next {
@@ -496,8 +503,8 @@ body.char-page {
 /* ── GIGGLEGLOOM TYPE CARDS (Stage 1) ──────────────────────────── */
 .char-type-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
   margin-bottom: 2rem;
 }
 
@@ -525,7 +532,7 @@ body.char-page {
   border-color: var(--type-color, var(--gold));
   transform: translateY(-3px);
 }
-.char-type-card.selected::before { opacity: 0.12; }
+.char-type-card.selected::before { opacity: 0.22; }
 
 /* Type-specific colors */
 .char-type-card[data-type="bubbleseed"] { --type-color: var(--bubbleseed); }
@@ -616,7 +623,7 @@ body.char-page {
 
 .char-class-grid {
   display: grid;
-  grid-template-columns: repeat((1), 1fr);
+  grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
@@ -791,102 +798,154 @@ body.char-page {
 .char-score-chip:hover { border-color: var(--gold); background: rgba(200,148,10,0.2); }
 .char-score-chip.dragging { opacity: 0.4; cursor: grabbing; }
 
-/* ── BACKGROUND CARDS (Stage 2) ────────────────────────────────── */
+/* ── BACKGROUND CARDS (Stage 2) — accordion, single column ─────── */
 .char-bg-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-top: 0.5rem;
 }
+
+/* Card shell */
 .char-bg-card {
-  position: relative;
-  border: 2px solid var(--char-border);
+  border: 1px solid var(--char-border);
   border-radius: var(--char-radius);
-  padding: 1rem 1rem 0.85rem;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
   background: rgba(18, 24, 42, 0.95);
+  transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
 }
-.char-bg-card:hover {
-  border-color: rgba(200,148,10,0.5);
-  background: rgba(22, 30, 54, 0.98);
-}
+.char-bg-card:hover { border-color: rgba(200,148,10,0.4); }
 .char-bg-card.selected {
   border-color: var(--gold);
   background: rgba(40, 30, 10, 0.95);
 }
+
+/* Clickable header row */
+.char-bg-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Left: name + phb label */
+.char-bg-header-info { flex: 1; min-width: 0; }
+.char-bg-name {
+  font-family: var(--font-headers);
+  font-size: 1.1rem;
+  color: var(--parchment);
+  line-height: 1.2;
+}
+.char-bg-card.selected .char-bg-name { color: var(--gold); }
+.char-bg-phb {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245,234,212,0.3);
+  margin-top: 0.1rem;
+}
+
+/* Right: pills + check + chevron */
+.char-bg-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.char-bg-bonuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}
+.char-bg-bonus-pill {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 20px;
+  border: 1px solid rgba(200,148,10,0.3);
+  color: var(--gold);
+  background: rgba(200,148,10,0.06);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* Selected check badge */
 .char-bg-check {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: var(--gold);
   color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   opacity: 0;
   transform: scale(0.5);
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 .char-bg-card.selected .char-bg-check {
   opacity: 1;
   transform: scale(1);
 }
-.char-bg-name {
-  font-family: var(--font-headers);
-  font-size: 1.15rem;
-  color: var(--parchment);
-  margin-bottom: 0.1rem;
-  padding-right: 1.5rem;
-}
-.char-bg-card.selected .char-bg-name { color: var(--gold); }
-.char-bg-phb {
+
+/* Expand/collapse text button */
+.char-bg-toggle {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.45);
   font-family: var(--font-sans);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(245,234,212,0.3);
-  margin-bottom: 0.6rem;
+  cursor: pointer;
+  padding: 0.2rem 0.55rem;
+  transition: color 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+  line-height: 1.4;
 }
+.char-bg-toggle:hover { color: #ffffff; border-color: rgba(255,255,255,0.35); }
+.char-bg-toggle.open { color: var(--gold); border-color: rgba(200,148,10,0.4); }
+
+/* Collapsible body */
+.char-bg-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 1rem;
+}
+.char-bg-card.expanded .char-bg-body {
+  max-height: 400px;
+  padding: 0 1rem 1rem;
+}
+
 .char-bg-lore {
   font-family: var(--font-sans);
   font-size: 0.8rem;
   line-height: 1.65;
-  color: #ffffff;
-  margin-bottom: 0.65rem;
+  color: rgba(255,255,255,0.82);
+  margin-bottom: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
 .char-bg-skills {
   font-family: var(--font-sans);
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.75);
-  margin-bottom: 0.5rem;
+  color: rgba(255,255,255,0.6);
 }
 .char-bg-skill-label {
   font-weight: 600;
-  color: rgba(245,234,212,0.4);
+  color: rgba(245,234,212,0.35);
   text-transform: uppercase;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   letter-spacing: 0.08em;
-}
-.char-bg-bonuses {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-.char-bg-bonus-pill {
-  font-family: var(--font-sans);
-  font-size: 0.68rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 20px;
-  border: 1px solid rgba(200,148,10,0.3);
-  color: var(--gold);
-  background: rgba(200,148,10,0.06);
-  letter-spacing: 0.04em;
 }
 
 /* ── ALIGNMENT CARDS (Stage 4) ─────────────────────────────────── */
@@ -1170,35 +1229,37 @@ body.char-page {
 }
 .char-tooltip-wrap:hover .char-tooltip-box { opacity: 1; }
 
-/* ── SECTION HEADER (within-stage subheadings) ─────────────────── */
+/* ── SECTION HEADER (within-stage subheadings) — subordinate to stage header */
 .char-section-header {
   margin-top: 3rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
-.char-section-header:first-child { margin-top: 0; }
+.char-section-header:first-child { margin-top: 1.5rem; }
 .char-section-header-eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.68rem;
-  letter-spacing: 0.22em;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-  font-weight: 600;
-  margin-bottom: 0.35rem;
+  color: rgba(200,148,10,0.6);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
 }
 .char-section-header-title {
   font-family: var(--font-sans);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 0.3rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.2rem;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 .char-section-header-desc {
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  color: rgba(255,255,255,0.65);
-  line-height: 1.6;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.55;
 }
 
 /* ── IMAGINED PAST SECTION ─────────────────────────────────────── */
@@ -1240,9 +1301,10 @@ body.char-page {
 /* ── PAGE TITLE ────────────────────────────────────────────────── */
 .char-page-title {
   font-family: var(--font-headers);
-  font-size: clamp(1.5rem, 5vw, 4rem);
-  color: #ffffff;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  color: rgba(255,255,255,0.18);
   letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
 }
 
 /* ── WELCOME PANEL COLLAPSE ────────────────────────────────────── */
