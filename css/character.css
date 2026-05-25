@@ -42,7 +42,7 @@
   --char-border-gold: rgba(200, 148, 10, 0.6);
   --char-radius:      12px;
   --char-sidebar-w:   240px;
-  --char-progress-h:  16px;
+  --char-progress-h:  26px;
 }
 
 /* ── PAGE SHELL ────────────────────────────────────────────────── */
@@ -95,7 +95,7 @@ body.char-page {
   z-index: 90;
   height: var(--char-progress-h);
   background: rgba(255,255,255,0.08);
-  overflow: visible;
+  overflow: hidden;
 }
 .char-progress-bar {
   height: 100%;
@@ -104,30 +104,28 @@ body.char-page {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   animation: progress-shimmer 3s ease infinite;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: fit-content;
 }
 @keyframes progress-shimmer {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-/* Percentage label: tag that sits below the bar's right edge */
+/* Label sits inside the bar, right-aligned, always visible */
 .char-progress-label {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  transform: translateX(50%);
+  position: relative;
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  color: #ffffff;
-  background: rgba(10,14,24,0.9);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 4px;
-  padding: 0.15rem 0.5rem;
+  color: rgba(10,14,24,0.9);
+  padding: 0 0.6rem;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  z-index: 91;
   pointer-events: none;
+  line-height: var(--char-progress-h);
 }
 
 /* ── LAYOUT ────────────────────────────────────────────────────── */
@@ -328,12 +326,11 @@ body.char-page {
 }
 .char-stage-eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
-  letter-spacing: 0.25em;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #ffffff;
-  margin-bottom: 0.85rem;
-  opacity: 1;
+  color: var(--gold);
+  margin-bottom: 0.6rem;
   font-weight: 600;
 }
 .char-stage-title {
@@ -511,9 +508,8 @@ body.char-page {
   padding: 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
-  background: var(--char-bg);
+  background: rgba(18, 24, 42, 0.95);
   overflow: hidden;
-  backdrop-filter: blur(8px);
 }
 .char-type-card::before {
   content: '';
@@ -573,7 +569,8 @@ body.char-page {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.7;
-  color: rgba(255,255,255,1);
+  color: #ffffff;
+  margin-top: 0.75rem;
 }
 .char-type-card.selected .char-type-desc { color: #ffffff; }
 
@@ -629,7 +626,7 @@ body.char-page {
   padding: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--char-bg);
+  background: rgba(18, 24, 42, 0.95);
 }
 .char-class-card:hover {
   border-color: rgba(200,148,10,0.4);
@@ -648,7 +645,7 @@ body.char-page {
   font-family: var(--font-sans);
   font-size: 0.8rem;
   line-height: 1.6;
-  color: rgba(255,255,255,0.75);
+  color: #ffffff;
 }
 .char-class-sensory {
   font-family: var(--font-sans);
@@ -664,9 +661,9 @@ body.char-page {
 .char-field-label {
   display: block;
   font-family: var(--font-sans);
-  font-size: 0.875rem;
+  font-size: 0.925rem;
   font-weight: 600;
-  color: var(--parchment);
+  color: #ffffff;
   margin-bottom: 0.3rem;
 }
 .char-field-help {
@@ -808,15 +805,15 @@ body.char-page {
   padding: 1rem 1rem 0.85rem;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
-  background: rgba(255,255,255,0.02);
+  background: rgba(18, 24, 42, 0.95);
 }
 .char-bg-card:hover {
-  border-color: rgba(200,148,10,0.4);
-  background: rgba(200,148,10,0.03);
+  border-color: rgba(200,148,10,0.5);
+  background: rgba(22, 30, 54, 0.98);
 }
 .char-bg-card.selected {
   border-color: var(--gold);
-  background: rgba(200,148,10,0.07);
+  background: rgba(40, 30, 10, 0.95);
 }
 .char-bg-check {
   position: absolute;
@@ -860,13 +857,13 @@ body.char-page {
   font-family: var(--font-sans);
   font-size: 0.8rem;
   line-height: 1.65;
-  color: rgba(255,255,255,0.75);
+  color: #ffffff;
   margin-bottom: 0.65rem;
 }
 .char-bg-skills {
   font-family: var(--font-sans);
   font-size: 0.75rem;
-  color: rgba(245,234,212,0.55);
+  color: rgba(255,255,255,0.75);
   margin-bottom: 0.5rem;
 }
 .char-bg-skill-label {
@@ -904,15 +901,15 @@ body.char-page {
   padding: 1.25rem 1.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgba(255,255,255,0.02);
+  background: rgba(18, 24, 42, 0.95);
 }
 .char-alignment-card:hover {
-  border-color: rgba(200,148,10,0.4);
-  background: rgba(200,148,10,0.04);
+  border-color: rgba(200,148,10,0.5);
+  background: rgba(22, 30, 54, 0.98);
 }
 .char-alignment-card.selected {
   border-color: var(--gold);
-  background: rgba(200,148,10,0.08);
+  background: rgba(40, 30, 10, 0.95);
 }
 .char-alignment-name {
   font-family: var(--font-headers);
@@ -931,7 +928,7 @@ body.char-page {
 .char-alignment-desc {
   font-family: var(--font-sans);
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.78);
+  color: #ffffff;
   line-height: 1.6;
   margin-bottom: 0.75rem;
 }
@@ -943,7 +940,7 @@ body.char-page {
 .char-alignment-trait {
   font-family: var(--font-sans);
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255,255,255,0.85);
   padding: 0.3rem 0.6rem;
   border-radius: 4px;
   border: 1px solid transparent;
@@ -1172,6 +1169,37 @@ body.char-page {
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 .char-tooltip-wrap:hover .char-tooltip-box { opacity: 1; }
+
+/* ── SECTION HEADER (within-stage subheadings) ─────────────────── */
+.char-section-header {
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.char-section-header:first-child { margin-top: 0; }
+.char-section-header-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+.char-section-header-title {
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+.char-section-header-desc {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+}
 
 /* ── IMAGINED PAST SECTION ─────────────────────────────────────── */
 .char-past-question {

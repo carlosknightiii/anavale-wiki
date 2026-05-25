@@ -407,6 +407,19 @@ function initStage1() {
   }
 }
 
+// ── SCROLL HELPER — accounts for fixed progress bar + optional banner ──
+function scrollToField(el) {
+  if (!el) return;
+  var offset = 0;
+  var prog = document.getElementById('char-progress-wrap');
+  if (prog) offset += prog.offsetHeight;
+  var banner = document.getElementById('char-return-banner');
+  if (banner && banner.classList.contains('visible')) offset += banner.offsetHeight;
+  offset += 64; // breathing room
+  var top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({ top: top, behavior: 'smooth' });
+}
+
 function selectType(typeId, silent) {
   // Update card UI
   document.querySelectorAll('.char-type-card').forEach(function(c) {
@@ -436,6 +449,10 @@ function selectType(typeId, silent) {
     CHAR_STATE.draft.gigglegloom_type = typeId;
     CHAR_STATE.draft.class_id = null; // reset class when type changes
     saveDraftToStorage();
+    // Scroll to class picker
+    setTimeout(function() {
+      scrollToField(document.getElementById('char-class-panel'));
+    }, 80);
   }
 }
 
@@ -445,6 +462,10 @@ function selectClass(classId) {
   });
   CHAR_STATE.draft.class_id = classId;
   saveDraftToStorage();
+  // Scroll to the Continue button after class is chosen
+  setTimeout(function() {
+    scrollToField(document.querySelector('#char-stage-1 .char-nav'));
+  }, 80);
 }
 
 function restoreClassSelection(classId) {
@@ -495,6 +516,11 @@ function selectBackground(bgId) {
   var hidden = document.getElementById('char-background');
   if (hidden) hidden.value = bgId;
   saveDraftToStorage();
+  // Scroll past the background grid to the species section
+  setTimeout(function() {
+    var target = document.getElementById('char-species-section') || document.getElementById('char-species');
+    scrollToField(target);
+  }, 80);
 }
 
 function restoreStage2Selections() {
@@ -711,6 +737,13 @@ function selectAlignment(alignmentId) {
     c.classList.toggle('selected', c.dataset.alignment === alignmentId);
   });
   saveDraftToStorage();
+  // Scroll to the selected card's trait picker
+  setTimeout(function() {
+    var selected = document.querySelector('.char-alignment-card.selected');
+    if (selected) {
+      scrollToField(selected.querySelector('.char-alignment-traits') || selected);
+    }
+  }, 80);
 }
 
 function selectAlignmentTrait(el, trait) {
