@@ -129,6 +129,14 @@ function resumeDraft() {
   dismissReturnBanner();
   showStage(stage);
   initStageOnEnter(stage);
+  // After banner dismisses and stage renders, scroll to top with chrome offset
+  setTimeout(function() {
+    var offset = 0;
+    var prog = document.getElementById('char-progress-wrap');
+    if (prog) offset += prog.offsetHeight;
+    offset += 16;
+    window.scrollTo({ top: offset, behavior: 'smooth' });
+  }, 100);
 }
 
 function initAutoSave() {
@@ -602,16 +610,21 @@ window.renderSpeciesCardsImpl = function() {
   var grid = document.getElementById('char-species-grid');
   if (!grid) return;
   grid.innerHTML = ANAVALE_SPECIES.map(function(sp) {
-    return '<div class="char-bg-card" data-species="' + sp.id + '" onclick="selectSpecies(\'' + sp.id + '\')">'
-      + '<div class="char-bg-check">✓</div>'
-      + '<div class="char-bg-name">' + sp.name + '</div>'
-      + '<div class="char-bg-phb">' + sp.phb + '</div>'
-      + '<div class="char-bg-lore">' + sp.desc + '</div>'
-      + '<div class="char-bg-skills">'
-      + '<span class="char-bg-skill-label">Region</span> ' + sp.region
+    return '<div class="char-bg-card" data-species="' + sp.id + '">'
+      + '<div class="char-bg-header" onclick="selectSpecies(\'' + sp.id + '\')">'
+      +   '<div class="char-bg-header-info">'
+      +     '<div class="char-bg-name">' + sp.name + '</div>'
+      +     '<div class="char-bg-phb">' + sp.phb + '</div>'
+      +   '</div>'
+      +   '<div class="char-bg-header-right">'
+      +     '<div class="char-bg-bonuses"><span class="char-bg-bonus-pill">' + sp.affinity + '</span></div>'
+      +     '<div class="char-bg-check">✓</div>'
+      +     '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleBgCard(this)" aria-label="Toggle details">Expand</button>'
+      +   '</div>'
       + '</div>'
-      + '<div class="char-bg-bonuses">'
-      + '<span class="char-bg-bonus-pill">' + sp.affinity + '</span>'
+      + '<div class="char-bg-body">'
+      +   '<div class="char-bg-lore">' + sp.desc + '</div>'
+      +   '<div class="char-bg-skills"><span class="char-bg-skill-label">Region</span> ' + sp.region + '</div>'
       + '</div>'
       + '</div>';
   }).join('');
@@ -621,6 +634,12 @@ function selectSpecies(speciesId) {
   document.querySelectorAll('#char-species-grid .char-bg-card').forEach(function(c) {
     c.classList.toggle('selected', c.dataset.species === speciesId);
   });
+  var selectedCard = document.querySelector('#char-species-grid .char-bg-card[data-species="' + speciesId + '"]');
+  if (selectedCard && !selectedCard.classList.contains('expanded')) {
+    selectedCard.classList.add('expanded');
+    var toggleBtn = selectedCard.querySelector('.char-bg-toggle');
+    if (toggleBtn) { toggleBtn.classList.add('open'); toggleBtn.textContent = 'Collapse'; }
+  }
   CHAR_STATE.draft.species_id = speciesId;
   var hidden = document.getElementById('char-species');
   if (hidden) hidden.value = speciesId;
