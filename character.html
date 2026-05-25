@@ -553,5 +553,65 @@ function showPastEffect(question, select) {
 </script>
 
 <script src="js/character.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(tip) {
+    var box = null;
+
+    function show() {
+      if (box) return;
+      box = document.createElement('div');
+      box.textContent = tip.dataset.tip;
+      box.setAttribute('style', [
+        'position:fixed',
+        'z-index:99999',
+        'width:220px',
+        'background:#0a0e18',
+        'border:1px solid rgba(200,148,10,0.7)',
+        'border-radius:6px',
+        'padding:10px 14px',
+        'font-size:13px',
+        'line-height:1.5',
+        'color:rgba(245,234,212,0.9)',
+        'pointer-events:none',
+        'box-shadow:0 4px 16px rgba(0,0,0,0.7)',
+        'visibility:hidden',
+        'top:0',
+        'left:0'
+      ].join(';'));
+      document.body.appendChild(box);
+
+      var bh   = box.offsetHeight || 60;
+      var r    = tip.getBoundingClientRect();
+      var left = r.left + r.width / 2 - 110;
+      if (left < 8) left = 8;
+      if (left + 220 > window.innerWidth - 8) left = window.innerWidth - 228;
+      var top = r.top - bh - 8;
+      if (top < 8) top = r.bottom + 8;
+
+      box.style.top        = top  + 'px';
+      box.style.left       = left + 'px';
+      box.style.visibility = 'visible';
+    }
+
+    function hide() {
+      if (box) { box.remove(); box = null; }
+    }
+
+    tip.addEventListener('mouseenter', show);
+    tip.addEventListener('mouseleave', hide);
+    tip.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (box) { hide(); } else { show(); }
+    });
+  });
+
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(tip) {
+      tip.dispatchEvent(new Event('mouseleave'));
+    });
+  });
+});
+</script>
 </body>
 </html>
