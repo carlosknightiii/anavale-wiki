@@ -920,6 +920,52 @@ function initStage5() {
 
 function generateSummary() {
   var d = CHAR_STATE.draft;
+
+  // ── Label lookups — convert raw keys to human-readable text ──
+  var WHY_LEFT_LABELS = {
+    'someone-disappeared': 'left home searching for someone who disappeared',
+    'saw-the-grey':        'left after watching the grey arrive somewhere they thought was safe',
+    'received-message':    'left after receiving a message that couldn\'t be ignored',
+    'ran-from-something':  'left running from something they haven\'t named yet',
+    'restlessness':        'left because the world was out there and staying felt impossible'
+  };
+  var LEFT_BEHIND_LABELS = {
+    'person':   'a person they loved',
+    'promise':  'a promise they didn\'t keep',
+    'self':     'a version of themselves they can\'t return to',
+    'place':    'a place that no longer exists',
+    'nothing':  null
+  };
+  var RAISED_LABELS = {
+    'kind-parents':     'raised by people who loved them well',
+    'the-streets':      'raised by no one in particular — the streets taught them everything',
+    'strict-religious': 'raised inside a strict faith that left its mark',
+    'single-parent':    'raised by a single parent who worked too hard to complain about it',
+    'grandparent':      'raised by a grandparent or elder who remembered things worth remembering'
+  };
+  var ALIGNMENT_LABELS = {
+    'brightward':  'They believe the world is worth protecting, and they intend to be someone others can count on.',
+    'colorful':    'They want to do right by people — they\'ve just never been good at following someone else\'s idea of how.',
+    'greywarden':  'They see all sides. They weigh things carefully. They don\'t think the world divides neatly into light and dark.',
+    'steelbound':  'They do what they said they would do. They consider this uncomplicated.',
+    'ashwalker':   'They do what works for them, and they try to be honest about that.'
+  };
+  var SPECIES_LABELS = {
+    'solmeri':     'Solmeri',
+    'verdathi':    'Verdathi',
+    'stonemarked': 'Stonemarked',
+    'glimmerkin':  'Glimmerkin',
+    'hearthbound': 'Hearthbound',
+    'duskborn':    'Duskborn',
+    'brightblood': 'Brightblood',
+    'scalegrace':  'Scalegrace',
+    'tallwalker':  'Tallwalker',
+    'rootwalker':  'Rootwalker',
+    'veilstepped': 'Veilstepped',
+    'gloomtouched':'Gloomtouched'
+  };
+
+  // ── Resolve values ──
   var type = d.gigglegloom_type || 'bubbleseed';
   var typeData = GIGGLEGLOOM_TYPES[type];
   var typeName = typeData ? typeData.name : type;
@@ -928,14 +974,44 @@ function generateSummary() {
   if (typeData) {
     typeData.classes.forEach(function(c) { if (c.id === classId) cls = c; });
   }
-  var className = cls ? cls.name : classId;
-  var region = d.home_region || 'Caparia';
+  var className  = cls ? cls.name : classId;
+  var region     = d.home_region || 'Caparia';
+  var speciesLabel  = SPECIES_LABELS[d.species_id] || d.species_id || '';
+  var whyLeft       = WHY_LEFT_LABELS[d.why_you_left] || '';
+  var leftBehind    = LEFT_BEHIND_LABELS[d.left_behind] || null;
+  var raisedLabel   = RAISED_LABELS[d.who_raised_you] || '';
+  var alignmentLine = ALIGNMENT_LABELS[d.alignment] || '';
 
-  var summary = 'A practitioner of ' + typeName + ' magic';
-  if (className) summary += ', known among their people as ' + className;
-  if (region)    summary += ', from ' + region;
-  if (d.why_you_left) summary += '. ' + d.why_you_left;
-  else summary += '.';
+  // ── Build narrative ──
+  // Sentence 1: who they are
+  var s1 = '';
+  if (speciesLabel && className && typeName) {
+    s1 = 'A ' + speciesLabel + ' ' + className + ' who carries the ' + typeName + ' — ';
+  } else if (className && typeName) {
+    s1 = 'A ' + className + ' who carries the ' + typeName + ' — ';
+  } else {
+    s1 = 'A practitioner of ' + typeName + ' magic — ';
+  }
+  if (raisedLabel) {
+    s1 += raisedLabel + ', from ' + region + '.';
+  } else {
+    s1 += 'from ' + region + '.';
+  }
+
+  // Sentence 2: why they left and what they carry
+  var s2 = '';
+  if (whyLeft && leftBehind) {
+    s2 = 'They ' + whyLeft + ', and they carry with them ' + leftBehind + '.';
+  } else if (whyLeft) {
+    s2 = 'They ' + whyLeft + '.';
+  } else if (leftBehind) {
+    s2 = 'They carry with them ' + leftBehind + '.';
+  }
+
+  // Sentence 3: alignment
+  var s3 = alignmentLine || '';
+
+  var summary = [s1, s2, s3].filter(Boolean).join(' ');
 
   var el = document.getElementById('char-auto-summary');
   if (el) el.textContent = summary;
@@ -1145,12 +1221,67 @@ function showConfirmation(entry, token) {
   var screen = document.getElementById('char-confirmation');
   if (!screen) return;
   screen.classList.add('visible');
+
+  // Name
   var nameEl = document.getElementById('char-confirm-name');
   if (nameEl) nameEl.textContent = entry.name;
+
+  // Type line — gigglegloom · class · species
   var typeEl = document.getElementById('char-confirm-type');
-  if (typeEl) typeEl.textContent = entry.class_gigglegloom;
+  if (typeEl) {
+    var typeName = entry.class_gigglegloom
+      ? entry.class_gigglegloom.charAt(0).toUpperCase() + entry.class_gigglegloom.slice(1)
+      : '';
+    var className = entry.class_id
+      ? entry.class_id.charAt(0).toUpperCase() + entry.class_id.slice(1)
+      : '';
+    var speciesName = entry.species
+      ? entry.species.charAt(0).toUpperCase() + entry.species.slice(1)
+      : '';
+    typeEl.textContent = [typeName, className, speciesName].filter(Boolean).join(' · ');
+  }
+
+  // Sheet URL
+  var sheetUrl = window.location.origin + '/anavale-wiki/sheet/' + token + '.html';
+  var urlEl = document.getElementById('char-confirm-url');
+  if (urlEl) urlEl.textContent = sheetUrl;
+
+  // Open sheet link
   var sheetLink = document.getElementById('char-confirm-sheet-link');
-  if (sheetLink) sheetLink.href = 'sheet/' + token + '.html';
+  if (sheetLink) sheetLink.href = sheetUrl;
+
+  // Copy button
+  var copyBtn = document.getElementById('char-confirm-copy-btn');
+  if (copyBtn) {
+    copyBtn.onclick = function() {
+      navigator.clipboard.writeText(sheetUrl).then(function() {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(function() { copyBtn.textContent = 'Copy Link'; }, 2500);
+      });
+    };
+  }
+
+  // Spawn particles
+  var particleContainer = document.getElementById('char-confirm-particles');
+  if (particleContainer) {
+    var colors = ['#e8c84a','#e87a8a','#9a70e8','#4ac8b8','#f8e888'];
+    for (var i = 0; i < 28; i++) {
+      (function() {
+        var p = document.createElement('div');
+        p.className = 'char-confirmation-particle';
+        var size = Math.random() * 4 + 2;
+        p.style.cssText = [
+          'width:' + size + 'px',
+          'height:' + size + 'px',
+          'left:' + Math.random() * 100 + '%',
+          'background:' + colors[Math.floor(Math.random() * colors.length)],
+          'animation-duration:' + (Math.random() * 8 + 6) + 's',
+          'animation-delay:' + (Math.random() * 10) + 's'
+        ].join(';');
+        particleContainer.appendChild(p);
+      })();
+    }
+  }
 }
 
 function showSubmitError() {

@@ -636,10 +636,34 @@
 
 <!-- ══ CONFIRMATION SCREEN ══ -->
 <div id="char-confirmation" class="char-confirmation">
-  <div class="char-confirmation-glow">✦</div>
-  <h1 class="char-confirmation-title" id="char-confirm-name">Your character</h1>
-  <p class="char-confirmation-subtitle">Your name has been recorded in the Traveller's Compendium. Your DM will review your character and send you your character sheet link shortly.</p>
-  <a id="char-confirm-sheet-link" class="char-confirmation-wiki-link" href="index.html">Visit the Compendium →</a>
+  <div class="char-confirmation-particles" id="char-confirm-particles"></div>
+  <div class="char-confirmation-content">
+    <div class="char-confirmation-ornament">✦ · · · ✦</div>
+    <div class="char-confirmation-eyebrow">Your character has been created</div>
+    <h1 class="char-confirmation-title" id="char-confirm-name"></h1>
+    <div class="char-confirmation-type" id="char-confirm-type"></div>
+    <div class="char-confirmation-divider"></div>
+    <p class="char-confirmation-subtitle">Your name has been recorded in the Traveller's Compendium.<br>Your story begins when your DM calls for you.</p>
+
+    <div class="char-confirmation-sheet-block">
+      <div class="char-confirmation-sheet-label">Your Character Sheet</div>
+      <div class="char-confirmation-sheet-url" id="char-confirm-url"></div>
+      <div class="char-confirmation-sheet-buttons">
+        <a id="char-confirm-sheet-link" class="char-confirmation-open-btn" href="#">↗ Open My Sheet</a>
+        <button class="char-confirmation-copy-btn" id="char-confirm-copy-btn">Copy Link</button>
+      </div>
+    </div>
+
+    <div class="char-confirmation-warning">
+      <div class="char-confirmation-warning-icon">!</div>
+      <div class="char-confirmation-warning-text">
+        <strong>Save your character sheet link before you leave.</strong>
+        This link is the only way to access your character. It won't be emailed to you and cannot be recovered if lost. Copy it now or open it and bookmark it from there.
+      </div>
+    </div>
+
+    <div class="char-confirmation-bottom">· · · · ·</div>
+  </div>
 </div>
 
 <script>
