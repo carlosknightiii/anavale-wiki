@@ -1399,7 +1399,16 @@ function setAbilityScore(ability, score) {
   } else {
     var n   = parseInt(score);
     var mod = Math.floor((n - 10) / 2);
-    scoreEl.textContent = n;
+    // Place a draggable chip on the card so the player can drag it back
+    var chip = document.createElement('div');
+    chip.className = 'char-score-chip';
+    chip.draggable = true;
+    chip.dataset.score = n;
+    chip.textContent = n;
+    chip.addEventListener('dragstart', onChipDragStart);
+    chip.addEventListener('dragend',   onChipDragEnd);
+    scoreEl.innerHTML = '';
+    scoreEl.appendChild(chip);
     if (modEl)  modEl.textContent  = (mod >= 0 ? '+' : '') + mod;
     if (hidden) hidden.value = n;
     if (card)   card.dataset.score = n;
@@ -1463,14 +1472,15 @@ function onCardDrop(e) {
   var incomingScore = _dragScore;
   if (!incomingScore) return;
 
-  // If this card already has a score, swap it back to bank (or source card)
+  // Read existing score from card before we change anything
   var existingScore = this.dataset.score;
 
   // Clear source
   if (_dragSource && _dragSource !== 'bank') {
+    // Dragged from another card — clear that card
     setAbilityScore(_dragSource, null);
   } else {
-    // Remove chip from bank
+    // Dragged from bank — remove the chip from the bank
     var bank = document.getElementById('char-score-bank');
     if (bank) {
       var bankChip = bank.querySelector('[data-score="' + incomingScore + '"]');
@@ -1478,8 +1488,8 @@ function onCardDrop(e) {
     }
   }
 
-  // If target had a score, put it back in bank
-  if (existingScore) {
+  // If target card already had a score, return it to the bank
+  if (existingScore && existingScore !== '') {
     addChipToBank(existingScore);
   }
 
