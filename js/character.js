@@ -213,6 +213,7 @@ function jumpToStage(n) {
 
 function initStageOnEnter(n) {
   if (n === 2) initStage2();
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); }
   if (n === 5) initStage5();
 }
 
@@ -766,6 +767,16 @@ function validateStage(n) {
       return false;
     }
   }
+  if (n === 3) {
+    var abilities = ['str','dex','con','int','wis','cha'];
+    var allAssigned = abilities.every(function(ab) {
+      return document.getElementById('char-ability-' + ab).value !== '';
+    });
+    if (!allAssigned) {
+      showToast('Please assign all six ability scores before continuing.');
+      return false;
+    }
+  }
   if (n === 4) {
     if (!CHAR_STATE.draft.alignment) {
       showToast('Please choose an alignment.');
@@ -826,6 +837,22 @@ function collectStage5Data() {
   CHAR_STATE.draft.cares_about     = getVal('char-cares-about');
   CHAR_STATE.draft.deepest_fear    = getVal('char-fear');
   CHAR_STATE.draft.seeking         = getVal('char-seeking');
+}
+
+function initAppearanceListeners() {
+  var ids = ['app-height','app-build','app-age','app-face-shape',
+             'app-eye-color','app-eye-shape','app-facial-hair',
+             'app-hair-color','app-hair-style','app-cloak','app-top',
+             'app-lower','app-shoes','app-hat','app-accessory','app-jewelry'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateAIPrompt);
+  });
+  var skinTone = document.getElementById('app-skin-tone');
+  if (skinTone) skinTone.addEventListener('input', updateAIPrompt);
+  document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
+    cb.addEventListener('change', updateAIPrompt);
+  });
 }
 
 // ── APPEARANCE DATA ────────────────────────────────────────────────
@@ -1330,6 +1357,291 @@ function showToast(msg) {
 // ── TOOLTIP SYSTEM ────────────────────────────────────────────────
 // Stub — tooltip logic now lives in an inline <script> block in character.html.
 function initTooltips() {}
+
+// ── ABILITY SCORE DRAG AND DROP ───────────────────────────────
+var ABILITY_SCORES = [15, 14, 13, 12, 10, 8];
+
+function initAbilityScores() {
+  resetAbilityScores();
+  initAbilityDragDrop();
+}
+
+function resetAbilityScores() {
+  // Restore bank chips
+  var bank = document.getElementById('char-score-bank');
+  if (!bank) return;
+  bank.innerHTML = '';
+  ABILITY_SCORES.forEach(function(score) {
+    var chip = document.createElement('div');
+    chip.className = 'char-score-chip';
+    chip.draggable = true;
+    chip.dataset.score = score;
+    chip.textContent = score;
+    bank.appendChild(chip);
+  });
+  // Clear all ability cards
+  ['str','dex','con','int','wis','cha'].forEach(function(ab) {
+    setAbilityScore(ab, null);
+  });
+  initAbilityDragDrop();
+}
+
+function setAbilityScore(ability, score) {
+  var scoreEl = document.getElementById('ability-score-' + ability);
+  var modEl   = document.getElementById('ability-mod-'   + ability);
+  var hidden  = document.getElementById('char-ability-'  + ability);
+  var card    = document.getElementById('ability-card-'  + ability);
+  if (!scoreEl) return;
+  if (score === null || score === undefined || score === '') {
+    scoreEl.textContent = '—';
+    if (modEl)  modEl.textContent  = '';
+    if (hidden) hidden.value = '';
+    if (card)   card.dataset.score = '';
+  } else {
+    var n   = parseInt(score);
+    var mod = Math.floor((n - 10) / 2);
+    scoreEl.textContent = n;
+    if (modEl)  modEl.textContent  = (mod >= 0 ? '+' : '') + mod;
+    if (hidden) hidden.value = n;
+    if (card)   card.dataset.score = n;
+  }
+}
+
+function initAbilityDragDrop() {
+  // Re-wire all chips (bank + any placed chips)
+  document.querySelectorAll('.char-score-chip').forEach(function(chip) {
+    chip.addEventListener('dragstart', onChipDragStart);
+    chip.addEventListener('dragend',   onChipDragEnd);
+  });
+  // Wire ability cards as drop targets
+  document.querySelectorAll('.char-ability-card').forEach(function(card) {
+    card.addEventListener('dragover',  onCardDragOver);
+    card.addEventListener('dragleave', onCardDragLeave);
+    card.addEventListener('drop',      onCardDrop);
+  });
+  // Wire bank as drop target (for returning chips)
+  var bank = document.getElementById('char-score-bank');
+  if (bank) {
+    bank.addEventListener('dragover',  function(e) { e.preventDefault(); bank.style.borderColor = 'var(--gold)'; });
+    bank.addEventListener('dragleave', function()  { bank.style.borderColor = ''; });
+    bank.addEventListener('drop',      onBankDrop);
+  }
+  // Touch support
+  initAbilityTouchDrag();
+}
+
+var _dragScore = null;
+var _dragSource = null; // 'bank' or ability id
+
+function onChipDragStart(e) {
+  _dragScore  = this.dataset.score;
+  _dragSource = this.closest('.char-ability-card') ? this.closest('.char-ability-card').dataset.ability : 'bank';
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', _dragScore);
+}
+
+function onChipDragEnd() {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.char-ability-card').forEach(function(c) { c.classList.remove('drag-over'); });
+  var bank = document.getElementById('char-score-bank');
+  if (bank) bank.style.borderColor = '';
+}
+
+function onCardDragOver(e) {
+  e.preventDefault();
+  this.classList.add('drag-over');
+}
+
+function onCardDragLeave() {
+  this.classList.remove('drag-over');
+}
+
+function onCardDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drag-over');
+  var targetAbility = this.dataset.ability;
+  var incomingScore = _dragScore;
+  if (!incomingScore) return;
+
+  // If this card already has a score, swap it back to bank (or source card)
+  var existingScore = this.dataset.score;
+
+  // Clear source
+  if (_dragSource && _dragSource !== 'bank') {
+    setAbilityScore(_dragSource, null);
+  } else {
+    // Remove chip from bank
+    var bank = document.getElementById('char-score-bank');
+    if (bank) {
+      var bankChip = bank.querySelector('[data-score="' + incomingScore + '"]');
+      if (bankChip) bankChip.remove();
+    }
+  }
+
+  // If target had a score, put it back in bank
+  if (existingScore) {
+    addChipToBank(existingScore);
+  }
+
+  // Place incoming score on target card
+  setAbilityScore(targetAbility, incomingScore);
+  saveDraftToStorage();
+  updateAIPrompt();
+}
+
+function onBankDrop(e) {
+  e.preventDefault();
+  var bank = document.getElementById('char-score-bank');
+  if (bank) bank.style.borderColor = '';
+  if (!_dragScore) return;
+  // Only act if dragged from a card (not from bank itself)
+  if (_dragSource && _dragSource !== 'bank') {
+    setAbilityScore(_dragSource, null);
+    addChipToBank(_dragScore);
+    saveDraftToStorage();
+  }
+}
+
+function addChipToBank(score) {
+  var bank = document.getElementById('char-score-bank');
+  if (!bank) return;
+  // Don't add duplicates
+  if (bank.querySelector('[data-score="' + score + '"]')) return;
+  var chip = document.createElement('div');
+  chip.className = 'char-score-chip';
+  chip.draggable = true;
+  chip.dataset.score = score;
+  chip.textContent = score;
+  chip.addEventListener('dragstart', onChipDragStart);
+  chip.addEventListener('dragend',   onChipDragEnd);
+  bank.appendChild(chip);
+  // Re-sort bank chips in descending order
+  var chips = Array.from(bank.querySelectorAll('.char-score-chip'));
+  chips.sort(function(a,b) { return parseInt(b.dataset.score) - parseInt(a.dataset.score); });
+  chips.forEach(function(c) { bank.appendChild(c); });
+}
+
+// Touch drag support (mobile)
+function initAbilityTouchDrag() {
+  var touchChip = null;
+  var touchClone = null;
+
+  document.querySelectorAll('.char-score-chip').forEach(function(chip) {
+    chip.addEventListener('touchstart', function(e) {
+      touchChip = chip;
+      _dragScore  = chip.dataset.score;
+      _dragSource = chip.closest('.char-ability-card') ? chip.closest('.char-ability-card').dataset.ability : 'bank';
+      // Create floating clone
+      var rect = chip.getBoundingClientRect();
+      touchClone = chip.cloneNode(true);
+      touchClone.style.cssText = 'position:fixed;pointer-events:none;opacity:0.8;z-index:9999;width:' + rect.width + 'px;height:' + rect.height + 'px;top:' + rect.top + 'px;left:' + rect.left + 'px;';
+      document.body.appendChild(touchClone);
+      chip.classList.add('dragging');
+      e.preventDefault();
+    }, { passive: false });
+
+    chip.addEventListener('touchmove', function(e) {
+      if (!touchClone) return;
+      var t = e.touches[0];
+      touchClone.style.top  = (t.clientY - 20) + 'px';
+      touchClone.style.left = (t.clientX - 24) + 'px';
+      e.preventDefault();
+    }, { passive: false });
+
+    chip.addEventListener('touchend', function(e) {
+      if (touchClone) { touchClone.remove(); touchClone = null; }
+      if (!touchChip) return;
+      touchChip.classList.remove('dragging');
+      var t = e.changedTouches[0];
+      var el = document.elementFromPoint(t.clientX, t.clientY);
+      var card = el ? el.closest('.char-ability-card') : null;
+      var bank = document.getElementById('char-score-bank');
+      if (card) {
+        // Simulate drop on card
+        var fakeEvent = { preventDefault: function(){} };
+        var origSource = _dragSource;
+        onCardDrop.call(card, fakeEvent);
+      } else if (bank && bank.contains(el)) {
+        var fakeEvent = { preventDefault: function(){} };
+        onBankDrop(fakeEvent);
+      }
+      touchChip = null;
+      _dragScore = null;
+      _dragSource = null;
+    });
+  });
+}
+
+// ── APPEARANCE PROMPT ─────────────────────────────────────────
+function updateAIPrompt() {
+  var data = collectAppearanceData();
+  var prompt = buildAIPrompt(data);
+  var el = document.getElementById('char-ai-prompt-text');
+  if (el) el.textContent = prompt || 'Fill in your appearance details above to generate your portrait prompt.';
+  CHAR_STATE.draft.appearance_data   = data;
+  CHAR_STATE.draft.appearance_prompt = prompt;
+}
+
+// ── STAGE 3 RESTORE ───────────────────────────────────────────
+function restoreStage3Selections() {
+  // Restore ability scores
+  var scores = CHAR_STATE.draft.ability_scores;
+  if (scores) {
+    var bank = document.getElementById('char-score-bank');
+    if (bank) bank.innerHTML = '';
+    var placed = [];
+    ['str','dex','con','int','wis','cha'].forEach(function(ab) {
+      var val = scores[ab];
+      if (val && val !== 10) {
+        setAbilityScore(ab, val);
+        placed.push(parseInt(val));
+      } else if (val === 10) {
+        setAbilityScore(ab, val);
+        placed.push(10);
+      }
+    });
+    // Put unplaced scores back in bank
+    ABILITY_SCORES.forEach(function(s) {
+      if (placed.indexOf(s) === -1) {
+        addChipToBank(s);
+      }
+    });
+    initAbilityDragDrop();
+  }
+  // Restore appearance selects
+  var app = CHAR_STATE.draft.appearance_data;
+  if (app) {
+    var simpleIds = ['app-height','app-build','app-age','app-face-shape',
+                     'app-eye-color','app-eye-shape','app-facial-hair',
+                     'app-hair-color','app-hair-style','app-cloak','app-top',
+                     'app-lower','app-shoes','app-hat','app-accessory','app-jewelry'];
+    simpleIds.forEach(function(id) {
+      var key = id.replace('app-','').replace(/-/g,'_');
+      // handle key mismatches
+      var map = { 'skin_tone': 'skin_tone', 'facial_hair': 'facial_hair',
+                  'hair_color': 'hair_color', 'hair_style': 'hair_style',
+                  'face_shape': 'face_shape', 'eye_color': 'eye_color',
+                  'eye_shape': 'eye_shape' };
+      var val = app[map[key] || key];
+      if (!val) return;
+      var el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+    // Restore skin tone color
+    if (app.skin_tone) {
+      var st = document.getElementById('app-skin-tone');
+      if (st) st.value = app.skin_tone;
+    }
+    // Restore checkboxes
+    if (app.facial_markings) {
+      document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
+        cb.checked = app.facial_markings.indexOf(cb.value) >= 0;
+      });
+    }
+    updateAIPrompt();
+  }
+}
 
 // ── TOAST STYLES (injected) ────────────────────────────────────────
 (function() {

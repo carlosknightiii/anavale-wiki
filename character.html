@@ -436,9 +436,62 @@
         <div class="char-section-header-title">Ability scores</div>
         <div class="char-section-header-desc">Your six core abilities — Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma. Drag and drop to assign them.</div>
       </div>
-      <div class="char-placeholder-box">
-        ✦ Ability score drag-and-drop — coming in Phase 2
+      <!-- Score bank -->
+      <div class="char-score-bank" id="char-score-bank">
+        <div class="char-score-chip" draggable="true" data-score="15">15</div>
+        <div class="char-score-chip" draggable="true" data-score="14">14</div>
+        <div class="char-score-chip" draggable="true" data-score="13">13</div>
+        <div class="char-score-chip" draggable="true" data-score="12">12</div>
+        <div class="char-score-chip" draggable="true" data-score="10">10</div>
+        <div class="char-score-chip" draggable="true" data-score="8">8</div>
       </div>
+
+      <!-- Ability grid -->
+      <div class="char-ability-grid">
+        <div class="char-ability-card" id="ability-card-str" data-ability="str">
+          <div class="char-ability-name">Strength</div>
+          <div class="char-ability-score" id="ability-score-str">—</div>
+          <div class="char-ability-mod" id="ability-mod-str"></div>
+          <div class="char-ability-desc">Carrying, climbing, breaking things</div>
+          <input type="hidden" id="char-ability-str" value="">
+        </div>
+        <div class="char-ability-card" id="ability-card-dex" data-ability="dex">
+          <div class="char-ability-name">Dexterity</div>
+          <div class="char-ability-score" id="ability-score-dex">—</div>
+          <div class="char-ability-mod" id="ability-mod-dex"></div>
+          <div class="char-ability-desc">Speed, stealth, quick hands</div>
+          <input type="hidden" id="char-ability-dex" value="">
+        </div>
+        <div class="char-ability-card" id="ability-card-con" data-ability="con">
+          <div class="char-ability-name">Constitution</div>
+          <div class="char-ability-score" id="ability-score-con">—</div>
+          <div class="char-ability-mod" id="ability-mod-con"></div>
+          <div class="char-ability-desc">Endurance, health, resilience</div>
+          <input type="hidden" id="char-ability-con" value="">
+        </div>
+        <div class="char-ability-card" id="ability-card-int" data-ability="int">
+          <div class="char-ability-name">Intelligence</div>
+          <div class="char-ability-score" id="ability-score-int">—</div>
+          <div class="char-ability-mod" id="ability-mod-int"></div>
+          <div class="char-ability-desc">Memory, logic, arcane knowledge</div>
+          <input type="hidden" id="char-ability-int" value="">
+        </div>
+        <div class="char-ability-card" id="ability-card-wis" data-ability="wis">
+          <div class="char-ability-name">Wisdom</div>
+          <div class="char-ability-score" id="ability-score-wis">—</div>
+          <div class="char-ability-mod" id="ability-mod-wis"></div>
+          <div class="char-ability-desc">Perception, instinct, calm judgment</div>
+          <input type="hidden" id="char-ability-wis" value="">
+        </div>
+        <div class="char-ability-card" id="ability-card-cha" data-ability="cha">
+          <div class="char-ability-name">Charisma</div>
+          <div class="char-ability-score" id="ability-score-cha">—</div>
+          <div class="char-ability-mod" id="ability-mod-cha"></div>
+          <div class="char-ability-desc">Presence, persuasion, performance</div>
+          <input type="hidden" id="char-ability-cha" value="">
+        </div>
+      </div>
+      <p style="font-family:var(--font-sans);font-size:0.78rem;color:rgba(245,234,212,0.4);margin-bottom:2.5rem;font-style:italic;">Drag a number from the bank onto an ability. Drag it back to unassign.</p>
 
       <!-- Appearance -->
       <div class="char-section-header">
@@ -446,8 +499,280 @@
         <div class="char-section-header-title">Your appearance</div>
         <div class="char-section-header-desc">Describe what you look like. These details will be used to generate your character portrait.</div>
       </div>
-      <div class="char-placeholder-box">
-        ✦ Appearance builder — coming in Phase 2
+
+      <!-- Body -->
+      <div class="char-appearance-section">
+        <div class="char-appearance-section-title">Body</div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-height">Height</label>
+            <select class="char-select" id="app-height">
+              <option value="">— choose —</option>
+              <option value="very short">Very short</option>
+              <option value="short">Short</option>
+              <option value="average height">Average height</option>
+              <option value="tall">Tall</option>
+              <option value="very tall">Very tall</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-build">Build</label>
+            <select class="char-select" id="app-build">
+              <option value="">— choose —</option>
+              <option value="slight">Slight</option>
+              <option value="lean">Lean</option>
+              <option value="average build">Average build</option>
+              <option value="sturdy">Sturdy</option>
+              <option value="broad">Broad</option>
+            </select>
+          </div>
+        </div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-age">Age appearance</label>
+            <select class="char-select" id="app-age">
+              <option value="">— choose —</option>
+              <option value="young">Young</option>
+              <option value="young adult">Young adult</option>
+              <option value="adult">Adult</option>
+              <option value="middle-aged">Middle-aged</option>
+              <option value="elder">Elder</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-skin-tone">Skin tone</label>
+            <input type="color" id="app-skin-tone" value="#c68642" style="width:100%;height:42px;border-radius:6px;border:1px solid var(--char-border);background:rgba(255,255,255,0.09);cursor:pointer;padding:2px 4px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Face -->
+      <div class="char-appearance-section">
+        <div class="char-appearance-section-title">Face</div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-face-shape">Face shape</label>
+            <select class="char-select" id="app-face-shape">
+              <option value="">— choose —</option>
+              <option value="round">Round</option>
+              <option value="oval">Oval</option>
+              <option value="square">Square</option>
+              <option value="heart-shaped">Heart-shaped</option>
+              <option value="angular">Angular</option>
+              <option value="soft">Soft</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-eye-color">Eye color</label>
+            <select class="char-select" id="app-eye-color">
+              <option value="">— choose —</option>
+              <option value="brown">Brown</option>
+              <option value="dark brown">Dark brown</option>
+              <option value="hazel">Hazel</option>
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="grey">Grey</option>
+              <option value="amber">Amber</option>
+              <option value="violet">Violet</option>
+              <option value="gold">Gold</option>
+              <option value="silver">Silver</option>
+              <option value="completely black">Completely black</option>
+              <option value="completely white">Completely white</option>
+              <option value="mismatched">Mismatched</option>
+            </select>
+          </div>
+        </div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-eye-shape">Eye shape</label>
+            <select class="char-select" id="app-eye-shape">
+              <option value="">— choose —</option>
+              <option value="wide">Wide</option>
+              <option value="narrow">Narrow</option>
+              <option value="deep-set">Deep-set</option>
+              <option value="prominent">Prominent</option>
+              <option value="almond-shaped">Almond-shaped</option>
+              <option value="hooded">Hooded</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-facial-hair">Facial hair</label>
+            <select class="char-select" id="app-facial-hair">
+              <option value="">None</option>
+              <option value="light stubble">Light stubble</option>
+              <option value="a short beard">Short beard</option>
+              <option value="a full beard">Full beard</option>
+              <option value="a long beard">Long beard</option>
+              <option value="a moustache">Moustache</option>
+              <option value="sideburns">Sideburns</option>
+            </select>
+          </div>
+        </div>
+        <div class="char-field-group">
+          <label class="char-field-label">Facial markings</label>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.25rem;">
+            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="freckles"> Freckles</label>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="a scar"> Scar</label>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="tattoos"> Tattoos</label>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="vitiligo"> Vitiligo</label>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="birthmarks"> Birthmarks</label>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="paint or pigment markings"> Paint / pigment</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hair -->
+      <div class="char-appearance-section">
+        <div class="char-appearance-section-title">Hair</div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-hair-color">Hair color</label>
+            <select class="char-select" id="app-hair-color">
+              <option value="">— choose —</option>
+              <option value="black">Black</option>
+              <option value="dark brown">Dark brown</option>
+              <option value="brown">Brown</option>
+              <option value="auburn">Auburn</option>
+              <option value="red">Red</option>
+              <option value="strawberry blonde">Strawberry blonde</option>
+              <option value="blonde">Blonde</option>
+              <option value="platinum blonde">Platinum blonde</option>
+              <option value="grey">Grey</option>
+              <option value="white">White</option>
+              <option value="silver">Silver</option>
+              <option value="blue-black">Blue-black</option>
+              <option value="deep violet">Deep violet</option>
+              <option value="no hair">No hair</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-hair-style">Hair style</label>
+            <select class="char-select" id="app-hair-style">
+              <option value="">— choose —</option>
+              <option value="cropped">Cropped</option>
+              <option value="short">Short</option>
+              <option value="medium-length">Medium-length</option>
+              <option value="long straight">Long straight</option>
+              <option value="long wavy">Long wavy</option>
+              <option value="long curly">Long curly</option>
+              <option value="tightly coiled">Tightly coiled</option>
+              <option value="braided">Braided</option>
+              <option value="locs">Locs</option>
+              <option value="shaved on sides">Shaved on sides</option>
+              <option value="tied back">Tied back</option>
+              <option value="wild and untamed">Wild and untamed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clothing -->
+      <div class="char-appearance-section">
+        <div class="char-appearance-section-title">Clothing</div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-cloak">Cloak</label>
+            <select class="char-select" id="app-cloak">
+              <option value="none">No cloak</option>
+              <option value="short dark">Short dark</option>
+              <option value="long dark">Long dark</option>
+              <option value="tattered">Tattered</option>
+              <option value="colourful">Colourful</option>
+              <option value="hooded">Hooded</option>
+              <option value="fur-trimmed">Fur-trimmed</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-top">Top / torso</label>
+            <select class="char-select" id="app-top">
+              <option value="">— choose —</option>
+              <option value="simple tunic">Simple tunic</option>
+              <option value="leather jerkin">Leather jerkin</option>
+              <option value="chainmail shirt">Chainmail shirt</option>
+              <option value="plate armour">Plate armour</option>
+              <option value="robes">Robes</option>
+              <option value="traveller's coat">Traveller's coat</option>
+              <option value="formal doublet">Formal doublet</option>
+              <option value="wrapped cloth">Wrapped cloth</option>
+            </select>
+          </div>
+        </div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-lower">Lower / legs</label>
+            <select class="char-select" id="app-lower">
+              <option value="">— choose —</option>
+              <option value="trousers">Trousers</option>
+              <option value="leather breeches">Leather breeches</option>
+              <option value="a skirt">Skirt</option>
+              <option value="a long skirt">Long skirt</option>
+              <option value="armoured greaves">Armoured greaves</option>
+              <option value="wrapped cloth lower">Wrapped cloth</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-shoes">Footwear</label>
+            <select class="char-select" id="app-shoes">
+              <option value="">— choose —</option>
+              <option value="worn boots">Worn boots</option>
+              <option value="sturdy boots">Sturdy boots</option>
+              <option value="fine boots">Fine boots</option>
+              <option value="sandals">Sandals</option>
+              <option value="no shoes">Barefoot</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accessories -->
+      <div class="char-appearance-section">
+        <div class="char-appearance-section-title">Accessories</div>
+        <div class="char-field-row">
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-hat">Hat / headwear</label>
+            <select class="char-select" id="app-hat">
+              <option value="">None</option>
+              <option value="a wide-brimmed hat">Wide-brimmed hat</option>
+              <option value="a hood">Hood</option>
+              <option value="a circlet">Circlet</option>
+              <option value="a crown">Crown</option>
+              <option value="a helmet">Helmet</option>
+              <option value="a headband">Headband</option>
+              <option value="a turban">Turban</option>
+            </select>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label" for="app-accessory">Carried item</label>
+            <select class="char-select" id="app-accessory">
+              <option value="">None</option>
+              <option value="carrying a staff">Staff</option>
+              <option value="carrying a lute">Lute</option>
+              <option value="carrying a book">Book</option>
+              <option value="carrying a lantern">Lantern</option>
+              <option value="carrying a shield">Shield</option>
+              <option value="carrying a bow">Bow</option>
+              <option value="carrying a sword">Sword</option>
+            </select>
+          </div>
+        </div>
+        <div class="char-field-group">
+          <label class="char-field-label" for="app-jewelry">Jewellery / adornments</label>
+          <select class="char-select" id="app-jewelry">
+            <option value="">None</option>
+            <option value="wearing a necklace">Necklace</option>
+            <option value="wearing earrings">Earrings</option>
+            <option value="wearing rings">Rings</option>
+            <option value="wearing a bracelet">Bracelet</option>
+            <option value="wearing many bangles">Many bangles</option>
+            <option value="wearing an amulet">Amulet</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- AI prompt preview -->
+      <div class="char-ai-prompt-preview">
+        <div class="char-ai-prompt-label">Portrait prompt — updates as you choose</div>
+        <div class="char-ai-prompt-text" id="char-ai-prompt-text">Fill in your appearance details above to generate your portrait prompt.</div>
       </div>
 
       <!-- Personality -->
