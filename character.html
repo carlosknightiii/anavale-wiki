@@ -437,6 +437,7 @@
         <div class="char-section-header-desc">Your six core abilities — Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma. Drag and drop to assign them.</div>
       </div>
       <!-- Score bank -->
+      <p class="char-ability-bank-instruction">Drag each number onto an ability card below</p>
       <div class="char-score-bank" id="char-score-bank">
         <div class="char-score-chip" draggable="true" data-score="15">15</div>
         <div class="char-score-chip" draggable="true" data-score="14">14</div>
@@ -457,47 +458,64 @@
         <div class="char-ability-card" id="ability-card-str" data-ability="str">
           <div class="char-ability-name">Strength</div>
           <div class="char-ability-score" id="ability-score-str"><span class="char-ability-drop-target">drop here</span></div>
-          <div class="char-ability-mod" id="ability-mod-str"></div>
+          <div class="char-ability-mod-wrap">
+            <div class="char-ability-mod" id="ability-mod-str"></div>
+            <div class="char-ability-mod-label" id="ability-mod-label-str"></div>
+          </div>
           <div class="char-ability-desc">Carrying, climbing, breaking things</div>
           <input type="hidden" id="char-ability-str" value="">
         </div>
         <div class="char-ability-card" id="ability-card-dex" data-ability="dex">
           <div class="char-ability-name">Dexterity</div>
           <div class="char-ability-score" id="ability-score-dex"><span class="char-ability-drop-target">drop here</span></div>
-          <div class="char-ability-mod" id="ability-mod-dex"></div>
+          <div class="char-ability-mod-wrap">
+            <div class="char-ability-mod" id="ability-mod-dex"></div>
+            <div class="char-ability-mod-label" id="ability-mod-label-dex"></div>
+          </div>
           <div class="char-ability-desc">Speed, stealth, quick hands</div>
           <input type="hidden" id="char-ability-dex" value="">
         </div>
         <div class="char-ability-card" id="ability-card-con" data-ability="con">
           <div class="char-ability-name">Constitution</div>
           <div class="char-ability-score" id="ability-score-con"><span class="char-ability-drop-target">drop here</span></div>
-          <div class="char-ability-mod" id="ability-mod-con"></div>
+          <div class="char-ability-mod-wrap">
+            <div class="char-ability-mod" id="ability-mod-con"></div>
+            <div class="char-ability-mod-label" id="ability-mod-label-con"></div>
+          </div>
           <div class="char-ability-desc">Endurance, health, resilience</div>
           <input type="hidden" id="char-ability-con" value="">
         </div>
         <div class="char-ability-card" id="ability-card-int" data-ability="int">
           <div class="char-ability-name">Intelligence</div>
           <div class="char-ability-score" id="ability-score-int"><span class="char-ability-drop-target">drop here</span></div>
-          <div class="char-ability-mod" id="ability-mod-int"></div>
+          <div class="char-ability-mod-wrap">
+            <div class="char-ability-mod" id="ability-mod-int"></div>
+            <div class="char-ability-mod-label" id="ability-mod-label-int"></div>
+          </div>
           <div class="char-ability-desc">Memory, logic, arcane knowledge</div>
           <input type="hidden" id="char-ability-int" value="">
         </div>
         <div class="char-ability-card" id="ability-card-wis" data-ability="wis">
           <div class="char-ability-name">Wisdom</div>
           <div class="char-ability-score" id="ability-score-wis"><span class="char-ability-drop-target">drop here</span></div>
-          <div class="char-ability-mod" id="ability-mod-wis"></div>
+          <div class="char-ability-mod-wrap">
+            <div class="char-ability-mod" id="ability-mod-wis"></div>
+            <div class="char-ability-mod-label" id="ability-mod-label-wis"></div>
+          </div>
           <div class="char-ability-desc">Perception, instinct, calm judgment</div>
           <input type="hidden" id="char-ability-wis" value="">
         </div>
         <div class="char-ability-card" id="ability-card-cha" data-ability="cha">
           <div class="char-ability-name">Charisma</div>
           <div class="char-ability-score" id="ability-score-cha"><span class="char-ability-drop-target">drop here</span></div>
-          <div class="char-ability-mod" id="ability-mod-cha"></div>
+          <div class="char-ability-mod-wrap">
+            <div class="char-ability-mod" id="ability-mod-cha"></div>
+            <div class="char-ability-mod-label" id="ability-mod-label-cha"></div>
+          </div>
           <div class="char-ability-desc">Presence, persuasion, performance</div>
           <input type="hidden" id="char-ability-cha" value="">
         </div>
       </div>
-      <p style="font-family:var(--font-sans);font-size:0.78rem;color:rgba(245,234,212,0.4);margin-bottom:2.5rem;font-style:italic;">Drag a number from the bank onto an ability. Drag it back to unassign.</p>
 
       <!-- Appearance -->
       <div class="char-section-header">
@@ -506,169 +524,242 @@
         <div class="char-section-header-desc">Describe what you look like. These details will be used to generate your character portrait.</div>
       </div>
 
+      <!-- Face & Hair -->
+      <div class="char-body-section">
+        <div class="char-body-fields">
+          <div class="char-appearance-section-title">Face &amp; Hair</div>
+          <div class="char-field-row">
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-face-shape">Face shape</label>
+              <select class="char-select" id="app-face-shape">
+                <option value="">— choose —</option>
+                <option value="round">Round</option>
+                <option value="oval">Oval</option>
+                <option value="square">Square</option>
+                <option value="heart-shaped">Heart-shaped</option>
+                <option value="angular">Angular</option>
+                <option value="soft">Soft</option>
+              </select>
+            </div>
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-eye-color">Eye color</label>
+              <select class="char-select" id="app-eye-color">
+                <option value="">— choose —</option>
+                <option value="brown">Brown</option>
+                <option value="dark brown">Dark brown</option>
+                <option value="hazel">Hazel</option>
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="grey">Grey</option>
+                <option value="amber">Amber</option>
+                <option value="violet">Violet</option>
+                <option value="gold">Gold</option>
+                <option value="silver">Silver</option>
+                <option value="completely black">Completely black</option>
+                <option value="completely white">Completely white</option>
+                <option value="mismatched">Mismatched</option>
+              </select>
+            </div>
+          </div>
+          <div class="char-field-row">
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-eye-shape">Eye shape</label>
+              <select class="char-select" id="app-eye-shape">
+                <option value="">— choose —</option>
+                <option value="wide">Wide</option>
+                <option value="narrow">Narrow</option>
+                <option value="deep-set">Deep-set</option>
+                <option value="prominent">Prominent</option>
+                <option value="almond-shaped">Almond-shaped</option>
+                <option value="hooded">Hooded</option>
+              </select>
+            </div>
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-facial-hair">Facial hair</label>
+              <select class="char-select" id="app-facial-hair">
+                <option value="">None</option>
+                <option value="light stubble">Light stubble</option>
+                <option value="a short beard">Short beard</option>
+                <option value="a full beard">Full beard</option>
+                <option value="a long beard">Long beard</option>
+                <option value="a moustache">Moustache</option>
+                <option value="sideburns">Sideburns</option>
+              </select>
+            </div>
+          </div>
+          <div class="char-field-row">
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-hair-color">Hair color</label>
+              <select class="char-select" id="app-hair-color">
+                <option value="">— choose —</option>
+                <option value="black">Black</option>
+                <option value="dark brown">Dark brown</option>
+                <option value="brown">Brown</option>
+                <option value="auburn">Auburn</option>
+                <option value="red">Red</option>
+                <option value="strawberry blonde">Strawberry blonde</option>
+                <option value="blonde">Blonde</option>
+                <option value="platinum blonde">Platinum blonde</option>
+                <option value="grey">Grey</option>
+                <option value="white">White</option>
+                <option value="silver">Silver</option>
+                <option value="blue-black">Blue-black</option>
+                <option value="deep violet">Deep violet</option>
+                <option value="no hair">No hair</option>
+              </select>
+            </div>
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-hair-style">Hair style</label>
+              <select class="char-select" id="app-hair-style">
+                <option value="">— choose —</option>
+                <option value="cropped">Cropped</option>
+                <option value="short">Short</option>
+                <option value="medium-length">Medium-length</option>
+                <option value="long straight">Long straight</option>
+                <option value="long wavy">Long wavy</option>
+                <option value="long curly">Long curly</option>
+                <option value="tightly coiled">Tightly coiled</option>
+                <option value="braided">Braided</option>
+                <option value="locs">Locs</option>
+                <option value="shaved on sides">Shaved on sides</option>
+                <option value="tied back">Tied back</option>
+                <option value="wild and untamed">Wild and untamed</option>
+              </select>
+            </div>
+          </div>
+          <div class="char-field-group">
+            <label class="char-field-label">Facial markings</label>
+            <div class="char-markings-wrap">
+              <label class="char-checkbox-label"><input type="checkbox" name="app-markings" value="freckles"> Freckles</label>
+              <label class="char-checkbox-label"><input type="checkbox" name="app-markings" value="a scar"> Scar</label>
+              <label class="char-checkbox-label"><input type="checkbox" name="app-markings" value="tattoos"> Tattoos</label>
+              <label class="char-checkbox-label"><input type="checkbox" name="app-markings" value="vitiligo"> Vitiligo</label>
+              <label class="char-checkbox-label"><input type="checkbox" name="app-markings" value="birthmarks"> Birthmarks</label>
+              <label class="char-checkbox-label"><input type="checkbox" name="app-markings" value="paint or pigment markings"> Paint / pigment</label>
+            </div>
+          </div>
+        </div>
+        <div class="char-body-figure-panel">
+          <div class="char-body-figure-label">Preview</div>
+          <svg id="face-figure-svg" class="char-body-figure-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Background -->
+            <rect width="200" height="240" fill="#0a0e18" rx="7"/>
+            <!-- Neck -->
+            <rect id="face-neck" x="86" y="178" width="28" height="30" rx="4" fill="#c68642"/>
+            <!-- Ears -->
+            <ellipse id="face-ear-left"  cx="52"  cy="148" rx="10" ry="14" fill="#c68642"/>
+            <ellipse id="face-ear-right" cx="148" cy="148" rx="10" ry="14" fill="#c68642"/>
+            <!-- Face -->
+            <ellipse id="face-outline" cx="100" cy="140" rx="50" ry="62" fill="#c68642"/>
+            <!-- Hair (behind face for top, drawn last for sides/long) -->
+            <ellipse id="hair-top" cx="100" cy="96" rx="52" ry="30" fill="#4a3010"/>
+            <rect    id="hair-sides" x="50" y="96" width="12" height="50" rx="6" fill="#4a3010" opacity="0"/>
+            <rect    id="hair-sides-r" x="138" y="96" width="12" height="50" rx="6" fill="#4a3010" opacity="0"/>
+            <path    id="hair-long" d="M52,130 Q44,190 56,210 Q100,220 144,210 Q156,190 148,130" fill="#4a3010" opacity="0"/>
+            <!-- Eyes -->
+            <ellipse id="eye-left"   cx="82"  cy="140" rx="9" ry="6" fill="#3A5A8A"/>
+            <ellipse id="pupil-left" cx="82"  cy="140" rx="4" ry="4" fill="#111111"/>
+            <ellipse id="eye-right"   cx="118" cy="140" rx="9" ry="6" fill="#3A5A8A"/>
+            <ellipse id="pupil-right" cx="118" cy="140" rx="4" ry="4" fill="#111111"/>
+            <!-- Nose (static) -->
+            <path d="M97,148 Q100,158 103,148" stroke="#00000033" stroke-width="1.5" fill="none"/>
+            <!-- Mouth (static) -->
+            <path d="M90,165 Q100,172 110,165" stroke="#00000044" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- Facial hair -->
+            <path id="facial-hair-shape" d="M85,162 Q100,175 115,162 Q115,178 100,180 Q85,178 85,162Z" fill="#3a2010" opacity="0"/>
+            <!-- Markings (toggled by checkboxes) -->
+            <g id="marking-freckles" opacity="0">
+              <circle cx="88" cy="152" r="1.5" fill="#7a4020" opacity="0.6"/>
+              <circle cx="94" cy="155" r="1.5" fill="#7a4020" opacity="0.6"/>
+              <circle cx="106" cy="155" r="1.5" fill="#7a4020" opacity="0.6"/>
+              <circle cx="112" cy="152" r="1.5" fill="#7a4020" opacity="0.6"/>
+              <circle cx="91" cy="149" r="1"   fill="#7a4020" opacity="0.5"/>
+              <circle cx="109" cy="149" r="1"   fill="#7a4020" opacity="0.5"/>
+            </g>
+            <line id="marking-scar" x1="78" y1="134" x2="86" y2="146" stroke="#c0a080" stroke-width="1.5" opacity="0" stroke-linecap="round"/>
+            <g id="marking-tattoo" opacity="0">
+              <path d="M68,138 Q72,130 76,138 Q72,142 68,138Z" fill="none" stroke="#6a3a8a" stroke-width="1"/>
+              <path d="M124,138 Q128,130 132,138 Q128,142 124,138Z" fill="none" stroke="#6a3a8a" stroke-width="1"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
       <!-- Body -->
-      <div class="char-appearance-section">
-        <div class="char-appearance-section-title">Body</div>
-        <div class="char-field-row">
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-height">Height</label>
-            <select class="char-select" id="app-height">
-              <option value="">— choose —</option>
-              <option value="very short">Very short</option>
-              <option value="short">Short</option>
-              <option value="average height">Average height</option>
-              <option value="tall">Tall</option>
-              <option value="very tall">Very tall</option>
-            </select>
+      <div class="char-body-section">
+        <div class="char-body-fields">
+          <div class="char-appearance-section-title">Body</div>
+          <div class="char-field-row">
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-height">Height</label>
+              <select class="char-select" id="app-height">
+                <option value="">— choose —</option>
+                <option value="very short">Very short</option>
+                <option value="short">Short</option>
+                <option value="average height">Average height</option>
+                <option value="tall">Tall</option>
+                <option value="very tall">Very tall</option>
+              </select>
+            </div>
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-build">Build</label>
+              <select class="char-select" id="app-build">
+                <option value="">— choose —</option>
+                <option value="slight">Slight</option>
+                <option value="lean">Lean</option>
+                <option value="average build">Average build</option>
+                <option value="sturdy">Sturdy</option>
+                <option value="broad">Broad</option>
+              </select>
+            </div>
           </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-build">Build</label>
-            <select class="char-select" id="app-build">
-              <option value="">— choose —</option>
-              <option value="slight">Slight</option>
-              <option value="lean">Lean</option>
-              <option value="average build">Average build</option>
-              <option value="sturdy">Sturdy</option>
-              <option value="broad">Broad</option>
-            </select>
-          </div>
-        </div>
-        <div class="char-field-row">
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-age">Age appearance</label>
-            <select class="char-select" id="app-age">
-              <option value="">— choose —</option>
-              <option value="young">Young</option>
-              <option value="young adult">Young adult</option>
-              <option value="adult">Adult</option>
-              <option value="middle-aged">Middle-aged</option>
-              <option value="elder">Elder</option>
-            </select>
-          </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-skin-tone">Skin tone</label>
-            <input type="color" id="app-skin-tone" value="#c68642" style="width:100%;height:42px;border-radius:6px;border:1px solid var(--char-border);background:rgba(255,255,255,0.09);cursor:pointer;padding:2px 4px;">
-          </div>
-        </div>
-      </div>
-
-      <!-- Face -->
-      <div class="char-appearance-section">
-        <div class="char-appearance-section-title">Face</div>
-        <div class="char-field-row">
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-face-shape">Face shape</label>
-            <select class="char-select" id="app-face-shape">
-              <option value="">— choose —</option>
-              <option value="round">Round</option>
-              <option value="oval">Oval</option>
-              <option value="square">Square</option>
-              <option value="heart-shaped">Heart-shaped</option>
-              <option value="angular">Angular</option>
-              <option value="soft">Soft</option>
-            </select>
-          </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-eye-color">Eye color</label>
-            <select class="char-select" id="app-eye-color">
-              <option value="">— choose —</option>
-              <option value="brown">Brown</option>
-              <option value="dark brown">Dark brown</option>
-              <option value="hazel">Hazel</option>
-              <option value="green">Green</option>
-              <option value="blue">Blue</option>
-              <option value="grey">Grey</option>
-              <option value="amber">Amber</option>
-              <option value="violet">Violet</option>
-              <option value="gold">Gold</option>
-              <option value="silver">Silver</option>
-              <option value="completely black">Completely black</option>
-              <option value="completely white">Completely white</option>
-              <option value="mismatched">Mismatched</option>
-            </select>
+          <div class="char-field-row">
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-age">Age appearance</label>
+              <select class="char-select" id="app-age">
+                <option value="">— choose —</option>
+                <option value="young">Young</option>
+                <option value="young adult">Young adult</option>
+                <option value="adult">Adult</option>
+                <option value="middle-aged">Middle-aged</option>
+                <option value="elder">Elder</option>
+              </select>
+            </div>
+            <div class="char-field-group">
+              <label class="char-field-label" for="app-skin-tone">Skin tone</label>
+              <input type="color" id="app-skin-tone" class="char-color-input" value="#c68642">
+            </div>
           </div>
         </div>
-        <div class="char-field-row">
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-eye-shape">Eye shape</label>
-            <select class="char-select" id="app-eye-shape">
-              <option value="">— choose —</option>
-              <option value="wide">Wide</option>
-              <option value="narrow">Narrow</option>
-              <option value="deep-set">Deep-set</option>
-              <option value="prominent">Prominent</option>
-              <option value="almond-shaped">Almond-shaped</option>
-              <option value="hooded">Hooded</option>
-            </select>
-          </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-facial-hair">Facial hair</label>
-            <select class="char-select" id="app-facial-hair">
-              <option value="">None</option>
-              <option value="light stubble">Light stubble</option>
-              <option value="a short beard">Short beard</option>
-              <option value="a full beard">Full beard</option>
-              <option value="a long beard">Long beard</option>
-              <option value="a moustache">Moustache</option>
-              <option value="sideburns">Sideburns</option>
-            </select>
-          </div>
-        </div>
-        <div class="char-field-group">
-          <label class="char-field-label">Facial markings</label>
-          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.25rem;">
-            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="freckles"> Freckles</label>
-            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="a scar"> Scar</label>
-            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="tattoos"> Tattoos</label>
-            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="vitiligo"> Vitiligo</label>
-            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="birthmarks"> Birthmarks</label>
-            <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-sans);font-size:0.85rem;color:var(--white);cursor:pointer;"><input type="checkbox" name="app-markings" value="paint or pigment markings"> Paint / pigment</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Hair -->
-      <div class="char-appearance-section">
-        <div class="char-appearance-section-title">Hair</div>
-        <div class="char-field-row">
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-hair-color">Hair color</label>
-            <select class="char-select" id="app-hair-color">
-              <option value="">— choose —</option>
-              <option value="black">Black</option>
-              <option value="dark brown">Dark brown</option>
-              <option value="brown">Brown</option>
-              <option value="auburn">Auburn</option>
-              <option value="red">Red</option>
-              <option value="strawberry blonde">Strawberry blonde</option>
-              <option value="blonde">Blonde</option>
-              <option value="platinum blonde">Platinum blonde</option>
-              <option value="grey">Grey</option>
-              <option value="white">White</option>
-              <option value="silver">Silver</option>
-              <option value="blue-black">Blue-black</option>
-              <option value="deep violet">Deep violet</option>
-              <option value="no hair">No hair</option>
-            </select>
-          </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-hair-style">Hair style</label>
-            <select class="char-select" id="app-hair-style">
-              <option value="">— choose —</option>
-              <option value="cropped">Cropped</option>
-              <option value="short">Short</option>
-              <option value="medium-length">Medium-length</option>
-              <option value="long straight">Long straight</option>
-              <option value="long wavy">Long wavy</option>
-              <option value="long curly">Long curly</option>
-              <option value="tightly coiled">Tightly coiled</option>
-              <option value="braided">Braided</option>
-              <option value="locs">Locs</option>
-              <option value="shaved on sides">Shaved on sides</option>
-              <option value="tied back">Tied back</option>
-              <option value="wild and untamed">Wild and untamed</option>
-            </select>
-          </div>
+        <div class="char-body-figure-panel">
+          <div class="char-body-figure-label">Preview</div>
+          <svg id="body-figure-svg" class="char-body-figure-svg" viewBox="0 0 160 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Background -->
+            <rect width="160" height="300" fill="#0a0e18" rx="7"/>
+            <!-- Figure group — transform driven by height/build -->
+            <g id="body-figure-group" transform="translate(80,150)">
+              <!-- Head -->
+              <ellipse id="body-head" cx="0" cy="-95" rx="20" ry="24" fill="#c68642"/>
+              <!-- Neck -->
+              <rect id="body-neck" x="-7" y="-72" width="14" height="14" rx="3" fill="#c68642"/>
+              <!-- Torso -->
+              <path id="body-torso" d="M-22,-58 Q-26,0 -22,42 L22,42 Q26,0 22,-58 Z" fill="#c68642"/>
+              <!-- Arms -->
+              <path id="body-arm-left"  d="M-22,-50 Q-40,-30 -36,30 Q-30,36 -26,30 Q-28,-20 -14,-44 Z" fill="#c68642"/>
+              <path id="body-arm-right" d="M22,-50 Q40,-30 36,30 Q30,36 26,30 Q28,-20 14,-44 Z" fill="#c68642"/>
+              <!-- Legs -->
+              <path id="body-leg-left"  d="M-18,42 Q-20,80 -18,118 Q-12,122 -8,118 Q-10,80 -8,42 Z" fill="#c68642"/>
+              <path id="body-leg-right" d="M18,42 Q20,80 18,118 Q12,122 8,118 Q10,80 8,42 Z" fill="#c68642"/>
+              <!-- Age lines overlay on head -->
+              <g id="age-lines" opacity="0">
+                <path d="M-10,-102 Q0,-104 10,-102" stroke="#00000033" stroke-width="1" fill="none"/>
+                <path d="M-14,-96 Q-18,-94 -20,-90" stroke="#00000022" stroke-width="0.8" fill="none"/>
+                <path d="M14,-96 Q18,-94 20,-90" stroke="#00000022" stroke-width="0.8" fill="none"/>
+              </g>
+            </g>
+            <!-- Height label -->
+            <text id="height-label" x="80" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" fill="#c8940a" opacity="0.7"></text>
+          </svg>
         </div>
       </div>
 

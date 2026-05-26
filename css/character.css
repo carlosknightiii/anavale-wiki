@@ -792,6 +792,23 @@ body.char-page {
   margin-top: 0.55rem;
   color: var(--gold);
 }
+.char-ability-mod-wrap {
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.15rem;
+  margin-top: 0.55rem;
+}
+.char-ability-mod-wrap .char-ability-mod {
+  margin-top: 0;
+}
+.char-ability-mod-wrap .char-field-tooltip {
+  margin-left: 0;
+  font-size: 0.6rem;
+  border-bottom: none;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
 .char-ability-desc {
   font-family: var(--font-sans);
   font-size: 0.92rem;
@@ -834,6 +851,17 @@ body.char-page {
 }
 .char-score-chip:hover { border-color: var(--gold); background: var(--gold-light); }
 .char-score-chip.dragging { opacity: 0.4; cursor: grabbing; }
+/* Ability score bank instruction */
+.char-ability-bank-instruction {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--parchment);
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+
 /* Drag instruction bar (Stage 3 ability scores) */
 .char-drag-instruction {
   display: flex;
@@ -1101,6 +1129,83 @@ body.char-page {
   border-bottom: 1px solid var(--char-border);
 }
 .char-appearance-section:last-child { border-bottom: none; }
+
+/* Facial markings checkbox row */
+.char-markings-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* ── FIGURE LAYOUT (Face & Hair / Body two-column panels) ───── */
+.char-body-section {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--char-border);
+}
+.char-body-section:last-of-type { border-bottom: none; }
+.char-body-fields { min-width: 0; }
+.char-body-figure-panel {
+  position: sticky;
+  top: calc(var(--char-progress-h) + 1.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.char-body-figure-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+}
+.char-body-figure-svg {
+  border: 1px solid var(--char-border-gold);
+  border-radius: 8px;
+  background: var(--char-card-bg);
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .char-body-section {
+    grid-template-columns: 1fr;
+  }
+  .char-body-figure-panel {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+/* Checkbox label rows inside appearance sections */
+.char-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--white);
+  cursor: pointer;
+}
+
+/* Native color picker input */
+.char-color-input {
+  width: 100%;
+  height: 42px;
+  border-radius: 6px;
+  border: 1px solid var(--char-border);
+  background: var(--char-accent-tint);
+  cursor: pointer;
+  padding: 2px 4px;
+}
 
 /* Color picker swatches */
 .char-color-swatches {
