@@ -1130,61 +1130,6 @@ body.char-page {
 }
 .char-appearance-section:last-child { border-bottom: none; }
 
-/* Facial markings checkbox row */
-.char-markings-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-/* ── FIGURE LAYOUT (Face & Hair / Body two-column panels) ───── */
-.char-body-section {
-  display: grid;
-  grid-template-columns: 1fr 180px;
-  gap: 1.5rem;
-  align-items: start;
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--char-border);
-}
-.char-body-section:last-of-type { border-bottom: none; }
-.char-body-fields { min-width: 0; }
-.char-body-figure-panel {
-  position: sticky;
-  top: calc(var(--char-progress-h) + 1.5rem);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-.char-body-figure-label {
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--char-text-faint);
-}
-.char-body-figure-svg {
-  border: 1px solid var(--char-border-gold);
-  border-radius: 8px;
-  background: var(--char-card-bg);
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-@media (max-width: 768px) {
-  .char-body-section {
-    grid-template-columns: 1fr;
-  }
-  .char-body-figure-panel {
-    position: static;
-    flex-direction: row;
-    justify-content: center;
-  }
-}
-
 /* Checkbox label rows inside appearance sections */
 .char-checkbox-label {
   display: flex;
