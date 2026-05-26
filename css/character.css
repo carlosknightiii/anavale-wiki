@@ -58,11 +58,9 @@
   /* Text levels */
   --char-text-muted:       rgba(255, 255, 255, 0.8);
   --char-text-faint:       rgba(245, 234, 212, 0.65);
-  --char-text-whisper:     rgba(245, 234, 212, 0.35);
-  /* Highlight system — gold-tinted surfaces, borders, labels */
+  /* Highlight system — gold-tinted surfaces and borders */
   --char-highlight-tint:   rgba(200, 148, 10, 0.1);
   --char-highlight-border: rgba(200, 148, 10, 0.3);
-  --char-highlight-label:  rgba(200, 148, 10, 0.6);
   /* Subtle surface — near-invisible background for non-interactive containers */
   --char-card-bg-subtle:   rgba(255, 255, 255, 0.03);
 }
@@ -797,7 +795,7 @@ body.char-page {
 .char-ability-desc {
   font-family: var(--font-sans);
   font-size: 0.92rem;
-  color: var(--char-text);
+  color: var(--char-text-faint);
   margin-top: 0.5rem;
   line-height: 1.4;
   font-style: italic;
@@ -867,12 +865,12 @@ body.char-page {
   width: 48px;
   height: 40px;
   border-radius: 6px;
-  border: 1px dashed rgba(200,148,10,0.4);
+  border: 1px dashed var(--char-highlight-border);
   font-family: var(--font-sans);
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(200,148,10,0.35);
+  color: var(--char-text-faint);
   pointer-events: none;
 }
 
@@ -1059,7 +1057,7 @@ body.char-page {
 .char-alignment-phb {
   font-family: var(--font-sans);
   font-size: 0.72rem;
-  color: var(--char-text-whisper);
+  color: var(--char-text-faint);
   letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
 }
@@ -1136,7 +1134,7 @@ body.char-page {
   font-size: 0.72rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--char-highlight-label);
+  color: var(--gold);
   margin-bottom: 0.5rem;
 }
 .char-ai-prompt-text {
