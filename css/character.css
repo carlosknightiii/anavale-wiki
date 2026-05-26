@@ -753,7 +753,7 @@ body.char-page {
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
-  background: rgba(255,255,255,0.03);
+  background: var(--char-card-bg);
   transition: border-color 0.2s;
 }
 .char-ability-card.drag-over { border-color: var(--gold); background: rgba(200,148,10,0.1); }
@@ -789,6 +789,7 @@ body.char-page {
 /* Score bank — draggable chips */
 .char-score-bank {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
@@ -802,11 +803,13 @@ body.char-page {
   width: 48px;
   height: 40px;
   border-radius: 6px;
-  border: 1px solid rgba(200,148,10,0.3);
-  background: rgba(200,148,10,0.1);
-  color: var(--gold);
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
+  border: 2px solid rgba(0, 0, 0, 1);
+  box-shadow: 0 0px 10px var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -814,8 +817,24 @@ body.char-page {
   transition: all 0.15s;
   user-select: none;
 }
-.char-score-chip:hover { border-color: var(--gold); background: rgba(200,148,10,0.2); }
+.char-score-chip:hover { border-color: var(--gold); background: var(--gold-light); }
 .char-score-chip.dragging { opacity: 0.4; cursor: grabbing; }
+/* Drop target placeholder inside empty ability cards */
+.char-ability-drop-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px dashed rgba(200,148,10,0.4);
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200,148,10,0.35);
+  pointer-events: none;
+}
 
 /* ── BACKGROUND CARDS (Stage 2) — accordion, single column ─────── */
 .char-bg-grid {

@@ -185,6 +185,7 @@ function showStage(n) {
   renderProgress();
   renderSidebar();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  initStageOnEnter(n);
 }
 
 function goNext() {
@@ -192,7 +193,6 @@ function goNext() {
   collectStageData(CHAR_STATE.current_stage);
   if (CHAR_STATE.current_stage < CHAR_CONFIG.total_stages) {
     showStage(CHAR_STATE.current_stage + 1);
-    initStageOnEnter(CHAR_STATE.current_stage);
   }
 }
 
@@ -207,7 +207,6 @@ function jumpToStage(n) {
   if (n < CHAR_STATE.current_stage) {
     collectStageData(CHAR_STATE.current_stage);
     showStage(n);
-    initStageOnEnter(n);
   }
 }
 
@@ -1393,7 +1392,7 @@ function setAbilityScore(ability, score) {
   var card    = document.getElementById('ability-card-'  + ability);
   if (!scoreEl) return;
   if (score === null || score === undefined || score === '') {
-    scoreEl.textContent = '—';
+    scoreEl.innerHTML = '<span class="char-ability-drop-target">drop here</span>';
     if (modEl)  modEl.textContent  = '';
     if (hidden) hidden.value = '';
     if (card)   card.dataset.score = '';
