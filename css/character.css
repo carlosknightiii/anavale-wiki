@@ -760,16 +760,16 @@ body.char-page {
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
-  background: var(--char-card-bg-subtle);
+  background: var(--char-card-bg);
   transition: border-color 0.2s;
 }
 .char-ability-card.drag-over { border-color: var(--gold); background: var(--char-highlight-tint); }
 .char-ability-name {
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--char-highlight-label);
+  color: var(--gold);
   margin-bottom: 0.35rem;
 }
 .char-ability-score {
@@ -790,13 +790,14 @@ body.char-page {
 }
 .char-ability-mod {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 1.25rem;
+  margin-top: 0.55rem;
   color: var(--gold);
 }
 .char-ability-desc {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
-  color: var(--char-text-whisper);
+  font-size: 0.92rem;
+  color: var(--char-text);
   margin-top: 0.5rem;
   line-height: 1.4;
   font-style: italic;
@@ -819,11 +820,13 @@ body.char-page {
   width: 48px;
   height: 40px;
   border-radius: 6px;
-  border: 1px solid var(--char-highlight-border);
-  background: var(--char-highlight-tint);
-  color: var(--gold);
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 15px var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -831,7 +834,7 @@ body.char-page {
   transition: all 0.15s;
   user-select: none;
 }
-.char-score-chip:hover { border-color: var(--gold); background: var(--char-accent-tint); }
+.char-score-chip:hover { border-color: var(--gold); background: var(--gold-light); }
 .char-score-chip.dragging { opacity: 0.4; cursor: grabbing; }
 /* Drag instruction bar (Stage 3 ability scores) */
 .char-drag-instruction {
