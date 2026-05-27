@@ -1581,10 +1581,12 @@ function renderStartingGear() {
   if (gear.armor) {
     itemsHtml = '<div class="char-gear-item"><span class="char-gear-icon">🛡</span>' + gear.armor + '</div>' + itemsHtml;
   } else {
-    itemsHtml = '<div class="char-gear-item char-gear-item--note"><span class="char-gear-icon">○</span>No armor — ' + gear.note.split('—')[1].trim() + '</div>' + itemsHtml;
+    var noArmorNote = gear.note.indexOf('—') >= 0 ? gear.note.split('—')[1].trim() : gear.note;
+    itemsHtml = '<div class="char-gear-item char-gear-item--note"><span class="char-gear-icon">○</span>No armor — ' + noArmorNote + '</div>' + itemsHtml;
   }
 
-  itemsHtml += '<div class="char-gear-item char-gear-item--pack"><span class="char-gear-icon">🎒</span>' + gear.note.split('·')[0].trim() + '</div>';
+  var packLabel = gear.note.indexOf('·') >= 0 ? gear.note.split('·')[0].trim() : gear.note;
+  itemsHtml += '<div class="char-gear-item char-gear-item--pack"><span class="char-gear-icon">🎒</span>' + packLabel + '</div>';
 
   panel.innerHTML =
     '<div class="char-gear-header">'
