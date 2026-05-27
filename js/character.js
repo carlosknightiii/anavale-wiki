@@ -180,6 +180,7 @@ function showStage(n) {
   var target = document.getElementById('char-stage-' + n);
   if (target) target.classList.add('active');
   CHAR_STATE.current_stage = n;
+  if (!CHAR_STATE.highest_stage || n > CHAR_STATE.highest_stage) CHAR_STATE.highest_stage = n;
   CHAR_STATE.draft._stage = n;
   saveDraftToStorage();
   renderProgress();
@@ -203,8 +204,9 @@ function goBack() {
 }
 
 function jumpToStage(n) {
-  // Only allow jumping to completed stages
-  if (n < CHAR_STATE.current_stage) {
+  // Allow jumping to any stage the player has already reached
+  var highest = CHAR_STATE.highest_stage || CHAR_STATE.current_stage;
+  if (n <= highest) {
     collectStageData(CHAR_STATE.current_stage);
     showStage(n);
   }
@@ -238,13 +240,14 @@ var STAGE_NAMES = [
 ];
 
 function renderSidebar() {
+  var highest = CHAR_STATE.highest_stage || CHAR_STATE.current_stage;
   for (var i = 1; i <= CHAR_CONFIG.total_stages; i++) {
     var el = document.getElementById('char-sidebar-stage-' + i);
     if (!el) continue;
     el.classList.remove('active', 'completed');
     if (i === CHAR_STATE.current_stage) {
       el.classList.add('active');
-    } else if (i < CHAR_STATE.current_stage) {
+    } else if (i <= highest) {
       el.classList.add('completed');
     }
   }
