@@ -1262,10 +1262,25 @@ function validateStage(n) {
 
 // ── STAGE DATA COLLECTION ──────────────────────────────────────────
 function collectStageData(n) {
+  if (n === 1) collectStage1Data();
   if (n === 2) collectStage2Data();
   if (n === 3) collectStage3Data();
   if (n === 4) collectStage4Data();
   if (n === 5) collectStage5Data();
+}
+
+function collectStage1Data() {
+  // Read selected class from DOM — covers sidebar-jump case where Continue was not clicked
+  var selectedCard = document.querySelector('.char-class-card.selected');
+  if (selectedCard && selectedCard.dataset.class) {
+    CHAR_STATE.draft.class_id = selectedCard.dataset.class;
+  }
+  // Read selected gigglegloom type from DOM
+  var selectedType = document.querySelector('.char-type-card.selected');
+  if (selectedType && selectedType.dataset.type) {
+    CHAR_STATE.draft.gigglegloom_type = selectedType.dataset.type;
+  }
+  saveDraftToStorage();
 }
 
 function collectStage2Data() {
