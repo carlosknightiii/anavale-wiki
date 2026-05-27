@@ -1035,6 +1035,72 @@ body.char-page {
   gap: 1rem;
 }
 
+/* ── STAGE 3 CLASS CONTEXT BLURB ───────────────────────────────── */
+.char-class-context {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--char-accent-tint);
+  border: 1px solid var(--char-accent-border);
+  border-radius: var(--char-radius);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 2rem;
+}
+.char-class-context-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+  flex-basis: 100%;
+  margin-bottom: -0.5rem;
+}
+.char-class-context-name {
+  font-family: var(--font-headers);
+  font-size: 1.25rem;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.char-class-context-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.char-class-context-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--parchment);
+}
+.char-class-context-stat-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+}
+.char-class-context-divider {
+  color: var(--char-text-faint);
+  font-size: 0.9rem;
+  align-self: center;
+  padding-bottom: 0.1rem;
+}
+.char-class-context-tip {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-style: italic;
+  flex-basis: 100%;
+  margin-top: -0.25rem;
+}
+
 /* ── ABILITY SCORE GRID (Stage 3) ──────────────────────────────── */
 .char-ability-grid {
   display: grid;

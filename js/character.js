@@ -214,7 +214,7 @@ function jumpToStage(n) {
 
 function initStageOnEnter(n) {
   if (n === 2) initStage2();
-  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); }
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); renderClassContextBlurb(); }
   if (n === 5) initStage5();
 }
 
@@ -2150,6 +2150,29 @@ function wireTooltip(el) {
 
 // ── ABILITY SCORE DRAG AND DROP ───────────────────────────────
 var ABILITY_SCORES = [15, 14, 13, 12, 10, 8];
+
+// ── STAGE 3 CLASS CONTEXT BLURB ───────────────────────────────────────────────
+function renderClassContextBlurb() {
+  var el = document.getElementById('char-class-context');
+  if (!el) return;
+  var classId = CHAR_STATE.draft.class_id;
+  if (!classId) {
+    el.style.display = 'none';
+    return;
+  }
+  var cls = CLASS_DATA.find(function(c) { return c.id === classId; });
+  if (!cls) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML =
+    '<div class="char-class-context-label">Your class</div>'
+    + '<div class="char-class-context-name">' + cls.name + '</div>'
+    + '<div class="char-class-context-stats">'
+    +   '<span class="char-class-context-stat"><span class="char-class-context-stat-label">Primary</span>' + cls.primary + '</span>'
+    +   '<span class="char-class-context-divider">·</span>'
+    +   '<span class="char-class-context-stat"><span class="char-class-context-stat-label">Saving Throws</span>' + cls.saves + '</span>'
+    + '</div>'
+    + '<div class="char-class-context-tip">Put your highest scores in your primary ability first.</div>';
+}
 
 function initAbilityScores() {
   resetAbilityScores();
