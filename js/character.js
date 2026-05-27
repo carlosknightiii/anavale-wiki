@@ -397,14 +397,177 @@ var GIGGLEGLOOM_TYPES = {
   }
 };
 
-function initStage1() {
-  var typeGrid = document.getElementById('char-type-grid');
-  if (!typeGrid) return;
+// ── CLASS DATA (PHB 2024) ──────────────────────────────────────────
+var CLASS_DATA = [
+  {
+    id: 'barbarian', name: 'Barbarian', anavale: 'The Furious',
+    gigglegloom: 'flamerage',
+    summary: 'Storm into battle with primal fury, shrugging off blows that would fell lesser warriors. Your rage transforms you into an unstoppable force.',
+    hit_die: 'd12', primary: 'Strength', saves: 'Strength, Constitution',
+    armor: 'Light, Medium, Shields', weapons: 'Simple, Martial',
+    skills: 'Choose 2 from Animal Handling, Athletics, Intimidation, Nature, Perception, Survival',
+    features: ['Rage — bonus damage, resistance to physical damage', 'Unarmored Defense — AC = 10 + Dex + Con', 'Reckless Attack', 'Danger Sense', 'Primal Path subclass at level 3', 'Extra Attack at level 5']
+  },
+  {
+    id: 'bard', name: 'Bard', anavale: 'The Reveler',
+    gigglegloom: 'featherflow',
+    summary: 'Weave magic through music, words, and performance. Inspire allies, confound enemies, and collect secrets — the Revel would call this a calling.',
+    hit_die: 'd8', primary: 'Charisma', saves: 'Dexterity, Charisma',
+    armor: 'Light', weapons: 'Simple, Hand Crossbow, Longsword, Rapier, Shortsword',
+    skills: 'Choose 3 from any skills',
+    features: ['Bardic Inspiration — grant bonus dice to allies', 'Spellcasting (Charisma)', 'Jack of All Trades', 'Song of Rest', 'Bard College subclass at level 3', 'Expertise in 2 skills']
+  },
+  {
+    id: 'cleric', name: 'Cleric', anavale: 'The Faithful',
+    gigglegloom: 'bubbleseed',
+    summary: 'Channel divine power from Oro, Nara, or the gods of Anavale. Heal, protect, and smite — your magic comes through devotion.',
+    hit_die: 'd8', primary: 'Wisdom', saves: 'Wisdom, Charisma',
+    armor: 'Light, Medium, Shields', weapons: 'Simple',
+    skills: 'Choose 2 from History, Insight, Medicine, Persuasion, Religion',
+    features: ['Spellcasting (Wisdom)', 'Divine Domain subclass at level 1', 'Channel Divinity', 'Turn Undead', 'Divine Intervention at level 10', 'Destroy Undead at level 5']
+  },
+  {
+    id: 'druid', name: 'Druid', anavale: 'The Verdant',
+    gigglegloom: 'bubbleseed',
+    summary: 'Speak to the living world and shape-shift into beasts. Your magic grows things, heals things, and occasionally starts a garden where you didn\'t intend one.',
+    hit_die: 'd8', primary: 'Wisdom', saves: 'Intelligence, Wisdom',
+    armor: 'Light, Medium, Shields (no metal)', weapons: 'Simple (no metal)',
+    skills: 'Choose 2 from Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, Survival',
+    features: ['Spellcasting (Wisdom)', 'Wild Shape — transform into beasts', 'Druidic language', 'Druid Circle subclass at level 2', 'Timeless Body at level 18', 'Beast Spells at level 18']
+  },
+  {
+    id: 'fighter', name: 'Fighter', anavale: 'The Tested',
+    gigglegloom: 'steelfist',
+    summary: 'Master every weapon and suit of armor. You know how to stand in the way of something and not move — the Gigglegloom has decided this is admirable.',
+    hit_die: 'd10', primary: 'Strength or Dexterity', saves: 'Strength, Constitution',
+    armor: 'All armor, Shields', weapons: 'Simple, Martial',
+    skills: 'Choose 2 from Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, Survival',
+    features: ['Fighting Style', 'Second Wind — heal yourself once per rest', 'Action Surge', 'Martial Archetype subclass at level 3', 'Extra Attack at level 5', 'Indomitable — reroll saving throws']
+  },
+  {
+    id: 'monk', name: 'Monk', anavale: 'The Still',
+    gigglegloom: 'steelfist',
+    summary: 'Your body is the instrument. Strike fast, deflect blows bare-handed, and channel ki into precise supernatural techniques.',
+    hit_die: 'd8', primary: 'Dexterity & Wisdom', saves: 'Strength, Dexterity',
+    armor: 'None', weapons: 'Simple, Shortsword',
+    skills: 'Choose 2 from Acrobatics, Athletics, History, Insight, Religion, Stealth',
+    features: ['Unarmored Defense — AC = 10 + Dex + Wis', 'Martial Arts — unarmed strikes use Dex', 'Ki points — fuel special techniques', 'Unarmored Movement', 'Monastic Tradition subclass at level 3', 'Stunning Strike']
+  },
+  {
+    id: 'paladin', name: 'Paladin', anavale: 'The Warden',
+    gigglegloom: 'bubbleseed',
+    summary: 'You made a promise. The Gigglegloom heard it and decided to help you keep it. Smite foes with divine power and shield your allies with sacred oaths.',
+    hit_die: 'd10', primary: 'Strength & Charisma', saves: 'Wisdom, Charisma',
+    armor: 'All armor, Shields', weapons: 'Simple, Martial',
+    skills: 'Choose 2 from Athletics, Insight, Intimidation, Medicine, Persuasion, Religion',
+    features: ['Divine Smite — expend spell slots for radiant damage', 'Spellcasting (Charisma)', 'Divine Health — immune to disease', 'Sacred Oath subclass at level 3', 'Aura of Protection at level 6', 'Extra Attack at level 5']
+  },
+  {
+    id: 'ranger', name: 'Ranger', anavale: 'The Wanderer',
+    gigglegloom: 'featherflow',
+    summary: 'Weave martial prowess with nature magic. You know how to read the color of a place before you arrive — and how to move through it without leaving a trace.',
+    hit_die: 'd10', primary: 'Dexterity & Wisdom', saves: 'Strength, Dexterity',
+    armor: 'Light, Medium, Shields', weapons: 'Simple, Martial',
+    skills: 'Choose 3 from Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival',
+    features: ['Favored Enemy', 'Natural Explorer', 'Spellcasting (Wisdom)', 'Ranger Archetype subclass at level 3', 'Extra Attack at level 5', 'Hide in Plain Sight at level 10']
+  },
+  {
+    id: 'rogue', name: 'Rogue', anavale: 'The Nimble',
+    gigglegloom: 'featherflow',
+    summary: 'Move through the world lightly, strike precisely, and disappear. Sneak Attack turns a single well-placed hit into something devastating.',
+    hit_die: 'd8', primary: 'Dexterity', saves: 'Dexterity, Intelligence',
+    armor: 'Light', weapons: 'Simple, Hand Crossbow, Longsword, Rapier, Shortsword',
+    skills: 'Choose 4 from Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, Stealth',
+    features: ['Sneak Attack — bonus damage when you have advantage', 'Thieves\' Cant', 'Cunning Action — Dash/Disengage/Hide as bonus action', 'Roguish Archetype subclass at level 3', 'Uncanny Dodge', 'Evasion at level 7']
+  },
+  {
+    id: 'sorcerer', name: 'Sorcerer', anavale: 'The Sparked',
+    gigglegloom: 'flamerage',
+    summary: 'The Gigglegloom chose you, not the other way around. Wield innate magic that flows from your bloodline — reshape spells with Metamagic.',
+    hit_die: 'd6', primary: 'Charisma', saves: 'Constitution, Charisma',
+    armor: 'None', weapons: 'Simple, Light Crossbow',
+    skills: 'Choose 2 from Arcana, Deception, Insight, Intimidation, Persuasion, Religion',
+    features: ['Spellcasting (Charisma)', 'Sorcerous Origin subclass at level 1', 'Font of Magic — sorcery points', 'Metamagic — modify spells (Quicken, Twin, Empower…)', 'Sorcerous Restoration at level 20', 'Flexible Casting']
+  },
+  {
+    id: 'warlock', name: 'Warlock', anavale: 'The Bound',
+    gigglegloom: 'flamerage',
+    summary: 'You made an agreement with something old. The terms were worth it. Probably. Cast powerful spells fueled by your patron — and Eldritch Blast when slots run dry.',
+    hit_die: 'd8', primary: 'Charisma', saves: 'Wisdom, Charisma',
+    armor: 'Light', weapons: 'Simple',
+    skills: 'Choose 2 from Arcana, Deception, History, Intimidation, Investigation, Nature, Religion',
+    features: ['Otherworldly Patron subclass at level 1', 'Pact Magic — few powerful spell slots, recover on short rest', 'Eldritch Invocations — customize your magic', 'Pact Boon at level 3', 'Mystic Arcanum at level 11', 'Eldritch Master at level 20']
+  },
+  {
+    id: 'wizard', name: 'Wizard', anavale: 'The Learned',
+    gigglegloom: 'steelfist',
+    summary: 'You studied until the Gigglegloom respected you. Command the widest spell list in the game — and write new spells into your spellbook as you discover them.',
+    hit_die: 'd6', primary: 'Intelligence', saves: 'Intelligence, Wisdom',
+    armor: 'None', weapons: 'Simple, Light Crossbow',
+    skills: 'Choose 2 from Arcana, History, Insight, Investigation, Medicine, Religion',
+    features: ['Spellcasting (Intelligence)', 'Spellbook — learn and copy spells', 'Arcane Recovery — recover spell slots on short rest', 'Arcane Tradition subclass at level 2', 'Spell Mastery at level 18', 'Signature Spells at level 20']
+  }
+];
 
-  typeGrid.innerHTML = Object.keys(GIGGLEGLOOM_TYPES).map(function(typeId) {
+// Class → Gigglegloom type auto-assignment
+var CLASS_TO_GIGGLEGLOOM = {
+  barbarian: 'flamerage', bard: 'featherflow', cleric: 'bubbleseed',
+  druid: 'bubbleseed', fighter: 'steelfist', monk: 'steelfist',
+  paladin: 'bubbleseed', ranger: 'featherflow', rogue: 'featherflow',
+  sorcerer: 'flamerage', warlock: 'flamerage', wizard: 'steelfist'
+};
+
+function initStage1() {
+  renderClassGrid();
+  renderGigglogloomAffinity();
+  // Restore from draft
+  if (CHAR_STATE.draft.class_id) {
+    restoreClassSelection(CHAR_STATE.draft.class_id);
+  }
+  if (CHAR_STATE.draft.gigglegloom_type) {
+    highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
+  }
+}
+
+function renderClassGrid() {
+  var grid = document.getElementById('char-class-grid');
+  if (!grid) return;
+  grid.innerHTML = CLASS_DATA.map(function(cls) {
+    var featuresHtml = cls.features.map(function(f) {
+      return '<li>' + f + '</li>';
+    }).join('');
+    return '<div class="char-class-card" data-class="' + cls.id + '" data-gigglegloom="' + cls.gigglegloom + '" onclick="selectClass(\'' + cls.id + '\')">'
+      + '<div class="char-class-card-check">✓</div>'
+      + '<div class="char-class-card-header">'
+      +   '<div class="char-class-card-names">'
+      +     '<div class="char-class-name">' + cls.name + '</div>'
+      +     '<div class="char-class-anavale">' + cls.anavale + ' <span class="char-class-affinity-dot char-class-affinity-dot--' + cls.gigglegloom + '"></span></div>'
+      +   '</div>'
+      +   '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleClassCard(this)" aria-label="Toggle details">Details</button>'
+      + '</div>'
+      + '<div class="char-class-summary">' + cls.summary + '</div>'
+      + '<div class="char-class-body">'
+      +   '<div class="char-class-traits">'
+      +     '<span class="char-class-trait"><span class="char-class-trait-label">Hit Die</span>' + cls.hit_die + '</span>'
+      +     '<span class="char-class-trait"><span class="char-class-trait-label">Primary</span>' + cls.primary + '</span>'
+      +     '<span class="char-class-trait"><span class="char-class-trait-label">Saves</span>' + cls.saves + '</span>'
+      +     '<span class="char-class-trait"><span class="char-class-trait-label">Armor</span>' + cls.armor + '</span>'
+      +     '<span class="char-class-trait"><span class="char-class-trait-label">Weapons</span>' + cls.weapons + '</span>'
+      +     '<span class="char-class-trait"><span class="char-class-trait-label">Skills</span>' + cls.skills + '</span>'
+      +   '</div>'
+      +   '<div class="char-class-features-label">Key Features</div>'
+      +   '<ul class="char-class-features">' + featuresHtml + '</ul>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderGigglogloomAffinity() {
+  var grid = document.getElementById('char-type-grid');
+  if (!grid) return;
+  grid.innerHTML = Object.keys(GIGGLEGLOOM_TYPES).map(function(typeId) {
     var t = GIGGLEGLOOM_TYPES[typeId];
-    return '<div class="char-type-card" data-type="' + typeId + '" onclick="selectType(\'' + typeId + '\')">'
-      + '<div class="char-type-check">✓</div>'
+    return '<div class="char-type-card char-type-card--affinity" data-type="' + typeId + '">'
       + '<div class="char-type-header">'
       + '<img class="char-type-icon" src="assets/icons/icon-' + typeId + '.svg" alt="' + t.name + '">'
       + '<div class="char-type-meta">'
@@ -415,13 +578,58 @@ function initStage1() {
       + '<div class="char-type-desc">' + t.desc + '</div>'
       + '</div>';
   }).join('');
+}
 
-  // Restore selection from draft
-  if (CHAR_STATE.draft.gigglegloom_type) {
-    selectType(CHAR_STATE.draft.gigglegloom_type, true);
+function highlightAffinityCard(typeId) {
+  document.querySelectorAll('.char-type-card').forEach(function(c) {
+    c.classList.toggle('selected', c.dataset.type === typeId);
+  });
+}
+
+function toggleClassCard(btn) {
+  var card = btn.closest('.char-class-card');
+  if (!card) return;
+  var expanding = !card.classList.contains('expanded');
+  card.classList.toggle('expanded');
+  btn.classList.toggle('open');
+  btn.textContent = expanding ? 'Close' : 'Details';
+}
+
+function selectClass(classId) {
+  // Update card UI
+  document.querySelectorAll('.char-class-card').forEach(function(c) {
+    c.classList.toggle('selected', c.dataset.class === classId);
+  });
+  // Auto-assign Gigglegloom type
+  var typeId = CLASS_TO_GIGGLEGLOOM[classId] || 'bubbleseed';
+  highlightAffinityCard(typeId);
+  CHAR_STATE.draft.class_id = classId;
+  CHAR_STATE.draft.gigglegloom_type = typeId;
+  saveDraftToStorage();
+  // Scroll to affinity section so player sees what was assigned
+  setTimeout(function() {
+    var affinitySection = document.getElementById('char-affinity-section');
+    if (affinitySection) scrollToField(affinitySection);
+  }, 80);
+}
+
+function selectType(typeId, silent) {
+  // Legacy stub — Gigglegloom type is now auto-assigned from class selection.
+  // Kept to avoid ReferenceErrors from any restored draft calls.
+  if (!silent) {
+    CHAR_STATE.draft.gigglegloom_type = typeId;
+    saveDraftToStorage();
   }
-  if (CHAR_STATE.draft.class_id) {
-    restoreClassSelection(CHAR_STATE.draft.class_id);
+  highlightAffinityCard(typeId);
+}
+
+function restoreClassSelection(classId) {
+  var card = document.querySelector('.char-class-card[data-class="' + classId + '"]');
+  if (card) {
+    card.classList.add('selected');
+    card.classList.add('expanded');
+    var btn = card.querySelector('.char-bg-toggle');
+    if (btn) { btn.classList.add('open'); btn.textContent = 'Close'; }
   }
 }
 
@@ -436,59 +644,6 @@ function scrollToField(el) {
   offset += 64; // breathing room
   var top = el.getBoundingClientRect().top + window.pageYOffset - offset;
   window.scrollTo({ top: top, behavior: 'smooth' });
-}
-
-function selectType(typeId, silent) {
-  // Update card UI
-  document.querySelectorAll('.char-type-card').forEach(function(c) {
-    c.classList.toggle('selected', c.dataset.type === typeId);
-  });
-
-  // Show class panel
-  var t = GIGGLEGLOOM_TYPES[typeId];
-  if (!t) return;
-
-  var panel = document.getElementById('char-class-panel');
-  if (panel) {
-    panel.classList.add('visible');
-    var classGrid = document.getElementById('char-class-grid');
-    if (classGrid) {
-      classGrid.innerHTML = t.classes.map(function(cls) {
-        return '<div class="char-class-card" data-class="' + cls.id + '" onclick="selectClass(\'' + cls.id + '\')">'
-          + '<div class="char-class-name">' + cls.name + '</div>'
-          + '<div class="char-class-flavor">' + cls.flavor + '</div>'
-          + '<div class="char-class-sensory">' + cls.sensory + '</div>'
-          + '</div>';
-      }).join('');
-    }
-  }
-
-  if (!silent) {
-    CHAR_STATE.draft.gigglegloom_type = typeId;
-    CHAR_STATE.draft.class_id = null; // reset class when type changes
-    saveDraftToStorage();
-    // Scroll to class picker
-    setTimeout(function() {
-      scrollToField(document.getElementById('char-class-panel'));
-    }, 80);
-  }
-}
-
-function selectClass(classId) {
-  document.querySelectorAll('.char-class-card').forEach(function(c) {
-    c.classList.toggle('selected', c.dataset.class === classId);
-  });
-  CHAR_STATE.draft.class_id = classId;
-  saveDraftToStorage();
-  // Scroll to the Continue button after class is chosen
-  setTimeout(function() {
-    scrollToField(document.querySelector('#char-stage-1 .char-nav'));
-  }, 80);
-}
-
-function restoreClassSelection(classId) {
-  var card = document.querySelector('.char-class-card[data-class="' + classId + '"]');
-  if (card) card.classList.add('selected');
 }
 
 // ── STAGE 2: BACKGROUND + SPECIES ──────────────────────────────────
@@ -1062,7 +1217,7 @@ function renderStartingGear() {
   var panel = document.getElementById('char-starting-gear-panel');
   if (!panel) return;
 
-  var cls = CHAR_STATE.draft.char_class;
+  var cls = CHAR_STATE.draft.class_id;
   var bg  = CHAR_STATE.draft.background;
 
   if (!cls) {

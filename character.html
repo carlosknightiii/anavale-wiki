@@ -105,37 +105,41 @@
     <!-- ══ STAGE 1 — YOUR GIFT ══ -->
     <div id="char-stage-1" class="char-stage active">
 
-      <!-- Welcome panel comes first — sets context before the stage content -->
-      <div class="char-welcome-panel">
-        <div class="char-welcome-panel-header">
-          <div class="char-welcome-panel-title">What You'll Do Here</div>
-          <button class="char-welcome-collapse-btn" aria-expanded="true" onclick="toggleWelcomePanel(this)">
-            <span class="char-collapse-icon">▲</span> Collapse
-          </button>
-        </div>
-        <div class="char-welcome-body" id="char-welcome-body">
-          <p class="char-welcome-body-text">Over five stages you'll choose your magic type and class, build your background and origin story, assign your ability scores and describe your appearance, set your moral compass, and give your character a name. About 15–20 minutes total — your progress saves automatically, so you can pause and come back any time.</p>
-        </div>
-      </div>
+  <!-- Welcome panel -->
+  <div class="char-welcome-panel">
+    <div class="char-welcome-panel-header">
+      <div class="char-welcome-panel-title">What You'll Do Here</div>
+      <button class="char-welcome-collapse-btn" aria-expanded="true" onclick="toggleWelcomePanel(this)">
+        <span class="char-collapse-icon">▲</span> Collapse
+      </button>
+    </div>
+    <div class="char-welcome-body" id="char-welcome-body">
+      <p class="char-welcome-body-text">Over five stages you'll choose your class, build your background and origin story, assign your ability scores and describe your appearance, set your moral compass, and give your character a name. About 15–20 minutes total — your progress saves automatically.</p>
+    </div>
+  </div>
 
-      <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 1 of 5 · <span class="char-eyebrow-accent">Choose a Class</span></div>
-        <h2 class="char-stage-title">Your Gift</h2>
-        <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom. </p>
-      </div>
+  <!-- Stage header -->
+  <div class="char-stage-header">
+    <div class="char-stage-eyebrow">Stage 1 of 5 · <span class="char-eyebrow-accent">Choose Your Class</span></div>
+    <h2 class="char-stage-title">Your Gift</h2>
+    <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom — but your <strong>class</strong> defines how you use it. Pick the one that fits how you want to play.</p>
+  </div>
 
-      <p class="char-type-instruction">1. Select a magic type to begin!</p>
+  <!-- Class picker — primary selection -->
+  <div class="char-class-section-label">Choose Your Class</div>
+  <p class="char-class-section-intro">Click any class to select it. Use the Details button to see full traits and features before deciding.</p>
+  <div id="char-class-grid" class="char-class-grid">
+    <!-- Rendered by character.js renderClassGrid() -->
+  </div>
 
-      <div id="char-type-grid" class="char-type-grid">
-        <!-- Rendered by character.js initStage1() -->
-      </div>
-
-      <div id="char-class-panel" class="char-class-panel">
-        <div class="char-class-heading">2. Now choose your role within that magic.</div>
-        <div id="char-class-grid" class="char-class-grid">
-          <!-- Rendered by character.js selectType() -->
-        </div>
-      </div>
+  <!-- Gigglegloom affinity — auto-assigned, read-only display -->
+  <div id="char-affinity-section" class="char-affinity-section">
+    <div class="char-affinity-label">Your Gigglegloom Affinity</div>
+    <p class="char-affinity-intro">Your class determines which current of the Gigglegloom flows through you. This is assigned automatically when you choose a class — no separate selection needed.</p>
+    <div id="char-type-grid" class="char-type-grid">
+      <!-- Rendered by character.js renderGigglogloomAffinity() -->
+    </div>
+  </div>
 
       <div class="char-nav">
         <span></span>

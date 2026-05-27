@@ -626,63 +626,244 @@ body.char-page {
   transform: scale(1);
 }
 
-/* ── CLASS PICKER (Stage 1, sub-selection) ─────────────────────── */
-.char-class-panel {
-  margin-top: 1rem;
-  display: none;
-  animation: stageIn 0.3s ease forwards;
-}
-.char-class-panel.visible { display: block; }
-
-.char-class-heading {
+/* ── CLASS PICKER (Stage 1) ────────────────────────────────────── */
+.char-class-section-label {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
-  color: var(--white);
-  margin-bottom: 1.25rem;
-  letter-spacing: 0.01em;
-  font-weight: 500;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.char-class-section-intro {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--char-text-faint);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
 }
 
 .char-class-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
+  gap: 0.65rem;
+  margin-bottom: 3rem;
 }
 
 .char-class-card {
+  position: relative;
   border: 2px solid var(--char-border);
   border-radius: var(--char-radius);
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
   background: var(--char-card-bg);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
 }
+
 .char-class-card:hover {
   border-color: var(--char-accent-border-mid);
+  background: var(--char-card-bg-hover);
 }
+
 .char-class-card.selected {
   border-color: var(--gold);
+  background: var(--char-card-bg-selected);
 }
+
+/* Checkmark badge */
+.char-class-card-check {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.char-class-card.selected .char-class-card-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Card header row */
+.char-class-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem 0.4rem;
+  gap: 1rem;
+}
+
+.char-class-card-names {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  padding-right: 1.75rem;
+}
+
 .char-class-name {
   font-family: var(--font-headers);
-  font-size: 1.50rem;
+  font-size: 1.35rem;
   color: var(--parchment);
-  margin-bottom: 0.35rem;
+  line-height: 1.1;
 }
 .char-class-card.selected .char-class-name { color: var(--gold); }
-.char-class-flavor {
+
+.char-class-anavale {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--char-text-faint);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.char-class-card.selected .char-class-anavale { color: rgba(200,148,10,0.75); }
+
+/* Gigglegloom affinity dot */
+.char-class-affinity-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.char-class-affinity-dot--bubbleseed { background: var(--bubbleseed); }
+.char-class-affinity-dot--featherflow { background: var(--featherflow); }
+.char-class-affinity-dot--steelfist   { background: var(--steelfist); }
+.char-class-affinity-dot--flamerage   { background: var(--flamerage); }
+
+/* Summary line — always visible */
+.char-class-summary {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--char-text-muted);
+  line-height: 1.55;
+  padding: 0 1rem 0.85rem;
+}
+
+/* Collapsible body */
+.char-class-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.2s ease;
+  border-top: 1px solid transparent;
+}
+.char-class-card.expanded .char-class-body {
+  max-height: 600px;
+  border-top-color: rgba(255,255,255,0.07);
+  padding-bottom: 0.75rem;
+}
+
+/* Trait pills row */
+.char-class-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem 0.5rem;
+}
+
+.char-class-trait {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  background: var(--char-accent-tint);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--parchment);
+  line-height: 1.35;
+}
+
+.char-class-trait-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.1rem;
+}
+
+/* Features list */
+.char-class-features-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 0.6rem 1rem 0.35rem;
+}
+
+.char-class-features {
+  margin: 0;
+  padding: 0 1rem 0.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.char-class-features li {
   font-family: var(--font-sans);
   font-size: 0.8rem;
-  line-height: 1.6;
-  color: var(--white);
+  color: var(--char-text-muted);
+  line-height: 1.45;
 }
-.char-class-sensory {
+
+/* ── GIGGLEGLOOM AFFINITY SECTION (Stage 1, below class picker) ─── */
+.char-affinity-section {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+.char-affinity-label {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-style: italic;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: var(--gold);
-  margin-top: 0.5rem;
-  line-height: 1.5;
+  margin-bottom: 0.4rem;
+}
+
+.char-affinity-intro {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--char-text-faint);
+  margin-bottom: 1.25rem;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+/* Affinity cards are non-interactive — dimmed until a class is chosen */
+.char-type-card--affinity {
+  cursor: default;
+  opacity: 0.45;
+  transition: opacity 0.3s, border-color 0.3s;
+}
+.char-type-card--affinity.selected {
+  opacity: 1;
+  border-color: var(--type-color, var(--gold));
+}
+.char-type-card--affinity:hover {
+  transform: none;
 }
 
 /* ── FIELD STYLES ──────────────────────────────────────────────── */
