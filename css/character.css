@@ -676,7 +676,7 @@ body.char-page {
 .char-class-card-check {
   position: absolute;
   top: 0.9rem;
-  right: 0.9rem;
+  left: 0.9rem;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -709,10 +709,10 @@ body.char-page {
 
 .char-class-card-names {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.65rem;
   flex-wrap: wrap;
-  padding-right: 1.75rem;
+  padding-left: 2rem;
 }
 
 .char-class-name {
@@ -743,6 +743,22 @@ body.char-page {
   letter-spacing: 0.03em;
   align-self: center;
   flex-shrink: 0;
+}
+.char-class-affinity-badge.sm-type-badge {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  gap: 0.3rem;
+}
+.char-affinity-badge-icon {
+  width: 13px;
+  height: 13px;
+  filter: brightness(0) invert(1);
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Gigglegloom affinity dot */
@@ -913,6 +929,12 @@ body.char-page {
 /* Affinity cards are interactive again */
 .char-type-card--affinity { cursor: pointer; opacity: 1; }
 .char-type-card--affinity:hover { transform: translateY(-3px); }
+
+/* ── GIGGLEGLOOM BADGE COLORS (mirrors spells.css sm-type-badge) ── */
+.char-class-affinity-badge.Bubbleseed  { background: #2a7a3a; color: #fff; }
+.char-class-affinity-badge.Featherflow { background: #2266b8; color: #fff; }
+.char-class-affinity-badge.Steelfist   { background: #6a3aaa; color: #fff; }
+.char-class-affinity-badge.Flamerage   { background: #aa3a1a; color: #fff; }
 
 /* ── GIGGLEGLOOM AFFINITY SECTION (Stage 1, below class picker) ─── */
 .char-affinity-section {

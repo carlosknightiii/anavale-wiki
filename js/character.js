@@ -800,37 +800,58 @@ function initStage1() {
 function renderClassGrid() {
   var grid = document.getElementById('char-class-grid');
   if (!grid) return;
+
+  // Icon paths matching TYPE_ICONS in wiki.js
+  var AFFINITY_ICONS = {
+    bubbleseed:  'assets/icons/icon-bubbleseed.svg',
+    featherflow: 'assets/icons/icon-featherflow.svg',
+    steelfist:   'assets/icons/icon-steelfist.svg',
+    flamerage:   'assets/icons/icon-flamerage.svg'
+  };
+
   grid.innerHTML = CLASS_DATA.map(function(cls) {
     var featuresHtml = cls.features.map(function(f) {
       return '<li>' + f + '</li>';
     }).join('');
-    var traitTips = [
-      { label: 'HIT DIE', value: cls.hit_die, tip: cls.hit_die_tip },
-      { label: 'PRIMARY', value: cls.primary, tip: null },
-      { label: 'SAVES', value: cls.saves, tip: cls.saves_tip },
-      { label: 'ARMOR', value: cls.armor, tip: null },
-      { label: 'WEAPONS', value: cls.weapons, tip: cls.weapons_tip }
-    ];
-    var traitsHtml = traitTips.map(function(t) {
+
+    var traitsHtml = [
+      { label: 'HIT DIE',  value: cls.hit_die,  tip: cls.hit_die_tip  },
+      { label: 'PRIMARY',  value: cls.primary,  tip: null              },
+      { label: 'SAVES',    value: cls.saves,    tip: cls.saves_tip    },
+      { label: 'ARMOR',    value: cls.armor,    tip: null              },
+      { label: 'WEAPONS',  value: cls.weapons,  tip: cls.weapons_tip  }
+    ].map(function(t) {
       var labelHtml = t.tip
-        ? '<span class="char-class-trait-label char-trait-has-tip" data-tip="' + t.tip.replace(/"/g,'&quot;') + '">' + t.label + ' <span class="char-trait-tip-icon">?</span></span>'
+        ? '<span class="char-class-trait-label char-trait-has-tip char-field-tooltip" data-tip="' + t.tip.replace(/"/g, '&quot;') + '">'
+          + t.label + ' <span class="char-trait-tip-icon">?</span></span>'
         : '<span class="char-class-trait-label">' + t.label + '</span>';
       return '<span class="char-class-trait">' + labelHtml + t.value + '</span>';
     }).join('');
+
     var skillsHtml = cls.skills_list.map(function(sk) {
       var tip = cls.skills_tip[sk] || '';
       return '<label class="char-skill-option" data-class="' + cls.id + '">'
         + '<input type="checkbox" name="skill-' + cls.id + '" value="' + sk + '">'
-        + '<span class="char-skill-name">' + sk + '</span>'
-        + (tip ? '<span class="char-skill-tip">' + tip + '</span>' : '')
+        + '<span class="char-skill-name">' + sk
+        +   (tip ? ' <span class="char-field-tooltip" data-tip="' + tip.replace(/"/g, '&quot;') + '"><span class="char-trait-tip-icon">?</span></span>' : '')
+        + '</span>'
         + '</label>';
     }).join('');
+
+    var iconSrc  = AFFINITY_ICONS[cls.gigglegloom] || '';
+    var iconHtml = iconSrc
+      ? '<img src="' + iconSrc + '" class="char-affinity-badge-icon" alt="">'
+      : '';
+    var badgeHtml = '<span class="sm-type-badge char-class-affinity-badge ' + cls.gigglegloom_label + '">'
+      + iconHtml + cls.gigglegloom_label
+      + '</span>';
+
     return '<div class="char-class-card" data-class="' + cls.id + '" data-gigglegloom="' + cls.gigglegloom + '">'
       + '<div class="char-class-card-check">✓</div>'
       + '<div class="char-class-card-header" onclick="selectClass(\'' + cls.id + '\')">'
       +   '<div class="char-class-card-names">'
       +     '<div class="char-class-name">' + cls.name + '</div>'
-      +     '<span class="sm-type-badge ' + cls.gigglegloom_label + ' char-class-affinity-badge">' + cls.gigglegloom_label + '</span>'
+      +     badgeHtml
       +   '</div>'
       +   '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleClassCard(this)" aria-label="Toggle details">Details</button>'
       + '</div>'
@@ -847,6 +868,7 @@ function renderClassGrid() {
       + '</div>'
       + '</div>';
   }).join('');
+
   // Wire skill checkboxes
   document.querySelectorAll('.char-skill-option input[type=checkbox]').forEach(function(cb) {
     cb.addEventListener('change', function() {
@@ -863,6 +885,9 @@ function renderClassGrid() {
       saveDraftToStorage();
     });
   });
+
+  // Wire tooltips for dynamically rendered [data-tip] elements
+  if (typeof initTooltips === 'function') initTooltips();
 }
 
 function renderGigglogloomAffinity() {
