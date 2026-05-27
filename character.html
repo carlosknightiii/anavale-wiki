@@ -689,6 +689,14 @@
           </div>
       </div>
 
+      <!-- Starting Gear (auto-populated from class + background) -->
+      <div class="char-appearance-section char-gear-section">
+        <div class="char-appearance-section-title">Your Starting Equipment</div>
+        <div id="char-starting-gear-panel" class="char-gear-panel">
+          <p class="char-gear-empty">Go back to Stage 1 to choose your class — your starting gear will appear here.</p>
+        </div>
+      </div>
+
       <!-- Clothing -->
       <div class="char-appearance-section">
         <div class="char-appearance-section-title">Clothing</div>
@@ -706,7 +714,7 @@
             </select>
           </div>
           <div class="char-field-group">
-            <label class="char-field-label" for="app-top">Top / torso</label>
+            <label class="char-field-label" for="app-top">Top / Armour</label>
             <select class="char-select" id="app-top">
               <option value="">— choose —</option>
               <option value="simple tunic">Simple tunic</option>
@@ -718,6 +726,7 @@
               <option value="formal doublet">Formal doublet</option>
               <option value="wrapped cloth">Wrapped cloth</option>
             </select>
+            <div id="app-top-stat" class="char-stat-chips" style="display:none"></div>
           </div>
         </div>
         <div class="char-field-row">
@@ -732,6 +741,7 @@
               <option value="armoured greaves">Armoured greaves</option>
               <option value="wrapped cloth lower">Wrapped cloth</option>
             </select>
+            <div id="app-lower-stat" class="char-stat-chips" style="display:none"></div>
           </div>
           <div class="char-field-group">
             <label class="char-field-label" for="app-shoes">Footwear</label>

@@ -212,7 +212,7 @@ function jumpToStage(n) {
 
 function initStageOnEnter(n) {
   if (n === 2) initStage2();
-  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); }
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); }
   if (n === 5) initStage5();
 }
 
@@ -838,6 +838,272 @@ function collectStage5Data() {
   CHAR_STATE.draft.seeking         = getVal('char-seeking');
 }
 
+// ── CLASS STARTING GEAR (PHB 2024) ────────────────────────────────
+var CLASS_STARTING_GEAR = {
+  barbarian: {
+    armor: 'Explorer\'s Pack',
+    weapons: ['Greataxe', 'Two handaxes', '4 javelins'],
+    note: 'No starting armor — AC = 10 + Dex + Con modifier while unarmored'
+  },
+  bard: {
+    armor: 'Leather Armor',
+    weapons: ['Rapier', 'Dagger'],
+    note: 'Entertainer\'s Pack + musical instrument of your choice'
+  },
+  cleric: {
+    armor: 'Scale Mail',
+    weapons: ['Mace', 'Shield'],
+    note: 'Priest\'s Pack + Holy Symbol'
+  },
+  druid: {
+    armor: 'Leather Armor',
+    weapons: ['Quarterstaff', 'Shield'],
+    note: 'Explorer\'s Pack + Druidic Focus (no metal armor)'
+  },
+  fighter: {
+    armor: 'Chain Mail',
+    weapons: ['Longsword', 'Shield', 'Light Crossbow + 20 bolts'],
+    note: 'Dungeoneer\'s Pack'
+  },
+  monk: {
+    armor: null,
+    weapons: ['Shortsword', '5 darts'],
+    note: 'Dungeoneer\'s Pack — AC = 10 + Dex + Wis while unarmored'
+  },
+  paladin: {
+    armor: 'Chain Mail',
+    weapons: ['Longsword', 'Shield', 'Javelin (×5)'],
+    note: 'Priest\'s Pack + Holy Symbol'
+  },
+  ranger: {
+    armor: 'Scale Mail',
+    weapons: ['Longsword', 'Two shortswords', 'Longbow + 20 arrows'],
+    note: 'Explorer\'s Pack'
+  },
+  rogue: {
+    armor: 'Leather Armor',
+    weapons: ['Rapier', 'Shortbow + 20 arrows', 'Dagger (×2)'],
+    note: 'Burglar\'s Pack + Thieves\' Tools'
+  },
+  sorcerer: {
+    armor: null,
+    weapons: ['Light Crossbow + 20 bolts', 'Dagger (×2)'],
+    note: 'Dungeoneer\'s Pack + Arcane Focus'
+  },
+  warlock: {
+    armor: 'Leather Armor',
+    weapons: ['Light Crossbow + 20 bolts', 'Dagger (×2)'],
+    note: 'Scholar\'s Pack + Arcane Focus'
+  },
+  wizard: {
+    armor: null,
+    weapons: ['Quarterstaff', 'Dagger'],
+    note: 'Scholar\'s Pack + Spellbook + Arcane Focus'
+  }
+};
+
+// Stat data for clothing options (used by stat chip display)
+var CLOTHING_STATS = {
+  // app-top
+  'plate armour':        { ac: 'AC 18', weight: 'Heavy', note: 'Str 15 req · Stealth ⚠' },
+  'chainmail shirt':     { ac: 'AC 16', weight: 'Heavy', note: 'Str 13 req · Stealth ⚠' },
+  'scale mail':          { ac: 'AC 14 + Dex (max +2)', weight: 'Medium', note: 'Stealth ⚠' },
+  'breastplate':         { ac: 'AC 14 + Dex (max +2)', weight: 'Medium', note: '' },
+  'leather armour':      { ac: 'AC 11 + Dex', weight: 'Light', note: '' },
+  'studded leather':     { ac: 'AC 12 + Dex', weight: 'Light', note: '' },
+  'padded gambeson':     { ac: 'AC 11 + Dex', weight: 'Light', note: 'Stealth ⚠' },
+  'leather jerkin':      { ac: 'AC 11 + Dex', weight: 'Light', note: '' },
+  // unarmored / no mechanical stats — intentionally omitted; chip shows nothing
+};
+
+// Clothing options by armor tier (controls app-top options)
+var CLOTHING_TIERS = {
+  unarmored: [
+    { value: '',                    label: '— choose —' },
+    { value: 'robes',               label: 'Robes' },
+    { value: 'arcane vestments',    label: 'Arcane vestments' },
+    { value: 'simple tunic',        label: 'Simple tunic' },
+    { value: "monk's gi",           label: "Monk's gi" },
+    { value: 'wrapped cloth',       label: 'Wrapped cloth' },
+    { value: 'linen shirt',         label: 'Linen shirt' }
+  ],
+  light: [
+    { value: 'leather jerkin',      label: 'Leather jerkin' },
+    { value: 'studded leather',     label: 'Studded leather' },
+    { value: 'padded gambeson',     label: 'Padded gambeson' },
+    { value: "traveller's coat",    label: "Traveller's coat" }
+  ],
+  medium: [
+    { value: 'scale mail',          label: 'Scale mail' },
+    { value: 'chainmail shirt',     label: 'Chain shirt' },
+    { value: 'breastplate',         label: 'Breastplate' },
+    { value: 'ranger\'s mail',      label: "Ranger's mail" }
+  ],
+  heavy: [
+    { value: 'plate armour',        label: 'Plate armour' },
+    { value: 'half-plate cuirass',  label: 'Half-plate cuirass' },
+    { value: 'splint coat',         label: 'Splint coat' }
+  ]
+};
+
+// Lower-body options by tier
+var LOWER_TIERS = {
+  unarmored: [
+    { value: '',                      label: '— choose —' },
+    { value: 'trousers',              label: 'Trousers' },
+    { value: 'a long skirt',          label: 'Long skirt' },
+    { value: 'a skirt',               label: 'Skirt' },
+    { value: 'wrapped cloth lower',   label: 'Wrapped cloth' },
+    { value: 'flowing robes',         label: 'Flowing robes' }
+  ],
+  light: [
+    { value: 'leather breeches',      label: 'Leather breeches' }
+  ],
+  medium: [],
+  heavy: [
+    { value: 'armoured greaves',      label: 'Armoured greaves' }
+  ]
+};
+
+// Which tier each class can reach
+var CLASS_ARMOR_TIER = {
+  barbarian: 'medium',
+  bard:      'light',
+  cleric:    'medium',
+  druid:     'medium',
+  fighter:   'heavy',
+  monk:      'unarmored',
+  paladin:   'heavy',
+  ranger:    'medium',
+  rogue:     'light',
+  sorcerer:  'unarmored',
+  warlock:   'light',
+  wizard:    'unarmored'
+};
+
+var TIER_ORDER = ['unarmored', 'light', 'medium', 'heavy'];
+
+function getTiersUpTo(maxTier) {
+  var maxIdx = TIER_ORDER.indexOf(maxTier);
+  return TIER_ORDER.slice(0, maxIdx + 1);
+}
+
+function filterClothingByClass(cls) {
+  var maxTier  = CLASS_ARMOR_TIER[cls] || 'unarmored';
+  var tiers    = getTiersUpTo(maxTier);
+
+  // Rebuild app-top
+  var topSel = document.getElementById('app-top');
+  if (topSel) {
+    var topCurrent = topSel.value;
+    topSel.innerHTML = '';
+    tiers.forEach(function(tier) {
+      (CLOTHING_TIERS[tier] || []).forEach(function(opt) {
+        var o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.label;
+        topSel.appendChild(o);
+      });
+    });
+    // Re-select previous value if still valid, else blank
+    if (topCurrent && topSel.querySelector('option[value="' + topCurrent + '"]')) {
+      topSel.value = topCurrent;
+    } else {
+      topSel.value = '';
+    }
+    updateGearStatChip('app-top', 'app-top-stat');
+  }
+
+  // Rebuild app-lower
+  var lowSel = document.getElementById('app-lower');
+  if (lowSel) {
+    var lowCurrent = lowSel.value;
+    lowSel.innerHTML = '';
+    tiers.forEach(function(tier) {
+      (LOWER_TIERS[tier] || []).forEach(function(opt) {
+        var o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.label;
+        lowSel.appendChild(o);
+      });
+    });
+    if (lowCurrent && lowSel.querySelector('option[value="' + lowCurrent + '"]')) {
+      lowSel.value = lowCurrent;
+    } else {
+      lowSel.value = '';
+    }
+    updateGearStatChip('app-lower', 'app-lower-stat');
+  }
+}
+
+function updateGearStatChip(selectId, chipId) {
+  var sel  = document.getElementById(selectId);
+  var chip = document.getElementById(chipId);
+  if (!sel || !chip) return;
+  var stats = CLOTHING_STATS[sel.value];
+  if (!stats) {
+    chip.innerHTML = '';
+    chip.style.display = 'none';
+    return;
+  }
+  var html = '<span class="char-stat-chip char-stat-chip--ac">' + stats.ac + '</span>'
+           + '<span class="char-stat-chip char-stat-chip--weight">' + stats.weight + '</span>';
+  if (stats.note) {
+    html += '<span class="char-stat-chip char-stat-chip--note">' + stats.note + '</span>';
+  }
+  chip.innerHTML = html;
+  chip.style.display = 'flex';
+}
+
+function renderStartingGear() {
+  var panel = document.getElementById('char-starting-gear-panel');
+  if (!panel) return;
+
+  var cls = CHAR_STATE.draft.char_class;
+  var bg  = CHAR_STATE.draft.background;
+
+  if (!cls) {
+    panel.innerHTML = '<p class="char-gear-empty">Go back to Stage 1 to choose your class — your starting gear will appear here.</p>';
+    return;
+  }
+
+  var gear = CLASS_STARTING_GEAR[cls];
+  if (!gear) { panel.innerHTML = ''; return; }
+
+  // Resolve display name from ANAVALE_CLASSES data
+  var clsLabel = cls.charAt(0).toUpperCase() + cls.slice(1);
+  GIGGLEGLOOM_TYPES && Object.values(GIGGLEGLOOM_TYPES).forEach(function(type) {
+    (type.classes || []).forEach(function(c) {
+      if (c.id === cls) clsLabel = c.name + ' (' + cls.charAt(0).toUpperCase() + cls.slice(1) + ')';
+    });
+  });
+
+  var bgLabel = '';
+  if (bg && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
+    var bgObj = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bg; });
+    if (bgObj) bgLabel = bgObj.name;
+  }
+
+  var itemsHtml = gear.weapons.map(function(w) {
+    return '<div class="char-gear-item"><span class="char-gear-icon">⚔</span>' + w + '</div>';
+  }).join('');
+
+  if (gear.armor) {
+    itemsHtml = '<div class="char-gear-item"><span class="char-gear-icon">🛡</span>' + gear.armor + '</div>' + itemsHtml;
+  } else {
+    itemsHtml = '<div class="char-gear-item char-gear-item--note"><span class="char-gear-icon">○</span>No armor — ' + gear.note.split('—')[1].trim() + '</div>' + itemsHtml;
+  }
+
+  itemsHtml += '<div class="char-gear-item char-gear-item--pack"><span class="char-gear-icon">🎒</span>' + gear.note.split('·')[0].trim() + '</div>';
+
+  panel.innerHTML =
+    '<div class="char-gear-header">'
+    + '<span class="char-gear-label">Starting gear — ' + clsLabel + (bgLabel ? ' · ' + bgLabel : '') + '</span>'
+    + '<span class="char-gear-sublabel">This gear is yours automatically. No choices needed.</span>'
+    + '</div>'
+    + '<div class="char-gear-items">' + itemsHtml + '</div>';
+}
+
 function initAppearanceListeners() {
   var ids = ['app-height','app-build','app-age','app-face-shape',
              'app-eye-color','app-eye-shape','app-facial-hair',
@@ -849,6 +1115,10 @@ function initAppearanceListeners() {
   });
   var skinTone = document.getElementById('app-skin-tone');
   if (skinTone) skinTone.addEventListener('input', updateAIPrompt);
+  var topSel = document.getElementById('app-top');
+  if (topSel) topSel.addEventListener('change', function() { updateGearStatChip('app-top', 'app-top-stat'); });
+  var lowSel = document.getElementById('app-lower');
+  if (lowSel) lowSel.addEventListener('change', function() { updateGearStatChip('app-lower', 'app-lower-stat'); });
   document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
     cb.addEventListener('change', updateAIPrompt);
   });

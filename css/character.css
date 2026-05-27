@@ -1122,6 +1122,109 @@ body.char-page {
   background: var(--char-accent-tint);
 }
 
+/* ── STARTING GEAR PANEL ───────────────────────────────────────── */
+.char-gear-section { margin-bottom: 2rem; }
+
+.char-gear-panel {
+  background: var(--char-card-bg);
+  border: 1px solid var(--char-border);
+  border-radius: var(--char-radius);
+  padding: 1.25rem 1.5rem;
+}
+
+.char-gear-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.char-gear-label {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.char-gear-sublabel {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--char-text-faint);
+  font-style: italic;
+}
+
+.char-gear-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.char-gear-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--parchment);
+  line-height: 1.4;
+}
+
+.char-gear-item--note { color: var(--char-text-faint); font-style: italic; }
+.char-gear-item--pack { color: var(--char-text-faint); }
+
+.char-gear-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  width: 1.25rem;
+  text-align: center;
+}
+
+.char-gear-empty {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--char-text-faint);
+  font-style: italic;
+}
+
+/* ── STAT CHIPS (inline under clothing selects) ─────────────────── */
+.char-stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.char-stat-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.char-stat-chip--ac {
+  background: var(--char-highlight-tint);
+  border: 1px solid var(--char-highlight-border);
+  color: var(--gold-light);
+}
+
+.char-stat-chip--weight {
+  background: var(--char-accent-tint);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--parchment);
+}
+
+.char-stat-chip--note {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--char-text-faint);
+}
+
 /* ── APPEARANCE BUILDER (Stage 3) ──────────────────────────────── */
 .char-appearance-section {
   margin-bottom: 2.5rem;
