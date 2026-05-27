@@ -347,15 +347,19 @@
           <div class="char-option-cards" data-field="char-org" data-past="org">
             <div class="char-option-card" data-value="wanderkeep" data-effect="Wanderkeep Field Kit (DM adds), +1 Survival" onclick="selectPastCard(this)">
               <div class="char-option-card-label">The Wanderkeep</div>
+              <div class="char-option-card-sub">Wandering protectors who travel Anavale keeping color alive. Very tired. Very committed.</div>
             </div>
             <div class="char-option-card" data-value="merchant-guild" data-effect="+50gp starting gold, +1 Persuasion" onclick="selectPastCard(this)">
               <div class="char-option-card-label">A merchant guild</div>
+              <div class="char-option-card-sub">Trade networks that move goods — and information — across Anavale's nations.</div>
             </div>
             <div class="char-option-card" data-value="brightcreed" data-effect="Brightcreed Token (DM adds), +1 Religion" onclick="selectPastCard(this)">
               <div class="char-option-card-label">A religious order (Brightcreed)</div>
+              <div class="char-option-card-sub">The Brightcreed venerates Oro and Nara — color, joy, and living things. The most widespread faith in Anavale.</div>
             </div>
             <div class="char-option-card" data-value="fighting-company" data-effect="Common weapon of choice (DM adds), +1 Athletics" onclick="selectPastCard(this)">
               <div class="char-option-card-label">A fighting company</div>
+              <div class="char-option-card-sub">Mercenary or militia — you learned to fight alongside others and take orders under pressure.</div>
             </div>
             <div class="char-option-card" data-value="kept-to-myself" data-effect="+1 Stealth, +1 any skill of your choice" onclick="selectPastCard(this)">
               <div class="char-option-card-label">No — I kept to myself</div>
@@ -456,7 +460,7 @@
       <!-- Ability grid -->
       <div class="char-ability-grid">
         <div class="char-ability-card" id="ability-card-str" data-ability="str">
-          <div class="char-ability-name">Strength</div>
+          <div class="char-ability-name">Strength<span class="char-field-tooltip" data-tip="Measures physical power. Used for melee attacks, breaking things, jumping, climbing, and carrying heavy loads. Fighters and Barbarians rely on this.">?</span></div>
           <div class="char-ability-score" id="ability-score-str"><span class="char-ability-drop-target">drop here</span></div>
           <div class="char-ability-mod-wrap">
             <div class="char-ability-mod" id="ability-mod-str"></div>
@@ -466,7 +470,7 @@
           <input type="hidden" id="char-ability-str" value="">
         </div>
         <div class="char-ability-card" id="ability-card-dex" data-ability="dex">
-          <div class="char-ability-name">Dexterity</div>
+          <div class="char-ability-name">Dexterity<span class="char-field-tooltip" data-tip="Measures agility and reflexes. Used for ranged attacks, dodging, sneaking, picking locks, and determining how fast you act. Rogues and Rangers rely on this.">?</span></div>
           <div class="char-ability-score" id="ability-score-dex"><span class="char-ability-drop-target">drop here</span></div>
           <div class="char-ability-mod-wrap">
             <div class="char-ability-mod" id="ability-mod-dex"></div>
@@ -476,7 +480,7 @@
           <input type="hidden" id="char-ability-dex" value="">
         </div>
         <div class="char-ability-card" id="ability-card-con" data-ability="con">
-          <div class="char-ability-name">Constitution</div>
+          <div class="char-ability-name">Constitution<span class="char-field-tooltip" data-tip="Measures endurance and toughness. Determines your hit points and your ability to resist poison, disease, and exhaustion. Every class benefits from a higher Constitution.">?</span></div>
           <div class="char-ability-score" id="ability-score-con"><span class="char-ability-drop-target">drop here</span></div>
           <div class="char-ability-mod-wrap">
             <div class="char-ability-mod" id="ability-mod-con"></div>
@@ -486,7 +490,7 @@
           <input type="hidden" id="char-ability-con" value="">
         </div>
         <div class="char-ability-card" id="ability-card-int" data-ability="int">
-          <div class="char-ability-name">Intelligence</div>
+          <div class="char-ability-name">Intelligence<span class="char-field-tooltip" data-tip="Measures reasoning and memory. Used for recalling lore, investigating clues, and understanding magical theory. Wizards rely on this.">?</span></div>
           <div class="char-ability-score" id="ability-score-int"><span class="char-ability-drop-target">drop here</span></div>
           <div class="char-ability-mod-wrap">
             <div class="char-ability-mod" id="ability-mod-int"></div>
@@ -496,7 +500,7 @@
           <input type="hidden" id="char-ability-int" value="">
         </div>
         <div class="char-ability-card" id="ability-card-wis" data-ability="wis">
-          <div class="char-ability-name">Wisdom</div>
+          <div class="char-ability-name">Wisdom<span class="char-field-tooltip" data-tip="Measures perception and intuition. Used for noticing hidden things, reading people, surviving in the wild, and healing. Clerics, Druids, and Rangers rely on this.">?</span></div>
           <div class="char-ability-score" id="ability-score-wis"><span class="char-ability-drop-target">drop here</span></div>
           <div class="char-ability-mod-wrap">
             <div class="char-ability-mod" id="ability-mod-wis"></div>
@@ -506,7 +510,7 @@
           <input type="hidden" id="char-ability-wis" value="">
         </div>
         <div class="char-ability-card" id="ability-card-cha" data-ability="cha">
-          <div class="char-ability-name">Charisma</div>
+          <div class="char-ability-name">Charisma<span class="char-field-tooltip" data-tip="Measures force of personality. Used for persuading, deceiving, performing, and intimidating. Bards, Sorcerers, and Paladins rely on this.">?</span></div>
           <div class="char-ability-score" id="ability-score-cha"><span class="char-ability-drop-target">drop here</span></div>
           <div class="char-ability-mod-wrap">
             <div class="char-ability-mod" id="ability-mod-cha"></div>
