@@ -674,24 +674,21 @@ body.char-page {
 
 /* Checkmark badge */
 .char-class-card-check {
-  position: absolute;
-  top: 0.9rem;
-  left: 0.9rem;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: var(--gold);
   color: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 700;
   opacity: 0;
   transform: scale(0.5);
   transition: all 0.2s ease;
   pointer-events: none;
-  z-index: 2;
+  flex-shrink: 0;
 }
 .char-class-card.selected .char-class-card-check {
   opacity: 1;
@@ -704,7 +701,7 @@ body.char-page {
   align-items: center;
   justify-content: space-between;
   padding: 0.9rem 1rem 0.4rem;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .char-class-card-names {
@@ -830,6 +827,9 @@ body.char-page {
   font-weight: 600;
   pointer-events: none;
 }
+.char-skill-name .char-field-tooltip {
+  pointer-events: auto;
+}
 .char-skill-tip {
   font-family: var(--font-sans);
   font-size: 0.72rem;
@@ -906,7 +906,6 @@ body.char-page {
 /* Trait label tooltip trigger */
 .char-trait-has-tip {
   cursor: help;
-  border-bottom: 1px dotted rgba(200,148,10,0.5);
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
@@ -915,14 +914,15 @@ body.char-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: var(--gold);
   color: var(--ink);
   font-size: 0.55rem;
   font-weight: 700;
   line-height: 1;
+  vertical-align: middle;
   flex-shrink: 0;
 }
 /* Affinity cards are interactive again */
@@ -997,11 +997,9 @@ body.char-page {
 .char-past-q-hint { margin-bottom: 0.75rem; }
 .char-field-tooltip {
   display: inline-block;
-  margin-left: 0.4rem;
   font-size: 0.7rem;
   color: var(--gold);
   cursor: help;
-  border-bottom: 1px dotted var(--char-border-gold);
 }
 
 .char-input,

@@ -838,21 +838,12 @@ function renderClassGrid() {
         + '</label>';
     }).join('');
 
-    var iconSrc  = AFFINITY_ICONS[cls.gigglegloom] || '';
-    var iconHtml = iconSrc
-      ? '<img src="' + iconSrc + '" class="char-affinity-badge-icon" alt="">'
-      : '';
-    var badgeHtml = '<span class="sm-type-badge char-class-affinity-badge ' + cls.gigglegloom_label + '">'
-      + iconHtml + cls.gigglegloom_label
-      + '</span>';
-
     return '<div class="char-class-card" data-class="' + cls.id + '" data-gigglegloom="' + cls.gigglegloom + '">'
-      + '<div class="char-class-card-check">✓</div>'
       + '<div class="char-class-card-header" onclick="selectClass(\'' + cls.id + '\')">'
       +   '<div class="char-class-card-names">'
       +     '<div class="char-class-name">' + cls.name + '</div>'
-      +     badgeHtml
       +   '</div>'
+      +   '<div class="char-class-card-check">✓</div>'
       +   '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleClassCard(this)" aria-label="Toggle details">Details</button>'
       + '</div>'
       + '<div class="char-class-summary" onclick="selectClass(\'' + cls.id + '\')">' + cls.summary + '</div>'
