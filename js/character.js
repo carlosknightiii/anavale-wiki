@@ -1535,7 +1535,7 @@ function renderStartingGear() {
   if (!panel) return;
 
   var cls = CHAR_STATE.draft.class_id;
-  var bg  = CHAR_STATE.draft.background;
+  var bg  = CHAR_STATE.draft.background_id;
 
   if (!cls) {
     panel.innerHTML = '<p class="char-gear-empty">Go back to Stage 1 to choose your class — your starting gear will appear here.</p>';
