@@ -398,118 +398,382 @@ var GIGGLEGLOOM_TYPES = {
 };
 
 // ── CLASS DATA (PHB 2024) ──────────────────────────────────────────
+// ── CLASS DATA (PHB 2024) ──────────────────────────────────────────
 var CLASS_DATA = [
   {
-    id: 'barbarian', name: 'Barbarian', anavale: 'The Furious',
-    gigglegloom: 'flamerage',
+    id: 'barbarian', name: 'Barbarian',
+    gigglegloom: 'flamerage', gigglegloom_label: 'Flamerage',
     summary: 'Storm into battle with primal fury, shrugging off blows that would fell lesser warriors. Your rage transforms you into an unstoppable force.',
-    hit_die: 'd12', primary: 'Strength', saves: 'Strength, Constitution',
+    hit_die: 'd12', hit_die_tip: 'Your Hit Die determines how many hit points you gain per level. A d12 means you roll a 12-sided die each level — Barbarians are the hardiest class in the game.',
+    primary: 'Strength',
+    saves: 'Strength, Constitution', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light, Medium, Shields', weapons: 'Simple, Martial',
-    skills: 'Choose 2 from Animal Handling, Athletics, Intimidation, Nature, Perception, Survival',
-    features: ['Rage — bonus damage, resistance to physical damage', 'Unarmored Defense — AC = 10 + Dex + Con', 'Reckless Attack', 'Danger Sense', 'Primal Path subclass at level 3', 'Extra Attack at level 5']
+    weapons_tip: 'Simple weapons are basic tools anyone can use (clubs, daggers, spears). Martial weapons are advanced weapons requiring training (swords, axes, bows).',
+    skills: 'Choose 2: Animal Handling, Athletics, Intimidation, Nature, Perception, Survival',
+    skills_tip: {
+      'Animal Handling': 'Calm or control animals, keep your mount steady in combat.',
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Nature': 'Recall knowledge about terrain, plants, animals, and the natural world.',
+      'Perception': 'Notice things — spot a hidden enemy, hear footsteps, find a secret door.',
+      'Survival': 'Track creatures, forage for food, navigate wilderness, and avoid natural hazards.'
+    },
+    skills_count: 2,
+    skills_list: ['Animal Handling','Athletics','Intimidation','Nature','Perception','Survival'],
+    features: [
+      'Rage — bonus damage on attacks, resistance to physical damage while raging',
+      'Unarmored Defense — AC = 10 + Dex modifier + Con modifier (no armor needed)',
+      'Reckless Attack — attack with advantage, but enemies gain advantage against you until your next turn',
+      'Danger Sense — advantage on Dex saving throws against effects you can see',
+      'Primal Path subclass at level 3',
+      'Extra Attack at level 5 — attack twice whenever you take the Attack action'
+    ]
   },
   {
-    id: 'bard', name: 'Bard', anavale: 'The Reveler',
-    gigglegloom: 'featherflow',
+    id: 'bard', name: 'Bard',
+    gigglegloom: 'featherflow', gigglegloom_label: 'Featherflow',
     summary: 'Weave magic through music, words, and performance. Inspire allies, confound enemies, and collect secrets — the Revel would call this a calling.',
-    hit_die: 'd8', primary: 'Charisma', saves: 'Dexterity, Charisma',
+    hit_die: 'd8', hit_die_tip: 'Your Hit Die determines hit points per level. A d8 is average — Bards are resilient but not frontline fighters.',
+    primary: 'Charisma',
+    saves: 'Dexterity, Charisma', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light', weapons: 'Simple, Hand Crossbow, Longsword, Rapier, Shortsword',
-    skills: 'Choose 3 from any skills',
-    features: ['Bardic Inspiration — grant bonus dice to allies', 'Spellcasting (Charisma)', 'Jack of All Trades', 'Song of Rest', 'Bard College subclass at level 3', 'Expertise in 2 skills']
+    weapons_tip: 'Simple weapons are basic tools anyone can use (clubs, daggers, spears). Martial weapons are advanced weapons requiring training (swords, axes, bows).',
+    skills: 'Choose 3 from any skill',
+    skills_tip: {
+      'Acrobatics': 'Stay on your feet, tumble, or perform feats of agility.',
+      'Animal Handling': 'Calm or control animals, keep your mount steady in combat.',
+      'Arcana': 'Recall knowledge about spells, magic items, and magical traditions.',
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'Deception': 'Lie convincingly, disguise your intentions, and mislead others.',
+      'History': 'Recall knowledge about past events, legends, and important figures.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Investigation': 'Search an area carefully, find clues, deduce conclusions.',
+      'Medicine': 'Stabilize a dying creature or diagnose illness and poison.',
+      'Nature': 'Recall knowledge about terrain, plants, animals, and the natural world.',
+      'Perception': 'Notice things — spot a hidden enemy, hear footsteps, find a secret door.',
+      'Performance': 'Entertain an audience with music, dance, acting, or storytelling.',
+      'Persuasion': 'Influence someone through honest appeals, diplomacy, or charm.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.',
+      'Sleight of Hand': 'Pick pockets, palm objects, or perform manual trickery unnoticed.',
+      'Stealth': 'Move silently and stay hidden from creatures that might notice you.',
+      'Survival': 'Track creatures, forage for food, navigate wilderness, and avoid natural hazards.'
+    },
+    skills_count: 3,
+    skills_list: ['Acrobatics','Animal Handling','Arcana','Athletics','Deception','History','Insight','Intimidation','Investigation','Medicine','Nature','Perception','Performance','Persuasion','Religion','Sleight of Hand','Stealth','Survival'],
+    features: [
+      'Bardic Inspiration — grant a bonus die (d6) to an ally\'s attack roll, ability check, or saving throw',
+      'Spellcasting (Charisma) — cast spells using Charisma as your magic ability',
+      'Jack of All Trades — add half your proficiency bonus to any skill you\'re not proficient in',
+      'Song of Rest — allies who hear you play during a short rest regain extra hit points',
+      'Bard College subclass at level 3',
+      'Expertise at level 3 — double your proficiency bonus for 2 chosen skills'
+    ]
   },
   {
-    id: 'cleric', name: 'Cleric', anavale: 'The Faithful',
-    gigglegloom: 'bubbleseed',
-    summary: 'Channel divine power from Oro, Nara, or the gods of Anavale. Heal, protect, and smite — your magic comes through devotion.',
-    hit_die: 'd8', primary: 'Wisdom', saves: 'Wisdom, Charisma',
+    id: 'cleric', name: 'Cleric',
+    gigglegloom: 'bubbleseed', gigglegloom_label: 'Bubbleseed',
+    summary: 'Channel divine power from the gods of Anavale. Heal, protect, and smite — your magic comes through devotion.',
+    hit_die: 'd8', hit_die_tip: 'Your Hit Die determines hit points per level. A d8 is average — Clerics can hold their own in combat while supporting allies.',
+    primary: 'Wisdom',
+    saves: 'Wisdom, Charisma', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light, Medium, Shields', weapons: 'Simple',
-    skills: 'Choose 2 from History, Insight, Medicine, Persuasion, Religion',
-    features: ['Spellcasting (Wisdom)', 'Divine Domain subclass at level 1', 'Channel Divinity', 'Turn Undead', 'Divine Intervention at level 10', 'Destroy Undead at level 5']
+    weapons_tip: 'Simple weapons are basic tools anyone can use — clubs, daggers, maces, spears, and similar weapons.',
+    skills: 'Choose 2: History, Insight, Medicine, Persuasion, Religion',
+    skills_tip: {
+      'History': 'Recall knowledge about past events, legends, and important figures.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Medicine': 'Stabilize a dying creature or diagnose illness and poison.',
+      'Persuasion': 'Influence someone through honest appeals, diplomacy, or charm.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.'
+    },
+    skills_count: 2,
+    skills_list: ['History','Insight','Medicine','Persuasion','Religion'],
+    features: [
+      'Spellcasting (Wisdom) — cast spells using Wisdom as your magic ability',
+      'Divine Domain subclass at level 1 — chosen domain shapes your powers from the very start',
+      'Channel Divinity — activate powerful domain-specific effects once per rest',
+      'Turn Undead — force undead creatures to flee from you',
+      'Destroy Undead at level 5 — instantly destroy weak undead instead of just turning them',
+      'Divine Intervention at level 10 — call on your god to directly intervene on your behalf'
+    ]
   },
   {
-    id: 'druid', name: 'Druid', anavale: 'The Verdant',
-    gigglegloom: 'bubbleseed',
+    id: 'druid', name: 'Druid',
+    gigglegloom: 'bubbleseed', gigglegloom_label: 'Bubbleseed',
     summary: 'Speak to the living world and shape-shift into beasts. Your magic grows things, heals things, and occasionally starts a garden where you didn\'t intend one.',
-    hit_die: 'd8', primary: 'Wisdom', saves: 'Intelligence, Wisdom',
+    hit_die: 'd8', hit_die_tip: 'Your Hit Die determines hit points per level. A d8 is average — Druids can take hits while staying mobile.',
+    primary: 'Wisdom',
+    saves: 'Intelligence, Wisdom', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light, Medium, Shields (no metal)', weapons: 'Simple (no metal)',
-    skills: 'Choose 2 from Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, Survival',
-    features: ['Spellcasting (Wisdom)', 'Wild Shape — transform into beasts', 'Druidic language', 'Druid Circle subclass at level 2', 'Timeless Body at level 18', 'Beast Spells at level 18']
+    weapons_tip: 'Simple weapons are basic tools anyone can use. Druids avoid metal weapons and armor by tradition — it disrupts their connection to the living world.',
+    skills: 'Choose 2: Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, Survival',
+    skills_tip: {
+      'Arcana': 'Recall knowledge about spells, magic items, and magical traditions.',
+      'Animal Handling': 'Calm or control animals, keep your mount steady in combat.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Medicine': 'Stabilize a dying creature or diagnose illness and poison.',
+      'Nature': 'Recall knowledge about terrain, plants, animals, and the natural world.',
+      'Perception': 'Notice things — spot a hidden enemy, hear footsteps, find a secret door.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.',
+      'Survival': 'Track creatures, forage for food, navigate wilderness, and avoid natural hazards.'
+    },
+    skills_count: 2,
+    skills_list: ['Arcana','Animal Handling','Insight','Medicine','Nature','Perception','Religion','Survival'],
+    features: [
+      'Spellcasting (Wisdom) — cast spells using Wisdom as your magic ability',
+      'Wild Shape — transform into a beast you have seen; stronger forms unlock at higher levels',
+      'Druidic — you know a secret language only Druids share',
+      'Druid Circle subclass at level 2',
+      'Timeless Body at level 18 — you age 10× slower and can\'t be aged magically',
+      'Beast Spells at level 18 — cast spells even while in Wild Shape form'
+    ]
   },
   {
-    id: 'fighter', name: 'Fighter', anavale: 'The Tested',
-    gigglegloom: 'steelfist',
+    id: 'fighter', name: 'Fighter',
+    gigglegloom: 'steelfist', gigglegloom_label: 'Steelfist',
     summary: 'Master every weapon and suit of armor. You know how to stand in the way of something and not move — the Gigglegloom has decided this is admirable.',
-    hit_die: 'd10', primary: 'Strength or Dexterity', saves: 'Strength, Constitution',
+    hit_die: 'd10', hit_die_tip: 'Your Hit Die determines hit points per level. A d10 is excellent — Fighters are built to take punishment.',
+    primary: 'Strength or Dexterity',
+    saves: 'Strength, Constitution', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'All armor, Shields', weapons: 'Simple, Martial',
-    skills: 'Choose 2 from Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, Survival',
-    features: ['Fighting Style', 'Second Wind — heal yourself once per rest', 'Action Surge', 'Martial Archetype subclass at level 3', 'Extra Attack at level 5', 'Indomitable — reroll saving throws']
+    weapons_tip: 'Simple weapons are basic tools anyone can use (clubs, daggers, spears). Martial weapons are advanced weapons requiring training (swords, axes, bows). Fighters can use all of them.',
+    skills: 'Choose 2: Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, Survival',
+    skills_tip: {
+      'Acrobatics': 'Stay on your feet, tumble, or perform feats of agility.',
+      'Animal Handling': 'Calm or control animals, keep your mount steady in combat.',
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'History': 'Recall knowledge about past events, legends, and important figures.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Perception': 'Notice things — spot a hidden enemy, hear footsteps, find a secret door.',
+      'Survival': 'Track creatures, forage for food, navigate wilderness, and avoid natural hazards.'
+    },
+    skills_count: 2,
+    skills_list: ['Acrobatics','Animal Handling','Athletics','History','Insight','Intimidation','Perception','Survival'],
+    features: [
+      'Fighting Style — choose a specialty: Archery, Defense, Dueling, Great Weapon Fighting, Protection, or Two-Weapon Fighting',
+      'Second Wind — heal yourself for 1d10 + Fighter level as a bonus action, once per rest',
+      'Action Surge — take one additional action on your turn, once per rest',
+      'Martial Archetype subclass at level 3',
+      'Extra Attack at level 5 — attack twice whenever you take the Attack action',
+      'Indomitable at level 9 — reroll a failed saving throw, keeping the new result'
+    ]
   },
   {
-    id: 'monk', name: 'Monk', anavale: 'The Still',
-    gigglegloom: 'steelfist',
+    id: 'monk', name: 'Monk',
+    gigglegloom: 'steelfist', gigglegloom_label: 'Steelfist',
     summary: 'Your body is the instrument. Strike fast, deflect blows bare-handed, and channel ki into precise supernatural techniques.',
-    hit_die: 'd8', primary: 'Dexterity & Wisdom', saves: 'Strength, Dexterity',
+    hit_die: 'd8', hit_die_tip: 'Your Hit Die determines hit points per level. A d8 is average — Monks compensate with exceptional mobility and defense.',
+    primary: 'Dexterity & Wisdom',
+    saves: 'Strength, Dexterity', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'None', weapons: 'Simple, Shortsword',
-    skills: 'Choose 2 from Acrobatics, Athletics, History, Insight, Religion, Stealth',
-    features: ['Unarmored Defense — AC = 10 + Dex + Wis', 'Martial Arts — unarmed strikes use Dex', 'Ki points — fuel special techniques', 'Unarmored Movement', 'Monastic Tradition subclass at level 3', 'Stunning Strike']
+    weapons_tip: 'Monks use simple weapons and shortswords, but their unarmed strikes are their most powerful tool — they deal more damage than most weapons.',
+    skills: 'Choose 2: Acrobatics, Athletics, History, Insight, Religion, Stealth',
+    skills_tip: {
+      'Acrobatics': 'Stay on your feet, tumble, or perform feats of agility.',
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'History': 'Recall knowledge about past events, legends, and important figures.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.',
+      'Stealth': 'Move silently and stay hidden from creatures that might notice you.'
+    },
+    skills_count: 2,
+    skills_list: ['Acrobatics','Athletics','History','Insight','Religion','Stealth'],
+    features: [
+      'Unarmored Defense — AC = 10 + Dex modifier + Wis modifier (no armor needed)',
+      'Martial Arts — unarmed strikes use Dexterity and deal more damage than normal punches',
+      'Ki points — fuel special techniques like Flurry of Blows and Patient Defense',
+      'Unarmored Movement — move faster than normal, eventually run on walls and water',
+      'Monastic Tradition subclass at level 3',
+      'Stunning Strike — spend a ki point to potentially stun a creature you hit'
+    ]
   },
   {
-    id: 'paladin', name: 'Paladin', anavale: 'The Warden',
-    gigglegloom: 'bubbleseed',
+    id: 'paladin', name: 'Paladin',
+    gigglegloom: 'bubbleseed', gigglegloom_label: 'Bubbleseed',
     summary: 'You made a promise. The Gigglegloom heard it and decided to help you keep it. Smite foes with divine power and shield your allies with sacred oaths.',
-    hit_die: 'd10', primary: 'Strength & Charisma', saves: 'Wisdom, Charisma',
+    hit_die: 'd10', hit_die_tip: 'Your Hit Die determines hit points per level. A d10 is excellent — Paladins are durable frontline fighters with healing capability.',
+    primary: 'Strength & Charisma',
+    saves: 'Wisdom, Charisma', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'All armor, Shields', weapons: 'Simple, Martial',
-    skills: 'Choose 2 from Athletics, Insight, Intimidation, Medicine, Persuasion, Religion',
-    features: ['Divine Smite — expend spell slots for radiant damage', 'Spellcasting (Charisma)', 'Divine Health — immune to disease', 'Sacred Oath subclass at level 3', 'Aura of Protection at level 6', 'Extra Attack at level 5']
+    weapons_tip: 'Simple weapons are basic tools anyone can use (clubs, daggers, spears). Martial weapons are advanced weapons requiring training (swords, axes, bows). Paladins can use all of them.',
+    skills: 'Choose 2: Athletics, Insight, Intimidation, Medicine, Persuasion, Religion',
+    skills_tip: {
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Medicine': 'Stabilize a dying creature or diagnose illness and poison.',
+      'Persuasion': 'Influence someone through honest appeals, diplomacy, or charm.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.'
+    },
+    skills_count: 2,
+    skills_list: ['Athletics','Insight','Intimidation','Medicine','Persuasion','Religion'],
+    features: [
+      'Divine Smite — expend a spell slot after hitting to deal extra radiant damage (more slots = more damage)',
+      'Spellcasting (Charisma) — cast spells using Charisma as your magic ability',
+      'Divine Health — you are immune to disease',
+      'Sacred Oath subclass at level 3 — your oath defines your powers and code of conduct',
+      'Aura of Protection at level 6 — you and nearby allies add your Charisma modifier to all saving throws',
+      'Extra Attack at level 5 — attack twice whenever you take the Attack action'
+    ]
   },
   {
-    id: 'ranger', name: 'Ranger', anavale: 'The Wanderer',
-    gigglegloom: 'featherflow',
+    id: 'ranger', name: 'Ranger',
+    gigglegloom: 'featherflow', gigglegloom_label: 'Featherflow',
     summary: 'Weave martial prowess with nature magic. You know how to read the color of a place before you arrive — and how to move through it without leaving a trace.',
-    hit_die: 'd10', primary: 'Dexterity & Wisdom', saves: 'Strength, Dexterity',
+    hit_die: 'd10', hit_die_tip: 'Your Hit Die determines hit points per level. A d10 is excellent — Rangers are mobile and tough.',
+    primary: 'Dexterity & Wisdom',
+    saves: 'Strength, Dexterity', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light, Medium, Shields', weapons: 'Simple, Martial',
-    skills: 'Choose 3 from Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival',
-    features: ['Favored Enemy', 'Natural Explorer', 'Spellcasting (Wisdom)', 'Ranger Archetype subclass at level 3', 'Extra Attack at level 5', 'Hide in Plain Sight at level 10']
+    weapons_tip: 'Simple weapons are basic tools anyone can use (clubs, daggers, spears). Martial weapons are advanced weapons requiring training (swords, axes, bows).',
+    skills: 'Choose 3: Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival',
+    skills_tip: {
+      'Animal Handling': 'Calm or control animals, keep your mount steady in combat.',
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Investigation': 'Search an area carefully, find clues, deduce conclusions.',
+      'Nature': 'Recall knowledge about terrain, plants, animals, and the natural world.',
+      'Perception': 'Notice things — spot a hidden enemy, hear footsteps, find a secret door.',
+      'Stealth': 'Move silently and stay hidden from creatures that might notice you.',
+      'Survival': 'Track creatures, forage for food, navigate wilderness, and avoid natural hazards.'
+    },
+    skills_count: 3,
+    skills_list: ['Animal Handling','Athletics','Insight','Investigation','Nature','Perception','Stealth','Survival'],
+    features: [
+      'Favored Enemy — choose a creature type; you have advantage on tracking and recalling knowledge about them',
+      'Natural Explorer — choose a terrain type; you move faster, don\'t get lost, and always find food there',
+      'Spellcasting (Wisdom) — cast spells using Wisdom as your magic ability',
+      'Ranger Archetype subclass at level 3',
+      'Extra Attack at level 5 — attack twice whenever you take the Attack action',
+      'Hide in Plain Sight at level 10 — spend 1 minute to camouflage yourself; +10 to Stealth while still'
+    ]
   },
   {
-    id: 'rogue', name: 'Rogue', anavale: 'The Nimble',
-    gigglegloom: 'featherflow',
+    id: 'rogue', name: 'Rogue',
+    gigglegloom: 'featherflow', gigglegloom_label: 'Featherflow',
     summary: 'Move through the world lightly, strike precisely, and disappear. Sneak Attack turns a single well-placed hit into something devastating.',
-    hit_die: 'd8', primary: 'Dexterity', saves: 'Dexterity, Intelligence',
+    hit_die: 'd8', hit_die_tip: 'Your Hit Die determines hit points per level. A d8 is average — Rogues rely on not getting hit rather than absorbing blows.',
+    primary: 'Dexterity',
+    saves: 'Dexterity, Intelligence', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light', weapons: 'Simple, Hand Crossbow, Longsword, Rapier, Shortsword',
-    skills: 'Choose 4 from Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, Stealth',
-    features: ['Sneak Attack — bonus damage when you have advantage', 'Thieves\' Cant', 'Cunning Action — Dash/Disengage/Hide as bonus action', 'Roguish Archetype subclass at level 3', 'Uncanny Dodge', 'Evasion at level 7']
+    weapons_tip: 'Simple weapons are basic tools anyone can use. Rogues also train with a handful of martial weapons — rapiers and longswords — that suit a precise, mobile fighting style.',
+    skills: 'Choose 4: Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, Stealth',
+    skills_tip: {
+      'Acrobatics': 'Stay on your feet, tumble, or perform feats of agility.',
+      'Athletics': 'Climb, jump, swim, or grapple — anything requiring raw physical effort.',
+      'Deception': 'Lie convincingly, disguise your intentions, and mislead others.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Investigation': 'Search an area carefully, find clues, deduce conclusions.',
+      'Perception': 'Notice things — spot a hidden enemy, hear footsteps, find a secret door.',
+      'Performance': 'Entertain an audience with music, dance, acting, or storytelling.',
+      'Persuasion': 'Influence someone through honest appeals, diplomacy, or charm.',
+      'Sleight of Hand': 'Pick pockets, palm objects, or perform manual trickery unnoticed.',
+      'Stealth': 'Move silently and stay hidden from creatures that might notice you.'
+    },
+    skills_count: 4,
+    skills_list: ['Acrobatics','Athletics','Deception','Insight','Intimidation','Investigation','Perception','Performance','Persuasion','Sleight of Hand','Stealth'],
+    features: [
+      'Sneak Attack — deal extra damage (1d6, growing each level) when you have advantage or an ally is next to your target',
+      'Thieves\' Cant — a secret language of signs, symbols, and slang known only to rogues and thieves',
+      'Cunning Action — Dash, Disengage, or Hide as a bonus action every turn',
+      'Roguish Archetype subclass at level 3',
+      'Uncanny Dodge — when hit by an attacker you can see, use your reaction to halve the damage',
+      'Evasion at level 7 — when a spell or effect targets your Dex save: no damage on success, half on failure'
+    ]
   },
   {
-    id: 'sorcerer', name: 'Sorcerer', anavale: 'The Sparked',
-    gigglegloom: 'flamerage',
+    id: 'sorcerer', name: 'Sorcerer',
+    gigglegloom: 'flamerage', gigglegloom_label: 'Flamerage',
     summary: 'The Gigglegloom chose you, not the other way around. Wield innate magic that flows from your bloodline — reshape spells with Metamagic.',
-    hit_die: 'd6', primary: 'Charisma', saves: 'Constitution, Charisma',
+    hit_die: 'd6', hit_die_tip: 'Your Hit Die determines hit points per level. A d6 is the lowest — Sorcerers are powerful but fragile. Stay out of melee range.',
+    primary: 'Charisma',
+    saves: 'Constitution, Charisma', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'None', weapons: 'Simple, Light Crossbow',
-    skills: 'Choose 2 from Arcana, Deception, Insight, Intimidation, Persuasion, Religion',
-    features: ['Spellcasting (Charisma)', 'Sorcerous Origin subclass at level 1', 'Font of Magic — sorcery points', 'Metamagic — modify spells (Quicken, Twin, Empower…)', 'Sorcerous Restoration at level 20', 'Flexible Casting']
+    weapons_tip: 'Simple weapons are basic tools anyone can use. Sorcerers have minimal weapon training — their spells are their primary offense.',
+    skills: 'Choose 2: Arcana, Deception, Insight, Intimidation, Persuasion, Religion',
+    skills_tip: {
+      'Arcana': 'Recall knowledge about spells, magic items, and magical traditions.',
+      'Deception': 'Lie convincingly, disguise your intentions, and mislead others.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Persuasion': 'Influence someone through honest appeals, diplomacy, or charm.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.'
+    },
+    skills_count: 2,
+    skills_list: ['Arcana','Deception','Insight','Intimidation','Persuasion','Religion'],
+    features: [
+      'Spellcasting (Charisma) — cast spells using Charisma as your magic ability',
+      'Sorcerous Origin subclass at level 1 — your magical bloodline shapes your powers from the start',
+      'Font of Magic — convert spell slots into sorcery points and back again',
+      'Metamagic — modify spells in powerful ways: cast two at once, extend range, add targets, and more',
+      'Flexible Casting — spend sorcery points to create spell slots of any level on the fly',
+      'Sorcerous Restoration at level 20 — regain 4 sorcery points whenever you have none left'
+    ]
   },
   {
-    id: 'warlock', name: 'Warlock', anavale: 'The Bound',
-    gigglegloom: 'flamerage',
+    id: 'warlock', name: 'Warlock',
+    gigglegloom: 'flamerage', gigglegloom_label: 'Flamerage',
     summary: 'You made an agreement with something old. The terms were worth it. Probably. Cast powerful spells fueled by your patron — and Eldritch Blast when slots run dry.',
-    hit_die: 'd8', primary: 'Charisma', saves: 'Wisdom, Charisma',
+    hit_die: 'd8', hit_die_tip: 'Your Hit Die determines hit points per level. A d8 is average — Warlocks are resilient, especially since their spell slots recharge on short rests.',
+    primary: 'Charisma',
+    saves: 'Wisdom, Charisma', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'Light', weapons: 'Simple',
-    skills: 'Choose 2 from Arcana, Deception, History, Intimidation, Investigation, Nature, Religion',
-    features: ['Otherworldly Patron subclass at level 1', 'Pact Magic — few powerful spell slots, recover on short rest', 'Eldritch Invocations — customize your magic', 'Pact Boon at level 3', 'Mystic Arcanum at level 11', 'Eldritch Master at level 20']
+    weapons_tip: 'Simple weapons are basic tools anyone can use. Warlocks pair simple weapons with Eldritch Blast — a powerful at-will ranged attack that never runs out.',
+    skills: 'Choose 2: Arcana, Deception, History, Intimidation, Investigation, Nature, Religion',
+    skills_tip: {
+      'Arcana': 'Recall knowledge about spells, magic items, and magical traditions.',
+      'Deception': 'Lie convincingly, disguise your intentions, and mislead others.',
+      'History': 'Recall knowledge about past events, legends, and important figures.',
+      'Intimidation': 'Frighten or pressure someone through threats and displays of force.',
+      'Investigation': 'Search an area carefully, find clues, deduce conclusions.',
+      'Nature': 'Recall knowledge about terrain, plants, animals, and the natural world.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.'
+    },
+    skills_count: 2,
+    skills_list: ['Arcana','Deception','History','Intimidation','Investigation','Nature','Religion'],
+    features: [
+      'Otherworldly Patron subclass at level 1 — your patron defines your expanded spell list and special powers',
+      'Pact Magic — fewer spell slots than other casters, but they recharge on a short rest (not long rest)',
+      'Eldritch Invocations — customize your magic with permanent upgrades chosen from a long list',
+      'Pact Boon at level 3 — your patron gives you a lasting gift: a weapon, a familiar, or a magical tome',
+      'Mystic Arcanum at level 11 — gain one very powerful spell that you can cast once per long rest',
+      'Eldritch Master at level 20 — spend 1 minute communing with your patron to regain all spell slots'
+    ]
   },
   {
-    id: 'wizard', name: 'Wizard', anavale: 'The Learned',
-    gigglegloom: 'steelfist',
+    id: 'wizard', name: 'Wizard',
+    gigglegloom: 'steelfist', gigglegloom_label: 'Steelfist',
     summary: 'You studied until the Gigglegloom respected you. Command the widest spell list in the game — and write new spells into your spellbook as you discover them.',
-    hit_die: 'd6', primary: 'Intelligence', saves: 'Intelligence, Wisdom',
+    hit_die: 'd6', hit_die_tip: 'Your Hit Die determines hit points per level. A d6 is the lowest — Wizards are powerful but fragile. Position carefully and keep allies between you and danger.',
+    primary: 'Intelligence',
+    saves: 'Intelligence, Wisdom', saves_tip: 'These are the two abilities you add your proficiency bonus to when making saving throws — rolls to resist spells, traps, and other threats.',
     armor: 'None', weapons: 'Simple, Light Crossbow',
-    skills: 'Choose 2 from Arcana, History, Insight, Investigation, Medicine, Religion',
-    features: ['Spellcasting (Intelligence)', 'Spellbook — learn and copy spells', 'Arcane Recovery — recover spell slots on short rest', 'Arcane Tradition subclass at level 2', 'Spell Mastery at level 18', 'Signature Spells at level 20']
+    weapons_tip: 'Simple weapons are basic tools anyone can use. Wizards have minimal weapon training — their vast spell list is their entire offense and defense.',
+    skills: 'Choose 2: Arcana, History, Insight, Investigation, Medicine, Religion',
+    skills_tip: {
+      'Arcana': 'Recall knowledge about spells, magic items, and magical traditions.',
+      'History': 'Recall knowledge about past events, legends, and important figures.',
+      'Insight': 'Read people — sense if someone is lying or hiding something.',
+      'Investigation': 'Search an area carefully, find clues, deduce conclusions.',
+      'Medicine': 'Stabilize a dying creature or diagnose illness and poison.',
+      'Religion': 'Recall knowledge about gods, religious rites, and holy symbols.'
+    },
+    skills_count: 2,
+    skills_list: ['Arcana','History','Insight','Investigation','Medicine','Religion'],
+    features: [
+      'Spellcasting (Intelligence) — cast spells using Intelligence as your magic ability',
+      'Spellbook — start with 6 spells; copy new ones from scrolls and other spellbooks as you adventure',
+      'Arcane Recovery — once per day during a short rest, recover expended spell slots',
+      'Arcane Tradition subclass at level 2',
+      'Spell Mastery at level 18 — choose one 1st-level and one 2nd-level spell; cast them at will without slots',
+      'Signature Spells at level 20 — two 3rd-level spells you can always cast for free once per rest'
+    ]
   }
 ];
 
-// Class → Gigglegloom type auto-assignment
+// Class → Gigglegloom type mapping
 var CLASS_TO_GIGGLEGLOOM = {
   barbarian: 'flamerage', bard: 'featherflow', cleric: 'bubbleseed',
   druid: 'bubbleseed', fighter: 'steelfist', monk: 'steelfist',
@@ -518,14 +782,18 @@ var CLASS_TO_GIGGLEGLOOM = {
 };
 
 function initStage1() {
-  renderClassGrid();
   renderGigglogloomAffinity();
+  renderClassGrid();
+  // Class grid hidden until affinity is chosen
+  var classSection = document.getElementById('char-class-section');
+  if (classSection) classSection.style.display = 'none';
   // Restore from draft
-  if (CHAR_STATE.draft.class_id) {
-    restoreClassSelection(CHAR_STATE.draft.class_id);
-  }
   if (CHAR_STATE.draft.gigglegloom_type) {
     highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
+    if (classSection) classSection.style.display = 'block';
+  }
+  if (CHAR_STATE.draft.class_id) {
+    restoreClassSelection(CHAR_STATE.draft.class_id);
   }
 }
 
@@ -536,30 +804,65 @@ function renderClassGrid() {
     var featuresHtml = cls.features.map(function(f) {
       return '<li>' + f + '</li>';
     }).join('');
-    return '<div class="char-class-card" data-class="' + cls.id + '" data-gigglegloom="' + cls.gigglegloom + '" onclick="selectClass(\'' + cls.id + '\')">'
+    var traitTips = [
+      { label: 'HIT DIE', value: cls.hit_die, tip: cls.hit_die_tip },
+      { label: 'PRIMARY', value: cls.primary, tip: null },
+      { label: 'SAVES', value: cls.saves, tip: cls.saves_tip },
+      { label: 'ARMOR', value: cls.armor, tip: null },
+      { label: 'WEAPONS', value: cls.weapons, tip: cls.weapons_tip }
+    ];
+    var traitsHtml = traitTips.map(function(t) {
+      var labelHtml = t.tip
+        ? '<span class="char-class-trait-label char-trait-has-tip" data-tip="' + t.tip.replace(/"/g,'&quot;') + '">' + t.label + ' <span class="char-trait-tip-icon">?</span></span>'
+        : '<span class="char-class-trait-label">' + t.label + '</span>';
+      return '<span class="char-class-trait">' + labelHtml + t.value + '</span>';
+    }).join('');
+    var skillsHtml = cls.skills_list.map(function(sk) {
+      var tip = cls.skills_tip[sk] || '';
+      return '<label class="char-skill-option" data-class="' + cls.id + '">'
+        + '<input type="checkbox" name="skill-' + cls.id + '" value="' + sk + '">'
+        + '<span class="char-skill-name">' + sk + '</span>'
+        + (tip ? '<span class="char-skill-tip">' + tip + '</span>' : '')
+        + '</label>';
+    }).join('');
+    return '<div class="char-class-card" data-class="' + cls.id + '" data-gigglegloom="' + cls.gigglegloom + '">'
       + '<div class="char-class-card-check">✓</div>'
-      + '<div class="char-class-card-header">'
+      + '<div class="char-class-card-header" onclick="selectClass(\'' + cls.id + '\')">'
       +   '<div class="char-class-card-names">'
       +     '<div class="char-class-name">' + cls.name + '</div>'
-      +     '<div class="char-class-anavale">' + cls.anavale + ' <span class="char-class-affinity-dot char-class-affinity-dot--' + cls.gigglegloom + '"></span></div>'
+      +     '<span class="sm-type-badge ' + cls.gigglegloom_label + ' char-class-affinity-badge">' + cls.gigglegloom_label + '</span>'
       +   '</div>'
       +   '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleClassCard(this)" aria-label="Toggle details">Details</button>'
       + '</div>'
-      + '<div class="char-class-summary">' + cls.summary + '</div>'
+      + '<div class="char-class-summary" onclick="selectClass(\'' + cls.id + '\')">' + cls.summary + '</div>'
       + '<div class="char-class-body">'
-      +   '<div class="char-class-traits">'
-      +     '<span class="char-class-trait"><span class="char-class-trait-label">Hit Die</span>' + cls.hit_die + '</span>'
-      +     '<span class="char-class-trait"><span class="char-class-trait-label">Primary</span>' + cls.primary + '</span>'
-      +     '<span class="char-class-trait"><span class="char-class-trait-label">Saves</span>' + cls.saves + '</span>'
-      +     '<span class="char-class-trait"><span class="char-class-trait-label">Armor</span>' + cls.armor + '</span>'
-      +     '<span class="char-class-trait"><span class="char-class-trait-label">Weapons</span>' + cls.weapons + '</span>'
-      +     '<span class="char-class-trait"><span class="char-class-trait-label">Skills</span>' + cls.skills + '</span>'
+      +   '<div class="char-class-traits">' + traitsHtml + '</div>'
+      +   '<div class="char-class-skills-section">'
+      +     '<div class="char-class-features-label">Skills — choose ' + cls.skills_count + '</div>'
+      +     '<div class="char-class-skills-grid">' + skillsHtml + '</div>'
+      +     '<div class="char-class-skills-count" id="skill-count-' + cls.id + '">0 of ' + cls.skills_count + ' chosen</div>'
       +   '</div>'
       +   '<div class="char-class-features-label">Key Features</div>'
       +   '<ul class="char-class-features">' + featuresHtml + '</ul>'
       + '</div>'
       + '</div>';
   }).join('');
+  // Wire skill checkboxes
+  document.querySelectorAll('.char-skill-option input[type=checkbox]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      var classId = this.closest('.char-class-card').dataset.class;
+      var cls = CLASS_DATA.find(function(c) { return c.id === classId; });
+      var checked = document.querySelectorAll('input[name="skill-' + classId + '"]:checked');
+      if (checked.length > cls.skills_count) {
+        this.checked = false;
+        return;
+      }
+      var counter = document.getElementById('skill-count-' + classId);
+      if (counter) counter.textContent = checked.length + ' of ' + cls.skills_count + ' chosen';
+      CHAR_STATE.draft['skills_' + classId] = Array.from(checked).map(function(c) { return c.value; });
+      saveDraftToStorage();
+    });
+  });
 }
 
 function renderGigglogloomAffinity() {
@@ -567,7 +870,8 @@ function renderGigglogloomAffinity() {
   if (!grid) return;
   grid.innerHTML = Object.keys(GIGGLEGLOOM_TYPES).map(function(typeId) {
     var t = GIGGLEGLOOM_TYPES[typeId];
-    return '<div class="char-type-card char-type-card--affinity" data-type="' + typeId + '">'
+    return '<div class="char-type-card" data-type="' + typeId + '" onclick="selectType(\'' + typeId + '\')">'
+      + '<div class="char-type-check">✓</div>'
       + '<div class="char-type-header">'
       + '<img class="char-type-icon" src="assets/icons/icon-' + typeId + '.svg" alt="' + t.name + '">'
       + '<div class="char-type-meta">'
@@ -596,31 +900,28 @@ function toggleClassCard(btn) {
 }
 
 function selectClass(classId) {
-  // Update card UI
   document.querySelectorAll('.char-class-card').forEach(function(c) {
     c.classList.toggle('selected', c.dataset.class === classId);
   });
-  // Auto-assign Gigglegloom type
   var typeId = CLASS_TO_GIGGLEGLOOM[classId] || 'bubbleseed';
-  highlightAffinityCard(typeId);
   CHAR_STATE.draft.class_id = classId;
   CHAR_STATE.draft.gigglegloom_type = typeId;
   saveDraftToStorage();
-  // Scroll to affinity section so player sees what was assigned
-  setTimeout(function() {
-    var affinitySection = document.getElementById('char-affinity-section');
-    if (affinitySection) scrollToField(affinitySection);
-  }, 80);
 }
 
 function selectType(typeId, silent) {
-  // Legacy stub — Gigglegloom type is now auto-assigned from class selection.
-  // Kept to avoid ReferenceErrors from any restored draft calls.
+  highlightAffinityCard(typeId);
+  // Reveal class section on first affinity selection
+  var classSection = document.getElementById('char-class-section');
+  if (classSection) classSection.style.display = 'block';
   if (!silent) {
     CHAR_STATE.draft.gigglegloom_type = typeId;
     saveDraftToStorage();
+    // Scroll to class section
+    setTimeout(function() {
+      scrollToField(document.getElementById('char-class-section'));
+    }, 80);
   }
-  highlightAffinityCard(typeId);
 }
 
 function restoreClassSelection(classId) {

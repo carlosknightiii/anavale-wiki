@@ -120,24 +120,26 @@
 
   <!-- Stage header -->
   <div class="char-stage-header">
-    <div class="char-stage-eyebrow">Stage 1 of 5 · <span class="char-eyebrow-accent">Choose Your Class</span></div>
-    <h2 class="char-stage-title">Your Gift</h2>
-    <p class="char-stage-intro">Everyone in Anavale carries a trace of the Gigglegloom — but your <strong>class</strong> defines how you use it. Pick the one that fits how you want to play.</p>
+    <div class="char-stage-eyebrow">Stage 1 of 5 · <span class="char-eyebrow-accent">Your Gift</span></div>
+    <h2 class="char-stage-title">Choose Your Class</h2>
+    <p class="char-stage-intro">Your class is who you are in a fight — and beyond it. Start by choosing your Gigglegloom affinity, then pick the class that fits how you want to play.</p>
   </div>
 
-  <!-- Class picker — primary selection -->
-  <div class="char-class-section-label">Choose Your Class</div>
-  <p class="char-class-section-intro">Click any class to select it. Use the Details button to see full traits and features before deciding.</p>
-  <div id="char-class-grid" class="char-class-grid">
-    <!-- Rendered by character.js renderClassGrid() -->
-  </div>
-
-  <!-- Gigglegloom affinity — auto-assigned, read-only display -->
-  <div id="char-affinity-section" class="char-affinity-section">
-    <div class="char-affinity-label">Your Gigglegloom Affinity</div>
-    <p class="char-affinity-intro">Your class determines which current of the Gigglegloom flows through you. This is assigned automatically when you choose a class — no separate selection needed.</p>
+  <!-- Step 1 — Gigglegloom affinity -->
+  <div class="char-affinity-section" id="char-affinity-section">
+    <div class="char-class-section-label">Step 1 — Your Gigglegloom Affinity</div>
+    <p class="char-class-section-intro">The Gigglegloom is the living magic that flows through Anavale. Choose the current that calls to you — this is flavor, not a restriction. <strong>Your affinity does not limit your class or your spells.</strong> All spell access is determined by your class alone.</p>
     <div id="char-type-grid" class="char-type-grid">
       <!-- Rendered by character.js renderGigglogloomAffinity() -->
+    </div>
+  </div>
+
+  <!-- Step 2 — Class selection (hidden until affinity chosen) -->
+  <div id="char-class-section">
+    <div class="char-class-section-label">Step 2 — Choose Your Class</div>
+    <p class="char-class-section-intro">Each class lists its natural Gigglegloom affinity — but you are not bound by it. A Wizard with Flamerage affinity is just as valid as one with Steelfist. Click a class to select it. Open Details to see full traits, features, and skills before deciding.</p>
+    <div id="char-class-grid" class="char-class-grid">
+      <!-- Rendered by character.js renderClassGrid() -->
     </div>
   </div>
 
