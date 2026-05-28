@@ -214,7 +214,7 @@ function jumpToStage(n) {
 
 function initStageOnEnter(n) {
   if (n === 2) initStage2();
-  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); renderStage3Panel(); }
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); renderStage3Panel(); updateGoldDisplay(); }
   if (n === 5) initStage5();
 }
 
@@ -2555,20 +2555,16 @@ function renderStage3Panel() {
   var total     = getStartingGold();
   var spent     = calcGoldSpent();
   var remaining = total - spent;
-  var goldClass = remaining < 0 ? ' char-stage3-stat-value--red' : '';
-  var moneyHtml;
-  if (remaining < 0) {
-    moneyHtml = '<div class="char-stage3-stat-value char-stage3-stat-value--red">◈ ' + remaining.toFixed(2) + ' Gold</div>';
-  } else {
-    var remGold   = Math.floor(remaining);
-    var remFrac   = remaining - remGold;
-    var remSilver = Math.floor(remFrac * 10);
-    var remCopper = Math.round((remFrac * 10 - remSilver) * 10);
-    moneyHtml =
-      '<div class="char-stage3-stat-value char-stage3-stat-value--gold">◈ ' + remGold + ' Gold</div>'
-      + '<div class="char-stage3-stat-value char-stage3-stat-value--silver" style="font-size:0.8rem;">◈ ' + remSilver + ' Silver</div>'
-      + '<div class="char-stage3-stat-value char-stage3-stat-value--copper" style="font-size:0.8rem;">◈ ' + remCopper + ' Copper</div>';
-  }
+  var totalCP   = Math.round(remaining * 100);
+  var absCP     = Math.abs(totalCP);
+  var remGold   = Math.floor(absCP / 100) * (remaining < 0 ? -1 : 1);
+  var remSilver = Math.floor((absCP % 100) / 10);
+  var remCopper = absCP % 10;
+  var goldValClass = remaining < 0 ? 'char-stage3-stat-value char-stage3-stat-value--red' : 'char-stage3-stat-value char-stage3-stat-value--gold';
+  var moneyHtml =
+    '<div class="' + goldValClass + '">◈ ' + remGold + ' Gold</div>'
+    + '<div class="char-stage3-stat-value char-stage3-stat-value--silver" style="font-size:0.8rem;">◈ ' + remSilver + ' Silver</div>'
+    + '<div class="char-stage3-stat-value char-stage3-stat-value--copper" style="font-size:0.8rem;">◈ ' + remCopper + ' Copper</div>';
 
   // ── Skills: class + background + imagined past ──
   var profSkills = [];
@@ -2718,6 +2714,15 @@ function renderStage3Panel() {
 }
 function updateGoldDisplay() {
   renderStage3Panel();
+  if (CHAR_STATE.current_stage === 3) {
+    var btn = document.querySelector('#char-stage-3 .char-btn-next');
+    if (btn) {
+      var overspent = (getStartingGold() - calcGoldSpent()) < 0;
+      btn.disabled = overspent;
+      btn.style.opacity = overspent ? '0.35' : '';
+      btn.style.cursor  = overspent ? 'not-allowed' : '';
+    }
+  }
 }
 
 function initAbilityScores() {
