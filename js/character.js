@@ -1588,6 +1588,15 @@ function updateWeaponStatChip(selectId, chipId) {
   if (!sel.value || typeof ITEMS === 'undefined') {
     chip.innerHTML = '';
     chip.style.display = 'none';
+    // Re-enable other hand if this slot is cleared
+    var otherIdClr = selectId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
+    var otherSelClr = document.getElementById(otherIdClr);
+    if (otherSelClr) {
+      otherSelClr.disabled = false;
+      if (otherSelClr.options[0] && otherSelClr.options[0].value === '__two_handed__') {
+        otherSelClr.remove(0);
+      }
+    }
     return;
   }
   var item = ITEMS.find(function(i) { return i.id === sel.value; });
@@ -1611,22 +1620,29 @@ function updateWeaponStatChip(selectId, chipId) {
   chip.innerHTML = html;
   chip.style.display = 'flex';
 
-  // Inline two-handed conflict warning
-  var conflictId = selectId + '-conflict';
-  var existing = document.getElementById(conflictId);
-  if (existing) existing.remove();
-  if (item && item.category === 'weapon') {
-    var otherSlotId = selectId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
-    var otherSel = document.getElementById(otherSlotId);
-    if (otherSel && otherSel.value && typeof ITEMS !== 'undefined') {
-      var otherItem = ITEMS.find(function(i) { return i.id === otherSel.value; });
-      if (otherItem && otherItem.properties && otherItem.properties.indexOf('two-handed') >= 0) {
-        var warn = document.createElement('div');
-        warn.id = conflictId;
-        warn.className = 'char-weapon-conflict';
-        warn.textContent = '! You have a two-handed weapon selected in your other hand.';
-        chip.parentNode.insertBefore(warn, chip.nextSibling);
-      }
+  // Two-handed weapon handling — disable other hand slot
+  var otherSlotId = selectId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
+  var otherSel    = document.getElementById(otherSlotId);
+  var otherChip   = document.getElementById(otherSlotId + '-stat');
+  // Clean up any previous conflict state on the other slot
+  if (otherSel) {
+    otherSel.disabled = false;
+    if (otherSel.options[0] && otherSel.options[0].value === '__two_handed__') {
+      otherSel.remove(0);
+    }
+  }
+  if (item && item.category === 'weapon'
+      && item.properties && item.properties.indexOf('two-handed') >= 0) {
+    // This weapon is two-handed — lock the other hand
+    if (otherSel) {
+      var placeholder = document.createElement('option');
+      placeholder.value   = '__two_handed__';
+      placeholder.text    = 'Using a 2-handed Weapon';
+      placeholder.disabled = false;
+      otherSel.insertBefore(placeholder, otherSel.options[0]);
+      otherSel.value    = '__two_handed__';
+      otherSel.disabled = true;
+      if (otherChip) { otherChip.innerHTML = ''; otherChip.style.display = 'none'; }
     }
   }
 }
@@ -2378,11 +2394,31 @@ function getStartingGearIds() {
   if (!cls || typeof ITEMS === 'undefined') return [];
   var gear = CLASS_STARTING_GEAR[cls];
   if (!gear) return [];
-  var gearNames = gear.weapons.map(function(w) { return w.toLowerCase(); });
-  if (gear.armor) gearNames.push(gear.armor.toLowerCase());
+  // Build a set of lowercase single-word tokens from gear strings
+  // e.g. 'Two handaxes' → ['handaxe','handaxes'], '4 javelins' → ['javelin','javelins']
+  // We match if any ITEM name token appears in the gear string or vice versa
+  var gearStrings = gear.weapons.slice();
+  if (gear.armor) gearStrings.push(gear.armor);
   return ITEMS
     .filter(function(item) {
-      return gearNames.some(function(g) { return item.name.toLowerCase() === g; });
+      if (!item.player_addable) return false;
+      if (item.category !== 'weapon' && item.category !== 'armor' && item.category !== 'shield') return false;
+      var itemName = item.name.toLowerCase();
+      return gearStrings.some(function(g) {
+        var gs = g.toLowerCase();
+        // Exact match
+        if (gs === itemName) return true;
+        // Gear string contains item name as a word (e.g. 'Two handaxes' contains 'handaxe' stem)
+        if (gs.indexOf(itemName) >= 0) return true;
+        // Item name contains the gear string
+        if (itemName.indexOf(gs) >= 0) return true;
+        // Stem match: strip trailing 's' from both and compare
+        var itemStem = itemName.replace(/s$/, '');
+        var gWords = gs.split(/\s+/);
+        return gWords.some(function(w) {
+          return w.replace(/s$/, '') === itemStem && w.length > 2;
+        });
+      });
     })
     .map(function(item) { return item.id; });
 }
@@ -2499,30 +2535,54 @@ function renderStage3Panel() {
   var total     = getStartingGold();
   var spent     = calcGoldSpent();
   var remaining = total - spent;
+  var remainingGold   = Math.floor(Math.max(remaining, 0));
+  var remainingFrac   = Math.max(remaining, 0) - remainingGold;
+  var remainingSilver = Math.floor(remainingFrac * 10);
+  var remainingCopper = Math.round((remainingFrac * 10 - remainingSilver) * 10);
   var goldClass = remaining < 0 ? ' char-stage3-stat-value--red' : '';
   var goldIcon  = '◈';
+  var moneyHtml;
+  if (remaining < 0) {
+    moneyHtml = '<div class="char-stage3-stat-value char-stage3-stat-value--red">'
+      + goldIcon + ' ' + remaining.toFixed(2) + ' Gold</div>';
+  } else {
+    moneyHtml = '<div class="char-stage3-stat-value">◈ ' + remainingGold + ' Gold</div>'
+      + (remainingSilver > 0 ? '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remainingSilver + ' Silver</div>' : '')
+      + (remainingCopper > 0 ? '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remainingCopper + ' Copper</div>' : '');
+  }
 
   // ── Skills: class + background + imagined past ──
-  var allSkills = [];
+  var profSkills = [];   // full proficiencies
+  var bonusLines = [];   // flat +1 modifiers (ability bonuses from bg/past)
   // Class chosen skills
   if (classId) {
-    var clsSkills = CHAR_STATE.draft['skills_' + classId] || [];
-    clsSkills.forEach(function(s) { if (allSkills.indexOf(s) < 0) allSkills.push(s); });
+    (CHAR_STATE.draft['skills_' + classId] || []).forEach(function(s) {
+      if (profSkills.indexOf(s) < 0) profSkills.push(s);
+    });
   }
-  // Background skills
+  // Background skills → proficiencies
   if (bgObj && bgObj.skills) {
-    bgObj.skills.forEach(function(s) { if (allSkills.indexOf(s) < 0) allSkills.push(s); });
+    bgObj.skills.forEach(function(s) {
+      if (profSkills.indexOf(s) < 0) profSkills.push(s);
+    });
   }
-  // Imagined past skills
+  // Background ability bonuses → flat modifier lines
+  if (bgObj && bgObj.bonuses) {
+    bgObj.bonuses.forEach(function(b) {
+      // Only include stat bonuses (e.g. "+2 Str"), skip feat names
+      if (/^[+-]\d+\s+\w+$/.test(b.trim())) bonusLines.push(b.trim());
+    });
+  }
+  // Imagined past skills → proficiencies
   var pastKeys = ['who_raised_you','dearest_friend','organization'];
   pastKeys.forEach(function(k) {
     var val = CHAR_STATE.draft[k];
     if (val && PAST_SKILL_GRANTS[val]) {
       var sk = PAST_SKILL_GRANTS[val];
-      if (allSkills.indexOf(sk) < 0) allSkills.push(sk);
+      if (profSkills.indexOf(sk) < 0) profSkills.push(sk);
     }
   });
-  allSkills.sort();
+  profSkills.sort();
 
   // ── Ability scores with background bonuses applied ──
   var AB_KEYS  = ['str','dex','con','int','wis','cha'];
@@ -2581,12 +2641,13 @@ function renderStage3Panel() {
 
   body.innerHTML =
     '<div class="char-stage3-panel-icon">' + icon + '</div>'
-    + '<div>'
-      + '<div class="char-stage3-panel-class">' + clsName + '</div>'
-      + (clsObj ? '<div class="char-stage3-panel-sub">Main Abilities: ' + clsObj.primary + '</div>' : '')
-      + (bgDisplay ? '<div class="char-stage3-panel-sub">' + bgDisplay + '</div>' : '')
-    + '</div>'
-    + '<div class="char-stage3-panel-stats">'
+    + '<div class="char-stage3-panel-top-row">'
+      + '<div>'
+        + '<div class="char-stage3-panel-class">' + clsName + '</div>'
+        + (clsObj ? '<div class="char-stage3-panel-sub">Main Abilities: ' + clsObj.primary + '</div>' : '')
+        + (bgDisplay ? '<div class="char-stage3-panel-sub">' + bgDisplay + '</div>' : '')
+      + '</div>'
+      + '<div class="char-stage3-panel-stats">'
       + '<div class="char-stage3-stat-block">'
         + '<div class="char-stage3-stat-label">Armor</div>'
         + '<div class="char-stage3-stat-value">🛡 ' + ac + '</div>'
@@ -2597,20 +2658,23 @@ function renderStage3Panel() {
       + '</div>'
       + '<div class="char-stage3-stat-block">'
         + '<div class="char-stage3-stat-label">Money</div>'
-        + '<div class="char-stage3-stat-value' + goldClass + '">' + goldIcon + ' ' + remaining + ' Gold</div>'
+        + moneyHtml
       + '</div>'
+    + '</div>'
     + '</div>'
     + '<div class="char-stage3-panel-lower">'
       + '<div class="char-stage3-lower-block">'
         + '<div class="char-stage3-lower-label">Skills</div>'
-        + (allSkills.length
-            ? '<div class="char-stage3-lower-row">' + allSkills.join(', ') + '</div>'
+        + (profSkills.length
+            ? '<div class="char-stage3-lower-row"><span>Proficient</span>' + profSkills.join(', ') + '</div>'
             : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Choose class + background to see skills</div>')
+        + (bonusLines.length
+            ? '<div class="char-stage3-lower-row"><span>Modifiers</span>' + bonusLines.join(', ') + '</div>'
+            : '')
       + '</div>'
       + '<div class="char-stage3-lower-block">'
-        + '<div class="char-stage3-lower-label">Ability Scores '
-          + '<span style="color:var(--char-text-faint);font-weight:400;text-transform:none;letter-spacing:0;">(red = 9 or below)</span>'
-        + '</div>'
+        + '<div class="char-stage3-lower-label">Total Ability Scores</div>'
+        + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--char-text-faint);margin-bottom:0.3rem;line-height:1.4;">Includes assigned scores and modifiers from your previous selections.</div>'
         + (anyScore
             ? '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
             : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores above</div>')
