@@ -440,16 +440,17 @@
         <p class="char-stage-intro">Assign your six core abilities and describe what you look like. The appearance details will be used to create your character portrait later.</p>
       </div>
 
+  <div id="char-stage3-summary" class="char-stage3-panel">
+    <div class="char-stage3-panel-header">
+      <span class="char-stage3-panel-title">Your Character</span>
+      <button class="char-stage3-panel-collapse" onclick="toggleStage3Panel(this)" aria-expanded="true">Collapse</button>
+    </div>
+    <div class="char-stage3-panel-body" id="char-stage3-panel-body">
+      <!-- populated by renderStage3Panel() in character.js -->
+    </div>
+  </div>
+
       <!-- Ability Scores -->
-      <div id="char-class-context" class="char-class-context"></div>
-      <div id="char-gold-display" class="char-gold-display">
-        <span class="char-gold-icon">◈</span>
-        <span class="char-gold-total"></span>
-        <span class="char-gold-divider">·</span>
-        <span class="char-gold-spent"></span>
-        <span class="char-gold-divider">·</span>
-        <span class="char-gold-remaining"></span>
-      </div>
       <div class="char-section-header">
         <div class="char-section-header-eyebrow">Part 1 of 3</div>
         <div class="char-section-header-title">Ability scores</div>

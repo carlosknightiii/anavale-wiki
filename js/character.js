@@ -214,7 +214,7 @@ function jumpToStage(n) {
 
 function initStageOnEnter(n) {
   if (n === 2) initStage2();
-  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); renderClassContextBlurb(); updateGoldDisplay(); }
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); renderStage3Panel(); }
   if (n === 5) initStage5();
 }
 
@@ -1396,7 +1396,7 @@ var CLASS_STARTING_GEAR = {
 var CLOTHING_STATS = {
   // app-top
   'plate armour':        { ac: 'AC 18', weight: 'Heavy', note: 'Str 15 req · Stealth ⚠' },
-  'chainmail shirt':     { ac: 'AC 16', weight: 'Heavy', note: 'Str 13 req · Stealth ⚠' },
+  'chainmail shirt':     { ac: 'AC 13 + Dex (max +2)', weight: 'Heavy', note: 'Str 13 req · Stealth ⚠' },
   'scale mail':          { ac: 'AC 14 + Dex (max +2)', weight: 'Medium', note: 'Stealth ⚠' },
   'breastplate':         { ac: 'AC 14 + Dex (max +2)', weight: 'Medium', note: '' },
   'leather armour':      { ac: 'AC 11 + Dex', weight: 'Light', note: '' },
@@ -1507,7 +1507,7 @@ function filterClothingByClass(cls) {
       (CLOTHING_TIERS[tier] || []).forEach(function(opt) {
         var o = document.createElement('option');
         o.value = opt.value;
-        o.textContent = opt.label;
+        o.textContent = opt.cost_gp ? opt.label + ' -' + opt.cost_gp + ' Gold' : opt.label;
         topSel.appendChild(o);
       });
     });
@@ -1529,7 +1529,7 @@ function filterClothingByClass(cls) {
       (LOWER_TIERS[tier] || []).forEach(function(opt) {
         var o = document.createElement('option');
         o.value = opt.value;
-        o.textContent = opt.label;
+        o.textContent = opt.cost_gp ? opt.label + ' -' + opt.cost_gp + ' Gold' : opt.label;
         lowSel.appendChild(o);
       });
     });
@@ -1569,7 +1569,7 @@ function filterWeaponsByClass(cls) {
       if (slotId === 'app-hand-right' && item.category === 'shield') return;
       var o = document.createElement('option');
       o.value = item.id;
-      o.textContent = item.name;
+      o.textContent = item.cost_gp ? item.name + ' -' + item.cost_gp + ' Gold' : item.name;
       sel.appendChild(o);
     });
     if (current && sel.querySelector('option[value="' + current + '"]')) {
@@ -1600,14 +1600,32 @@ function updateWeaponStatChip(selectId, chipId) {
       html += '<span class="char-stat-chip char-stat-chip--note">Versatile ' + item.versatile_dice + '</span>';
     }
     if (item.properties && item.properties.length) {
-      var props = item.properties.filter(function(p) { return p !== 'versatile'; });
-      if (props.length) {
-        html += '<span class="char-stat-chip char-stat-chip--note">' + props.join(' · ') + '</span>';
-      }
+      item.properties.filter(function(p) { return p !== 'versatile'; }).forEach(function(p) {
+        html += '<span class="char-stat-chip char-stat-chip--note">' + p + '</span>';
+      });
     }
   }
   chip.innerHTML = html;
   chip.style.display = 'flex';
+
+  // Inline two-handed conflict warning
+  var conflictId = selectId + '-conflict';
+  var existing = document.getElementById(conflictId);
+  if (existing) existing.remove();
+  if (item && item.category === 'weapon') {
+    var otherSlotId = selectId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
+    var otherSel = document.getElementById(otherSlotId);
+    if (otherSel && otherSel.value && typeof ITEMS !== 'undefined') {
+      var otherItem = ITEMS.find(function(i) { return i.id === otherSel.value; });
+      if (otherItem && otherItem.properties && otherItem.properties.indexOf('two-handed') >= 0) {
+        var warn = document.createElement('div');
+        warn.id = conflictId;
+        warn.className = 'char-weapon-conflict';
+        warn.textContent = '! You have a two-handed weapon selected in your other hand.';
+        chip.parentNode.insertBefore(warn, chip.nextSibling);
+      }
+    }
+  }
 }
 function updateGearStatChip(selectId, chipId) {
   var sel  = document.getElementById(selectId);
@@ -2263,7 +2281,7 @@ function wireTooltip(el) {
 // ── ABILITY SCORE DRAG AND DROP ───────────────────────────────
 var ABILITY_SCORES = [15, 14, 13, 12, 10, 8];
 
-// ── GOLD TRACKER (Stage 3) ────────────────────────────────────────
+// ── STAGE 3 SUMMARY PANEL ────────────────────────────────────────
 function getStartingGold() {
   var bgId = CHAR_STATE.draft.background_id;
   if (!bgId) return 0;
@@ -2297,40 +2315,184 @@ function calcGoldSpent() {
   });
   return spent;
 }
-function updateGoldDisplay() {
-  var el = document.getElementById('char-gold-display');
-  if (!el) return;
-  var total = getStartingGold();
-  var spent = calcGoldSpent();
-  var remaining = total - spent;
-  el.querySelector('.char-gold-total').textContent = total + ' gp starting';
-  el.querySelector('.char-gold-remaining').textContent = remaining + ' gp remaining';
-  var spentEl = el.querySelector('.char-gold-spent');
-  spentEl.textContent = spent > 0 ? '−' + spent + ' gp spent' : '';
-  el.classList.toggle('char-gold-overspent', remaining < 0);
+function toggleStage3Panel(btn) {
+  var panel = document.getElementById('char-stage3-summary');
+  if (!panel) return;
+  var collapsed = panel.classList.toggle('char-stage3-panel--collapsed');
+  btn.textContent = collapsed ? 'Expand' : 'Collapse';
+  btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
+function renderStage3Panel() {
+  var body = document.getElementById('char-stage3-panel-body');
+  if (!body) return;
 
-// ── STAGE 3 CLASS CONTEXT BLURB ───────────────────────────────────────────────
-function renderClassContextBlurb() {
-  var el = document.getElementById('char-class-context');
-  if (!el) return;
   var classId = CHAR_STATE.draft.class_id;
-  if (!classId) {
-    el.style.display = 'none';
-    return;
+  var bgId    = CHAR_STATE.draft.background_id;
+
+  // ── Class + background labels ──
+  var clsName = classId ? classId.charAt(0).toUpperCase() + classId.slice(1) : '—';
+  var clsObj  = classId && typeof CLASS_DATA !== 'undefined'
+    ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
+  if (clsObj) clsName = clsObj.name;
+  var bgName = '';
+  if (bgId && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
+    var bgObj = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
+    if (bgObj) bgName = bgObj.name;
   }
-  var cls = CLASS_DATA.find(function(c) { return c.id === classId; });
-  if (!cls) { el.style.display = 'none'; return; }
-  el.style.display = 'flex';
-  el.innerHTML =
-    '<div class="char-class-context-label">Your class</div>'
-    + '<div class="char-class-context-name">' + cls.name + '</div>'
-    + '<div class="char-class-context-stats">'
-    +   '<span class="char-class-context-stat"><span class="char-class-context-stat-label">Primary</span>' + cls.primary + '</span>'
-    +   '<span class="char-class-context-divider">·</span>'
-    +   '<span class="char-class-context-stat"><span class="char-class-context-stat-label">Saving Throws</span>' + cls.saves + '</span>'
+
+  // ── Armor class ──
+  var ac = 10;
+  if (clsObj) {
+    var topSel = document.getElementById('app-top');
+    var topVal = topSel ? topSel.value : '';
+    var topStats = topVal && typeof CLOTHING_STATS !== 'undefined' ? CLOTHING_STATS[topVal] : null;
+    if (topStats) {
+      var acMatch = topStats.ac.match(/\d+/);
+      ac = acMatch ? parseInt(acMatch[0]) : 10;
+    }
+  }
+
+  // ── Hit points ──
+  var hp = 0;
+  if (clsObj && clsObj.hit_die) {
+    var die = parseInt(clsObj.hit_die.replace('d','')) || 8;
+    var conScore = parseInt((document.getElementById('char-ability-con') || {}).value) || 10;
+    var conMod = Math.floor((conScore - 10) / 2);
+    hp = die + conMod;
+  }
+
+  // ── Gold ──
+  var total    = getStartingGold();
+  var spent    = calcGoldSpent();
+  var remaining = total - spent;
+  var goldClass = remaining < 0 ? ' char-stage3-stat-value--red' : '';
+
+  // ── Skills ──
+  var proficiencies = [];
+  var modifiers     = [];
+  if (clsObj) {
+    var skillsKey = 'skills_' + classId;
+    var chosenSkills = CHAR_STATE.draft[skillsKey] || [];
+    proficiencies = chosenSkills.slice();
+    // Background proficiencies
+    if (bgId && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
+      var bg2 = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
+      if (bg2 && bg2.proficiencies) {
+        bg2.proficiencies.forEach(function(p) {
+          if (proficiencies.indexOf(p) < 0) proficiencies.push(p);
+        });
+      }
+    }
+  }
+  // Ability score modifiers from background bonuses
+  if (bgId && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
+    var bg3 = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
+    if (bg3 && bg3.ability_bonuses) {
+      Object.keys(bg3.ability_bonuses).forEach(function(ab) {
+        var bonus = bg3.ability_bonuses[ab];
+        if (bonus && bonus !== 0) {
+          var sign = bonus > 0 ? '+' : '';
+          modifiers.push(sign + bonus + ' ' + ab.charAt(0).toUpperCase() + ab.slice(1));
+        }
+      });
+    }
+  }
+
+  // ── Ability scores ──
+  var AB_KEYS  = ['str','dex','con','int','wis','cha'];
+  var AB_NAMES = { str:'Strength', dex:'Dexterity', con:'Constitution',
+                   int:'Intelligence', wis:'Wisdom', cha:'Charisma' };
+  var scores = CHAR_STATE.draft.ability_scores || {};
+  var abilityHtml = AB_KEYS.map(function(ab) {
+    var val = scores[ab];
+    var scoreEl = document.getElementById('char-ability-' + ab);
+    if (scoreEl && scoreEl.value) val = parseInt(scoreEl.value);
+    if (!val) return '';
+    var low = val <= 9 ? ' char-stage3-score-low' : '';
+    return '<span class="char-stage3-lower-row' + low + '">'
+      + '<span>' + val + '</span>' + AB_NAMES[ab].slice(0,3) + '</span>';
+  }).filter(Boolean).join(' ');
+
+  // ── Weapons ──
+  var rhSel  = document.getElementById('app-hand-right');
+  var lhSel  = document.getElementById('app-hand-left');
+  var rhVal  = rhSel ? rhSel.value : '';
+  var lhVal  = lhSel ? lhSel.value : '';
+  var rhItem = rhVal && typeof ITEMS !== 'undefined' ? ITEMS.find(function(i) { return i.id === rhVal; }) : null;
+  var lhItem = lhVal && typeof ITEMS !== 'undefined' ? ITEMS.find(function(i) { return i.id === lhVal; }) : null;
+  var dmgHtml = '';
+  if (rhItem || lhItem) {
+    function fmtWeapon(item) {
+      if (!item) return 'N/A';
+      if (item.category === 'shield') return 'Shield (AC +' + (item.ac_bonus || 2) + ')';
+      var s = item.damage_dice + ' ' + item.damage_type;
+      if (item.properties && item.properties.length) s += ' · ' + item.properties.join(', ');
+      return s;
+    }
+    dmgHtml = '<div class="char-stage3-lower-block">'
+      + '<div class="char-stage3-lower-label">Damage</div>'
+      + '<div class="char-stage3-lower-row"><span>Right Hand</span>' + fmtWeapon(rhItem) + '</div>'
+      + '<div class="char-stage3-lower-row"><span>Left Hand</span>' + fmtWeapon(lhItem) + '</div>'
+      + '</div>';
+  }
+
+  // ── Class icon (simple emoji fallback by type) ──
+  var CLASS_ICONS = {
+    barbarian:'⚔️', bard:'🎵', cleric:'✨', druid:'🌿', fighter:'🛡️',
+    monk:'👊', paladin:'⚔️', ranger:'🏹', rogue:'🗡️',
+    sorcerer:'💫', warlock:'🌑', wizard:'📖'
+  };
+  var icon = classId ? (CLASS_ICONS[classId] || '✦') : '✦';
+
+  // ── Render ──
+  var primaryLine = clsObj ? 'Main Abilities: ' + clsObj.primary : '';
+  var bgLine      = bgName ? bgName : '';
+
+  body.innerHTML =
+    '<div class="char-stage3-panel-icon">' + icon + '</div>'
+    + '<div>'
+      + '<div class="char-stage3-panel-class">' + clsName + '</div>'
+      + (primaryLine ? '<div class="char-stage3-panel-sub">' + primaryLine + '</div>' : '')
+      + (bgLine      ? '<div class="char-stage3-panel-sub">' + bgLine + '</div>' : '')
     + '</div>'
-    + '<div class="char-class-context-tip">Put your highest scores in your primary ability first.</div>';
+    + '<div class="char-stage3-panel-stats">'
+      + '<div class="char-stage3-stat-block">'
+        + '<div class="char-stage3-stat-label">Armor</div>'
+        + '<div class="char-stage3-stat-value">🛡 ' + ac + '</div>'
+      + '</div>'
+      + '<div class="char-stage3-stat-block">'
+        + '<div class="char-stage3-stat-label">Hit Points</div>'
+        + '<div class="char-stage3-stat-value">❤️ ' + (hp || '—') + '</div>'
+      + '</div>'
+      + '<div class="char-stage3-stat-block">'
+        + '<div class="char-stage3-stat-label">Money</div>'
+        + '<div class="char-stage3-stat-value' + goldClass + '">💛 ' + remaining + ' Gold</div>'
+      + '</div>'
+    + '</div>'
+    + '<div class="char-stage3-panel-lower">'
+      + '<div class="char-stage3-lower-block">'
+        + '<div class="char-stage3-lower-label">Skills</div>'
+        + (proficiencies.length
+            ? '<div class="char-stage3-lower-row"><span>Proficiency</span>' + proficiencies.join(', ') + '</div>'
+            : '<div class="char-stage3-lower-row">—</div>')
+        + (modifiers.length
+            ? '<div class="char-stage3-lower-row"><span>Modifiers</span>' + modifiers.join(', ') + '</div>'
+            : '')
+      + '</div>'
+      + (abilityHtml
+          ? '<div class="char-stage3-lower-block">'
+              + '<div class="char-stage3-lower-label">Ability Scores</div>'
+              + '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
+            + '</div>'
+          : '<div class="char-stage3-lower-block">'
+              + '<div class="char-stage3-lower-label">Ability Scores</div>'
+              + '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores above to see them here</div>'
+            + '</div>')
+      + dmgHtml
+    + '</div>';
+}
+function updateGoldDisplay() {
+  renderStage3Panel();
 }
 
 function initAbilityScores() {
@@ -2395,6 +2557,7 @@ function setAbilityScore(ability, score) {
     if (hidden) hidden.value = n;
     if (card)   card.dataset.score = n;
   }
+  renderStage3Panel();
 }
 
 function initAbilityDragDrop() {

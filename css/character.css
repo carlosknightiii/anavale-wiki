@@ -1035,99 +1035,136 @@ body.char-page {
   gap: 1rem;
 }
 
-/* ── STAGE 3 GOLD TRACKER ───────────────────────────────────────── */
-.char-gold-display {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  padding: 0.55rem 1.25rem;
-  background: var(--char-accent-tint);
+/* ── STAGE 3 SUMMARY PANEL ─────────────────────────────────────── */
+.char-stage3-panel {
+  background: var(--char-card-bg);
   border: 1px solid var(--char-accent-border);
   border-radius: var(--char-radius);
-  margin-bottom: 1rem;
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  color: var(--parchment);
-}
-.char-gold-icon {
-  color: var(--gold);
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-.char-gold-total { color: var(--char-text-faint); }
-.char-gold-divider { color: var(--char-text-faint); opacity: 0.4; }
-.char-gold-spent { color: var(--parchment); }
-.char-gold-remaining { color: var(--gold); font-weight: 600; }
-.char-gold-display.char-gold-overspent .char-gold-remaining {
-  color: #e05050;
-}
-
-/* ── STAGE 3 CLASS CONTEXT BLURB ───────────────────────────────── */
-.char-class-context {
-  display: none;
-  flex-direction: row;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  background: var(--char-accent-tint);
-  border: 1px solid var(--char-accent-border);
-  border-radius: var(--char-radius);
-  padding: 0.75rem 1.25rem;
   margin-bottom: 2rem;
+  overflow: hidden;
 }
-.char-class-context-label {
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--char-text-faint);
-  flex-basis: 100%;
-  margin-bottom: -0.5rem;
-}
-.char-class-context-name {
-  font-family: var(--font-headers);
-  font-size: 1.25rem;
-  color: var(--gold);
-  flex-shrink: 0;
-}
-.char-class-context-stats {
+.char-stage3-panel-header {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  flex: 1;
+  justify-content: space-between;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--char-accent-border);
 }
-.char-class-context-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+.char-stage3-panel-title {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
-  color: var(--parchment);
-}
-.char-class-context-stat-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--char-text-faint);
+  color: var(--gold);
 }
-.char-class-context-divider {
+.char-stage3-panel-collapse {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
   color: var(--char-text-faint);
-  font-size: 0.9rem;
-  align-self: center;
-  padding-bottom: 0.1rem;
+  background: none;
+  border: 1px solid var(--char-border);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
 }
-.char-class-context-tip {
+.char-stage3-panel-collapse:hover {
+  color: var(--parchment);
+  border-color: var(--char-accent-border-mid);
+}
+.char-stage3-panel-body {
+  padding: 1rem 1.25rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem 1.25rem;
+  align-items: start;
+}
+.char-stage3-panel--collapsed .char-stage3-panel-body {
+  display: none;
+}
+.char-stage3-panel-icon {
+  font-size: 2rem;
+  line-height: 1;
+  padding-top: 0.1rem;
+  grid-row: span 3;
+  align-self: start;
+}
+.char-stage3-panel-class {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.char-stage3-panel-sub {
   font-family: var(--font-sans);
   font-size: 0.78rem;
-  color: var(--gold);
-  font-style: italic;
-  flex-basis: 100%;
-  margin-top: -0.25rem;
+  color: var(--char-text-faint);
+  margin-top: 0.1rem;
 }
+.char-stage3-panel-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  grid-column: 2;
+}
+.char-stage3-stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.char-stage3-stat-label {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+}
+.char-stage3-stat-value {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--parchment);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.char-stage3-stat-value--red { color: #e05050; }
+.char-stage3-panel-lower {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--char-border);
+  margin-top: 0.25rem;
+}
+.char-stage3-lower-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.char-stage3-lower-label {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+}
+.char-stage3-lower-row {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--parchment);
+  line-height: 1.5;
+}
+.char-stage3-lower-row span {
+  color: var(--char-text-faint);
+  margin-right: 0.3rem;
+}
+.char-stage3-score-low { color: #e05050; }
 
 /* ── ABILITY SCORE GRID (Stage 3) ──────────────────────────────── */
 .char-ability-grid {
@@ -1611,6 +1648,13 @@ body.char-page {
   background: var(--char-highlight-tint);
   border: 1px solid var(--char-highlight-border);
   color: var(--gold-light);
+}
+.char-weapon-conflict {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: #e05050;
+  margin-top: 0.35rem;
+  line-height: 1.4;
 }
 
 /* ── APPEARANCE BUILDER (Stage 3) ──────────────────────────────── */
