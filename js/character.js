@@ -1409,49 +1409,49 @@ var CLOTHING_STATS = {
 // Clothing options by armor tier (controls app-top options)
 var CLOTHING_TIERS = {
   unarmored: [
-    { value: '',                    label: '— choose —' },
-    { value: 'robes',               label: 'Robes' },
-    { value: 'arcane vestments',    label: 'Arcane vestments' },
-    { value: 'simple tunic',        label: 'Simple tunic' },
-    { value: "monk's gi",           label: "Monk's gi" },
-    { value: 'wrapped cloth',       label: 'Wrapped cloth' },
-    { value: 'linen shirt',         label: 'Linen shirt' }
+    { value: '',                  label: '— choose —' },
+    { value: 'arcane vestments',  label: 'Arcane vestments' },
+    { value: 'linen shirt',       label: 'Linen shirt' },
+    { value: "monk's gi",         label: "Monk's gi" },
+    { value: 'robes',             label: 'Robes' },
+    { value: 'simple tunic',      label: 'Simple tunic' },
+    { value: 'wrapped cloth',     label: 'Wrapped cloth' }
   ],
   light: [
-    { value: 'leather jerkin',      label: 'Leather jerkin' },
-    { value: 'studded leather',     label: 'Studded leather' },
-    { value: 'padded gambeson',     label: 'Padded gambeson' },
-    { value: "traveller's coat",    label: "Traveller's coat" }
+    { value: 'leather jerkin',    label: 'Leather jerkin',   cost_gp: 10 },
+    { value: 'padded gambeson',   label: 'Padded gambeson',  cost_gp: 5  },
+    { value: 'studded leather',   label: 'Studded leather',  cost_gp: 45 },
+    { value: "traveller's coat",  label: "Traveller's coat", cost_gp: 2  }
   ],
   medium: [
-    { value: 'scale mail',          label: 'Scale mail' },
-    { value: 'chainmail shirt',     label: 'Chain shirt' },
-    { value: 'breastplate',         label: 'Breastplate' },
-    { value: 'ranger\'s mail',      label: "Ranger's mail" }
+    { value: 'breastplate',       label: 'Breastplate',      cost_gp: 400 },
+    { value: 'chainmail shirt',   label: 'Chain shirt',      cost_gp: 50  },
+    { value: "ranger's mail",     label: "Ranger's mail",    cost_gp: 30  },
+    { value: 'scale mail',        label: 'Scale mail',       cost_gp: 50  }
   ],
   heavy: [
-    { value: 'plate armour',        label: 'Plate armour' },
-    { value: 'half-plate cuirass',  label: 'Half-plate cuirass' },
-    { value: 'splint coat',         label: 'Splint coat' }
+    { value: 'half-plate cuirass', label: 'Half-plate cuirass', cost_gp: 750 },
+    { value: 'plate armour',       label: 'Plate armour',        cost_gp: 1500 },
+    { value: 'splint coat',        label: 'Splint coat',         cost_gp: 200  }
   ]
 };
 
 // Lower-body options by tier
 var LOWER_TIERS = {
   unarmored: [
-    { value: '',                      label: '— choose —' },
-    { value: 'trousers',              label: 'Trousers' },
-    { value: 'a long skirt',          label: 'Long skirt' },
-    { value: 'a skirt',               label: 'Skirt' },
-    { value: 'wrapped cloth lower',   label: 'Wrapped cloth' },
-    { value: 'flowing robes',         label: 'Flowing robes' }
+    { value: '',                    label: '— choose —' },
+    { value: 'flowing robes',       label: 'Flowing robes' },
+    { value: 'a long skirt',        label: 'Long skirt' },
+    { value: 'a skirt',             label: 'Skirt' },
+    { value: 'trousers',            label: 'Trousers' },
+    { value: 'wrapped cloth lower', label: 'Wrapped cloth' }
   ],
   light: [
-    { value: 'leather breeches',      label: 'Leather breeches' }
+    { value: 'leather breeches',    label: 'Leather breeches', cost_gp: 5 }
   ],
   medium: [],
   heavy: [
-    { value: 'armoured greaves',      label: 'Armoured greaves' }
+    { value: 'armoured greaves',    label: 'Armoured greaves', cost_gp: 20 }
   ]
 };
 
@@ -1507,7 +1507,8 @@ function filterClothingByClass(cls) {
       (CLOTHING_TIERS[tier] || []).forEach(function(opt) {
         var o = document.createElement('option');
         o.value = opt.value;
-        o.textContent = opt.cost_gp ? opt.label + ' -' + opt.cost_gp + ' Gold' : opt.label;
+        var costLbl = formatCost(opt.cost_gp);
+        o.textContent = costLbl ? opt.label + ' ' + costLbl : opt.label;
         topSel.appendChild(o);
       });
     });
@@ -1529,7 +1530,8 @@ function filterClothingByClass(cls) {
       (LOWER_TIERS[tier] || []).forEach(function(opt) {
         var o = document.createElement('option');
         o.value = opt.value;
-        o.textContent = opt.cost_gp ? opt.label + ' -' + opt.cost_gp + ' Gold' : opt.label;
+        var costLbl = formatCost(opt.cost_gp);
+        o.textContent = costLbl ? opt.label + ' ' + costLbl : opt.label;
         lowSel.appendChild(o);
       });
     });
@@ -1569,7 +1571,8 @@ function filterWeaponsByClass(cls) {
       if (slotId === 'app-hand-right' && item.category === 'shield') return;
       var o = document.createElement('option');
       o.value = item.id;
-      o.textContent = item.cost_gp ? item.name + ' -' + item.cost_gp + ' Gold' : item.name;
+      var costLabel = formatCost(item.cost_gp);
+      o.textContent = costLabel ? item.name + ' ' + costLabel : item.name;
       sel.appendChild(o);
     });
     if (current && sel.querySelector('option[value="' + current + '"]')) {
@@ -1697,7 +1700,89 @@ function renderStartingGear() {
     + '<div class="char-gear-items">' + itemsHtml + '</div>';
 }
 
+// ── STATIC APPEARANCE OPTION COSTS ───────────────────────────────
+// Cost data for selects that are not driven by CLOTHING_TIERS/LOWER_TIERS
+var STATIC_OPTION_COSTS = {
+  // app-cloak
+  'colourful':      { label: 'Colourful cloak',   cost_gp: 2   },
+  'fur-trimmed':    { label: 'Fur-trimmed cloak',  cost_gp: 15  },
+  'hooded':         { label: 'Hood',               cost_gp: 1   },
+  'long dark':      { label: 'Long dark cloak',    cost_gp: 2   },
+  'short dark':     { label: 'Short dark cloak',   cost_gp: 1   },
+  'tattered':       { label: 'Tattered cloak' },
+  // app-shoes
+  'fine boots':     { label: 'Fine boots',         cost_gp: 10  },
+  'sandals':        { label: 'Sandals',             cost_gp: 0.1 },
+  'sturdy boots':   { label: 'Sturdy boots',        cost_gp: 2   },
+  'worn boots':     { label: 'Worn boots',          cost_gp: 0.5 },
+  // app-hat
+  'a circlet':      { label: 'Circlet',             cost_gp: 25  },
+  'a crown':        { label: 'Crown',               cost_gp: 100 },
+  'a headband':     { label: 'Headband',            cost_gp: 0.2 },
+  'a helmet':       { label: 'Helmet',              cost_gp: 10  },
+  'a hood':         { label: 'Hood',                cost_gp: 0.5 },
+  'a turban':       { label: 'Turban',              cost_gp: 1   },
+  'a wide-brimmed hat': { label: 'Wide-brimmed hat', cost_gp: 1  },
+  // app-ring-right / app-ring-left
+  'a braided cord ring':  { label: 'Braided cord ring' },
+  'a gemstone ring':      { label: 'Gemstone earring', cost_gp: 25  },
+  'a gold ring':          { label: 'Gold ring',         cost_gp: 25  },
+  'a plain iron ring':    { label: 'Plain iron ring',   cost_gp: 0.1 },
+  'a signet ring':        { label: 'Signet ring',       cost_gp: 5   },
+  'a silver ring':        { label: 'Silver ring',       cost_gp: 10  },
+  // app-necklace
+  'a beaded necklace':        { label: 'Beaded necklace',  cost_gp: 1   },
+  'a gold chain necklace':    { label: 'Gold chain',        cost_gp: 50  },
+  'a holy symbol on a chain': { label: 'Holy symbol',       cost_gp: 5   },
+  'a leather cord necklace':  { label: 'Leather cord',      cost_gp: 0.2 },
+  'a pendant necklace':       { label: 'Pendant',           cost_gp: 10  },
+  'a silver necklace':        { label: 'Silver necklace',   cost_gp: 15  },
+  // app-earrings
+  'bone or carved earrings':    { label: 'Carved bone',      cost_gp: 0.5 },
+  'dangling gold earrings':     { label: 'Gold hoops',       cost_gp: 15  },
+  'dangling silver earrings':   { label: 'Silver hoops',     cost_gp: 5   },
+  'gemstone earrings':          { label: 'Gemstone earrings', cost_gp: 25  },
+  'small gold earrings':        { label: 'Gold studs',        cost_gp: 10  },
+  'small silver earrings':      { label: 'Silver studs',      cost_gp: 3   }
+};
+
+function rebuildStaticSelect(selectId, blankLabel) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return;
+  var current = sel.value;
+  // Collect all non-blank options with their values
+  var opts = Array.from(sel.options)
+    .filter(function(o) { return o.value !== ''; })
+    .map(function(o) { return o.value; })
+    .sort(function(a, b) {
+      var la = (STATIC_OPTION_COSTS[a] && STATIC_OPTION_COSTS[a].label) || a;
+      var lb = (STATIC_OPTION_COSTS[b] && STATIC_OPTION_COSTS[b].label) || b;
+      return la.localeCompare(lb);
+    });
+  sel.innerHTML = '<option value="">' + (blankLabel || '— choose —') + '</option>';
+  opts.forEach(function(val) {
+    var meta     = STATIC_OPTION_COSTS[val];
+    var label    = (meta && meta.label)   || val;
+    var costFmt  = meta ? formatCost(meta.cost_gp) : null;
+    var o        = document.createElement('option');
+    o.value      = val;
+    o.textContent = costFmt ? label + ' ' + costFmt : label;
+    sel.appendChild(o);
+  });
+  // Restore selection
+  if (current && sel.querySelector('option[value="' + current + '"]')) sel.value = current;
+}
+
 function initAppearanceListeners() {
+  // Rebuild static selects with costs and alphabetical sorting
+  rebuildStaticSelect('app-cloak',    'No cloak');
+  rebuildStaticSelect('app-shoes',    '— choose —');
+  rebuildStaticSelect('app-hat',      'None');
+  rebuildStaticSelect('app-ring-right', '— none —');
+  rebuildStaticSelect('app-ring-left',  '— none —');
+  rebuildStaticSelect('app-necklace',   '— none —');
+  rebuildStaticSelect('app-earrings',   '— none —');
+
   var ids = ['app-height','app-build','app-age','app-face-shape',
              'app-eye-color','app-eye-shape','app-facial-hair',
              'app-hair-color','app-hair-style','app-cloak','app-top',
@@ -2315,6 +2400,15 @@ function calcGoldSpent() {
   });
   return spent;
 }
+// Format a cost_gp value into the most readable denomination
+function formatCost(cost_gp) {
+  if (!cost_gp) return null;
+  if (cost_gp >= 1) return '-' + cost_gp + ' Gold';
+  var sp = Math.round(cost_gp * 10);
+  if (sp >= 1) return '-' + sp + ' Silver';
+  var cp = Math.round(cost_gp * 100);
+  return '-' + cp + ' Copper';
+}
 function toggleStage3Panel(btn) {
   var panel = document.getElementById('char-stage3-summary');
   if (!panel) return;
@@ -2322,6 +2416,40 @@ function toggleStage3Panel(btn) {
   btn.textContent = collapsed ? 'Expand' : 'Collapse';
   btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
+
+// Lookup: past question answer value → bonus skill granted
+var PAST_SKILL_GRANTS = {
+  // who_raised_you
+  'kind_parents':      'Insight',
+  'streets':           'Sleight of Hand',
+  'religious':         'Religion',
+  'single_parent':     'Athletics',
+  'grandparent':       'History',
+  // dearest_friend
+  'neighbor':          'Insight',
+  'animal':            'Animal Handling',
+  'imaginary':         'Perception',
+  'no_one':            'Survival',
+  'mentor':            'History',
+  // organization
+  'wanderkeep':        'Survival',
+  'merchant_guild':    'Persuasion',
+  'brightcreed':       'Religion',
+  'fighting_company':  'Athletics'
+};
+
+// Lookup: background bonus string → ability key + amount
+function parseBgBonuses(bonuses) {
+  var result = {};
+  if (!bonuses) return result;
+  var AB_MAP = { 'Str':'str','Dex':'dex','Con':'con','Int':'int','Wis':'wis','Cha':'cha' };
+  bonuses.forEach(function(b) {
+    var m = b.match(/([+-]\d+)\s+(\w+)/);
+    if (m && AB_MAP[m[2]]) result[AB_MAP[m[2]]] = parseInt(m[1]);
+  });
+  return result;
+}
+
 function renderStage3Panel() {
   var body = document.getElementById('char-stage3-panel-body');
   if (!body) return;
@@ -2334,84 +2462,83 @@ function renderStage3Panel() {
   var clsObj  = classId && typeof CLASS_DATA !== 'undefined'
     ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
   if (clsObj) clsName = clsObj.name;
+
   var bgName = '';
+  var bgPhb  = '';
+  var bgObj  = null;
   if (bgId && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
-    var bgObj = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
-    if (bgObj) bgName = bgObj.name;
+    bgObj = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
+    if (bgObj) { bgName = bgObj.name; bgPhb = bgObj.phb || ''; }
   }
+
+  // ── Background ability bonuses (for score display) ──
+  var bgBonusMap = bgObj ? parseBgBonuses(bgObj.bonuses) : {};
 
   // ── Armor class ──
   var ac = 10;
-  if (clsObj) {
-    var topSel = document.getElementById('app-top');
-    var topVal = topSel ? topSel.value : '';
-    var topStats = topVal && typeof CLOTHING_STATS !== 'undefined' ? CLOTHING_STATS[topVal] : null;
-    if (topStats) {
-      var acMatch = topStats.ac.match(/\d+/);
-      ac = acMatch ? parseInt(acMatch[0]) : 10;
-    }
+  var topSel   = document.getElementById('app-top');
+  var topVal   = topSel ? topSel.value : '';
+  var topStats = topVal && typeof CLOTHING_STATS !== 'undefined' ? CLOTHING_STATS[topVal] : null;
+  if (topStats) {
+    var acMatch = topStats.ac.match(/\d+/);
+    ac = acMatch ? parseInt(acMatch[0]) : 10;
   }
 
   // ── Hit points ──
   var hp = 0;
   if (clsObj && clsObj.hit_die) {
-    var die = parseInt(clsObj.hit_die.replace('d','')) || 8;
-    var conScore = parseInt((document.getElementById('char-ability-con') || {}).value) || 10;
-    var conMod = Math.floor((conScore - 10) / 2);
+    var die    = parseInt((clsObj.hit_die || 'd8').replace('d', '')) || 8;
+    var conRaw = parseInt((document.getElementById('char-ability-con') || {}).value) || 10;
+    var conBonus = bgBonusMap['con'] || 0;
+    var conFinal = conRaw + conBonus;
+    var conMod   = Math.floor((conFinal - 10) / 2);
     hp = die + conMod;
   }
 
   // ── Gold ──
-  var total    = getStartingGold();
-  var spent    = calcGoldSpent();
+  var total     = getStartingGold();
+  var spent     = calcGoldSpent();
   var remaining = total - spent;
   var goldClass = remaining < 0 ? ' char-stage3-stat-value--red' : '';
+  var goldIcon  = '◈';
 
-  // ── Skills ──
-  var proficiencies = [];
-  var modifiers     = [];
-  if (clsObj) {
-    var skillsKey = 'skills_' + classId;
-    var chosenSkills = CHAR_STATE.draft[skillsKey] || [];
-    proficiencies = chosenSkills.slice();
-    // Background proficiencies
-    if (bgId && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
-      var bg2 = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
-      if (bg2 && bg2.proficiencies) {
-        bg2.proficiencies.forEach(function(p) {
-          if (proficiencies.indexOf(p) < 0) proficiencies.push(p);
-        });
-      }
-    }
+  // ── Skills: class + background + imagined past ──
+  var allSkills = [];
+  // Class chosen skills
+  if (classId) {
+    var clsSkills = CHAR_STATE.draft['skills_' + classId] || [];
+    clsSkills.forEach(function(s) { if (allSkills.indexOf(s) < 0) allSkills.push(s); });
   }
-  // Ability score modifiers from background bonuses
-  if (bgId && typeof ANAVALE_BACKGROUNDS !== 'undefined') {
-    var bg3 = ANAVALE_BACKGROUNDS.find(function(b) { return b.id === bgId; });
-    if (bg3 && bg3.ability_bonuses) {
-      Object.keys(bg3.ability_bonuses).forEach(function(ab) {
-        var bonus = bg3.ability_bonuses[ab];
-        if (bonus && bonus !== 0) {
-          var sign = bonus > 0 ? '+' : '';
-          modifiers.push(sign + bonus + ' ' + ab.charAt(0).toUpperCase() + ab.slice(1));
-        }
-      });
-    }
+  // Background skills
+  if (bgObj && bgObj.skills) {
+    bgObj.skills.forEach(function(s) { if (allSkills.indexOf(s) < 0) allSkills.push(s); });
   }
+  // Imagined past skills
+  var pastKeys = ['who_raised_you','dearest_friend','organization'];
+  pastKeys.forEach(function(k) {
+    var val = CHAR_STATE.draft[k];
+    if (val && PAST_SKILL_GRANTS[val]) {
+      var sk = PAST_SKILL_GRANTS[val];
+      if (allSkills.indexOf(sk) < 0) allSkills.push(sk);
+    }
+  });
+  allSkills.sort();
 
-  // ── Ability scores ──
+  // ── Ability scores with background bonuses applied ──
   var AB_KEYS  = ['str','dex','con','int','wis','cha'];
-  var AB_NAMES = { str:'Strength', dex:'Dexterity', con:'Constitution',
-                   int:'Intelligence', wis:'Wisdom', cha:'Charisma' };
-  var scores = CHAR_STATE.draft.ability_scores || {};
-  var abilityHtml = AB_KEYS.map(function(ab) {
-    var val = scores[ab];
-    var scoreEl = document.getElementById('char-ability-' + ab);
-    if (scoreEl && scoreEl.value) val = parseInt(scoreEl.value);
-    if (!val) return '';
-    var low = val <= 9 ? ' char-stage3-score-low' : '';
-    return '<span class="char-stage3-lower-row' + low + '">'
-      + '<span>' + val + '</span>' + AB_NAMES[ab].slice(0,3) + '</span>';
-  }).filter(Boolean).join(' ');
+  var AB_NAMES = { str:'Str', dex:'Dex', con:'Con', int:'Int', wis:'Wis', cha:'Cha' };
+  var abilityHtml = '';
+  var anyScore = false;
+  AB_KEYS.forEach(function(ab) {
+    var raw = parseInt((document.getElementById('char-ability-' + ab) || {}).value) || 0;
+    if (!raw) return;
+    anyScore = true;
+    var bonus = bgBonusMap[ab] || 0;
+    var final = raw + bonus;
+    var low   = final <= 9 ? ' char-stage3-score-low' : '';
+    abilityHtml += '<span class="char-stage3-lower-row' + low + '">'
+      + '<span>' + final + '</span>' + AB_NAMES[ab] + '</span> ';
+  });
 
   // ── Weapons ──
   var rhSel  = document.getElementById('app-hand-right');
@@ -2420,23 +2547,28 @@ function renderStage3Panel() {
   var lhVal  = lhSel ? lhSel.value : '';
   var rhItem = rhVal && typeof ITEMS !== 'undefined' ? ITEMS.find(function(i) { return i.id === rhVal; }) : null;
   var lhItem = lhVal && typeof ITEMS !== 'undefined' ? ITEMS.find(function(i) { return i.id === lhVal; }) : null;
+
+  function fmtWeapon(item, otherItem) {
+    if (!item) return 'N/A';
+    // If the OTHER hand has a two-handed weapon, this hand can't be used
+    if (otherItem && otherItem.properties && otherItem.properties.indexOf('two-handed') >= 0) return 'N/A';
+    if (item.category === 'shield') return 'Shield (AC +' + (item.ac_bonus || 2) + ')';
+    var s = item.damage_dice + ' ' + item.damage_type;
+    var props = (item.properties || []).filter(function(p) { return p !== 'versatile'; });
+    if (props.length) s += ' · ' + props.join(', ');
+    return s;
+  }
+
   var dmgHtml = '';
   if (rhItem || lhItem) {
-    function fmtWeapon(item) {
-      if (!item) return 'N/A';
-      if (item.category === 'shield') return 'Shield (AC +' + (item.ac_bonus || 2) + ')';
-      var s = item.damage_dice + ' ' + item.damage_type;
-      if (item.properties && item.properties.length) s += ' · ' + item.properties.join(', ');
-      return s;
-    }
     dmgHtml = '<div class="char-stage3-lower-block">'
       + '<div class="char-stage3-lower-label">Damage</div>'
-      + '<div class="char-stage3-lower-row"><span>Right Hand</span>' + fmtWeapon(rhItem) + '</div>'
-      + '<div class="char-stage3-lower-row"><span>Left Hand</span>' + fmtWeapon(lhItem) + '</div>'
+      + '<div class="char-stage3-lower-row"><span>Right</span>' + fmtWeapon(rhItem, lhItem) + '</div>'
+      + '<div class="char-stage3-lower-row"><span>Left</span>'  + fmtWeapon(lhItem, rhItem) + '</div>'
       + '</div>';
   }
 
-  // ── Class icon (simple emoji fallback by type) ──
+  // ── Class icon ──
   var CLASS_ICONS = {
     barbarian:'⚔️', bard:'🎵', cleric:'✨', druid:'🌿', fighter:'🛡️',
     monk:'👊', paladin:'⚔️', ranger:'🏹', rogue:'🗡️',
@@ -2445,15 +2577,14 @@ function renderStage3Panel() {
   var icon = classId ? (CLASS_ICONS[classId] || '✦') : '✦';
 
   // ── Render ──
-  var primaryLine = clsObj ? 'Main Abilities: ' + clsObj.primary : '';
-  var bgLine      = bgName ? bgName : '';
+  var bgDisplay = bgName + (bgPhb ? ' (' + bgPhb + ')' : '');
 
   body.innerHTML =
     '<div class="char-stage3-panel-icon">' + icon + '</div>'
     + '<div>'
       + '<div class="char-stage3-panel-class">' + clsName + '</div>'
-      + (primaryLine ? '<div class="char-stage3-panel-sub">' + primaryLine + '</div>' : '')
-      + (bgLine      ? '<div class="char-stage3-panel-sub">' + bgLine + '</div>' : '')
+      + (clsObj ? '<div class="char-stage3-panel-sub">Main Abilities: ' + clsObj.primary + '</div>' : '')
+      + (bgDisplay ? '<div class="char-stage3-panel-sub">' + bgDisplay + '</div>' : '')
     + '</div>'
     + '<div class="char-stage3-panel-stats">'
       + '<div class="char-stage3-stat-block">'
@@ -2462,32 +2593,28 @@ function renderStage3Panel() {
       + '</div>'
       + '<div class="char-stage3-stat-block">'
         + '<div class="char-stage3-stat-label">Hit Points</div>'
-        + '<div class="char-stage3-stat-value">❤️ ' + (hp || '—') + '</div>'
+        + '<div class="char-stage3-stat-value">♥ ' + (hp || '—') + '</div>'
       + '</div>'
       + '<div class="char-stage3-stat-block">'
         + '<div class="char-stage3-stat-label">Money</div>'
-        + '<div class="char-stage3-stat-value' + goldClass + '">💛 ' + remaining + ' Gold</div>'
+        + '<div class="char-stage3-stat-value' + goldClass + '">' + goldIcon + ' ' + remaining + ' Gold</div>'
       + '</div>'
     + '</div>'
     + '<div class="char-stage3-panel-lower">'
       + '<div class="char-stage3-lower-block">'
         + '<div class="char-stage3-lower-label">Skills</div>'
-        + (proficiencies.length
-            ? '<div class="char-stage3-lower-row"><span>Proficiency</span>' + proficiencies.join(', ') + '</div>'
-            : '<div class="char-stage3-lower-row">—</div>')
-        + (modifiers.length
-            ? '<div class="char-stage3-lower-row"><span>Modifiers</span>' + modifiers.join(', ') + '</div>'
-            : '')
+        + (allSkills.length
+            ? '<div class="char-stage3-lower-row">' + allSkills.join(', ') + '</div>'
+            : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Choose class + background to see skills</div>')
       + '</div>'
-      + (abilityHtml
-          ? '<div class="char-stage3-lower-block">'
-              + '<div class="char-stage3-lower-label">Ability Scores</div>'
-              + '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
-            + '</div>'
-          : '<div class="char-stage3-lower-block">'
-              + '<div class="char-stage3-lower-label">Ability Scores</div>'
-              + '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores above to see them here</div>'
-            + '</div>')
+      + '<div class="char-stage3-lower-block">'
+        + '<div class="char-stage3-lower-label">Ability Scores '
+          + '<span style="color:var(--char-text-faint);font-weight:400;text-transform:none;letter-spacing:0;">(red = 9 or below)</span>'
+        + '</div>'
+        + (anyScore
+            ? '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
+            : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores above</div>')
+      + '</div>'
       + dmgHtml
     + '</div>';
 }
