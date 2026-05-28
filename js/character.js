@@ -1571,7 +1571,9 @@ function filterWeaponsByClass(cls) {
       if (slotId === 'app-hand-right' && item.category === 'shield') return;
       var o = document.createElement('option');
       o.value = item.id;
-      var costLabel = formatCost(item.cost_gp);
+      var startIds = getStartingGearIds();
+      var isFree   = startIds.indexOf(item.id) >= 0;
+      var costLabel = isFree ? '(free)' : formatCost(item.cost_gp);
       o.textContent = costLabel ? item.name + ' ' + costLabel : item.name;
       sel.appendChild(o);
     });
@@ -2535,25 +2537,24 @@ function renderStage3Panel() {
   var total     = getStartingGold();
   var spent     = calcGoldSpent();
   var remaining = total - spent;
-  var remainingGold   = Math.floor(Math.max(remaining, 0));
-  var remainingFrac   = Math.max(remaining, 0) - remainingGold;
-  var remainingSilver = Math.floor(remainingFrac * 10);
-  var remainingCopper = Math.round((remainingFrac * 10 - remainingSilver) * 10);
   var goldClass = remaining < 0 ? ' char-stage3-stat-value--red' : '';
-  var goldIcon  = '◈';
   var moneyHtml;
   if (remaining < 0) {
-    moneyHtml = '<div class="char-stage3-stat-value char-stage3-stat-value--red">'
-      + goldIcon + ' ' + remaining.toFixed(2) + ' Gold</div>';
+    moneyHtml = '<div class="char-stage3-stat-value char-stage3-stat-value--red">◈ ' + remaining.toFixed(2) + ' Gold</div>';
   } else {
-    moneyHtml = '<div class="char-stage3-stat-value">◈ ' + remainingGold + ' Gold</div>'
-      + (remainingSilver > 0 ? '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remainingSilver + ' Silver</div>' : '')
-      + (remainingCopper > 0 ? '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remainingCopper + ' Copper</div>' : '');
+    var remGold   = Math.floor(remaining);
+    var remFrac   = remaining - remGold;
+    var remSilver = Math.floor(remFrac * 10);
+    var remCopper = Math.round((remFrac * 10 - remSilver) * 10);
+    moneyHtml =
+      '<div class="char-stage3-stat-value">◈ ' + remGold + ' Gold</div>'
+      + '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remSilver + ' Silver</div>'
+      + '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remCopper + ' Copper</div>';
   }
 
   // ── Skills: class + background + imagined past ──
-  var profSkills = [];   // full proficiencies
-  var bonusLines = [];   // flat +1 modifiers (ability bonuses from bg/past)
+  var profSkills = [];
+  var bonusLines = [];
   // Class chosen skills
   if (classId) {
     (CHAR_STATE.draft['skills_' + classId] || []).forEach(function(s) {
@@ -2566,13 +2567,6 @@ function renderStage3Panel() {
       if (profSkills.indexOf(s) < 0) profSkills.push(s);
     });
   }
-  // Background ability bonuses → flat modifier lines
-  if (bgObj && bgObj.bonuses) {
-    bgObj.bonuses.forEach(function(b) {
-      // Only include stat bonuses (e.g. "+2 Str"), skip feat names
-      if (/^[+-]\d+\s+\w+$/.test(b.trim())) bonusLines.push(b.trim());
-    });
-  }
   // Imagined past skills → proficiencies
   var pastKeys = ['who_raised_you','dearest_friend','organization'];
   pastKeys.forEach(function(k) {
@@ -2583,10 +2577,21 @@ function renderStage3Panel() {
     }
   });
   profSkills.sort();
+  // Ability modifier bonuses from background — shown in Ability Scores section, not Skills
+  var AB_EXPAND = { 'Str':'Strength','Dex':'Dexterity','Con':'Constitution',
+                    'Int':'Intelligence','Wis':'Wisdom','Cha':'Charisma' };
+  if (bgObj && bgObj.bonuses) {
+    bgObj.bonuses.forEach(function(b) {
+      var m = b.trim().match(/^([+-]\d+)\s+(\w+)$/);
+      if (m && AB_EXPAND[m[2]]) {
+        bonusLines.push(m[1] + ' ' + AB_EXPAND[m[2]]);
+      }
+    });
+  }
 
   // ── Ability scores with background bonuses applied ──
   var AB_KEYS  = ['str','dex','con','int','wis','cha'];
-  var AB_NAMES = { str:'Str', dex:'Dex', con:'Con', int:'Int', wis:'Wis', cha:'Cha' };
+  var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
   var abilityHtml = '';
   var anyScore = false;
   AB_KEYS.forEach(function(ab) {
@@ -2595,9 +2600,12 @@ function renderStage3Panel() {
     anyScore = true;
     var bonus = bgBonusMap[ab] || 0;
     var final = raw + bonus;
-    var low   = final <= 9 ? ' char-stage3-score-low' : '';
-    abilityHtml += '<span class="char-stage3-lower-row' + low + '">'
-      + '<span>' + final + '</span>' + AB_NAMES[ab] + '</span> ';
+    var lowCls = final <= 9 ? ' is-low' : '';
+    abilityHtml +=
+      '<div class="char-stage3-score-pill' + lowCls + '">'
+      + '<span class="char-stage3-score-pill-val">' + final + '</span>'
+      + '<span class="char-stage3-score-pill-ab">' + AB_NAMES[ab] + '</span>'
+      + '</div>';
   });
 
   // ── Weapons ──
@@ -2638,6 +2646,7 @@ function renderStage3Panel() {
 
   // ── Render ──
   var bgDisplay = bgName + (bgPhb ? ' (' + bgPhb + ')' : '');
+  var savesLine = clsObj ? 'Saving Throws: ' + clsObj.saves : '';
 
   body.innerHTML =
     '<div class="char-stage3-panel-icon">' + icon + '</div>'
@@ -2645,36 +2654,37 @@ function renderStage3Panel() {
       + '<div>'
         + '<div class="char-stage3-panel-class">' + clsName + '</div>'
         + (clsObj ? '<div class="char-stage3-panel-sub">Main Abilities: ' + clsObj.primary + '</div>' : '')
+        + (clsObj ? '<div class="char-stage3-panel-sub">' + savesLine + '</div>' : '')
         + (bgDisplay ? '<div class="char-stage3-panel-sub">' + bgDisplay + '</div>' : '')
       + '</div>'
       + '<div class="char-stage3-panel-stats">'
-      + '<div class="char-stage3-stat-block">'
-        + '<div class="char-stage3-stat-label">Armor</div>'
-        + '<div class="char-stage3-stat-value">🛡 ' + ac + '</div>'
+        + '<div class="char-stage3-stat-block">'
+          + '<div class="char-stage3-stat-label">Armor</div>'
+          + '<div class="char-stage3-stat-value">🛡 ' + ac + '</div>'
+        + '</div>'
+        + '<div class="char-stage3-stat-block">'
+          + '<div class="char-stage3-stat-label">Hit Points</div>'
+          + '<div class="char-stage3-stat-value">♥ ' + (hp || '—') + '</div>'
+        + '</div>'
+        + '<div class="char-stage3-stat-block">'
+          + '<div class="char-stage3-stat-label">Money</div>'
+          + moneyHtml
+        + '</div>'
       + '</div>'
-      + '<div class="char-stage3-stat-block">'
-        + '<div class="char-stage3-stat-label">Hit Points</div>'
-        + '<div class="char-stage3-stat-value">♥ ' + (hp || '—') + '</div>'
-      + '</div>'
-      + '<div class="char-stage3-stat-block">'
-        + '<div class="char-stage3-stat-label">Money</div>'
-        + moneyHtml
-      + '</div>'
-    + '</div>'
     + '</div>'
     + '<div class="char-stage3-panel-lower">'
       + '<div class="char-stage3-lower-block">'
         + '<div class="char-stage3-lower-label">Skills</div>'
         + (profSkills.length
-            ? '<div class="char-stage3-lower-row"><span>Proficient</span>' + profSkills.join(', ') + '</div>'
+            ? '<div class="char-stage3-lower-row"><span>Proficient in</span>' + profSkills.join(', ') + '</div>'
             : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Choose class + background to see skills</div>')
-        + (bonusLines.length
-            ? '<div class="char-stage3-lower-row"><span>Modifiers</span>' + bonusLines.join(', ') + '</div>'
-            : '')
       + '</div>'
       + '<div class="char-stage3-lower-block">'
         + '<div class="char-stage3-lower-label">Total Ability Scores</div>'
-        + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--char-text-faint);margin-bottom:0.3rem;line-height:1.4;">Includes assigned scores and modifiers from your previous selections.</div>'
+        + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--char-text-faint);margin-bottom:0.4rem;line-height:1.4;">Includes assigned scores and modifiers from your previous selections.</div>'
+        + (bonusLines.length
+            ? '<div class="char-stage3-lower-row" style="margin-bottom:0.4rem;"><span>Bonuses</span>' + bonusLines.join(', ') + '</div>'
+            : '')
         + (anyScore
             ? '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
             : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores above</div>')

@@ -1176,6 +1176,39 @@ body.char-page {
 }
 .char-stage3-score-low { color: #e05050; }
 
+.char-stage3-score-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--char-accent-tint);
+  border: 1px solid var(--char-border);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  min-width: 2.75rem;
+  gap: 0.1rem;
+}
+.char-stage3-score-pill.is-low {
+  border-color: rgba(224,80,80,0.5);
+  background: rgba(224,80,80,0.08);
+}
+.char-stage3-score-pill-val {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--parchment);
+  line-height: 1;
+}
+.char-stage3-score-pill.is-low .char-stage3-score-pill-val { color: #e05050; }
+.char-stage3-score-pill-ab {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+  line-height: 1;
+}
+
 /* ── ABILITY SCORE GRID (Stage 3) ──────────────────────────────── */
 .char-ability-grid {
   display: grid;
