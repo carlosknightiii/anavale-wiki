@@ -1250,6 +1250,11 @@ function validateStage(n) {
       showToast('Please assign all six ability scores before continuing.');
       return false;
     }
+    var goldRemaining = getStartingGold() - calcGoldSpent();
+    if (goldRemaining < 0) {
+      showToast('You\'ve spent more than your starting gold. Remove some items before continuing.');
+      return false;
+    }
   }
   if (n === 4) {
     if (!CHAR_STATE.draft.alignment) {
@@ -1820,6 +1825,11 @@ function initAppearanceListeners() {
   if (rhSel) rhSel.addEventListener('change', function() { updateWeaponStatChip('app-hand-right', 'app-hand-right-stat'); updateGoldDisplay(); });
   var lhSel = document.getElementById('app-hand-left');
   if (lhSel) lhSel.addEventListener('change', function() { updateWeaponStatChip('app-hand-left', 'app-hand-left-stat'); updateGoldDisplay(); });
+  // Wire gold display updates for static clothing/accessory slots
+  ['app-cloak','app-shoes','app-hat','app-ring-right','app-ring-left','app-necklace','app-earrings'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateGoldDisplay);
+  });
   document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
     cb.addEventListener('change', updateAIPrompt);
   });
@@ -2427,14 +2437,21 @@ function getStartingGearIds() {
 function calcGoldSpent() {
   if (typeof ITEMS === 'undefined') return 0;
   var startingIds = getStartingGearIds();
-  var slots = ['app-top', 'app-lower', 'app-hand-right', 'app-hand-left'];
   var spent = 0;
-  slots.forEach(function(slotId) {
+  // ITEMS-backed slots (weapons, armor, lower)
+  ['app-top', 'app-lower', 'app-hand-right', 'app-hand-left'].forEach(function(slotId) {
     var sel = document.getElementById(slotId);
     if (!sel || !sel.value) return;
     if (startingIds.indexOf(sel.value) >= 0) return;
     var item = ITEMS.find(function(i) { return i.id === sel.value; });
     if (item && item.cost_gp) spent += item.cost_gp;
+  });
+  // Static option slots (cloak, shoes, hat, rings, necklace, earrings)
+  ['app-cloak','app-shoes','app-hat','app-ring-right','app-ring-left','app-necklace','app-earrings'].forEach(function(slotId) {
+    var sel = document.getElementById(slotId);
+    if (!sel || !sel.value) return;
+    var meta = STATIC_OPTION_COSTS[sel.value];
+    if (meta && meta.cost_gp) spent += meta.cost_gp;
   });
   return spent;
 }
@@ -2568,13 +2585,14 @@ function renderStage3Panel() {
       if (profSkills.indexOf(s) < 0) profSkills.push(s);
     });
   }
-  // Imagined past skills → proficiencies
+  // Imagined past skills → flat +1 modifiers (not full proficiency)
+  var modifierSkills = [];
   var pastKeys = ['who_raised_you','dearest_friend','organization'];
   pastKeys.forEach(function(k) {
     var val = CHAR_STATE.draft[k];
     if (val && PAST_SKILL_GRANTS[val]) {
       var sk = PAST_SKILL_GRANTS[val].skill;
-      if (profSkills.indexOf(sk) < 0) profSkills.push(sk);
+      modifierSkills.push('+1 ' + sk);
     }
   });
   profSkills.sort();
@@ -2677,8 +2695,13 @@ function renderStage3Panel() {
       + '<div class="char-stage3-lower-block">'
         + '<div class="char-stage3-lower-label">Skills</div>'
         + (profSkills.length
-            ? '<div class="char-stage3-lower-row"><span>Proficient in</span>' + profSkills.join(', ') + '</div>'
+            ? '<div class="char-stage3-lower-row"><span>Proficiency:</span>' + profSkills.join(', ') + '</div>'
             : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Choose class + background to see skills</div>')
+        + (modifierSkills.length
+            ? '<div class="char-stage3-lower-row"><span>Modifiers:</span>'
+              + modifierSkills.map(function(s) { return '<span style="color:#6ecf6e;">' + s + '</span>'; }).join(', ')
+              + '</div>'
+            : '')
       + '</div>'
       + '<div class="char-stage3-lower-block">'
         + '<div class="char-stage3-lower-label">Total Ability Scores</div>'
