@@ -2457,23 +2457,24 @@ function toggleStage3Panel(btn) {
 
 // Lookup: past question answer value → bonus skill granted
 var PAST_SKILL_GRANTS = {
-  // who_raised_you
-  'kind_parents':      'Insight',
-  'streets':           'Sleight of Hand',
-  'religious':         'Religion',
-  'single_parent':     'Athletics',
-  'grandparent':       'History',
+  // who_raised_you (data-value uses hyphens)
+  'kind-parents':    { skill: 'Insight' },
+  'the-streets':     { skill: 'Sleight of Hand' },
+  'strict-religious':{ skill: 'Religion' },
+  'single-parent':   { skill: 'Athletics' },
+  'grandparent':     { skill: 'History' },
   // dearest_friend
-  'neighbor':          'Insight',
-  'animal':            'Animal Handling',
-  'imaginary':         'Perception',
-  'no_one':            'Survival',
-  'mentor':            'History',
+  'neighbor':        { skill: 'Insight' },
+  'animal':          { skill: 'Animal Handling' },
+  'imaginary':       { skill: 'Perception' },
+  'no-one':          { skill: 'Survival' },
+  'mentor':          { skill: 'History' },
   // organization
-  'wanderkeep':        'Survival',
-  'merchant_guild':    'Persuasion',
-  'brightcreed':       'Religion',
-  'fighting_company':  'Athletics'
+  'wanderkeep':      { skill: 'Survival' },
+  'merchant-guild':  { skill: 'Persuasion' },
+  'brightcreed':     { skill: 'Religion' },
+  'fighting-company':{ skill: 'Athletics' }
+  // 'kept-to-myself' grants +1 Stealth + 1 free skill — no fixed grant, skip
 };
 
 // Lookup: background bonus string → ability key + amount
@@ -2547,9 +2548,9 @@ function renderStage3Panel() {
     var remSilver = Math.floor(remFrac * 10);
     var remCopper = Math.round((remFrac * 10 - remSilver) * 10);
     moneyHtml =
-      '<div class="char-stage3-stat-value">◈ ' + remGold + ' Gold</div>'
-      + '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remSilver + ' Silver</div>'
-      + '<div class="char-stage3-stat-value" style="font-size:0.8rem;color:var(--char-text-faint);">◈ ' + remCopper + ' Copper</div>';
+      '<div class="char-stage3-stat-value char-stage3-stat-value--gold">◈ ' + remGold + ' Gold</div>'
+      + '<div class="char-stage3-stat-value char-stage3-stat-value--silver" style="font-size:0.8rem;">◈ ' + remSilver + ' Silver</div>'
+      + '<div class="char-stage3-stat-value char-stage3-stat-value--copper" style="font-size:0.8rem;">◈ ' + remCopper + ' Copper</div>';
   }
 
   // ── Skills: class + background + imagined past ──
@@ -2572,7 +2573,7 @@ function renderStage3Panel() {
   pastKeys.forEach(function(k) {
     var val = CHAR_STATE.draft[k];
     if (val && PAST_SKILL_GRANTS[val]) {
-      var sk = PAST_SKILL_GRANTS[val];
+      var sk = PAST_SKILL_GRANTS[val].skill;
       if (profSkills.indexOf(sk) < 0) profSkills.push(sk);
     }
   });

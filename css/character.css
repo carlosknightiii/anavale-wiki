@@ -1042,6 +1042,9 @@ body.char-page {
   border-radius: var(--char-radius);
   margin-bottom: 2rem;
   overflow: hidden;
+  position: sticky;
+  top: var(--char-progress-h);
+  z-index: 50;
 }
 .char-stage3-panel-header {
   display: flex;
@@ -1141,6 +1144,9 @@ body.char-page {
   align-items: center;
   gap: 0.3rem;
 }
+.char-stage3-stat-value--gold   { color: #f0c040; }
+.char-stage3-stat-value--silver { color: #c8d4e0; }
+.char-stage3-stat-value--copper { color: #d4845a; }
 .char-stage3-stat-value--red { color: #e05050; }
 .char-stage3-panel-lower {
   grid-column: 1 / -1;
