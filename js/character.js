@@ -1455,6 +1455,22 @@ var LOWER_TIERS = {
   ]
 };
 
+// ── CLASS WEAPON PROFICIENCY ───────────────────────────────────────
+// 'simple' = simple weapons only; 'martial' = simple + martial
+var CLASS_WEAPON_TIER = {
+  barbarian: 'martial', bard: 'martial',   cleric: 'simple',
+  druid:     'simple',  fighter: 'martial', monk: 'simple',
+  paladin:   'martial', ranger: 'martial',  rogue: 'martial',
+  sorcerer:  'simple',  warlock: 'simple',  wizard: 'simple'
+};
+// Classes that can use a shield in off-hand
+var CLASS_CAN_SHIELD = {
+  barbarian: false, bard: false,   cleric: true,
+  druid:     true,  fighter: true, monk: false,
+  paladin:   true,  ranger: false, rogue: false,
+  sorcerer:  false, warlock: false, wizard: false
+};
+
 // Which tier each class can reach
 var CLASS_ARMOR_TIER = {
   barbarian: 'medium',
@@ -1524,8 +1540,75 @@ function filterClothingByClass(cls) {
     }
     updateGearStatChip('app-lower', 'app-lower-stat');
   }
+  // Rebuild hand slots from live ITEMS database
+  filterWeaponsByClass(cls);
 }
 
+function filterWeaponsByClass(cls) {
+  if (typeof ITEMS === 'undefined') return;
+  var tier     = CLASS_WEAPON_TIER[cls] || 'simple';
+  var canShield = CLASS_CAN_SHIELD[cls] || false;
+  // All player_addable weapons matching tier
+  var eligible = ITEMS.filter(function(item) {
+    if (!item.player_addable) return false;
+    if (item.category === 'weapon') {
+      if (item.weapon_type === 'simple') return true;
+      if (item.weapon_type === 'martial' && tier === 'martial') return true;
+      return false;
+    }
+    if (item.category === 'shield') return canShield;
+    return false;
+  }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+  ['app-hand-right', 'app-hand-left'].forEach(function(slotId) {
+    var sel = document.getElementById(slotId);
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">— none —</option>';
+    // For left hand, show shields; for right hand, weapons only
+    eligible.forEach(function(item) {
+      if (slotId === 'app-hand-right' && item.category === 'shield') return;
+      var o = document.createElement('option');
+      o.value = item.id;
+      o.textContent = item.name;
+      sel.appendChild(o);
+    });
+    if (current && sel.querySelector('option[value="' + current + '"]')) {
+      sel.value = current;
+    }
+    updateWeaponStatChip(slotId, slotId + '-stat');
+  });
+}
+function updateWeaponStatChip(selectId, chipId) {
+  var sel  = document.getElementById(selectId);
+  var chip = document.getElementById(chipId);
+  if (!sel || !chip) return;
+  if (!sel.value || typeof ITEMS === 'undefined') {
+    chip.innerHTML = '';
+    chip.style.display = 'none';
+    return;
+  }
+  var item = ITEMS.find(function(i) { return i.id === sel.value; });
+  if (!item) { chip.innerHTML = ''; chip.style.display = 'none'; return; }
+  var html = '';
+  if (item.category === 'shield') {
+    html = '<span class="char-stat-chip char-stat-chip--ac">AC +' + (item.ac_bonus || 2) + '</span>';
+  } else {
+    var dmg = item.damage_dice + ' ' + item.damage_type;
+    if (item.magic_bonus) dmg += ' (+' + item.magic_bonus + ')';
+    html = '<span class="char-stat-chip char-stat-chip--dmg">' + dmg + '</span>';
+    if (item.versatile_dice) {
+      html += '<span class="char-stat-chip char-stat-chip--note">Versatile ' + item.versatile_dice + '</span>';
+    }
+    if (item.properties && item.properties.length) {
+      var props = item.properties.filter(function(p) { return p !== 'versatile'; });
+      if (props.length) {
+        html += '<span class="char-stat-chip char-stat-chip--note">' + props.join(' · ') + '</span>';
+      }
+    }
+  }
+  chip.innerHTML = html;
+  chip.style.display = 'flex';
+}
 function updateGearStatChip(selectId, chipId) {
   var sel  = document.getElementById(selectId);
   var chip = document.getElementById(chipId);
@@ -1600,7 +1683,7 @@ function initAppearanceListeners() {
   var ids = ['app-height','app-build','app-age','app-face-shape',
              'app-eye-color','app-eye-shape','app-facial-hair',
              'app-hair-color','app-hair-style','app-cloak','app-top',
-             'app-lower','app-shoes','app-hat','app-accessory','app-jewelry'];
+             'app-lower','app-shoes','app-hat','app-hand-right','app-hand-left','app-jewelry'];
   ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('change', updateAIPrompt);
@@ -1611,6 +1694,10 @@ function initAppearanceListeners() {
   if (topSel) topSel.addEventListener('change', function() { updateGearStatChip('app-top', 'app-top-stat'); });
   var lowSel = document.getElementById('app-lower');
   if (lowSel) lowSel.addEventListener('change', function() { updateGearStatChip('app-lower', 'app-lower-stat'); });
+  var rhSel = document.getElementById('app-hand-right');
+  if (rhSel) rhSel.addEventListener('change', function() { updateWeaponStatChip('app-hand-right', 'app-hand-right-stat'); });
+  var lhSel = document.getElementById('app-hand-left');
+  if (lhSel) lhSel.addEventListener('change', function() { updateWeaponStatChip('app-hand-left', 'app-hand-left-stat'); });
   document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
     cb.addEventListener('change', updateAIPrompt);
   });
@@ -1636,7 +1723,8 @@ function collectAppearanceData() {
     lower:            getVal('app-lower'),
     shoes:            getVal('app-shoes'),
     hat:              getVal('app-hat'),
-    accessory:        getVal('app-accessory'),
+    hand_right:       getVal('app-hand-right'),
+    hand_left:        getVal('app-hand-left'),
     jewelry:          getVal('app-jewelry')
   };
 }
@@ -2464,7 +2552,7 @@ function restoreStage3Selections() {
     var simpleIds = ['app-height','app-build','app-age','app-face-shape',
                      'app-eye-color','app-eye-shape','app-facial-hair',
                      'app-hair-color','app-hair-style','app-cloak','app-top',
-                     'app-lower','app-shoes','app-hat','app-accessory','app-jewelry'];
+                     'app-lower','app-shoes','app-hat','app-hand-right','app-hand-left','app-jewelry'];
     simpleIds.forEach(function(id) {
       var key = id.replace('app-','').replace(/-/g,'_');
       // handle key mismatches

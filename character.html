@@ -781,19 +781,22 @@
               <option value="a turban">Turban</option>
             </select>
           </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-accessory">Carried item</label>
-            <select class="char-select" id="app-accessory">
-              <option value="">None</option>
-              <option value="carrying a staff">Staff</option>
-              <option value="carrying a lute">Lute</option>
-              <option value="carrying a book">Book</option>
-              <option value="carrying a lantern">Lantern</option>
-              <option value="carrying a shield">Shield</option>
-              <option value="carrying a bow">Bow</option>
-              <option value="carrying a sword">Sword</option>
-            </select>
-          </div>
+<div class="char-field-row">
+  <div class="char-field-group">
+    <label class="char-field-label" for="app-hand-right">Right hand</label>
+    <select class="char-select" id="app-hand-right">
+      <option value="">— none —</option>
+    </select>
+    <div class="char-stat-chips" id="app-hand-right-stat" style="display:none"></div>
+  </div>
+  <div class="char-field-group">
+    <label class="char-field-label" for="app-hand-left">Left hand</label>
+    <select class="char-select" id="app-hand-left">
+      <option value="">— none —</option>
+    </select>
+    <div class="char-stat-chips" id="app-hand-left-stat" style="display:none"></div>
+  </div>
+</div>
         </div>
         <div class="char-field-group">
           <label class="char-field-label" for="app-jewelry">Jewellery / adornments</label>
