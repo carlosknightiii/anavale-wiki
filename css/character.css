@@ -1035,6 +1035,34 @@ body.char-page {
   gap: 1rem;
 }
 
+/* ── STAGE 3 GOLD TRACKER ───────────────────────────────────────── */
+.char-gold-display {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 1.25rem;
+  background: var(--char-accent-tint);
+  border: 1px solid var(--char-accent-border);
+  border-radius: var(--char-radius);
+  margin-bottom: 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--parchment);
+}
+.char-gold-icon {
+  color: var(--gold);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.char-gold-total { color: var(--char-text-faint); }
+.char-gold-divider { color: var(--char-text-faint); opacity: 0.4; }
+.char-gold-spent { color: var(--parchment); }
+.char-gold-remaining { color: var(--gold); font-weight: 600; }
+.char-gold-display.char-gold-overspent .char-gold-remaining {
+  color: #e05050;
+}
+
 /* ── STAGE 3 CLASS CONTEXT BLURB ───────────────────────────────── */
 .char-class-context {
   display: none;
