@@ -1698,6 +1698,52 @@ body.char-page {
   text-align: center;
 }
 
+.char-gear-section-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--char-text-faint);
+  margin-top: 0.85rem;
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.char-gear-section-label:first-child { margin-top: 0; }
+
+.char-gear-item-name {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--parchment);
+  line-height: 1.4;
+}
+
+.char-gear-item--unarmored .char-gear-item-name {
+  color: var(--char-text-faint);
+  font-style: italic;
+}
+
+.char-equip-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: 6px;
+  background: var(--char-accent-tint);
+  border: 1px solid var(--char-accent-border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--char-text-muted);
+  line-height: 1.55;
+}
+.char-equip-callout-icon {
+  color: var(--gold);
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
 .char-gear-empty {
   font-family: var(--font-sans);
   font-size: 0.82rem;
@@ -1760,15 +1806,38 @@ body.char-page {
 }
 .char-appearance-section:last-child { border-bottom: none; }
 
-/* Checkbox label rows inside appearance sections */
-.char-checkbox-label {
+/* Facial markings chip toggles */
+.char-markings-wrap {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.char-checkbox-label {
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  color: var(--white);
+  gap: 5px;
+  padding: 5px 13px;
+  border: 1.5px solid var(--char-border-gold);
+  border-radius: 20px;
   cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--white);
+  background: var(--char-accent-tint);
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.char-checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+.char-checkbox-label:has(input:checked) {
+  background: var(--gold);
+  color: var(--parchment-dark);
+  border-color: var(--gold);
 }
 
 /* Native color picker input */

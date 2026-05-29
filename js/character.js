@@ -1406,64 +1406,96 @@ function collectStage5Data() {
 // ── CLASS STARTING GEAR (PHB 2024) ────────────────────────────────
 var CLASS_STARTING_GEAR = {
   barbarian: {
-    armor: 'Explorer\'s Pack',
+    armor: null,
+    unarmored_ac: 'AC = 10 + Dex + Con modifier while unarmored',
     weapons: ['Greataxe', 'Two handaxes', '4 javelins'],
-    note: 'No starting armor — AC = 10 + Dex + Con modifier while unarmored'
+    pack: "Explorer's Pack",
+    pack_contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft hempen rope'
   },
   bard: {
     armor: 'Leather Armor',
+    unarmored_ac: null,
     weapons: ['Rapier', 'Dagger'],
-    note: 'Entertainer\'s Pack + musical instrument of your choice'
+    pack: "Entertainer's Pack",
+    pack_contents: 'Backpack, bedroll, 2 costumes, 5 candles, 5 days rations, waterskin, disguise kit',
+    pack_extras: 'Musical instrument of your choice'
   },
   cleric: {
     armor: 'Scale Mail',
+    unarmored_ac: null,
     weapons: ['Mace', 'Shield'],
-    note: 'Priest\'s Pack + Holy Symbol'
+    pack: "Priest's Pack",
+    pack_contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 blocks incense, censer, vestments, 2 days rations, waterskin',
+    pack_extras: 'Holy Symbol'
   },
   druid: {
     armor: 'Leather Armor',
+    unarmored_ac: null,
     weapons: ['Quarterstaff', 'Shield'],
-    note: 'Explorer\'s Pack + Druidic Focus (no metal armor)'
+    pack: "Explorer's Pack",
+    pack_contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft hempen rope',
+    pack_extras: 'Druidic Focus (no metal armor)'
   },
   fighter: {
     armor: 'Chain Mail',
+    unarmored_ac: null,
     weapons: ['Longsword', 'Shield', 'Light Crossbow + 20 bolts'],
-    note: 'Dungeoneer\'s Pack'
+    pack: "Dungeoneer's Pack",
+    pack_contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft hempen rope'
   },
   monk: {
     armor: null,
+    unarmored_ac: 'AC = 10 + Dex + Wis modifier while unarmored',
     weapons: ['Shortsword', '5 darts'],
-    note: 'Dungeoneer\'s Pack — AC = 10 + Dex + Wis while unarmored'
+    pack: "Dungeoneer's Pack",
+    pack_contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft hempen rope'
   },
   paladin: {
     armor: 'Chain Mail',
+    unarmored_ac: null,
     weapons: ['Longsword', 'Shield', 'Javelin (×5)'],
-    note: 'Priest\'s Pack + Holy Symbol'
+    pack: "Priest's Pack",
+    pack_contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 blocks incense, censer, vestments, 2 days rations, waterskin',
+    pack_extras: 'Holy Symbol'
   },
   ranger: {
     armor: 'Scale Mail',
+    unarmored_ac: null,
     weapons: ['Longsword', 'Two shortswords', 'Longbow + 20 arrows'],
-    note: 'Explorer\'s Pack'
+    pack: "Explorer's Pack",
+    pack_contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft hempen rope'
   },
   rogue: {
     armor: 'Leather Armor',
+    unarmored_ac: null,
     weapons: ['Rapier', 'Shortbow + 20 arrows', 'Dagger (×2)'],
-    note: 'Burglar\'s Pack + Thieves\' Tools'
+    pack: "Burglar's Pack",
+    pack_contents: 'Backpack, 1000 ball bearings, 10 ft string, bell, 5 candles, crowbar, hammer, 10 pitons, hooded lantern, 2 flasks oil, 5 days rations, tinderbox, waterskin',
+    pack_extras: "Thieves' Tools"
   },
   sorcerer: {
     armor: null,
+    unarmored_ac: null,
     weapons: ['Light Crossbow + 20 bolts', 'Dagger (×2)'],
-    note: 'Dungeoneer\'s Pack + Arcane Focus'
+    pack: "Dungeoneer's Pack",
+    pack_contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft hempen rope',
+    pack_extras: 'Arcane Focus'
   },
   warlock: {
     armor: 'Leather Armor',
+    unarmored_ac: null,
     weapons: ['Light Crossbow + 20 bolts', 'Dagger (×2)'],
-    note: 'Scholar\'s Pack + Arcane Focus'
+    pack: "Scholar's Pack",
+    pack_contents: 'Backpack, book of lore, bottle of ink, ink pen, 10 sheets parchment, little bag of sand, small knife',
+    pack_extras: 'Arcane Focus'
   },
   wizard: {
     armor: null,
+    unarmored_ac: null,
     weapons: ['Quarterstaff', 'Dagger'],
-    note: 'Scholar\'s Pack + Spellbook + Arcane Focus'
+    pack: "Scholar's Pack",
+    pack_contents: 'Backpack, book of lore, bottle of ink, ink pen, 10 sheets parchment, little bag of sand, small knife',
+    pack_extras: 'Spellbook + Arcane Focus'
   }
 };
 
@@ -1757,7 +1789,7 @@ function renderStartingGear() {
   var gear = CLASS_STARTING_GEAR[cls];
   if (!gear) { panel.innerHTML = ''; return; }
 
-  // Resolve display name from ANAVALE_CLASSES data
+  // Resolve class display name
   var clsLabel = cls.charAt(0).toUpperCase() + cls.slice(1);
   GIGGLEGLOOM_TYPES && Object.values(GIGGLEGLOOM_TYPES).forEach(function(type) {
     (type.classes || []).forEach(function(c) {
@@ -1771,26 +1803,126 @@ function renderStartingGear() {
     if (bgObj) bgLabel = bgObj.name;
   }
 
-  var itemsHtml = gear.weapons.map(function(w) {
-    return '<div class="char-gear-item"><span class="char-gear-icon">⚔</span>' + w + '</div>';
-  }).join('');
+  // ── Per-weapon icon lookup ──
+  var WEAPON_ICONS = {
+    'greataxe': '🪓', 'handaxe': '🪓', 'battleaxe': '🪓',
+    'longsword': '⚔️', 'shortsword': '⚔️', 'rapier': '🤺',
+    'dagger': '🗡️', 'quarterstaff': '🪄', 'mace': '🔨',
+    'warhammer': '🔨', 'light-hammer': '🔨', 'flail': '⛓️',
+    'glaive': '🔱', 'halberd': '🔱', 'pike': '🔱',
+    'javelin': '🎯', 'spear': '🎯', 'dart': '🎯',
+    'longbow': '🏹', 'shortbow': '🏹',
+    'light crossbow': '🏹', 'heavy crossbow': '🏹',
+    'shield': '🛡️', 'default': '⚔️'
+  };
 
-  if (gear.armor) {
-    itemsHtml = '<div class="char-gear-item"><span class="char-gear-icon">🛡</span>' + gear.armor + '</div>' + itemsHtml;
-  } else {
-    var noArmorNote = gear.note.indexOf('—') >= 0 ? gear.note.split('—')[1].trim() : gear.note;
-    itemsHtml = '<div class="char-gear-item char-gear-item--note"><span class="char-gear-icon">○</span>No armor — ' + noArmorNote + '</div>' + itemsHtml;
+  function weaponIcon(weaponStr) {
+    var w = weaponStr.toLowerCase();
+    var keys = Object.keys(WEAPON_ICONS);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i] !== 'default' && w.indexOf(keys[i]) >= 0) return WEAPON_ICONS[keys[i]];
+    }
+    return WEAPON_ICONS['default'];
   }
 
-  var packLabel = gear.note.indexOf('·') >= 0 ? gear.note.split('·')[0].trim() : gear.note;
-  itemsHtml += '<div class="char-gear-item char-gear-item--pack"><span class="char-gear-icon">🎒</span>' + packLabel + '</div>';
+  function weaponStatChips(weaponStr) {
+    if (typeof ITEMS === 'undefined') return '';
+    var w = weaponStr.toLowerCase();
+    var item = ITEMS.find(function(it) {
+      if (it.category !== 'weapon') return false;
+      var name = it.name.toLowerCase();
+      return w.indexOf(name) >= 0 || name.indexOf(w.split(' ')[0]) >= 0;
+    });
+    if (!item || !item.damage_dice) return '';
+    var chips = '';
+    var dmgLabel = item.damage_dice + ' ' + item.damage_type;
+    if (item.versatile_dice) dmgLabel += ' / ' + item.versatile_dice + ' two-handed';
+    chips += '<span class="char-stat-chip char-stat-chip--dmg">' + dmgLabel + '</span>';
+    if (item.range_normal) {
+      chips += '<span class="char-stat-chip char-stat-chip--note">range ' + item.range_normal + '/' + item.range_long + '</span>';
+    }
+    var showProps = (item.properties || []).filter(function(p) {
+      return ['heavy','light','finesse','thrown','reach','two-handed'].indexOf(p) >= 0;
+    });
+    if (showProps.length) {
+      chips += '<span class="char-stat-chip char-stat-chip--weight">' + showProps.join(', ') + '</span>';
+    }
+    return chips ? '<div class="char-stat-chips">' + chips + '</div>' : '';
+  }
+
+  function sectionLabel(text) {
+    return '<div class="char-gear-section-label">' + text + '</div>';
+  }
+
+  // ── Armor row ──
+  var armorHtml = '';
+  if (gear.armor) {
+    var armorKey   = gear.armor.toLowerCase();
+    var armorStats = CLOTHING_STATS[armorKey];
+    var armorChips = '';
+    if (armorStats) {
+      armorChips = '<div class="char-stat-chips">'
+        + '<span class="char-stat-chip char-stat-chip--ac">' + armorStats.ac + '</span>'
+        + '<span class="char-stat-chip char-stat-chip--weight">' + armorStats.weight + '</span>'
+        + (armorStats.note ? '<span class="char-stat-chip char-stat-chip--note">' + armorStats.note + '</span>' : '')
+        + '</div>';
+    }
+    armorHtml = '<div class="char-gear-item">'
+      + '<span class="char-gear-icon">🛡️</span>'
+      + '<div><span class="char-gear-item-name">' + gear.armor + '</span>' + armorChips + '</div>'
+      + '</div>';
+  } else if (gear.unarmored_ac) {
+    armorHtml = '<div class="char-gear-item char-gear-item--unarmored">'
+      + '<span class="char-gear-icon">🌀</span>'
+      + '<div>'
+      +   '<span class="char-gear-item-name">Unarmored</span>'
+      +   '<div class="char-stat-chips">'
+      +     '<span class="char-stat-chip char-stat-chip--ac">' + gear.unarmored_ac + '</span>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  // ── Weapons rows ──
+  var weaponsHtml = gear.weapons.map(function(w) {
+    return '<div class="char-gear-item">'
+      + '<span class="char-gear-icon">' + weaponIcon(w) + '</span>'
+      + '<div><span class="char-gear-item-name">' + w + '</span>' + weaponStatChips(w) + '</div>'
+      + '</div>';
+  }).join('');
+
+  // ── Pack row with tooltip ──
+  var packTip = gear.pack_contents
+    + (gear.pack_extras ? ' · ' + gear.pack_extras : '');
+  var packHtml = '<div class="char-gear-item char-gear-item--pack">'
+    + '<span class="char-gear-icon">🎒</span>'
+    + '<div>'
+    +   '<span class="char-gear-item-name char-field-tooltip" data-tip="' + packTip + '">'
+    +     gear.pack
+    +     ' <span class="char-trait-tip-icon">?</span>'
+    +   '</span>'
+    +   (gear.pack_extras
+        ? '<div class="char-stat-chips"><span class="char-stat-chip char-stat-chip--note">' + gear.pack_extras + '</span></div>'
+        : '')
+    + '</div>'
+    + '</div>';
 
   panel.innerHTML =
     '<div class="char-gear-header">'
     + '<span class="char-gear-label">Starting gear — ' + clsLabel + (bgLabel ? ' · ' + bgLabel : '') + '</span>'
     + '<span class="char-gear-sublabel">This gear is yours automatically. No choices needed.</span>'
     + '</div>'
-    + '<div class="char-gear-items">' + itemsHtml + '</div>';
+    + '<div class="char-gear-items">'
+    +   (armorHtml ? sectionLabel('ARMOR') + armorHtml : '')
+    +   sectionLabel('WEAPONS')
+    +   weaponsHtml
+    +   sectionLabel('PACK')
+    +   packHtml
+    + '</div>';
+
+  // Wire tooltip on the pack name
+  var packTipEl = panel.querySelector('.char-field-tooltip[data-tip]');
+  if (packTipEl && typeof wireTooltip === 'function') wireTooltip(packTipEl);
 }
 
 // ── STATIC APPEARANCE OPTION COSTS ───────────────────────────────
