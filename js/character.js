@@ -136,14 +136,7 @@ function resumeDraft() {
   dismissReturnBanner();
   showStage(stage);
   initStageOnEnter(stage);
-  // After banner dismisses and stage renders, scroll to top with chrome offset
-  setTimeout(function() {
-    var offset = 0;
-    var prog = document.getElementById('char-progress-wrap');
-    if (prog) offset += prog.offsetHeight;
-    offset += 16;
-    window.scrollTo({ top: offset, behavior: 'smooth' });
-  }, 100);
+
 }
 
 function initAutoSave() {
@@ -185,7 +178,7 @@ function showStage(n) {
   saveDraftToStorage();
   renderProgress();
   renderSidebar();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0 });
   initStageOnEnter(n);
 }
 
@@ -213,9 +206,11 @@ function jumpToStage(n) {
 }
 
 function initStageOnEnter(n) {
-  if (n === 2) initStage2();
-  if (n === 3) { initAbilityScores(); restoreStage3Selections(); initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); renderStage3Panel(); updateGoldDisplay(); }
-  if (n === 5) initStage5();
+  if (n === 1) { initStage1(); initAppearanceListeners(); }
+  if (n === 2) { initStage2(); }
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); renderStage3Panel(); }
+  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); }
+  if (n === 5) { initStage5(); }
 }
 
 // ── PROGRESS BAR ───────────────────────────────────────────────────
@@ -232,11 +227,11 @@ function renderProgress() {
 // ── SIDEBAR ────────────────────────────────────────────────────────
 var STAGE_NAMES = [
   '', // 0 unused
-  'Your Gift',
   'Your Story',
+  'Your Gift',
   'Your Strengths',
-  'Your Compass',
-  'Who You Are'
+  'Your Gear',
+  'Your Character'
 ];
 
 function renderSidebar() {
@@ -781,21 +776,80 @@ var CLASS_TO_GIGGLEGLOOM = {
   sorcerer: 'flamerage', warlock: 'flamerage', wizard: 'steelfist'
 };
 
+function toggleAccordion(panelId) {
+  var panel = document.getElementById(panelId);
+  if (!panel) return;
+  var body = document.getElementById(panelId + '-body');
+  var header = panel.querySelector('.char-accordion-header');
+  if (!body || !header) return;
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+}
+
 function initStage1() {
-  renderGigglogloomAffinity();
-  renderClassGrid();
-  // Class grid hidden until affinity is chosen
-  var classSection = document.getElementById('char-class-section');
-  if (classSection) classSection.style.display = 'none';
-  // Restore from draft
+  // Render background and species cards into the accordion panels
+  renderBackgroundCards();
+  renderSpeciesCards();
+  // Restore all Stage 1 selections from draft
+  restoreStage1Selections();
+}
+
+function restoreStage1Selections() {
+  // Name, gender, personality, three last things
+  var nameEl = document.getElementById('char-final-name');
+  if (nameEl && CHAR_STATE.draft.character_name) nameEl.value = CHAR_STATE.draft.character_name;
+  var genderEl = document.getElementById('char-gender');
+  if (genderEl && CHAR_STATE.draft.gender) genderEl.value = CHAR_STATE.draft.gender;
+  var p1 = document.getElementById('char-personality-1');
+  if (p1 && CHAR_STATE.draft.personality_immediate) p1.value = CHAR_STATE.draft.personality_immediate;
+  var p2 = document.getElementById('char-personality-2');
+  if (p2 && CHAR_STATE.draft.personality_wrong) p2.value = CHAR_STATE.draft.personality_wrong;
+  var p3 = document.getElementById('char-personality-3');
+  if (p3 && CHAR_STATE.draft.personality_laugh) p3.value = CHAR_STATE.draft.personality_laugh;
+  var caresEl = document.getElementById('char-cares-about');
+  if (caresEl && CHAR_STATE.draft.cares_about) caresEl.value = CHAR_STATE.draft.cares_about;
+  var fearEl = document.getElementById('char-fear');
+  if (fearEl && CHAR_STATE.draft.deepest_fear) fearEl.value = CHAR_STATE.draft.deepest_fear;
+  var seekEl = document.getElementById('char-seeking');
+  if (seekEl && CHAR_STATE.draft.seeking) seekEl.value = CHAR_STATE.draft.seeking;
+  // Gigglegloom affinity
   if (CHAR_STATE.draft.gigglegloom_type) {
     highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
-    if (classSection) classSection.style.display = 'block';
   }
-  if (CHAR_STATE.draft.class_id) {
-    restoreClassSelection(CHAR_STATE.draft.class_id);
+  // Background, species, region, language, imagined past
+  restoreStage2Selections();
+  // Alignment
+  if (CHAR_STATE.draft.alignment) {
+    selectAlignment(CHAR_STATE.draft.alignment);
   }
-  updateStage1SkillAlert();
+  // Appearance
+  var app = CHAR_STATE.draft.appearance_data;
+  if (app) {
+    var simpleAppIds = ['app-height','app-build','app-age','app-face-shape',
+      'app-eye-color','app-eye-shape','app-facial-hair',
+      'app-hair-color','app-hair-style'];
+    simpleAppIds.forEach(function(id) {
+      var key = id.replace('app-','').replace(/-/g,'_');
+      var map = { 'facial_hair': 'facial_hair', 'hair_color': 'hair_color',
+                  'hair_style': 'hair_style', 'face_shape': 'face_shape',
+                  'eye_color': 'eye_color', 'eye_shape': 'eye_shape' };
+      var val = app[map[key] || key];
+      if (!val) return;
+      var el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+    if (app.skin_tone) {
+      var st = document.getElementById('app-skin-tone');
+      if (st) st.value = app.skin_tone;
+    }
+    if (app.facial_markings) {
+      document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
+        cb.checked = app.facial_markings.indexOf(cb.value) >= 0;
+      });
+    }
+    updateAIPrompt();
+  }
 }
 
 function renderClassGrid() {
@@ -875,7 +929,7 @@ function renderClassGrid() {
       if (counter) counter.textContent = checked.length + ' of ' + cls.skills_count + ' chosen';
       CHAR_STATE.draft['skills_' + classId] = Array.from(checked).map(function(c) { return c.value; });
       saveDraftToStorage();
-      updateStage1SkillAlert();
+      updateStage2SkillAlert();
     });
   });
 
@@ -925,14 +979,14 @@ function selectClass(classId) {
   CHAR_STATE.draft.class_id = classId;
   CHAR_STATE.draft.gigglegloom_type = typeId;
   saveDraftToStorage();
-  updateStage1SkillAlert();
+  updateStage2SkillAlert();
 }
 
-function updateStage1SkillAlert() {
+function updateStage2SkillAlert() {
   var classId = CHAR_STATE.draft.class_id;
   var cls = classId ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
-  var btn = document.getElementById('char-stage1-continue');
-  var alert = document.getElementById('char-stage1-skill-alert');
+  var btn = document.getElementById('char-stage2-continue');
+  var alert = document.getElementById('char-stage2-skill-alert');
   if (!cls || !btn) return;
   var chosen = (CHAR_STATE.draft['skills_' + classId] || []).length;
   var needed = cls.skills_count;
@@ -949,10 +1003,7 @@ function selectType(typeId, silent) {
   if (!silent) {
     CHAR_STATE.draft.gigglegloom_type = typeId;
     saveDraftToStorage();
-    // Scroll to class section
-    setTimeout(function() {
-      scrollToField(document.getElementById('char-class-section'));
-    }, 80);
+
   }
 }
 
@@ -981,9 +1032,21 @@ function scrollToField(el) {
 
 // ── STAGE 2: BACKGROUND + SPECIES ──────────────────────────────────
 function initStage2() {
-  renderBackgroundCards();
-  renderSpeciesCards();
-  restoreStage2Selections();
+  // Render affinity cards and class grid into Stage 2
+  renderGigglogloomAffinity();
+  renderClassGrid();
+  // Class grid hidden until affinity is chosen
+  var classSection = document.getElementById('char-class-section');
+  if (classSection) classSection.style.display = 'none';
+  // Restore from draft
+  if (CHAR_STATE.draft.gigglegloom_type) {
+    highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
+    if (classSection) classSection.style.display = 'block';
+  }
+  if (CHAR_STATE.draft.class_id) {
+    restoreClassSelection(CHAR_STATE.draft.class_id);
+  }
+  updateStage2SkillAlert();
 }
 
 function renderBackgroundCards() {
@@ -1185,10 +1248,7 @@ function selectSpecies(speciesId) {
   var hidden = document.getElementById('char-species');
   if (hidden) hidden.value = speciesId;
   saveDraftToStorage();
-  setTimeout(function() {
-    var target = document.getElementById('char-home-region-section') || document.getElementById('char-home-region');
-    scrollToField(target);
-  }, 80);
+
 }
 
 function selectBackground(bgId) {
@@ -1206,11 +1266,7 @@ function selectBackground(bgId) {
   var hidden = document.getElementById('char-background');
   if (hidden) hidden.value = bgId;
   saveDraftToStorage();
-  // Scroll past the background grid to the species section
-  setTimeout(function() {
-    var target = document.getElementById('char-species-section') || document.getElementById('char-species');
-    scrollToField(target);
-  }, 80);
+
 }
 
 function restoreStage2Selections() {
@@ -1281,6 +1337,9 @@ function restoreStage2Selections() {
 // ── STAGE VALIDATION ───────────────────────────────────────────────
 function validateStage(n) {
   if (n === 1) {
+    // Stage 1: Your Story — no hard gates, all optional lore fields
+  }
+  if (n === 2) {
     if (!CHAR_STATE.draft.gigglegloom_type) {
       showToast('Please choose a Gigglegloom type first.');
       return false;
@@ -1289,46 +1348,31 @@ function validateStage(n) {
       showToast('Please choose a class within your Gigglegloom type.');
       return false;
     }
-    // Skill gate: must choose the required number of skills for chosen class
-    var classId1 = CHAR_STATE.draft.class_id;
-    var cls1 = CLASS_DATA.find(function(c) { return c.id === classId1; });
-    if (cls1) {
-      var chosenSkills = (CHAR_STATE.draft['skills_' + classId1] || []);
-      if (chosenSkills.length < cls1.skills_count) {
-        showToast('Choose ' + cls1.skills_count + ' skills for your class before continuing.');
-        updateStage1SkillAlert();
+    var classId2 = CHAR_STATE.draft.class_id;
+    var cls2 = CLASS_DATA.find(function(c) { return c.id === classId2; });
+    if (cls2) {
+      var chosenSkills2 = (CHAR_STATE.draft['skills_' + classId2] || []);
+      if (chosenSkills2.length < cls2.skills_count) {
+        showToast('Choose ' + cls2.skills_count + ' skills for your class before continuing.');
         return false;
       }
-    }
-  }
-  if (n === 2) {
-    if (!CHAR_STATE.draft.background_id) {
-      showToast('Please choose a background.');
-      return false;
-    }
-    if (!CHAR_STATE.draft.species_id) {
-      showToast('Please choose a species.');
-      return false;
     }
   }
   if (n === 3) {
     var abilities = ['str','dex','con','int','wis','cha'];
     var allAssigned = abilities.every(function(ab) {
-      return document.getElementById('char-ability-' + ab).value !== '';
+      return document.getElementById('char-ability-' + ab) &&
+             document.getElementById('char-ability-' + ab).value !== '';
     });
     if (!allAssigned) {
       showToast('Please assign all six ability scores before continuing.');
       return false;
     }
+  }
+  if (n === 4) {
     var goldRemaining = getStartingGold() - calcGoldSpent();
     if (goldRemaining < 0) {
       showToast('You\'ve spent more than your starting gold. Remove some items before continuing.');
-      return false;
-    }
-  }
-  if (n === 4) {
-    if (!CHAR_STATE.draft.alignment) {
-      showToast('Please choose an alignment.');
       return false;
     }
   }
@@ -1345,31 +1389,53 @@ function collectStageData(n) {
 }
 
 function collectStage1Data() {
-  // Read selected class from DOM — covers sidebar-jump case where Continue was not clicked
+  // Name, gender, personality
+  CHAR_STATE.draft.character_name      = getVal('char-final-name');
+  CHAR_STATE.draft.gender              = getVal('char-gender');
+  CHAR_STATE.draft.personality_immediate = getVal('char-personality-1');
+  CHAR_STATE.draft.personality_wrong   = getVal('char-personality-2');
+  CHAR_STATE.draft.personality_laugh   = getVal('char-personality-3');
+  // Gigglegloom affinity (read from DOM in case card was clicked without Continue)
+  var selectedType = document.querySelector('.char-type-card.selected');
+  if (selectedType && selectedType.dataset.type) {
+    CHAR_STATE.draft.gigglegloom_type = selectedType.dataset.type;
+  }
+  // Background, species, region, language
+  CHAR_STATE.draft.background_id = getVal('char-background');
+  CHAR_STATE.draft.species_id    = getVal('char-species');
+  CHAR_STATE.draft.home_region   = getVal('char-home-region');
+  CHAR_STATE.draft.language      = getVal('char-language');
+  // Imagined past
+  CHAR_STATE.draft.who_raised_you  = getVal('char-raised');
+  CHAR_STATE.draft.dearest_friend  = getVal('char-friend');
+  CHAR_STATE.draft.had_pet         = getVal('char-pet');
+  CHAR_STATE.draft.fallen_in_love  = getVal('char-love');
+  CHAR_STATE.draft.organization    = getVal('char-org');
+  CHAR_STATE.draft.left_behind     = getVal('char-left-behind');
+  CHAR_STATE.draft.why_you_left    = getVal('char-why-left');
+  // Appearance
+  CHAR_STATE.draft.appearance_data   = collectAppearanceData();
+  CHAR_STATE.draft.appearance_prompt = buildAIPrompt(CHAR_STATE.draft.appearance_data);
+  // Alignment
+  CHAR_STATE.draft.alignment       = getVal('char-alignment') || CHAR_STATE.draft.alignment;
+  CHAR_STATE.draft.alignment_trait = CHAR_STATE.draft.alignment_trait || null;
+  // Cares/fear/seeking (Three Last Things)
+  CHAR_STATE.draft.cares_about  = getVal('char-cares-about');
+  CHAR_STATE.draft.deepest_fear = getVal('char-fear');
+  CHAR_STATE.draft.seeking      = getVal('char-seeking');
+  saveDraftToStorage();
+}
+
+function collectStage2Data() {
   var selectedCard = document.querySelector('.char-class-card.selected');
   if (selectedCard && selectedCard.dataset.class) {
     CHAR_STATE.draft.class_id = selectedCard.dataset.class;
   }
-  // Read selected gigglegloom type from DOM
   var selectedType = document.querySelector('.char-type-card.selected');
   if (selectedType && selectedType.dataset.type) {
     CHAR_STATE.draft.gigglegloom_type = selectedType.dataset.type;
   }
   saveDraftToStorage();
-}
-
-function collectStage2Data() {
-  CHAR_STATE.draft.background_id = getVal('char-background');
-  CHAR_STATE.draft.species_id    = getVal('char-species');
-  CHAR_STATE.draft.language      = getVal('char-language');
-  // Imagined past
-  CHAR_STATE.draft.who_raised_you     = getVal('char-raised');
-  CHAR_STATE.draft.dearest_friend     = getVal('char-friend');
-  CHAR_STATE.draft.had_pet            = getVal('char-pet');
-  CHAR_STATE.draft.fallen_in_love     = getVal('char-love');
-  CHAR_STATE.draft.organization       = getVal('char-org');
-  CHAR_STATE.draft.left_behind        = getVal('char-left-behind');
-  CHAR_STATE.draft.why_you_left       = getVal('char-why-left');
 }
 
 function collectStage3Data() {
@@ -1381,26 +1447,18 @@ function collectStage3Data() {
     wis: parseInt(getVal('char-ability-wis')) || null,
     cha: parseInt(getVal('char-ability-cha')) || null
   };
-  // Appearance
-  CHAR_STATE.draft.appearance_data = collectAppearanceData();
-  CHAR_STATE.draft.appearance_prompt = buildAIPrompt(CHAR_STATE.draft.appearance_data);
-  // Personality
-  CHAR_STATE.draft.personality_immediate = getVal('char-personality-1');
-  CHAR_STATE.draft.personality_wrong     = getVal('char-personality-2');
-  CHAR_STATE.draft.personality_laugh     = getVal('char-personality-3');
+  saveDraftToStorage();
 }
 
 function collectStage4Data() {
-  CHAR_STATE.draft.alignment       = getVal('char-alignment') || CHAR_STATE.draft.alignment;
-  CHAR_STATE.draft.alignment_trait = CHAR_STATE.draft.alignment_trait || null;
+  CHAR_STATE.draft.appearance_data   = collectAppearanceData();
+  CHAR_STATE.draft.appearance_prompt = buildAIPrompt(CHAR_STATE.draft.appearance_data);
+  saveDraftToStorage();
 }
 
 function collectStage5Data() {
-  CHAR_STATE.draft.character_name  = getVal('char-final-name');
-  CHAR_STATE.draft.gender          = getVal('char-gender');
-  CHAR_STATE.draft.cares_about     = getVal('char-cares-about');
-  CHAR_STATE.draft.deepest_fear    = getVal('char-fear');
-  CHAR_STATE.draft.seeking         = getVal('char-seeking');
+  // Stage 5 is a read-only summary — all data was collected in prior stages
+  saveDraftToStorage();
 }
 
 // ── CLASS STARTING GEAR (PHB 2024) ────────────────────────────────
@@ -1977,7 +2035,7 @@ function renderStartingGear() {
 
   panel.innerHTML =
     '<div class="char-gear-header">'
-    + '<span class="char-gear-label">⚔️ ' + clsLabel + (bgLabel ? ' · ' + bgLabel : '') + '</span>'
+    + '<span class="char-gear-label">⚔️ Your Starting Gear</span>'
     + '<span class="char-gear-sublabel">Everything below is yours from day one — no choices needed.</span>'
     + '</div>'
     + '<div class="char-gear-items">'
@@ -2317,13 +2375,7 @@ function selectAlignment(alignmentId) {
     c.classList.toggle('selected', c.dataset.alignment === alignmentId);
   });
   saveDraftToStorage();
-  // Scroll to the selected card's trait picker
-  setTimeout(function() {
-    var selected = document.querySelector('.char-alignment-card.selected');
-    if (selected) {
-      scrollToField(selected.querySelector('.char-alignment-traits') || selected);
-    }
-  }, 80);
+
 }
 
 function selectAlignmentTrait(el, trait) {
@@ -2345,7 +2397,10 @@ async function submitCharacter() {
   if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
   try {
-    collectStageData(5);
+    collectStageData(1);
+    collectStageData(2);
+    collectStageData(3);
+    collectStageData(4);
     var d = CHAR_STATE.draft;
 
     // Basic validation

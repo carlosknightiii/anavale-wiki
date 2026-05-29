@@ -110,12 +110,14 @@ body.char-page {
 
 /* ── PROGRESS BAR ──────────────────────────────────────────────── */
 .char-progress-wrap {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 90;
-  height: var(--char-progress-h);
+  position: relative;
+  width: 100%;
+  z-index: 1;
+  height: 6px;
   background: rgba(255,255,255,0.08);
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
+  margin-bottom: 1.25rem;
 }
 .char-progress-bar {
   height: 100%;
@@ -136,23 +138,22 @@ body.char-page {
 }
 /* Label sits inside the bar, right-aligned, always visible */
 .char-progress-label {
-  position: relative;
+  display: block;
   font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: rgba(10,14,24,0.9);
-  padding: 0 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  padding: 0.3rem 1rem 0;
   letter-spacing: 0.04em;
   white-space: nowrap;
   pointer-events: none;
-  line-height: var(--char-progress-h);
 }
 
 /* ── LAYOUT ────────────────────────────────────────────────────── */
 .char-layout {
   display: flex;
   min-height: 100vh;
-  padding-top: var(--char-progress-h);
+  padding-top: 0;
 }
 
 /* ── SIDEBAR ───────────────────────────────────────────────────── */
@@ -160,8 +161,8 @@ body.char-page {
   width: var(--char-sidebar-w);
   flex-shrink: 0;
   position: sticky;
-  top: var(--char-progress-h);
-  height: calc(100vh - var(--char-progress-h));
+  top: 0;
+  height: 100vh;
   overflow-y: auto;
   background: linear-gradient(180deg, #080c1a 0%, #0d1120 60%, #06080f 100%);
   border-right: 1px solid rgba(255,255,255,0.06);
@@ -322,7 +323,7 @@ body.char-page {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--char-progress-h));
+  min-height: 100vh;
   padding: 2rem 2rem 5rem 1rem;
   max-width: 860px;
   margin: 0 auto;
@@ -1067,7 +1068,7 @@ body.char-page {
   margin-bottom: 2rem;
   overflow: hidden;
   position: sticky;
-  top: var(--char-progress-h);
+  top: 0;
   z-index: 50;
 }
 .char-stage3-panel-header {
@@ -2575,4 +2576,83 @@ body.char-page {
 @media (max-width: 480px) {
   .char-ability-grid { grid-template-columns: 1fr 1fr; }
   .char-stage-title { font-size: 1.75rem; }
+}
+
+/* ── STAGE 1 ACCORDION ─────────────────────────────────────────── */
+.char-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+.char-accordion-panel {
+  border: 1px solid var(--char-border);
+  border-radius: var(--char-radius);
+  overflow: hidden;
+  background: var(--char-card-bg);
+  transition: border-color 0.2s;
+}
+.char-accordion-panel:has(.char-accordion-body.open) {
+  border-color: var(--char-accent-border);
+}
+.char-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.char-accordion-header:hover {
+  background: rgba(255,255,255,0.04);
+}
+.char-accordion-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.char-accordion-title {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--white);
+  flex-shrink: 0;
+}
+.char-accordion-sub {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--char-text-faint);
+  flex: 1;
+  margin-left: 0.25rem;
+}
+.char-accordion-check {
+  font-size: 0.7rem;
+  color: rgb(134,239,172);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.char-accordion-panel.done .char-accordion-check { opacity: 1; }
+.char-accordion-chevron {
+  font-size: 0.85rem;
+  color: var(--char-text-faint);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.char-accordion-body.open ~ .char-accordion-header .char-accordion-chevron,
+.char-accordion-header[aria-expanded="true"] .char-accordion-chevron {
+  transform: rotate(180deg);
+}
+.char-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+  padding: 0 1.25rem;
+}
+.char-accordion-body.open {
+  max-height: 9999px;
+  padding: 0 1.25rem 1.5rem;
 }
