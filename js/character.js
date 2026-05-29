@@ -1853,6 +1853,34 @@ function renderStartingGear() {
     return WEAPON_ICONS['default'];
   }
 
+  // Tooltip definitions for D&D concepts first-timers won't know
+  var GEAR_TIPS = {
+    'finesse':    'Finesse — you can use either your Strength or Dexterity modifier for attack and damage rolls. Pick whichever is higher.',
+    'light':      'Light — small enough to hold in your off-hand. You can attack with both hands without penalty.',
+    'thrown':     'Thrown — you can hurl this weapon at a target instead of swinging it. Use the range numbers to see how far.',
+    'heavy':      'Heavy — this weapon is large and powerful. Small-sized creatures have disadvantage using it.',
+    'two-handed': 'Two-handed — this weapon requires both hands to use. You cannot hold anything in your other hand.',
+    'reach':      'Reach — this weapon lets you strike enemies up to 10 feet away, not just 5 feet.',
+    'loading':    'Loading — this weapon takes time to reload. You can only fire it once per turn, regardless of how many attacks you have.',
+    'ammunition': 'Ammunition — this weapon needs arrows or bolts to fire. You start with a supply included in your starting gear.',
+    'versatile':  'Versatile — you can use this weapon one-handed or two-handed. Two-handed deals more damage.',
+    'Arcane Focus':    'Arcane Focus — a held object (wand, crystal, staff, or orb) that channels your magic. You need it in hand to cast most spells. A quarterstaff counts as a valid arcane focus — so a wizard holding their staff is already set.',
+    'Spellbook':       'Spellbook — a personal book containing your wizard spells. You start with 6 spells written inside. You can copy new spells into it as you adventure.',
+    'Holy Symbol':     'Holy Symbol — a religious emblem of your god. Clerics and Paladins need it to cast certain spells. Can be worn as an amulet or emblazoned on a shield.',
+    'Druidic Focus':   'Druidic Focus — a natural object (sprig of mistletoe, totem, staff, or wand of yew) used to channel druid magic instead of material components.',
+    'Thieves\' Tools': 'Thieves\' Tools — a set of lockpicks and small tools. Required to pick locks or disarm traps. You are proficient with these.',
+    'musical instrument of your choice': 'Musical instrument — you are proficient with one instrument of your choice (lute, flute, drum, etc). Bards can use it as a spellcasting focus.'
+  };
+
+  function tipChip(label, tipKey) {
+    var tip = GEAR_TIPS[tipKey || label];
+    if (tip) {
+      return '<span class="char-stat-chip char-stat-chip--note char-field-tooltip" data-tip="' + tip.replace(/"/g, '&quot;') + '">'
+        + label + ' <span class="char-trait-tip-icon">?</span></span>';
+    }
+    return '<span class="char-stat-chip char-stat-chip--note">' + label + '</span>';
+  }
+
   function weaponStatChips(weaponStr) {
     if (typeof ITEMS === 'undefined') return '';
     var w = weaponStr.toLowerCase();
@@ -1867,13 +1895,18 @@ function renderStartingGear() {
     if (item.versatile_dice) dmgLabel += ' / ' + item.versatile_dice + ' two-handed';
     chips += '<span class="char-stat-chip char-stat-chip--dmg">' + dmgLabel + '</span>';
     if (item.range_normal) {
-      chips += '<span class="char-stat-chip char-stat-chip--note">range ' + item.range_normal + '/' + item.range_long + '</span>';
+      chips += '<span class="char-stat-chip char-stat-chip--note">range ' + item.range_normal + ' / ' + item.range_long + ' ft</span>';
     }
     var showProps = (item.properties || []).filter(function(p) {
-      return ['heavy','light','finesse','thrown','reach','two-handed'].indexOf(p) >= 0;
+      return ['heavy','light','finesse','thrown','reach','two-handed','loading','ammunition'].indexOf(p) >= 0;
     });
-    if (showProps.length) {
-      chips += '<span class="char-stat-chip char-stat-chip--weight">' + showProps.join(', ') + '</span>';
+    showProps.forEach(function(p) {
+      chips += tipChip(p, p);
+    });
+    // Staff-as-focus note for spellcasting classes
+    var STAFF_FOCUS_CLASSES = ['wizard', 'druid', 'warlock', 'sorcerer'];
+    if (w.indexOf('quarterstaff') >= 0 && STAFF_FOCUS_CLASSES.indexOf(cls) >= 0) {
+      chips += tipChip('doubles as arcane focus', 'Arcane Focus');
     }
     return chips ? '<div class="char-stat-chips">' + chips + '</div>' : '';
   }
@@ -1930,7 +1963,7 @@ function renderStartingGear() {
     +     ' <span class="char-trait-tip-icon">?</span>'
     +   '</span>'
     +   (gear.pack_extras
-        ? '<div class="char-stat-chips"><span class="char-stat-chip char-stat-chip--note">' + gear.pack_extras + '</span></div>'
+        ? '<div class="char-stat-chips">' + gear.pack_extras.split(' + ').map(function(ex) { return tipChip(ex.trim(), ex.trim()); }).join('') + '</div>'
         : '')
     + '</div>'
     + '</div>';
@@ -1948,9 +1981,10 @@ function renderStartingGear() {
     +   packHtml
     + '</div>';
 
-  // Wire tooltip on the pack name
-  var packTipEl = panel.querySelector('.char-field-tooltip[data-tip]');
-  if (packTipEl && typeof wireTooltip === 'function') wireTooltip(packTipEl);
+  // Wire tooltips on pack name and all gear chips
+  panel.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(el) {
+    if (typeof wireTooltip === 'function') wireTooltip(el);
+  });
 }
 
 // ── STATIC APPEARANCE OPTION COSTS ───────────────────────────────
