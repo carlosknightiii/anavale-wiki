@@ -940,7 +940,9 @@ function renderClassGrid() {
   });
 
   // Wire tooltips for dynamically rendered [data-tip] elements
-  if (typeof initTooltips === 'function') initTooltips();
+  document.querySelectorAll('#char-class-grid [data-tip]').forEach(function(el) {
+    if (typeof wireTooltip === 'function') wireTooltip(el);
+  });
 }
 
 function renderGigglogloomAffinity() {
