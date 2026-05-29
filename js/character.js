@@ -785,10 +785,16 @@ function toggleAccordion(panelId) {
   var isOpen = body.classList.contains('open');
   body.classList.toggle('open', !isOpen);
   header.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+  // Render dynamic content when panels first open
+  if (!isOpen) {
+    if (panelId === 'acc-magic') renderGigglogloomAffinity();
+    if (panelId === 'acc-background') { renderBackgroundCards(); renderSpeciesCards(); }
+  }
 }
 
 function initStage1() {
-  // Render background and species cards into the accordion panels
+  // Render dynamic content into accordion panels
+  renderGigglogloomAffinity();
   renderBackgroundCards();
   renderSpeciesCards();
   // Restore all Stage 1 selections from draft
