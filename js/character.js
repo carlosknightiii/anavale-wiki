@@ -1717,13 +1717,29 @@ function updateWeaponStatChip(selectId, chipId) {
     var dmg = item.damage_dice + ' ' + item.damage_type;
     if (item.magic_bonus) dmg += ' (+' + item.magic_bonus + ')';
     html = '<span class="char-stat-chip char-stat-chip--dmg">' + dmg + '</span>';
-    if (item.versatile_dice) {
-      html += '<span class="char-stat-chip char-stat-chip--note">Versatile ' + item.versatile_dice + '</span>';
+    if (item.range_normal) {
+      html += '<span class="char-stat-chip char-stat-chip--note">Range ' + item.range_normal + ' / ' + item.range_long + ' ft</span>';
     }
+    if (item.versatile_dice) {
+      html += '<span class="char-stat-chip char-stat-chip--note">Versatile: ' + item.versatile_dice + ' two-handed</span>';
+    }
+    var PROP_LABELS = {
+      'heavy':      'Heavy — requires two hands, can\'t be used by Small creatures',
+      'light':      'Light — can be used in your off-hand without penalty',
+      'finesse':    'Finesse — use Strength or Dexterity, your choice',
+      'thrown':     'Thrown — can be hurled at a target',
+      'reach':      'Reach — attacks enemies up to 10 ft away',
+      'two-handed': 'Two-handed — requires both hands to use',
+      'loading':    'Loading — can only fire once per turn',
+      'ammunition': 'Ammunition — requires arrows or bolts'
+    };
     if (item.properties && item.properties.length) {
-      item.properties.filter(function(p) { return p !== 'versatile'; }).forEach(function(p) {
-        html += '<span class="char-stat-chip char-stat-chip--note">' + p + '</span>';
-      });
+      item.properties
+        .filter(function(p) { return p !== 'versatile'; })
+        .forEach(function(p) {
+          var label = PROP_LABELS[p] || p;
+          html += '<span class="char-stat-chip char-stat-chip--note">' + label + '</span>';
+        });
     }
   }
   chip.innerHTML = html;
@@ -1765,10 +1781,22 @@ function updateGearStatChip(selectId, chipId) {
     chip.style.display = 'none';
     return;
   }
+  var WEIGHT_LABELS = {
+    'Light':  'Light armor — easy to move in',
+    'Medium': 'Medium armor — some movement penalty',
+    'Heavy':  'Heavy armor — slow and loud'
+  };
+  var weightLabel = WEIGHT_LABELS[stats.weight] || stats.weight;
+  // Expand stealth note into plain English
+  var noteLabel = stats.note
+    ? stats.note.replace('Stealth ⚠', 'Disadvantage on Stealth rolls — enemies hear you coming')
+                .replace('Str 15 req', 'Requires Strength 15+')
+                .replace('Str 13 req', 'Requires Strength 13+')
+    : '';
   var html = '<span class="char-stat-chip char-stat-chip--ac">' + stats.ac + '</span>'
-           + '<span class="char-stat-chip char-stat-chip--weight">' + stats.weight + '</span>';
-  if (stats.note) {
-    html += '<span class="char-stat-chip char-stat-chip--note">' + stats.note + '</span>';
+           + '<span class="char-stat-chip char-stat-chip--weight">' + weightLabel + '</span>';
+  if (noteLabel) {
+    html += '<span class="char-stat-chip char-stat-chip--note">' + noteLabel + '</span>';
   }
   chip.innerHTML = html;
   chip.style.display = 'flex';
