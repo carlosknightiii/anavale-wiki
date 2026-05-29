@@ -796,7 +796,7 @@ body.char-page {
 
 /* Skill selection within class card */
 .char-class-skills-section {
-  padding: 0 1rem 0.5rem;
+  padding: 0 1rem 0.5rem 1rem;
 }
 .char-class-skills-grid {
   display: flex;
@@ -842,10 +842,21 @@ body.char-page {
 }
 .char-class-skills-count {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   color: var(--gold);
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
 }
+
+.char-skills-needed-alert {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: #e05050;
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+}
+.char-skills-needed-alert.visible { display: inline-flex; }
 
 /* Trait pills row */
 .char-class-traits {
@@ -859,10 +870,10 @@ body.char-page {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  background: var(--char-accent-tint);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  padding: 0.35rem 0.65rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.35rem 0.65rem 0.35rem 0;
   font-family: var(--font-sans);
   font-size: 0.78rem;
   color: var(--parchment);
@@ -875,19 +886,28 @@ body.char-page {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--white);
   margin-bottom: 0.1rem;
 }
 
 /* Features list */
 .char-class-features-label {
   font-family: var(--font-sans);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white);
+  padding: 0.6rem 1rem 0.35rem;
+}
+.char-class-skills-label {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gold);
-  padding: 0.6rem 1rem 0.35rem;
+  padding: 0.6rem 0 0.35rem;
 }
 
 .char-class-features {
@@ -911,6 +931,10 @@ body.char-page {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
+}
+/* Keep trait labels white even when they also carry .char-field-tooltip */
+.char-class-trait-label.char-field-tooltip {
+  color: var(--white);
 }
 .char-trait-tip-icon {
   display: inline-flex;
@@ -1437,13 +1461,9 @@ body.char-page {
 }
 .char-bg-bonus-pill {
   font-family: var(--font-sans);
-  font-size: 0.65rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: 20px;
-  border: 1px solid var(--parchment);
+  font-size: 0.78rem;
   color: var(--parchment);
-  background: rgba(200,148,10,0.06);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
@@ -1512,7 +1532,33 @@ body.char-page {
 .char-bg-skills {
   font-family: var(--font-sans);
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.6);
+  color: var(--parchment);
+  line-height: 1.6;
+}
+.char-bg-body-footer {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.5rem;
+}
+.char-bg-bonus-row {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--parchment);
+  white-space: nowrap;
+}
+.char-bg-body-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.char-bg-bonuses-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex-shrink: 0;
 }
 .char-bg-skill-label {
   font-weight: 600;
@@ -2340,11 +2386,11 @@ body.char-page {
 }
 .char-option-card-sub {
   font-family: var(--font-sans);
-  font-size: .85rem;
+  font-size: 0.82rem;
   color: var(--char-text-faint);
-  margin-top: 0.2rem;
-  line-height: 1.4;
-  text-transform: capitalize;
+  margin-top: 0.3rem;
+  line-height: 1.6;
+  text-transform: none;
 }
 
 /* ── IMAGINED PAST SECTION ─────────────────────────────────────── */
@@ -2373,7 +2419,7 @@ body.char-page {
   border-radius: 5px;
   font-family: var(--font-sans);
   font-size: 0.78rem;
-  color: var(--gold);
+  color: var(--white);
   display: none;
 }
 .char-past-effect-preview.visible { display: block; }

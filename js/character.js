@@ -795,6 +795,7 @@ function initStage1() {
   if (CHAR_STATE.draft.class_id) {
     restoreClassSelection(CHAR_STATE.draft.class_id);
   }
+  updateStage1SkillAlert();
 }
 
 function renderClassGrid() {
@@ -850,7 +851,7 @@ function renderClassGrid() {
       + '<div class="char-class-body">'
       +   '<div class="char-class-traits">' + traitsHtml + '</div>'
       +   '<div class="char-class-skills-section">'
-      +     '<div class="char-class-features-label">Skills — choose ' + cls.skills_count + '</div>'
+      +     '<div class="char-class-skills-label">Skills — choose ' + cls.skills_count + '</div>'
       +     '<div class="char-class-skills-grid">' + skillsHtml + '</div>'
       +     '<div class="char-class-skills-count" id="skill-count-' + cls.id + '">0 of ' + cls.skills_count + ' chosen</div>'
       +   '</div>'
@@ -874,6 +875,7 @@ function renderClassGrid() {
       if (counter) counter.textContent = checked.length + ' of ' + cls.skills_count + ' chosen';
       CHAR_STATE.draft['skills_' + classId] = Array.from(checked).map(function(c) { return c.value; });
       saveDraftToStorage();
+      updateStage1SkillAlert();
     });
   });
 
@@ -923,6 +925,20 @@ function selectClass(classId) {
   CHAR_STATE.draft.class_id = classId;
   CHAR_STATE.draft.gigglegloom_type = typeId;
   saveDraftToStorage();
+  updateStage1SkillAlert();
+}
+
+function updateStage1SkillAlert() {
+  var classId = CHAR_STATE.draft.class_id;
+  var cls = classId ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
+  var btn = document.getElementById('char-stage1-continue');
+  var alert = document.getElementById('char-stage1-skill-alert');
+  if (!cls || !btn) return;
+  var chosen = (CHAR_STATE.draft['skills_' + classId] || []).length;
+  var needed = cls.skills_count;
+  var complete = chosen >= needed;
+  btn.disabled = !complete;
+  if (alert) alert.classList.toggle('visible', !complete);
 }
 
 function selectType(typeId, silent) {
@@ -974,9 +990,24 @@ function renderBackgroundCards() {
   var grid = document.getElementById('char-background-grid');
   if (!grid) return;
   grid.innerHTML = ANAVALE_BACKGROUNDS.map(function(bg) {
+    var FEAT_TIPS = {
+      'Skilled':           'Gain proficiency in 3 additional skills of your choice.',
+      'Lucky':             'Reroll any attack roll, ability check, or saving throw 3 times per long rest — use the new result.',
+      'Alert':             '+5 to initiative. You can\'t be surprised. Hidden creatures gain no advantage on attacks against you.',
+      'Tough':             'Your maximum hit points increase by 2 for every level, including this one.',
+      'Magic Initiate':    'Learn 2 cantrips and 1 first-level spell from any class. Cast the spell once per long rest without a spell slot.',
+      'Inspiring Leader':  'After a 10-minute speech, nearby allies gain temporary HP equal to your level + your Charisma modifier.',
+      'Tavern Brawler':    'Proficiency with improvised weapons. Unarmed strikes deal 1d4 + Strength modifier.',
+      'Savage Attacker':   'Once per turn when you hit with a weapon, reroll the damage dice and use the higher result.',
+      'Keen Mind':         'Always know which direction is north, how long until sunrise/sunset, and can recall anything you\'ve heard or read in the past month.'
+    };
     var bonusHtml = bg.bonuses.map(function(b) {
-      return '<span class="char-bg-bonus-pill">' + b + '</span>';
-    }).join('');
+      var tip = FEAT_TIPS[b] || '';
+      if (tip) {
+        return b + ' <span class="char-field-tooltip" data-tip="' + tip.replace(/"/g, '&quot;') + '"><span class="char-trait-tip-icon">?</span></span>';
+      }
+      return b;
+    }).join(' · ');
     return '<div class="char-bg-card" data-bg="' + bg.id + '">'
       + '<div class="char-bg-header" onclick="selectBackground(\'' + bg.id + '\')">'
       +   '<div class="char-bg-header-info">'
@@ -984,17 +1015,46 @@ function renderBackgroundCards() {
       +     '<div class="char-bg-phb">' + bg.phb + '</div>'
       +   '</div>'
       +   '<div class="char-bg-header-right">'
-      +     '<div class="char-bg-bonuses">' + bonusHtml + '</div>'
       +     '<div class="char-bg-check">✓</div>'
       +     '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleBgCard(this)" aria-label="Toggle details">Expand</button>'
       +   '</div>'
       + '</div>'
       + '<div class="char-bg-body">'
       +   '<div class="char-bg-lore">' + bg.lore + '</div>'
-      +   '<div class="char-bg-skills"><span class="char-bg-skill-label">Skills</span> ' + bg.skills.join(' · ') + '</div>'
+      +   '<div class="char-bg-body-footer">'
+      +     '<span class="char-bg-bonus-row">' + bonusHtml + '</span>'
+      +     '<span class="char-bg-skills"><span class="char-bg-skill-label">Skills</span> '
+      +       bg.skills.map(function(sk) {
+                var SKILL_TIPS = {
+                  'Acrobatics':       'Dexterity — tumbling, balancing, graceful physical feats.',
+                  'Animal Handling':  'Wisdom — calming, controlling, or reading animals.',
+                  'Arcana':           'Intelligence — knowledge of magic, spells, and the Gigglegloom.',
+                  'Athletics':        'Strength — climbing, jumping, swimming, feats of raw power.',
+                  'Deception':        'Charisma — misleading, lying convincingly, disguising intent.',
+                  'History':          'Intelligence — recalling past events, legends, and lore.',
+                  'Insight':          'Wisdom — reading people, sensing lies, understanding motives.',
+                  'Intimidation':     'Charisma — frightening, threatening, pressuring others.',
+                  'Investigation':    'Intelligence — searching carefully, finding clues, deducing.',
+                  'Medicine':         'Wisdom — stabilizing the dying, diagnosing illness or poison.',
+                  'Nature':           'Intelligence — knowledge of plants, animals, weather, terrain.',
+                  'Perception':       'Wisdom — noticing things around you with your senses.',
+                  'Performance':      'Charisma — entertaining through music, dance, acting, storytelling.',
+                  'Persuasion':       'Charisma — convincing others through reason, charm, or negotiation.',
+                  'Religion':         'Intelligence — knowledge of gods, rites, and holy symbols.',
+                  'Sleight of Hand':  'Dexterity — pickpocketing, planting items, fine manual trickery.',
+                  'Stealth':          'Dexterity — moving silently and hiding from notice.',
+                  'Survival':         'Wisdom — tracking, foraging, navigating, and surviving the wild.'
+                };
+                var tip = SKILL_TIPS[sk] || '';
+                return sk + (tip ? ' <span class="char-field-tooltip" data-tip="' + tip.replace(/"/g, '&quot;') + '"><span class="char-trait-tip-icon">?</span></span>' : '');
+              }).join(' · ')
+      +     '</span>'
+      +   '</div>'
       + '</div>'
       + '</div>';
   }).join('');
+  // Wire tooltips for dynamically rendered [data-tip] elements in background cards
+  if (typeof initTooltips === 'function') initTooltips();
 }
 
 function toggleBgCard(btn) {
@@ -1099,7 +1159,6 @@ window.renderSpeciesCardsImpl = function() {
       +     '<div class="char-bg-phb">' + sp.phb + '</div>'
       +   '</div>'
       +   '<div class="char-bg-header-right">'
-      +     '<div class="char-bg-bonuses"><span class="char-bg-bonus-pill">' + sp.affinity + '</span></div>'
       +     '<div class="char-bg-check">✓</div>'
       +     '<button class="char-bg-toggle" onclick="event.stopPropagation();toggleBgCard(this)" aria-label="Toggle details">Expand</button>'
       +   '</div>'
@@ -1209,7 +1268,7 @@ function restoreStage2Selections() {
       var effect = matched.dataset.effect || '';
       var preview = document.getElementById('effect-' + f.past);
       if (preview && effect) {
-        preview.textContent = '✦ ' + effect;
+        preview.innerHTML = effect.replace(/(\+\d+)/g, '<span style="color:#6ecf6e;">$1</span>');
         preview.classList.add('visible');
       }
       // Mark question answered
@@ -1229,6 +1288,17 @@ function validateStage(n) {
     if (!CHAR_STATE.draft.class_id) {
       showToast('Please choose a class within your Gigglegloom type.');
       return false;
+    }
+    // Skill gate: must choose the required number of skills for chosen class
+    var classId1 = CHAR_STATE.draft.class_id;
+    var cls1 = CLASS_DATA.find(function(c) { return c.id === classId1; });
+    if (cls1) {
+      var chosenSkills = (CHAR_STATE.draft['skills_' + classId1] || []);
+      if (chosenSkills.length < cls1.skills_count) {
+        showToast('Choose ' + cls1.skills_count + ' skills for your class before continuing.');
+        updateStage1SkillAlert();
+        return false;
+      }
     }
   }
   if (n === 2) {
@@ -1304,12 +1374,12 @@ function collectStage2Data() {
 
 function collectStage3Data() {
   CHAR_STATE.draft.ability_scores = {
-    str: parseInt(getVal('char-ability-str')) || 10,
-    dex: parseInt(getVal('char-ability-dex')) || 10,
-    con: parseInt(getVal('char-ability-con')) || 10,
-    int: parseInt(getVal('char-ability-int')) || 10,
-    wis: parseInt(getVal('char-ability-wis')) || 10,
-    cha: parseInt(getVal('char-ability-cha')) || 10
+    str: parseInt(getVal('char-ability-str')) || null,
+    dex: parseInt(getVal('char-ability-dex')) || null,
+    con: parseInt(getVal('char-ability-con')) || null,
+    int: parseInt(getVal('char-ability-int')) || null,
+    wis: parseInt(getVal('char-ability-wis')) || null,
+    cha: parseInt(getVal('char-ability-cha')) || null
   };
   // Appearance
   CHAR_STATE.draft.appearance_data = collectAppearanceData();
@@ -2695,7 +2765,11 @@ function renderStage3Panel() {
             : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Choose class + background to see skills</div>')
         + (modifierSkills.length
             ? '<div class="char-stage3-lower-row"><span>Modifiers:</span>'
-              + modifierSkills.map(function(s) { return '<span style="color:#6ecf6e;">' + s + '</span>'; }).join(', ')
+              + modifierSkills.map(function(s) {
+                  var p = s.match(/^([+-]\d+)\s+(.+)$/);
+                  return p ? '<span style="color:#6ecf6e;margin-right:0;">' + p[1] + '</span> <span style="color:#fff;margin-right:0;">' + p[2] + '</span>'
+                           : '<span style="color:#6ecf6e;">' + s + '</span>';
+                }).join(', ')
               + '</div>'
             : '')
       + '</div>'
@@ -2703,7 +2777,11 @@ function renderStage3Panel() {
         + '<div class="char-stage3-lower-label">Total Ability Scores</div>'
         + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--char-text-faint);margin-bottom:0.4rem;line-height:1.4;">Includes assigned scores and modifiers from your previous selections.</div>'
         + (bonusLines.length
-            ? '<div class="char-stage3-lower-row" style="margin-bottom:0.4rem;"><span>Bonuses</span>' + bonusLines.join(', ') + '</div>'
+            ? '<div class="char-stage3-lower-row" style="margin-bottom:0.4rem;"><span>Bonuses</span>' + bonusLines.map(function(b) {
+                var p = b.match(/^([+-]\d+)\s+(.+)$/);
+                return p ? '<span style="color:#6ecf6e;margin-right:0;">' + p[1] + '</span> <span style="color:#fff;margin-right:0;">' + p[2] + '</span>'
+                         : b;
+              }).join(', ') + '</div>'
             : '')
         + (anyScore
             ? '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
@@ -2715,13 +2793,15 @@ function renderStage3Panel() {
 function updateGoldDisplay() {
   renderStage3Panel();
   if (CHAR_STATE.current_stage === 3) {
+    var overspent = (getStartingGold() - calcGoldSpent()) < 0;
     var btn = document.querySelector('#char-stage-3 .char-btn-next');
     if (btn) {
-      var overspent = (getStartingGold() - calcGoldSpent()) < 0;
-      btn.disabled = overspent;
+      btn.disabled     = overspent;
       btn.style.opacity = overspent ? '0.35' : '';
       btn.style.cursor  = overspent ? 'not-allowed' : '';
     }
+    var err = document.getElementById('char-stage3-gold-error');
+    if (err) err.style.display = overspent ? 'block' : 'none';
   }
 }
 
@@ -2977,12 +3057,9 @@ function restoreStage3Selections() {
     var placed = [];
     ['str','dex','con','int','wis','cha'].forEach(function(ab) {
       var val = scores[ab];
-      if (val && val !== 10) {
+      if (val !== null && val !== undefined && val !== '') {
         setAbilityScore(ab, val);
         placed.push(parseInt(val));
-      } else if (val === 10) {
-        setAbilityScore(ab, val);
-        placed.push(10);
       }
     });
     // Put unplaced scores back in bank

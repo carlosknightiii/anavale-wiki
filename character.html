@@ -146,7 +146,8 @@
       <div class="char-nav">
         <span></span>
         <div class="char-nav-right" style="gap:1.5rem;">
-          <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
+          <span id="char-stage1-skill-alert" class="char-skills-needed-alert">You must select your skills before continuing. Select them under "Skills" inside the expanded class details.</span>
+          <button id="char-stage1-continue" class="char-btn char-btn-next" onclick="goNext()" disabled>Continue →</button>
           <button class="char-save-draft" onclick="copyResumeLink()" title="Generates a link you can bookmark or save to continue later on any device">💾 Save My Progress</button>
           <span class="char-save-hint">💾 copies a link you can bookmark to continue later on any device</span>
         </div>
@@ -193,19 +194,19 @@
         <div class="char-option-cards" data-field="char-home-region" data-save="home_region">
           <div class="char-option-card" data-value="Caparia" onclick="selectOptionCard(this)">
             <div class="char-option-card-label">Caparia</div>
-            <div class="char-option-card-sub">The colorful heartlands</div>
+            <div class="char-option-card-sub">The colorful heartlands — lush meadows, sparkling rivers, and the most vibrant cities on the continent. The Pogglewog Confederation was built here. Color maintenance isn't a tradition, it's law. The Gigglegloom runs warm and generous, and you can feel it in the air on clear days. Most visitors never want to leave.</div>
           </div>
           <div class="char-option-card" data-value="Nombi" onclick="selectOptionCard(this)">
             <div class="char-option-card-label">Nombi</div>
-            <div class="char-option-card-sub">The frozen, aurora-lit north</div>
+            <div class="char-option-card-sub">The frozen, aurora-lit north — dense forests, icy mountains, and skies painted nightly by the aurora. The Gigglegloom manifests visually through the northern lights, and the people here have learned to read it the way others read weather. Honor is the primary currency. The north is beautiful and dangerous in equal measure, and it knows it.</div>
           </div>
           <div class="char-option-card" data-value="Sohot" onclick="selectOptionCard(this)">
             <div class="char-option-card-label">Sohot</div>
-            <div class="char-option-card-sub">The ancient, blazing south</div>
+            <div class="char-option-card-sub">The ancient, blazing south — desert dunes, ceremonial cities, and a kingdom that has never forgotten a single thing. Sohot's colors have always been vivid and deliberate, every hue carrying meaning. The heat doesn't destroy — it preserves. Something has been quietly wrong here for a while, but the south keeps its grief inward and its colors bright for as long as it can.</div>
           </div>
           <div class="char-option-card" data-value="Jugabi" onclick="selectOptionCard(this)">
             <div class="char-option-card-label">Jugabi</div>
-            <div class="char-option-card-sub">The living jungle southwest</div>
+            <div class="char-option-card-sub">The living jungle southwest — the Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on the continent, and the jungle has developed opinions about it. Ancient, layered, and loud with color. The creatures here are unlike anywhere else. The canopy is not above you — you are inside the forest, and the forest is aware of you specifically.</div>
           </div>
         </div>
       </div>
@@ -882,6 +883,7 @@
       <div class="char-nav">
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
         <div class="char-nav-right">
+          <div id="char-stage3-gold-error" style="display:none; font-family:var(--font-sans); font-size:0.78rem; color:#e05050; text-align:right; line-height:1.4;">! Not enough money — remove items to continue.</div>
           <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
           <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
         </div>
@@ -1117,7 +1119,7 @@ function selectPastCard(card) {
   var preview = document.getElementById('effect-' + pastKey);
   if (preview) {
     if (effect) {
-      preview.textContent = '✦ ' + effect;
+      preview.innerHTML = effect.replace(/(\+\d+)/g, '<span style="color:#6ecf6e;">$1</span>');
       preview.classList.add('visible');
     } else {
       preview.classList.remove('visible');
