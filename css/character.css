@@ -1344,6 +1344,25 @@ body.char-page {
 }
 .char-score-chip:hover { border-color: var(--gold); background: var(--gold-light); }
 .char-score-chip.dragging { opacity: 0.4; cursor: grabbing; }
+.char-ability-reset-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--char-border);
+  background: transparent;
+  color: var(--char-text-faint);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.char-ability-reset-btn:hover {
+  color: var(--parchment);
+  border-color: var(--char-accent-border-mid);
+}
 /* Ability score bank instruction */
 .char-ability-bank-instruction {
   font-family: var(--font-sans);
@@ -1815,29 +1834,31 @@ body.char-page {
 }
 
 .char-checkbox-label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 13px;
-  border: 1.5px solid var(--char-border-gold);
-  border-radius: 20px;
-  cursor: pointer;
+  gap: 0.4rem;
   font-family: var(--font-sans);
-  font-size: 0.82rem;
-  color: var(--white);
-  background: var(--char-accent-tint);
-  transition: background 0.15s, color 0.15s;
+  font-size: 0.85rem;
+  color: var(--char-text-faint);
+  cursor: pointer;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--char-border);
+  background: transparent;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
   user-select: none;
 }
-
+.char-checkbox-label:hover {
+  border-color: var(--char-accent-border-mid);
+  color: var(--parchment);
+}
+.char-checkbox-label:has(input:checked) {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--char-highlight-tint);
+}
 .char-checkbox-label input[type="checkbox"] {
   display: none;
-}
-
-.char-checkbox-label:has(input:checked) {
-  background: var(--gold);
-  color: var(--parchment-dark);
-  border-color: var(--gold);
 }
 
 /* Native color picker input */

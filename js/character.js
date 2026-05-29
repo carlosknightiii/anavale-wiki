@@ -1891,11 +1891,18 @@ function renderStartingGear() {
     });
     if (!item || !item.damage_dice) return '';
     var chips = '';
-    var dmgLabel = item.damage_dice + ' ' + item.damage_type;
-    if (item.versatile_dice) dmgLabel += ' / ' + item.versatile_dice + ' two-handed';
-    chips += '<span class="char-stat-chip char-stat-chip--dmg">' + dmgLabel + '</span>';
+    var diceStr = item.damage_dice;
+    var dmgLabel = diceStr + ' ' + item.damage_type;
+    var dmgTip = 'Roll ' + diceStr + ' (a ' + diceStr.replace('1','') + '-sided die) and add your modifier — that\'s your damage.';
+    if (item.versatile_dice) {
+      dmgLabel += ' / ' + item.versatile_dice + ' two-handed';
+      dmgTip += ' Use two hands for ' + item.versatile_dice + ' damage instead.';
+    }
+    chips += '<span class="char-stat-chip char-stat-chip--dmg char-field-tooltip" data-tip="' + dmgTip.replace(/"/g, '&quot;') + '">' + dmgLabel + ' <span class="char-trait-tip-icon">?</span></span>';
     if (item.range_normal) {
-      chips += '<span class="char-stat-chip char-stat-chip--note">range ' + item.range_normal + ' / ' + item.range_long + ' ft</span>';
+      var rangeTip = 'Normal range: ' + item.range_normal + ' ft — full accuracy. Long range: ' + item.range_long + ' ft — you have disadvantage (roll twice, take the lower result).';
+      chips += '<span class="char-stat-chip char-stat-chip--note char-field-tooltip" data-tip="' + rangeTip + '">'
+        + item.range_normal + ' / ' + item.range_long + ' ft range <span class="char-trait-tip-icon">?</span></span>';
     }
     var showProps = (item.properties || []).filter(function(p) {
       return ['heavy','light','finesse','thrown','reach','two-handed','loading','ammunition'].indexOf(p) >= 0;
@@ -1906,9 +1913,9 @@ function renderStartingGear() {
     // Staff-as-focus note for spellcasting classes
     var STAFF_FOCUS_CLASSES = ['wizard', 'druid', 'warlock', 'sorcerer'];
     if (w.indexOf('quarterstaff') >= 0 && STAFF_FOCUS_CLASSES.indexOf(cls) >= 0) {
-      chips += tipChip('doubles as arcane focus', 'Arcane Focus');
+      chips += tipChip('also your spellcasting tool', 'Arcane Focus');
     }
-    return chips ? '<div class="char-stat-chips">' + chips + '</div>' : '';
+    return chips ? '<div class="char-stat-chips" style="flex-wrap:wrap;">' + chips + '</div>' : '';
   }
 
   function sectionLabel(text) {
@@ -1970,8 +1977,8 @@ function renderStartingGear() {
 
   panel.innerHTML =
     '<div class="char-gear-header">'
-    + '<span class="char-gear-label">Starting gear — ' + clsLabel + (bgLabel ? ' · ' + bgLabel : '') + '</span>'
-    + '<span class="char-gear-sublabel">This gear is yours automatically. No choices needed.</span>'
+    + '<span class="char-gear-label">⚔️ ' + clsLabel + (bgLabel ? ' · ' + bgLabel : '') + '</span>'
+    + '<span class="char-gear-sublabel">Everything below is yours from day one — no choices needed.</span>'
     + '</div>'
     + '<div class="char-gear-items">'
     +   (armorHtml ? sectionLabel('ARMOR') + armorHtml : '')
@@ -1985,6 +1992,13 @@ function renderStartingGear() {
   panel.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(el) {
     if (typeof wireTooltip === 'function') wireTooltip(el);
   });
+  // Add equip nudge link below the panel
+  var nudge = document.getElementById('char-gear-equip-nudge');
+  if (nudge && gear.weapons && gear.weapons.length) {
+    nudge.style.display = 'block';
+  } else if (nudge) {
+    nudge.style.display = 'none';
+  }
 }
 
 // ── STATIC APPEARANCE OPTION COSTS ───────────────────────────────
@@ -2979,7 +2993,7 @@ function renderStage3Panel() {
             : '')
         + (anyScore
             ? '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + abilityHtml + '</div>'
-            : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores above</div>')
+            : '<div class="char-stage3-lower-row" style="color:var(--char-text-faint);font-style:italic;">Assign scores below</div>')
       + '</div>'
       + dmgHtml
     + '</div>';
@@ -2997,6 +3011,15 @@ function updateGoldDisplay() {
     var err = document.getElementById('char-stage3-gold-error');
     if (err) err.style.display = overspent ? 'block' : 'none';
   }
+}
+
+function updateResetButton() {
+  var btn = document.getElementById('char-ability-reset-btn');
+  if (!btn) return;
+  var bank = document.getElementById('char-score-bank');
+  var bankChips = bank ? bank.querySelectorAll('.char-score-chip').length : 0;
+  // Show reset if at least one score has been placed (bank is not full)
+  btn.style.display = bankChips < ABILITY_SCORES.length ? 'inline-flex' : 'none';
 }
 
 function initAbilityScores() {
@@ -3017,6 +3040,20 @@ function resetAbilityScores() {
     chip.textContent = score;
     bank.appendChild(chip);
   });
+  // Add reset button if not already present
+  if (!document.getElementById('char-ability-reset-btn')) {
+    var resetBtn = document.createElement('button');
+    resetBtn.id = 'char-ability-reset-btn';
+    resetBtn.className = 'char-ability-reset-btn';
+    resetBtn.textContent = '↺ Reset';
+    resetBtn.style.display = 'none';
+    resetBtn.addEventListener('click', function() {
+      resetAbilityScores();
+      saveDraftToStorage();
+    });
+    bank.appendChild(resetBtn);
+  }
+  updateResetButton();
   // Clear all ability cards
   ['str','dex','con','int','wis','cha'].forEach(function(ab) {
     setAbilityScore(ab, null);
@@ -3062,6 +3099,7 @@ function setAbilityScore(ability, score) {
     if (card)   card.dataset.score = n;
   }
   renderStage3Panel();
+  updateResetButton();
 }
 
 function initAbilityDragDrop() {
