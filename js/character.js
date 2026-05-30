@@ -1124,8 +1124,9 @@ function renderBackgroundCards() {
       + '</div>'
       + '</div>';
   }).join('');
-  // Wire tooltips for dynamically rendered [data-tip] elements in background cards
-  if (typeof initTooltips === 'function') initTooltips();
+  document.querySelectorAll('#acc-background-body [data-tip]').forEach(function(el) {
+    if (typeof wireTooltip === 'function') wireTooltip(el);
+  });
 }
 
 function toggleBgCard(btn) {

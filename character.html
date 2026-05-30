@@ -637,7 +637,7 @@
         <div class="char-nav-right" style="gap:1.5rem;">
           <span id="char-stage1-skill-alert" class="char-skills-needed-alert">You must select your skills before continuing. Select them under "Skills" inside the expanded class details.</span>
           <button id="char-stage1-continue" class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
-          <button class="char-save-draft" onclick="copyResumeLink()" title="Generates a link you can bookmark or save to continue later on any device">💾 Save My Progress</button>
+          <button class="char-save-draft" onclick="generateResumeLink()" title="Generates a link you can bookmark or save to continue later on any device">💾 Save My Progress</button>
           <span class="char-save-hint">💾 copies a link you can bookmark to continue later on any device</span>
         </div>
       </div>
@@ -662,7 +662,7 @@
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
         <div class="char-nav-right">
           <button id="char-stage2-continue" class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
-          <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
+          <button class="char-save-draft" onclick="generateResumeLink()">Save My Progress</button>
         </div>
       </div>
     </div>
@@ -768,7 +768,7 @@
         <div class="char-nav-right">
           <div id="char-stage3-gold-error" style="display:none; font-family:var(--font-sans); font-size:0.78rem; color:#e05050; text-align:right; line-height:1.4;">! Not enough money — remove items to continue.</div>
           <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
-          <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
+          <button class="char-save-draft" onclick="generateResumeLink()">Save My Progress</button>
         </div>
       </div>
     </div>
@@ -873,7 +873,7 @@
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
         <div class="char-nav-right">
           <button class="char-btn char-btn-next" onclick="goNext()">Continue →</button>
-          <button class="char-save-draft" onclick="copyResumeLink()">Save My Progress</button>
+          <button class="char-save-draft" onclick="generateResumeLink()">Save My Progress</button>
         </div>
       </div>
     </div>
