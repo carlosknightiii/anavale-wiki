@@ -135,16 +135,6 @@
           <div id="char-name-suggestions" class="char-name-suggestions"></div>
         </div>
         <div class="char-field-group">
-          <label class="char-field-label" for="char-gender">Gender</label>
-          <span class="char-field-help">Choose one, or leave blank.</span>
-          <select class="char-select" id="char-gender">
-            <option value="">— prefer not to say —</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="non-binary">Non-binary</option>
-          </select>
-        </div>
-        <div class="char-field-group">
           <label class="char-field-label">Your personality</label>
           <span class="char-field-help">Three quick lines — no wrong answers.</span>
           <input class="char-input char-input--spaced" id="char-personality-1" type="text" placeholder="One thing people notice about you immediately.">
@@ -198,15 +188,27 @@
         </div>
         <input type="hidden" id="char-background" name="char-background">
         <div id="char-background-grid" class="char-bg-grid"></div>
-        <div id="char-species-section" class="char-section-header">
-          <div class="char-section-header-eyebrow">Part 2 of 3</div>
-          <div class="char-section-header-title">Choose your species</div>
-          <div class="char-section-header-desc">Your species shapes where you come from and what you carry in your blood.</div>
+        <div class="char-section-header">
+          <div class="char-section-header-eyebrow">Part 2 of 4</div>
+          <div class="char-section-header-title">Your Gender</div>
+          <div class="char-section-header-desc">Choose one — this determines which portraits appear for your species.</div>
         </div>
+        <input type="hidden" id="char-gender" value="">
+        <div class="char-gender-options" style="margin-bottom:1.75rem;">
+          <button type="button" class="char-gender-btn" data-value="male" onclick="selectGender(this)">♂ Male</button>
+          <button type="button" class="char-gender-btn" data-value="female" onclick="selectGender(this)">♀ Female</button>
+          <button type="button" class="char-gender-btn" data-value="non-binary" onclick="selectGender(this)">⚧ Non-binary</button>
+        </div>
+        <div id="char-species-section" class="char-section-header char-species-section--locked">
+          <div class="char-section-header-eyebrow">Part 3 of 4</div>
+          <div class="char-section-header-title">Choose your species</div>
+          <div class="char-section-header-desc">Choose your gender above to see your options.</div>
+        </div>
+        <div id="char-species-locked-msg" class="char-species-locked-msg">Choose your gender above to unlock species selection.</div>
         <div id="char-species-grid" class="char-bg-grid"></div>
         <input type="hidden" id="char-species" name="char-species" value="">
         <div class="char-section-header" id="char-home-region-section">
-          <div class="char-section-header-eyebrow">Part 3 of 3</div>
+          <div class="char-section-header-eyebrow">Part 4 of 4</div>
           <div class="char-section-header-title">Where you come from</div>
           <div class="char-section-header-desc">Your home region and a second language.</div>
         </div>
@@ -214,22 +216,50 @@
           <label class="char-field-label">Where are you from?</label>
           <span class="char-field-help">The region of Pogglewog you call home.</span>
           <input type="hidden" id="char-home-region">
-          <div class="char-option-cards" data-field="char-home-region" data-save="home_region">
-            <div class="char-option-card" data-value="Caparia" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Caparia</div>
-              <div class="char-option-card-sub">The colorful heartlands — lush meadows, sparkling rivers, and the most vibrant cities on the continent.</div>
+          <div class="char-option-cards char-region-cards" data-field="char-home-region" data-save="home_region">
+            <div class="char-region-card" data-value="Caparia" onclick="selectOptionCard(this)">
+              <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-caparia-landscape.png')"></div>
+              <div class="char-region-card-overlay"></div>
+              <div class="char-region-card-content">
+                <div class="char-region-card-label">Region</div>
+                <div class="char-region-card-name">Caparia</div>
+                <div class="char-region-card-climate">The colorful heartlands</div>
+                <div class="char-region-card-blurb">Lush meadows, sparkling rivers, and the most vibrant cities on the continent. Color maintenance here is not a tradition — it is law.</div>
+              </div>
+              <div class="char-region-card-check">✓</div>
             </div>
-            <div class="char-option-card" data-value="Nombi" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Nombi</div>
-              <div class="char-option-card-sub">The frozen, aurora-lit north — dense forests, icy mountains, and skies painted nightly by the aurora.</div>
+            <div class="char-region-card" data-value="Nombi" onclick="selectOptionCard(this)">
+              <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-nombi-landscape.webp')"></div>
+              <div class="char-region-card-overlay"></div>
+              <div class="char-region-card-content">
+                <div class="char-region-card-label">Region</div>
+                <div class="char-region-card-name">Nombi</div>
+                <div class="char-region-card-climate">The frozen, aurora-lit north</div>
+                <div class="char-region-card-blurb">Dense forests, icy mountains, and skies painted nightly by the aurora. Honor is currency here.</div>
+              </div>
+              <div class="char-region-card-check">✓</div>
             </div>
-            <div class="char-option-card" data-value="Sohot" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Sohot</div>
-              <div class="char-option-card-sub">The ancient, blazing south — desert dunes, ceremonial cities, and a kingdom that has never forgotten a single thing.</div>
+            <div class="char-region-card" data-value="Sohot" onclick="selectOptionCard(this)">
+              <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-sohot-landscape.png')"></div>
+              <div class="char-region-card-overlay"></div>
+              <div class="char-region-card-content">
+                <div class="char-region-card-label">Region</div>
+                <div class="char-region-card-name">Sohot</div>
+                <div class="char-region-card-climate">The ancient, blazing south</div>
+                <div class="char-region-card-blurb">Desert dunes, ceremonial cities, and a kingdom that has never forgotten a single thing. The south's colors have always been vivid.</div>
+              </div>
+              <div class="char-region-card-check">✓</div>
             </div>
-            <div class="char-option-card" data-value="Jugabi" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Jugabi</div>
-              <div class="char-option-card-sub">The living jungle southwest — the Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on the continent.</div>
+            <div class="char-region-card" data-value="Jugabi" onclick="selectOptionCard(this)">
+              <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-jugabi-landscape.png')"></div>
+              <div class="char-region-card-overlay"></div>
+              <div class="char-region-card-content">
+                <div class="char-region-card-label">Region</div>
+                <div class="char-region-card-name">Jugabi</div>
+                <div class="char-region-card-climate">The living jungle southwest</div>
+                <div class="char-region-card-blurb">The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain on the continent. The jungle has opinions.</div>
+              </div>
+              <div class="char-region-card-check">✓</div>
             </div>
           </div>
         </div>
@@ -237,30 +267,48 @@
           <label class="char-field-label">Additional Language <span class="char-field-tooltip" data-tip="All characters speak Common automatically. Choose one regional language.">What's this?</span></label>
           <span class="char-field-help">You already speak Common. Choose one additional language.</span>
           <input type="hidden" id="char-language">
-          <div class="char-option-cards" data-field="char-language" data-save="language">
-            <div class="char-option-card" data-value="caparian-deep" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Caparian Deep</div>
-              <div class="char-option-card-sub">Spoken in the Opu Forest and Dingu territories</div>
+          <div class="char-option-cards char-lang-cards" data-field="char-language" data-save="language">
+            <div class="char-lang-card" data-value="caparian-deep" data-color="#2a7a3a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">᛫ᚠᚢ</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Caparian Deep</div>
+                <div class="char-lang-sub">Spoken in the Opu Forest and Dingu territories</div>
+              </div>
             </div>
-            <div class="char-option-card" data-value="nombi-frost" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Nombi Frost</div>
-              <div class="char-option-card-sub">Spoken across the northern fjords and forests</div>
+            <div class="char-lang-card" data-value="nombi-frost" data-color="#2266b8" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">ᚱᚢᚾ</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Nombi Frost</div>
+                <div class="char-lang-sub">Spoken across the northern fjords and forests</div>
+              </div>
             </div>
-            <div class="char-option-card" data-value="sohot-old" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Sohot Old Tongue</div>
-              <div class="char-option-card-sub">Ceremonial language of the southern kingdoms</div>
+            <div class="char-lang-card" data-value="sohot-old" data-color="#c8882a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">𐡀𐡁𐡂</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Sohot Old Tongue</div>
+                <div class="char-lang-sub">Ceremonial language of the southern kingdoms</div>
+              </div>
             </div>
-            <div class="char-option-card" data-value="jugabi-canopy" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Jugabi Canopy</div>
-              <div class="char-option-card-sub">Spoken by the Greenvast Tribes and Verdathi</div>
+            <div class="char-lang-card" data-value="jugabi-canopy" data-color="#4a9a3a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">꩜ꩻ꧁</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Jugabi Canopy</div>
+                <div class="char-lang-sub">Spoken by the Greenvast Tribes and Verdathi</div>
+              </div>
             </div>
-            <div class="char-option-card" data-value="conclave-script" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Conclave Script</div>
-              <div class="char-option-card-sub">The Gigglegloom Conclave's written technical language</div>
+            <div class="char-lang-card" data-value="conclave-script" data-color="#6a3aaa" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">⟁⌬⎊</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Conclave Script</div>
+                <div class="char-lang-sub">The Gigglegloom Conclave's written technical language</div>
+              </div>
             </div>
-            <div class="char-option-card" data-value="pre-partition" onclick="selectOptionCard(this)">
-              <div class="char-option-card-label">Pre-Partition Script</div>
-              <div class="char-option-card-sub">Ancient, mostly unreadable, occasionally useful</div>
+            <div class="char-lang-card" data-value="pre-partition" data-color="#8a6a2a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">𐤀𐤁𐤂</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Pre-Partition Script</div>
+                <div class="char-lang-sub">Ancient, mostly unreadable, occasionally useful</div>
+              </div>
             </div>
           </div>
         </div>
@@ -278,7 +326,12 @@
       </button>
       <div class="char-accordion-body" id="acc-past-body">
         <div class="char-past-questions-wrap">
-          <div class="char-past-question" id="past-q-raised">
+          <div class="char-past-progress" id="char-past-progress">
+            <span class="char-past-progress-fill" id="char-past-progress-fill"></span>
+            <span class="char-past-progress-label" id="char-past-progress-label">0 of 7 answered</span>
+          </div>
+          <div class="char-past-question" id="past-q-raised" data-num="1" data-icon="🏠">
+            <div class="char-past-q-badge"><span class="char-past-q-num">1</span><span class="char-past-q-icon">🏠</span></div>
             <div class="char-past-q-label">Who raised you?</div>
             <div class="char-past-q-hint">Select one — you'll see what it means for your character before committing.</div>
             <input type="hidden" id="char-raised">
@@ -291,7 +344,8 @@
             </div>
             <div class="char-past-effect-preview" id="effect-raised"></div>
           </div>
-          <div class="char-past-question" id="past-q-friend">
+          <div class="char-past-question" id="past-q-friend" data-num="2" data-icon="🤝">
+            <div class="char-past-q-badge"><span class="char-past-q-num">2</span><span class="char-past-q-icon">🤝</span></div>
             <div class="char-past-q-label">Who was your dearest childhood friend?</div>
             <div class="char-past-q-hint">This shaped how you connect with others.</div>
             <input type="hidden" id="char-friend">
@@ -304,7 +358,8 @@
             </div>
             <div class="char-past-effect-preview" id="effect-friend"></div>
           </div>
-          <div class="char-past-question" id="past-q-pet">
+          <div class="char-past-question" id="past-q-pet" data-num="3" data-icon="🐾">
+            <div class="char-past-q-badge"><span class="char-past-q-num">3</span><span class="char-past-q-icon">🐾</span></div>
             <div class="char-past-q-label">Did you grow up with a pet?</div>
             <div class="char-past-q-hint">This affects how creatures respond to you in the world.</div>
             <input type="hidden" id="char-pet">
@@ -316,7 +371,8 @@
             </div>
             <div class="char-past-effect-preview" id="effect-pet"></div>
           </div>
-          <div class="char-past-question" id="past-q-love">
+          <div class="char-past-question" id="past-q-love" data-num="4" data-icon="🌸">
+            <div class="char-past-q-badge"><span class="char-past-q-num">4</span><span class="char-past-q-icon">🌸</span></div>
             <div class="char-past-q-label">Have you ever fallen in love?</div>
             <div class="char-past-q-hint">This shapes how you build trust with others during play.</div>
             <input type="hidden" id="char-love">
@@ -329,7 +385,8 @@
             </div>
             <div class="char-past-effect-preview" id="effect-love"></div>
           </div>
-          <div class="char-past-question" id="past-q-org">
+          <div class="char-past-question" id="past-q-org" data-num="5" data-icon="⚔️">
+            <div class="char-past-q-badge"><span class="char-past-q-num">5</span><span class="char-past-q-icon">⚔️</span></div>
             <div class="char-past-q-label">Did you join an organization?</div>
             <div class="char-past-q-hint">Organizations give you contacts, skills, and sometimes starting equipment.</div>
             <input type="hidden" id="char-org">
@@ -342,7 +399,8 @@
             </div>
             <div class="char-past-effect-preview" id="effect-org"></div>
           </div>
-          <div class="char-past-question" id="past-q-left-behind">
+          <div class="char-past-question" id="past-q-left-behind" data-num="6" data-icon="🎒">
+            <div class="char-past-q-badge"><span class="char-past-q-num">6</span><span class="char-past-q-icon">🎒</span></div>
             <div class="char-past-q-label">What is one thing you left behind?</div>
             <div class="char-past-q-hint">This becomes a memory your character carries — it may surface during play.</div>
             <input type="hidden" id="char-left-behind">
@@ -355,7 +413,8 @@
             </div>
             <div class="char-past-effect-preview" id="effect-left-behind"></div>
           </div>
-          <div class="char-past-question" id="past-q-why-left">
+          <div class="char-past-question" id="past-q-why-left" data-num="7" data-icon="🌅">
+            <div class="char-past-q-badge"><span class="char-past-q-num">7</span><span class="char-past-q-icon">🌅</span></div>
             <div class="char-past-q-label">What finally made you leave home?</div>
             <div class="char-past-q-hint">This becomes your personal overarching quest.</div>
             <input type="hidden" id="char-why-left">
@@ -955,6 +1014,13 @@ function selectPastCard(card) {
   // Mark question answered
   var question_el = document.getElementById('past-q-' + pastKey);
   if (question_el) question_el.classList.add('answered');
+  // Update progress tracker
+  var answered = document.querySelectorAll('.char-past-question.answered').length;
+  var total = document.querySelectorAll('.char-past-question').length;
+  var label = document.getElementById('char-past-progress-label');
+  if (label) label.textContent = answered + ' of ' + total + ' answered';
+  var fill = document.getElementById('char-past-progress-fill');
+  if (fill) fill.style.setProperty('--fill', (answered / total));
   // Save to draft
   CHAR_STATE.draft['past_' + pastKey] = value;
   saveDraftToStorage();
@@ -964,7 +1030,8 @@ function selectPastCard(card) {
 function selectOptionCard(card) {
   var container = card.closest('.char-option-cards');
   if (!container) return;
-  container.querySelectorAll('.char-option-card').forEach(function(c) {
+  // Deselect all — handles both .char-option-card and .char-lang-card
+  container.querySelectorAll('.char-option-card, .char-lang-card, .char-region-card').forEach(function(c) {
     c.classList.remove('selected');
   });
   card.classList.add('selected');
@@ -1037,6 +1104,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.char-field-tooltip[data-tip]').forEach(function(tip) {
       tip.dispatchEvent(new Event('mouseleave'));
     });
+  });
+  // Apply --lang-color CSS variable to each language card from data-color attribute
+  document.querySelectorAll('.char-lang-card[data-color]').forEach(function(card) {
+    card.style.setProperty('--lang-color', card.dataset.color);
   });
 });
 </script>

@@ -956,18 +956,31 @@ function renderClassGrid() {
 function renderGigglogloomAffinity() {
   var grid = document.getElementById('char-type-grid');
   if (!grid) return;
+  var TYPE_COLORS = {
+    bubbleseed: '#2a7a3a',
+    featherflow: '#2266b8',
+    steelfist:  '#6a3aaa',
+    flamerage:  '#aa3a1a'
+  };
   grid.innerHTML = Object.keys(GIGGLEGLOOM_TYPES).map(function(typeId) {
     var t = GIGGLEGLOOM_TYPES[typeId];
-    return '<div class="char-type-card" data-type="' + typeId + '" onclick="selectType(\'' + typeId + '\')">'
-      + '<div class="char-type-check">✓</div>'
-      + '<div class="char-type-header">'
-      + '<img class="char-type-icon" src="assets/icons/icon-' + typeId + '.svg" alt="' + t.name + '">'
-      + '<div class="char-type-meta">'
-      + '<div class="char-type-name">' + t.name + '</div>'
-      + '<div class="char-type-element">' + t.element + '</div>'
+    var color = TYPE_COLORS[typeId] || '#c8a83a';
+    return '<div class="char-type-card" data-type="' + typeId + '" onclick="selectType(\'' + typeId + '\')" style="--type-color:' + color + '">'
+      + '<div class="char-type-video-wrap">'
+      +   '<video class="char-type-video" src="assets/videos/anim-' + typeId + '.mp4" autoplay muted loop playsinline preload="auto"></video>'
+      +   '<div class="char-type-video-overlay"></div>'
       + '</div>'
+      + '<div class="char-type-content">'
+      +   '<div class="char-type-check">✓</div>'
+      +   '<div class="char-type-header">'
+      +     '<img class="char-type-icon" src="assets/icons/icon-' + typeId + '.svg" alt="' + t.name + '">'
+      +     '<div class="char-type-meta">'
+      +       '<div class="char-type-name">' + t.name + '</div>'
+      +       '<div class="char-type-element">' + t.element + '</div>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div class="char-type-desc">' + t.desc + '</div>'
       + '</div>'
-      + '<div class="char-type-desc">' + t.desc + '</div>'
       + '</div>';
   }).join('');
 }
@@ -1232,9 +1245,12 @@ function renderSpeciesCards() {
 window.renderSpeciesCardsImpl = function() {
   var grid = document.getElementById('char-species-grid');
   if (!grid) return;
+  var gender = CHAR_STATE.draft.gender || 'm';
+  var suffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
   grid.innerHTML = ANAVALE_SPECIES.map(function(sp) {
     return '<div class="char-bg-card" data-species="' + sp.id + '">'
       + '<div class="char-bg-header" onclick="selectSpecies(\'' + sp.id + '\')">'
+      +   '<img class="char-bg-thumb" src="assets/images/species/sp-' + sp.id + '-' + suffix + '.png" alt="' + sp.name + '">'
       +   '<div class="char-bg-header-info">'
       +     '<div class="char-bg-name">' + sp.name + '</div>'
       +     '<div class="char-bg-phb">' + sp.phb + '</div>'
@@ -1250,6 +1266,11 @@ window.renderSpeciesCardsImpl = function() {
       + '</div>'
       + '</div>';
   }).join('');
+  // Restore selection if already chosen
+  if (CHAR_STATE.draft.species_id) {
+    var selected = grid.querySelector('[data-species="' + CHAR_STATE.draft.species_id + '"]');
+    if (selected) selected.classList.add('selected');
+  }
 };
 
 function selectSpecies(speciesId) {
@@ -1404,6 +1425,26 @@ function collectStageData(n) {
   if (n === 3) collectStage3Data();
   if (n === 4) collectStage4Data();
   if (n === 5) collectStage5Data();
+}
+
+function selectGender(btn) {
+  var container = btn.closest('.char-gender-options');
+  container.querySelectorAll('.char-gender-btn').forEach(function(b) {
+    b.classList.remove('selected');
+  });
+  btn.classList.add('selected');
+  var hidden = document.getElementById('char-gender');
+  if (hidden) hidden.value = btn.dataset.value;
+  CHAR_STATE.draft.gender = btn.dataset.value;
+  saveDraftToStorage();
+  // Unlock and re-render species grid with gender-correct portraits
+  var section = document.getElementById('char-species-section');
+  if (section) section.classList.remove('char-species-section--locked');
+  var lockedMsg = document.getElementById('char-species-locked-msg');
+  if (lockedMsg) lockedMsg.style.display = 'none';
+  var grid = document.getElementById('char-species-grid');
+  if (grid) grid.style.display = 'block';
+  renderSpeciesCards();
 }
 
 function collectStage1Data() {
