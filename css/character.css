@@ -113,11 +113,12 @@ body.char-page {
   position: relative;
   width: 100%;
   z-index: 1;
-  height: 6px;
+  height: 18px;
   background: rgba(255,255,255,0.08);
   overflow: visible;
   flex-shrink: 0;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
+  border-radius: 4px;
 }
 .char-progress-bar {
   height: 100%;
@@ -126,27 +127,31 @@ body.char-page {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   animation: progress-shimmer 3s ease infinite;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: fit-content;
 }
 @keyframes progress-shimmer {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-/* Label sits inside the bar, right-aligned, always visible */
+/* Label tracks the bar's right edge, flips color based on bar width */
 .char-progress-label {
-  display: block;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 6px;
   font-family: var(--font-sans);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.5);
-  padding: 0.3rem 1rem 0;
-  letter-spacing: 0.04em;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   white-space: nowrap;
   pointer-events: none;
+  color: var(--ink);
+  transition: color 0.3s;
+}
+.char-progress-label.outside {
+  right: auto;
+  left: calc(100% + 8px);
+  color: rgba(255,255,255,0.7);
 }
 
 /* ── LAYOUT ────────────────────────────────────────────────────── */
@@ -175,9 +180,8 @@ body.char-page {
   font-family: var(--font-sans);
   font-size: 1.5rem;
   color: #ffffff;
-  padding: 1rem;
+  padding: 0.6rem 1rem;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 0.5rem;
   background: rgba(255,255,255,0.03);
 }
 
@@ -344,10 +348,10 @@ body.char-page {
 
 /* Stage header — primary landmark, gold left bar */
 .char-stage-header {
-  padding: 1.75rem 0 1.75rem 1.5rem;
+  padding: 1rem 0 1rem 1.25rem;
   border-left: 3px solid var(--gold);
   border-bottom: 1px solid rgba(255,255,255,0.07);
-  margin-bottom: 2.75rem;
+  margin-bottom: 1.75rem;
   background: var(--char-section-bg);
 }
 .char-stage-eyebrow {
@@ -362,9 +366,9 @@ body.char-page {
 }
 .char-stage-title {
   font-family: var(--font-headers);
-  font-size: clamp(2.2rem, 4vw, 3rem);
-  line-height: 1.05;
-  margin-bottom: 0.6rem;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.1;
+  margin-bottom: 0;
   color: var(--white);
 }
 .char-stage-intro {
@@ -374,6 +378,7 @@ body.char-page {
   color: var(--white);
   max-width: 680px;
   margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 
 /* ── WELCOME PANEL (Stage 1 only) ─────────────────────────────── */
@@ -1446,6 +1451,14 @@ body.char-page {
   padding: 0.75rem 1rem;
   cursor: pointer;
   user-select: none;
+}
+
+.char-bg-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 /* Left: name + phb label */
@@ -2522,7 +2535,6 @@ body.char-page {
   font-size: clamp(1.1rem, 2vw, 1.5rem);
   color: var(--white);
   letter-spacing: 0.04em;
-  margin-bottom: 1.25rem;
 }
 
 /* ── WELCOME PANEL COLLAPSE ────────────────────────────────────── */
@@ -2655,5 +2667,5 @@ body.char-page {
 }
 .char-accordion-body.open {
   max-height: 9999px;
-  padding: 0 1.25rem 1.5rem;
+  padding: 0.5rem 1.25rem 1.5rem;
 }

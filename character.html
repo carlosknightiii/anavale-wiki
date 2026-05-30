@@ -40,7 +40,6 @@
         <div id="char-progress-label" class="char-progress-label">Progress 10%</div>
       </div>
     </div>
-    <div class="char-sidebar-meta">5 stages · about 15–20 minutes</div>
     <div class="char-sidebar-stages">
 
       <div id="char-sidebar-stage-1" class="char-sidebar-stage active" onclick="jumpToStage(1)">
@@ -104,23 +103,13 @@
     <div id="char-stage-1" class="char-stage active">
 
   <!-- Welcome panel -->
-  <div class="char-welcome-panel">
-    <div class="char-welcome-panel-header">
-      <div class="char-welcome-panel-title">What You'll Do Here</div>
-      <button class="char-welcome-collapse-btn" aria-expanded="true" onclick="toggleWelcomePanel(this)">
-        <span class="char-collapse-icon">▲</span> Collapse
-      </button>
-    </div>
-    <div class="char-welcome-body" id="char-welcome-body">
-      <p class="char-welcome-body-text">Over five stages you'll choose your class, build your background and origin story, assign your ability scores and describe your appearance, set your moral compass, and give your character a name. About 15–20 minutes total — your progress saves automatically.</p>
-    </div>
-  </div>
+  <p class="char-stage-intro">Five stages. Class, background, ability scores, appearance, alignment. About 15–20 minutes — your progress saves automatically.</p>
 
   <!-- Stage header -->
   <div class="char-stage-header">
-    <div class="char-stage-eyebrow">Stage 1 of 5 · <span class="char-eyebrow-accent">Your Story</span></div>
+    <div class="char-stage-eyebrow">Stage 1 of 5</div>
     <h2 class="char-stage-title">Who Are You?</h2>
-    <p class="char-stage-intro">Tell us about your character. Work through each section at your own pace — open any section to fill it in, collapse it when you're done.</p>
+    <p class="char-stage-intro">Answer what you can — nothing here is wrong. You can skip sections and come back.</p>
   </div>
 
   <!-- ── STAGE 1 ACCORDION ── -->
@@ -566,64 +555,35 @@
         <input type="hidden" id="char-alignment" value="">
         <div class="char-section-header" style="margin-top:0">
           <div class="char-section-header-eyebrow">Choose one</div>
-          <div class="char-section-header-title">Which compass do you follow?</div>
-          <div class="char-section-header-desc">Pick the one that fits — then choose a personal trait inside it that sounds most like you.</div>
+          <div class="char-section-header-title">Which of these sounds most like you?</div>
+          <div class="char-section-header-desc">Pick the one that fits.</div>
         </div>
+        <img src="assets/images/img-alignment.webp" alt="The five alignments of Anavale" style="width:100%;border-radius:10px;margin-bottom:1.25rem;">
         <div class="char-alignment-grid">
           <div class="char-alignment-card" data-alignment="brightward" onclick="selectAlignment('brightward')">
             <div class="char-alignment-name">Brightward</div>
             <div class="char-alignment-phb">Lawful Good in the Player's Handbook</div>
             <div class="char-alignment-desc">You believe the world is worth protecting and that the best way to protect it is to be someone others can count on.</div>
-            <div class="char-alignment-traits">
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I keep my word even when it costs me something. Especially then.')">"I keep my word even when it costs me something. Especially then."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I believe most people are trying their best. I\'ve been wrong about this. I still believe it.')">"I believe most people are trying their best. I've been wrong about this. I still believe it."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'When something bad happens, my first question is: what can I do?')">"When something bad happens, my first question is: what can I do?"</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I find it genuinely hard to understand people who don\'t care whether they\'re good.')">"I find it genuinely hard to understand people who don't care whether they're good."</div>
-            </div>
           </div>
           <div class="char-alignment-card" data-alignment="colorful" onclick="selectAlignment('colorful')">
             <div class="char-alignment-name">Colorful</div>
             <div class="char-alignment-phb">Chaotic Good in the Player's Handbook</div>
             <div class="char-alignment-desc">You want to do right by people but you've never been very good at following someone else's idea of how.</div>
-            <div class="char-alignment-traits">
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I make decisions fast and feel bad about the wrong ones later. This is a feature, not a bug.')">"I make decisions fast and feel bad about the wrong ones later. This is a feature, not a bug."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I don\'t think the rules were written for situations like this one.')">"I don't think the rules were written for situations like this one."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I care deeply about people and very little about systems.')">"I care deeply about people and very little about systems."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve been told I\'m a lot. I\'ve decided to take that as a compliment.')">"I've been told I'm a lot. I've decided to take that as a compliment."</div>
-            </div>
           </div>
           <div class="char-alignment-card" data-alignment="greywarden" onclick="selectAlignment('greywarden')">
             <div class="char-alignment-name">Greywarden</div>
             <div class="char-alignment-phb">True Neutral in the Player's Handbook</div>
             <div class="char-alignment-desc">You see all sides. You weigh things carefully. You don't think the world is simple enough to be neatly divided into light and dark.</div>
-            <div class="char-alignment-traits">
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I try to understand a situation fully before deciding what I think about it.')">"I try to understand a situation fully before deciding what I think about it."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I don\'t owe anyone my loyalty just because they asked for it.')">"I don't owe anyone my loyalty just because they asked for it."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve seen good people do terrible things for good reasons. I try to remember that.')">"I've seen good people do terrible things for good reasons. I try to remember that."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'m not disengaged. I\'m careful. There\'s a difference.')">"I'm not disengaged. I'm careful. There's a difference."</div>
-            </div>
           </div>
           <div class="char-alignment-card" data-alignment="steelbound" onclick="selectAlignment('steelbound')">
             <div class="char-alignment-name">Steelbound</div>
             <div class="char-alignment-phb">Lawful Neutral in the Player's Handbook</div>
-            <div class="char-alignment-desc">Order is not a cage. Order is how things work. You respect hierarchies, honor agreements, and follow through on commitments.</div>
-            <div class="char-alignment-traits">
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I do what I said I would do. This is not complicated.')">"I do what I said I would do. This is not complicated."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I respect authority when it earns respect. I follow it even when it hasn\'t, because the alternative is worse.')">"I respect authority when it earns respect. I follow it even when it hasn't, because the alternative is worse."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I believe in fairness more than I believe in kindness. Fairness is consistent. Kindness is situational.')">"I believe in fairness more than I believe in kindness."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve been told I\'m inflexible. I prefer: reliable.')">"I've been told I'm inflexible. I prefer: reliable."</div>
-            </div>
+            <div class="char-alignment-desc">Order is not a cage. Order is how things work. You respect hierarchies, honor agreements, follow through on commitments.</div>
           </div>
           <div class="char-alignment-card" data-alignment="ashwalker" onclick="selectAlignment('ashwalker')">
             <div class="char-alignment-name">Ashwalker</div>
             <div class="char-alignment-phb">Chaotic Neutral in the Player's Handbook</div>
-            <div class="char-alignment-desc">You do what works for you, and you try to be honest about that. You're not cruel — but you don't pretend to have obligations you don't feel.</div>
-            <div class="char-alignment-traits">
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I make decisions based on what\'s actually in front of me, not principles I agreed to in better circumstances.')">"I make decisions based on what's actually in front of me."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'m loyal to people I\'ve chosen to be loyal to. That list is short and carefully maintained.')">"I'm loyal to people I've chosen to be loyal to. That list is short and carefully maintained."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I don\'t think I owe the world anything it hasn\'t given me first.')">"I don't think I owe the world anything it hasn't given me first."</div>
-              <div class="char-alignment-trait" onclick="selectAlignmentTrait(this, 'I\'ve done things I\'m not proud of. I\'d probably do them again.')">"I've done things I'm not proud of. I'd probably do them again."</div>
-            </div>
+            <div class="char-alignment-desc">You do what works for you, and you try to be honest about that. You're not cruel but you don't pretend to have obligations you don't feel.</div>
           </div>
         </div>
       </div>
@@ -646,7 +606,7 @@
     <!-- ══ STAGE 2 — YOUR GIFT ══ -->
     <div id="char-stage-2" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 2 of 5 · <span class="char-eyebrow-accent">Your Gift</span></div>
+        <div class="char-stage-eyebrow">Stage 2 of 5</div>
         <h2 class="char-stage-title">Choose Your Class</h2>
         <p class="char-stage-intro">Your class is who you are in a fight — and beyond it. Start by choosing your Gigglegloom affinity, then pick the class that fits how you want to play.</p>
       </div>
@@ -670,7 +630,7 @@
     <!-- ══ STAGE 3 — YOUR STRENGTHS ══ -->
     <div id="char-stage-3" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 3 of 5 · <span class="char-eyebrow-accent">Your Strengths</span></div>
+        <div class="char-stage-eyebrow">Stage 3 of 5</div>
         <h2 class="char-stage-title">Your Strengths</h2>
         <p class="char-stage-intro">Assign your six core abilities — these numbers determine how strong, quick, tough, smart, wise, and charming your character is.</p>
       </div>
@@ -776,7 +736,7 @@
     <!-- ══ STAGE 4 — YOUR GEAR ══ -->
     <div id="char-stage-4" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 4 of 5 · <span class="char-eyebrow-accent">Your Gear</span></div>
+        <div class="char-stage-eyebrow">Stage 4 of 5</div>
         <h2 class="char-stage-title">Equip Your Character</h2>
         <p class="char-stage-intro">Review your starting gear, equip your weapons, choose your armor and clothing, and spend any remaining gold on extras.</p>
       </div>
@@ -881,7 +841,7 @@
     <!-- ══ STAGE 5 — YOUR CHARACTER ══ -->
     <div id="char-stage-5" class="char-stage">
       <div class="char-stage-header">
-        <div class="char-stage-eyebrow">Stage 5 of 5 · <span class="char-eyebrow-accent">Your Character</span></div>
+        <div class="char-stage-eyebrow">Stage 5 of 5</div>
         <h2 class="char-stage-title">Your Character</h2>
         <p class="char-stage-intro">Everything you've chosen, all in one place. Review your character before sending them into Anavale.</p>
       </div>

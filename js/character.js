@@ -221,7 +221,15 @@ function renderProgress() {
   var bar = document.getElementById('char-progress-bar');
   if (bar) bar.style.width = pct + '%';
   var label = document.getElementById('char-progress-label');
-  if (label) label.textContent = 'Stage ' + CHAR_STATE.current_stage + ' of ' + CHAR_CONFIG.total_stages;
+  if (label) {
+    label.textContent = 'Stage ' + CHAR_STATE.current_stage + ' of ' + CHAR_CONFIG.total_stages;
+    // Below 40%: label overflows bar — put it outside (white), else inside (dark)
+    if (pct < 40) {
+      label.classList.add('outside');
+    } else {
+      label.classList.remove('outside');
+    }
+  }
 }
 
 // ── SIDEBAR ────────────────────────────────────────────────────────
@@ -1081,6 +1089,7 @@ function renderBackgroundCards() {
     }).join(' · ');
     return '<div class="char-bg-card" data-bg="' + bg.id + '">'
       + '<div class="char-bg-header" onclick="selectBackground(\'' + bg.id + '\')">'
+      +   '<img class="char-bg-thumb" src="assets/images/backgrounds/bg-' + bg.id + '.png" alt="" aria-hidden="true">'
       +   '<div class="char-bg-header-info">'
       +     '<div class="char-bg-name">' + bg.name + '</div>'
       +     '<div class="char-bg-phb">' + bg.phb + '</div>'
@@ -1414,14 +1423,14 @@ function collectStage1Data() {
   CHAR_STATE.draft.species_id    = getVal('char-species');
   CHAR_STATE.draft.home_region   = getVal('char-home-region');
   CHAR_STATE.draft.language      = getVal('char-language');
-  // Imagined past
-  CHAR_STATE.draft.who_raised_you  = getVal('char-raised');
-  CHAR_STATE.draft.dearest_friend  = getVal('char-friend');
-  CHAR_STATE.draft.had_pet         = getVal('char-pet');
-  CHAR_STATE.draft.fallen_in_love  = getVal('char-love');
-  CHAR_STATE.draft.organization    = getVal('char-org');
-  CHAR_STATE.draft.left_behind     = getVal('char-left-behind');
-  CHAR_STATE.draft.why_you_left    = getVal('char-why-left');
+  // Imagined past — keys must match selectPastCard's 'past_' + pastKey pattern
+  CHAR_STATE.draft['past_raised']      = getVal('char-raised')      || CHAR_STATE.draft['past_raised'];
+  CHAR_STATE.draft['past_friend']      = getVal('char-friend')      || CHAR_STATE.draft['past_friend'];
+  CHAR_STATE.draft['past_pet']         = getVal('char-pet')         || CHAR_STATE.draft['past_pet'];
+  CHAR_STATE.draft['past_love']        = getVal('char-love')        || CHAR_STATE.draft['past_love'];
+  CHAR_STATE.draft['past_org']         = getVal('char-org')         || CHAR_STATE.draft['past_org'];
+  CHAR_STATE.draft['past_left-behind'] = getVal('char-left-behind') || CHAR_STATE.draft['past_left-behind'];
+  CHAR_STATE.draft['past_why-left']    = getVal('char-why-left')    || CHAR_STATE.draft['past_why-left'];
   // Appearance
   CHAR_STATE.draft.appearance_data   = collectAppearanceData();
   CHAR_STATE.draft.appearance_prompt = buildAIPrompt(CHAR_STATE.draft.appearance_data);
