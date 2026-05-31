@@ -167,13 +167,14 @@ function dismissReturnBanner() {
 }
 
 function resumeDraft() {
+  // Re-arm splash so it fires again on resume
+  if (typeof window.armSplashForResume === 'function') window.armSplashForResume();
   var stage = (CHAR_STATE.draft._stage && CHAR_STATE.draft._stage > 1)
     ? CHAR_STATE.draft._stage
     : CHAR_STATE.current_stage;
   dismissReturnBanner();
   showStage(stage);
   initStageOnEnter(stage);
-
 }
 
 function initAutoSave() {

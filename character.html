@@ -10,6 +10,193 @@
 </head>
 <body class="char-page">
 
+<!-- ── SPLASH SCREEN ───────────────────────────────────────────── -->
+<div id="char-splash" style="position:fixed;inset:0;z-index:9999;background:#000;pointer-events:all;">
+  <canvas id="char-splash-canvas" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+  <div id="char-splash-sub" style="position:absolute;top:50%;margin-top:3.5rem;width:100%;text-align:center;font-family:'Roboto',sans-serif;font-size:clamp(0.6rem,1.4vw,0.85rem);font-weight:600;letter-spacing:0.55em;text-transform:uppercase;color:rgba(255,255,255,0.7);opacity:0;pointer-events:none;">Character Creator</div>
+</div>
+
+<script>
+(function() {
+  var SPLASH_KEY = 'anavale_splash_shown';
+
+  // Determine whether to show the splash:
+  // Show if sessionStorage flag is absent (fresh visit or explicit resume trigger)
+  function shouldShow() {
+    return !sessionStorage.getItem(SPLASH_KEY);
+  }
+
+  // Called by resumeDraft() in character.js to re-arm the splash
+  window.armSplashForResume = function() {
+    sessionStorage.removeItem(SPLASH_KEY);
+  };
+
+  var splashEl = document.getElementById('char-splash');
+
+  function removeSplash() {
+    if (splashEl && splashEl.parentNode) {
+      splashEl.style.opacity = '0';
+      splashEl.style.transition = 'opacity 0s';
+      splashEl.parentNode.removeChild(splashEl);
+    }
+  }
+
+  if (!shouldShow()) {
+    removeSplash();
+    return;
+  }
+
+  // Mark as shown for this session
+  sessionStorage.setItem(SPLASH_KEY, '1');
+
+  var canvas  = document.getElementById('char-splash-canvas');
+  var ctx     = canvas.getContext('2d');
+  var subEl   = document.getElementById('char-splash-sub');
+
+  function resize() {
+    canvas.width  = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var BURST_COLORS = [
+    [0,   255, 80,  120, 255, 180],
+    [0,   140, 255, 100, 200, 255],
+    [180, 0,   255, 220, 100, 255],
+    [255, 50,  0,   255, 160, 80],
+  ];
+
+  function Particle(cx, cy, angle, col) {
+    var spd   = 10 + Math.random() * 22;
+    this.x    = cx; this.y = cy;
+    this.vx   = Math.cos(angle) * spd;
+    this.vy   = Math.sin(angle) * spd;
+    this.r    = col[0]; this.g  = col[1]; this.b  = col[2];
+    this.gr   = col[3]; this.gg = col[4]; this.gb = col[5];
+    this.size = 3.5 + Math.random() * 5;
+    this.life = 1.0;
+    this.decay= 0.005 + Math.random() * 0.008;
+    this.trail= [];
+  }
+  Particle.prototype.update = function() {
+    this.trail.push({ x: this.x, y: this.y, life: this.life });
+    if (this.trail.length > 32) this.trail.shift();
+    this.vx *= 0.975; this.vy *= 0.975;
+    this.x += this.vx; this.y += this.vy;
+    this.life -= this.decay;
+  };
+  Particle.prototype.draw = function() {
+    var t = this.trail, n = t.length;
+    for (var i = 1; i < n; i++) {
+      var f = i / n, a = f * t[i].life * 0.9;
+      ctx.beginPath(); ctx.arc(t[i].x, t[i].y, this.size * f * 2.2, 0, 6.2832);
+      ctx.fillStyle = 'rgba('+this.gr+','+this.gg+','+this.gb+','+(a*0.18)+')'; ctx.fill();
+      ctx.beginPath(); ctx.arc(t[i].x, t[i].y, this.size * f * 0.9, 0, 6.2832);
+      ctx.fillStyle = 'rgba('+this.r+','+this.g+','+this.b+','+(a*0.85)+')'; ctx.fill();
+    }
+    if (this.life > 0) {
+      var sz = this.size * Math.min(1, this.life * 1.5);
+      ctx.beginPath(); ctx.arc(this.x, this.y, sz*3.5, 0, 6.2832);
+      ctx.fillStyle = 'rgba('+this.gr+','+this.gg+','+this.gb+','+(this.life*0.12)+')'; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x, this.y, sz*1.8, 0, 6.2832);
+      ctx.fillStyle = 'rgba('+this.gr+','+this.gg+','+this.gb+','+(this.life*0.35)+')'; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x, this.y, sz, 0, 6.2832);
+      ctx.fillStyle = 'rgba('+this.r+','+this.g+','+this.b+','+this.life+')'; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x, this.y, sz*0.4, 0, 6.2832);
+      ctx.fillStyle = 'rgba(255,255,255,'+(this.life*0.8)+')'; ctx.fill();
+    }
+  };
+
+  var particles=[], startTime=null, animId=null, detonated=false, detonateMs=0, fadeStart=null, FONT_READY=false;
+
+  var fontTimer = setTimeout(function(){ FONT_READY=true; run(); }, 1000);
+  document.fonts.load('700 100px Charm').then(function(){ clearTimeout(fontTimer); FONT_READY=true; run(); }).catch(function(){ clearTimeout(fontTimer); FONT_READY=true; run(); });
+
+  function doBurst(cx, cy, now) {
+    detonated=true; detonateMs=now;
+    for (var ci=0; ci<4; ci++) {
+      var base=(ci/4)*Math.PI*2-Math.PI*0.25, spread=Math.PI*0.5, col=BURST_COLORS[ci];
+      for (var i=0; i<180; i++) particles.push(new Particle(cx,cy,base+(Math.random()-0.5)*spread,col));
+    }
+    for (var j=0; j<60; j++) {
+      var wp=new Particle(cx,cy,0,[255,255,255,255,255,255]), ang=Math.random()*6.2832, spd2=2+Math.random()*8;
+      wp.vx=Math.cos(ang)*spd2; wp.vy=Math.sin(ang)*spd2; wp.size=2+Math.random()*3; wp.decay=0.03;
+      particles.push(wp);
+    }
+  }
+
+  var GRAD_COLORS=['#e8c84a','#4ac87a','#4a9ae8','#9a70e8','#e87a8a','#e8703a','#e8c84a'];
+
+  function drawTitle(cx, cy, alpha, elapsed) {
+    var fontSize = Math.min(canvas.width*0.13, canvas.height*0.17, 96);
+    ctx.save();
+    ctx.font='700 '+fontSize+'px Charm, Georgia, serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    var tw=ctx.measureText('Anavale').width;
+    var grd=ctx.createLinearGradient(cx-tw/2,0,cx+tw/2,0);
+    var offset=(elapsed%2400)/2400;
+    for (var i=0; i<GRAD_COLORS.length; i++) grd.addColorStop(((i/(GRAD_COLORS.length-1))+offset)%1, GRAD_COLORS[i]);
+    ctx.globalAlpha=alpha*0.55; ctx.shadowColor='rgba(220,200,255,0.9)'; ctx.shadowBlur=28;
+    ctx.fillStyle=grd; ctx.fillText('Anavale',cx,cy); ctx.shadowBlur=0;
+    ctx.globalAlpha=alpha; ctx.fillStyle=grd; ctx.fillText('Anavale',cx,cy);
+    ctx.globalAlpha=1; ctx.restore();
+  }
+
+  function render(ts) {
+    if (startTime===null) startTime=ts;
+    var elapsed=ts-startTime, cw=canvas.width, ch=canvas.height, cx=cw/2, cy=ch/2;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,cw,ch);
+    if (!detonated && elapsed<600) {
+      var p=elapsed/600, pulse=Math.sin(p*Math.PI), outerR=Math.max(2,18+pulse*80);
+      var grd2=ctx.createRadialGradient(cx,cy,0,cx,cy,outerR);
+      grd2.addColorStop(0,'rgba(255,255,255,'+(0.6+pulse*0.4)+')');
+      grd2.addColorStop(0.35,'rgba(255,255,220,'+(0.25+pulse*0.35)+')');
+      grd2.addColorStop(1,'rgba(255,255,200,0)');
+      ctx.beginPath(); ctx.arc(cx,cy,outerR,0,6.2832); ctx.fillStyle=grd2; ctx.fill();
+      var innerR=3+pulse*10;
+      ctx.beginPath(); ctx.arc(cx,cy,innerR,0,6.2832);
+      ctx.fillStyle='rgba(255,255,255,'+(0.8+pulse*0.2)+')';
+      ctx.shadowColor='rgba(255,255,255,1)'; ctx.shadowBlur=50; ctx.fill(); ctx.shadowBlur=0;
+    }
+    if (!detonated && elapsed>=600) doBurst(cx,cy,elapsed);
+    if (detonated) {
+      var age=Math.max(0,elapsed-detonateMs), maxR=Math.max(cw,ch), sR=Math.min(maxR,age*1.4), salpha=Math.max(0,0.7-sR/maxR);
+      if (salpha>0 && sR>4) {
+        var r0=Math.max(0,sR*0.88), r1=Math.max(r0+2,sR);
+        var sgrd=ctx.createRadialGradient(cx,cy,r0,cx,cy,r1);
+        sgrd.addColorStop(0,'rgba(255,255,255,0)'); sgrd.addColorStop(0.5,'rgba(255,255,255,'+(salpha*0.5)+')'); sgrd.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.beginPath(); ctx.arc(cx,cy,r1,0,6.2832); ctx.fillStyle=sgrd; ctx.fill();
+      }
+    }
+    for (var i=particles.length-1; i>=0; i--) {
+      particles[i].update(); particles[i].draw();
+      if (particles[i].life<=0) particles.splice(i,1);
+    }
+    if (elapsed>=1200) {
+      var tp=Math.min(1,(elapsed-1200)/500);
+      drawTitle(cx, cy-(1-tp)*28, tp, elapsed);
+    }
+    if (elapsed>=2000) {
+      subEl.style.opacity = Math.min(1,(elapsed-2000)/450);
+    }
+    if (elapsed>=3000) {
+      if (fadeStart===null) fadeStart=elapsed;
+      var fp=Math.min(1,(elapsed-fadeStart)/650), ease=fp<0.5?2*fp*fp:-1+(4-2*fp)*fp;
+      ctx.fillStyle='rgba(0,0,0,'+ease+')'; ctx.fillRect(0,0,cw,ch);
+      subEl.style.opacity=Math.max(0,1-ease*2);
+      if (fp>=1) { removeSplash(); return; }
+    }
+    animId=requestAnimationFrame(render);
+  }
+
+  function run() {
+    if (!FONT_READY) return;
+    animId=requestAnimationFrame(render);
+  }
+})();
+</script>
+
 <!-- ── TOAST ── -->
 <div id="char-toast"></div>
 
