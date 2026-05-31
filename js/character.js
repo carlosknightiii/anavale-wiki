@@ -1236,17 +1236,7 @@ function scrollToField(el) {
 
 // ── STAGE 2: BACKGROUND + SPECIES ──────────────────────────────────
 function initStage2() {
-  // Render affinity cards and class grid into Stage 2
-  renderGigglogloomAffinity('char-type-grid-s2');
   renderClassGrid();
-  // Class grid hidden until affinity is chosen
-  var classSection = document.getElementById('char-class-section');
-  if (classSection) classSection.style.display = 'none';
-  // Restore from draft
-  if (CHAR_STATE.draft.gigglegloom_type) {
-    highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
-    if (classSection) classSection.style.display = 'block';
-  }
   if (CHAR_STATE.draft.class_id) {
     restoreClassSelection(CHAR_STATE.draft.class_id);
   }
