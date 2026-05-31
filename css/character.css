@@ -3503,41 +3503,78 @@ body.banner-visible .char-stage4-hud {
   /* ── MOBILE STAGE NAV ── */
   .char-mobile-stage-nav {
     display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 0.65rem 0.5rem 0;
     background: rgba(8, 10, 22, 0.98);
     position: sticky;
     top: 0;
     z-index: 95;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    border-bottom: none;
   }
   .char-mobile-stage-pill {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.4);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    font-weight: 700;
+    flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 0.3rem;
+    padding: 0 0.25rem 0.65rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
+    min-height: 56px;
+    opacity: 0.35;
+  }
+  .char-mobile-pill-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .char-mobile-pill-label {
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.3;
+    white-space: nowrap;
   }
   .char-mobile-stage-pill.active {
+    opacity: 1;
+    border-bottom-color: #e8c84a;
+  }
+  .char-mobile-stage-pill.active .char-mobile-pill-dot {
+    width: 10px;
+    height: 10px;
     background: linear-gradient(135deg, #e8c84a, #e87a8a, #9a70e8);
-    border-color: transparent;
+    box-shadow: 0 0 8px rgba(232,200,74,0.6);
+  }
+  .char-mobile-stage-pill.active .char-mobile-pill-label {
     color: #ffffff;
-    box-shadow: 0 0 10px rgba(232,200,74,0.4);
+    font-weight: 700;
   }
   .char-mobile-stage-pill.completed {
-    border-color: rgba(34,197,94,0.7);
+    opacity: 0.75;
+    cursor: pointer;
+  }
+  .char-mobile-stage-pill.completed .char-mobile-pill-dot {
+    background: rgb(134,239,172);
+  }
+  .char-mobile-stage-pill.completed .char-mobile-pill-label {
     color: rgb(134,239,172);
-    background: rgba(34,197,94,0.15);
+  }
+  /* Progress bar flush under nav — no gap */
+  .char-progress-wrap--mobile {
+    display: block;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    border-radius: 0;
   }
   /* Progress bar — ensure visible below mobile nav */
   .char-progress-wrap {
