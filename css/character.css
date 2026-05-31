@@ -2855,6 +2855,25 @@ body.char-page {
 }
 .char-past-effect-preview.visible { display: block; }
 
+/* ── PAST QUESTION IMAGE ───────────────────────────────────────── */
+.char-past-q-img {
+  display: none;
+  width: 100%;
+  height: 200px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+.char-past-q-img.visible {
+  display: block;
+  opacity: 1;
+}
+
 /* ── PAGE TITLE ────────────────────────────────────────────────── */
 .char-page-title {
   font-family: var(--font-serif);

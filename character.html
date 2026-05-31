@@ -326,22 +326,19 @@
       </button>
       <div class="char-accordion-body" id="acc-past-body">
         <div class="char-past-questions-wrap">
-          <div class="char-past-progress" id="char-past-progress">
-            <span class="char-past-progress-fill" id="char-past-progress-fill"></span>
-            <span class="char-past-progress-label" id="char-past-progress-label">0 of 7 answered</span>
-          </div>
           <div class="char-past-question" id="past-q-raised" data-num="1" data-icon="🏠">
             <div class="char-past-q-badge"><span class="char-past-q-num">1</span><span class="char-past-q-icon">🏠</span></div>
             <div class="char-past-q-label">Who raised you?</div>
             <div class="char-past-q-hint">Select one — you'll see what it means for your character before committing.</div>
             <input type="hidden" id="char-raised">
             <div class="char-option-cards" data-field="char-raised" data-past="raised">
-              <div class="char-option-card" data-value="kind-parents" data-effect="+1 Wisdom, free Insight proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">Kind, loving parents</div></div>
-              <div class="char-option-card" data-value="the-streets" data-effect="+1 Dexterity, +1 Sleight of Hand, -1 Wisdom" onclick="selectPastCard(this)"><div class="char-option-card-label">The streets — no one, really</div></div>
-              <div class="char-option-card" data-value="strict-religious" data-effect="+1 Intelligence, +1 Religion proficiency, -1 Charisma" onclick="selectPastCard(this)"><div class="char-option-card-label">A strict religious household</div></div>
-              <div class="char-option-card" data-value="single-parent" data-effect="+1 Constitution, +1 Athletics proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A single parent working too hard</div></div>
-              <div class="char-option-card" data-value="grandparent" data-effect="+1 Wisdom, +1 History proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A grandparent or elder</div></div>
+              <div class="char-option-card" data-value="kind-parents" data-img="assets/images/past/raised-kind-parents.webp" data-effect="+1 Wisdom, free Insight proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">Kind, loving parents</div></div>
+              <div class="char-option-card" data-value="the-streets" data-img="assets/images/past/raised-the-streets.webp" data-effect="+1 Dexterity, +1 Sleight of Hand, -1 Wisdom" onclick="selectPastCard(this)"><div class="char-option-card-label">The streets — no one, really</div></div>
+              <div class="char-option-card" data-value="strict-religious" data-img="assets/images/past/raised-strict-religious.webp" data-effect="+1 Intelligence, +1 Religion proficiency, -1 Charisma" onclick="selectPastCard(this)"><div class="char-option-card-label">A strict religious household</div></div>
+              <div class="char-option-card" data-value="single-parent" data-img="assets/images/past/raised-single-parent.webp" data-effect="+1 Constitution, +1 Athletics proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A single parent working too hard</div></div>
+              <div class="char-option-card" data-value="grandparent" data-img="assets/images/past/raised-grandparent.webp" data-effect="+1 Wisdom, +1 History proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A grandparent or elder</div></div>
             </div>
+            <div class="char-past-q-img" id="img-raised"></div>
             <div class="char-past-effect-preview" id="effect-raised"></div>
           </div>
           <div class="char-past-question" id="past-q-friend" data-num="2" data-icon="🤝">
@@ -350,12 +347,13 @@
             <div class="char-past-q-hint">This shaped how you connect with others.</div>
             <input type="hidden" id="char-friend">
             <div class="char-option-cards" data-field="char-friend" data-past="friend">
-              <div class="char-option-card" data-value="neighbor" data-effect="+1 Insight" onclick="selectPastCard(this)"><div class="char-option-card-label">A neighbor kid</div></div>
-              <div class="char-option-card" data-value="animal" data-effect="+1 Animal Handling" onclick="selectPastCard(this)"><div class="char-option-card-label">An animal — wild or domestic</div></div>
-              <div class="char-option-card" data-value="imaginary" data-effect="+1 Perception" onclick="selectPastCard(this)"><div class="char-option-card-label">An imaginary one</div></div>
-              <div class="char-option-card" data-value="no-one" data-effect="+1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">Honestly, no one</div></div>
-              <div class="char-option-card" data-value="mentor" data-effect="+1 History or Medicine (your choice)" onclick="selectPastCard(this)"><div class="char-option-card-label">An older mentor figure</div></div>
+              <div class="char-option-card" data-value="neighbor" data-img="assets/images/past/friend-neighbor.webp" data-effect="+1 Insight" onclick="selectPastCard(this)"><div class="char-option-card-label">A neighbor kid</div></div>
+              <div class="char-option-card" data-value="animal" data-img="assets/images/past/friend-animal.webp" data-effect="+1 Animal Handling" onclick="selectPastCard(this)"><div class="char-option-card-label">An animal — wild or domestic</div></div>
+              <div class="char-option-card" data-value="imaginary" data-img="assets/images/past/friend-imaginary.webp" data-effect="+1 Perception" onclick="selectPastCard(this)"><div class="char-option-card-label">An imaginary one</div></div>
+              <div class="char-option-card" data-value="no-one" data-img="assets/images/past/friend-no-one.webp" data-effect="+1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">Honestly, no one</div></div>
+              <div class="char-option-card" data-value="mentor" data-img="assets/images/past/friend-mentor.webp" data-effect="+1 History or Medicine (your choice)" onclick="selectPastCard(this)"><div class="char-option-card-label">An older mentor figure</div></div>
             </div>
+            <div class="char-past-q-img" id="img-friend"></div>
             <div class="char-past-effect-preview" id="effect-friend"></div>
           </div>
           <div class="char-past-question" id="past-q-pet" data-num="3" data-icon="🐾">
@@ -364,11 +362,12 @@
             <div class="char-past-q-hint">This affects how creatures respond to you in the world.</div>
             <input type="hidden" id="char-pet">
             <div class="char-option-cards" data-field="char-pet" data-past="pet">
-              <div class="char-option-card" data-value="loyal-animal" data-effect="Creatures that protect tend to trust you faster" onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — a dog or similar loyal animal</div></div>
-              <div class="char-option-card" data-value="unusual" data-effect="You have patience with strange things that most people don't" onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — something unusual</div></div>
-              <div class="char-option-card" data-value="wanted-one" data-effect="You notice animals. They sometimes notice back." onclick="selectPastCard(this)"><div class="char-option-card-label">No, but I wanted one</div></div>
-              <div class="char-option-card" data-value="never-wanted" data-effect="Neutral. The Fluffets don't take it personally." onclick="selectPastCard(this)"><div class="char-option-card-label">No — never wanted one</div></div>
+              <div class="char-option-card" data-value="loyal-animal" data-img="assets/images/past/pet-loyal-animal.webp" data-effect="Creatures that protect tend to trust you faster" onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — a dog or similar loyal animal</div></div>
+              <div class="char-option-card" data-value="unusual" data-img="assets/images/past/pet-unusual.webp" data-effect="You have patience with strange things that most people don't" onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — something unusual</div></div>
+              <div class="char-option-card" data-value="wanted-one" data-img="assets/images/past/pet-wanted-one.webp" data-effect="You notice animals. They sometimes notice back." onclick="selectPastCard(this)"><div class="char-option-card-label">No, but I wanted one</div></div>
+              <div class="char-option-card" data-value="never-wanted" data-img="assets/images/past/pet-never-wanted.webp" data-effect="Neutral. The Fluffets don't take it personally." onclick="selectPastCard(this)"><div class="char-option-card-label">No — never wanted one</div></div>
             </div>
+            <div class="char-past-q-img" id="img-pet"></div>
             <div class="char-past-effect-preview" id="effect-pet"></div>
           </div>
           <div class="char-past-question" id="past-q-love" data-num="4" data-icon="🌸">
@@ -377,12 +376,13 @@
             <div class="char-past-q-hint">This shapes how you build trust with others during play.</div>
             <input type="hidden" id="char-love">
             <div class="char-option-cards" data-field="char-love" data-past="love">
-              <div class="char-option-card" data-value="ended-well" data-effect="You know what it's like when it works. You're still looking for it." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended well</div></div>
-              <div class="char-option-card" data-value="ended-badly" data-effect="You're not closed. You're careful. There's a difference." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended badly</div></div>
-              <div class="char-option-card" data-value="complicated" data-effect="Some threads are still attached. That's not always a bad thing." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it's complicated</div></div>
-              <div class="char-option-card" data-value="not-yet" data-effect="You think about it sometimes. It seems like something that happens to other people." onclick="selectPastCard(this)"><div class="char-option-card-label">Not yet</div></div>
-              <div class="char-option-card" data-value="not-for-me" data-effect="You've built something else instead. It's solid." onclick="selectPastCard(this)"><div class="char-option-card-label">I don't think that's for me</div></div>
+              <div class="char-option-card" data-value="ended-well" data-img="assets/images/past/love-ended-well.webp" data-effect="You know what it's like when it works. You're still looking for it." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended well</div></div>
+              <div class="char-option-card" data-value="ended-badly" data-img="assets/images/past/love-ended-badly.webp" data-effect="You're not closed. You're careful. There's a difference." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended badly</div></div>
+              <div class="char-option-card" data-value="complicated" data-img="assets/images/past/love-complicated.webp" data-effect="Some threads are still attached. That's not always a bad thing." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it's complicated</div></div>
+              <div class="char-option-card" data-value="not-yet" data-img="assets/images/past/love-not-yet.webp" data-effect="You think about it sometimes. It seems like something that happens to other people." onclick="selectPastCard(this)"><div class="char-option-card-label">Not yet</div></div>
+              <div class="char-option-card" data-value="not-for-me" data-img="assets/images/past/love-not-for-me.webp" data-effect="You've built something else instead. It's solid." onclick="selectPastCard(this)"><div class="char-option-card-label">I don't think that's for me</div></div>
             </div>
+            <div class="char-past-q-img" id="img-love"></div>
             <div class="char-past-effect-preview" id="effect-love"></div>
           </div>
           <div class="char-past-question" id="past-q-org" data-num="5" data-icon="⚔️">
@@ -391,12 +391,13 @@
             <div class="char-past-q-hint">Organizations give you contacts, skills, and sometimes starting equipment.</div>
             <input type="hidden" id="char-org">
             <div class="char-option-cards" data-field="char-org" data-past="org">
-              <div class="char-option-card" data-value="wanderkeep" data-effect="Wanderkeep Field Kit (DM adds), +1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">The Wanderkeep</div><div class="char-option-card-sub">Wandering protectors who travel Anavale keeping color alive.</div></div>
-              <div class="char-option-card" data-value="merchant-guild" data-effect="+50gp starting gold, +1 Persuasion" onclick="selectPastCard(this)"><div class="char-option-card-label">A merchant guild</div><div class="char-option-card-sub">Trade networks that move goods — and information — across Anavale's nations.</div></div>
-              <div class="char-option-card" data-value="brightcreed" data-effect="Brightcreed Token (DM adds), +1 Religion" onclick="selectPastCard(this)"><div class="char-option-card-label">A religious order (Brightcreed)</div><div class="char-option-card-sub">The Brightcreed venerates Oro and Nara — color, joy, and living things.</div></div>
-              <div class="char-option-card" data-value="fighting-company" data-effect="Common weapon of choice (DM adds), +1 Athletics" onclick="selectPastCard(this)"><div class="char-option-card-label">A fighting company</div><div class="char-option-card-sub">Mercenary or militia — you learned to fight alongside others.</div></div>
-              <div class="char-option-card" data-value="kept-to-myself" data-effect="+1 Stealth, +1 any skill of your choice" onclick="selectPastCard(this)"><div class="char-option-card-label">No — I kept to myself</div></div>
+              <div class="char-option-card" data-value="wanderkeep" data-img="assets/images/past/org-wanderkeep.webp" data-effect="Wanderkeep Field Kit (DM adds), +1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">The Wanderkeep</div><div class="char-option-card-sub">Wandering protectors who travel Anavale keeping color alive.</div></div>
+              <div class="char-option-card" data-value="merchant-guild" data-img="assets/images/past/org-merchant-guild.webp" data-effect="+50gp starting gold, +1 Persuasion" onclick="selectPastCard(this)"><div class="char-option-card-label">A merchant guild</div><div class="char-option-card-sub">Trade networks that move goods — and information — across Anavale's nations.</div></div>
+              <div class="char-option-card" data-value="brightcreed" data-img="assets/images/past/org-brightcreed.webp" data-effect="Brightcreed Token (DM adds), +1 Religion" onclick="selectPastCard(this)"><div class="char-option-card-label">A religious order (Brightcreed)</div><div class="char-option-card-sub">The Brightcreed venerates Oro and Nara — color, joy, and living things.</div></div>
+              <div class="char-option-card" data-value="fighting-company" data-img="assets/images/past/org-fighting-company.webp" data-effect="Common weapon of choice (DM adds), +1 Athletics" onclick="selectPastCard(this)"><div class="char-option-card-label">A fighting company</div><div class="char-option-card-sub">Mercenary or militia — you learned to fight alongside others.</div></div>
+              <div class="char-option-card" data-value="kept-to-myself" data-img="assets/images/past/org-kept-to-myself.webp" data-effect="+1 Stealth, +1 any skill of your choice" onclick="selectPastCard(this)"><div class="char-option-card-label">No — I kept to myself</div></div>
             </div>
+            <div class="char-past-q-img" id="img-org"></div>
             <div class="char-past-effect-preview" id="effect-org"></div>
           </div>
           <div class="char-past-question" id="past-q-left-behind" data-num="6" data-icon="🎒">
@@ -405,12 +406,13 @@
             <div class="char-past-q-hint">This becomes a memory your character carries — it may surface during play.</div>
             <input type="hidden" id="char-left-behind">
             <div class="char-option-cards" data-field="char-left-behind" data-past="left-behind">
-              <div class="char-option-card" data-value="person" data-effect="There's a name you don't say out loud in crowds." onclick="selectPastCard(this)"><div class="char-option-card-label">A person I loved</div></div>
-              <div class="char-option-card" data-value="promise" data-effect="You think about it in quiet moments." onclick="selectPastCard(this)"><div class="char-option-card-label">A promise I didn't keep</div></div>
-              <div class="char-option-card" data-value="self" data-effect="You changed. You're still deciding if that was good." onclick="selectPastCard(this)"><div class="char-option-card-label">A version of myself I can't return to</div></div>
-              <div class="char-option-card" data-value="place" data-effect="A place the Dimming took. This is why the grey is personal." onclick="selectPastCard(this)"><div class="char-option-card-label">A place that no longer exists</div></div>
-              <div class="char-option-card" data-value="nothing" data-effect="You don't look back. You've decided that's a strength." onclick="selectPastCard(this)"><div class="char-option-card-label">Nothing — I travel light</div></div>
+              <div class="char-option-card" data-value="person" data-img="assets/images/past/left-behind-person.webp" data-effect="There's a name you don't say out loud in crowds." onclick="selectPastCard(this)"><div class="char-option-card-label">A person I loved</div></div>
+              <div class="char-option-card" data-value="promise" data-img="assets/images/past/left-behind-promise.webp" data-effect="You think about it in quiet moments." onclick="selectPastCard(this)"><div class="char-option-card-label">A promise I didn't keep</div></div>
+              <div class="char-option-card" data-value="self" data-img="assets/images/past/left-behind-self.webp" data-effect="You changed. You're still deciding if that was good." onclick="selectPastCard(this)"><div class="char-option-card-label">A version of myself I can't return to</div></div>
+              <div class="char-option-card" data-value="place" data-img="assets/images/past/left-behind-place.webp" data-effect="A place the Dimming took. This is why the grey is personal." onclick="selectPastCard(this)"><div class="char-option-card-label">A place that no longer exists</div></div>
+              <div class="char-option-card" data-value="nothing" data-img="assets/images/past/left-behind-nothing.webp" data-effect="You don't look back. You've decided that's a strength." onclick="selectPastCard(this)"><div class="char-option-card-label">Nothing — I travel light</div></div>
             </div>
+            <div class="char-past-q-img" id="img-left-behind"></div>
             <div class="char-past-effect-preview" id="effect-left-behind"></div>
           </div>
           <div class="char-past-question" id="past-q-why-left" data-num="7" data-icon="🌅">
@@ -419,12 +421,13 @@
             <div class="char-past-q-hint">This becomes your personal overarching quest.</div>
             <input type="hidden" id="char-why-left">
             <div class="char-option-cards" data-field="char-why-left" data-past="why-left">
-              <div class="char-option-card" data-value="someone-disappeared" data-effect="Personal quest: Find them, or find out what happened." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone I loved disappeared</div></div>
-              <div class="char-option-card" data-value="saw-the-grey" data-effect="Personal quest: Push the grey back." onclick="selectPastCard(this)"><div class="char-option-card-label">I saw the grey arrive somewhere I thought was safe</div></div>
-              <div class="char-option-card" data-value="received-message" data-effect="Personal quest: Follow the thread." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone sent me — a letter, a message, a dream</div></div>
-              <div class="char-option-card" data-value="ran-from-something" data-effect="Personal quest: Figure out if you can stop running." onclick="selectPastCard(this)"><div class="char-option-card-label">I ran from something</div></div>
-              <div class="char-option-card" data-value="restlessness" data-effect="Personal quest: Discover something worth staying for." onclick="selectPastCard(this)"><div class="char-option-card-label">Pure restlessness — I needed to see what was out there</div></div>
+              <div class="char-option-card" data-value="someone-disappeared" data-img="assets/images/past/why-left-someone-disappeared.webp" data-effect="Personal quest: Find them, or find out what happened." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone I loved disappeared</div></div>
+              <div class="char-option-card" data-value="saw-the-grey" data-img="assets/images/past/why-left-saw-the-grey.webp" data-effect="Personal quest: Push the grey back." onclick="selectPastCard(this)"><div class="char-option-card-label">I saw the grey arrive somewhere I thought was safe</div></div>
+              <div class="char-option-card" data-value="received-message" data-img="assets/images/past/why-left-received-message.webp" data-effect="Personal quest: Follow the thread." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone sent me — a letter, a message, a dream</div></div>
+              <div class="char-option-card" data-value="ran-from-something" data-img="assets/images/past/why-left-ran-from-something.webp" data-effect="Personal quest: Figure out if you can stop running." onclick="selectPastCard(this)"><div class="char-option-card-label">I ran from something</div></div>
+              <div class="char-option-card" data-value="restlessness" data-img="assets/images/past/why-left-restlessness.webp" data-effect="Personal quest: Discover something worth staying for." onclick="selectPastCard(this)"><div class="char-option-card-label">Pure restlessness — I needed to see what was out there</div></div>
             </div>
+            <div class="char-past-q-img" id="img-why-left"></div>
             <div class="char-past-effect-preview" id="effect-why-left"></div>
           </div>
         </div>
@@ -1014,6 +1017,15 @@ function selectPastCard(card) {
   // Mark question answered
   var question_el = document.getElementById('past-q-' + pastKey);
   if (question_el) question_el.classList.add('answered');
+  // Show selected image
+  var imgEl = document.getElementById('img-' + pastKey);
+  if (imgEl) {
+    var imgSrc = card.dataset.img || '';
+    if (imgSrc) {
+      imgEl.style.backgroundImage = 'url(' + imgSrc + ')';
+      imgEl.classList.add('visible');
+    }
+  }
   // Update progress tracker
   var answered = document.querySelectorAll('.char-past-question.answered').length;
   var total = document.querySelectorAll('.char-past-question').length;
