@@ -110,12 +110,10 @@ function showReturnBanner() {
   var banner = document.getElementById('char-return-banner');
   if (!banner) return;
   banner.classList.add('visible');
+  document.body.classList.add('banner-visible');
   requestAnimationFrame(function() {
     var h = banner.offsetHeight;
-    var prog = document.getElementById('char-progress-wrap');
-    if (prog) prog.style.top = h + 'px';
-    var layout = document.querySelector('.char-layout');
-    if (layout) layout.style.paddingTop = (h + 16) + 'px';
+    document.body.style.paddingTop = h + 'px';
   });
 }
 
@@ -123,10 +121,8 @@ function dismissReturnBanner() {
   var banner = document.getElementById('char-return-banner');
   if (!banner) return;
   banner.classList.remove('visible');
-  var prog = document.getElementById('char-progress-wrap');
-  if (prog) prog.style.top = '0';
-  var layout = document.querySelector('.char-layout');
-  if (layout) layout.style.paddingTop = '';
+  document.body.classList.remove('banner-visible');
+  document.body.style.paddingTop = '';
 }
 
 function resumeDraft() {
@@ -208,8 +204,8 @@ function jumpToStage(n) {
 function initStageOnEnter(n) {
   if (n === 1) { initStage1(); initAppearanceListeners(); }
   if (n === 2) { initStage2(); }
-  if (n === 3) { initAbilityScores(); restoreStage3Selections(); renderStage3Panel(); }
-  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); }
+  if (n === 3) { initAbilityScores(); restoreStage3Selections(); renderStage3Panel(); renderStage3ClassBanner(); updateStage3ContinueButton(); }
+  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); updateStage4Hud(); }
   if (n === 5) { initStage5(); }
 }
 
@@ -236,10 +232,10 @@ function renderProgress() {
 var STAGE_NAMES = [
   '', // 0 unused
   'Your Story',
-  'Your Gift',
-  'Your Strengths',
-  'Your Gear',
-  'Your Character'
+  'Your Class',
+  'Ability Scores',
+  'Gear & Look',
+  'Review & Submit'
 ];
 
 function renderSidebar() {
@@ -259,40 +255,34 @@ function renderSidebar() {
 // ── BACKGROUND DATA ────────────────────────────────────────────────
 var ANAVALE_BACKGROUNDS = [
   {
+    id: 'cobblewise', name: 'Cobblewise', phb: 'Urchin', starting_gold: 10,
+    lore: 'You grew up in the margins of one of Anavale\'s cities — Mirrenport\'s lower docks, Bumbleton\'s market back-alleys, the parts of Solenveil that don\'t appear in the Formery\'s official maps. You know how a city actually works, where to sleep when you have nothing, and which doors to knock on when you need help. A Pocketmole found you every time you were at your lowest. You still don\'t know what to make of that.',
+    skills: ['Sleight of Hand', 'Stealth'],
+    bonuses: ['+2 Dex', '+1 Wis', 'Lucky']
+  },
+  {
+    id: 'craftborn', name: 'Craftborn', phb: 'Guild Artisan', starting_gold: 15,
+    lore: 'You trained under a master in one of the Zippan guilds, a Dingurei paper house, or a Stonemarked workshop in the Jani Mountains. You know how to make something from nothing, how guild politics work, and that the difference between a good piece and a great one is always the part nobody sees.',
+    skills: ['Insight', 'Persuasion'],
+    bonuses: ['+2 Int', '+1 Cha', 'Skilled']
+  },
+  {
     id: 'faithful', name: 'Faithful', phb: 'Acolyte', starting_gold: 10,
     lore: 'You grew up inside one of Anavale\'s three faiths — the Brightcreed\'s color festivals, the Stillkeep\'s stone libraries, or the Veilborn\'s careful silences. You know the prayers, the practices, and the politics. You can also read pre-Partition script, which more people want than will admit it.',
     skills: ['Insight', 'Religion'],
     bonuses: ['+2 Int', '+1 Wis', 'Magic Initiate']
   },
   {
-    id: 'streetwise', name: 'Streetwise', phb: 'Criminal', starting_gold: 25,
-    lore: 'You learned what you know in places that don\'t appear on official maps — back alleys, Grusk-adjacent markets, Nimblewood-adjacent neighborhoods. Not necessarily a bad person. Just someone who understands how the world actually moves when the Formery isn\'t watching.',
-    skills: ['Deception', 'Stealth'],
-    bonuses: ['+2 Dex', '+1 Int', 'Alert']
+    id: 'greywitnessed', name: 'Greywitnessed', phb: 'Haunted One', starting_gold: 10,
+    lore: 'You were there when the grey arrived somewhere it shouldn\'t have been. A town that was fine last season. A creature that stopped humming. A person you loved who started forgetting why things were worth caring about. You didn\'t cause it. You couldn\'t stop it. But you saw it, and seeing it changed what you\'re willing to do. The Hollowmoth appeared. You remember exactly what it looked like.',
+    skills: ['Arcana', 'Survival'],
+    bonuses: ['+2 Wis', '+1 Str', 'Alert']
   },
   {
     id: 'learned', name: 'Learned', phb: 'Sage', starting_gold: 10,
     lore: 'You spent years in one of Anavale\'s great collections of knowledge — the Great Index in Lightcrak, a Stillkeep archive, the Chroma Bureau\'s public records. You know more than most people want to know about things most people have never heard of. This has been both useful and isolating.',
     skills: ['Arcana', 'History'],
     bonuses: ['+2 Int', '+1 Wis', 'Keen Mind']
-  },
-  {
-    id: 'tested', name: 'Tested', phb: 'Soldier', starting_gold: 10,
-    lore: 'You served — in a Confederation guard company, a Nombi honor corps, a Sohot desert patrol, or a fighting company attached to the Wanderkeep. You know how to follow orders, how to give them, and exactly which situations require which. The grey you\'ve seen may or may not have been the Vareth kind.',
-    skills: ['Athletics', 'Intimidation'],
-    bonuses: ['+2 Str', '+1 Con', 'Savage Attacker']
-  },
-  {
-    id: 'wellborn', name: 'Wellborn', phb: 'Noble', starting_gold: 25,
-    lore: 'You come from one of Anavale\'s established families — a Confederation merchant house, a Sohot ceremonial lineage, a Nombi honor clan. You know how rooms full of powerful people work. You also know exactly what those people are willing to do to stay powerful, which is information the Formery would file under Form 9-C (Societal Leverage, Observed).',
-    skills: ['History', 'Persuasion'],
-    bonuses: ['+2 Cha', '+1 Int', 'Skilled']
-  },
-  {
-    id: 'rootborn', name: 'Rootborn', phb: 'Folk Hero', starting_gold: 10,
-    lore: 'You\'re from a small place — Pebbleshire, a Bunari fishing village, a Zippydoda Hills farm — and something happened there that made people look at you differently. You didn\'t ask for it. You\'re not sure you deserved it. But the Pocketmoles have always found you specifically, and you\'ve stopped pretending that doesn\'t mean something.',
-    skills: ['Animal Handling', 'Survival'],
-    bonuses: ['+2 Con', '+1 Cha', 'Tough']
   },
   {
     id: 'masquerader', name: 'Masquerader', phb: 'Charlatan', starting_gold: 15,
@@ -307,10 +297,16 @@ var ANAVALE_BACKGROUNDS = [
     bonuses: ['+2 Cha', '+1 Dex', 'Inspiring Leader']
   },
   {
-    id: 'craftborn', name: 'Craftborn', phb: 'Guild Artisan', starting_gold: 15,
-    lore: 'You trained under a master in one of the Zippan guilds, a Dingurei paper house, or a Stonemarked workshop in the Jani Mountains. You know how to make something from nothing, how guild politics work, and that the difference between a good piece and a great one is always the part nobody sees.',
-    skills: ['Insight', 'Persuasion'],
-    bonuses: ['+2 Int', '+1 Cha', 'Skilled']
+    id: 'ringscarred', name: 'Ringscarred', phb: 'Gladiator', starting_gold: 15,
+    lore: 'You fought in the arenas — the Vokrath fighting pits in Sohot, the honor-bout circles of Nombi, the Caparia traveling tournaments that follow the festival circuit. You know how to perform violence and how to make it look like something else entirely. The crowd\'s color surges when you win. You\'ve noticed it dims slightly when you lose — not much, but enough to notice. You think about that.',
+    skills: ['Athletics', 'Performance'],
+    bonuses: ['+2 Str', '+1 Cha', 'Savage Attacker']
+  },
+  {
+    id: 'rootborn', name: 'Rootborn', phb: 'Folk Hero', starting_gold: 10,
+    lore: 'You\'re from a small place — Pebbleshire, a Bunari fishing village, a Zippydoda Hills farm — and something happened there that made people look at you differently. You didn\'t ask for it. You\'re not sure you deserved it. But the Pocketmoles have always found you specifically, and you\'ve stopped pretending that doesn\'t mean something.',
+    skills: ['Animal Handling', 'Survival'],
+    bonuses: ['+2 Con', '+1 Cha', 'Tough']
   },
   {
     id: 'stillsought', name: 'Stillsought', phb: 'Hermit', starting_gold: 5,
@@ -319,28 +315,16 @@ var ANAVALE_BACKGROUNDS = [
     bonuses: ['+2 Wis', '+1 Con', 'Magic Initiate']
   },
   {
-    id: 'wildborn', name: 'Wildborn', phb: 'Outlander', starting_gold: 10,
-    lore: 'The Dodooti Rainforest, the Nombi deep forest, the Wraithfell Tundra, the Jani Mountain passes — you grew up in one of these, or spent enough time there to change how you think. The Gigglegloom reads differently in the wild. Purer. Louder. You know what it sounds like when it\'s healthy and you know what the silence means when it isn\'t.',
-    skills: ['Athletics', 'Survival'],
-    bonuses: ['+2 Str', '+1 Wis', 'Tough']
+    id: 'streetwise', name: 'Streetwise', phb: 'Criminal', starting_gold: 25,
+    lore: 'You learned what you know in places that don\'t appear on official maps — back alleys, Grusk-adjacent markets, Nimblewood-adjacent neighborhoods. Not necessarily a bad person. Just someone who understands how the world actually moves when the Formery isn\'t watching.',
+    skills: ['Deception', 'Stealth'],
+    bonuses: ['+2 Dex', '+1 Int', 'Alert']
   },
   {
-    id: 'tidemarked', name: 'Tidemarked', phb: 'Sailor', starting_gold: 10,
-    lore: 'You know the Bunbun Bay, the Salindri Sea, the Glacial Sea off Nombi\'s coast, or the Golden Sea south of Sohot. Ships, currents, weather, the way Shimmer Rays surface before a storm and what that means. The Bunari consider the sea a living thing and treat it accordingly. You may not be Bunari, but you\'ve spent enough time on their ships to understand why.',
-    skills: ['Athletics', 'Perception'],
-    bonuses: ['+2 Str', '+1 Dex', 'Tavern Brawler']
-  },
-  {
-    id: 'cobblewise', name: 'Cobblewise', phb: 'Urchin', starting_gold: 10,
-    lore: 'You grew up in the margins of one of Anavale\'s cities — Mirrenport\'s lower docks, Bumbleton\'s market back-alleys, the parts of Solenveil that don\'t appear in the Formery\'s official maps. You know how a city actually works, where to sleep when you have nothing, and which doors to knock on when you need help. A Pocketmole found you every time you were at your lowest. You still don\'t know what to make of that.',
-    skills: ['Sleight of Hand', 'Stealth'],
-    bonuses: ['+2 Dex', '+1 Wis', 'Lucky']
-  },
-  {
-    id: 'greywitnessed', name: 'Greywitnessed', phb: 'Haunted One', starting_gold: 10,
-    lore: 'You were there when the grey arrived somewhere it shouldn\'t have been. A town that was fine last season. A creature that stopped humming. A person you loved who started forgetting why things were worth caring about. You didn\'t cause it. You couldn\'t stop it. But you saw it, and seeing it changed what you\'re willing to do. The Hollowmoth appeared. You remember exactly what it looked like.',
-    skills: ['Arcana', 'Survival'],
-    bonuses: ['+2 Wis', '+1 Str', 'Alert']
+    id: 'tested', name: 'Tested', phb: 'Soldier', starting_gold: 10,
+    lore: 'You served — in a Confederation guard company, a Nombi honor corps, a Sohot desert patrol, or a fighting company attached to the Wanderkeep. You know how to follow orders, how to give them, and exactly which situations require which. The grey you\'ve seen may or may not have been the Vareth kind.',
+    skills: ['Athletics', 'Intimidation'],
+    bonuses: ['+2 Str', '+1 Con', 'Savage Attacker']
   },
   {
     id: 'threadpuller', name: 'Threadpuller', phb: 'Investigator', starting_gold: 10,
@@ -349,10 +333,22 @@ var ANAVALE_BACKGROUNDS = [
     bonuses: ['+2 Int', '+1 Wis', 'Keen Mind']
   },
   {
-    id: 'ringscarred', name: 'Ringscarred', phb: 'Gladiator', starting_gold: 15,
-    lore: 'You fought in the arenas — the Vokrath fighting pits in Sohot, the honor-bout circles of Nombi, the Caparia traveling tournaments that follow the festival circuit. You know how to perform violence and how to make it look like something else entirely. The crowd\'s color surges when you win. You\'ve noticed it dims slightly when you lose — not much, but enough to notice. You think about that.',
-    skills: ['Athletics', 'Performance'],
-    bonuses: ['+2 Str', '+1 Cha', 'Savage Attacker']
+    id: 'tidemarked', name: 'Tidemarked', phb: 'Sailor', starting_gold: 10,
+    lore: 'You know the Bunbun Bay, the Salindri Sea, the Glacial Sea off Nombi\'s coast, or the Golden Sea south of Sohot. Ships, currents, weather, the way Shimmer Rays surface before a storm and what that means. The Bunari consider the sea a living thing and treat it accordingly. You may not be Bunari, but you\'ve spent enough time on their ships to understand why.',
+    skills: ['Athletics', 'Perception'],
+    bonuses: ['+2 Str', '+1 Dex', 'Tavern Brawler']
+  },
+  {
+    id: 'wellborn', name: 'Wellborn', phb: 'Noble', starting_gold: 25,
+    lore: 'You come from one of Anavale\'s established families — a Confederation merchant house, a Sohot ceremonial lineage, a Nombi honor clan. You know how rooms full of powerful people work. You also know exactly what those people are willing to do to stay powerful, which is information the Formery would file under Form 9-C (Societal Leverage, Observed).',
+    skills: ['History', 'Persuasion'],
+    bonuses: ['+2 Cha', '+1 Int', 'Skilled']
+  },
+  {
+    id: 'wildborn', name: 'Wildborn', phb: 'Outlander', starting_gold: 10,
+    lore: 'The Dodooti Rainforest, the Nombi deep forest, the Wraithfell Tundra, the Jani Mountain passes — you grew up in one of these, or spent enough time there to change how you think. The Gigglegloom reads differently in the wild. Purer. Louder. You know what it sounds like when it\'s healthy and you know what the silence means when it isn\'t.',
+    skills: ['Athletics', 'Survival'],
+    bonuses: ['+2 Str', '+1 Wis', 'Tough']
   }
 ];
 
@@ -878,8 +874,66 @@ function renderClassGrid() {
   };
 
   grid.innerHTML = CLASS_DATA.map(function(cls) {
+    var FEAT_ICONS = [
+      // Specific features — checked first, most specific to least
+      { pattern: /favored enemy/i,            icon: '🎯' },
+      { pattern: /natural explorer/i,         icon: '🌿' },
+      { pattern: /hide in plain sight/i,      icon: '👁️' },
+      { pattern: /rage/i,                     icon: '👹' },
+      { pattern: /unarmored defense/i,        icon: '💪' },
+      { pattern: /danger sense/i,             icon: '⁉️' },
+      { pattern: /primal path/i,              icon: '🐅' },
+      { pattern: /bardic inspiration/i,       icon: '🎭' },
+      { pattern: /jack of all trades/i,       icon: '🎵' },
+      { pattern: /song of rest/i,             icon: '🎵' },
+      { pattern: /expertise/i,               icon: '🎵' },
+      { pattern: /destroy undead/i,           icon: '💀' },
+      { pattern: /turn undead/i,              icon: '🧟' },
+      { pattern: /druidic circle/i,           icon: '💫' },
+      { pattern: /druidic/i,                  icon: '💬' },
+      { pattern: /timeless body/i,            icon: '⏳' },
+      { pattern: /beast spells/i,             icon: '✨' },
+      { pattern: /wild shape/i,               icon: '🌿' },
+      { pattern: /second wind/i,              icon: '🌬️' },
+      { pattern: /action surge/i,             icon: '⚡' },
+      { pattern: /indomitable/i,              icon: '👊' },
+      { pattern: /martial arts/i,             icon: '🥋' },
+      { pattern: /stunning strike/i,          icon: '🤛' },
+      { pattern: /unarmored movement/i,       icon: '💨' },
+      { pattern: /metamagic/i,                icon: '🔮' },
+      { pattern: /pact magic/i,               icon: '🩸' },
+      { pattern: /eldritch invocation/i,      icon: '😈' },
+      { pattern: /mystic arcanum/i,           icon: '📜' },
+      { pattern: /arcane tradition/i,         icon: '⚱️' },
+      { pattern: /arcane recovery/i,          icon: '💠' },
+      { pattern: /spell mastery/i,            icon: '🧙🏽‍♂️' },
+      { pattern: /spellbook/i,                icon: '📖' },
+      { pattern: /reckless attack/i,          icon: '⚡' },
+      { pattern: /sneak attack/i,             icon: '🗡️' },
+      { pattern: /divine smite|smite/i,       icon: '⚔️' },
+      { pattern: /extra attack/i,             icon: '⚔️' },
+      { pattern: /fighting style/i,           icon: '⚔️' },
+      { pattern: /spellcasting/i,             icon: '✨' },
+      { pattern: /channel divinity/i,         icon: '☀️' },
+      { pattern: /divine intervention/i,      icon: '☀️' },
+      { pattern: /aura of protection/i,       icon: '🛡️' },
+      { pattern: /sacred oath|monastic tradition|ranger archetype|bard college|sorcerous origin|otherworldly patron/i, icon: '🌟' },
+      { pattern: /subclass/i,                 icon: '🌟' },
+      { pattern: /cunning action|uncanny dodge|evasion/i, icon: '🗡️' },
+      { pattern: /superiority|maneuver/i,     icon: '💫' },
+      { pattern: /ki point|flurry|patient defense/i, icon: '👊' },
+      { pattern: /eldritch blast/i,           icon: '😈' },
+      { pattern: /dark one|pact of/i,         icon: '🩸' },
+      { pattern: /signature spell/i,          icon: '🧙🏽‍♂️' },
+      // Generic fallback
+      { pattern: /./,                         icon: '✦' }
+    ];
     var featuresHtml = cls.features.map(function(f) {
-      return '<li>' + f + '</li>';
+      var icon = '✦';
+      for (var fi = 0; fi < FEAT_ICONS.length; fi++) {
+        if (FEAT_ICONS[fi].pattern.test(f)) { icon = FEAT_ICONS[fi].icon; break; }
+      }
+      return '<li><span class="char-feature-icon">' + icon + '</span><span>' + f + '</span></li>';
     }).join('');
 
     var traitsHtml = [
@@ -918,10 +972,18 @@ function renderClassGrid() {
       + '<div class="char-class-summary" onclick="selectClass(\'' + cls.id + '\')">' + cls.summary + '</div>'
       + '<div class="char-class-body">'
       +   '<div class="char-class-traits">' + traitsHtml + '</div>'
-      +   '<div class="char-class-skills-section">'
-      +     '<div class="char-class-skills-label">Skills — choose ' + cls.skills_count + '</div>'
+      +   '<div class="char-class-skills-section" id="skills-section-' + cls.id + '">'
+      +     '<div class="char-class-skills-required">⚠ Required — choose ' + cls.skills_count + ' skills before you can continue</div>'
+      +     '<div class="char-class-skills-header">'
+      +       '<div class="char-class-skills-label">Choose ' + cls.skills_count + ' skills</div>'
+      +       '<div class="char-class-skills-slots" id="skills-slots-' + cls.id + '">'
+      +         Array.from({length: cls.skills_count}, function() {
+                  return '<div class="char-class-skills-slot">✓</div>';
+                }).join('')
+      +       '</div>'
+      +     '</div>'
       +     '<div class="char-class-skills-grid">' + skillsHtml + '</div>'
-      +     '<div class="char-class-skills-count" id="skill-count-' + cls.id + '">0 of ' + cls.skills_count + ' chosen</div>'
+      +     '<div class="char-class-skills-count" id="skill-count-' + cls.id + '">Choose ' + cls.skills_count + ' to continue</div>'
       +   '</div>'
       +   '<div class="char-class-features-label">Key Features</div>'
       +   '<ul class="char-class-features">' + featuresHtml + '</ul>'
@@ -940,7 +1002,16 @@ function renderClassGrid() {
         return;
       }
       var counter = document.getElementById('skill-count-' + classId);
-      if (counter) counter.textContent = checked.length + ' of ' + cls.skills_count + ' chosen';
+      var section = document.getElementById('skills-section-' + classId);
+      var slotsEl = document.getElementById('skills-slots-' + classId);
+      var complete = checked.length >= cls.skills_count;
+      if (counter) counter.textContent = complete ? '✓ All skills chosen' : 'Choose ' + cls.skills_count + ' to continue';
+      if (section) section.classList.toggle('skills-complete', complete);
+      if (slotsEl) {
+        slotsEl.querySelectorAll('.char-class-skills-slot').forEach(function(slot, i) {
+          slot.classList.toggle('filled', i < checked.length);
+        });
+      }
       CHAR_STATE.draft['skills_' + classId] = Array.from(checked).map(function(c) { return c.value; });
       saveDraftToStorage();
       updateStage2SkillAlert();
@@ -1177,34 +1248,10 @@ function toggleBgCard(btn) {
 // ── SPECIES DATA ───────────────────────────────────────────────────
 var ANAVALE_SPECIES = [
   {
-    id: 'solmeri', name: 'Solmeri', phb: 'Human',
-    region: 'Everywhere',
-    affinity: 'Adaptable — no dominant type',
-    desc: 'Solmeri are found in every corner of Anavale, shaped by wherever they were born rather than any single magical tradition. They carry the Gigglegloom lightly, which means it fits them in whatever way they need it to.'
-  },
-  {
-    id: 'verdathi', name: 'Verdathi', phb: 'Elf',
-    region: 'Dingu, Opu & Dodooti Forests',
-    affinity: 'Featherflow, Bubbleseed',
-    desc: 'Verdathi grow up in the old forests where the Gigglegloom pools deepest. They move like they have time — because in the forests, they do. Most are unhurried in a way that others sometimes mistake for indifference.'
-  },
-  {
-    id: 'stonemarked', name: 'Stonemarked', phb: 'Dwarf',
-    region: 'Jani Mountains, Tanaki Peaks',
-    affinity: 'Steelfist',
-    desc: 'Stonemarked are carved from the same stubbornness as the mountains they come from. Their Gigglegloom runs in straight lines and holds its shape under pressure. They find this satisfying. Others find it occasionally alarming.'
-  },
-  {
-    id: 'glimmerkin', name: 'Glimmerkin', phb: 'Gnome',
-    region: 'Bumbleton, Prismhold, Zippydoda Hills',
-    affinity: 'Bubbleseed, Steelfist',
-    desc: 'Glimmerkin are the reason half the Conclave\'s safety protocols exist. Their magic is precise and enthusiastic simultaneously, which produces results that are either brilliant or spectacular, sometimes both at once.'
-  },
-  {
-    id: 'hearthbound', name: 'Hearthbound', phb: 'Halfling',
-    region: 'Pebbleshire, Mirrenport, Caparia',
-    affinity: 'Bubbleseed',
-    desc: 'Hearthbound carry warmth the way other people carry weapons — automatically and without thinking much about it. Their Gigglegloom responds to belonging and comfort. They are very difficult to discourage.'
+    id: 'brightblood', name: 'Brightblood', phb: 'Aasimar',
+    region: 'Brightcreed temples, Solenveil',
+    affinity: 'Bubbleseed, Oro resonance',
+    desc: 'Brightblood carry a trace of Oro\'s attention — not a blessing exactly, more like being quietly watched by something that loves you. Their Gigglegloom is warm and difficult to extinguish, even when they are.'
   },
   {
     id: 'duskborn', name: 'Duskborn', phb: 'Tiefling',
@@ -1213,22 +1260,22 @@ var ANAVALE_SPECIES = [
     desc: 'Duskborn carry something old in their blood — a resonance with the edges of the Gigglegloom that most people never touch. This makes them interesting at parties and occasionally unsettling in quiet rooms.'
   },
   {
-    id: 'brightblood', name: 'Brightblood', phb: 'Aasimar',
-    region: 'Brightcreed temples, Solenveil',
-    affinity: 'Bubbleseed, Oro resonance',
-    desc: 'Brightblood carry a trace of Oro\'s attention — not a blessing exactly, more like being quietly watched by something that loves you. Their Gigglegloom is warm and difficult to extinguish, even when they are.'
+    id: 'glimmerkin', name: 'Glimmerkin', phb: 'Gnome',
+    region: 'Bumbleton, Prismhold, Zippydoda Hills',
+    affinity: 'Bubbleseed, Steelfist',
+    desc: 'Glimmerkin are the reason half the Conclave\'s safety protocols exist. Their magic is precise and enthusiastic simultaneously, which produces results that are either brilliant or spectacular, sometimes both at once.'
   },
   {
-    id: 'scalegrace', name: 'Scalegrace', phb: 'Dragonborn',
-    region: 'Sohot volcanic, Caparia trade cities',
-    affinity: 'Flamerage',
-    desc: 'Scalegrace come from a tradition that treats fire as a conversation rather than a weapon. Their Gigglegloom runs hot and expressive. They are rarely subtle and have mostly made peace with this.'
+    id: 'gloomtouched', name: 'Gloomtouched', phb: 'Warforged',
+    region: 'Prismhold, Conclave sites',
+    affinity: 'Steelfist',
+    desc: 'Gloomtouched were made rather than born, constructed at Conclave sites where Steelfist magic runs deep. They experience the Gigglegloom as something woven into their structure rather than something they carry. The distinction matters to them.'
   },
   {
-    id: 'tallwalker', name: 'Tallwalker', phb: 'Goliath',
-    region: 'Doopu Peaks, Tanaki, Jani Mountains',
-    affinity: 'Steelfist, Flamerage',
-    desc: 'Tallwalkers grow up where the weather is a daily negotiation and the ground does not forgive mistakes. Their magic reflects this — solid, purposeful, and with very little patience for anything decorative.'
+    id: 'hearthbound', name: 'Hearthbound', phb: 'Halfling',
+    region: 'Pebbleshire, Mirrenport, Caparia',
+    affinity: 'Bubbleseed',
+    desc: 'Hearthbound carry warmth the way other people carry weapons — automatically and without thinking much about it. Their Gigglegloom responds to belonging and comfort. They are very difficult to discourage.'
   },
   {
     id: 'rootwalker', name: 'Rootwalker', phb: 'Orc',
@@ -1237,16 +1284,40 @@ var ANAVALE_SPECIES = [
     desc: 'Rootwalkers carry two currents that most people assume cancel each other out. They do not. The result is someone who grows things and protects them with the same intensity, which the Jugabi rainforest finds completely reasonable.'
   },
   {
+    id: 'scalegrace', name: 'Scalegrace', phb: 'Dragonborn',
+    region: 'Sohot volcanic, Caparia trade cities',
+    affinity: 'Flamerage',
+    desc: 'Scalegrace come from a tradition that treats fire as a conversation rather than a weapon. Their Gigglegloom runs hot and expressive. They are rarely subtle and have mostly made peace with this.'
+  },
+  {
+    id: 'solmeri', name: 'Solmeri', phb: 'Human',
+    region: 'Everywhere',
+    affinity: 'Adaptable — no dominant type',
+    desc: 'Solmeri are found in every corner of Anavale, shaped by wherever they were born rather than any single magical tradition. They carry the Gigglegloom lightly, which means it fits them in whatever way they need it to.'
+  },
+  {
+    id: 'stonemarked', name: 'Stonemarked', phb: 'Dwarf',
+    region: 'Jani Mountains, Tanaki Peaks',
+    affinity: 'Steelfist',
+    desc: 'Stonemarked are carved from the same stubbornness as the mountains they come from. Their Gigglegloom runs in straight lines and holds its shape under pressure. They find this satisfying. Others find it occasionally alarming.'
+  },
+  {
+    id: 'tallwalker', name: 'Tallwalker', phb: 'Goliath',
+    region: 'Doopu Peaks, Tanaki, Jani Mountains',
+    affinity: 'Steelfist, Flamerage',
+    desc: 'Tallwalkers grow up where the weather is a daily negotiation and the ground does not forgive mistakes. Their magic reflects this — solid, purposeful, and with very little patience for anything decorative.'
+  },
+  {
     id: 'veilstepped', name: 'Veilstepped', phb: 'Changeling',
     region: 'Everywhere, documented nowhere',
     affinity: 'Featherflow, Solvara-adjacent',
     desc: 'Veilstepped are the only species that the Chroma Bureau has consistently failed to count. Their Gigglegloom moves like water around whatever shape is needed. They are not hiding. They are simply not particularly invested in being found.'
   },
   {
-    id: 'gloomtouched', name: 'Gloomtouched', phb: 'Warforged',
-    region: 'Prismhold, Conclave sites',
-    affinity: 'Steelfist',
-    desc: 'Gloomtouched were made rather than born, constructed at Conclave sites where Steelfist magic runs deep. They experience the Gigglegloom as something woven into their structure rather than something they carry. The distinction matters to them.'
+    id: 'verdathi', name: 'Verdathi', phb: 'Elf',
+    region: 'Dingu, Opu & Dodooti Forests',
+    affinity: 'Featherflow, Bubbleseed',
+    desc: 'Verdathi grow up in the old forests where the Gigglegloom pools deepest. They move like they have time — because in the forests, they do. Most are unhurried in a way that others sometimes mistake for indifference.'
   }
 ];
 
@@ -1385,6 +1456,13 @@ function restoreStage2Selections() {
       if (questionEl) questionEl.classList.add('answered');
     }
   });
+  // Restore kept-to-myself free skill pick
+  if (CHAR_STATE.draft['past_org_solo_skill'] && CHAR_STATE.draft['past_org'] === 'kept-to-myself') {
+    var picker = document.getElementById('org-solo-skill-picker');
+    var sel    = document.getElementById('org-solo-skill-select');
+    if (picker) picker.style.display = 'block';
+    if (sel)    sel.value = CHAR_STATE.draft['past_org_solo_skill'];
+  }
 }
 
 // ── STAGE VALIDATION ───────────────────────────────────────────────
@@ -1813,7 +1891,7 @@ function filterWeaponsByClass(cls) {
       var startIds = getStartingGearIds();
       var isFree   = startIds.indexOf(item.id) >= 0;
       var costLabel = isFree ? '(free)' : formatCost(item.cost_gp);
-      o.textContent = costLabel ? item.name + ' ' + costLabel : item.name;
+      o.textContent = costLabel ? item.name + ' [' + costLabel + ']' : item.name;
       sel.appendChild(o);
     });
     if (current && sel.querySelector('option[value="' + current + '"]')) {
@@ -1932,6 +2010,9 @@ function updateGearStatChip(selectId, chipId) {
   }
   chip.innerHTML = html;
   chip.style.display = 'flex';
+  chip.querySelectorAll('[data-tip]').forEach(function(el) {
+    if (typeof wireTooltip === 'function') wireTooltip(el);
+  });
 }
 
 function renderStartingGear() {
@@ -2069,12 +2150,12 @@ function renderStartingGear() {
     }
     armorHtml = '<div class="char-gear-item">'
       + '<span class="char-gear-icon">🛡️</span>'
-      + '<div><span class="char-gear-item-name">' + gear.armor + '</span>' + armorChips + '</div>'
+      + '<div class="char-gear-item-body"><span class="char-gear-item-name">' + gear.armor + '</span>' + armorChips + '</div>'
       + '</div>';
   } else if (gear.unarmored_ac) {
     armorHtml = '<div class="char-gear-item char-gear-item--unarmored">'
       + '<span class="char-gear-icon">🌀</span>'
-      + '<div>'
+      + '<div class="char-gear-item-body">'
       +   '<span class="char-gear-item-name">Unarmored</span>'
       +   '<div class="char-stat-chips">'
       +     '<span class="char-stat-chip char-stat-chip--ac">' + gear.unarmored_ac + '</span>'
@@ -2087,7 +2168,7 @@ function renderStartingGear() {
   var weaponsHtml = gear.weapons.map(function(w) {
     return '<div class="char-gear-item">'
       + '<span class="char-gear-icon">' + weaponIcon(w) + '</span>'
-      + '<div><span class="char-gear-item-name">' + w + '</span>' + weaponStatChips(w) + '</div>'
+      + '<div class="char-gear-item-body"><span class="char-gear-item-name">' + w + '</span>' + weaponStatChips(w) + '</div>'
       + '</div>';
   }).join('');
 
@@ -2096,7 +2177,7 @@ function renderStartingGear() {
     + (gear.pack_extras ? ' · ' + gear.pack_extras : '');
   var packHtml = '<div class="char-gear-item char-gear-item--pack">'
     + '<span class="char-gear-icon">🎒</span>'
-    + '<div>'
+    + '<div class="char-gear-item-body">'
     +   '<span class="char-gear-item-name char-field-tooltip" data-tip="' + packTip + '">'
     +     gear.pack
     +     ' <span class="char-trait-tip-icon">?</span>'
@@ -2451,6 +2532,11 @@ function generateSummary() {
   var el = document.getElementById('char-auto-summary');
   if (el) el.textContent = summary;
   CHAR_STATE.draft.summary = summary;
+}
+
+function selectSoloSkill(skill) {
+  CHAR_STATE.draft['past_org_solo_skill'] = skill || null;
+  saveDraftToStorage();
 }
 
 // ── ALIGNMENT SELECTION ────────────────────────────────────────────
@@ -2908,8 +2994,8 @@ var PAST_SKILL_GRANTS = {
   'wanderkeep':      { skill: 'Survival' },
   'merchant-guild':  { skill: 'Persuasion' },
   'brightcreed':     { skill: 'Religion' },
-  'fighting-company':{ skill: 'Athletics' }
-  // 'kept-to-myself' grants +1 Stealth + 1 free skill — no fixed grant, skip
+  'fighting-company':{ skill: 'Athletics' },
+  'kept-to-myself': { skill: null } // free pick — handled by org-solo-skill-picker
 };
 
 // Lookup: background bonus string → ability key + amount
@@ -2947,6 +3033,23 @@ function renderStage3Panel() {
 
   // ── Background ability bonuses (for score display) ──
   var bgBonusMap = bgObj ? parseBgBonuses(bgObj.bonuses) : {};
+
+  // ── Per-class ability advice blurbs ──
+  var CLASS_ABILITY_ADVICE = {
+    barbarian: 'Put your 15 in Strength. Constitution second — it boosts your HP and your unarmored AC.',
+    bard:      'Put your 15 in Charisma. Dexterity second for AC and initiative.',
+    cleric:    'Put your 15 in Wisdom — it powers your spells and saves. Constitution second for survivability.',
+    druid:     'Put your 15 in Wisdom. Constitution second — Druids take hits in Wild Shape.',
+    fighter:   'Put your 15 in Strength (melee) or Dexterity (ranged/finesse). Constitution second for hit points.',
+    monk:      'Put your 15 in Dexterity. Wisdom second — it boosts your AC and ki abilities.',
+    paladin:   'Split your top scores between Strength and Charisma. Constitution third for durability.',
+    ranger:    'Put your 15 in Dexterity. Wisdom second for spells and perception.',
+    rogue:     'Put your 15 in Dexterity — it drives everything you do. Intelligence or Charisma second.',
+    sorcerer:  'Put your 15 in Charisma. Constitution second to keep concentration spells alive.',
+    warlock:   'Put your 15 in Charisma. Constitution second for concentration.',
+    wizard:    'Put your 15 in Intelligence. Constitution second to hold concentration spells.'
+  };
+  var abilityAdvice = classId ? (CLASS_ABILITY_ADVICE[classId] || '') : '';
 
   // ── Armor class ──
   var ac = 10;
@@ -3082,6 +3185,15 @@ function renderStage3Panel() {
   var savesLine = clsObj ? 'Saving Throws: ' + clsObj.saves : '';
 
   body.innerHTML =
+    (clsObj ? '<div class="char-stage3-class-banner">'
+      + '<img class="char-stage3-class-img" src="assets/images/classes/class-' + classId + '.webp" alt="' + clsName + '">'
+      + '<div class="char-stage3-class-banner-info">'
+        + '<div class="char-stage3-class-banner-name">' + clsName + '</div>'
+        + '<div class="char-stage3-class-banner-meta">Primary: ' + clsObj.primary + ' &nbsp;·&nbsp; Saves: ' + clsObj.saves + '</div>'
+        + (abilityAdvice ? '<div class="char-stage3-class-banner-advice">' + abilityAdvice + '</div>' : '')
+      + '</div>'
+    + '</div>' : '')
+    +
     '<div class="char-stage3-panel-icon">' + icon + '</div>'
     + '<div class="char-stage3-panel-top-row">'
       + '<div>'
@@ -3138,8 +3250,110 @@ function renderStage3Panel() {
       + dmgHtml
     + '</div>';
 }
+function initHudSticky() {
+  // Sticky handled via CSS — no JS needed
+}
+
+function updateStage4Hud() {
+  if (CHAR_STATE.current_stage !== 4) return;
+
+  // ── AC ──
+  var acEl = document.getElementById('hud-ac-value');
+  if (acEl) {
+    var ac = 10;
+    var topSel = document.getElementById('app-top');
+    var topVal = topSel ? topSel.value : '';
+    var topStats = topVal && typeof CLOTHING_STATS !== 'undefined' ? CLOTHING_STATS[topVal] : null;
+    if (topStats) {
+      var acMatch = topStats.ac.match(/\d+/);
+      if (acMatch) ac = parseInt(acMatch[0]);
+    }
+    var dexRaw = parseInt((document.getElementById('char-ability-dex') || {}).value) || 10;
+    var dexMod = Math.floor((dexRaw - 10) / 2);
+    if (topStats) {
+      if (topStats.weight === 'Heavy') { /* no dex */ }
+      else if (topStats.weight === 'Medium') { ac += Math.min(dexMod, 2); }
+      else { ac += dexMod; }
+    } else { ac += dexMod; }
+    // Shield bonus
+    var lhSel = document.getElementById('app-hand-left');
+    if (lhSel && lhSel.value) {
+      var lhItem = typeof ITEMS !== 'undefined' ? ITEMS.find(function(i) { return i.id === lhSel.value; }) : null;
+      if (lhItem && lhItem.category === 'shield') ac += (lhItem.ac_bonus || 2);
+    }
+    acEl.textContent = ac;
+  }
+
+  // ── Money ──
+  var moneyEl = document.getElementById('hud-money-values');
+  if (moneyEl) {
+    var total = getStartingGold();
+    var spent = calcGoldSpent();
+    var remaining = total - spent;
+    if (remaining < 0) {
+      moneyEl.innerHTML = '<span class="char-hud-money-negative">−' + Math.abs(remaining).toFixed(1) + ' gp overspent</span>';
+    } else {
+      var totalCP = Math.round(remaining * 100);
+      var remGold   = Math.floor(totalCP / 100);
+      var remSilver = Math.floor((totalCP % 100) / 10);
+      var remCopper = totalCP % 10;
+      moneyEl.innerHTML =
+        '<div class="char-hud-money-row"><span class="char-hud-money-gold">'   + remGold   + '</span><span class="char-hud-money-denom char-hud-money-denom--gold">Gold</span></div>' +
+        '<div class="char-hud-money-row"><span class="char-hud-money-silver">' + remSilver + '</span><span class="char-hud-money-denom char-hud-money-denom--silver">Silver</span></div>' +
+        '<div class="char-hud-money-row"><span class="char-hud-money-copper">' + remCopper + '</span><span class="char-hud-money-denom char-hud-money-denom--copper">Copper</span></div>';
+    }
+  }
+
+  // ── Weapon damage ──
+  var rhEl = document.getElementById('hud-weapon-right');
+  var lhEl = document.getElementById('hud-weapon-left');
+  function hudWeaponLabel(slotId) {
+    var sel = document.getElementById(slotId);
+    if (!sel || !sel.value) return '—';
+    var it = typeof ITEMS !== 'undefined' ? ITEMS.find(function(i) { return i.id === sel.value; }) : null;
+    if (!it) return '—';
+    if (it.category === 'shield') return 'Shield +' + (it.ac_bonus || 2) + ' AC';
+    if (it.damage_dice) {
+      var s = it.damage_dice + ' ' + it.damage_type;
+      if (it.magic_bonus) s += ' +' + it.magic_bonus;
+      return s;
+    }
+    return it.name || '—';
+  }
+  if (rhEl) rhEl.textContent = hudWeaponLabel('app-hand-right');
+  if (lhEl) lhEl.textContent = hudWeaponLabel('app-hand-left');
+
+  // ── Weight ──
+  var fillEl    = document.getElementById('hud-weight-fill');
+  var numsEl    = document.getElementById('hud-weight-numbers');
+  var labelEl   = document.getElementById('hud-weight-label');
+  var strRaw    = parseInt((document.getElementById('char-ability-str') || {}).value) || 10;
+  var capacity  = strRaw * 15;
+  var carried   = 0;
+  if (typeof ITEMS !== 'undefined') {
+    ['app-top','app-lower','app-hand-right','app-hand-left'].forEach(function(slotId) {
+      var sel = document.getElementById(slotId);
+      if (!sel || !sel.value) return;
+      var item = ITEMS.find(function(i) { return i.id === sel.value; });
+      if (item && item.weight_lb) carried += item.weight_lb;
+    });
+  }
+  var pct = capacity > 0 ? Math.min((carried / capacity) * 100, 100) : 0;
+  if (fillEl) {
+    fillEl.style.width = pct + '%';
+    fillEl.classList.toggle('over-half',  pct >= 50 && pct < 90);
+    fillEl.classList.toggle('encumbered', pct >= 90);
+  }
+  if (numsEl) numsEl.textContent = carried.toFixed(1) + ' / ' + capacity + ' lb';
+  if (labelEl) {
+    labelEl.textContent = pct >= 90 ? '⚠ Encumbered' : pct >= 50 ? 'Weight Carried' : 'Weight Carried';
+    labelEl.style.color = pct >= 90 ? '#e05050' : pct >= 50 ? '#e8b830' : '';
+  }
+}
+
 function updateGoldDisplay() {
   renderStage3Panel();
+  updateStage4Hud();
   if (CHAR_STATE.current_stage === 3) {
     var overspent = (getStartingGold() - calcGoldSpent()) < 0;
     var btn = document.querySelector('#char-stage-3 .char-btn-next');
@@ -3153,6 +3367,21 @@ function updateGoldDisplay() {
   }
 }
 
+function updateStage3ContinueButton() {
+  if (CHAR_STATE.current_stage !== 3) return;
+  var abilities = ['str','dex','con','int','wis','cha'];
+  var allAssigned = abilities.every(function(ab) {
+    var el = document.getElementById('char-ability-' + ab);
+    return el && el.value !== '';
+  });
+  var btn = document.querySelector('#char-stage-3 .char-btn-next');
+  if (!btn) return;
+  btn.disabled      = !allAssigned;
+  btn.style.opacity = allAssigned ? '' : '0.35';
+  btn.style.cursor  = allAssigned ? '' : 'not-allowed';
+}
+
+
 function updateResetButton() {
   var btn = document.getElementById('char-ability-reset-btn');
   if (!btn) return;
@@ -3161,6 +3390,43 @@ function updateResetButton() {
   // Show reset if at least one score has been placed (bank is not full)
   btn.style.display = bankChips < ABILITY_SCORES.length ? 'inline-flex' : 'none';
 }
+
+function renderStage3ClassBanner() {
+  var el = document.getElementById('char-stage3-class-banner');
+  if (!el) return;
+  var classId = CHAR_STATE.draft.class_id;
+  var cls = classId ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
+  if (!cls) {
+    el.innerHTML = '';
+    el.style.display = 'none';
+    return;
+  }
+  var CLASS_ABILITY_ADVICE = {
+    barbarian: 'Put your 15 in Strength. Constitution second — it boosts your HP and your unarmored AC.',
+    bard:      'Put your 15 in Charisma. Dexterity second for AC and initiative.',
+    cleric:    'Put your 15 in Wisdom — it powers your spells and saves. Constitution second for survivability.',
+    druid:     'Put your 15 in Wisdom. Constitution second — Druids take hits in Wild Shape.',
+    fighter:   'Put your 15 in Strength (melee) or Dexterity (ranged/finesse). Constitution second for hit points.',
+    monk:      'Put your 15 in Dexterity. Wisdom second — it boosts your AC and ki abilities.',
+    paladin:   'Split your top scores between Strength and Charisma. Constitution third for durability.',
+    ranger:    'Put your 15 in Dexterity. Wisdom second for spells and perception.',
+    rogue:     'Put your 15 in Dexterity — it drives everything you do. Intelligence or Charisma second.',
+    sorcerer:  'Put your 15 in Charisma. Constitution second to keep concentration spells alive.',
+    warlock:   'Put your 15 in Charisma. Constitution second for concentration.',
+    wizard:    'Put your 15 in Intelligence. Constitution second to hold concentration spells.'
+  };
+  var advice = CLASS_ABILITY_ADVICE[classId] || '';
+  el.style.display = '';
+  el.innerHTML = '<div class="char-stage3-class-banner-inner">'
+    + '<img class="char-stage3-class-img" src="assets/images/classes/class-' + classId + '.webp" alt="' + cls.name + '">'
+    + '<div class="char-stage3-class-banner-info">'
+      + '<div class="char-stage3-class-banner-name">' + cls.name + '</div>'
+      + '<div class="char-stage3-class-banner-meta">Primary: ' + cls.primary + ' &nbsp;·&nbsp; Saves: ' + cls.saves + '</div>'
+      + (advice ? '<div class="char-stage3-class-banner-advice">' + advice + '</div>' : '')
+    + '</div>'
+  + '</div>';
+}
+
 
 function initAbilityScores() {
   resetAbilityScores();
@@ -3240,6 +3506,7 @@ function setAbilityScore(ability, score) {
   }
   renderStage3Panel();
   updateResetButton();
+  updateStage3ContinueButton();
 }
 
 function initAbilityDragDrop() {

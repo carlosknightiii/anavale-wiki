@@ -80,7 +80,7 @@ body.char-page {
 .char-return-banner {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 100;
+  z-index: 200;
   background: linear-gradient(90deg, var(--bubbleseed), var(--featherflow));
   color: var(--white);
   font-family: var(--font-sans);
@@ -848,49 +848,158 @@ body.char-page {
   border-top: 1px solid transparent;
 }
 .char-class-card.expanded .char-class-body {
-  max-height: 600px;
+  max-height: 2000px;
   border-top-color: rgba(255,255,255,0.07);
   padding-bottom: 0.75rem;
 }
 
 /* Skill selection within class card */
 .char-class-skills-section {
-  padding: 0 1rem 0.5rem 1rem;
+  margin: 0.5rem 1rem 0.75rem;
+  padding: 1rem;
+  background: rgba(5, 7, 15, 0.92);
+  border: 2px solid rgba(200,148,10,0.35);
+  border-radius: 10px;
+  transition: border-color 0.3s, background 0.3s;
+  animation: skills-pulse 2s ease-in-out infinite;
+}
+.char-class-skills-section.skills-complete {
+  background: rgba(34,197,94,0.06);
+  border-color: rgba(34,197,94,0.4);
+  animation: none;
+}
+@keyframes skills-pulse {
+  0%, 100% { border-color: rgba(200,148,10,0.35); box-shadow: none; }
+  50%       { border-color: rgba(200,148,10,0.9);  box-shadow: 0 0 12px rgba(200,148,10,0.4); }
+}
+.char-class-skills-required {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(200,148,10,0.12);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.4;
+}
+.char-class-skills-section.skills-complete .char-class-skills-required {
+  display: none;
+}
+.char-class-skills-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+.char-class-skills-label {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+.char-class-skills-slots {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.char-class-skills-slot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(200,148,10,0.5);
+  background: transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: transparent;
+}
+.char-class-skills-slot.filled {
+  background: rgba(34,197,94,0.9);
+  border-color: rgba(34,197,94,0.9);
+  color: #fff;
 }
 .char-class-skills-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 0.4rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 .char-skill-option {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  background: var(--char-accent-tint);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: transform 0.1s;
+  isolation: isolate;
+  /* Inner background via box-shadow so ::before border shows through */
+  background: rgba(10, 14, 24, 0.92);
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
 }
-.char-skill-option:hover { border-color: rgba(255,255,255,0.3); }
+.char-skill-option::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 9px;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--skill-angle, 0deg),
+    #e8c84a, #e87a8a, #9a70e8, #4ac8b8, #e8c84a
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  z-index: -1;
+  animation: skill-border-spin 3s linear infinite;
+  opacity: 0.75;
+}
+@property --skill-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes skill-border-spin {
+  to { --skill-angle: 360deg; }
+}
+.char-skill-option:hover {
+  transform: translateY(-1px);
+}
+.char-skill-option:hover::before { opacity: 1; }
 .char-skill-option input[type=checkbox] { display: none; }
 .char-skill-option:has(input:checked) {
-  border-color: var(--gold);
-  background: var(--char-highlight-tint);
+  background: rgba(20, 50, 28, 0.92);
+}
+.char-skill-option:has(input:checked)::before {
+  background: conic-gradient(
+    from var(--skill-angle, 0deg),
+    rgb(34,197,94), #4ac8b8, rgb(134,239,172), rgb(34,197,94)
+  );
+  opacity: 1;
+}
+.char-skill-option:has(input:checked) .char-skill-name {
+  color: rgb(134,239,172);
 }
 .char-skill-name {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--parchment);
   font-weight: 600;
   pointer-events: none;
 }
-.char-skill-name .char-field-tooltip {
-  pointer-events: auto;
-}
+.char-skill-name .char-field-tooltip { pointer-events: auto; }
 .char-skill-tip {
   font-family: var(--font-sans);
   font-size: 0.72rem;
@@ -900,10 +1009,14 @@ body.char-page {
   pointer-events: none;
 }
 .char-class-skills-count {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--gold);
-  margin-top: 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--char-text-faint);
+  letter-spacing: 0.04em;
+}
+.char-class-skills-section.skills-complete .char-class-skills-count {
+  color: rgb(134,239,172);
 }
 
 .char-skills-needed-alert {
@@ -971,17 +1084,29 @@ body.char-page {
 
 .char-class-features {
   margin: 0;
-  padding: 0 1rem 0.5rem 2rem;
+  padding: 0 1rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.5rem;
+  list-style: none;
 }
 
 .char-class-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--char-text-muted);
-  line-height: 1.45;
+  line-height: 1.5;
+}
+
+.char-feature-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 1.4rem;
+  text-align: center;
+  margin-top: 0.05rem;
 }
 
 /* Trait label tooltip trigger */
@@ -1129,6 +1254,50 @@ body.char-page {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+/* ── STAGE 3 CLASS BANNER ──────────────────────────────────────── */
+#char-stage3-class-banner { margin-bottom: 1.5rem; }
+.char-stage3-class-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--char-section-bg);
+  border: 1px solid var(--char-accent-border);
+  border-radius: var(--char-radius);
+}
+.char-stage3-class-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+.char-stage3-class-banner-info {
+  flex: 1;
+  min-width: 0;
+}
+.char-stage3-class-banner-name {
+  font-family: var(--font-headers);
+  font-size: 1.4rem;
+  color: var(--white);
+  margin-bottom: 0.2rem;
+}
+.char-stage3-class-banner-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+.char-stage3-class-banner-advice {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--char-text-faint);
+  line-height: 1.55;
+  font-style: italic;
 }
 
 /* ── STAGE 3 SUMMARY PANEL ─────────────────────────────────────── */
@@ -1750,23 +1919,23 @@ body.char-page {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 .char-gear-label {
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--white);
 }
 
 .char-gear-sublabel {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--char-text-faint);
   font-style: italic;
 }
@@ -1774,54 +1943,372 @@ body.char-page {
 .char-gear-items {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.5rem;
 }
 
-.char-gear-item {
+/* Section divider — WEAPONS / ARMOR / PACK */
+.char-gear-section-label {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  color: var(--parchment);
-  line-height: 1.4;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 1.1rem;
+  margin-bottom: 0.5rem;
 }
+.char-gear-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(200,148,10,0.35), transparent);
+}
+.char-gear-section-label:first-child { margin-top: 0; }
 
-.char-gear-item--note { color: var(--char-text-faint); font-style: italic; }
-.char-gear-item--pack { color: var(--char-text-faint); }
+/* Each gear item — card-style row */
+.char-gear-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.char-gear-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.14);
+}
 
 .char-gear-icon {
-  font-size: 0.85rem;
+  font-size: 1.4rem;
   flex-shrink: 0;
-  width: 1.25rem;
+  width: 2rem;
   text-align: center;
+  margin-top: 0.1rem;
 }
 
-.char-gear-section-label {
+.char-gear-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.char-gear-item-name {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.3;
+  margin-bottom: 0.35rem;
+}
+
+.char-gear-item--note { opacity: 0.65; }
+.char-gear-item--pack .char-gear-item-name { color: var(--parchment); }
+.char-gear-item--unarmored .char-gear-item-name {
+  color: var(--char-text-faint);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ── STAGE 4 HUD BAR ───────────────────────────────────────────── */
+.char-stage4-hud {
+  position: sticky;
+  top: 8px;
+  z-index: 90;
+  margin-bottom: 2rem;
+  background: rgba(8, 10, 22, 0.98);
+  border: 1px solid var(--char-accent-border);
+  border-radius: var(--char-radius);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+  transition: box-shadow 0.2s ease, top 0.2s ease;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+.char-hud-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  flex: 1;
+}
+.char-hud-stat--weight { flex: 2; }
+.char-hud-stat-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(200,148,10,0.3));
+}
+.char-hud-stat-body { flex: 1; min-width: 0; }
+.char-hud-stat-label {
   font-family: var(--font-sans);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--char-text-faint);
-  margin-top: 0.85rem;
-  margin-bottom: 0.35rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 0.2rem;
 }
-.char-gear-section-label:first-child { margin-top: 0; }
-
-.char-gear-item-name {
+.char-hud-stat-value {
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  color: var(--parchment);
-  line-height: 1.4;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+.char-hud-money {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.char-hud-money-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.char-hud-money-gold   { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; color: #f0c040; }
+.char-hud-money-silver { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; color: #c8d4e0; }
+.char-hud-money-copper { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; color: #d4845a; }
+.char-hud-money-negative { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; color: #e05050; }
+.char-hud-money-denom {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+.char-hud-money-denom--gold   { color: rgba(240,192,64,0.7); }
+.char-hud-money-denom--silver { color: rgba(200,212,224,0.7); }
+.char-hud-money-denom--copper { color: rgba(212,132,90,0.7); }
+.char-hud-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.07);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+.char-hud-weight-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.char-hud-weight-bar-track {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 120px;
+}
+.char-hud-weight-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.4s ease, background-color 0.3s ease;
+  background: linear-gradient(90deg, #4ac8b8, #e8c84a);
+}
+.char-hud-weight-bar-fill.over-half { background: linear-gradient(90deg, #e8c84a, #e87a3a); }
+.char-hud-weight-bar-fill.encumbered { background: #e05050; }
+.char-hud-weight-numbers {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--char-text-faint);
+  white-space: nowrap;
 }
 
-.char-gear-item--unarmored .char-gear-item-name {
-  color: var(--char-text-faint);
-  font-style: italic;
+/* Weapon damage slot */
+.char-hud-weapon-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
+.char-hud-weapon-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.char-hud-weapon-hand {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--char-text-faint);
+  width: 0.8rem;
+  flex-shrink: 0;
+}
+.char-hud-weapon-dmg {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--parchment);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* ── HUD STICKY MODE ───────────────────────────────────────────── */
+.char-stage4-hud {
+  position: sticky;
+  top: 8px;
+  z-index: 90;
+  margin-bottom: 2rem;
+  transition: box-shadow 0.2s ease;
+}
+.char-stage4-hud.char-hud--stuck {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+  backdrop-filter: blur(12px);
+}
+body.banner-visible .char-stage4-hud {
+  top: 60px;
+}
+/* Compact mode when stuck — triggered by JS class on scroll */
+.char-stage4-hud.char-hud--stuck .char-hud-stat {
+  padding: 0.5rem 0.85rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-stat-icon {
+  font-size: 1rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-stat-label {
+  display: none;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-stat-value {
+  font-size: 1rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-money-gold,
+.char-stage4-hud.char-hud--stuck .char-hud-money-silver,
+.char-stage4-hud.char-hud--stuck .char-hud-money-copper {
+  font-size: 0.82rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-money-denom {
+  display: none;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-weight-bar-track {
+  min-width: 70px;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-weight-numbers {
+  font-size: 0.65rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-weapon-dmg {
+  font-size: 0.78rem;
+  max-width: 80px;
+}
+
+/* ── WEAPON RACK (Stage 4) ─────────────────────────────────────── */
+.char-equip-note {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--char-text-faint);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+  padding: 0.55rem 0.85rem;
+  background: rgba(200,148,10,0.07);
+  border-left: 3px solid rgba(200,148,10,0.5);
+  border-radius: 0 6px 6px 0;
+}
+.char-equip-note strong { color: var(--gold); }
+
+.char-weapon-rack {
+  display: grid;
+  grid-template-columns: 1fr 2.5rem 1fr;
+  align-items: start;
+  margin-bottom: 1.25rem;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.char-weapon-slot {
+  background: var(--char-card-bg);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  min-width: 0;
+}
+.char-weapon-slot:focus-within {
+  border-color: rgba(200,148,10,0.6);
+  box-shadow: 0 0 0 3px rgba(200,148,10,0.1), 0 2px 12px rgba(0,0,0,0.4);
+}
+
+.char-weapon-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.char-weapon-slot-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(200,148,10,0.4));
+}
+.char-weapon-slot-label {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.char-weapon-slot-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.85rem;
+  margin-top: 3rem;
+  gap: 0.3rem;
+}
+.char-weapon-slot-divider::before {
+  content: '⚔️';
+  font-size: 1.1rem;
+  opacity: 0.5;
+}
+.char-weapon-slot-divider::after {
+  content: 'or';
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+}
+
+/* Hide the inner text node — replaced by ::before/::after */
+.char-weapon-slot-divider { font-size: 0; color: transparent; }
+
+.char-weapon-select {
+  width: 100%;
+  background: rgba(10,14,24,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: var(--parchment);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  transition: border-color 0.2s;
+  outline: none;
+  cursor: pointer;
+}
+.char-weapon-select:focus {
+  border-color: var(--gold);
+}
+.char-weapon-select option { background: #0a0e18; color: var(--parchment); }
+
+.char-weapon-chips {
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+  overflow-wrap: break-word;
+  display: flex;
+  gap: 0.35rem;
+}
+
 
 .char-equip-callout {
   display: flex;
@@ -1864,7 +2351,8 @@ body.char-page {
   padding: 0.2rem 0.55rem;
   border-radius: 4px;
   letter-spacing: 0.03em;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .char-stat-chip--ac {
@@ -2355,7 +2843,13 @@ body.char-page {
   font-weight: 700;
   margin-bottom: 0.2rem;
 }
-.char-appearance-section-title { margin-bottom: 1.25rem; font-size: 0.75rem; }
+.char-appearance-section-title {
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+  letter-spacing: 0.18em;
+  color: var(--white);
+  font-weight: 700;
+}
 .char-section-header-title {
   font-family: var(--font-sans);
   font-size: 1.25rem;
@@ -2919,6 +3413,7 @@ body.char-page {
   font-size: clamp(1.1rem, 2vw, 1.5rem);
   color: var(--white);
   letter-spacing: 0.04em;
+  margin-bottom: 1rem;
 }
 
 /* ── WELCOME PANEL COLLAPSE ────────────────────────────────────── */
@@ -2956,6 +3451,28 @@ body.char-page {
 .char-welcome-body.collapsed {
   max-height: 0;
   opacity: 0;
+}
+
+/* ── BACK BUTTON (top of stages 2–5) ──────────────────────────── */
+.char-back-top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 2rem;
+  padding: 0.35rem 0.85rem;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.55);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.char-back-top-btn:hover {
+  color: rgba(255,255,255,0.9);
+  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.05);
 }
 
 /* ── RESPONSIVE ────────────────────────────────────────────────── */

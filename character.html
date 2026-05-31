@@ -54,7 +54,7 @@
       <div id="char-sidebar-stage-2" class="char-sidebar-stage" onclick="jumpToStage(2)">
         <div class="char-stage-num">2</div>
         <div class="char-stage-label">
-          Your Gift
+          Your Class
           <span class="char-stage-sublabel">Choose a class</span>
         </div>
         <span class="char-stage-check">✓</span>
@@ -63,7 +63,7 @@
       <div id="char-sidebar-stage-3" class="char-sidebar-stage" onclick="jumpToStage(3)">
         <div class="char-stage-num">3</div>
         <div class="char-stage-label">
-          Your Strengths
+          Ability Scores
           <span class="char-stage-sublabel">Assign ability scores</span>
         </div>
         <span class="char-stage-check">✓</span>
@@ -72,7 +72,7 @@
       <div id="char-sidebar-stage-4" class="char-sidebar-stage" onclick="jumpToStage(4)">
         <div class="char-stage-num">4</div>
         <div class="char-stage-label">
-          Your Gear
+          Gear & Look
           <span class="char-stage-sublabel">Equipment & clothing</span>
         </div>
         <span class="char-stage-check">✓</span>
@@ -81,7 +81,7 @@
       <div id="char-sidebar-stage-5" class="char-sidebar-stage" onclick="jumpToStage(5)">
         <div class="char-stage-num">5</div>
         <div class="char-stage-label">
-          Your Character
+          Review & Submit
           <span class="char-stage-sublabel">Full summary</span>
         </div>
         <span class="char-stage-check">✓</span>
@@ -108,7 +108,7 @@
   <!-- Stage header -->
   <div class="char-stage-header">
     <div class="char-stage-eyebrow">Stage 1 of 5</div>
-    <h2 class="char-stage-title">Who Are You?</h2>
+    <h2 class="char-stage-title">Your Story</h2>
     <p class="char-stage-intro">Answer what you can — nothing here is wrong. You can skip sections and come back.</p>
   </div>
 
@@ -118,7 +118,7 @@
     <!-- Section 1: Who Are You -->
     <div class="char-accordion-panel" id="acc-identity">
       <button class="char-accordion-header" onclick="toggleAccordion('acc-identity')" aria-expanded="true">
-        <span class="char-accordion-icon">🧑</span>
+        <span class="char-accordion-icon">📖</span>
         <span class="char-accordion-title">Who Are You</span>
         <span class="char-accordion-sub">Name, gender &amp; personality</span>
         <span class="char-accordion-check" id="acc-identity-check">✓</span>
@@ -233,6 +233,17 @@
               </div>
               <div class="char-region-card-check">✓</div>
             </div>
+            <div class="char-region-card" data-value="Jugabi" onclick="selectOptionCard(this)">
+              <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-jugabi-landscape.webp')"></div>
+              <div class="char-region-card-overlay"></div>
+              <div class="char-region-card-content">
+                <div class="char-region-card-label">Region</div>
+                <div class="char-region-card-name">Jugabi</div>
+                <div class="char-region-card-climate">The living jungle southwest</div>
+                <div class="char-region-card-blurb">The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain on the continent. The jungle has opinions.</div>
+              </div>
+              <div class="char-region-card-check">✓</div>
+            </div>
             <div class="char-region-card" data-value="Nombi" onclick="selectOptionCard(this)">
               <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-nombi-landscape.webp')"></div>
               <div class="char-region-card-overlay"></div>
@@ -255,17 +266,6 @@
               </div>
               <div class="char-region-card-check">✓</div>
             </div>
-            <div class="char-region-card" data-value="Jugabi" onclick="selectOptionCard(this)">
-              <div class="char-region-card-bg" style="background-image:url('assets/images/regions/img-jugabi-landscape.webp')"></div>
-              <div class="char-region-card-overlay"></div>
-              <div class="char-region-card-content">
-                <div class="char-region-card-label">Region</div>
-                <div class="char-region-card-name">Jugabi</div>
-                <div class="char-region-card-climate">The living jungle southwest</div>
-                <div class="char-region-card-blurb">The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain on the continent. The jungle has opinions.</div>
-              </div>
-              <div class="char-region-card-check">✓</div>
-            </div>
           </div>
         </div>
         <div class="char-field-group" id="char-language-section">
@@ -280,18 +280,11 @@
                 <div class="char-lang-sub">Spoken in the Opu Forest and Dingu territories</div>
               </div>
             </div>
-            <div class="char-lang-card" data-value="nombi-frost" data-color="#2266b8" onclick="selectOptionCard(this)">
-              <div class="char-lang-glyph">ᚱᚢᚾ</div>
+            <div class="char-lang-card" data-value="conclave-script" data-color="#6a3aaa" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">⟁⌬⎊</div>
               <div class="char-lang-content">
-                <div class="char-lang-name">Nombi Frost</div>
-                <div class="char-lang-sub">Spoken across the northern fjords and forests</div>
-              </div>
-            </div>
-            <div class="char-lang-card" data-value="sohot-old" data-color="#c8882a" onclick="selectOptionCard(this)">
-              <div class="char-lang-glyph">𐡀𐡁𐡂</div>
-              <div class="char-lang-content">
-                <div class="char-lang-name">Sohot Old Tongue</div>
-                <div class="char-lang-sub">Ceremonial language of the southern kingdoms</div>
+                <div class="char-lang-name">Conclave Script</div>
+                <div class="char-lang-sub">The Gigglegloom Conclave's written technical language</div>
               </div>
             </div>
             <div class="char-lang-card" data-value="jugabi-canopy" data-color="#4a9a3a" onclick="selectOptionCard(this)">
@@ -301,11 +294,11 @@
                 <div class="char-lang-sub">Spoken by the Greenvast Tribes and Verdathi</div>
               </div>
             </div>
-            <div class="char-lang-card" data-value="conclave-script" data-color="#6a3aaa" onclick="selectOptionCard(this)">
-              <div class="char-lang-glyph">⟁⌬⎊</div>
+            <div class="char-lang-card" data-value="nombi-frost" data-color="#2266b8" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">ᚱᚢᚾ</div>
               <div class="char-lang-content">
-                <div class="char-lang-name">Conclave Script</div>
-                <div class="char-lang-sub">The Gigglegloom Conclave's written technical language</div>
+                <div class="char-lang-name">Nombi Frost</div>
+                <div class="char-lang-sub">Spoken across the northern fjords and forests</div>
               </div>
             </div>
             <div class="char-lang-card" data-value="pre-partition" data-color="#8a6a2a" onclick="selectOptionCard(this)">
@@ -313,6 +306,13 @@
               <div class="char-lang-content">
                 <div class="char-lang-name">Pre-Partition Script</div>
                 <div class="char-lang-sub">Ancient, mostly unreadable, occasionally useful</div>
+              </div>
+            </div>
+            <div class="char-lang-card" data-value="sohot-old" data-color="#c8882a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">𐡀𐡁𐡂</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Sohot Old Tongue</div>
+                <div class="char-lang-sub">Ceremonial language of the southern kingdoms</div>
               </div>
             </div>
           </div>
@@ -337,11 +337,11 @@
             <div class="char-past-q-hint">Select one — you'll see what it means for your character before committing.</div>
             <input type="hidden" id="char-raised">
             <div class="char-option-cards" data-field="char-raised" data-past="raised">
-              <div class="char-option-card" data-value="kind-parents" data-img="assets/images/past/raised-kind-parents.webp" data-effect="+1 Wisdom, free Insight proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">Kind, loving parents</div></div>
-              <div class="char-option-card" data-value="the-streets" data-img="assets/images/past/raised-the-streets.webp" data-effect="+1 Dexterity, +1 Sleight of Hand, -1 Wisdom" onclick="selectPastCard(this)"><div class="char-option-card-label">The streets — no one, really</div></div>
-              <div class="char-option-card" data-value="strict-religious" data-img="assets/images/past/raised-strict-religious.webp" data-effect="+1 Intelligence, +1 Religion proficiency, -1 Charisma" onclick="selectPastCard(this)"><div class="char-option-card-label">A strict religious household</div></div>
-              <div class="char-option-card" data-value="single-parent" data-img="assets/images/past/raised-single-parent.webp" data-effect="+1 Constitution, +1 Athletics proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A single parent working too hard</div></div>
               <div class="char-option-card" data-value="grandparent" data-img="assets/images/past/raised-grandparent.webp" data-effect="+1 Wisdom, +1 History proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A grandparent or elder</div></div>
+              <div class="char-option-card" data-value="kind-parents" data-img="assets/images/past/raised-kind-parents.webp" data-effect="+1 Wisdom, free Insight proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">Kind, loving parents</div></div>
+              <div class="char-option-card" data-value="single-parent" data-img="assets/images/past/raised-single-parent.webp" data-effect="+1 Constitution, +1 Athletics proficiency" onclick="selectPastCard(this)"><div class="char-option-card-label">A single parent working too hard</div></div>
+              <div class="char-option-card" data-value="strict-religious" data-img="assets/images/past/raised-strict-religious.webp" data-effect="+1 Intelligence, +1 Religion proficiency, -1 Charisma" onclick="selectPastCard(this)"><div class="char-option-card-label">A strict religious household</div></div>
+              <div class="char-option-card" data-value="the-streets" data-img="assets/images/past/raised-the-streets.webp" data-effect="+1 Dexterity, +1 Sleight of Hand, -1 Wisdom" onclick="selectPastCard(this)"><div class="char-option-card-label">The streets — no one, really</div></div>
             </div>
             <div class="char-past-q-img" id="img-raised"></div>
             <div class="char-past-effect-preview" id="effect-raised"></div>
@@ -352,11 +352,11 @@
             <div class="char-past-q-hint">This shaped how you connect with others.</div>
             <input type="hidden" id="char-friend">
             <div class="char-option-cards" data-field="char-friend" data-past="friend">
-              <div class="char-option-card" data-value="neighbor" data-img="assets/images/past/friend-neighbor.webp" data-effect="+1 Insight" onclick="selectPastCard(this)"><div class="char-option-card-label">A neighbor kid</div></div>
               <div class="char-option-card" data-value="animal" data-img="assets/images/past/friend-animal.webp" data-effect="+1 Animal Handling" onclick="selectPastCard(this)"><div class="char-option-card-label">An animal — wild or domestic</div></div>
               <div class="char-option-card" data-value="imaginary" data-img="assets/images/past/friend-imaginary.webp" data-effect="+1 Perception" onclick="selectPastCard(this)"><div class="char-option-card-label">An imaginary one</div></div>
-              <div class="char-option-card" data-value="no-one" data-img="assets/images/past/friend-no-one.webp" data-effect="+1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">Honestly, no one</div></div>
               <div class="char-option-card" data-value="mentor" data-img="assets/images/past/friend-mentor.webp" data-effect="+1 History or Medicine (your choice)" onclick="selectPastCard(this)"><div class="char-option-card-label">An older mentor figure</div></div>
+              <div class="char-option-card" data-value="neighbor" data-img="assets/images/past/friend-neighbor.webp" data-effect="+1 Insight" onclick="selectPastCard(this)"><div class="char-option-card-label">A neighbor kid</div></div>
+              <div class="char-option-card" data-value="no-one" data-img="assets/images/past/friend-no-one.webp" data-effect="+1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">Honestly, no one</div></div>
             </div>
             <div class="char-past-q-img" id="img-friend"></div>
             <div class="char-past-effect-preview" id="effect-friend"></div>
@@ -368,9 +368,9 @@
             <input type="hidden" id="char-pet">
             <div class="char-option-cards" data-field="char-pet" data-past="pet">
               <div class="char-option-card" data-value="loyal-animal" data-img="assets/images/past/pet-loyal-animal.webp" data-effect="Creatures that protect tend to trust you faster" onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — a dog or similar loyal animal</div></div>
+              <div class="char-option-card" data-value="never-wanted" data-img="assets/images/past/pet-never-wanted.webp" data-effect="Neutral. The Fluffets don't take it personally." onclick="selectPastCard(this)"><div class="char-option-card-label">No — never wanted one</div></div>
               <div class="char-option-card" data-value="unusual" data-img="assets/images/past/pet-unusual.webp" data-effect="You have patience with strange things that most people don't" onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — something unusual</div></div>
               <div class="char-option-card" data-value="wanted-one" data-img="assets/images/past/pet-wanted-one.webp" data-effect="You notice animals. They sometimes notice back." onclick="selectPastCard(this)"><div class="char-option-card-label">No, but I wanted one</div></div>
-              <div class="char-option-card" data-value="never-wanted" data-img="assets/images/past/pet-never-wanted.webp" data-effect="Neutral. The Fluffets don't take it personally." onclick="selectPastCard(this)"><div class="char-option-card-label">No — never wanted one</div></div>
             </div>
             <div class="char-past-q-img" id="img-pet"></div>
             <div class="char-past-effect-preview" id="effect-pet"></div>
@@ -381,11 +381,11 @@
             <div class="char-past-q-hint">This shapes how you build trust with others during play.</div>
             <input type="hidden" id="char-love">
             <div class="char-option-cards" data-field="char-love" data-past="love">
-              <div class="char-option-card" data-value="ended-well" data-img="assets/images/past/love-ended-well.webp" data-effect="You know what it's like when it works. You're still looking for it." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended well</div></div>
-              <div class="char-option-card" data-value="ended-badly" data-img="assets/images/past/love-ended-badly.webp" data-effect="You're not closed. You're careful. There's a difference." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended badly</div></div>
               <div class="char-option-card" data-value="complicated" data-img="assets/images/past/love-complicated.webp" data-effect="Some threads are still attached. That's not always a bad thing." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it's complicated</div></div>
-              <div class="char-option-card" data-value="not-yet" data-img="assets/images/past/love-not-yet.webp" data-effect="You think about it sometimes. It seems like something that happens to other people." onclick="selectPastCard(this)"><div class="char-option-card-label">Not yet</div></div>
+              <div class="char-option-card" data-value="ended-badly" data-img="assets/images/past/love-ended-badly.webp" data-effect="You're not closed. You're careful. There's a difference." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended badly</div></div>
+              <div class="char-option-card" data-value="ended-well" data-img="assets/images/past/love-ended-well.webp" data-effect="You know what it's like when it works. You're still looking for it." onclick="selectPastCard(this)"><div class="char-option-card-label">Yes — and it ended well</div></div>
               <div class="char-option-card" data-value="not-for-me" data-img="assets/images/past/love-not-for-me.webp" data-effect="You've built something else instead. It's solid." onclick="selectPastCard(this)"><div class="char-option-card-label">I don't think that's for me</div></div>
+              <div class="char-option-card" data-value="not-yet" data-img="assets/images/past/love-not-yet.webp" data-effect="You think about it sometimes. It seems like something that happens to other people." onclick="selectPastCard(this)"><div class="char-option-card-label">Not yet</div></div>
             </div>
             <div class="char-past-q-img" id="img-love"></div>
             <div class="char-past-effect-preview" id="effect-love"></div>
@@ -396,14 +396,38 @@
             <div class="char-past-q-hint">Organizations give you contacts, skills, and sometimes starting equipment.</div>
             <input type="hidden" id="char-org">
             <div class="char-option-cards" data-field="char-org" data-past="org">
-              <div class="char-option-card" data-value="wanderkeep" data-img="assets/images/past/org-wanderkeep.webp" data-effect="Wanderkeep Field Kit (DM adds), +1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">The Wanderkeep</div><div class="char-option-card-sub">Wandering protectors who travel Anavale keeping color alive.</div></div>
-              <div class="char-option-card" data-value="merchant-guild" data-img="assets/images/past/org-merchant-guild.webp" data-effect="+50gp starting gold, +1 Persuasion" onclick="selectPastCard(this)"><div class="char-option-card-label">A merchant guild</div><div class="char-option-card-sub">Trade networks that move goods — and information — across Anavale's nations.</div></div>
               <div class="char-option-card" data-value="brightcreed" data-img="assets/images/past/org-brightcreed.webp" data-effect="Brightcreed Token (DM adds), +1 Religion" onclick="selectPastCard(this)"><div class="char-option-card-label">A religious order (Brightcreed)</div><div class="char-option-card-sub">The Brightcreed venerates Oro and Nara — color, joy, and living things.</div></div>
               <div class="char-option-card" data-value="fighting-company" data-img="assets/images/past/org-fighting-company.webp" data-effect="Common weapon of choice (DM adds), +1 Athletics" onclick="selectPastCard(this)"><div class="char-option-card-label">A fighting company</div><div class="char-option-card-sub">Mercenary or militia — you learned to fight alongside others.</div></div>
               <div class="char-option-card" data-value="kept-to-myself" data-img="assets/images/past/org-kept-to-myself.webp" data-effect="+1 Stealth, +1 any skill of your choice" onclick="selectPastCard(this)"><div class="char-option-card-label">No — I kept to myself</div></div>
+              <div class="char-option-card" data-value="merchant-guild" data-img="assets/images/past/org-merchant-guild.webp" data-effect="+50gp starting gold, +1 Persuasion" onclick="selectPastCard(this)"><div class="char-option-card-label">A merchant guild</div><div class="char-option-card-sub">Trade networks that move goods — and information — across Anavale's nations.</div></div>
+              <div class="char-option-card" data-value="wanderkeep" data-img="assets/images/past/org-wanderkeep.webp" data-effect="Wanderkeep Field Kit (DM adds), +1 Survival" onclick="selectPastCard(this)"><div class="char-option-card-label">The Wanderkeep</div><div class="char-option-card-sub">Wandering protectors who travel Anavale keeping color alive.</div></div>
             </div>
             <div class="char-past-q-img" id="img-org"></div>
             <div class="char-past-effect-preview" id="effect-org"></div>
+            <div id="org-solo-skill-picker" style="display:none">
+              <div style="margin-top:0.75rem;margin-bottom:0.25rem;font-family:var(--font-sans);font-size:0.78rem;color:rgba(245,234,212,0.75);">Choose one skill you quietly sharpened on your own:</div>
+              <select id="org-solo-skill-select" class="char-field-select" onchange="selectSoloSkill(this.value)">
+                <option value="">— choose a skill —</option>
+                <option value="Acrobatics">Acrobatics</option>
+                <option value="Animal Handling">Animal Handling</option>
+                <option value="Arcana">Arcana</option>
+                <option value="Athletics">Athletics</option>
+                <option value="Deception">Deception</option>
+                <option value="History">History</option>
+                <option value="Insight">Insight</option>
+                <option value="Intimidation">Intimidation</option>
+                <option value="Investigation">Investigation</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Nature">Nature</option>
+                <option value="Perception">Perception</option>
+                <option value="Performance">Performance</option>
+                <option value="Persuasion">Persuasion</option>
+                <option value="Religion">Religion</option>
+                <option value="Sleight of Hand">Sleight of Hand</option>
+                <option value="Stealth">Stealth</option>
+                <option value="Survival">Survival</option>
+              </select>
+            </div>
           </div>
           <div class="char-past-question" id="past-q-left-behind" data-num="6" data-icon="🎒">
             <div class="char-past-q-badge"><span class="char-past-q-num">6</span><span class="char-past-q-icon">🎒</span></div>
@@ -411,11 +435,11 @@
             <div class="char-past-q-hint">This becomes a memory your character carries — it may surface during play.</div>
             <input type="hidden" id="char-left-behind">
             <div class="char-option-cards" data-field="char-left-behind" data-past="left-behind">
+              <div class="char-option-card" data-value="nothing" data-img="assets/images/past/left-behind-nothing.webp" data-effect="You don't look back. You've decided that's a strength." onclick="selectPastCard(this)"><div class="char-option-card-label">Nothing — I travel light</div></div>
               <div class="char-option-card" data-value="person" data-img="assets/images/past/left-behind-person.webp" data-effect="There's a name you don't say out loud in crowds." onclick="selectPastCard(this)"><div class="char-option-card-label">A person I loved</div></div>
+              <div class="char-option-card" data-value="place" data-img="assets/images/past/left-behind-place.webp" data-effect="A place the Dimming took. This is why the grey is personal." onclick="selectPastCard(this)"><div class="char-option-card-label">A place that no longer exists</div></div>
               <div class="char-option-card" data-value="promise" data-img="assets/images/past/left-behind-promise.webp" data-effect="You think about it in quiet moments." onclick="selectPastCard(this)"><div class="char-option-card-label">A promise I didn't keep</div></div>
               <div class="char-option-card" data-value="self" data-img="assets/images/past/left-behind-self.webp" data-effect="You changed. You're still deciding if that was good." onclick="selectPastCard(this)"><div class="char-option-card-label">A version of myself I can't return to</div></div>
-              <div class="char-option-card" data-value="place" data-img="assets/images/past/left-behind-place.webp" data-effect="A place the Dimming took. This is why the grey is personal." onclick="selectPastCard(this)"><div class="char-option-card-label">A place that no longer exists</div></div>
-              <div class="char-option-card" data-value="nothing" data-img="assets/images/past/left-behind-nothing.webp" data-effect="You don't look back. You've decided that's a strength." onclick="selectPastCard(this)"><div class="char-option-card-label">Nothing — I travel light</div></div>
             </div>
             <div class="char-past-q-img" id="img-left-behind"></div>
             <div class="char-past-effect-preview" id="effect-left-behind"></div>
@@ -426,11 +450,11 @@
             <div class="char-past-q-hint">This becomes your personal overarching quest.</div>
             <input type="hidden" id="char-why-left">
             <div class="char-option-cards" data-field="char-why-left" data-past="why-left">
-              <div class="char-option-card" data-value="someone-disappeared" data-img="assets/images/past/why-left-someone-disappeared.webp" data-effect="Personal quest: Find them, or find out what happened." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone I loved disappeared</div></div>
-              <div class="char-option-card" data-value="saw-the-grey" data-img="assets/images/past/why-left-saw-the-grey.webp" data-effect="Personal quest: Push the grey back." onclick="selectPastCard(this)"><div class="char-option-card-label">I saw the grey arrive somewhere I thought was safe</div></div>
-              <div class="char-option-card" data-value="received-message" data-img="assets/images/past/why-left-received-message.webp" data-effect="Personal quest: Follow the thread." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone sent me — a letter, a message, a dream</div></div>
               <div class="char-option-card" data-value="ran-from-something" data-img="assets/images/past/why-left-ran-from-something.webp" data-effect="Personal quest: Figure out if you can stop running." onclick="selectPastCard(this)"><div class="char-option-card-label">I ran from something</div></div>
+              <div class="char-option-card" data-value="received-message" data-img="assets/images/past/why-left-received-message.webp" data-effect="Personal quest: Follow the thread." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone sent me — a letter, a message, a dream</div></div>
               <div class="char-option-card" data-value="restlessness" data-img="assets/images/past/why-left-restlessness.webp" data-effect="Personal quest: Discover something worth staying for." onclick="selectPastCard(this)"><div class="char-option-card-label">Pure restlessness — I needed to see what was out there</div></div>
+              <div class="char-option-card" data-value="saw-the-grey" data-img="assets/images/past/why-left-saw-the-grey.webp" data-effect="Personal quest: Push the grey back." onclick="selectPastCard(this)"><div class="char-option-card-label">I saw the grey arrive somewhere I thought was safe</div></div>
+              <div class="char-option-card" data-value="someone-disappeared" data-img="assets/images/past/why-left-someone-disappeared.webp" data-effect="Personal quest: Find them, or find out what happened." onclick="selectPastCard(this)"><div class="char-option-card-label">Someone I loved disappeared</div></div>
             </div>
             <div class="char-past-q-img" id="img-why-left"></div>
             <div class="char-past-effect-preview" id="effect-why-left"></div>
@@ -627,10 +651,10 @@
         </div>
         <img src="assets/images/img-alignment.webp" alt="The five alignments of Anavale" style="width:100%;border-radius:10px;margin-bottom:1.25rem;">
         <div class="char-alignment-grid">
-          <div class="char-alignment-card" data-alignment="brightward" onclick="selectAlignment('brightward')">
-            <div class="char-alignment-name">Protective</div>
-            <div class="char-alignment-phb">Lawful Good in the Player's Handbook</div>
-            <div class="char-alignment-desc">You believe the world is worth protecting and that the best way to protect it is to be someone others can count on.</div>
+          <div class="char-alignment-card" data-alignment="steelbound" onclick="selectAlignment('steelbound')">
+            <div class="char-alignment-name">Disciplined</div>
+            <div class="char-alignment-phb">Lawful Neutral in the Player's Handbook</div>
+            <div class="char-alignment-desc">Order is not a cage. Order is how things work. You respect hierarchies, honor agreements, follow through on commitments.</div>
           </div>
           <div class="char-alignment-card" data-alignment="colorful" onclick="selectAlignment('colorful')">
             <div class="char-alignment-name">Freespirited</div>
@@ -642,15 +666,15 @@
             <div class="char-alignment-phb">True Neutral in the Player's Handbook</div>
             <div class="char-alignment-desc">You see all sides. You weigh things carefully. You don't think the world is simple enough to be neatly divided into light and dark.</div>
           </div>
-          <div class="char-alignment-card" data-alignment="steelbound" onclick="selectAlignment('steelbound')">
-            <div class="char-alignment-name">Disciplined</div>
-            <div class="char-alignment-phb">Lawful Neutral in the Player's Handbook</div>
-            <div class="char-alignment-desc">Order is not a cage. Order is how things work. You respect hierarchies, honor agreements, follow through on commitments.</div>
-          </div>
           <div class="char-alignment-card" data-alignment="ashwalker" onclick="selectAlignment('ashwalker')">
             <div class="char-alignment-name">Pragmatic</div>
             <div class="char-alignment-phb">Chaotic Neutral in the Player's Handbook</div>
             <div class="char-alignment-desc">You do what works for you, and you try to be honest about that. You're not cruel but you don't pretend to have obligations you don't feel.</div>
+          </div>
+          <div class="char-alignment-card" data-alignment="brightward" onclick="selectAlignment('brightward')">
+            <div class="char-alignment-name">Protective</div>
+            <div class="char-alignment-phb">Lawful Good in the Player's Handbook</div>
+            <div class="char-alignment-desc">You believe the world is worth protecting and that the best way to protect it is to be someone others can count on.</div>
           </div>
         </div>
       </div>
@@ -672,17 +696,14 @@
 
     <!-- ══ STAGE 2 — YOUR GIFT ══ -->
     <div id="char-stage-2" class="char-stage">
+      <button class="char-back-top-btn" onclick="goBack()" aria-label="Go back">← Back</button>
       <div class="char-stage-header">
         <div class="char-stage-eyebrow">Stage 2 of 5</div>
-        <h2 class="char-stage-title">Choose Your Class</h2>
+        <h2 class="char-stage-title">Your Class</h2>
         <p class="char-stage-intro">Your class is who you are in a fight — and beyond it. Start by choosing your Gigglegloom affinity, then pick the class that fits how you want to play.</p>
       </div>
-      <p class="char-type-instruction">Which type of Gigglegloom calls to you?</p>
-      <p class="char-type-note">This is for flavor — you won't be bound to only using this type.</p>
       <div id="char-type-grid" class="char-type-grid"></div>
       <div id="char-class-section" style="display:none">
-        <div class="char-class-section-label">Now choose your class</div>
-        <p class="char-class-section-intro">Each class plays differently. Expand any card to read what it can do.</p>
         <div id="char-class-grid" class="char-class-grid"></div>
         <div id="char-stage2-skill-alert" class="char-stage1-skill-alert">Choose your skills before continuing.</div>
       </div>
@@ -697,19 +718,19 @@
 
     <!-- ══ STAGE 3 — YOUR STRENGTHS ══ -->
     <div id="char-stage-3" class="char-stage">
+      <button class="char-back-top-btn" onclick="goBack()" aria-label="Go back">← Back</button>
       <div class="char-stage-header">
         <div class="char-stage-eyebrow">Stage 3 of 5</div>
-        <h2 class="char-stage-title">Your Strengths</h2>
+        <h2 class="char-stage-title">Ability Scores</h2>
         <p class="char-stage-intro">Assign your six core abilities — these numbers determine how strong, quick, tough, smart, wise, and charming your character is.</p>
       </div>
 
 
-      <!-- Ability Scores -->
-      <div class="char-section-header">
-        <div class="char-section-header-eyebrow">Part 1 of 3</div>
-        <div class="char-section-header-title">Ability scores</div>
-        <div class="char-section-header-desc">Your six core abilities — Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma. Drag and drop to assign them.</div>
-      </div>
+
+      <!-- Class banner -->
+      <div id="char-stage3-class-banner"></div>
+
+
       <!-- Score bank -->
       <p class="char-ability-bank-instruction">Drag each number onto an ability card below</p>
       <div class="char-score-bank" id="char-score-bank">
@@ -721,11 +742,6 @@
         <div class="char-score-chip" draggable="true" data-score="8">8</div>
       </div>
 
-      <!-- Drag instruction -->
-      <div class="char-drag-instruction">
-        <span class="char-drag-instruction-icon">☝️</span>
-        <span class="char-drag-instruction-text">Drag each number from the bank above onto an ability card below. Drag it back to unassign, or swap by dragging onto an already-filled card.</span>
-      </div>
 
       <!-- Ability grid -->
       <div class="char-ability-grid">
@@ -803,10 +819,55 @@
 
     <!-- ══ STAGE 4 — YOUR GEAR ══ -->
     <div id="char-stage-4" class="char-stage">
+      <button class="char-back-top-btn" onclick="goBack()" aria-label="Go back">← Back</button>
       <div class="char-stage-header">
         <div class="char-stage-eyebrow">Stage 4 of 5</div>
-        <h2 class="char-stage-title">Equip Your Character</h2>
+        <h2 class="char-stage-title">Gear & Look</h2>
         <p class="char-stage-intro">Review your starting gear, equip your weapons, choose your armor and clothing, and spend any remaining gold on extras.</p>
+      </div>
+      <!-- Stage 4 HUD bar -->
+      <div id="char-stage4-hud" class="char-stage4-hud">
+        <div class="char-hud-stat" id="hud-ac">
+          <div class="char-hud-stat-icon">🛡️</div>
+          <div class="char-hud-stat-body">
+            <div class="char-hud-stat-label">Armor Class</div>
+            <div class="char-hud-stat-value" id="hud-ac-value">—</div>
+          </div>
+        </div>
+        <div class="char-hud-divider"></div>
+        <div class="char-hud-stat" id="hud-gold">
+          <div class="char-hud-stat-icon">💰</div>
+          <div class="char-hud-stat-body">
+            <div class="char-hud-stat-label">Money</div>
+            <div class="char-hud-money" id="hud-money-values">—</div>
+          </div>
+        </div>
+        <div class="char-hud-divider"></div>
+        <div class="char-hud-stat char-hud-stat--weight" id="hud-weight">
+          <div class="char-hud-stat-icon">⚖️</div>
+          <div class="char-hud-stat-body">
+            <div class="char-hud-stat-label">
+              <span id="hud-weight-label">Weight Carried</span>
+            </div>
+            <div class="char-hud-weight-bar-wrap">
+              <div class="char-hud-weight-bar-track">
+                <div class="char-hud-weight-bar-fill" id="hud-weight-fill"></div>
+              </div>
+              <div class="char-hud-weight-numbers" id="hud-weight-numbers">0 / — lb</div>
+            </div>
+          </div>
+        </div>
+        <div class="char-hud-divider"></div>
+        <div class="char-hud-stat" id="hud-weapon">
+          <div class="char-hud-stat-icon">⚔️</div>
+          <div class="char-hud-stat-body">
+            <div class="char-hud-stat-label">Weapon Damage</div>
+            <div class="char-hud-weapon-slots" id="hud-weapon-values">
+              <div class="char-hud-weapon-row"><span class="char-hud-weapon-hand">R</span><span class="char-hud-weapon-dmg" id="hud-weapon-right">—</span></div>
+              <div class="char-hud-weapon-row"><span class="char-hud-weapon-hand">L</span><span class="char-hud-weapon-dmg" id="hud-weapon-left">—</span></div>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- Starting gear panel -->
       <div class="char-appearance-section char-gear-section">
@@ -817,20 +878,26 @@
       <!-- Weapons section -->
       <div class="char-appearance-section">
         <div class="char-appearance-section-title">⚔️ Weapons</div>
-        <div class="char-equip-callout">
-          <span class="char-equip-callout-icon">✦</span>
-          <span>Your starting weapons are marked <strong>(free)</strong> in the lists below — selecting one equips a weapon you already own. Any weapon not in your starting gear costs gold.</span>
+        <div class="char-equip-note">
+          ✦ Starting weapons appear as <strong>(free)</strong> — selecting one equips something you already own. Other weapons cost gold.
         </div>
-        <div class="char-field-row">
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-hand-right">🤜 Right hand</label>
-            <select class="char-select" id="app-hand-right"><option value="">— none —</option></select>
-            <div class="char-stat-chips" id="app-hand-right-stat" style="display:none"></div>
+        <div class="char-weapon-rack">
+          <div class="char-weapon-slot">
+            <div class="char-weapon-slot-header">
+              <span class="char-weapon-slot-icon">🤜</span>
+              <span class="char-weapon-slot-label">Right Hand</span>
+            </div>
+            <select class="char-select char-weapon-select" id="app-hand-right"><option value="">— none —</option></select>
+            <div class="char-stat-chips char-weapon-chips" id="app-hand-right-stat" style="display:none"></div>
           </div>
-          <div class="char-field-group">
-            <label class="char-field-label" for="app-hand-left">🤛 Left hand</label>
-            <select class="char-select" id="app-hand-left"><option value="">— none —</option></select>
-            <div class="char-stat-chips" id="app-hand-left-stat" style="display:none"></div>
+          <div class="char-weapon-slot-divider">VS</div>
+          <div class="char-weapon-slot">
+            <div class="char-weapon-slot-header">
+              <span class="char-weapon-slot-icon">🤛</span>
+              <span class="char-weapon-slot-label">Left Hand</span>
+            </div>
+            <select class="char-select char-weapon-select" id="app-hand-left"><option value="">— none —</option></select>
+            <div class="char-stat-chips char-weapon-chips" id="app-hand-left-stat" style="display:none"></div>
           </div>
         </div>
       </div>
@@ -908,9 +975,10 @@
 
     <!-- ══ STAGE 5 — YOUR CHARACTER ══ -->
     <div id="char-stage-5" class="char-stage">
+      <button class="char-back-top-btn" onclick="goBack()" aria-label="Go back">← Back</button>
       <div class="char-stage-header">
         <div class="char-stage-eyebrow">Stage 5 of 5</div>
-        <h2 class="char-stage-title">Your Character</h2>
+        <h2 class="char-stage-title">Review & Submit</h2>
         <p class="char-stage-intro">Everything you've chosen, all in one place. Review your character before sending them into Anavale.</p>
       </div>
       <!-- Character summary -->
@@ -1028,6 +1096,17 @@ function selectPastCard(card) {
   // Mark question answered
   var question_el = document.getElementById('past-q-' + pastKey);
   if (question_el) question_el.classList.add('answered');
+  // Show/hide free skill picker for kept-to-myself
+  var picker = document.getElementById('org-solo-skill-picker');
+  if (picker) {
+    picker.style.display = (pastKey === 'org' && value === 'kept-to-myself') ? 'block' : 'none';
+    if (pastKey === 'org' && value !== 'kept-to-myself') {
+      var sel = document.getElementById('org-solo-skill-select');
+      if (sel) sel.value = '';
+      CHAR_STATE.draft['past_org_solo_skill'] = null;
+      saveDraftToStorage();
+    }
+  }
   // Show selected image
   var imgEl = document.getElementById('img-' + pastKey);
   if (imgEl) {
