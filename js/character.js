@@ -250,6 +250,17 @@ function renderSidebar() {
       el.classList.add('completed');
     }
   }
+  // Sync mobile stage pills
+  for (var j = 1; j <= CHAR_CONFIG.total_stages; j++) {
+    var pill = document.getElementById('char-mobile-pill-' + j);
+    if (!pill) continue;
+    pill.classList.remove('active', 'completed');
+    if (j === CHAR_STATE.current_stage) {
+      pill.classList.add('active');
+    } else if (j <= highest) {
+      pill.classList.add('completed');
+    }
+  }
 }
 
 // ── BACKGROUND DATA ────────────────────────────────────────────────
@@ -793,6 +804,24 @@ function toggleAccordion(panelId) {
   if (!isOpen) {
     if (panelId === 'acc-magic') renderGigglogloomAffinity();
     if (panelId === 'acc-background') { renderBackgroundCards(); renderSpeciesCards(); }
+    // Mobile: tapping anywhere in an open accordion body selects that option.
+    // We attach once per open, and remove on close or on any selection.
+    body._accordionTapHandler = function(e) {
+      var IGNORE = 'input, button, select, label, a, textarea';
+      if (e.target.closest(IGNORE)) return;
+      // Find the nearest selectable option card or class card and click it
+      var card = e.target.closest('.char-option-card, .char-class-card, .char-bg-card, .char-type-card, .char-region-card, .char-lang-card, .char-alignment-card, .char-species-card');
+      if (card) {
+        card.click();
+      }
+    };
+    body.addEventListener('click', body._accordionTapHandler);
+  } else {
+    // Panel closing — remove tap handler if present
+    if (body._accordionTapHandler) {
+      body.removeEventListener('click', body._accordionTapHandler);
+      body._accordionTapHandler = null;
+    }
   }
 }
 
@@ -2885,6 +2914,7 @@ function wireTooltip(el) {
     box.style.top        = top  + 'px';
     box.style.left       = left + 'px';
     box.style.visibility = 'visible';
+    window.addEventListener('scroll', hide, { passive: true, once: true });
   }
   function hide() { if (box) { box.remove(); box = null; } }
   el.addEventListener('mouseenter', show);
@@ -2893,6 +2923,20 @@ function wireTooltip(el) {
     e.stopPropagation();
     if (box) { hide(); } else { show(); }
   });
+  el.addEventListener('touchstart', function(e) {
+    e.stopPropagation();
+    if (box) { hide(); } else {
+      e.preventDefault();
+      show();
+    }
+  }, { passive: false });
+  document.addEventListener('touchstart', function onOutside(ev) {
+    if (!box) { document.removeEventListener('touchstart', onOutside, true); return; }
+    if (!el.contains(ev.target)) {
+      hide();
+      document.removeEventListener('touchstart', onOutside, true);
+    }
+  }, true);
 }
 
 // ── ABILITY SCORE DRAG AND DROP ───────────────────────────────
@@ -3498,7 +3542,7 @@ function setAbilityScore(ability, score) {
     wireTooltip(chip);
     var modLabelEl = document.getElementById('ability-mod-label-' + ability);
     if (modLabelEl) {
-      modLabelEl.innerHTML = '<span class="char-field-tooltip" data-tip="This number is your roll bonus — it gets added (or subtracted) whenever you make a dice roll using this ability.">ⓘ</span>';
+      modLabelEl.innerHTML = '<span class="char-field-tooltip" data-tip="This number is your roll bonus — it gets added (or subtracted) whenever you make a dice roll using this ability."><span class="char-trait-tip-icon">?</span></span>';
       wireTooltip(modLabelEl.querySelector('.char-field-tooltip'));
     }
     if (hidden) hidden.value = n;
@@ -3649,6 +3693,13 @@ function initAbilityTouchDrag() {
       var t = e.touches[0];
       touchClone.style.top  = (t.clientY - 20) + 'px';
       touchClone.style.left = (t.clientX - 24) + 'px';
+      var edgeZone = 80;
+      var scrollSpeed = 6;
+      if (t.clientY > window.innerHeight - edgeZone) {
+        window.scrollBy(0, scrollSpeed);
+      } else if (t.clientY < edgeZone) {
+        window.scrollBy(0, -scrollSpeed);
+      }
       e.preventDefault();
     }, { passive: false });
 
