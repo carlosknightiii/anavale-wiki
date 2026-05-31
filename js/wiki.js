@@ -772,7 +772,7 @@ var REGION_CONFIG = {
     subtitle: 'The central heartlands of Pogglewog',
     quote: '"In Caparia, color maintenance is not pride. It is law. The fine for a faded storefront is modest. The social consequences are not."',
     quoteAttrib: '— A Bunari merchant, describing Solenveil',
-    heroImg: 'assets/images/regions/img-caparia-landscape.png'
+    heroImg: 'assets/images/regions/img-caparia-landscape.webp'
   },
   nombi: {
     subtitle: 'The frozen north of Pogglewog',
@@ -784,13 +784,13 @@ var REGION_CONFIG = {
     subtitle: 'The blazing south of Pogglewog',
     quote: '"The desert keeps everything. Memory, color, grief. The heat does not destroy — it preserves. This is why Sohot has not forgotten anything."',
     quoteAttrib: '— Auvari Remnance oral history',
-    heroImg: 'assets/images/regions/img-sohot-landscape.png'
+    heroImg: 'assets/images/regions/img-sohot-landscape.webp'
   },
   jugabi: {
     subtitle: 'The ancient jungle southwest of Pogglewog',
     quote: '"The canopy is not above you. You are inside the forest. The forest has been here longer than anyone and is aware of you specifically."',
     quoteAttrib: '— Verdathi elder, speaking to a Kalori Republic delegation',
-    heroImg: 'assets/images/regions/img-jugabi-landscape.png'
+    heroImg: 'assets/images/regions/img-jugabi-landscape.webp'
   }
 };
 
@@ -999,7 +999,7 @@ function renderHome(el) {
         { id: 'caparia', name: 'Caparia', label: 'Region',
           climate: 'The colorful heartlands',
           blurb: 'Lush meadows, sparkling rivers, and the most colorful cities in Anavale. The Confederation was built here. Color maintenance is not a tradition — it is law.',
-          image: 'assets/images/regions/img-caparia-landscape.png' },
+          image: 'assets/images/regions/img-caparia-landscape.webp' },
         { id: 'nombi', name: 'Nombi', label: 'Region',
           climate: 'The frozen, aurora-lit north',
           blurb: 'Dense forests, icy mountains, and skies painted by the aurora. The north is stoic and beautiful and dangerous in equal measure. Honor is currency here.',
@@ -1007,11 +1007,11 @@ function renderHome(el) {
         { id: 'sohot', name: 'Sohot', label: 'Region',
           climate: 'The ancient, blazing south',
           blurb: 'Desert dunes, ancient ceremony, and the weight of a kingdom that has never forgotten a single thing. The south\'s colors have always been vivid. They have been looking slightly less so, lately.',
-          image: 'assets/images/regions/img-sohot-landscape.png' },
+          image: 'assets/images/regions/img-sohot-landscape.webp' },
         { id: 'jugabi', name: 'Jugabi', label: 'Region',
           climate: 'The living jungle southwest',
           blurb: 'The Dodooti Rainforest produces more ambient Gigglegloom than any other terrain type on the continent. The jungle has opinions. The jungle is always right.',
-          image: 'assets/images/regions/img-jugabi-landscape.png' }
+          image: 'assets/images/regions/img-jugabi-landscape.webp' }
       ];
       var rowsHtml = regionData.map(function(r, i) {
         return '<div class="home-region-row reveal reveal-delay-' + (i + 1) + '"'

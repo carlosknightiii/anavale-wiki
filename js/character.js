@@ -967,7 +967,7 @@ function renderGigglogloomAffinity() {
     var color = TYPE_COLORS[typeId] || '#c8a83a';
     return '<div class="char-type-card" data-type="' + typeId + '" onclick="selectType(\'' + typeId + '\')" style="--type-color:' + color + '">'
       + '<div class="char-type-video-wrap">'
-      +   '<video class="char-type-video" src="assets/videos/anim-' + typeId + '.mp4" autoplay muted loop playsinline preload="auto"></video>'
+      +   '<video class="char-type-video" src="assets/videos/anim-' + typeId + '.mp4" autoplay muted loop playsinline preload="none"></video>'
       +   '<div class="char-type-video-overlay"></div>'
       + '</div>'
       + '<div class="char-type-content">'
@@ -983,6 +983,20 @@ function renderGigglogloomAffinity() {
       + '</div>'
       + '</div>';
   }).join('');
+  // Lazy-load videos when the grid scrolls into view
+  if ('IntersectionObserver' in window) {
+    var videoObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.char-type-video').forEach(function(v) {
+            if (v.preload === 'none') { v.preload = 'metadata'; v.load(); }
+          });
+          videoObserver.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '200px' });
+    videoObserver.observe(grid);
+  }
 }
 
 function highlightAffinityCard(typeId) {
