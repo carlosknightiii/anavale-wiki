@@ -802,7 +802,6 @@ function toggleAccordion(panelId) {
 
 function initStage1() {
   // Render dynamic content into accordion panels
-  renderGigglogloomAffinity();
   renderBackgroundCards();
   renderSpeciesCards();
   // Restore all Stage 1 selections from draft
