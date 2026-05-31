@@ -563,12 +563,15 @@ body.char-page {
 
 .char-type-card {
   position: relative;
+  min-height: 200px;
   border: 2px solid var(--char-border);
   border-radius: var(--char-radius);
   cursor: pointer;
   transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
   background: var(--char-card-bg);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .char-type-card:hover {
   transform: translateY(-3px);
@@ -592,6 +595,7 @@ body.char-page {
   position: absolute;
   inset: 0;
   z-index: 0;
+  min-height: 200px;
 }
 .char-type-video {
   width: 100%;
@@ -617,6 +621,7 @@ body.char-page {
   position: relative;
   z-index: 1;
   padding: 1rem;
+  flex: 1;
 }
 
 .char-type-header {
