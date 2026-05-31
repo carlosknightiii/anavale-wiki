@@ -847,7 +847,7 @@ function toggleAccordion(panelId) {
   header.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
   // Render dynamic content when panels first open
   if (!isOpen) {
-    if (panelId === 'acc-magic') renderGigglogloomAffinity();
+    if (panelId === 'acc-magic') renderGigglogloomAffinity('char-type-grid');
     if (panelId === 'acc-background') { renderBackgroundCards(); renderSpeciesCards(); }
     // Mobile: tapping anywhere in an open accordion body selects that option.
     // We attach once per open, and remove on close or on any selection.
@@ -1098,8 +1098,8 @@ function renderClassGrid() {
   });
 }
 
-function renderGigglogloomAffinity() {
-  var grid = document.getElementById('char-type-grid');
+function renderGigglogloomAffinity(targetId) {
+  var grid = document.getElementById(targetId || 'char-type-grid');
   if (!grid) return;
   var TYPE_COLORS = {
     bubbleseed: '#2a7a3a',
@@ -1237,7 +1237,7 @@ function scrollToField(el) {
 // ── STAGE 2: BACKGROUND + SPECIES ──────────────────────────────────
 function initStage2() {
   // Render affinity cards and class grid into Stage 2
-  renderGigglogloomAffinity();
+  renderGigglogloomAffinity('char-type-grid-s2');
   renderClassGrid();
   // Class grid hidden until affinity is chosen
   var classSection = document.getElementById('char-class-section');
