@@ -2691,12 +2691,17 @@ body.char-page {
   opacity: 0.35;
   pointer-events: none;
   letter-spacing: 0.1em;
-  transition: opacity 0.2s;
+  transition: opacity 0.3s ease, text-shadow 0.3s ease;
   user-select: none;
 }
 .char-lang-card:hover .char-lang-glyph,
 .char-lang-card.selected .char-lang-glyph {
-  opacity: 0.55;
+  opacity: 1;
+  text-shadow:
+    0 0 8px var(--lang-color, var(--gold)),
+    0 0 20px var(--lang-color, var(--gold)),
+    0 0 40px color-mix(in srgb, var(--lang-color, var(--gold)) 60%, transparent);
+  transition: opacity 0.3s ease, text-shadow 0.3s ease;
 }
 .char-lang-content {
   flex: 1;
