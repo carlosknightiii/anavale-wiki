@@ -32,6 +32,15 @@
 <!-- ── LAYOUT ── -->
 <div class="char-layout">
 
+<!-- ── MOBILE STAGE NAV ─────────────────────────────────────────── -->
+<div id="char-mobile-stage-nav" class="char-mobile-stage-nav">
+  <button class="char-mobile-stage-pill" id="char-mobile-pill-1" onclick="jumpToStage(1)" aria-label="Stage 1">1</button>
+  <button class="char-mobile-stage-pill" id="char-mobile-pill-2" onclick="jumpToStage(2)" aria-label="Stage 2">2</button>
+  <button class="char-mobile-stage-pill" id="char-mobile-pill-3" onclick="jumpToStage(3)" aria-label="Stage 3">3</button>
+  <button class="char-mobile-stage-pill" id="char-mobile-pill-4" onclick="jumpToStage(4)" aria-label="Stage 4">4</button>
+  <button class="char-mobile-stage-pill" id="char-mobile-pill-5" onclick="jumpToStage(5)" aria-label="Stage 5">5</button>
+</div>
+
   <!-- SIDEBAR -->
   <aside class="char-sidebar">
     <div class="char-sidebar-title">Stages</div>
@@ -96,6 +105,12 @@
 
   <!-- MAIN -->
   <main class="char-main">
+
+<div id="char-progress-wrap-mobile" class="char-progress-wrap char-progress-wrap--mobile">
+  <div id="char-progress-bar-mobile" class="char-progress-bar" style="width:10%">
+    <div id="char-progress-label-mobile" class="char-progress-label outside">Stage 1 of 5</div>
+  </div>
+</div>
 
     <h1 class="char-page-title">Character Creator</h1>
 

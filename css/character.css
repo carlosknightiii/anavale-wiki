@@ -1029,6 +1029,16 @@ body.char-page {
   margin-left: 0.5rem;
 }
 .char-skills-needed-alert.visible { display: inline-flex; }
+.char-skill-scroll-link {
+  color: var(--gold);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.char-skill-scroll-link:hover {
+  text-decoration: underline;
+}
 
 /* Trait pills row */
 .char-class-traits {
@@ -3478,6 +3488,8 @@ body.banner-visible .char-stage4-hud {
 /* ── RESPONSIVE ────────────────────────────────────────────────── */
 /* Mobile stage nav — hidden on desktop, revealed by media query */
 .char-mobile-stage-nav { display: none; }
+/* Mobile progress bar duplicate — hidden on desktop */
+.char-progress-wrap--mobile { display: none; }
 @media (max-width: 768px) {
   .char-sidebar { display: none; }
   .char-layout { flex-direction: column; }
@@ -3541,6 +3553,31 @@ body.banner-visible .char-stage4-hud {
   }
   .char-stat-chips {
     width: 100%;
+  }
+  /* Mobile-only progress bar */
+  .char-progress-wrap--mobile {
+    display: block;
+    margin-bottom: 1rem;
+  }
+  /* Region cards — more height so text breathes */
+  .char-region-card {
+    height: auto;
+    min-height: 110px;
+  }
+  .char-region-card-content {
+    padding: 0.85rem 1rem 0.85rem 1rem;
+  }
+  .char-region-card-blurb {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  /* Appearance section — reduce excessive spacing */
+  .char-appearance-section {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+  .char-field-group {
+    margin-bottom: 1.1rem;
   }
 }
 

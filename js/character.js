@@ -212,19 +212,22 @@ function initStageOnEnter(n) {
 // ── PROGRESS BAR ───────────────────────────────────────────────────
 function renderProgress() {
   var pct = ((CHAR_STATE.current_stage - 1) / (CHAR_CONFIG.total_stages - 1)) * 100;
-  // Clamp to 10% minimum so bar is always visible
   pct = Math.max(10, pct);
+  // Desktop bar
   var bar = document.getElementById('char-progress-bar');
   if (bar) bar.style.width = pct + '%';
   var label = document.getElementById('char-progress-label');
   if (label) {
     label.textContent = 'Stage ' + CHAR_STATE.current_stage + ' of ' + CHAR_CONFIG.total_stages;
-    // Below 40%: label overflows bar — put it outside (white), else inside (dark)
-    if (pct < 40) {
-      label.classList.add('outside');
-    } else {
-      label.classList.remove('outside');
-    }
+    if (pct < 40) { label.classList.add('outside'); } else { label.classList.remove('outside'); }
+  }
+  // Mobile bar (duplicate inside char-main)
+  var barM = document.getElementById('char-progress-bar-mobile');
+  if (barM) barM.style.width = pct + '%';
+  var labelM = document.getElementById('char-progress-label-mobile');
+  if (labelM) {
+    labelM.textContent = 'Stage ' + CHAR_STATE.current_stage + ' of ' + CHAR_CONFIG.total_stages;
+    if (pct < 40) { labelM.classList.add('outside'); } else { labelM.classList.remove('outside'); }
   }
 }
 
@@ -1135,7 +1138,23 @@ function updateStage2SkillAlert() {
   var needed = cls.skills_count;
   var complete = chosen >= needed;
   btn.disabled = !complete;
-  if (alert) alert.classList.toggle('visible', !complete);
+  if (alert) {
+    alert.classList.toggle('visible', !complete);
+    if (!complete && CHAR_STATE.draft.class_id) {
+      var skillsSection = document.getElementById('skill-count-' + CHAR_STATE.draft.class_id);
+      if (skillsSection && !alert.querySelector('.char-skill-scroll-link')) {
+        var link = document.createElement('a');
+        link.className = 'char-skill-scroll-link';
+        link.href = '#';
+        link.textContent = ' — Take me there →';
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          scrollToField(skillsSection);
+        });
+        alert.appendChild(link);
+      }
+    }
+  }
 }
 
 function selectType(typeId, silent) {
@@ -2884,6 +2903,7 @@ function wireTooltip(el) {
   var box = null;
   function show() {
     if (box) return;
+    document.querySelectorAll('._tooltip-box-active').forEach(function(b) { b.remove(); });
     box = document.createElement('div');
     box.textContent = el.dataset.tip;
     box.setAttribute('style', [
@@ -2914,6 +2934,7 @@ function wireTooltip(el) {
     box.style.top        = top  + 'px';
     box.style.left       = left + 'px';
     box.style.visibility = 'visible';
+    box.classList.add('_tooltip-box-active');
     window.addEventListener('scroll', hide, { passive: true, once: true });
   }
   function hide() { if (box) { box.remove(); box = null; } }
