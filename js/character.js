@@ -42,6 +42,20 @@ document.addEventListener('DOMContentLoaded', function() {
   initStage1();
   initAutoSave();
   initTooltips();
+  // Pin mobile progress bar flush under nav after paint
+  function pinMobileProgressBar() {
+    if (window.innerWidth > 768) return;
+    var mobileNav = document.getElementById('char-mobile-stage-nav');
+    var mobileBar = document.getElementById('char-progress-wrap-mobile');
+    if (!mobileNav || !mobileBar) return;
+    mobileBar.style.top = mobileNav.offsetHeight + 'px';
+  }
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      pinMobileProgressBar();
+    });
+  });
+  window.addEventListener('resize', pinMobileProgressBar);
 });
 
 // ── DUPLICATE CHECK ────────────────────────────────────────────────
@@ -112,8 +126,24 @@ function showReturnBanner() {
   banner.classList.add('visible');
   document.body.classList.add('banner-visible');
   requestAnimationFrame(function() {
-    var h = banner.offsetHeight;
-    document.body.style.paddingTop = h + 'px';
+    requestAnimationFrame(function() {
+      var isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        var bh = banner.offsetHeight;
+        var nav = document.getElementById('char-mobile-stage-nav');
+        var bar = document.getElementById('char-progress-wrap-mobile');
+        var main = document.querySelector('.char-main');
+        if (nav) nav.style.top = bh + 'px';
+        requestAnimationFrame(function() {
+          var navH = nav ? nav.offsetHeight : 74;
+          if (bar) bar.style.top = (bh + navH) + 'px';
+          if (main) main.style.paddingTop = (bh + navH + 16) + 'px';
+        });
+      } else {
+        var layout = document.querySelector('.char-layout');
+        if (layout) layout.style.paddingTop = (banner.offsetHeight + 16) + 'px';
+      }
+    });
   });
 }
 
@@ -122,7 +152,18 @@ function dismissReturnBanner() {
   if (!banner) return;
   banner.classList.remove('visible');
   document.body.classList.remove('banner-visible');
-  document.body.style.paddingTop = '';
+  var isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    var nav  = document.getElementById('char-mobile-stage-nav');
+    var bar  = document.getElementById('char-progress-wrap-mobile');
+    var main = document.querySelector('.char-main');
+    if (nav)  nav.style.top  = '';
+    if (bar)  bar.style.top  = '';
+    if (main) main.style.paddingTop = '';
+  } else {
+    var layout = document.querySelector('.char-layout');
+    if (layout) layout.style.paddingTop = '';
+  }
 }
 
 function resumeDraft() {
