@@ -126,9 +126,13 @@
       </button>
       <div class="char-accordion-body open" id="acc-identity-body">
         <div class="char-field-group">
-          <label class="char-field-label" for="char-final-name">Your Character's Name</label>
-          <span class="char-field-help">One name or two — whatever feels right.</span>
-          <input class="char-input" id="char-final-name" type="text" placeholder="e.g. Borra, or Borra Stonemark">
+          <label class="char-field-label">Your Character's Name</label>
+          <span class="char-field-help">First name required — last name is optional.</span>
+          <div class="char-name-row">
+            <input class="char-input" id="char-first-name" type="text" placeholder="First name">
+            <input class="char-input char-input--optional" id="char-last-name" type="text" placeholder="Last name (optional)">
+          </div>
+          <input type="hidden" id="char-final-name">
           <div class="char-nav-actions">
             <button class="char-save-draft" onclick="suggestNames()">✦ Suggest names</button>
           </div>
@@ -167,6 +171,7 @@
       </button>
       <div class="char-accordion-body" id="acc-magic-body">
         <p class="char-type-instruction">Which type of Gigglegloom calls to you?</p>
+        <p class="char-type-note">This is for flavor — you won't be bound to only using this type.</p>
         <div id="char-type-grid" class="char-type-grid"></div>
       </div>
     </div>
@@ -673,6 +678,7 @@
         <p class="char-stage-intro">Your class is who you are in a fight — and beyond it. Start by choosing your Gigglegloom affinity, then pick the class that fits how you want to play.</p>
       </div>
       <p class="char-type-instruction">Which type of Gigglegloom calls to you?</p>
+      <p class="char-type-note">This is for flavor — you won't be bound to only using this type.</p>
       <div id="char-type-grid" class="char-type-grid"></div>
       <div id="char-class-section" style="display:none">
         <div class="char-class-section-label">Now choose your class</div>
@@ -986,6 +992,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (label) label.textContent = 'Progress ' + Math.round(pct) + '%';
     };
   }
+  // Sync first + last name into hidden char-final-name on every keystroke
+  var firstInput = document.getElementById('char-first-name');
+  var lastInput  = document.getElementById('char-last-name');
+  if (firstInput) firstInput.addEventListener('input', function() { if (typeof syncCharacterName === 'function') syncCharacterName(); });
+  if (lastInput)  lastInput.addEventListener('input',  function() { if (typeof syncCharacterName === 'function') syncCharacterName(); });
 });
 
 // Imagined Past — card selection

@@ -1462,6 +1462,7 @@ function selectGender(btn) {
 
 function collectStage1Data() {
   // Name, gender, personality
+  syncCharacterName();
   CHAR_STATE.draft.character_name      = getVal('char-final-name');
   CHAR_STATE.draft.gender              = getVal('char-gender');
   CHAR_STATE.draft.personality_immediate = getVal('char-personality-1');
@@ -2323,8 +2324,19 @@ function suggestNames() {
 }
 
 function useNameSuggestion(name) {
-  var input = document.getElementById('char-final-name');
+  var input = document.getElementById('char-first-name');
   if (input) { input.value = name; input.dispatchEvent(new Event('input')); }
+  syncCharacterName();
+}
+
+function syncCharacterName() {
+  var first = (document.getElementById('char-first-name') || {}).value || '';
+  var last  = (document.getElementById('char-last-name')  || {}).value || '';
+  var full  = last.trim() ? first.trim() + ' ' + last.trim() : first.trim();
+  var hidden = document.getElementById('char-final-name');
+  if (hidden) hidden.value = full;
+  CHAR_STATE.draft.character_name = full;
+  saveDraftToStorage();
 }
 
 // ── STAGE 5: INIT ──────────────────────────────────────────────────
