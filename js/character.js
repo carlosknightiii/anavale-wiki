@@ -908,6 +908,7 @@ function renderClassGrid() {
 
     return '<div class="char-class-card" data-class="' + cls.id + '" data-gigglegloom="' + cls.gigglegloom + '">'
       + '<div class="char-class-card-header" onclick="selectClass(\'' + cls.id + '\')">'
+      +   '<img class="char-class-icon" src="assets/images/classes/class-' + cls.id + '.webp" alt="' + cls.name + '">'
       +   '<div class="char-class-card-names">'
       +     '<div class="char-class-name">' + cls.name + '</div>'
       +   '</div>'
@@ -2378,11 +2379,11 @@ function generateSummary() {
     'grandparent':      'raised by a grandparent or elder who remembered things worth remembering'
   };
   var ALIGNMENT_LABELS = {
-    'brightward':  'They believe the world is worth protecting, and they intend to be someone others can count on.',
-    'colorful':    'They want to do right by people — they\'ve just never been good at following someone else\'s idea of how.',
-    'greywarden':  'They see all sides. They weigh things carefully. They don\'t think the world divides neatly into light and dark.',
-    'steelbound':  'They do what they said they would do. They consider this uncomplicated.',
-    'ashwalker':   'They do what works for them, and they try to be honest about that.'
+    'brightward':  'They are Protective — they believe the world is worth protecting, and they intend to be someone others can count on.',
+    'colorful':    'They are Freespirited — they want to do right by people, they\'ve just never been good at following someone else\'s idea of how.',
+    'greywarden':  'They are Measured — they see all sides, weigh things carefully, and don\'t think the world divides neatly into light and dark.',
+    'steelbound':  'They are Disciplined — they do what they said they would do. They consider this uncomplicated.',
+    'ashwalker':   'They are Pragmatic — they do what works for them, and they try to be honest about that.'
   };
   var SPECIES_LABELS = {
     'solmeri':     'Solmeri',
