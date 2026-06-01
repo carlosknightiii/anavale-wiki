@@ -2515,9 +2515,17 @@ function initAppearanceListeners() {
   var lowSel = document.getElementById('app-lower');
   if (lowSel) lowSel.addEventListener('change', function() { updateGearStatChip('app-lower', 'app-lower-stat'); updateGoldDisplay(); });
   var rhSel = document.getElementById('app-hand-right');
-  if (rhSel) rhSel.addEventListener('change', function() { updateWeaponStatChip('app-hand-right', 'app-hand-right-stat'); updateGoldDisplay(); });
+  if (rhSel) rhSel.addEventListener('change', function() {
+    updateWeaponStatChip('app-hand-right', 'app-hand-right-stat');
+    updateGoldDisplay();
+    filterWeaponsByClass(CHAR_STATE.draft.class_id || '');
+  });
   var lhSel = document.getElementById('app-hand-left');
-  if (lhSel) lhSel.addEventListener('change', function() { updateWeaponStatChip('app-hand-left', 'app-hand-left-stat'); updateGoldDisplay(); });
+  if (lhSel) lhSel.addEventListener('change', function() {
+    updateWeaponStatChip('app-hand-left', 'app-hand-left-stat');
+    updateGoldDisplay();
+    filterWeaponsByClass(CHAR_STATE.draft.class_id || '');
+  });
   // Wire gold display updates for static clothing/accessory slots
   ['app-cloak','app-shoes','app-hat','app-ring-right','app-ring-left','app-necklace','app-earrings'].forEach(function(id) {
     var el = document.getElementById(id);
