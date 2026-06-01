@@ -1062,6 +1062,27 @@ body.char-page {
   text-decoration: underline;
 }
 
+/* Stage 2 skill alert — sits above Continue button in .char-nav-right */
+.char-stage2-skill-alert {
+  display: none;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: var(--char-highlight-tint);
+  border: 1px solid var(--char-highlight-border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gold);
+  text-align: right;
+}
+.char-stage2-skill-alert.visible {
+  display: block;
+}
+.char-stage2-skill-alert .char-skill-scroll-link {
+  font-size: 0.88rem;
+}
+
 /* Trait pills row */
 .char-class-traits {
   display: flex;
