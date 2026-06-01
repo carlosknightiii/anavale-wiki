@@ -3028,120 +3028,167 @@ function shuffle(arr) {
 }
 
 function randomizeDraft() {
-  // ── Stage 1 ──
   var names = ['Aldric','Bessa','Corra','Davin','Elira','Farro','Genna','Holt','Idris','Jorra','Kael','Lira','Maren','Nori','Oryn','Pella','Quill','Reva','Sable','Tomas','Ula','Vesper','Wren','Yori','Zell'];
   var genders = ['male','female','non-binary'];
   var personalities = ['Jumps in before thinking','Painfully honest','Makes everyone laugh somehow','Quietly observant','Overly cautious','Surprisingly reckless'];
   var alignments = ['brightward','colorful','greywarden','steelbound','ashwalker'];
   var regions = ['caparia','nombi','sohot','jugabi'];
   var languages = ['elvish','dwarvish','gnomish','halfling','draconic','orcish','infernal','celestial','sylvan'];
-  var pastRaised = ['kind-parents','the-streets','strict-religious','single-parent','grandparent'];
-  var pastFriend = ['neighbor','animal','imaginary','no-one','mentor'];
-  var pastPet = ['a loyal hound','a clever crow','a tiny dragon','no pet — you wanted one','a cat that chose you'];
-  var pastLove = ['someone from home','a fellow traveller','a mentor','no one yet','someone you lost'];
-  var pastOrg = ['wanderkeep','merchant-guild','brightcreed','fighting-company','kept-to-myself'];
-  var pastLeftBehind = ['a person','a place','a promise','a secret','an object'];
-  var pastWhyLeft = ['something called to me','I had no choice','I was running from something','I was looking for something','I needed to prove something'];
+  var pastRaised    = ['kind-parents','the-streets','strict-religious','single-parent','grandparent'];
+  var pastFriend    = ['neighbor','animal','imaginary','no-one','mentor'];
+  var pastPet       = ['a loyal hound','a clever crow','a tiny dragon','no pet','a cat that chose you'];
+  var pastLove      = ['someone from home','a fellow traveller','a mentor','no one yet','someone you lost'];
+  var pastOrg       = ['wanderkeep','merchant-guild','brightcreed','fighting-company','kept-to-myself'];
+  var pastLeft      = ['a person','a place','a promise','a secret','an object'];
+  var pastWhyLeft   = ['something called to me','I had no choice','I was running from something','I was looking for something','I needed to prove something'];
+  var skinTones     = ['#f5d5b0','#e8b88a','#c8a070','#a07040','#7a4820','#4a2810'];
+  var hairColors    = ['black','brown','blonde','silver','red','white'];
+  var hairStyles    = ['long','short','braided','wild','shaved','curly'];
+  var eyeColors     = ['brown','blue','green','grey','amber','violet'];
+  var eyeShapes     = ['sharp','warm','wide','heavy-lidded'];
+  var faceShapes    = ['angular','round','heart-shaped','oval','square'];
+  var cloakOpts     = ['colourful','fur-trimmed','hooded','long dark','short dark','tattered',''];
+  var shoeOpts      = ['fine boots','sandals','sturdy boots','worn boots',''];
+  var hatOpts       = ['a circlet','a headband','a helmet','a hood','a wide-brimmed hat',''];
+  var necklaceOpts  = ['a beaded necklace','a gold chain necklace','a leather cord necklace','a pendant necklace',''];
+  var ringOpts      = ['a braided cord ring','a gold ring','a plain iron ring','a silver ring',''];
+  var earringOpts   = ['bone or carved earrings','dangling gold earrings','small silver earrings','gemstone earrings',''];
 
+  // ── Stage 1 ──
   var gender = rand(genders);
-  var bg = rand(ANAVALE_BACKGROUNDS);
-  var species = rand(ANAVALE_SPECIES);
+  var bg     = rand(ANAVALE_BACKGROUNDS);
+  var sp     = rand(ANAVALE_SPECIES);
   var region = rand(regions);
-  var language = rand(languages);
+  var lang   = rand(languages);
+  var typeId = rand(Object.keys(GIGGLEGLOOM_TYPES));
 
-  CHAR_STATE.draft.character_name      = rand(names);
-  CHAR_STATE.draft.gender              = gender;
+  CHAR_STATE.draft.character_name        = rand(names);
+  CHAR_STATE.draft.gender                = gender;
   CHAR_STATE.draft.personality_immediate = rand(personalities);
-  CHAR_STATE.draft.personality_wrong   = rand(personalities);
-  CHAR_STATE.draft.personality_laugh   = rand(personalities);
-  CHAR_STATE.draft.cares_about         = 'People who can\'t protect themselves';
-  CHAR_STATE.draft.deepest_fear        = 'Losing someone to the Dimming';
-  CHAR_STATE.draft.seeking             = 'A reason to stay somewhere';
-  CHAR_STATE.draft.background_id       = bg.id;
-  CHAR_STATE.draft.species_id          = species.id;
-  CHAR_STATE.draft.home_region         = region;
-  CHAR_STATE.draft.language            = language;
-  CHAR_STATE.draft.alignment           = rand(alignments);
-  CHAR_STATE.draft['past_raised']      = rand(pastRaised);
-  CHAR_STATE.draft['past_friend']      = rand(pastFriend);
-  CHAR_STATE.draft['past_pet']         = rand(pastPet);
-  CHAR_STATE.draft['past_love']        = rand(pastLove);
-  CHAR_STATE.draft['past_org']         = rand(pastOrg);
-  CHAR_STATE.draft['past_left-behind'] = rand(pastLeftBehind);
-  CHAR_STATE.draft['past_why-left']    = rand(pastWhyLeft);
-  CHAR_STATE.draft.appearance_data     = {
-    height: rand(['tall','average height','short','very tall']),
-    build:  rand(['slender','athletic','stocky','lean']),
-    age:    rand(['young','middle-aged','weathered']),
-    skin_tone: '#c8a070',
-    hair_color: rand(['black','brown','blonde','silver','red']),
-    hair_style: rand(['long','short','braided','wild']),
-    eye_color: rand(['brown','blue','green','grey','amber']),
-    eye_shape: rand(['sharp','warm','wide']),
-    facial_hair: 'none', facial_markings: [], glasses: 'none',
-    cloak: '', top: '', lower: '', shoes: '', hat: '',
-    hand_right: '', hand_left: '', ring_right: '', ring_left: '',
-    necklace: '', earrings: ''
-  };
+  CHAR_STATE.draft.personality_wrong     = rand(personalities);
+  CHAR_STATE.draft.personality_laugh     = rand(personalities);
+  CHAR_STATE.draft.cares_about           = 'People who can\'t protect themselves';
+  CHAR_STATE.draft.deepest_fear          = 'Losing someone to the Dimming';
+  CHAR_STATE.draft.seeking               = 'A reason to stay somewhere';
+  CHAR_STATE.draft.background_id         = bg.id;
+  CHAR_STATE.draft.species_id            = sp.id;
+  CHAR_STATE.draft.home_region           = region;
+  CHAR_STATE.draft.language              = lang;
+  CHAR_STATE.draft.gigglegloom_type      = typeId;
+  CHAR_STATE.draft.alignment             = rand(alignments);
+  CHAR_STATE.draft['past_raised']        = rand(pastRaised);
+  CHAR_STATE.draft['past_friend']        = rand(pastFriend);
+  CHAR_STATE.draft['past_pet']           = rand(pastPet);
+  CHAR_STATE.draft['past_love']          = rand(pastLove);
+  CHAR_STATE.draft['past_org']           = rand(pastOrg);
+  CHAR_STATE.draft['past_left-behind']   = rand(pastLeft);
+  CHAR_STATE.draft['past_why-left']      = rand(pastWhyLeft);
 
   // ── Stage 2 ──
-  var typeIds = Object.keys(GIGGLEGLOOM_TYPES);
-  var typeId = rand(typeIds);
   var classesForType = GIGGLEGLOOM_TYPES[typeId].classes;
-  var cls = rand(classesForType);
+  var cls    = rand(classesForType);
   var clsData = CLASS_DATA.find(function(c) { return c.id === cls.id; });
   var skills = shuffle(clsData.skills_list).slice(0, clsData.skills_count);
-  CHAR_STATE.draft.gigglegloom_type = typeId;
-  CHAR_STATE.draft.class_id = cls.id;
-  CHAR_STATE.draft['skills_' + cls.id] = skills;
+  CHAR_STATE.draft.class_id              = cls.id;
+  CHAR_STATE.draft['skills_' + cls.id]  = skills;
 
   // ── Stage 3 ──
   var shuffled = shuffle([15,14,13,12,10,8]);
-  var abKeys = ['str','dex','con','int','wis','cha'];
-  var scores = {};
+  var abKeys   = ['str','dex','con','int','wis','cha'];
+  var scores   = {};
   abKeys.forEach(function(ab, i) { scores[ab] = shuffled[i]; });
   CHAR_STATE.draft.ability_scores = scores;
 
-  // ── Stage 4 — pick a free starting weapon ──
-  var startingGear = CLASS_STARTING_GEAR[cls.id];
-  if (startingGear && typeof ITEMS !== 'undefined') {
-    var startIds = getStartingGearIds();
-    var freeWeapon = ITEMS.find(function(it) {
-      return it.player_addable && it.category === 'weapon' && startIds.indexOf(it.id) >= 0;
-    });
-    if (freeWeapon) CHAR_STATE.draft.appearance_data.hand_right = freeWeapon.id;
-  }
+  // ── Stage 4 — pick starting weapon + random top/lower within budget ──
+  var startIds  = getStartingGearIds();
+  var freeWeapon = typeof ITEMS !== 'undefined'
+    ? ITEMS.find(function(it) { return it.player_addable && it.category === 'weapon' && startIds.indexOf(it.id) >= 0; })
+    : null;
+  var cls4top   = '';
+  var cls4lower = '';
+  var tier = CLASS_ARMOR_TIER ? CLASS_ARMOR_TIER[cls.id] : 'unarmored';
+  var topOptions = (CLOTHING_TIERS && CLOTHING_TIERS[tier]) ? CLOTHING_TIERS[tier].filter(function(o) { return o.value; }) : [];
+  if (topOptions.length) cls4top = rand(topOptions).value;
+  var lowerOptions = (LOWER_TIERS && LOWER_TIERS[tier]) ? LOWER_TIERS[tier].filter(function(o) { return o.value; }) : [];
+  if (lowerOptions.length) cls4lower = rand(lowerOptions).value;
+
+  CHAR_STATE.draft.appearance_data = {
+    height:          rand(['tall','average height','short','very tall']),
+    build:           rand(['slender','athletic','stocky','lean']),
+    age:             rand(['young','middle-aged','weathered']),
+    skin_tone:       rand(skinTones),
+    face_shape:      rand(faceShapes),
+    eye_color:       rand(eyeColors),
+    eye_shape:       rand(eyeShapes),
+    glasses:         'none',
+    facial_hair:     'none',
+    facial_markings: [],
+    hair_color:      rand(hairColors),
+    hair_style:      rand(hairStyles),
+    cloak:           rand(cloakOpts),
+    top:             cls4top,
+    lower:           cls4lower,
+    shoes:           rand(shoeOpts),
+    hat:             rand(hatOpts),
+    hand_right:      freeWeapon ? freeWeapon.id : '',
+    hand_left:       '',
+    ring_right:      rand(ringOpts),
+    ring_left:       rand(ringOpts),
+    necklace:        rand(necklaceOpts),
+    earrings:        rand(earringOpts)
+  };
+  CHAR_STATE.draft.appearance_prompt = buildAIPrompt(CHAR_STATE.draft.appearance_data);
 
   // ── Set highest stage so all stages are navigable ──
-  CHAR_STATE.draft._stage = 5;
-  CHAR_STATE.highest_stage = 5;
+  CHAR_STATE.draft._stage    = 5;
+  CHAR_STATE.highest_stage   = 5;
   saveDraftToStorage();
 
-  // ── Populate hidden ability score inputs so renderStage3Panel reads correctly ──
-  ['str','dex','con','int','wis','cha'].forEach(function(ab) {
+  // ── Populate all DOM inputs so renders read correctly ──
+  var app = CHAR_STATE.draft.appearance_data;
+  var domMap = {
+    'char-final-name':   CHAR_STATE.draft.character_name,
+    'char-gender':       CHAR_STATE.draft.gender,
+    'char-personality-1': CHAR_STATE.draft.personality_immediate,
+    'char-personality-2': CHAR_STATE.draft.personality_wrong,
+    'char-personality-3': CHAR_STATE.draft.personality_laugh,
+    'char-background':   CHAR_STATE.draft.background_id,
+    'char-species':      CHAR_STATE.draft.species_id,
+    'char-home-region':  CHAR_STATE.draft.home_region,
+    'char-language':     CHAR_STATE.draft.language,
+    'char-alignment':    CHAR_STATE.draft.alignment,
+    'app-height':        app.height,
+    'app-build':         app.build,
+    'app-age':           app.age,
+    'app-skin-tone':     app.skin_tone,
+    'app-face-shape':    app.face_shape,
+    'app-eye-color':     app.eye_color,
+    'app-eye-shape':     app.eye_shape,
+    'app-hair-color':    app.hair_color,
+    'app-hair-style':    app.hair_style,
+    'app-cloak':         app.cloak,
+    'app-top':           app.top,
+    'app-lower':         app.lower,
+    'app-shoes':         app.shoes,
+    'app-hat':           app.hat,
+    'app-hand-right':    app.hand_right,
+    'app-hand-left':     app.hand_left,
+    'app-ring-right':    app.ring_right,
+    'app-ring-left':     app.ring_left,
+    'app-necklace':      app.necklace,
+    'app-earrings':      app.earrings
+  };
+  Object.keys(domMap).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && domMap[id] !== undefined) el.value = domMap[id];
+  });
+  abKeys.forEach(function(ab) {
     var el = document.getElementById('char-ability-' + ab);
     if (el) el.value = scores[ab];
   });
 
-  // ── Populate appearance selects so Stage 4 / Stage 5 reads correctly ──
-  var appData = CHAR_STATE.draft.appearance_data;
-  if (appData) {
-    var appMap = {
-      'app-height': 'height', 'app-build': 'build', 'app-age': 'age',
-      'app-hair-color': 'hair_color', 'app-hair-style': 'hair_style',
-      'app-eye-color': 'eye_color', 'app-eye-shape': 'eye_shape',
-      'app-hand-right': 'hand_right'
-    };
-    Object.keys(appMap).forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && appData[appMap[id]]) el.value = appData[appMap[id]];
-    });
-  }
-
-  // ── Jump to Stage 5 ──
+  // ── Jump to Stage 5 and re-render panel with populated inputs ──
   showStage(5);
-  // renderStage3Panel runs inside initStage5 before hidden inputs are written,
-  // so call it again now that inputs are populated
   renderStage3Panel();
   showToast('🎲 Randomized! Check Stage 5 for your character summary.');
 }
