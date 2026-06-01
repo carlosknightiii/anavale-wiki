@@ -1654,7 +1654,7 @@ function validateStage(n) {
   if (n === 4) {
     var goldRemaining = getStartingGold() - calcGoldSpent();
     if (goldRemaining < 0) {
-      showToast('You\'ve spent more than your starting gold. Remove some items before continuing.');
+      showToast('You\'ve spent more than your starting gold. Remove some items before continuing.', 'error');
       return false;
     }
   }
@@ -3007,12 +3007,16 @@ function slugify(str) {
     .replace(/-+/g, '-');
 }
 
-function showToast(msg) {
+function showToast(msg, type) {
   var toast = document.getElementById('char-toast');
   if (!toast) return;
   toast.textContent = msg;
+  toast.classList.toggle('error', type === 'error');
   toast.classList.add('visible');
-  setTimeout(function() { toast.classList.remove('visible'); }, 3000);
+  setTimeout(function() {
+    toast.classList.remove('visible');
+    toast.classList.remove('error');
+  }, 3000);
 }
 
 // ── TOOLTIP SYSTEM ────────────────────────────────────────────────
@@ -4023,6 +4027,6 @@ function restoreStage3Selections() {
 // ── TOAST STYLES (injected) ────────────────────────────────────────
 (function() {
   var style = document.createElement('style');
-  style.textContent = '#char-toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(10,14,24,0.95);border:1px solid rgba(200,148,10,0.4);color:var(--gold);font-family:var(--font-sans);font-size:0.85rem;padding:0.65rem 1.5rem;border-radius:8px;opacity:0;transition:all 0.3s ease;z-index:300;pointer-events:none;white-space:nowrap;}#char-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}';
+  style.textContent = '#char-toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(10,14,24,0.95);border:1px solid rgba(200,148,10,0.4);color:var(--gold);font-family:var(--font-sans);font-size:0.85rem;padding:0.65rem 1.5rem;border-radius:8px;opacity:0;transition:all 0.3s ease;z-index:300;pointer-events:none;white-space:nowrap;}#char-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);}#char-toast.error{border-color:rgba(224,80,80,0.6);color:#e05050;}';
   document.head.appendChild(style);
 })();

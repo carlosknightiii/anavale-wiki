@@ -2286,10 +2286,15 @@ body.banner-visible .char-stage4-hud {
   font-size: 0.62rem;
 }
 
+/* AC and currency — narrow in compact mode */
+.char-stage4-hud.char-hud--stuck #hud-ac   { flex: 0 0 auto; min-width: 80px; }
+.char-stage4-hud.char-hud--stuck #hud-gold  { flex: 0 0 auto; min-width: 110px; }
 /* Weight — half width in compact mode */
 .char-stage4-hud.char-hud--stuck .char-hud-stat--weight {
   flex: 1;
 }
+/* Weapon — widest section in compact mode */
+.char-stage4-hud.char-hud--stuck #hud-weapon { flex: 2; }
 .char-stage4-hud.char-hud--stuck .char-hud-weight-bar-track {
   min-width: 60px;
 }
@@ -2315,7 +2320,9 @@ body.banner-visible .char-stage4-hud {
 }
 .char-stage4-hud.char-hud--stuck .char-hud-weapon-dmg {
   font-size: 0.78rem;
-  max-width: 80px;
+  max-width: none;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 /* ── WEAPON RACK (Stage 4) ─────────────────────────────────────── */
