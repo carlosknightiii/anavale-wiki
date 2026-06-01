@@ -3140,6 +3140,9 @@ function randomizeDraft() {
 
   // ── Jump to Stage 5 ──
   showStage(5);
+  // renderStage3Panel runs inside initStage5 before hidden inputs are written,
+  // so call it again now that inputs are populated
+  renderStage3Panel();
   showToast('🎲 Randomized! Check Stage 5 for your character summary.');
 }
 
