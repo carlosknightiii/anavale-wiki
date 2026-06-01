@@ -3919,7 +3919,7 @@ body.banner-visible .char-stage4-hud {
   .char-stage4-hud .char-hud-money-denom { font-size: 0.55rem; }
   .char-stage4-hud .char-hud-weight-bar-track { min-width: 50px; }
   .char-stage4-hud .char-hud-weight-numbers { font-size: 0.6rem; }
-  .char-stage4-hud .char-hud-weapon-dmg { font-size: 0.75rem; max-width: 70px; }
+  .char-stage4-hud .char-hud-weapon-dmg { font-size: 0.72rem; max-width: none; overflow: visible; text-overflow: clip; white-space: normal; }
   .char-stage4-hud #hud-ac   { flex: 0 0 auto; min-width: 52px; }
   .char-stage4-hud #hud-gold { flex: 0 0 auto; min-width: 68px; }
   .char-stage4-hud .char-hud-stat--weight { flex: 1; }
@@ -3970,9 +3970,20 @@ body.banner-visible .char-stage4-hud {
     gap: 0.75rem;
     padding: 0.75rem 1rem;
   }
-  .char-stage3-class-img {
+  .char-stage3-class-banner {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .char-stage3-class-banner .char-stage3-class-img {
     width: 44px;
     height: 44px;
+    flex-shrink: 0;
+  }
+  .char-stage3-class-banner .char-stage3-class-banner-info {
+    flex: 1;
+    min-width: 0;
   }
   .char-stage3-class-banner-name { font-size: 1.1rem; }
   .char-stage3-class-banner-meta { font-size: 0.72rem; margin-bottom: 0.2rem; }
