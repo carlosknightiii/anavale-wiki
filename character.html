@@ -1505,5 +1505,17 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+<!-- Eruda mobile console — dev only, loaded only when ?devmode=1 -->
+<script>
+(function() {
+  if (new URLSearchParams(window.location.search).get('devmode') === '1') {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    s.onload = function() { eruda.init(); };
+    document.body.appendChild(s);
+  }
+})();
+</script>
 </body>
 </html>
