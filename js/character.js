@@ -3076,7 +3076,11 @@ function slugify(str) {
   if (new URLSearchParams(window.location.search).get('devmode') === '1') {
     document.addEventListener('DOMContentLoaded', function() {
       var btn = document.getElementById('char-dev-randomize');
-      if (btn) btn.style.display = 'block';
+      if (!btn) return;
+      btn.style.display = 'flex';
+      // Move button to <html> element to escape body overflow-x:hidden,
+      // which breaks position:fixed on iOS Safari
+      document.documentElement.appendChild(btn);
     });
   }
 })();
