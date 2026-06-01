@@ -1075,6 +1075,32 @@ function renderClassGrid() {
         this.checked = false;
         return;
       }
+
+      // Clear skill selections on every OTHER class card
+      CLASS_DATA.forEach(function(otherCls) {
+        if (otherCls.id === classId) return;
+        // Uncheck all checkboxes for the other class
+        document.querySelectorAll('input[name="skill-' + otherCls.id + '"]').forEach(function(cb) {
+          cb.checked = false;
+        });
+        // Reset slot UI
+        var otherSlots = document.getElementById('skills-slots-' + otherCls.id);
+        if (otherSlots) {
+          otherSlots.querySelectorAll('.char-class-skills-slot').forEach(function(slot) {
+            slot.classList.remove('filled');
+          });
+        }
+        // Reset counter text
+        var otherCounter = document.getElementById('skill-count-' + otherCls.id);
+        if (otherCounter) otherCounter.textContent = 'Choose ' + otherCls.skills_count + ' to continue';
+        // Reset section state
+        var otherSection = document.getElementById('skills-section-' + otherCls.id);
+        if (otherSection) otherSection.classList.remove('skills-complete');
+        // Clear from draft
+        delete CHAR_STATE.draft['skills_' + otherCls.id];
+      });
+
+      // Update current class UI
       var counter = document.getElementById('skill-count-' + classId);
       var section = document.getElementById('skills-section-' + classId);
       var slotsEl = document.getElementById('skills-slots-' + classId);
@@ -1182,9 +1208,12 @@ function updateStage2SkillAlert() {
   btn.disabled = !complete;
   if (alert) {
     alert.classList.toggle('visible', !complete);
-    if (!complete && CHAR_STATE.draft.class_id) {
-      var skillsSection = document.getElementById('skill-count-' + CHAR_STATE.draft.class_id);
-      if (skillsSection && !alert.querySelector('.char-skill-scroll-link')) {
+    // Always remove and recreate the link so it targets the current class
+    var oldLink = alert.querySelector('.char-skill-scroll-link');
+    if (oldLink) oldLink.parentNode.removeChild(oldLink);
+    if (!complete) {
+      var skillsSection = document.getElementById('skill-count-' + classId);
+      if (skillsSection) {
         var link = document.createElement('a');
         link.className = 'char-skill-scroll-link';
         link.href = '#';
