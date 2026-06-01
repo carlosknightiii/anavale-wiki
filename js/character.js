@@ -91,19 +91,33 @@ function loadDraftFromStorage() {
 function loadDraftFromURL() {
   try {
     var params = new URLSearchParams(window.location.search);
+    // New short-key resume format
+    var resumeKey = params.get('resume');
+    if (resumeKey) {
+      var raw = localStorage.getItem(resumeKey);
+      if (raw) {
+        var decoded = JSON.parse(raw);
+        CHAR_STATE.draft = decoded;
+        if (decoded._stage && decoded._stage > 1) {
+          CHAR_STATE.current_stage = decoded._stage;
+          showReturnBanner();
+        }
+        return;
+      }
+    }
+    // Legacy base64 draft format — keep for backwards compatibility
     var encoded = params.get('draft');
     if (encoded) {
-      // Decode as UTF-8 bytes to handle Unicode characters
       var binary = atob(encoded);
       var bytes = new Uint8Array(binary.length);
       for (var i = 0; i < binary.length; i++) {
         bytes[i] = binary.charCodeAt(i);
       }
       var json = new TextDecoder().decode(bytes);
-      var decoded = JSON.parse(json);
-      CHAR_STATE.draft = decoded;
-      if (decoded._stage && decoded._stage > 1) {
-        CHAR_STATE.current_stage = decoded._stage;
+      var legacy = JSON.parse(json);
+      CHAR_STATE.draft = legacy;
+      if (legacy._stage && legacy._stage > 1) {
+        CHAR_STATE.current_stage = legacy._stage;
         showReturnBanner();
       }
     }
@@ -113,28 +127,22 @@ function loadDraftFromURL() {
 function generateResumeLink() {
   try {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
-    // Strip bulky/recomputable fields to keep the URL short
-    var OMIT = ['appearance_prompt', 'appearance_data'];
-    var stripped = {};
-    Object.keys(CHAR_STATE.draft).forEach(function(k) {
-      if (OMIT.indexOf(k) >= 0) return;
-      var v = CHAR_STATE.draft[k];
-      if (v === null || v === undefined || v === '') return;
-      if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return;
-      stripped[k] = v;
-    });
-    stripped._stage = CHAR_STATE.current_stage;
-    var json = JSON.stringify(stripped);
-    var bytes = new TextEncoder().encode(json);
-    var binary = Array.from(bytes).map(function(b) { return String.fromCharCode(b); }).join('');
-    var encoded = btoa(binary);
-    var url = window.location.origin + window.location.pathname + '?draft=' + encoded;
+    // Save full draft to localStorage under a short resume key
+    var resumeKey = 'anavale_resume_' + Date.now();
+    localStorage.setItem(resumeKey, JSON.stringify(CHAR_STATE.draft));
+    // Also keep the standard draft key in sync
+    saveDraftToStorage();
+    // Put only the short key in the URL — not the entire draft
+    var url = window.location.origin + window.location.pathname + '?resume=' + resumeKey;
     navigator.clipboard.writeText(url).then(function() {
-      showToast('Link copied! (' + Math.round(url.length / 10.24) / 100 + ' KB)');
+      showToast('Progress saved! Link copied to clipboard.');
     }).catch(function() {
       prompt('Copy this link to resume later:', url);
     });
-  } catch(e) { console.warn('Resume link failed:', e); }
+  } catch(e) {
+    console.warn('Resume link failed:', e);
+    showToast('Could not copy link — try again.', 'error');
+  }
 }
 
 function showReturnBanner() {
@@ -3710,27 +3718,61 @@ function renderStage3Panel() {
 function initHudSticky() {
   var hud = document.getElementById('char-stage4-hud');
   if (!hud) return;
-  // Guard: remove any existing sentinel from a previous Stage 4 entry
-  // (occurs when the player uses Back and re-enters Stage 4)
+  // Remove any existing sentinel
   var existing = document.getElementById('char-hud-sentinel');
   if (existing) existing.parentNode.removeChild(existing);
-  var sentinel = document.createElement('div');
-  sentinel.id = 'char-hud-sentinel';
-  sentinel.style.cssText = 'height:1px;margin:0;padding:0;pointer-events:none;position:relative;';
-  hud.parentNode.insertBefore(sentinel, hud);
-  // Also reset stuck state so compact mode doesn't persist from last visit
   hud.classList.remove('char-hud--stuck');
-  var stuck = false;
-  var observer = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      var shouldBeStuck = !entry.isIntersecting;
-      if (shouldBeStuck !== stuck) {
-        stuck = shouldBeStuck;
-        hud.classList.toggle('char-hud--stuck', stuck);
+
+  // On mobile, body overflow-x:hidden breaks IntersectionObserver's scroll context.
+  // Fix: measure the fixed nav height and set sticky top accordingly, then use
+  // a scroll listener on the document element (not window) which works in WebKit.
+  function getNavHeight() {
+    var nav = document.getElementById('char-mobile-stage-nav');
+    return nav ? nav.offsetHeight : 0;
+  }
+
+  var isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    // Set top so HUD sticks just below the fixed nav
+    var navH = getNavHeight();
+    hud.style.top = navH + 'px';
+    // Use scroll listener on document.documentElement for WebKit mobile
+    var lastStuck = false;
+    function onMobileScroll() {
+      var hudTop = hud.getBoundingClientRect().top;
+      var navHeight = getNavHeight();
+      var shouldStick = hudTop <= navHeight + 2;
+      if (shouldStick !== lastStuck) {
+        lastStuck = shouldStick;
+        hud.classList.toggle('char-hud--stuck', shouldStick);
       }
-    });
-  }, { threshold: 0, rootMargin: '0px' });
-  observer.observe(sentinel);
+    }
+    document.addEventListener('scroll', onMobileScroll, { passive: true });
+    // Store cleanup reference so re-entry removes old listener
+    if (hud._scrollCleanup) hud._scrollCleanup();
+    hud._scrollCleanup = function() {
+      document.removeEventListener('scroll', onMobileScroll);
+    };
+  } else {
+    // Desktop: IntersectionObserver works correctly
+    if (hud._scrollCleanup) { hud._scrollCleanup(); hud._scrollCleanup = null; }
+    hud.style.top = '';
+    var sentinel = document.createElement('div');
+    sentinel.id = 'char-hud-sentinel';
+    sentinel.style.cssText = 'height:1px;margin:0;padding:0;pointer-events:none;position:relative;';
+    hud.parentNode.insertBefore(sentinel, hud);
+    var stuck = false;
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var shouldBeStuck = !entry.isIntersecting;
+        if (shouldBeStuck !== stuck) {
+          stuck = shouldBeStuck;
+          hud.classList.toggle('char-hud--stuck', stuck);
+        }
+      });
+    }, { threshold: 0, rootMargin: '0px' });
+    observer.observe(sentinel);
+  }
 }
 
 function updateStage4Hud() {
