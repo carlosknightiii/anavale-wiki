@@ -3516,12 +3516,50 @@ function updateStage3ContinueButton() {
 
 
 function updateResetButton() {
-  var btn = document.getElementById('char-ability-reset-btn');
-  if (!btn) return;
+  var btn  = document.getElementById('char-ability-reset-btn');
   var bank = document.getElementById('char-score-bank');
-  var bankChips = bank ? bank.querySelectorAll('.char-score-chip').length : 0;
-  // Show reset if at least one score has been placed (bank is not full)
+  if (!btn || !bank) return;
+  var bankChips = bank.querySelectorAll('.char-score-chip').length;
+  var allPlaced = bankChips === 0;
+  // Show/hide reset button
   btn.style.display = bankChips < ABILITY_SCORES.length ? 'inline-flex' : 'none';
+  // Show/hide "all placed" confirmation
+  var confirm = document.getElementById('char-bank-complete-msg');
+  if (allPlaced) {
+    bank.classList.add('char-score-bank--complete');
+    if (!confirm) {
+      var msg = document.createElement('div');
+      msg.id = 'char-bank-complete-msg';
+      msg.className = 'char-bank-complete-msg';
+      msg.textContent = '✓ All scores placed';
+      bank.appendChild(msg);
+    }
+    btn.style.display = 'inline-flex';
+  } else {
+    bank.classList.remove('char-score-bank--complete');
+    if (confirm) confirm.parentNode.removeChild(confirm);
+  }
+}
+
+function updateAbilityCardHints() {
+  var classId = CHAR_STATE.draft.class_id;
+  var cls = classId ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
+  // Map class primary stat string to ability key(s)
+  var CLASS_PRIMARY_AB = {
+    barbarian: ['str'], bard: ['cha'], cleric: ['wis'], druid: ['wis'],
+    fighter: ['str','dex'], monk: ['dex','wis'], paladin: ['str','cha'],
+    ranger: ['dex','wis'], rogue: ['dex'], sorcerer: ['cha'],
+    warlock: ['cha'], wizard: ['int']
+  };
+  var primaryAbs = (cls && CLASS_PRIMARY_AB[classId]) ? CLASS_PRIMARY_AB[classId] : [];
+  ['str','dex','con','int','wis','cha'].forEach(function(ab) {
+    var card = document.getElementById('ability-card-' + ab);
+    if (!card) return;
+    var score = parseInt(card.dataset.score) || 0;
+    var isPrimary = primaryAbs.indexOf(ab) >= 0;
+    card.classList.toggle('char-ability-card--primary', isPrimary && score >= 13);
+    card.classList.toggle('char-ability-card--warn',    isPrimary && score > 0 && score <= 10);
+  });
 }
 
 function renderStage3ClassBanner() {
@@ -3639,6 +3677,7 @@ function setAbilityScore(ability, score) {
   }
   renderStage3Panel();
   updateResetButton();
+  updateAbilityCardHints();
   updateStage3ContinueButton();
 }
 
