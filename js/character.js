@@ -3117,6 +3117,27 @@ function randomizeDraft() {
   CHAR_STATE.highest_stage = 5;
   saveDraftToStorage();
 
+  // ── Populate hidden ability score inputs so renderStage3Panel reads correctly ──
+  ['str','dex','con','int','wis','cha'].forEach(function(ab) {
+    var el = document.getElementById('char-ability-' + ab);
+    if (el) el.value = scores[ab];
+  });
+
+  // ── Populate appearance selects so Stage 4 / Stage 5 reads correctly ──
+  var appData = CHAR_STATE.draft.appearance_data;
+  if (appData) {
+    var appMap = {
+      'app-height': 'height', 'app-build': 'build', 'app-age': 'age',
+      'app-hair-color': 'hair_color', 'app-hair-style': 'hair_style',
+      'app-eye-color': 'eye_color', 'app-eye-shape': 'eye_shape',
+      'app-hand-right': 'hand_right'
+    };
+    Object.keys(appMap).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && appData[appMap[id]]) el.value = appData[appMap[id]];
+    });
+  }
+
   // ── Jump to Stage 5 ──
   showStage(5);
   showToast('🎲 Randomized! Check Stage 5 for your character summary.');
