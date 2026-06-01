@@ -114,7 +114,7 @@ function generateResumeLink() {
   try {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
     // Strip bulky/recomputable fields to keep the URL short
-    var OMIT = ['appearance_prompt'];
+    var OMIT = ['appearance_prompt', 'appearance_data'];
     var stripped = {};
     Object.keys(CHAR_STATE.draft).forEach(function(k) {
       if (OMIT.indexOf(k) >= 0) return;
@@ -2055,12 +2055,14 @@ function filterWeaponsByClass(cls) {
       o.value = item.id;
       var startIds = getStartingGearIds();
       var isFree   = startIds.indexOf(item.id) >= 0;
-      // Only show (free) if this item is not already equipped in the OTHER hand slot
+      // Only show (free) if this item is not already claimed as free in the other hand.
+      // Read from draft state, not the DOM — DOM selects may be stale during rebuild.
       if (isFree) {
-        var otherSlotId2 = slotId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
-        var otherSel2 = document.getElementById(otherSlotId2);
-        if (otherSel2 && otherSel2.value === item.id) {
-          isFree = false; // already using the free copy in the other hand
+        var otherKey2 = slotId === 'app-hand-right' ? 'hand_left' : 'hand_right';
+        var otherDraftVal = CHAR_STATE.draft.appearance_data
+          ? CHAR_STATE.draft.appearance_data[otherKey2] : '';
+        if (otherDraftVal && otherDraftVal === item.id) {
+          isFree = false;
         }
       }
       var costLabel = isFree ? '(free)' : formatCost(item.cost_gp);
@@ -3714,7 +3716,7 @@ function initHudSticky() {
   if (existing) existing.parentNode.removeChild(existing);
   var sentinel = document.createElement('div');
   sentinel.id = 'char-hud-sentinel';
-  sentinel.style.cssText = 'height:0;margin:0;padding:0;pointer-events:none;';
+  sentinel.style.cssText = 'height:1px;margin:0;padding:0;pointer-events:none;position:relative;';
   hud.parentNode.insertBefore(sentinel, hud);
   // Also reset stuck state so compact mode doesn't persist from last visit
   hud.classList.remove('char-hud--stuck');
