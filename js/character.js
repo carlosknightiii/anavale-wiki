@@ -2085,26 +2085,45 @@ function updateWeaponStatChip(selectId, chipId) {
       html += '<span class="char-stat-chip char-stat-chip--note">Versatile: ' + item.versatile_dice + ' two-handed</span>';
     }
     var PROP_LABELS = {
-      'heavy':      'Heavy — requires two hands, can\'t be used by Small creatures',
-      'light':      'Light — can be used in your off-hand without penalty',
-      'finesse':    'Finesse — use Strength or Dexterity, your choice',
-      'thrown':     'Thrown — can be hurled at a target',
-      'reach':      'Reach — attacks enemies up to 10 ft away',
-      'two-handed': 'Two-handed — requires both hands to use',
-      'loading':    'Loading — can only fire once per turn',
-      'ammunition': 'Ammunition — requires arrows or bolts'
+      'heavy':      'Heavy',
+      'light':      'Light',
+      'finesse':    'Finesse',
+      'thrown':     'Thrown',
+      'reach':      'Reach',
+      'two-handed': 'Two-handed',
+      'loading':    'Loading',
+      'ammunition': 'Ammunition'
+    };
+    var PROP_TIPS = {
+      'heavy':      'Requires both hands. Can\'t be used by Small creatures.',
+      'light':      'Small enough for your off-hand — no penalty to attack with both.',
+      'finesse':    'Use either Strength or Dexterity for attack and damage — pick whichever is higher.',
+      'thrown':     'Hurl it at a target instead of swinging. Check the range numbers.',
+      'reach':      'Attacks enemies up to 10 ft away — one square further than normal.',
+      'two-handed': 'Requires both hands to wield.',
+      'loading':    'Can only fire once per turn regardless of how many attacks you have.',
+      'ammunition': 'Requires arrows or bolts. You recover half after a battle.'
     };
     if (item.properties && item.properties.length) {
       item.properties
         .filter(function(p) { return p !== 'versatile'; })
         .forEach(function(p) {
           var label = PROP_LABELS[p] || p;
-          html += '<span class="char-stat-chip char-stat-chip--note">' + label + '</span>';
+          var tip   = PROP_TIPS[p] || '';
+          if (tip) {
+            html += '<span class="char-stat-chip char-stat-chip--note char-field-tooltip" data-tip="' + tip.replace(/"/g, '&quot;') + '">'
+              + label + ' <span class="char-trait-tip-icon">?</span></span>';
+          } else {
+            html += '<span class="char-stat-chip char-stat-chip--note">' + label + '</span>';
+          }
         });
     }
   }
   chip.innerHTML = html;
   chip.style.display = 'flex';
+  chip.querySelectorAll('[data-tip]').forEach(function(el) {
+    if (typeof wireTooltip === 'function') wireTooltip(el);
+  });
 
   // Two-handed weapon handling — disable other hand slot
   var otherSlotId = selectId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
@@ -3466,6 +3485,7 @@ function updateStage4Hud() {
       if (lhItem && lhItem.category === 'shield') ac += (lhItem.ac_bonus || 2);
     }
     acEl.textContent = ac;
+    acEl.dataset.ac = ac;
   }
 
   // ── Money ──
@@ -3482,9 +3502,9 @@ function updateStage4Hud() {
       var remSilver = Math.floor((totalCP % 100) / 10);
       var remCopper = totalCP % 10;
       moneyEl.innerHTML =
-        '<div class="char-hud-money-row"><span class="char-hud-money-gold">'   + remGold   + '</span><span class="char-hud-money-denom char-hud-money-denom--gold">Gold</span></div>' +
-        '<div class="char-hud-money-row"><span class="char-hud-money-silver">' + remSilver + '</span><span class="char-hud-money-denom char-hud-money-denom--silver">Silver</span></div>' +
-        '<div class="char-hud-money-row"><span class="char-hud-money-copper">' + remCopper + '</span><span class="char-hud-money-denom char-hud-money-denom--copper">Copper</span></div>';
+        '<div class="char-hud-money-row"><span class="char-hud-money-gold">'   + remGold   + '</span><span class="char-hud-money-denom char-hud-money-denom--gold">GP</span></div>' +
+        '<div class="char-hud-money-row"><span class="char-hud-money-silver">' + remSilver + '</span><span class="char-hud-money-denom char-hud-money-denom--silver">SP</span></div>' +
+        '<div class="char-hud-money-row"><span class="char-hud-money-copper">' + remCopper + '</span><span class="char-hud-money-denom char-hud-money-denom--copper">CP</span></div>';
     }
   }
 
@@ -3504,8 +3524,8 @@ function updateStage4Hud() {
     }
     return it.name || '—';
   }
-  if (rhEl) rhEl.textContent = hudWeaponLabel('app-hand-right');
-  if (lhEl) lhEl.textContent = hudWeaponLabel('app-hand-left');
+  if (rhEl) { rhEl.textContent = hudWeaponLabel('app-hand-right'); rhEl.dataset.dmg = hudWeaponLabel('app-hand-right'); }
+  if (lhEl) { lhEl.textContent = hudWeaponLabel('app-hand-left');  lhEl.dataset.dmg = hudWeaponLabel('app-hand-left'); }
 
   // ── Weight ──
   var fillEl    = document.getElementById('hud-weight-fill');

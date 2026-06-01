@@ -2244,7 +2244,7 @@ body.char-page {
 body.banner-visible .char-stage4-hud {
   top: 60px;
 }
-/* Compact mode when stuck — triggered by JS class on scroll */
+/* Compact mode when stuck — triggered by JS IntersectionObserver */
 .char-stage4-hud.char-hud--stuck .char-hud-stat {
   padding: 0.5rem 0.85rem;
 }
@@ -2257,19 +2257,61 @@ body.banner-visible .char-stage4-hud {
 .char-stage4-hud.char-hud--stuck .char-hud-stat-value {
   font-size: 1rem;
 }
+
+/* AC: prefix in compact mode via ::before */
+.char-stage4-hud.char-hud--stuck #hud-ac-value::before {
+  content: 'AC: ';
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--char-text-faint);
+  vertical-align: middle;
+}
+
+/* Money — single row in compact mode */
+.char-stage4-hud.char-hud--stuck .char-hud-money {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-money-row {
+  gap: 0.15rem;
+}
 .char-stage4-hud.char-hud--stuck .char-hud-money-gold,
 .char-stage4-hud.char-hud--stuck .char-hud-money-silver,
 .char-stage4-hud.char-hud--stuck .char-hud-money-copper {
   font-size: 0.82rem;
 }
 .char-stage4-hud.char-hud--stuck .char-hud-money-denom {
-  display: none;
+  font-size: 0.62rem;
+}
+
+/* Weight — half width in compact mode */
+.char-stage4-hud.char-hud--stuck .char-hud-stat--weight {
+  flex: 1;
 }
 .char-stage4-hud.char-hud--stuck .char-hud-weight-bar-track {
-  min-width: 70px;
+  min-width: 60px;
 }
 .char-stage4-hud.char-hud--stuck .char-hud-weight-numbers {
   font-size: 0.65rem;
+}
+
+/* Weapon — single row with DMG prefix in compact mode */
+.char-stage4-hud.char-hud--stuck .char-hud-weapon-slots {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.char-stage4-hud.char-hud--stuck .char-hud-weapon-slots::before {
+  content: 'DMG';
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--char-text-faint);
+  align-self: center;
+  flex-shrink: 0;
 }
 .char-stage4-hud.char-hud--stuck .char-hud-weapon-dmg {
   font-size: 0.78rem;
