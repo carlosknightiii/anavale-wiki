@@ -1266,6 +1266,26 @@ function restoreClassSelection(classId) {
     var btn = card.querySelector('.char-bg-toggle');
     if (btn) { btn.classList.add('open'); btn.textContent = 'Close'; }
   }
+  // Restore skill checkbox state from draft
+  var cls = CLASS_DATA.find(function(c) { return c.id === classId; });
+  var savedSkills = CHAR_STATE.draft['skills_' + classId] || [];
+  if (cls && savedSkills.length) {
+    savedSkills.forEach(function(skillVal) {
+      var cb = document.querySelector('input[name="skill-' + classId + '"][value="' + skillVal + '"]');
+      if (cb) cb.checked = true;
+    });
+    var section = document.getElementById('skills-section-' + classId);
+    var counter = document.getElementById('skill-count-' + classId);
+    var slotsEl = document.getElementById('skills-slots-' + classId);
+    var complete = savedSkills.length >= cls.skills_count;
+    if (section) section.classList.toggle('skills-complete', complete);
+    if (counter) counter.textContent = complete ? '✓ All skills chosen' : 'Choose ' + cls.skills_count + ' to continue';
+    if (slotsEl) {
+      slotsEl.querySelectorAll('.char-class-skills-slot').forEach(function(slot, i) {
+        slot.classList.toggle('filled', i < savedSkills.length);
+      });
+    }
+  }
 }
 
 // ── SCROLL HELPER — accounts for fixed progress bar + optional banner ──
