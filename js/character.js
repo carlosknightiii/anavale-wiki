@@ -113,19 +113,16 @@ function loadDraftFromURL() {
 function generateResumeLink() {
   try {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
-    // Build a stripped copy — omit recomputable / bulky fields to keep URL short
-    var OMIT_KEYS = ['appearance_prompt', '_stage'];
+    // Strip bulky/recomputable fields to keep the URL short
+    var OMIT = ['appearance_prompt'];
     var stripped = {};
     Object.keys(CHAR_STATE.draft).forEach(function(k) {
-      if (OMIT_KEYS.indexOf(k) >= 0) return;
+      if (OMIT.indexOf(k) >= 0) return;
       var v = CHAR_STATE.draft[k];
-      // Skip null/undefined/empty-string values
       if (v === null || v === undefined || v === '') return;
-      // Skip empty objects
       if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return;
       stripped[k] = v;
     });
-    // Always preserve current stage for resume routing
     stripped._stage = CHAR_STATE.current_stage;
     var json = JSON.stringify(stripped);
     var bytes = new TextEncoder().encode(json);
@@ -133,7 +130,7 @@ function generateResumeLink() {
     var encoded = btoa(binary);
     var url = window.location.origin + window.location.pathname + '?draft=' + encoded;
     navigator.clipboard.writeText(url).then(function() {
-      showToast('Resume link copied! (' + Math.round(url.length / 1024 * 10) / 10 + ' KB)');
+      showToast('Link copied! (' + Math.round(url.length / 10.24) / 100 + ' KB)');
     }).catch(function() {
       prompt('Copy this link to resume later:', url);
     });
@@ -2058,6 +2055,14 @@ function filterWeaponsByClass(cls) {
       o.value = item.id;
       var startIds = getStartingGearIds();
       var isFree   = startIds.indexOf(item.id) >= 0;
+      // Only show (free) if this item is not already equipped in the OTHER hand slot
+      if (isFree) {
+        var otherSlotId2 = slotId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
+        var otherSel2 = document.getElementById(otherSlotId2);
+        if (otherSel2 && otherSel2.value === item.id) {
+          isFree = false; // already using the free copy in the other hand
+        }
+      }
       var costLabel = isFree ? '(free)' : formatCost(item.cost_gp);
       o.textContent = costLabel ? item.name + ' [' + costLabel + ']' : item.name;
       sel.appendChild(o);
