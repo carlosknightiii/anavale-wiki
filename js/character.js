@@ -3075,34 +3075,8 @@ function slugify(str) {
 (function() {
   if (new URLSearchParams(window.location.search).get('devmode') === '1') {
     document.addEventListener('DOMContentLoaded', function() {
-      var btn = document.getElementById('char-dev-randomize');
-      if (!btn) return;
-      // Inline placement — avoids all iOS position:fixed / overflow bugs
-      btn.style.cssText = [
-        'display:flex',
-        'position:relative',
-        'margin:0.75rem auto 0',
-        'width:fit-content',
-        'background:linear-gradient(135deg,#9a70e8,#4ac8b8)',
-        'color:#fff',
-        'font-family:var(--font-sans)',
-        'font-size:0.85rem',
-        'font-weight:700',
-        'padding:0.6rem 1.25rem',
-        'border:none',
-        'border-radius:24px',
-        'cursor:pointer',
-        'box-shadow:0 4px 16px rgba(154,112,232,0.5)',
-        'letter-spacing:0.04em',
-        'z-index:1'
-      ].join(';');
-      // Insert after the mobile stage nav so it's visible at the top of every stage
-      var nav = document.getElementById('char-mobile-stage-nav');
-      if (nav && nav.parentNode) {
-        nav.parentNode.insertBefore(btn, nav.nextSibling);
-      } else {
-        document.body.insertBefore(btn, document.body.firstChild);
-      }
+      var bar = document.getElementById('char-dev-bar');
+      if (bar) bar.style.display = 'block';
     });
   }
 })();

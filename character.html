@@ -201,7 +201,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ── TOAST ── -->
 <div id="char-toast"></div>
-<button id="char-dev-randomize" onclick="randomizeDraft()" style="display:none">🎲 Randomize</button>
+<div id="char-dev-bar" style="display:none;position:sticky;top:0;left:0;right:0;z-index:9999;background:#9a70e8;padding:0.6rem 1rem;text-align:center;">
+  <button onclick="randomizeDraft()" style="background:#fff;color:#4a2878;font-weight:700;font-size:1rem;border:none;border-radius:20px;padding:0.5rem 1.5rem;cursor:pointer;">🎲 Randomize All</button>
+</div>
 
 <!-- ── ALREADY EXISTS BANNER ── -->
 <div id="char-already-exists" class="char-already-exists">
