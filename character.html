@@ -232,26 +232,33 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="char-mobile-stage-pill" id="char-mobile-pill-1" onclick="jumpToStage(1)" aria-label="Stage 1: Your Story">
       <span class="char-mobile-pill-num">1</span>
       <span class="char-mobile-pill-label">Your Story</span>
+      <span class="char-mobile-pill-check">✓</span>
     </button>
     <button class="char-mobile-stage-pill" id="char-mobile-pill-2" onclick="jumpToStage(2)" aria-label="Stage 2: Your Class">
       <span class="char-mobile-pill-num">2</span>
       <span class="char-mobile-pill-label">Your Class</span>
+      <span class="char-mobile-pill-check">✓</span>
     </button>
     <button class="char-mobile-stage-pill" id="char-mobile-pill-3" onclick="jumpToStage(3)" aria-label="Stage 3: Ability Scores">
       <span class="char-mobile-pill-num">3</span>
       <span class="char-mobile-pill-label">Ability Scores</span>
+      <span class="char-mobile-pill-check">✓</span>
     </button>
     <button class="char-mobile-stage-pill" id="char-mobile-pill-4" onclick="jumpToStage(4)" aria-label="Stage 4: Gear & Looks">
       <span class="char-mobile-pill-num">4</span>
       <span class="char-mobile-pill-label">Gear &amp; Looks</span>
+      <span class="char-mobile-pill-check">✓</span>
     </button>
     <button class="char-mobile-stage-pill" id="char-mobile-pill-5" onclick="jumpToStage(5)" aria-label="Stage 5: Review & Submit">
       <span class="char-mobile-pill-num">5</span>
       <span class="char-mobile-pill-label">Review &amp; Submit</span>
+      <span class="char-mobile-pill-check">✓</span>
     </button>
   </div>
   <div class="char-mobile-nav-progress">
-    <div class="char-mobile-nav-progress-fill" id="char-progress-bar-mobile"></div>
+    <div class="char-mobile-nav-progress-fill" id="char-progress-bar-mobile" style="width:10%">
+      <span class="char-mobile-nav-progress-label" id="char-progress-label-mobile">Progress 10%</span>
+    </div>
   </div>
 </div>
 
@@ -320,11 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <!-- MAIN -->
   <main class="char-main">
 
-<div id="char-progress-wrap-mobile" class="char-progress-wrap char-progress-wrap--mobile">
-  <div id="char-progress-bar-mobile" class="char-progress-bar" style="width:10%">
-    <div id="char-progress-label-mobile" class="char-progress-label outside">Stage 1 of 5</div>
-  </div>
-</div>
 
     <h1 class="char-page-title">Character Creator</h1>
 
@@ -1332,6 +1334,8 @@ document.addEventListener('DOMContentLoaded', function() {
       var pct = Math.max(10, ((CHAR_STATE.current_stage - 1) / (CHAR_CONFIG.total_stages - 1)) * 100);
       var label = document.getElementById('char-progress-label');
       if (label) label.textContent = 'Progress ' + Math.round(pct) + '%';
+      var labelM = document.getElementById('char-progress-label-mobile');
+      if (labelM) labelM.textContent = 'Progress ' + Math.round(pct) + '%';
     };
   }
   // Sync first + last name into hidden char-final-name on every keystroke

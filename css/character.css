@@ -3721,7 +3721,7 @@ body.banner-visible .char-stage4-hud {
   }
   .char-mobile-stage-pill.active {
     opacity: 1;
-    border-bottom-color: var(--gold);
+    border-bottom-color: transparent;
   }
   .char-mobile-stage-pill.active .char-mobile-pill-num {
     color: var(--white);
@@ -3741,16 +3741,48 @@ body.banner-visible .char-stage4-hud {
   .char-mobile-stage-pill.completed .char-mobile-pill-label {
     color: rgb(134,239,172);
   }
+  .char-mobile-pill-check {
+    display: none;
+    font-size: 0.55rem;
+    color: rgb(134,239,172);
+    line-height: 1;
+  }
+  .char-mobile-stage-pill.completed .char-mobile-pill-check {
+    display: block;
+  }
   .char-mobile-nav-progress {
-    height: 3px;
+    position: relative;
+    height: 18px;
     background: rgba(255,255,255,0.08);
     width: 100%;
+    overflow: visible;
   }
   .char-mobile-nav-progress-fill {
     height: 100%;
     background: var(--gradient-colorful);
-    transition: width 0.4s ease;
+    background-size: 400% 100%;
+    animation: progress-shimmer 3s ease infinite;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
     width: 10%;
+  }
+  .char-mobile-nav-progress-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    pointer-events: none;
+    color: var(--ink);
+    transition: color 0.3s;
+  }
+  .char-mobile-nav-progress-label.outside {
+    right: auto;
+    left: calc(100% + 8px);
+    color: rgba(255,255,255,0.7);
   }
 
   /* ── FIXED PROGRESS BAR ── */
@@ -3773,12 +3805,11 @@ body.banner-visible .char-stage4-hud {
   }
   /* ── MAIN CONTENT — offset below fixed nav + bar ── */
   .char-main {
-    padding: 108px 1.25rem 5rem;
+    padding: 130px 1.25rem 5rem;
   }
 
   .char-page-title {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
+    display: none;
   }
 
   /* ── RETURN BANNER — sits above everything ── */
