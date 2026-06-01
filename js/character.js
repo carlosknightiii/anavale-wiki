@@ -1220,6 +1220,13 @@ function updateStage2SkillAlert() {
         link.textContent = ' — Take me there →';
         link.addEventListener('click', function(e) {
           e.preventDefault();
+          // Ensure the selected class card is expanded before scrolling
+          var card = document.querySelector('.char-class-card[data-class="' + classId + '"]');
+          if (card && !card.classList.contains('expanded')) {
+            card.classList.add('expanded');
+            var btn = card.querySelector('.char-bg-toggle');
+            if (btn) { btn.classList.add('open'); btn.textContent = 'Close'; }
+          }
           scrollToField(skillsSection);
         });
         alert.appendChild(link);
