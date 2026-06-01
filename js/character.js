@@ -3421,15 +3421,18 @@ function renderStage3Panel() {
 function initHudSticky() {
   var hud = document.getElementById('char-stage4-hud');
   if (!hud) return;
-  // Create a sentinel element placed just above the HUD in the DOM
   var sentinel = document.createElement('div');
   sentinel.id = 'char-hud-sentinel';
-  sentinel.style.cssText = 'height:1px;margin-bottom:-1px;pointer-events:none;';
+  sentinel.style.cssText = 'height:0;margin:0;padding:0;pointer-events:none;';
   hud.parentNode.insertBefore(sentinel, hud);
-  // Use IntersectionObserver — immune to overflow-x:hidden scroll context issues
+  var stuck = false;
   var observer = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
-      hud.classList.toggle('char-hud--stuck', !entry.isIntersecting);
+      var shouldBeStuck = !entry.isIntersecting;
+      if (shouldBeStuck !== stuck) {
+        stuck = shouldBeStuck;
+        hud.classList.toggle('char-hud--stuck', stuck);
+      }
     });
   }, { threshold: 0, rootMargin: '0px' });
   observer.observe(sentinel);
