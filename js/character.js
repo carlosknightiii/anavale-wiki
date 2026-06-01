@@ -3075,8 +3075,8 @@ function slugify(str) {
 (function() {
   if (new URLSearchParams(window.location.search).get('devmode') === '1') {
     document.addEventListener('DOMContentLoaded', function() {
-      var bar = document.getElementById('char-dev-bar');
-      if (bar) bar.style.display = 'block';
+      var btn = document.getElementById('char-dev-randomize');
+      if (btn) btn.style.display = 'block';
     });
   }
 })();

@@ -201,9 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ── TOAST ── -->
 <div id="char-toast"></div>
-<div id="char-dev-bar" style="display:none;position:sticky;top:0;left:0;right:0;z-index:9999;background:#9a70e8;padding:0.6rem 1rem;text-align:center;">
-  <button onclick="randomizeDraft()" style="background:#fff;color:#4a2878;font-weight:700;font-size:1rem;border:none;border-radius:20px;padding:0.5rem 1.5rem;cursor:pointer;">🎲 Randomize All</button>
-</div>
+<button id="char-dev-randomize" onclick="randomizeDraft()" style="display:none">🎲 Randomize</button>
 
 <!-- ── ALREADY EXISTS BANNER ── -->
 <div id="char-already-exists" class="char-already-exists">
@@ -1508,16 +1506,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Eruda mobile console — dev only, loaded only when ?devmode=1 -->
-<script>
-(function() {
-  if (new URLSearchParams(window.location.search).get('devmode') === '1') {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/eruda';
-    s.onload = function() { eruda.init(); };
-    document.body.appendChild(s);
-  }
-})();
-</script>
 </body>
 </html>
