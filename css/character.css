@@ -2101,10 +2101,8 @@ body.char-page {
 
 /* ── DEV MODE RANDOMIZE BUTTON ─────────────────────────────────── */
 #char-dev-randomize {
-  position: fixed;
-  bottom: 5rem;
-  right: 1.5rem;
-  z-index: 400;
+  display: none;
+  margin: 0 0 1rem 0;
   background: linear-gradient(135deg, #9a70e8, #4ac8b8);
   color: #fff;
   font-family: var(--font-sans);
@@ -2116,7 +2114,6 @@ body.char-page {
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(154,112,232,0.5);
   letter-spacing: 0.04em;
-  transition: transform 0.15s, box-shadow 0.15s;
 }
 #char-dev-randomize:hover {
   transform: translateY(-2px);
