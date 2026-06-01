@@ -3007,6 +3007,121 @@ function slugify(str) {
     .replace(/-+/g, '-');
 }
 
+// ── DEV MODE — RANDOMIZE ALL STAGES ───────────────────────────────
+(function() {
+  if (new URLSearchParams(window.location.search).get('devmode') === '1') {
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('char-dev-randomize');
+      if (btn) btn.style.display = 'block';
+    });
+  }
+})();
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function randomizeDraft() {
+  // ── Stage 1 ──
+  var names = ['Aldric','Bessa','Corra','Davin','Elira','Farro','Genna','Holt','Idris','Jorra','Kael','Lira','Maren','Nori','Oryn','Pella','Quill','Reva','Sable','Tomas','Ula','Vesper','Wren','Yori','Zell'];
+  var genders = ['male','female','non-binary'];
+  var personalities = ['Jumps in before thinking','Painfully honest','Makes everyone laugh somehow','Quietly observant','Overly cautious','Surprisingly reckless'];
+  var alignments = ['brightward','colorful','greywarden','steelbound','ashwalker'];
+  var regions = ['caparia','nombi','sohot','jugabi'];
+  var languages = ['elvish','dwarvish','gnomish','halfling','draconic','orcish','infernal','celestial','sylvan'];
+  var pastRaised = ['kind-parents','the-streets','strict-religious','single-parent','grandparent'];
+  var pastFriend = ['neighbor','animal','imaginary','no-one','mentor'];
+  var pastPet = ['a loyal hound','a clever crow','a tiny dragon','no pet — you wanted one','a cat that chose you'];
+  var pastLove = ['someone from home','a fellow traveller','a mentor','no one yet','someone you lost'];
+  var pastOrg = ['wanderkeep','merchant-guild','brightcreed','fighting-company','kept-to-myself'];
+  var pastLeftBehind = ['a person','a place','a promise','a secret','an object'];
+  var pastWhyLeft = ['something called to me','I had no choice','I was running from something','I was looking for something','I needed to prove something'];
+
+  var gender = rand(genders);
+  var bg = rand(ANAVALE_BACKGROUNDS);
+  var species = rand(ANAVALE_SPECIES);
+  var region = rand(regions);
+  var language = rand(languages);
+
+  CHAR_STATE.draft.character_name      = rand(names);
+  CHAR_STATE.draft.gender              = gender;
+  CHAR_STATE.draft.personality_immediate = rand(personalities);
+  CHAR_STATE.draft.personality_wrong   = rand(personalities);
+  CHAR_STATE.draft.personality_laugh   = rand(personalities);
+  CHAR_STATE.draft.cares_about         = 'People who can\'t protect themselves';
+  CHAR_STATE.draft.deepest_fear        = 'Losing someone to the Dimming';
+  CHAR_STATE.draft.seeking             = 'A reason to stay somewhere';
+  CHAR_STATE.draft.background_id       = bg.id;
+  CHAR_STATE.draft.species_id          = species.id;
+  CHAR_STATE.draft.home_region         = region;
+  CHAR_STATE.draft.language            = language;
+  CHAR_STATE.draft.alignment           = rand(alignments);
+  CHAR_STATE.draft['past_raised']      = rand(pastRaised);
+  CHAR_STATE.draft['past_friend']      = rand(pastFriend);
+  CHAR_STATE.draft['past_pet']         = rand(pastPet);
+  CHAR_STATE.draft['past_love']        = rand(pastLove);
+  CHAR_STATE.draft['past_org']         = rand(pastOrg);
+  CHAR_STATE.draft['past_left-behind'] = rand(pastLeftBehind);
+  CHAR_STATE.draft['past_why-left']    = rand(pastWhyLeft);
+  CHAR_STATE.draft.appearance_data     = {
+    height: rand(['tall','average height','short','very tall']),
+    build:  rand(['slender','athletic','stocky','lean']),
+    age:    rand(['young','middle-aged','weathered']),
+    skin_tone: '#c8a070',
+    hair_color: rand(['black','brown','blonde','silver','red']),
+    hair_style: rand(['long','short','braided','wild']),
+    eye_color: rand(['brown','blue','green','grey','amber']),
+    eye_shape: rand(['sharp','warm','wide']),
+    facial_hair: 'none', facial_markings: [], glasses: 'none',
+    cloak: '', top: '', lower: '', shoes: '', hat: '',
+    hand_right: '', hand_left: '', ring_right: '', ring_left: '',
+    necklace: '', earrings: ''
+  };
+
+  // ── Stage 2 ──
+  var typeIds = Object.keys(GIGGLEGLOOM_TYPES);
+  var typeId = rand(typeIds);
+  var classesForType = GIGGLEGLOOM_TYPES[typeId].classes;
+  var cls = rand(classesForType);
+  var clsData = CLASS_DATA.find(function(c) { return c.id === cls.id; });
+  var skills = shuffle(clsData.skills_list).slice(0, clsData.skills_count);
+  CHAR_STATE.draft.gigglegloom_type = typeId;
+  CHAR_STATE.draft.class_id = cls.id;
+  CHAR_STATE.draft['skills_' + cls.id] = skills;
+
+  // ── Stage 3 ──
+  var shuffled = shuffle([15,14,13,12,10,8]);
+  var abKeys = ['str','dex','con','int','wis','cha'];
+  var scores = {};
+  abKeys.forEach(function(ab, i) { scores[ab] = shuffled[i]; });
+  CHAR_STATE.draft.ability_scores = scores;
+
+  // ── Stage 4 — pick a free starting weapon ──
+  var startingGear = CLASS_STARTING_GEAR[cls.id];
+  if (startingGear && typeof ITEMS !== 'undefined') {
+    var startIds = getStartingGearIds();
+    var freeWeapon = ITEMS.find(function(it) {
+      return it.player_addable && it.category === 'weapon' && startIds.indexOf(it.id) >= 0;
+    });
+    if (freeWeapon) CHAR_STATE.draft.appearance_data.hand_right = freeWeapon.id;
+  }
+
+  // ── Set highest stage so all stages are navigable ──
+  CHAR_STATE.draft._stage = 5;
+  CHAR_STATE.highest_stage = 5;
+  saveDraftToStorage();
+
+  // ── Jump to Stage 5 ──
+  showStage(5);
+  showToast('🎲 Randomized! Check Stage 5 for your character summary.');
+}
+
 function showToast(msg, type) {
   var toast = document.getElementById('char-toast');
   if (!toast) return;
