@@ -3544,7 +3544,6 @@ function updateResetButton() {
 function updateAbilityCardHints() {
   var classId = CHAR_STATE.draft.class_id;
   var cls = classId ? CLASS_DATA.find(function(c) { return c.id === classId; }) : null;
-  // Map class primary stat string to ability key(s)
   var CLASS_PRIMARY_AB = {
     barbarian: ['str'], bard: ['cha'], cleric: ['wis'], druid: ['wis'],
     fighter: ['str','dex'], monk: ['dex','wis'], paladin: ['str','cha'],
@@ -3557,8 +3556,31 @@ function updateAbilityCardHints() {
     if (!card) return;
     var score = parseInt(card.dataset.score) || 0;
     var isPrimary = primaryAbs.indexOf(ab) >= 0;
-    card.classList.toggle('char-ability-card--primary', isPrimary && score >= 13);
-    card.classList.toggle('char-ability-card--warn',    isPrimary && score > 0 && score <= 10);
+    var isGood = isPrimary && score >= 13;
+    var isWarn = isPrimary && score > 0 && score <= 10;
+    card.classList.toggle('char-ability-card--primary', isGood);
+    card.classList.toggle('char-ability-card--warn',    isWarn);
+    // Remove any existing hint
+    var existing = card.querySelector('.char-ability-primary-hint');
+    if (existing) existing.parentNode.removeChild(existing);
+    // Inject hint on primary cards with a score placed
+    if (isPrimary && score > 0) {
+      var hint = document.createElement('div');
+      hint.className = 'char-ability-primary-hint';
+      if (isGood) {
+        hint.textContent = '👍 Good choice! This is your class\'s primary stat.';
+        hint.classList.add('char-ability-primary-hint--good');
+      } else if (isWarn) {
+        hint.textContent = '⚠ This is your class\'s primary stat — consider a higher score.';
+        hint.classList.add('char-ability-primary-hint--warn');
+      } else {
+        // Placed but not high enough to be green, not low enough to warn — neutral nudge
+        hint.textContent = '★ This is your class\'s primary stat.';
+        hint.classList.add('char-ability-primary-hint--neutral');
+      }
+      var nameEl = card.querySelector('.char-ability-name');
+      if (nameEl) nameEl.insertAdjacentElement('afterend', hint);
+    }
   });
 }
 
