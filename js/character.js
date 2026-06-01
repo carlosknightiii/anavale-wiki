@@ -97,7 +97,14 @@ function loadDraftFromURL() {
     var params = new URLSearchParams(window.location.search);
     var encoded = params.get('draft');
     if (encoded) {
-      var decoded = JSON.parse(atob(encoded));
+      // Decode as UTF-8 bytes to handle Unicode characters
+      var binary = atob(encoded);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      var json = new TextDecoder().decode(bytes);
+      var decoded = JSON.parse(json);
       CHAR_STATE.draft = decoded;
       if (decoded._stage && decoded._stage > 1) {
         CHAR_STATE.current_stage = decoded._stage;
@@ -110,7 +117,11 @@ function loadDraftFromURL() {
 function generateResumeLink() {
   try {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
-    var encoded = btoa(JSON.stringify(CHAR_STATE.draft));
+    var json = JSON.stringify(CHAR_STATE.draft);
+    // Use TextEncoder to safely handle Unicode characters (language glyphs etc.)
+    var bytes = new TextEncoder().encode(json);
+    var binary = Array.from(bytes).map(function(b) { return String.fromCharCode(b); }).join('');
+    var encoded = btoa(binary);
     var url = window.location.origin + window.location.pathname + '?draft=' + encoded;
     navigator.clipboard.writeText(url).then(function() {
       showToast('Resume link copied to clipboard!');
