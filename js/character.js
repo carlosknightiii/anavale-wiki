@@ -44,11 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initTooltips();
   // Pin mobile progress bar flush under nav after paint
   function pinMobileProgressBar() {
-    if (window.innerWidth > 768) return;
-    var mobileNav = document.getElementById('char-mobile-stage-nav');
-    var mobileBar = document.getElementById('char-progress-wrap-mobile');
-    if (!mobileNav || !mobileBar) return;
-    mobileBar.style.top = mobileNav.offsetHeight + 'px';
+    // Progress bar now lives inside char-mobile-stage-nav — no separate positioning needed
   }
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {

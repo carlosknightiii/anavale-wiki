@@ -224,26 +224,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ── MOBILE STAGE NAV ─────────────────────────────────────────── -->
 <div id="char-mobile-stage-nav" class="char-mobile-stage-nav">
-  <button class="char-mobile-stage-pill" id="char-mobile-pill-1" onclick="jumpToStage(1)" aria-label="Stage 1: Your Story">
-    <span class="char-mobile-pill-dot"></span>
-    <span class="char-mobile-pill-label">Your Story</span>
-  </button>
-  <button class="char-mobile-stage-pill" id="char-mobile-pill-2" onclick="jumpToStage(2)" aria-label="Stage 2: Your Gift">
-    <span class="char-mobile-pill-dot"></span>
-    <span class="char-mobile-pill-label">Your Gift</span>
-  </button>
-  <button class="char-mobile-stage-pill" id="char-mobile-pill-3" onclick="jumpToStage(3)" aria-label="Stage 3: Your Strengths">
-    <span class="char-mobile-pill-dot"></span>
-    <span class="char-mobile-pill-label">Strengths</span>
-  </button>
-  <button class="char-mobile-stage-pill" id="char-mobile-pill-4" onclick="jumpToStage(4)" aria-label="Stage 4: Your Gear">
-    <span class="char-mobile-pill-dot"></span>
-    <span class="char-mobile-pill-label">Your Gear</span>
-  </button>
-  <button class="char-mobile-stage-pill" id="char-mobile-pill-5" onclick="jumpToStage(5)" aria-label="Stage 5: Your Character">
-    <span class="char-mobile-pill-dot"></span>
-    <span class="char-mobile-pill-label">Character</span>
-  </button>
+  <div class="char-mobile-nav-header">
+    <span class="char-mobile-nav-brand">Anavale</span>
+    <span class="char-mobile-nav-title">Character Creator</span>
+  </div>
+  <div class="char-mobile-nav-tabs">
+    <button class="char-mobile-stage-pill" id="char-mobile-pill-1" onclick="jumpToStage(1)" aria-label="Stage 1: Your Story">
+      <span class="char-mobile-pill-num">1</span>
+      <span class="char-mobile-pill-label">Your Story</span>
+    </button>
+    <button class="char-mobile-stage-pill" id="char-mobile-pill-2" onclick="jumpToStage(2)" aria-label="Stage 2: Your Class">
+      <span class="char-mobile-pill-num">2</span>
+      <span class="char-mobile-pill-label">Your Class</span>
+    </button>
+    <button class="char-mobile-stage-pill" id="char-mobile-pill-3" onclick="jumpToStage(3)" aria-label="Stage 3: Ability Scores">
+      <span class="char-mobile-pill-num">3</span>
+      <span class="char-mobile-pill-label">Ability Scores</span>
+    </button>
+    <button class="char-mobile-stage-pill" id="char-mobile-pill-4" onclick="jumpToStage(4)" aria-label="Stage 4: Gear & Looks">
+      <span class="char-mobile-pill-num">4</span>
+      <span class="char-mobile-pill-label">Gear &amp; Looks</span>
+    </button>
+    <button class="char-mobile-stage-pill" id="char-mobile-pill-5" onclick="jumpToStage(5)" aria-label="Stage 5: Review & Submit">
+      <span class="char-mobile-pill-num">5</span>
+      <span class="char-mobile-pill-label">Review &amp; Submit</span>
+    </button>
+  </div>
+  <div class="char-mobile-nav-progress">
+    <div class="char-mobile-nav-progress-fill" id="char-progress-bar-mobile"></div>
+  </div>
 </div>
 
   <!-- SIDEBAR -->
