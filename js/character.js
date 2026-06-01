@@ -258,7 +258,7 @@ function initStageOnEnter(n) {
   if (n === 1) { initStage1(); initAppearanceListeners(); }
   if (n === 2) { initStage2(); }
   if (n === 3) { initAbilityScores(); restoreStage3Selections(); renderStage3Panel(); renderStage3ClassBanner(); updateStage3ContinueButton(); }
-  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); updateStage4Hud(); }
+  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); updateStage4Hud(); initHudSticky(); }
   if (n === 5) { initStage5(); }
 }
 
@@ -1081,6 +1081,10 @@ function renderClassGrid() {
     cb.addEventListener('change', function() {
       var classId = this.closest('.char-class-card').dataset.class;
       var cls = CLASS_DATA.find(function(c) { return c.id === classId; });
+      // Auto-select this class if the player picks a skill without clicking the header
+      if (CHAR_STATE.draft.class_id !== classId) {
+        selectClass(classId);
+      }
       var checked = document.querySelectorAll('input[name="skill-' + classId + '"]:checked');
       if (checked.length > cls.skills_count) {
         this.checked = false;
@@ -3415,7 +3419,20 @@ function renderStage3Panel() {
     + '</div>';
 }
 function initHudSticky() {
-  // Sticky handled via CSS — no JS needed
+  var hud = document.getElementById('char-stage4-hud');
+  if (!hud) return;
+  // Create a sentinel element placed just above the HUD in the DOM
+  var sentinel = document.createElement('div');
+  sentinel.id = 'char-hud-sentinel';
+  sentinel.style.cssText = 'height:1px;margin-bottom:-1px;pointer-events:none;';
+  hud.parentNode.insertBefore(sentinel, hud);
+  // Use IntersectionObserver — immune to overflow-x:hidden scroll context issues
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      hud.classList.toggle('char-hud--stuck', !entry.isIntersecting);
+    });
+  }, { threshold: 0, rootMargin: '0px' });
+  observer.observe(sentinel);
 }
 
 function updateStage4Hud() {
