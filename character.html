@@ -931,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="char-stage-header">
         <div class="char-stage-eyebrow">Stage 2 of 5</div>
         <h2 class="char-stage-title">Your Class</h2>
-        <p class="char-stage-intro">Your class is who you are in a fight — and beyond it. Start by choosing your Gigglegloom affinity, then pick the class that fits how you want to play.</p>
+        <p class="char-stage-intro">Your class is who you are in a fight — and beyond it. Pick your class — it shapes how you fight, how you cast, and how you move through the world.</p>
       </div>
       <div id="char-class-section">
         <div id="char-class-grid" class="char-class-grid"></div>
@@ -1285,11 +1285,25 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="char-nav">
         <button class="char-btn char-btn-back" onclick="goBack()">← Back</button>
-        <button id="char-submit-btn" class="char-btn char-btn-submit" onclick="submitCharacter()">✦ · BEGIN YOUR STORY · ✦</button>
+        <button id="char-submit-btn" class="char-btn char-btn-submit" onclick="showPreSubmitConfirm()">✦ · BEGIN YOUR JOURNEY · ✦</button>
       </div>
     </div>
 
   </main>
+</div>
+
+<!-- ── PRE-SUBMIT CONFIRMATION MODAL ── -->
+<div id="char-presubmit-modal" class="char-presubmit-modal" style="display:none;" aria-modal="true" role="dialog">
+  <div class="char-presubmit-inner">
+    <div class="char-presubmit-ornament">✦</div>
+    <h2 class="char-presubmit-title">Ready to begin?</h2>
+    <p class="char-presubmit-body">Once you submit, your character is locked in. Make sure everything looks right before you step into Anavale.</p>
+    <div id="char-presubmit-summary" class="char-presubmit-summary"></div>
+    <div class="char-presubmit-buttons">
+      <button class="char-btn char-btn-back" onclick="closePreSubmitConfirm()">← Go back and edit</button>
+      <button class="char-btn char-btn-submit" onclick="submitCharacter()">✦ Yes — Begin My Journey</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ CONFIRMATION SCREEN ══ -->

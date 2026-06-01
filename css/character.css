@@ -1364,6 +1364,10 @@ body.char-page {
   top: 0;
   z-index: 50;
 }
+/* Stage 5 uses the same panel but as a static review — not sticky */
+#char-stage-5 .char-stage3-panel {
+  position: static;
+}
 .char-stage3-panel-header {
   display: flex;
   align-items: center;
@@ -2710,6 +2714,77 @@ body.banner-visible .char-stage4-hud {
   background: rgba(200,148,10,0.08);
 }
 
+/* ── PRE-SUBMIT CONFIRMATION MODAL ─────────────────────────────── */
+.char-presubmit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: rgba(3, 4, 12, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+.char-presubmit-inner {
+  background: var(--char-card-bg);
+  border: 1px solid var(--char-accent-border);
+  border-radius: var(--char-radius);
+  max-width: 480px;
+  width: 100%;
+  padding: 2rem 1.75rem;
+  text-align: center;
+}
+.char-presubmit-ornament {
+  font-size: 1.4rem;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+.char-presubmit-title {
+  font-family: var(--font-headers);
+  font-size: 1.8rem;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+.char-presubmit-body {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--char-text-faint);
+  line-height: 1.65;
+  margin-bottom: 1.25rem;
+}
+.char-presubmit-summary {
+  background: var(--char-section-bg);
+  border: 1px solid var(--char-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+.char-presubmit-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+}
+.char-presubmit-row:last-child { border-bottom: none; }
+.char-presubmit-label {
+  color: var(--char-text-faint);
+  flex-shrink: 0;
+}
+.char-presubmit-value {
+  color: var(--parchment);
+  text-align: right;
+}
+.char-presubmit-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* ── CONFIRMATION SCREEN ────────────────────────────────────────── */
 .char-confirmation {
   display: none;
@@ -3834,6 +3909,34 @@ body.banner-visible .char-stage4-hud {
   /* ── APPEARANCE SPACING ── */
   .char-appearance-section { margin-bottom: 1.25rem; padding-bottom: 1rem; }
   .char-field-group { margin-bottom: 1.1rem; }
+
+  /* ── STAGE 4 HUD — hide weight and weapon sections on mobile to prevent overflow ── */
+  .char-stage4-hud #hud-weight { display: none; }
+  .char-stage4-hud #hud-weapon { display: none; }
+  /* Show weapon section in compact/stuck mode only */
+  .char-stage4-hud.char-hud--stuck #hud-weight { display: flex; }
+  .char-stage4-hud.char-hud--stuck #hud-weapon { display: flex; }
+  /* Tighten HUD padding on mobile */
+  .char-stage4-hud .char-hud-stat { padding: 0.65rem 0.75rem; }
+  .char-stage4-hud .char-hud-stat-value { font-size: 1.1rem; }
+
+  /* ── STAGE 5 STATS PANEL — single column on mobile ── */
+  .char-stage3-panel-body {
+    grid-template-columns: 1fr;
+    gap: 0.5rem 0;
+    padding: 0.65rem 1rem 0.75rem;
+  }
+  .char-stage3-panel-icon { display: none; }
+  .char-stage3-panel-top-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .char-stage3-panel-stats {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .char-stage3-stat-block { min-width: 80px; }
+  .char-stage3-lower-block { margin-bottom: 0.75rem; }
 }
 
 @media (max-width: 480px) {

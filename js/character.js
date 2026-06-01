@@ -113,14 +113,27 @@ function loadDraftFromURL() {
 function generateResumeLink() {
   try {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
-    var json = JSON.stringify(CHAR_STATE.draft);
-    // Use TextEncoder to safely handle Unicode characters (language glyphs etc.)
+    // Build a stripped copy — omit recomputable / bulky fields to keep URL short
+    var OMIT_KEYS = ['appearance_prompt', '_stage'];
+    var stripped = {};
+    Object.keys(CHAR_STATE.draft).forEach(function(k) {
+      if (OMIT_KEYS.indexOf(k) >= 0) return;
+      var v = CHAR_STATE.draft[k];
+      // Skip null/undefined/empty-string values
+      if (v === null || v === undefined || v === '') return;
+      // Skip empty objects
+      if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return;
+      stripped[k] = v;
+    });
+    // Always preserve current stage for resume routing
+    stripped._stage = CHAR_STATE.current_stage;
+    var json = JSON.stringify(stripped);
     var bytes = new TextEncoder().encode(json);
     var binary = Array.from(bytes).map(function(b) { return String.fromCharCode(b); }).join('');
     var encoded = btoa(binary);
     var url = window.location.origin + window.location.pathname + '?draft=' + encoded;
     navigator.clipboard.writeText(url).then(function() {
-      showToast('Resume link copied to clipboard!');
+      showToast('Resume link copied! (' + Math.round(url.length / 1024 * 10) / 10 + ' KB)');
     }).catch(function() {
       prompt('Copy this link to resume later:', url);
     });
@@ -188,10 +201,18 @@ function initAutoSave() {
   // Save draft on every input change across the form
   document.addEventListener('input', function() {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
+    // Sync Stage 4 appearance selects into draft immediately on change
+    if (CHAR_STATE.current_stage === 4) {
+      CHAR_STATE.draft.appearance_data = collectAppearanceData();
+    }
     saveDraftToStorage();
   });
   document.addEventListener('change', function() {
     CHAR_STATE.draft._stage = CHAR_STATE.current_stage;
+    // Sync Stage 4 appearance selects into draft immediately on change
+    if (CHAR_STATE.current_stage === 4) {
+      CHAR_STATE.draft.appearance_data = collectAppearanceData();
+    }
     saveDraftToStorage();
   });
 }
@@ -2728,6 +2749,53 @@ function selectAlignmentTrait(el, trait) {
   saveDraftToStorage();
 }
 
+// ── PRE-SUBMIT CONFIRMATION ─────────────────────────────────────────
+function showPreSubmitConfirm() {
+  // Collect all current stage data so the summary is up to date
+  collectStageData(1);
+  collectStageData(2);
+  collectStageData(3);
+  collectStageData(4);
+  var d = CHAR_STATE.draft;
+  var modal = document.getElementById('char-presubmit-modal');
+  var summary = document.getElementById('char-presubmit-summary');
+  if (!modal || !summary) { submitCharacter(); return; }
+  // Build a quick-read summary of key choices
+  var clsObj = d.class_id && typeof CLASS_DATA !== 'undefined'
+    ? CLASS_DATA.find(function(c) { return c.id === d.class_id; }) : null;
+  var bgObj = d.background_id && typeof ANAVALE_BACKGROUNDS !== 'undefined'
+    ? ANAVALE_BACKGROUNDS.find(function(b) { return b.id === d.background_id; }) : null;
+  var spObj = d.species_id && typeof ANAVALE_SPECIES !== 'undefined'
+    ? ANAVALE_SPECIES.find(function(s) { return s.id === d.species_id; }) : null;
+  var TYPE_LABELS = {
+    bubbleseed: 'Bubbleseed', featherflow: 'Featherflow',
+    steelfist: 'Steelfist', flamerage: 'Flamerage'
+  };
+  var rows = [
+    ['Name',        d.character_name || '—'],
+    ['Class',       clsObj ? clsObj.name + ' (' + (d.class_id || '—') + ')' : (d.class_id || '—')],
+    ['Magic',       TYPE_LABELS[d.gigglegloom_type] || d.gigglegloom_type || '—'],
+    ['Species',     spObj ? spObj.name : (d.species_id || '—')],
+    ['Background',  bgObj ? bgObj.name : (d.background_id || '—')],
+    ['Alignment',   d.alignment || '—'],
+    ['Region',      d.home_region || '—']
+  ];
+  summary.innerHTML = rows.map(function(r) {
+    return '<div class="char-presubmit-row">'
+      + '<span class="char-presubmit-label">' + r[0] + '</span>'
+      + '<span class="char-presubmit-value">' + r[1] + '</span>'
+      + '</div>';
+  }).join('');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreSubmitConfirm() {
+  var modal = document.getElementById('char-presubmit-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 // ── SUBMIT ─────────────────────────────────────────────────────────
 async function submitCharacter() {
   var btn = document.getElementById('char-submit-btn');
@@ -3315,12 +3383,21 @@ function calcGoldSpent() {
   if (typeof ITEMS === 'undefined') return 0;
   var startingIds = getStartingGearIds();
   var spent = 0;
+  // Track how many times each starting-gear item has already been "used free"
+  var freeUsed = {};
   // ITEMS-backed slots (weapons, armor, lower)
   ['app-top', 'app-lower', 'app-hand-right', 'app-hand-left'].forEach(function(slotId) {
     var sel = document.getElementById(slotId);
     if (!sel || !sel.value) return;
-    if (startingIds.indexOf(sel.value) >= 0) return;
-    var item = ITEMS.find(function(i) { return i.id === sel.value; });
+    var id = sel.value;
+    var isFreeItem = startingIds.indexOf(id) >= 0;
+    // Only the FIRST use of a starting-gear item is free.
+    // A second copy of the same item (e.g. two quarterstaffs) costs gold.
+    if (isFreeItem && !freeUsed[id]) {
+      freeUsed[id] = true;
+      return; // free — don't charge
+    }
+    var item = ITEMS.find(function(i) { return i.id === id; });
     if (item && item.cost_gp) spent += item.cost_gp;
   });
   // Static option slots (cloak, shoes, hat, rings, necklace, earrings)
@@ -3626,10 +3703,16 @@ function renderStage3Panel() {
 function initHudSticky() {
   var hud = document.getElementById('char-stage4-hud');
   if (!hud) return;
+  // Guard: remove any existing sentinel from a previous Stage 4 entry
+  // (occurs when the player uses Back and re-enters Stage 4)
+  var existing = document.getElementById('char-hud-sentinel');
+  if (existing) existing.parentNode.removeChild(existing);
   var sentinel = document.createElement('div');
   sentinel.id = 'char-hud-sentinel';
   sentinel.style.cssText = 'height:0;margin:0;padding:0;pointer-events:none;';
   hud.parentNode.insertBefore(sentinel, hud);
+  // Also reset stuck state so compact mode doesn't persist from last visit
+  hud.classList.remove('char-hud--stuck');
   var stuck = false;
   var observer = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
@@ -3941,6 +4024,7 @@ function setAbilityScore(ability, score) {
     chip.textContent = n;
     chip.addEventListener('dragstart', onChipDragStart);
     chip.addEventListener('dragend',   onChipDragEnd);
+    wireTouchDrag(chip);
     scoreEl.innerHTML = '';
     scoreEl.appendChild(chip);
     if (modEl)  modEl.textContent  = (mod >= 0 ? '+' : '') + mod;
@@ -4069,6 +4153,7 @@ function addChipToBank(score) {
   chip.textContent = score;
   chip.addEventListener('dragstart', onChipDragStart);
   chip.addEventListener('dragend',   onChipDragEnd);
+  wireTouchDrag(chip);
   bank.appendChild(chip);
   // Re-sort bank chips in descending order
   var chips = Array.from(bank.querySelectorAll('.char-score-chip'));
@@ -4077,61 +4162,86 @@ function addChipToBank(score) {
 }
 
 // Touch drag support (mobile)
-function initAbilityTouchDrag() {
-  var touchChip = null;
+// wireTouchDrag() is called on every chip at creation time so newly placed
+// chips and restored draft chips are always touch-draggable.
+function wireTouchDrag(chip) {
+  var _touchOffsetX = 0;
+  var _touchOffsetY = 0;
   var touchClone = null;
 
-  document.querySelectorAll('.char-score-chip').forEach(function(chip) {
-    chip.addEventListener('touchstart', function(e) {
-      touchChip = chip;
-      _dragScore  = chip.dataset.score;
-      _dragSource = chip.closest('.char-ability-card') ? chip.closest('.char-ability-card').dataset.ability : 'bank';
-      // Create floating clone
-      var rect = chip.getBoundingClientRect();
-      touchClone = chip.cloneNode(true);
-      touchClone.style.cssText = 'position:fixed;pointer-events:none;opacity:0.8;z-index:9999;width:' + rect.width + 'px;height:' + rect.height + 'px;top:' + rect.top + 'px;left:' + rect.left + 'px;';
-      document.body.appendChild(touchClone);
-      chip.classList.add('dragging');
-      e.preventDefault();
-    }, { passive: false });
+  chip.addEventListener('touchstart', function(e) {
+    _dragScore  = chip.dataset.score;
+    _dragSource = chip.closest('.char-ability-card')
+      ? chip.closest('.char-ability-card').dataset.ability
+      : 'bank';
+    // Capture where the finger landed within the chip so the clone tracks correctly
+    var rect = chip.getBoundingClientRect();
+    var t = e.touches[0];
+    _touchOffsetX = t.clientX - rect.left;
+    _touchOffsetY = t.clientY - rect.top;
+    // Create floating clone
+    touchClone = chip.cloneNode(true);
+    touchClone.style.cssText = [
+      'position:fixed',
+      'pointer-events:none',
+      'opacity:0.9',
+      'z-index:9999',
+      'width:'  + rect.width  + 'px',
+      'height:' + rect.height + 'px',
+      'top:'    + (t.clientY - _touchOffsetY) + 'px',
+      'left:'   + (t.clientX - _touchOffsetX) + 'px',
+      'transform:scale(1.1)',
+      'box-shadow:0 8px 24px rgba(0,0,0,0.5)'
+    ].join(';');
+    document.body.appendChild(touchClone);
+    chip.classList.add('dragging');
+    e.preventDefault();
+  }, { passive: false });
 
-    chip.addEventListener('touchmove', function(e) {
-      if (!touchClone) return;
-      var t = e.touches[0];
-      touchClone.style.top  = (t.clientY - 20) + 'px';
-      touchClone.style.left = (t.clientX - 24) + 'px';
-      var edgeZone = 80;
-      var scrollSpeed = 6;
-      if (t.clientY > window.innerHeight - edgeZone) {
-        window.scrollBy(0, scrollSpeed);
-      } else if (t.clientY < edgeZone) {
-        window.scrollBy(0, -scrollSpeed);
-      }
-      e.preventDefault();
-    }, { passive: false });
-
-    chip.addEventListener('touchend', function(e) {
-      if (touchClone) { touchClone.remove(); touchClone = null; }
-      if (!touchChip) return;
-      touchChip.classList.remove('dragging');
-      var t = e.changedTouches[0];
-      var el = document.elementFromPoint(t.clientX, t.clientY);
-      var card = el ? el.closest('.char-ability-card') : null;
-      var bank = document.getElementById('char-score-bank');
-      if (card) {
-        // Simulate drop on card
-        var fakeEvent = { preventDefault: function(){} };
-        var origSource = _dragSource;
-        onCardDrop.call(card, fakeEvent);
-      } else if (bank && bank.contains(el)) {
-        var fakeEvent = { preventDefault: function(){} };
-        onBankDrop(fakeEvent);
-      }
-      touchChip = null;
-      _dragScore = null;
-      _dragSource = null;
+  chip.addEventListener('touchmove', function(e) {
+    if (!touchClone) return;
+    var t = e.touches[0];
+    touchClone.style.top  = (t.clientY - _touchOffsetY) + 'px';
+    touchClone.style.left = (t.clientX - _touchOffsetX) + 'px';
+    // Highlight the card or bank under the finger
+    var el = document.elementFromPoint(t.clientX, t.clientY);
+    var overCard = el ? el.closest('.char-ability-card') : null;
+    var overBank = !overCard && el
+      ? el.closest('#char-score-bank') !== null
+      : false;
+    document.querySelectorAll('.char-ability-card').forEach(function(c) {
+      c.classList.toggle('drag-over', c === overCard);
     });
+    var bank = document.getElementById('char-score-bank');
+    if (bank) bank.style.borderColor = overBank ? 'var(--gold)' : '';
+    e.preventDefault();
+  }, { passive: false });
+
+  chip.addEventListener('touchend', function(e) {
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    chip.classList.remove('dragging');
+    // Clear all highlights
+    document.querySelectorAll('.char-ability-card').forEach(function(c) {
+      c.classList.remove('drag-over');
+    });
+    var bank = document.getElementById('char-score-bank');
+    if (bank) bank.style.borderColor = '';
+    if (!_dragScore) return;
+    var t = e.changedTouches[0];
+    var el = document.elementFromPoint(t.clientX, t.clientY);
+    var card = el ? el.closest('.char-ability-card') : null;
+    if (card) {
+      onCardDrop.call(card, { preventDefault: function(){} });
+    } else if (bank && el && bank.contains(el)) {
+      onBankDrop({ preventDefault: function(){} });
+    }
+    _dragScore  = null;
+    _dragSource = null;
   });
+}
+
+function initAbilityTouchDrag() {
+  document.querySelectorAll('.char-score-chip').forEach(wireTouchDrag);
 }
 
 // ── APPEARANCE PROMPT ─────────────────────────────────────────
