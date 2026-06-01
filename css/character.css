@@ -3758,6 +3758,8 @@ body.banner-visible .char-stage4-hud {
     overflow: visible;
   }
   .char-mobile-nav-progress-fill {
+    position: relative;
+    overflow: visible;
     height: 100%;
     background: var(--gradient-colorful);
     background-size: 400% 100%;
@@ -3770,6 +3772,7 @@ body.banner-visible .char-stage4-hud {
     top: 50%;
     transform: translateY(-50%);
     right: 6px;
+    left: auto;
     font-family: var(--font-sans);
     font-size: 0.6rem;
     font-weight: 700;
@@ -3777,13 +3780,13 @@ body.banner-visible .char-stage4-hud {
     white-space: nowrap;
     pointer-events: none;
     color: var(--ink);
-    transition: color 0.3s;
+    text-shadow: none;
   }
   .char-mobile-nav-progress-label.outside {
-    right: 6px;
-    left: auto;
-    color: rgba(255,255,255,0.7);
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    right: auto;
+    left: calc(100% + 4px);
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.7);
   }
 
   /* ── FIXED PROGRESS BAR ── */
