@@ -3871,9 +3871,15 @@ function restoreStage3Selections() {
   var scores = CHAR_STATE.draft.ability_scores;
   if (scores) {
     var placed = [];
+    var bank = document.getElementById('char-score-bank');
     ['str','dex','con','int','wis','cha'].forEach(function(ab) {
       var val = scores[ab];
       if (val !== null && val !== undefined && val !== '') {
+        // Remove the matching chip from the bank before placing on card
+        if (bank) {
+          var bankChip = bank.querySelector('.char-score-chip[data-score="' + parseInt(val) + '"]');
+          if (bankChip) bankChip.remove();
+        }
         setAbilityScore(ab, val);
         placed.push(parseInt(val));
       }
