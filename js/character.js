@@ -3870,8 +3870,6 @@ function restoreStage3Selections() {
   // Restore ability scores
   var scores = CHAR_STATE.draft.ability_scores;
   if (scores) {
-    var bank = document.getElementById('char-score-bank');
-    if (bank) bank.innerHTML = '';
     var placed = [];
     ['str','dex','con','int','wis','cha'].forEach(function(ab) {
       var val = scores[ab];
