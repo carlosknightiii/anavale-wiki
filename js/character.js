@@ -965,7 +965,10 @@ function restoreStage1Selections() {
   if (app) {
     var simpleAppIds = ['app-height','app-build','app-age','app-face-shape',
       'app-eye-color','app-eye-shape','app-facial-hair',
-      'app-hair-color','app-hair-style'];
+      'app-hair-color','app-hair-style',
+      'app-cloak','app-top','app-lower','app-shoes','app-hat',
+      'app-hand-right','app-hand-left',
+      'app-ring-right','app-ring-left','app-necklace','app-earrings'];
     simpleAppIds.forEach(function(id) {
       var key = id.replace('app-','').replace(/-/g,'_');
       var map = { 'facial_hair': 'facial_hair', 'hair_color': 'hair_color',
@@ -987,6 +990,8 @@ function restoreStage1Selections() {
     }
     updateAIPrompt();
   }
+  // Restore region, language, and past question cards
+  restoreStage2Selections();
 }
 
 function renderClassGrid() {
