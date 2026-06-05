@@ -3167,7 +3167,7 @@ function randomizeDraft() {
   var personalities = ['Jumps in before thinking','Painfully honest','Makes everyone laugh somehow','Quietly observant','Overly cautious','Surprisingly reckless'];
   var alignments = ['brightward','colorful','greywarden','steelbound','ashwalker'];
   var regions = ['caparia','nombi','sohot','jugabi'];
-  var languages = ['elvish','dwarvish','gnomish','halfling','draconic','orcish','infernal','celestial','sylvan'];
+  var languages = ['caparian-deep','conclave-script','jugabi-canopy','nombi-frost','pre-partition','sohot-old'];
   var pastRaised    = ['kind-parents','the-streets','strict-religious','single-parent','grandparent'];
   var pastFriend    = ['neighbor','animal','imaginary','no-one','mentor'];
   var pastPet       = ['a loyal hound','a clever crow','a tiny dragon','no pet','a cat that chose you'];
