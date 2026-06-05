@@ -1606,7 +1606,7 @@ function restoreStage2Selections() {
     var regHidden = document.getElementById('char-home-region');
     if (regHidden) regHidden.value = regVal;
     document.querySelectorAll('.char-region-card').forEach(function(card) {
-      card.classList.toggle('selected', card.dataset.value === regVal);
+      card.classList.toggle('selected', (card.dataset.value || '').toLowerCase() === regVal.toLowerCase());
     });
   }
   // Restore language cards
@@ -1615,7 +1615,7 @@ function restoreStage2Selections() {
     var langHidden = document.getElementById('char-language');
     if (langHidden) langHidden.value = langVal;
     document.querySelectorAll('.char-lang-card').forEach(function(card) {
-      card.classList.toggle('selected', card.dataset.value === langVal);
+      card.classList.toggle('selected', (card.dataset.value || '').toLowerCase() === langVal.toLowerCase());
     });
   }
 
