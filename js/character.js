@@ -3244,44 +3244,44 @@ function randomizeDraft() {
     earrings:        rand(earringOpts)
   };
   // ── Gold-aware accessory pass ─────────────────────────────────
-  // After picking random accessories, check total cost and replace
-  // any over-budget items with their cheapest alternative.
+  // top/lower are always free (class starting gear) — not counted.
+  // Accessories are sorted by cost descending and cut until budget fits.
   (function() {
     var budget = getStartingGold();
-    // Cost of top/lower is already baked in via cls4top/cls4lower (class starting gear is free).
-    // Only optionally-purchased accessories consume gold.
-    var SLOT_FALLBACKS = {
-      cloak:    '',
-      shoes:    'worn boots',
-      hat:      '',
-      necklace: '',
-      ring_right: 'a plain iron ring',
-      ring_left:  '',
-      earrings:   'bone or carved earrings'
-    };
-    var slots = ['cloak','shoes','hat','necklace','ring_right','ring_left','earrings'];
+    var app = CHAR_STATE.draft.appearance_data;
+    // Slots to budget-check, with their free fallback values
+    var SLOTS = [
+      { key: 'cloak',      fallback: ''                     },
+      { key: 'shoes',      fallback: 'worn boots'           },
+      { key: 'hat',        fallback: ''                     },
+      { key: 'necklace',   fallback: ''                     },
+      { key: 'ring_right', fallback: 'a plain iron ring'    },
+      { key: 'ring_left',  fallback: ''                     },
+      { key: 'earrings',   fallback: 'bone or carved earrings' }
+    ];
     function slotCost(val) {
       if (!val) return 0;
       var meta = STATIC_OPTION_COSTS[val];
       return (meta && meta.cost_gp) ? meta.cost_gp : 0;
     }
-    var app = CHAR_STATE.draft.appearance_data;
-    // Also account for clothing cost (top/lower via CLOTHING_TIERS/LOWER_TIERS)
-    function clothingCost(val, tiers) {
-      if (!val || !tiers) return 0;
-      for (var t in tiers) {
-        var match = tiers[t].find(function(o) { return o.value === val; });
-        if (match) return match.cost_gp || 0;
-      }
-      return 0;
-    }
-    var spent = clothingCost(app.top, CLOTHING_TIERS) + clothingCost(app.lower, LOWER_TIERS);
-    slots.forEach(function(slot) {
-      var cost = slotCost(app[slot]);
+    // Sort slots by cost descending so we cut the most expensive first
+    SLOTS.sort(function(a, b) {
+      return slotCost(app[b.key]) - slotCost(app[a.key]);
+    });
+    var spent = 0;
+    SLOTS.forEach(function(slot) {
+      var cost = slotCost(app[slot.key]);
       if (spent + cost <= budget) {
         spent += cost;
       } else {
-        app[slot] = SLOT_FALLBACKS[slot] || '';
+        // Replace with fallback — if fallback still fits, use it; else blank
+        var fbCost = slotCost(slot.fallback);
+        if (spent + fbCost <= budget) {
+          app[slot.key] = slot.fallback;
+          spent += fbCost;
+        } else {
+          app[slot.key] = '';
+        }
       }
     });
   })();
