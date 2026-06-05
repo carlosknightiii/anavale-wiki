@@ -1600,22 +1600,24 @@ function restoreStage2Selections() {
     if (typeof selectSpecies === 'function') selectSpecies(CHAR_STATE.draft.species_id);
   }
 
-  // Restore simple option cards (region, language)
-  var simpleFields = [
-    { field: 'char-home-region', saveKey: 'home_region' },
-    { field: 'char-language',    saveKey: 'language'    }
-  ];
-  simpleFields.forEach(function(f) {
-    var val = CHAR_STATE.draft[f.saveKey];
-    if (!val) return;
-    var hidden = document.getElementById(f.field);
-    if (hidden) hidden.value = val;
-    var container = document.querySelector('.char-option-cards[data-field="' + f.field + '"]');
-    if (!container) return;
-    container.querySelectorAll('.char-option-card').forEach(function(card) {
-      card.classList.toggle('selected', card.dataset.value === val);
+  // Restore region cards
+  if (CHAR_STATE.draft.home_region) {
+    var regVal = CHAR_STATE.draft.home_region;
+    var regHidden = document.getElementById('char-home-region');
+    if (regHidden) regHidden.value = regVal;
+    document.querySelectorAll('.char-region-card').forEach(function(card) {
+      card.classList.toggle('selected', card.dataset.value === regVal);
     });
-  });
+  }
+  // Restore language cards
+  if (CHAR_STATE.draft.language) {
+    var langVal = CHAR_STATE.draft.language;
+    var langHidden = document.getElementById('char-language');
+    if (langHidden) langHidden.value = langVal;
+    document.querySelectorAll('.char-lang-card').forEach(function(card) {
+      card.classList.toggle('selected', card.dataset.value === langVal);
+    });
+  }
 
   // Restore past question cards
   var pastFields = [
