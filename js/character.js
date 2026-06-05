@@ -3292,73 +3292,33 @@ function randomizeDraft() {
   CHAR_STATE.highest_stage   = 5;
   saveDraftToStorage();
 
-  // Force Stage 1 and 2 to initialize so all card DOM exists before syncing
-  initStageOnEnter(1);
-  initStageOnEnter(2);
-  // ── Sync DOM using the same restore path as resumeDraft ──
-  // Simple inputs and selects
+  // ── Sync DOM for Stage 4 (gear/appearance selects exist after initStageOnEnter) ──
+  // Stage 1–3 cards restore automatically when the player navigates back to those
+  // stages, via the existing initStageOnEnter → restore path. We only need to
+  // sync the selects that live in Stage 4 and the name field.
   var app = CHAR_STATE.draft.appearance_data;
   var nameEl = document.getElementById('char-final-name');
   if (nameEl) nameEl.value = CHAR_STATE.draft.character_name || '';
-  // Gender — must use selectGender path to update button state
-  if (CHAR_STATE.draft.gender) {
-    var genderBtn = document.querySelector('.char-gender-btn[data-value="' + CHAR_STATE.draft.gender + '"]');
-    if (genderBtn) selectGender(genderBtn);
-  }
-  // Personality
-  ['char-personality-1','char-personality-2','char-personality-3'].forEach(function(id, i) {
+  // Sync hidden inputs so stage-entry restore functions read correct values
+  var hiddenMap = {
+    'char-gender':    CHAR_STATE.draft.gender,
+    'char-background': CHAR_STATE.draft.background_id,
+    'char-species':   CHAR_STATE.draft.species_id,
+    'char-home-region': CHAR_STATE.draft.home_region,
+    'char-language':  CHAR_STATE.draft.language,
+    'char-alignment': CHAR_STATE.draft.alignment
+  };
+  Object.keys(hiddenMap).forEach(function(id) {
     var el = document.getElementById(id);
-    var vals = [CHAR_STATE.draft.personality_immediate, CHAR_STATE.draft.personality_wrong, CHAR_STATE.draft.personality_laugh];
-    if (el) el.value = vals[i] || '';
+    if (el && hiddenMap[id] !== undefined) el.value = hiddenMap[id];
   });
-  // Gigglegloom affinity
-  if (CHAR_STATE.draft.gigglegloom_type) {
-    highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
-  }
-  // Background, species, region, language — card pickers
-  if (CHAR_STATE.draft.background_id) {
-    var bgHidden = document.getElementById('char-background');
-    if (bgHidden) bgHidden.value = CHAR_STATE.draft.background_id;
-    document.querySelectorAll('.char-option-card[data-field="char-background"]').forEach(function(c) {
-      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.background_id);
-    });
-  }
-  if (CHAR_STATE.draft.species_id) {
-    renderSpeciesCards();
-    var spHidden = document.getElementById('char-species');
-    if (spHidden) spHidden.value = CHAR_STATE.draft.species_id;
-    document.querySelectorAll('.char-species-card').forEach(function(c) {
-      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.species_id);
-    });
-  }
-  if (CHAR_STATE.draft.home_region) {
-    var regHidden = document.getElementById('char-home-region');
-    if (regHidden) regHidden.value = CHAR_STATE.draft.home_region;
-    document.querySelectorAll('.char-region-card').forEach(function(c) {
-      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.home_region);
-    });
-  }
-  if (CHAR_STATE.draft.language) {
-    var langHidden = document.getElementById('char-language');
-    if (langHidden) langHidden.value = CHAR_STATE.draft.language;
-    document.querySelectorAll('.char-lang-card').forEach(function(c) {
-      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.language);
-    });
-  }
-  // Alignment
-  if (CHAR_STATE.draft.alignment) {
-    selectAlignment(CHAR_STATE.draft.alignment);
-  }
-  // Past questions — restore cards and effect previews
-  restoreStage2Selections();
   // Ability scores
   abKeys.forEach(function(ab) {
     var el = document.getElementById('char-ability-' + ab);
     if (el) el.value = scores[ab];
   });
-  // Clothing and weapons — filter by class first, then set values
-  filterClothingByClass(CHAR_STATE.draft.class_id || '');
-  filterWeaponsByClass(CHAR_STATE.draft.class_id || '');
+  // Stage 4 selects — filter by class first so options exist, then set values
+  initStageOnEnter(4);
   var appSelects = {
     'app-height': app.height, 'app-build': app.build, 'app-age': app.age,
     'app-skin-tone': app.skin_tone, 'app-face-shape': app.face_shape,
