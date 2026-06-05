@@ -3178,11 +3178,11 @@ function randomizeDraft() {
   var languages = ['caparian-deep','conclave-script','jugabi-canopy','nombi-frost','pre-partition','sohot-old'];
   var pastRaised    = ['kind-parents','the-streets','strict-religious','single-parent','grandparent'];
   var pastFriend    = ['neighbor','animal','imaginary','no-one','mentor'];
-  var pastPet       = ['a loyal hound','a clever crow','a tiny dragon','no pet','a cat that chose you'];
-  var pastLove      = ['someone from home','a fellow traveller','a mentor','no one yet','someone you lost'];
+  var pastPet       = ['loyal-animal','never-wanted','unusual','wanted-one'];
+  var pastLove      = ['complicated','ended-badly','ended-well','not-for-me','not-yet'];
   var pastOrg       = ['wanderkeep','merchant-guild','brightcreed','fighting-company','kept-to-myself'];
-  var pastLeft      = ['a person','a place','a promise','a secret','an object'];
-  var pastWhyLeft   = ['something called to me','I had no choice','I was running from something','I was looking for something','I needed to prove something'];
+  var pastLeft      = ['nothing','person','place','promise','self'];
+  var pastWhyLeft   = ['ran-from-something','received-message','restlessness','saw-the-grey','someone-disappeared'];
   var skinTones     = ['#f5d5b0','#e8b88a','#c8a070','#a07040','#7a4820','#4a2810'];
   var hairColors    = ['black','brown','blonde','silver','red','white'];
   var hairStyles    = ['long','short','braided','wild','shaved','curly'];
