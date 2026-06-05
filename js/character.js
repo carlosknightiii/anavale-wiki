@@ -884,12 +884,23 @@ function toggleAccordion(panelId) {
       renderGigglogloomAffinity('char-type-grid');
       if (CHAR_STATE.draft.gigglegloom_type) highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
     }
+    if (panelId === 'acc-who') {
+      restoreStage1Selections();
+    }
     if (panelId === 'acc-background') {
       renderBackgroundCards();
       renderSpeciesCards();
       restoreStage1Selections();
+      // Restore gender button visual state and unlock species grid
+      if (CHAR_STATE.draft.gender) {
+        var gBtn = document.querySelector('.char-gender-btn[data-value="' + CHAR_STATE.draft.gender + '"]');
+        if (gBtn) selectGender(gBtn);
+      }
     }
     if (panelId === 'acc-past') {
+      restoreStage1Selections();
+    }
+    if (panelId === 'acc-appearance') {
       restoreStage1Selections();
     }
     // Mobile: tapping anywhere in an open accordion body selects that option.
