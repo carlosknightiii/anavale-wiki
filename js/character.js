@@ -3767,14 +3767,22 @@ function initHudSticky() {
     var lastStuck = false;
     function onScroll() {
       var rect = hud.getBoundingClientRect();
-      var shouldStick = rect.top <= navH + 2;
+      // Only stick when HUD top has actually reached the nav bottom
+      // Use a negative threshold so margin gap is fully scrolled past first
+      var shouldStick = rect.top <= navH;
       if (shouldStick !== lastStuck) {
         lastStuck = shouldStick;
         hud.classList.toggle('char-hud--stuck', shouldStick);
-        // In stuck mode remove margin so HUD sits flush against nav
         hud.style.marginTop = shouldStick ? '0' : '1rem';
       }
     }
+    // Run once on init to set correct state without triggering gap removal
+    requestAnimationFrame(function() {
+      var rect = hud.getBoundingClientRect();
+      if (rect.top > navH) {
+        hud.style.marginTop = '1rem';
+      }
+    });
     document.addEventListener('scroll', onScroll, { passive: true });
     hud._scrollCleanup = function() {
       document.removeEventListener('scroll', onScroll);
