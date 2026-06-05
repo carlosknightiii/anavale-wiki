@@ -2455,7 +2455,6 @@ var STATIC_OPTION_COSTS = {
   'a crown':        { label: 'Crown',               cost_gp: 100 },
   'a headband':     { label: 'Headband',            cost_gp: 0.2 },
   'a helmet':       { label: 'Helmet',              cost_gp: 10  },
-  'a hood':         { label: 'Hood',                cost_gp: 0.5 },
   'a turban':       { label: 'Turban',              cost_gp: 1   },
   'a wide-brimmed hat': { label: 'Wide-brimmed hat', cost_gp: 1  },
   // app-ring-right / app-ring-left
@@ -3322,7 +3321,37 @@ var APPEARANCE_IMG_OVERRIDE = {
   'hooded':      'hooded-cloak',
   'long dark':   'long-dark-cloak',
   'short dark':  'short-dark-cloak',
-  'tattered':    'tattered-cloak'
+  'tattered':    'tattered-cloak',
+  // app-lower: values with leading articles or mismatched slugs
+  'a long skirt':   'long-skirt',
+  'a skirt':        'skirt',
+  // app-top: value whose slug doesn't match filename
+  'chainmail shirt': 'chain-shirt',
+  // app-lower: 'flowing robes' doesn't slug to the image filename
+  'flowing robes':            'robes',
+  // app-hat: all static option values have leading 'a' article
+  'a wide-brimmed hat':       'wide-brimmed-hat',
+  'a circlet':                'circlet',
+  'a crown':                  'crown',
+  'a helmet':                 'helmet',
+  'a headband':               'headband',
+  'a turban':                 'turban',
+  // app-necklace: leading articles + mismatched slug
+  'a beaded necklace':        'beaded-necklace',
+  'a gold chain necklace':    'gold-chain-necklace',
+  'a holy symbol on a chain': 'holy-symbol-chain',
+  'a leather cord necklace':  'leather-cord-necklace',
+  'a pendant necklace':       'pendant-necklace',
+  'a silver necklace':        'silver-necklace',
+  // app-ring-right / app-ring-left: leading articles
+  'a braided cord ring':      'braided-cord-ring',
+  'a gemstone ring':          'gemstone-ring',
+  'a gold ring':              'gold-ring',
+  'a plain iron ring':        'plain-iron-ring',
+  'a signet ring':            'signet-ring',
+  'a silver ring':            'silver-ring',
+  // app-earrings: slug 'bone-or-carved-earrings' doesn't match filename
+  'bone or carved earrings':  'bone-carved-earrings'
 };
 
 function appearanceImgSlug(value) {
@@ -3342,16 +3371,22 @@ function updateAppearancePreview(selectId, imgId) {
     return;
   }
   var src = 'assets/images/appearance/' + slug + '.webp';
+  img.onerror = function() { img.style.display = 'none'; };
   img.src = src;
   img.style.display = 'block';
 }
 
 function initAppearancePreviews() {
   [
-    ['app-top',   'app-top-preview'],
-    ['app-lower', 'app-lower-preview'],
-    ['app-cloak', 'app-cloak-preview'],
-    ['app-shoes', 'app-shoes-preview']
+    ['app-top',        'app-top-preview'],
+    ['app-lower',      'app-lower-preview'],
+    ['app-cloak',      'app-cloak-preview'],
+    ['app-shoes',      'app-shoes-preview'],
+    ['app-hat',        'app-hat-preview'],
+    ['app-necklace',   'app-necklace-preview'],
+    ['app-ring-right', 'app-ring-right-preview'],
+    ['app-ring-left',  'app-ring-left-preview'],
+    ['app-earrings',   'app-earrings-preview']
   ].forEach(function(pair) {
     var sel = document.getElementById(pair[0]);
     if (sel) {
