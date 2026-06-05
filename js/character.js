@@ -996,7 +996,6 @@ function restoreStage1Selections() {
         cb.checked = app.facial_markings.indexOf(cb.value) >= 0;
       });
     }
-    updateAIPrompt();
   }
   // Restore region, language, and past question cards
   restoreStage2Selections();
