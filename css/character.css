@@ -3913,7 +3913,7 @@ body.banner-visible .char-stage4-hud {
   .char-weapon-slot-divider { display: none; }
 
   /* ── STAGE 4 HUD — all sections visible on mobile, tighter layout ── */
-  .char-stage4-hud { min-height: 0; overflow: visible; }
+  .char-stage4-hud { min-height: 0; overflow: visible; border-radius: 0; }
   .char-stage4-hud .char-hud-stat { padding: 0.55rem 0.5rem; gap: 0.3rem; }
   .char-stage4-hud .char-hud-stat-icon { display: none; }
   .char-stage4-hud .char-hud-stat-label { font-size: 0.55rem; }
@@ -3925,14 +3925,17 @@ body.banner-visible .char-stage4-hud {
   .char-stage4-hud .char-hud-money-negative { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .char-stage4-hud .char-hud-weight-bar-track { min-width: 50px; }
   .char-stage4-hud .char-hud-weight-numbers { font-size: 0.6rem; }
-  .char-stage4-hud .char-hud-weapon-dmg { font-size: 0.65rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .char-stage4-hud #hud-weapon { flex: 3; min-width: 0; overflow: hidden; }
+  .char-stage4-hud .char-hud-weapon-dmg { font-size: 0.65rem; max-width: 100%; overflow: visible; white-space: normal; word-break: break-word; }
+  .char-stage4-hud .char-hud-weapon-slots { flex-direction: column; overflow: visible; }
+  .char-stage4-hud.char-hud--stuck .char-hud-weapon-slots { flex-direction: column; }
+  .char-stage4-hud #hud-weapon { flex: 4; min-width: 0; overflow: hidden; }
   .char-stage4-hud.char-hud--stuck .char-hud-stat--weight { display: none; }
   .char-stage4-hud.char-hud--stuck #hud-weapon { flex: 3; overflow: visible; }
   .char-stage4-hud.char-hud--stuck .char-hud-weapon-dmg { overflow: visible; text-overflow: unset; white-space: nowrap; max-width: none; }
   .char-stage4-hud #hud-ac { flex: 1; min-width: 0; }
   .char-stage4-hud #hud-gold { flex: 1.5; min-width: 0; overflow: hidden; }
-  .char-stage4-hud .char-hud-stat--weight { flex: 1.5; min-width: 0; overflow: hidden; }
+  .char-stage4-hud .char-hud-stat--weight { display: none; }
+  .char-hud-spacer { height: 1rem; }
 
   /* ── STAGE 5 STATS PANEL — flex column on mobile ── */
   .char-stage3-panel-body {
