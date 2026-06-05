@@ -3354,8 +3354,13 @@ function randomizeDraft() {
     if (el) el.value = scores[ab];
   });
   // Stage 4 selects — init stage (renders options), then set values on next
-  // animation frame so all synchronous rebuild/change handlers have settled
+  // animation frame so all synchronous rebuild/change handlers have settled.
+  // Save appearance_data to draft first so initAutoSave change events fired
+  // by initStageOnEnter(4) cannot overwrite it with blank select values.
+  var savedAppearanceData = CHAR_STATE.draft.appearance_data;
   initStageOnEnter(4);
+  CHAR_STATE.draft.appearance_data = savedAppearanceData;
+  saveDraftToStorage();
   var appSelects = {
     'app-height': app.height, 'app-build': app.build, 'app-age': app.age,
     'app-skin-tone': app.skin_tone, 'app-face-shape': app.face_shape,
@@ -3373,6 +3378,10 @@ function randomizeDraft() {
         var el = document.getElementById(id);
         if (el && appSelects[id] !== undefined) el.value = appSelects[id];
       });
+      // Restore appearance_data from saved copy — prevents any change events
+      // fired during select assignment from overwriting it with blank values.
+      CHAR_STATE.draft.appearance_data = savedAppearanceData;
+      saveDraftToStorage();
       // Do NOT call updateAIPrompt() here — it would re-collect from DOM
       // and overwrite the correctly randomized appearance_data in the draft.
       updateGoldDisplay();
