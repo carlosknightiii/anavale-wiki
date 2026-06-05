@@ -2553,6 +2553,7 @@ function initAppearanceListeners() {
   document.querySelectorAll('input[name="app-markings"]').forEach(function(cb) {
     cb.addEventListener('change', updateAIPrompt);
   });
+  initAppearancePreviews();
 }
 
 // ── APPEARANCE DATA ────────────────────────────────────────────────
@@ -3309,6 +3310,58 @@ function showToast(msg, type) {
     toast.classList.remove('visible');
     toast.classList.remove('error');
   }, 3000);
+}
+
+// ── APPEARANCE IMAGE PREVIEWS ─────────────────────────────────────
+// Explicit filename overrides for slots whose option values don't
+// directly slug-convert to their image filenames.
+var APPEARANCE_IMG_OVERRIDE = {
+  // app-cloak: value → filename (without extension)
+  'colourful':   'colourful-cloak',
+  'fur-trimmed': 'fur-trimmed-cloak',
+  'hooded':      'hooded-cloak',
+  'long dark':   'long-dark-cloak',
+  'short dark':  'short-dark-cloak',
+  'tattered':    'tattered-cloak'
+};
+
+function appearanceImgSlug(value) {
+  if (!value) return '';
+  if (APPEARANCE_IMG_OVERRIDE[value]) return APPEARANCE_IMG_OVERRIDE[value];
+  return value.trim().replace(/\s+/g, '-').replace(/'/g, '').replace(/[^a-z0-9\-]/gi, '').toLowerCase();
+}
+
+function updateAppearancePreview(selectId, imgId) {
+  var sel = document.getElementById(selectId);
+  var img = document.getElementById(imgId);
+  if (!sel || !img) return;
+  var slug = appearanceImgSlug(sel.value);
+  if (!slug) {
+    img.style.display = 'none';
+    img.src = '';
+    return;
+  }
+  var src = 'assets/images/appearance/' + slug + '.webp';
+  img.src = src;
+  img.style.display = 'block';
+}
+
+function initAppearancePreviews() {
+  [
+    ['app-top',   'app-top-preview'],
+    ['app-lower', 'app-lower-preview'],
+    ['app-cloak', 'app-cloak-preview'],
+    ['app-shoes', 'app-shoes-preview']
+  ].forEach(function(pair) {
+    var sel = document.getElementById(pair[0]);
+    if (sel) {
+      sel.addEventListener('change', function() {
+        updateAppearancePreview(pair[0], pair[1]);
+      });
+      // Fire once immediately to restore preview if draft already has a value
+      updateAppearancePreview(pair[0], pair[1]);
+    }
+  });
 }
 
 // ── TOOLTIP SYSTEM ────────────────────────────────────────────────
