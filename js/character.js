@@ -3292,48 +3292,86 @@ function randomizeDraft() {
   CHAR_STATE.highest_stage   = 5;
   saveDraftToStorage();
 
-  // ── Populate all DOM inputs so renders read correctly ──
+  // ── Sync DOM using the same restore path as resumeDraft ──
+  // Simple inputs and selects
   var app = CHAR_STATE.draft.appearance_data;
-  var domMap = {
-    'char-final-name':   CHAR_STATE.draft.character_name,
-    'char-gender':       CHAR_STATE.draft.gender,
-    'char-personality-1': CHAR_STATE.draft.personality_immediate,
-    'char-personality-2': CHAR_STATE.draft.personality_wrong,
-    'char-personality-3': CHAR_STATE.draft.personality_laugh,
-    'char-background':   CHAR_STATE.draft.background_id,
-    'char-species':      CHAR_STATE.draft.species_id,
-    'char-home-region':  CHAR_STATE.draft.home_region,
-    'char-language':     CHAR_STATE.draft.language,
-    'char-alignment':    CHAR_STATE.draft.alignment,
-    'app-height':        app.height,
-    'app-build':         app.build,
-    'app-age':           app.age,
-    'app-skin-tone':     app.skin_tone,
-    'app-face-shape':    app.face_shape,
-    'app-eye-color':     app.eye_color,
-    'app-eye-shape':     app.eye_shape,
-    'app-hair-color':    app.hair_color,
-    'app-hair-style':    app.hair_style,
-    'app-cloak':         app.cloak,
-    'app-top':           app.top,
-    'app-lower':         app.lower,
-    'app-shoes':         app.shoes,
-    'app-hat':           app.hat,
-    'app-hand-right':    app.hand_right,
-    'app-hand-left':     app.hand_left,
-    'app-ring-right':    app.ring_right,
-    'app-ring-left':     app.ring_left,
-    'app-necklace':      app.necklace,
-    'app-earrings':      app.earrings
-  };
-  Object.keys(domMap).forEach(function(id) {
+  var nameEl = document.getElementById('char-final-name');
+  if (nameEl) nameEl.value = CHAR_STATE.draft.character_name || '';
+  // Gender — must use selectGender path to update button state
+  if (CHAR_STATE.draft.gender) {
+    var genderBtn = document.querySelector('.char-gender-btn[data-value="' + CHAR_STATE.draft.gender + '"]');
+    if (genderBtn) selectGender(genderBtn);
+  }
+  // Personality
+  ['char-personality-1','char-personality-2','char-personality-3'].forEach(function(id, i) {
     var el = document.getElementById(id);
-    if (el && domMap[id] !== undefined) el.value = domMap[id];
+    var vals = [CHAR_STATE.draft.personality_immediate, CHAR_STATE.draft.personality_wrong, CHAR_STATE.draft.personality_laugh];
+    if (el) el.value = vals[i] || '';
   });
+  // Gigglegloom affinity
+  if (CHAR_STATE.draft.gigglegloom_type) {
+    highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
+  }
+  // Background, species, region, language — card pickers
+  if (CHAR_STATE.draft.background_id) {
+    var bgHidden = document.getElementById('char-background');
+    if (bgHidden) bgHidden.value = CHAR_STATE.draft.background_id;
+    document.querySelectorAll('.char-option-card[data-field="char-background"]').forEach(function(c) {
+      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.background_id);
+    });
+  }
+  if (CHAR_STATE.draft.species_id) {
+    renderSpeciesCards();
+    var spHidden = document.getElementById('char-species');
+    if (spHidden) spHidden.value = CHAR_STATE.draft.species_id;
+    document.querySelectorAll('.char-species-card').forEach(function(c) {
+      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.species_id);
+    });
+  }
+  if (CHAR_STATE.draft.home_region) {
+    var regHidden = document.getElementById('char-home-region');
+    if (regHidden) regHidden.value = CHAR_STATE.draft.home_region;
+    document.querySelectorAll('.char-region-card').forEach(function(c) {
+      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.home_region);
+    });
+  }
+  if (CHAR_STATE.draft.language) {
+    var langHidden = document.getElementById('char-language');
+    if (langHidden) langHidden.value = CHAR_STATE.draft.language;
+    document.querySelectorAll('.char-lang-card').forEach(function(c) {
+      c.classList.toggle('selected', c.dataset.value === CHAR_STATE.draft.language);
+    });
+  }
+  // Alignment
+  if (CHAR_STATE.draft.alignment) {
+    selectAlignment(CHAR_STATE.draft.alignment);
+  }
+  // Past questions — restore cards and effect previews
+  restoreStage2Selections();
+  // Ability scores
   abKeys.forEach(function(ab) {
     var el = document.getElementById('char-ability-' + ab);
     if (el) el.value = scores[ab];
   });
+  // Clothing and weapons — filter by class first, then set values
+  filterClothingByClass(CHAR_STATE.draft.class_id || '');
+  filterWeaponsByClass(CHAR_STATE.draft.class_id || '');
+  var appSelects = {
+    'app-height': app.height, 'app-build': app.build, 'app-age': app.age,
+    'app-skin-tone': app.skin_tone, 'app-face-shape': app.face_shape,
+    'app-eye-color': app.eye_color, 'app-eye-shape': app.eye_shape,
+    'app-hair-color': app.hair_color, 'app-hair-style': app.hair_style,
+    'app-cloak': app.cloak, 'app-top': app.top, 'app-lower': app.lower,
+    'app-shoes': app.shoes, 'app-hat': app.hat,
+    'app-hand-right': app.hand_right, 'app-hand-left': app.hand_left,
+    'app-ring-right': app.ring_right, 'app-ring-left': app.ring_left,
+    'app-necklace': app.necklace, 'app-earrings': app.earrings
+  };
+  Object.keys(appSelects).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && appSelects[id] !== undefined) el.value = appSelects[id];
+  });
+  updateAIPrompt();
 
   // ── Jump to Stage 5 and re-render panel with populated inputs ──
   showStage(5);
