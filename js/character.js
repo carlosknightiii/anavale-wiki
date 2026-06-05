@@ -2081,6 +2081,25 @@ function filterWeaponsByClass(cls) {
       sel.value = current;
     }
     updateWeaponStatChip(slotId, slotId + '-stat');
+    // Re-inject two-handed placeholder if the OTHER hand has a two-handed weapon
+    var otherSlotId3 = slotId === 'app-hand-right' ? 'app-hand-left' : 'app-hand-right';
+    var otherSel3 = document.getElementById(otherSlotId3);
+    if (otherSel3 && otherSel3.value) {
+      var otherItem3 = typeof ITEMS !== 'undefined'
+        ? ITEMS.find(function(i) { return i.id === otherSel3.value; }) : null;
+      if (otherItem3 && otherItem3.properties
+          && otherItem3.properties.indexOf('two-handed') >= 0) {
+        // Other hand has two-handed weapon — lock this slot
+        if (!sel.options[0] || sel.options[0].value !== '__two_handed__') {
+          var ph = document.createElement('option');
+          ph.value = '__two_handed__';
+          ph.text  = '⚔ Two-handed weapon selected';
+          sel.insertBefore(ph, sel.options[0]);
+        }
+        sel.value    = '__two_handed__';
+        sel.disabled = true;
+      }
+    }
   });
 }
 function updateWeaponStatChip(selectId, chipId) {
