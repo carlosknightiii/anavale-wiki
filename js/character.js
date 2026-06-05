@@ -3183,11 +3183,11 @@ function randomizeDraft() {
   var pastLeft      = ['nothing','person','place','promise','self'];
   var pastWhyLeft   = ['ran-from-something','received-message','restlessness','saw-the-grey','someone-disappeared'];
   var skinTones     = ['#f5d5b0','#e8b88a','#c8a070','#a07040','#7a4820','#4a2810'];
-  var hairColors    = ['black','brown','blonde','silver','red','white'];
-  var hairStyles    = ['long','short','braided','wild','shaved','curly'];
-  var eyeColors     = ['brown','blue','green','grey','amber','violet'];
-  var eyeShapes     = ['sharp','warm','wide','heavy-lidded'];
-  var faceShapes    = ['angular','round','heart-shaped','oval','square'];
+  var hairColors    = ['Black','Dark brown','Brown','Auburn','Red','Blonde','Platinum','Grey','White'];
+  var hairStyles    = ['Short','Medium','Long','Shaved','Braided','Curly','Wavy','Tied back'];
+  var eyeColors     = ['Dark brown','Light brown','Hazel','Green','Blue','Grey','Amber','Violet'];
+  var eyeShapes     = ['Almond','Round','Deep-set','Wide-set','Hooded','Upturned'];
+  var faceShapes    = ['Round','Oval','Square','Heart','Diamond','Oblong'];
   var cloakOpts     = ['colourful','fur-trimmed','hooded','long dark','short dark','tattered',''];
   var shoeOpts      = ['fine boots','sandals','sturdy boots','worn boots',''];
   var hatOpts       = ['a circlet','a headband','a helmet','a wide-brimmed hat',''];
