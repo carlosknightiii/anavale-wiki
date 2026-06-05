@@ -3786,7 +3786,7 @@ function initHudSticky() {
     hud.style.top = '';
     var sentinel = document.createElement('div');
     sentinel.id = 'char-hud-sentinel';
-    sentinel.style.cssText = 'height:1px;margin:0;padding:0;pointer-events:none;position:relative;';
+    sentinel.style.cssText = 'height:1px;margin-top:1rem;padding:0;pointer-events:none;position:relative;';
     hud.parentNode.insertBefore(sentinel, hud);
     var stuck = false;
     var observer = new IntersectionObserver(function(entries) {
