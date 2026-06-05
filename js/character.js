@@ -936,6 +936,14 @@ function restoreStage1Selections() {
   // Name, gender, personality, three last things
   var nameEl = document.getElementById('char-final-name');
   if (nameEl && CHAR_STATE.draft.character_name) nameEl.value = CHAR_STATE.draft.character_name;
+  // Also restore the visible first/last name inputs
+  if (CHAR_STATE.draft.character_name) {
+    var nameParts = CHAR_STATE.draft.character_name.trim().split(/\s+/);
+    var firstEl = document.getElementById('char-first-name');
+    var lastEl  = document.getElementById('char-last-name');
+    if (firstEl) firstEl.value = nameParts[0] || '';
+    if (lastEl)  lastEl.value  = nameParts.slice(1).join(' ') || '';
+  }
   var genderEl = document.getElementById('char-gender');
   if (genderEl && CHAR_STATE.draft.gender) genderEl.value = CHAR_STATE.draft.gender;
   var p1 = document.getElementById('char-personality-1');
