@@ -280,7 +280,7 @@ function initStageOnEnter(n) {
   if (n === 1) { initStage1(); initAppearanceListeners(); }
   if (n === 2) { initStage2(); }
   if (n === 3) { initAbilityScores(); restoreStage3Selections(); renderStage3Panel(); renderStage3ClassBanner(); updateStage3ContinueButton(); }
-  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); updateStage4Hud(); initHudSticky(); }
+  if (n === 4) { initAppearanceListeners(); renderStartingGear(); filterClothingByClass(CHAR_STATE.draft.class_id || ''); filterWeaponsByClass(CHAR_STATE.draft.class_id || ''); updateGoldDisplay(); updateStage4Hud(); initHudSticky(); }
   if (n === 5) { initStage5(); }
 }
 
@@ -3317,7 +3317,7 @@ function randomizeDraft() {
     var el = document.getElementById('char-ability-' + ab);
     if (el) el.value = scores[ab];
   });
-  // Stage 4 selects — filter by class first so options exist, then set values
+  // Stage 4 selects — init stage (renders options), set values, then refresh gold
   initStageOnEnter(4);
   var appSelects = {
     'app-height': app.height, 'app-build': app.build, 'app-age': app.age,
@@ -3335,6 +3335,8 @@ function randomizeDraft() {
     if (el && appSelects[id] !== undefined) el.value = appSelects[id];
   });
   updateAIPrompt();
+  updateGoldDisplay();
+  updateStage4Hud();
 
   // ── Jump to Stage 5 and re-render panel with populated inputs ──
   showStage(5);
