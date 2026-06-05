@@ -3254,15 +3254,15 @@ function randomizeDraft() {
   if (lowerOptions.length) cls4lower = rand(lowerOptions).value;
 
   CHAR_STATE.draft.appearance_data = {
-    height:          rand(['tall','average height','short','very tall']),
-    build:           rand(['slender','athletic','stocky','lean']),
-    age:             rand(['young','middle-aged','weathered']),
+    height:          rand(['very short','short','average height','tall','very tall']),
+    build:           rand(['slight','lean','average build','athletic','stocky','heavyset']),
+    age:             rand(['young','adult','middle-aged','older']),
     skin_tone:       rand(skinTones),
     face_shape:      rand(faceShapes),
     eye_color:       rand(eyeColors),
     eye_shape:       rand(eyeShapes),
     glasses:         'none',
-    facial_hair:     'none',
+    facial_hair:     '',
     facial_markings: [],
     hair_color:      rand(hairColors),
     hair_style:      rand(hairStyles),
