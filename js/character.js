@@ -2174,7 +2174,7 @@ function updateWeaponStatChip(selectId, chipId) {
     if (otherSel) {
       var placeholder = document.createElement('option');
       placeholder.value   = '__two_handed__';
-      placeholder.text    = 'Using a 2-handed Weapon';
+      placeholder.text    = '⚔ Two-handed weapon selected';
       placeholder.disabled = false;
       otherSel.insertBefore(placeholder, otherSel.options[0]);
       otherSel.value    = '__two_handed__';
