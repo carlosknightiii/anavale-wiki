@@ -3292,6 +3292,9 @@ function randomizeDraft() {
   CHAR_STATE.highest_stage   = 5;
   saveDraftToStorage();
 
+  // Force Stage 1 and 2 to initialize so all card DOM exists before syncing
+  initStageOnEnter(1);
+  initStageOnEnter(2);
   // ── Sync DOM using the same restore path as resumeDraft ──
   // Simple inputs and selects
   var app = CHAR_STATE.draft.appearance_data;
