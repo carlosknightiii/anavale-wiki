@@ -3908,11 +3908,11 @@ body.banner-visible .char-stage4-hud {
   .char-field-group { margin-bottom: 1.1rem; }
 
   /* ── WEAPONS — stack vertically on mobile ── */
-  .char-weapon-rack { grid-template-columns: 1fr; }
+  .char-weapon-rack { grid-template-columns: 1fr; gap: 1rem; }
   .char-weapon-slot-divider { display: none; }
 
   /* ── STAGE 4 HUD — all sections visible on mobile, tighter layout ── */
-  .char-stage4-hud { min-height: 0; overflow: visible; }
+  .char-stage4-hud { min-height: 0; overflow: visible; margin-top: 0.75rem; }
   .char-stage4-hud .char-hud-stat { padding: 0.55rem 0.5rem; gap: 0.3rem; }
   .char-stage4-hud .char-hud-stat-icon { display: none; }
   .char-stage4-hud .char-hud-stat-label { font-size: 0.55rem; }
@@ -3925,6 +3925,9 @@ body.banner-visible .char-stage4-hud {
   .char-stage4-hud .char-hud-weight-numbers { font-size: 0.6rem; }
   .char-stage4-hud .char-hud-weapon-dmg { font-size: 0.68rem; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .char-stage4-hud #hud-weapon { flex: 2; min-width: 0; overflow: hidden; }
+  .char-stage4-hud.char-hud--stuck .char-hud-stat--weight { display: none; }
+  .char-stage4-hud.char-hud--stuck #hud-weapon { flex: 3; overflow: visible; }
+  .char-stage4-hud.char-hud--stuck .char-hud-weapon-dmg { overflow: visible; text-overflow: unset; white-space: nowrap; max-width: none; }
   .char-stage4-hud #hud-ac   { flex: 0 0 auto; min-width: 52px; }
   .char-stage4-hud #hud-gold { flex: 0 0 auto; min-width: 68px; }
   .char-stage4-hud .char-hud-stat--weight { flex: 1; }
