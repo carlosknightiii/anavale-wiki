@@ -3745,48 +3745,47 @@ function renderStage3Panel() {
 function initHudSticky() {
   var hud = document.getElementById('char-stage4-hud');
   if (!hud) return;
+
   // Remove any existing sentinel
   var existing = document.getElementById('char-hud-sentinel');
   if (existing) existing.parentNode.removeChild(existing);
   hud.classList.remove('char-hud--stuck');
-
-  // On mobile, body overflow-x:hidden breaks IntersectionObserver's scroll context.
-  // Fix: measure the fixed nav height and set sticky top accordingly, then use
-  // a scroll listener on the document element (not window) which works in WebKit.
-  function getNavHeight() {
-    var nav = document.getElementById('char-mobile-stage-nav');
-    return nav ? nav.offsetHeight : 0;
-  }
+  if (hud._scrollCleanup) { hud._scrollCleanup(); hud._scrollCleanup = null; }
 
   var isMobile = window.innerWidth <= 768;
+
   if (isMobile) {
-    // Set top so HUD sticks just below the fixed nav
-    var navH = getNavHeight();
+    // Add visible gap above the HUD by setting margin-top directly on the HUD element
+    // (padding-top on parent is blocked by overflow:hidden; margin on sentinel is ignored by sticky)
+    hud.style.marginTop = '1rem';
+
+    // Use scroll listener on document for WebKit mobile
+    var navEl = document.getElementById('char-mobile-stage-nav');
+    var navH = navEl ? navEl.offsetHeight : 74;
     hud.style.top = navH + 'px';
-    // Use scroll listener on document.documentElement for WebKit mobile
+
     var lastStuck = false;
-    function onMobileScroll() {
-      var hudTop = hud.getBoundingClientRect().top;
-      var navHeight = getNavHeight();
-      var shouldStick = hudTop <= navHeight + 2;
+    function onScroll() {
+      var rect = hud.getBoundingClientRect();
+      var shouldStick = rect.top <= navH + 2;
       if (shouldStick !== lastStuck) {
         lastStuck = shouldStick;
         hud.classList.toggle('char-hud--stuck', shouldStick);
+        // In stuck mode remove margin so HUD sits flush against nav
+        hud.style.marginTop = shouldStick ? '0' : '1rem';
       }
     }
-    document.addEventListener('scroll', onMobileScroll, { passive: true });
-    // Store cleanup reference so re-entry removes old listener
-    if (hud._scrollCleanup) hud._scrollCleanup();
+    document.addEventListener('scroll', onScroll, { passive: true });
     hud._scrollCleanup = function() {
-      document.removeEventListener('scroll', onMobileScroll);
+      document.removeEventListener('scroll', onScroll);
     };
   } else {
-    // Desktop: IntersectionObserver works correctly
-    if (hud._scrollCleanup) { hud._scrollCleanup(); hud._scrollCleanup = null; }
+    // Desktop: IntersectionObserver
+    hud.style.marginTop = '';
     hud.style.top = '';
     var sentinel = document.createElement('div');
     sentinel.id = 'char-hud-sentinel';
-    sentinel.style.cssText = 'height:1px;margin-top:1rem;padding:0;pointer-events:none;position:relative;';
+    sentinel.style.cssText = 'height:1px;padding:0;pointer-events:none;position:relative;';
     hud.parentNode.insertBefore(sentinel, hud);
     var stuck = false;
     var observer = new IntersectionObserver(function(entries) {
@@ -3797,7 +3796,7 @@ function initHudSticky() {
           hud.classList.toggle('char-hud--stuck', stuck);
         }
       });
-    }, { threshold: 0, rootMargin: '0px' });
+    }, { threshold: 0 });
     observer.observe(sentinel);
   }
 }
