@@ -880,8 +880,18 @@ function toggleAccordion(panelId) {
   header.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
   // Render dynamic content when panels first open
   if (!isOpen) {
-    if (panelId === 'acc-magic') renderGigglogloomAffinity('char-type-grid');
-    if (panelId === 'acc-background') { renderBackgroundCards(); renderSpeciesCards(); }
+    if (panelId === 'acc-magic') {
+      renderGigglogloomAffinity('char-type-grid');
+      if (CHAR_STATE.draft.gigglegloom_type) highlightAffinityCard(CHAR_STATE.draft.gigglegloom_type);
+    }
+    if (panelId === 'acc-background') {
+      renderBackgroundCards();
+      renderSpeciesCards();
+      restoreStage1Selections();
+    }
+    if (panelId === 'acc-past') {
+      restoreStage1Selections();
+    }
     // Mobile: tapping anywhere in an open accordion body selects that option.
     // We attach once per open, and remove on close or on any selection.
     body._accordionTapHandler = function(e) {
