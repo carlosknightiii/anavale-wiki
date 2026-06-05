@@ -3337,7 +3337,8 @@ function randomizeDraft() {
         var el = document.getElementById(id);
         if (el && appSelects[id] !== undefined) el.value = appSelects[id];
       });
-      updateAIPrompt();
+      // Do NOT call updateAIPrompt() here — it would re-collect from DOM
+      // and overwrite the correctly randomized appearance_data in the draft.
       updateGoldDisplay();
       updateStage4Hud();
       // ── Jump to Stage 5 and re-render panel with populated inputs ──
