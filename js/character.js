@@ -3317,7 +3317,8 @@ function randomizeDraft() {
     var el = document.getElementById('char-ability-' + ab);
     if (el) el.value = scores[ab];
   });
-  // Stage 4 selects — init stage (renders options), set values, then refresh gold
+  // Stage 4 selects — init stage (renders options), then set values on next
+  // animation frame so all synchronous rebuild/change handlers have settled
   initStageOnEnter(4);
   var appSelects = {
     'app-height': app.height, 'app-build': app.build, 'app-age': app.age,
@@ -3330,18 +3331,21 @@ function randomizeDraft() {
     'app-ring-right': app.ring_right, 'app-ring-left': app.ring_left,
     'app-necklace': app.necklace, 'app-earrings': app.earrings
   };
-  Object.keys(appSelects).forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el && appSelects[id] !== undefined) el.value = appSelects[id];
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      Object.keys(appSelects).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && appSelects[id] !== undefined) el.value = appSelects[id];
+      });
+      updateAIPrompt();
+      updateGoldDisplay();
+      updateStage4Hud();
+      // ── Jump to Stage 5 and re-render panel with populated inputs ──
+      showStage(5);
+      renderStage3Panel();
+      showToast('🎲 Randomized! Check Stage 5 for your character summary.');
+    });
   });
-  updateAIPrompt();
-  updateGoldDisplay();
-  updateStage4Hud();
-
-  // ── Jump to Stage 5 and re-render panel with populated inputs ──
-  showStage(5);
-  renderStage3Panel();
-  showToast('🎲 Randomized! Check Stage 5 for your character summary.');
 }
 
 function showToast(msg, type) {
