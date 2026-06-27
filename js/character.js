@@ -1823,6 +1823,8 @@ function collectStage4Data() {
 
 function collectStage5Data() {
   // Stage 5 is a read-only summary — all data was collected in prior stages
+  // except the optional color field added here
+  CHAR_STATE.draft.character_color = getVal('char-character-color') || null;
   saveDraftToStorage();
 }
 
@@ -3249,7 +3251,7 @@ function buildCharacterEntry(d, token) {
     dearest_friend: d.dearest_friend,
     had_pet: d.had_pet,
     fallen_in_love: d.fallen_in_love,
-    organization_joined: d.organization,
+    organization_joined: d['past_org'] || null,
     left_behind: d.left_behind,
     why_you_left: d.why_you_left,
     cares_about: d.cares_about,
@@ -3258,7 +3260,24 @@ function buildCharacterEntry(d, token) {
     gender: d.gender,
     category: 'player-character',
     player_facing: false,
-    tags: ['player-character', d.gigglegloom_type || '', d.species_id || ''].filter(Boolean)
+    tags: ['player-character', d.gigglegloom_type || '', d.species_id || ''].filter(Boolean),
+    role: (d.gigglegloom_type
+      ? d.gigglegloom_type.charAt(0).toUpperCase() + d.gigglegloom_type.slice(1)
+      : '') + ' ' + (d.class_id
+      ? d.class_id.charAt(0).toUpperCase() + d.class_id.slice(1)
+      : '') + (d.home_region ? ', ' + d.home_region.charAt(0).toUpperCase() + d.home_region.slice(1) : ''),
+    pronouns: d.gender === 'female' ? 'she/her' : d.gender === 'non-binary' ? 'they/them' : 'he/him',
+    status: 'active',
+    affiliation: d['past_org'] || null,
+    gigglegloom_relationship: (function() {
+      var typeData = typeof GIGGLEGLOOM_TYPES !== 'undefined' ? GIGGLEGLOOM_TYPES[d.gigglegloom_type] : null;
+      if (!typeData || !typeData.classes) return null;
+      var match = typeData.classes.find(function(c) { return c.id === d.class_id; });
+      return match ? match.flavor : null;
+    })(),
+    personality: [d.personality_immediate, d.personality_wrong, d.personality_laugh]
+      .filter(Boolean).join('. ') || null,
+    color: d.character_color || null
   };
 }
 

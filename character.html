@@ -1286,6 +1286,12 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div id="char-stage3-panel-body" class="char-stage3-panel-body"></div>
       </div>
+      <!-- Color field -->
+      <div class="char-field-group" style="margin-bottom:2rem;">
+        <label class="char-field-label" for="char-character-color">Your Color <span class="char-field-optional">optional</span></label>
+        <p class="char-field-help">What color do you associate with your character? Their aura, their magic, the hue people remember them by.</p>
+        <input type="text" id="char-character-color" class="char-input" placeholder="e.g. deep teal with gold edges, warm amber, cold silver" maxlength="120">
+      </div>
       <!-- Submit -->
       <div id="char-submit-error" class="char-submit-error">
         <div class="char-submit-error-text">Something went wrong sending your character. Your answers are safe — copy them and send to your DM directly.</div>
@@ -1323,7 +1329,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <h1 class="char-confirmation-title" id="char-confirm-name"></h1>
     <div class="char-confirmation-type" id="char-confirm-type"></div>
     <div class="char-confirmation-divider"></div>
-    <p class="char-confirmation-subtitle">Your name has been recorded in the Traveller's Compendium.<br>Your story begins when your DM calls for you.</p>
 
     <div class="char-confirmation-sheet-block">
       <div class="char-confirmation-sheet-label">Your Character Sheet</div>
