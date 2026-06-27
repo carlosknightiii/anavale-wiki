@@ -3326,6 +3326,13 @@ async function writeToGitHub(entry) {
       category:             'player-character',
       player_facing:        false,
       tags:                 entry.tags || [],
+      role:                 entry.role || null,
+      pronouns:             entry.pronouns || null,
+      status:               entry.status || 'active',
+      affiliation:          entry.affiliation || null,
+      gigglegloom_relationship: entry.gigglegloom_relationship || null,
+      personality:          entry.personality || null,
+      color:                entry.color || null,
       _dispatched_at:       new Date().toISOString()
     };
     var payloadSize = JSON.stringify(payload).length;
