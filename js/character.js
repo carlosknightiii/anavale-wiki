@@ -3103,15 +3103,53 @@ function buildCharacterEntry(d, token) {
 
 async function writeToGitHub(entry) {
   // Uses GitHub repository_dispatch to trigger a GitHub Actions workflow.
-  // The workflow holds the write token securely — this token only triggers Actions.
-  // Safe to embed in client code: it cannot read or modify repo files directly.
-  var dispatchToken = CHAR_CONFIG.github_token; // set via DM Tools OR hardcoded dispatch-only PAT below
+  // client_payload has a 10KB limit — send a slimmed subset, not the full entry.
+  var dispatchToken = CHAR_CONFIG.github_token;
   if (!dispatchToken) {
     console.warn('No dispatch token — GitHub write skipped.');
     return false;
   }
   try {
-    var payload = Object.assign({}, entry, { _dispatched_at: new Date().toISOString() });
+    // Slim payload: exclude large nested objects (appearance_data, appearance_prompt)
+    // The Actions workflow receives this and writes it to characters.js
+    var payload = {
+      id:                   entry.id,
+      name:                 entry.name,
+      pc:                   true,
+      player_email:         entry.player_email || '',
+      token:                entry.token,
+      level:                1,
+      class_id:             entry.class_id,
+      class_gigglegloom:    entry.class_gigglegloom,
+      species:              entry.species,
+      background_id:        entry.background_id,
+      alignment:            entry.alignment,
+      alignment_trait:      entry.alignment_trait || null,
+      home_region:          entry.home_region || 'Caparia',
+      ability_scores:       entry.ability_scores || { str:10, dex:10, con:10, int:10, wis:10, cha:10 },
+      language_extra:       entry.language_extra || null,
+      summary:              entry.summary || '',
+      personality_immediate: entry.personality_immediate || null,
+      personality_wrong:    entry.personality_wrong || null,
+      personality_laugh:    entry.personality_laugh || null,
+      who_raised_you:       entry.who_raised_you || null,
+      dearest_friend:       entry.dearest_friend || null,
+      had_pet:              entry.had_pet || null,
+      fallen_in_love:       entry.fallen_in_love || null,
+      organization_joined:  entry.organization_joined || null,
+      left_behind:          entry.left_behind || null,
+      why_you_left:         entry.why_you_left || null,
+      cares_about:          entry.cares_about || null,
+      deepest_fear:         entry.deepest_fear || null,
+      seeking:              entry.seeking || null,
+      gender:               entry.gender || null,
+      category:             'player-character',
+      player_facing:        false,
+      tags:                 entry.tags || [],
+      _dispatched_at:       new Date().toISOString()
+    };
+    var payloadSize = JSON.stringify(payload).length;
+    console.info('Dispatch payload size:', payloadSize, 'bytes');
     var res = await fetch(
       'https://api.github.com/repos/' + CHAR_CONFIG.github_repo + '/dispatches',
       {
@@ -3127,12 +3165,16 @@ async function writeToGitHub(entry) {
         })
       }
     );
-    // 204 No Content = accepted; anything else = failed
+    console.info('Dispatch response status:', res.status);
     if (res.status === 204) {
       console.info('Character dispatch accepted — workflow will write to characters.js in ~30s.');
       return true;
     }
-    console.warn('Dispatch returned', res.status);
+    // Log response body to help diagnose non-204 responses
+    try {
+      var body = await res.json();
+      console.warn('Dispatch failed. Response:', JSON.stringify(body));
+    } catch(e) {}
     return false;
   } catch(e) {
     console.error('Dispatch error:', e);
