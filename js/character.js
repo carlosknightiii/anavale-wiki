@@ -2853,13 +2853,13 @@ function renderSummaryCard() {
     // Text content
     + '<div style="position:relative;z-index:4;padding:2.25rem 2rem 1.75rem;height:100%;display:flex;flex-direction:column;justify-content:flex-end;max-width:62%;">'
     +   '<div style="font-size:0.58rem;font-weight:700;letter-spacing:0.32em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin-bottom:0.3rem;">Your Character</div>'
-    +   '<div style="font-family:var(--font-headers);font-size:3.8rem;font-weight:700;color:#fff;line-height:0.95;text-shadow:0 2px 30px rgba(0,0,0,0.9);margin-bottom:0.5rem;">' + (d.character_name || 'Your Character') + '</div>'
+    +   '<div style="font-family:var(--font-headers);font-size:3.8rem;font-weight:700;color:#fff;line-height:1.1;padding-bottom:0.15rem;text-shadow:0 2px 30px rgba(0,0,0,0.9);margin-bottom:0.6rem;">' + (d.character_name || 'Your Character') + '</div>'
     +   '<div style="font-size:0.7rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.48);margin-bottom:1rem;">'
     +     (clsObj ? clsObj.name : (d.class_id || ''))
     +     (spObj ? ' &nbsp;·&nbsp; ' + spObj.name + ' <span style="color:rgba(255,255,255,0.25);font-weight:400;">(' + (spObj.phb || '') + ')</span>' : '')
     +     (gender ? ' &nbsp;·&nbsp; ' + gender.charAt(0).toUpperCase() + gender.slice(1) : '')
     +   '</div>'
-    +   '<div style="display:inline-flex;align-items:center;gap:0.55rem;padding:0.32rem 1rem 0.32rem 0.65rem;border-radius:24px;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid rgba(255,255,255,0.12);background:rgba(' + typeGlow + ',0.28);color:#fff;width:fit-content;animation:sc-badge 3s ease-in-out infinite;">'
+    +   '<div style="display:inline-flex;align-items:center;gap:0.55rem;padding:0.32rem 1rem 0.32rem 0.65rem;border-radius:24px;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid rgba(255,255,255,0.12);background:rgba(' + typeGlow + ',0.28);color:#fff;width:fit-content;animation:sc-badge 3s ease-in-out infinite;--sc-type-glow:' + typeGlow + ';">'
     +     '<img src="assets/icons/icon-' + typeKey + '.svg" alt="" onerror="this.style.display=\'none\'" style="width:22px;height:22px;filter:brightness(0) invert(1);opacity:0.9;flex-shrink:0;">'
     +     '<span style="width:7px;height:7px;border-radius:50%;background:' + typeDot + ';flex-shrink:0;box-shadow:0 0 8px ' + typeDot + ';animation:sc-dot 1.8s ease-in-out infinite;display:inline-block;"></span>'
     +     (d.gigglegloom_type ? d.gigglegloom_type.charAt(0).toUpperCase() + d.gigglegloom_type.slice(1) : '')
@@ -2887,15 +2887,15 @@ function renderSummaryCard() {
   var combatHtml = '<div style="position:relative;z-index:1;display:flex;align-items:stretch;padding:1.25rem 1.75rem;gap:1.25rem;border-bottom:1px solid rgba(255,255,255,0.05);">'
     // Class block
     + '<div style="display:flex;align-items:flex-start;gap:1rem;flex:1;min-width:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem 1.1rem;">'
-    +   '<img src="assets/images/classes/class-' + (d.class_id||'') + '.webp" alt="" onerror="this.style.opacity=\'0\'" style="width:68px;height:68px;border-radius:12px;object-fit:cover;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;background:rgba(' + typeGlow + ',0.15);box-shadow:0 4px 16px rgba(0,0,0,0.4);">'
+    +   '<img src="assets/images/classes/class-' + (d.class_id||'') + '.webp" alt="" onerror="this.style.opacity=\'0\'" style="width:88px;height:88px;border-radius:14px;object-fit:cover;border:1px solid rgba(255,255,255,0.12);flex-shrink:0;background:rgba(' + typeGlow + ',0.15);box-shadow:0 6px 24px rgba(0,0,0,0.5);">'
     +   '<div style="min-width:0;flex:1;">'
-    +     '<div title="Your Class determines your abilities, spell list, and how you channel the Gigglegloom." style="font-size:1rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:0.3rem;margin-bottom:0.25rem;cursor:help;">'
+    +     '<div title="Your Class determines your abilities, spell list, and how you channel the Gigglegloom." style="font-size:1.15rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:0.3rem;margin-bottom:0.3rem;cursor:help;">'
     +       (clsObj ? clsObj.name : (d.class_id || '—'))
     +       (classFlavorName ? ' <span style="font-family:var(--font-headers);font-size:0.82rem;font-weight:400;letter-spacing:0;text-transform:none;color:rgba(255,255,255,0.4);">— ' + classFlavorName + '</span>' : '')
     +     '</div>'
-    +     (clsObj ? '<div style="font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:0.1rem;line-height:1.5;"><strong style="color:rgba(255,255,255,0.65);">Primary ability:</strong> ' + clsObj.primary + '</div>' : '')
-    +     (clsObj ? '<div style="font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:0.1rem;line-height:1.5;"><strong style="color:rgba(255,255,255,0.65);">Saving throws:</strong> ' + clsObj.saves + '</div>' : '')
-    +     (bgObj  ? '<div style="font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:0.1rem;line-height:1.5;"><strong style="color:rgba(255,255,255,0.65);">Background:</strong> ' + (bgObj.name||'') + (bgObj.phb ? ' <span style="color:rgba(255,255,255,0.22);">(' + bgObj.phb + ')</span>' : '') + '</div>' : '')
+    +     (clsObj ? '<div style="font-size:0.78rem;color:rgba(255,255,255,0.42);margin-top:0.14rem;line-height:1.55;"><strong style="color:rgba(255,255,255,0.72);">Primary ability:</strong> ' + clsObj.primary + '</div>' : '')
+    +     (clsObj ? '<div style="font-size:0.78rem;color:rgba(255,255,255,0.42);margin-top:0.14rem;line-height:1.55;"><strong style="color:rgba(255,255,255,0.72);">Saving throws:</strong> ' + clsObj.saves + '</div>' : '')
+    +     (bgObj  ? '<div style="font-size:0.78rem;color:rgba(255,255,255,0.42);margin-top:0.14rem;line-height:1.55;"><strong style="color:rgba(255,255,255,0.72);">Background:</strong> ' + (bgObj.name||'') + (bgObj.phb ? ' <span style="color:rgba(255,255,255,0.22);">(' + bgObj.phb + ')</span>' : '') + '</div>' : '')
     +   '</div>'
     + '</div>'
     // Stat pills — vertical stack
@@ -2937,7 +2937,7 @@ function renderSummaryCard() {
       '@keyframes sc-orb2{0%,100%{transform:translate(0,0) scale(1);opacity:.7}50%{transform:translate(-50px,-30px) scale(1.12);opacity:1}}',
       '@keyframes sc-ken{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.06) translate(-1%,-1%)}}',
       '@keyframes sc-shimmer{0%{background-position:250% 0}100%{background-position:-250% 0}}',
-      '@keyframes sc-badge{0%,100%{box-shadow:0 0 14px rgba(170,58,26,.45),0 0 40px rgba(170,58,26,.12)}50%{box-shadow:0 0 28px rgba(170,58,26,.75),0 0 70px rgba(170,58,26,.28)}}',
+      '@keyframes sc-badge{0%,100%{box-shadow:0 0 14px rgba(var(--sc-type-glow),.45),0 0 40px rgba(var(--sc-type-glow),.12)}50%{box-shadow:0 0 28px rgba(var(--sc-type-glow),.75),0 0 70px rgba(var(--sc-type-glow),.28)}}',
       '@keyframes sc-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.7}}',
       '@keyframes sc-flicker{0%,88%,100%{opacity:.7}92%{opacity:.15}96%{opacity:.9}}'
     ].join('');
