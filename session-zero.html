@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to Anavale</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#E8C84A;--gold-deep:#B8921A;--gold-faint:rgba(232,200,74,0.18);
+  --rose:#E87A8A;--teal:#4ABFBF;--violet:#9A70E8;--green:#6ecf6e;
+  --bs:#c8a83a;--ff:#2266b8;--sf:#6a3aaa;--fr:#aa3a1a;
+  --ink:#03040c;--ink-mid:#0d0d18;
+  --text:#f0e8d0;--text-muted:rgba(240,232,208,0.65);--text-faint:rgba(240,232,208,0.35);
+  --border:rgba(232,200,74,0.22);
+  --serif:'Cinzel Decorative',serif;--cinzel:'Cinzel',serif;--body:'EB Garamond',Georgia,serif;
+}
+html,body{width:100%;height:100%;background:var(--ink);color:var(--text);font-family:var(--body);overflow:hidden;user-select:none;}
+
+/* ── STARS ── */
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ── PROGRESS ── */
+#progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--rose),var(--violet));transition:width .4s ease;z-index:100;}
+
+/* ── DECK ── */
+#deck{position:relative;width:100vw;height:100vh;overflow:hidden;}
+.slide{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:3rem 5vw 5rem;
+  opacity:0;transform:translateX(60px);
+  transition:opacity .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;z-index:1;
+}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all;z-index:2;}
+.slide.exit{opacity:0;transform:translateX(-60px);z-index:1;}
+
+/* ── TYPOGRAPHY ── */
+.eyebrow{font-family:var(--cinzel);font-size:clamp(.6rem,1.1vw,.75rem);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:.9rem;opacity:.85;}
+.slide-title{font-family:var(--serif);font-size:clamp(1.8rem,4.5vw,3.4rem);font-weight:700;text-align:center;line-height:1.15;background:linear-gradient(135deg,var(--gold) 0%,#fff8e0 45%,var(--rose) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;}
+.slide-sub{font-family:var(--cinzel);font-size:clamp(.72rem,1.3vw,.9rem);letter-spacing:.07em;color:var(--text-muted);text-align:center;margin-bottom:1.8rem;}
+.body-text{font-size:clamp(.95rem,1.7vw,1.18rem);line-height:1.8;color:var(--text);text-align:center;max-width:680px;}
+.body-text em{color:var(--gold);font-style:normal;}
+.body-text strong{color:#fff;font-weight:500;}
+.divider{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1.2rem auto;}
+
+/* ── CARDS ── */
+.card-grid{display:grid;gap:.9rem;width:100%;max-width:840px;margin-top:1.2rem;}
+.cols-2{grid-template-columns:1fr 1fr;}
+.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.cols-4{grid-template-columns:repeat(4,1fr);}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;inset:0;background:var(--ct,transparent);opacity:.06;pointer-events:none;}
+.card-name{font-family:var(--cinzel);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.3rem;color:var(--cc,var(--gold));}
+.card-desc{font-size:.9rem;line-height:1.55;color:var(--text-muted);}
+
+/* ── SLIDE 1 HERO ── */
+.hero-bg{position:absolute;inset:0;z-index:0;}
+.hero-bg img{width:100%;height:100%;object-fit:cover;opacity:.18;filter:saturate(1.4);}
+.hero-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%,rgba(3,4,12,.3) 0%,rgba(3,4,12,.85) 70%);}
+.hero-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
+.hero-title{font-family:var(--serif);font-size:clamp(2.5rem,6vw,5rem);font-weight:700;text-align:center;line-height:1.1;background:linear-gradient(135deg,var(--gold) 0%,#fff8e0 50%,var(--rose) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-bottom:.5rem;}
+.hero-tagline{font-family:var(--cinzel);font-size:clamp(.8rem,1.6vw,1.05rem);letter-spacing:.1em;color:var(--text-muted);text-align:center;margin-bottom:2rem;max-width:600px;line-height:1.7;}
+
+/* ── SLIDE 2 COLOR ── */
+.color-bands{display:flex;gap:.5rem;margin:1.5rem 0;width:100%;max-width:720px;}
+.color-band{flex:1;border-radius:10px;padding:1rem .8rem;text-align:center;position:relative;overflow:hidden;}
+.color-band-label{font-family:var(--cinzel);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:.3rem;}
+.color-band-desc{font-size:.78rem;line-height:1.5;opacity:.85;}
+.band-vivid{background:linear-gradient(160deg,rgba(232,200,74,.25),rgba(74,191,191,.2));border:1px solid rgba(232,200,74,.4);}
+.band-mid{background:linear-gradient(160deg,rgba(200,160,50,.15),rgba(140,100,20,.1));border:1px solid rgba(200,160,50,.3);}
+.band-faded{background:rgba(180,180,180,.08);border:1px solid rgba(180,180,180,.25);filter:saturate(.4);}
+.band-dimmed{background:rgba(80,80,80,.12);border:1px solid rgba(120,120,120,.2);filter:saturate(.1);}
+.color-band-label.vivid{color:var(--gold);}
+.color-band-label.mid{color:#d4a832;}
+.color-band-label.faded{color:#aaa;}
+.color-band-label.dimmed{color:#777;}
+.mechanic-row{display:flex;gap:.8rem;margin-top:1rem;max-width:720px;width:100%;}
+.mechanic-pill{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.7rem 1rem;font-size:.82rem;color:var(--text-muted);line-height:1.5;text-align:center;}
+.mechanic-pill strong{display:block;font-family:var(--cinzel);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem;}
+
+/* ── SLIDE 3 DIMMING ── */
+.dimming-stages{display:flex;gap:0;max-width:780px;width:100%;margin-top:1.2rem;border-radius:12px;overflow:hidden;}
+.dimming-stage{flex:1;padding:1.2rem 1rem;text-align:center;position:relative;}
+.ds-healthy{background:linear-gradient(160deg,rgba(100,220,100,.18),rgba(232,200,74,.12));border:1px solid rgba(100,200,100,.3);}
+.ds-faded{background:linear-gradient(160deg,rgba(160,140,80,.14),rgba(140,120,60,.08));border:1px solid rgba(160,140,80,.25);filter:saturate(.65);}
+.ds-dimmed{background:linear-gradient(160deg,rgba(90,90,90,.18),rgba(60,60,60,.1));border:1px solid rgba(100,100,100,.2);filter:saturate(.15);}
+.ds-icon{font-size:2rem;display:block;margin-bottom:.5rem;line-height:1;}
+.ds-label{font-family:var(--cinzel);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;}
+.ds-healthy .ds-label{color:#6ecf6e;}
+.ds-faded .ds-label{color:#c8a830;}
+.ds-dimmed .ds-label{color:#888;}
+.ds-desc{font-size:.82rem;line-height:1.5;color:var(--text-muted);}
+.ds-arrow{display:flex;align-items:center;justify-content:center;padding:0 .2rem;color:var(--text-faint);font-size:1.2rem;flex-shrink:0;}
+.vareth-line{margin-top:1.2rem;max-width:680px;font-size:.95rem;line-height:1.7;color:var(--text-muted);text-align:center;}
+.vareth-line em{color:var(--rose);font-style:normal;}
+
+/* ── SLIDE 4 GIGGLEGLOOM ── */
+.type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;width:100%;max-width:900px;margin-top:1rem;}
+.type-card{border-radius:14px;overflow:hidden;position:relative;cursor:default;border:1px solid rgba(255,255,255,.1);}
+.type-card-video-wrap{position:relative;width:100%;height:120px;overflow:hidden;}
+.type-card-video{width:100%;height:100%;object-fit:cover;display:block;}
+.type-card-video-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--tc,#0d0d18) 100%);}
+.type-card-content{padding:.9rem 1rem 1.1rem;background:rgba(255,255,255,.03);}
+.type-card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;}
+.type-card-icon{width:28px;height:28px;flex-shrink:0;filter:drop-shadow(0 0 6px var(--tc,#fff));}
+.type-card-name{font-family:var(--cinzel);font-size:.85rem;letter-spacing:.06em;font-weight:600;color:var(--tc,var(--gold));}
+.type-element{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tc,var(--gold));opacity:.75;margin-bottom:.5rem;font-family:var(--cinzel);}
+.type-desc{font-size:.8rem;line-height:1.55;color:var(--text-muted);}
+.tc-bs{--tc:#c8a83a;border-color:rgba(200,168,58,.35);}
+.tc-ff{--tc:#4a9fe8;border-color:rgba(74,159,232,.35);}
+.tc-sf{--tc:#9a70e8;border-color:rgba(154,112,232,.35);}
+.tc-fr{--tc:#e8703a;border-color:rgba(232,112,58,.35);}
+
+/* ── SLIDE 5 CREATURES ── */
+.creature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;width:100%;max-width:860px;margin-top:1rem;}
+.creature-card{border-radius:12px;overflow:hidden;border:1px solid var(--border);background:rgba(255,255,255,.04);}
+.creature-img-wrap{width:100%;height:110px;overflow:hidden;background:rgba(255,255,255,.03);}
+.creature-img-wrap img{width:100%;height:100%;object-fit:contain;object-position:center;padding:.4rem;}
+.creature-body{padding:.7rem .9rem .9rem;}
+.creature-name{font-family:var(--cinzel);font-size:.75rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem;}
+.creature-desc{font-size:.78rem;line-height:1.5;color:var(--text-muted);}
+
+/* ── SLIDE 6 MECHANICS ── */
+.rules-list{display:flex;flex-direction:column;gap:.65rem;max-width:680px;width:100%;margin-top:1.2rem;}
+.rule-row{display:grid;grid-template-columns:2rem 1fr;gap:.8rem;align-items:start;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.8rem 1rem;}
+.rule-num{font-family:var(--cinzel);font-size:.85rem;color:var(--gold);font-weight:600;padding-top:.05rem;}
+.rule-text{font-size:.93rem;line-height:1.6;color:var(--text-muted);}
+.rule-text strong{color:var(--text);}
+
+/* ── SLIDE 7 DO/DONT/DM ── */
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem;width:100%;max-width:860px;margin-top:1.2rem;}
+.col-block{background:rgba(255,255,255,.04);border-radius:12px;padding:1.1rem 1.2rem;}
+.col-block.yes{border:1px solid rgba(74,191,191,.3);}
+.col-block.no{border:1px solid rgba(232,122,138,.3);}
+.col-block.dm{border:1px solid rgba(154,112,232,.3);}
+.col-head{font-family:var(--cinzel);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.7rem;}
+.col-block.yes .col-head{color:var(--teal);}
+.col-block.no .col-head{color:var(--rose);}
+.col-block.dm .col-head{color:var(--violet);}
+.col-item{font-size:.83rem;line-height:1.55;color:var(--text-muted);padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.col-item:last-child{border-bottom:none;}
+.col-item strong{color:var(--text);}
+
+/* ── SLIDE 8 ROLEPLAY ── */
+/* reuses .cols-2 card-grid */
+
+/* ── SLIDE 9 INSPIRATION ── */
+.inspo-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:1rem;max-width:820px;width:100%;margin-top:1rem;}
+.inspo-earn{background:rgba(232,200,74,.07);border:1px solid rgba(232,200,74,.25);border-radius:12px;padding:1.1rem 1.3rem;}
+.inspo-not{background:rgba(232,122,138,.06);border:1px solid rgba(232,122,138,.2);border-radius:12px;padding:1.1rem 1.3rem;}
+.inspo-head{font-family:var(--cinzel);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.7rem;}
+.inspo-earn .inspo-head{color:var(--gold);}
+.inspo-not .inspo-head{color:var(--rose);}
+.inspo-ex{font-size:.87rem;line-height:1.55;color:var(--text-muted);padding:.28rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.inspo-ex:last-child{border-bottom:none;}
+.inspo-ex em{color:var(--gold);font-style:normal;}
+.inspo-use{max-width:820px;margin-top:.9rem;font-size:.88rem;line-height:1.7;color:var(--text-muted);text-align:center;}
+.inspo-use strong{color:var(--text);}
+.inspo-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(232,200,74,.12);border:1px solid rgba(232,200,74,.3);border-radius:100px;padding:.3rem .9rem;font-family:var(--cinzel);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 .25rem;}
+
+/* ── SLIDE 10 NOTES ── */
+.notes-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem;max-width:820px;width:100%;margin-top:1.2rem;}
+.notes-col{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;}
+.notes-col-head{font-family:var(--cinzel);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;}
+.notes-col:nth-child(1) .notes-col-head{color:var(--teal);}
+.notes-col:nth-child(2) .notes-col-head{color:var(--gold);}
+.notes-col:nth-child(3) .notes-col-head{color:var(--violet);}
+.notes-desc{font-size:.88rem;color:var(--text-muted);line-height:1.55;}
+.notes-eg{margin-top:.7rem;font-size:.78rem;color:var(--text-faint);font-style:italic;border-top:1px solid rgba(255,255,255,.06);padding-top:.55rem;line-height:1.5;}
+
+/* ── SLIDE 11 WARMUP ── */
+.fluffet-stage{display:flex;flex-direction:column;align-items:center;gap:1.25rem;max-width:600px;width:100%;}
+.fluffet-img{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(232,200,74,.45));animation:fluffet-bob 1.8s ease-in-out infinite;}
+@keyframes fluffet-bob{0%,100%{transform:translateY(0) rotate(-3deg) scale(1);}50%{transform:translateY(-8px) rotate(3deg) scale(1.06);}}
+.warmup-bubble{background:rgba(232,200,74,.08);border:1px solid rgba(232,200,74,.28);border-radius:16px;padding:1.4rem 1.8rem;text-align:center;}
+.warmup-bubble p{font-size:1rem;line-height:1.8;color:var(--text);}
+.warmup-bubble em{color:var(--gold);font-style:normal;}
+.warmup-prompt{font-family:var(--cinzel);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-top:.9rem;}
+.bwip-badge{display:inline-block;font-family:var(--cinzel);font-size:.7rem;letter-spacing:.1em;background:rgba(232,200,74,.12);border:1px solid rgba(232,200,74,.3);border-radius:100px;padding:.2rem .7rem;color:var(--gold);margin-top:.5rem;}
+
+/* ── SLIDE 12 VISION ── */
+.vision-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem;max-width:820px;width:100%;margin-top:1.2rem;}
+.vision-box{border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem;background:rgba(255,255,255,.03);text-align:left;}
+.vision-q{font-family:var(--cinzel);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;line-height:1.4;}
+.vision-hint{font-size:.88rem;color:var(--text-muted);line-height:1.6;font-style:italic;}
+
+/* ── SLIDE 13 FORMERY ── */
+.formery-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;max-width:840px;width:100%;margin-top:1rem;align-items:start;}
+.formery-explain{display:flex;flex-direction:column;gap:.8rem;}
+.formery-explain-head{font-family:var(--cinzel);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem;}
+.formery-explain-body{font-size:.9rem;line-height:1.65;color:var(--text-muted);}
+.formery-explain-body em{color:var(--gold);font-style:normal;}
+.formery-steps{display:flex;flex-direction:column;gap:.5rem;}
+.fstep{display:grid;grid-template-columns:1.4rem 1fr;gap:.5rem;align-items:start;font-size:.85rem;line-height:1.55;color:var(--text-muted);}
+.fstep-num{font-family:var(--cinzel);color:var(--gold);font-size:.78rem;padding-top:.05rem;}
+.form-paper{background:#f0e8d2;color:#2a1f0e;border-radius:10px;padding:1.2rem 1.4rem;border:2px solid #c8a830;font-family:'Courier New',monospace;font-size:.72rem;line-height:1.65;position:relative;}
+.form-paper-head{font-size:.62rem;letter-spacing:.06em;color:#6a5010;border-bottom:1px solid #c8a830;padding-bottom:.5rem;margin-bottom:.75rem;}
+.form-field-row{margin-bottom:.55rem;}
+.form-label{color:#6a5010;font-size:.65rem;display:block;margin-bottom:.1rem;}
+.form-line{display:block;border-bottom:1px solid #c8a830;min-height:.9rem;width:100%;}
+.form-stamp{position:absolute;top:.9rem;right:1rem;font-size:.58rem;color:#cc4420;border:2px solid #cc4420;padding:.2rem .45rem;letter-spacing:.06em;transform:rotate(-7deg);opacity:.85;white-space:nowrap;background:#f0e8d2;}
+
+/* ── SLIDE 14 TEASER ── */
+.teaser-layout{display:grid;grid-template-columns:1fr 1.15fr;gap:1.5rem;max-width:960px;width:100%;align-items:stretch;}
+.teaser-img-col{position:relative;border-radius:12px;overflow:hidden;min-height:340px;}
+.teaser-img-col img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85;}
+.teaser-img-col::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,transparent 60%,var(--ink) 100%);}
+.teaser-text-col{display:flex;flex-direction:column;justify-content:center;padding:.5rem 0;}
+.teaser-beat{display:none;opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease;}
+.teaser-beat.visible{display:block;opacity:1;transform:translateY(0);}
+.teaser-beat p{font-size:clamp(.88rem,1.5vw,1.02rem);line-height:1.8;color:var(--text);margin-bottom:.7rem;text-align:left;}
+.teaser-beat p em{color:var(--gold);font-style:normal;}
+.teaser-beat p strong{color:var(--rose);}
+.teaser-beat-divider{width:50px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin:.5rem 0 .8rem;}
+.teaser-progress{display:flex;gap:.4rem;margin-top:1rem;}
+.tp-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18);transition:background .3s;}
+.tp-dot.active{background:var(--gold);}
+.teaser-btn{margin-top:1.1rem;font-family:var(--cinzel);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;background:rgba(232,200,74,.12);border:1px solid rgba(232,200,74,.35);color:var(--gold);padding:.45rem 1.2rem;border-radius:100px;cursor:pointer;transition:background .2s;}
+.teaser-btn:hover{background:rgba(232,200,74,.22);}
+.teaser-backdrop{background:rgba(255,30,30,.08);}
+
+/* ── SLIDE 15 BEGIN ── */
+.begin-glow{text-shadow:0 0 60px rgba(232,200,74,.4);}
+
+/* ── NAV ── */
+#controls{position:fixed;bottom:1.6rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.9rem;z-index:100;}
+.nav-btn{font-family:var(--cinzel);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;background:rgba(10,12,20,.85);border:1px solid var(--border);color:var(--gold);padding:.5rem 1.3rem;border-radius:100px;cursor:pointer;transition:background .2s,border-color .2s;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(232,200,74,.1);border-color:rgba(232,200,74,.5);}
+.nav-btn:disabled{opacity:.25;cursor:default;}
+#slide-counter{font-family:var(--cinzel);font-size:.68rem;letter-spacing:.15em;color:var(--text-faint);min-width:56px;text-align:center;}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="progress-bar"></div>
+<div id="deck">
+
+<!-- ── S1 WELCOME ── -->
+<div class="slide active" id="s1">
+  <div class="hero-bg">
+    <img src="https://carlosknightiii.github.io/anavale-wiki/assets/images/pogglewog-map.webp" alt="Caparia map">
+  </div>
+  <div class="hero-content">
+    <div class="eyebrow">A campaign for Adrian · Meeta · Hema</div>
+    <h1 class="hero-title">Welcome to Anavale</h1>
+    <p class="hero-tagline">
+      A world where color is alive, magic hums in the soil,<br>
+      creatures bwip and bounce and cannot fly straight,<br>
+      and the Gigglegloom answers to no government.<br><br>
+      <em>And where something is quietly eating all of it.</em>
+    </p>
+  </div>
+</div>
+
+<!-- ── S2 COLOR IS LIFE ── -->
+<div class="slide" id="s2">
+  <div class="eyebrow">The First Rule of Anavale</div>
+  <h2 class="slide-title">Color Is Life</h2>
+  <div class="divider"></div>
+  <p class="body-text" style="margin-bottom:1.2rem;">
+    In Anavale, color is not decoration. It is health, magic, and vitality all at once — a living measure of how much of the Gigglegloom a person, place, or creature carries. Think of it less like paint and more like the glow that living things have.
+  </p>
+  <div class="color-bands">
+    <div class="color-band band-vivid">
+      <div class="color-band-label vivid">Vivid</div>
+      <div class="color-band-desc">Fully saturated. The Gigglegloom is here and healthy. Magic flows freely.</div>
+    </div>
+    <div class="color-band band-mid">
+      <div class="color-band-label mid">Muted</div>
+      <div class="color-band-desc">Something is off. Not dangerous yet — but noticeable to those who know.</div>
+    </div>
+    <div class="color-band band-faded">
+      <div class="color-band-label faded">Faded — Stage 1</div>
+      <div class="color-band-desc">Early Dimming. Reversible. Joy accessible but muted. Creatures begin to quiet.</div>
+    </div>
+    <div class="color-band band-dimmed">
+      <div class="color-band-label dimmed">Dimmed — Stage 2</div>
+      <div class="color-band-desc">Grey. Joy only remembered, not felt. This is where the Bumble Frogs go silent.</div>
+    </div>
+  </div>
+  <div class="mechanic-row">
+    <div class="mechanic-pill"><strong>In D&D terms</strong>Color loss can affect what magic works and how. Areas of Fading may weaken Gigglegloom spells — or make them unpredictable.</div>
+    <div class="mechanic-pill"><strong>For your character</strong>Your color is part of who you are. It can shift. Protecting it — in others and yourself — is what heroes do here.</div>
+    <div class="mechanic-pill"><strong>What to watch for</strong>Creatures change. Frogs go quiet. Fluffets bring grey acorns. These are signs you'll learn to read.</div>
+  </div>
+</div>
+
+<!-- ── S3 THE DIMMING ── -->
+<div class="slide" id="s3">
+  <div class="eyebrow">What You Are Walking Into</div>
+  <h2 class="slide-title">The Vareth & the Dimming</h2>
+  <div class="dimming-stages">
+    <div class="dimming-stage ds-healthy">
+      <span class="ds-icon">🌈</span>
+      <div class="ds-label">Healthy</div>
+      <div class="ds-desc">Gigglegloom flows freely. Creatures are colorful and loud. The world hums.</div>
+    </div>
+    <div class="ds-arrow">→</div>
+    <div class="dimming-stage ds-faded">
+      <span class="ds-icon">🌫</span>
+      <div class="ds-label">Faded — Stage 1</div>
+      <div class="ds-desc">Colors shift toward grey. Magic may behave oddly. Creatures begin to quiet. <em>Reversible.</em></div>
+    </div>
+    <div class="ds-arrow">→</div>
+    <div class="dimming-stage ds-dimmed">
+      <span class="ds-icon">⬜</span>
+      <div class="ds-label">Dimmed — Stage 2</div>
+      <div class="ds-desc">Grey. Fully saturated. Joy is only a memory. The Bumble Frogs are completely silent. <em>Very hard to undo.</em></div>
+    </div>
+  </div>
+  <p class="vareth-line">
+    The force behind this is called <em>the Vareth</em>. It has no face, no body, no throne. Its goal is not conquest or power.<br>
+    Its goal is <em>Quietude</em> — a world that has stopped. That has gone still. That has forgotten what color even was.<br><br>
+    It has been doing this slowly, carefully, and without announcement for longer than most kingdoms have existed.
+  </p>
+</div>
+
+<!-- ── S4 GIGGLEGLOOM ── -->
+<div class="slide" id="s4">
+  <div class="eyebrow">The Magic of This World</div>
+  <h2 class="slide-title">The Gigglegloom</h2>
+  <div class="slide-sub" style="margin-bottom:.8rem;">Living magic. Alive, opinionated, mischievous. It responds to you.</div>
+  <div class="type-grid">
+    <div class="type-card tc-bs">
+      <div class="type-card-video-wrap" style="--tc:#c8a83a">
+        <video class="type-card-video" src="https://carlosknightiii.github.io/anavale-wiki/assets/videos/anim-bubbleseed.mp4" autoplay muted loop playsinline></video>
+        <div class="type-card-video-overlay" style="background:linear-gradient(to bottom,transparent 30%,rgba(10,8,2,.95) 100%);"></div>
+      </div>
+      <div class="type-card-content">
+        <div class="type-card-header"><img class="type-card-icon" src="https://carlosknightiii.github.io/anavale-wiki/assets/icons/icon-bubbleseed.svg" alt="Bubbleseed"><div class="type-card-name">Bubbleseed</div></div>
+        <div class="type-element">Earth · Growth · Joy</div>
+        <div class="type-desc">Warm, generous, overshoots. Emotionally attached. Smells like soil after rain.</div>
+      </div>
+    </div>
+    <div class="type-card tc-ff">
+      <div class="type-card-video-wrap">
+        <video class="type-card-video" src="https://carlosknightiii.github.io/anavale-wiki/assets/videos/anim-featherflow.mp4" autoplay muted loop playsinline></video>
+        <div class="type-card-video-overlay" style="background:linear-gradient(to bottom,transparent 30%,rgba(2,5,14,.95) 100%);"></div>
+      </div>
+      <div class="type-card-content">
+        <div class="type-card-header"><img class="type-card-icon" src="https://carlosknightiii.github.io/anavale-wiki/assets/icons/icon-featherflow.svg" alt="Featherflow"><div class="type-card-name">Featherflow</div></div>
+        <div class="type-element">Wind · Water · Freedom</div>
+        <div class="type-desc">Never goes straight. Resists cages. May slow early Fading.</div>
+      </div>
+    </div>
+    <div class="type-card tc-sf">
+      <div class="type-card-video-wrap">
+        <video class="type-card-video" src="https://carlosknightiii.github.io/anavale-wiki/assets/videos/anim-steelfist.mp4" autoplay muted loop playsinline></video>
+        <div class="type-card-video-overlay" style="background:linear-gradient(to bottom,transparent 30%,rgba(5,2,14,.95) 100%);"></div>
+      </div>
+      <div class="type-card-content">
+        <div class="type-card-header"><img class="type-card-icon" src="https://carlosknightiii.github.io/anavale-wiki/assets/icons/icon-steelfist.svg" alt="Steelfist"><div class="type-card-name">Steelfist</div></div>
+        <div class="type-element">Metal · Resolve · Order</div>
+        <div class="type-desc">Does exactly what it's told. Its grey shines — Dimming grey is flat.</div>
+      </div>
+    </div>
+    <div class="type-card tc-fr">
+      <div class="type-card-video-wrap">
+        <video class="type-card-video" src="https://carlosknightiii.github.io/anavale-wiki/assets/videos/anim-flamerage.mp4" autoplay muted loop playsinline></video>
+        <div class="type-card-video-overlay" style="background:linear-gradient(to bottom,transparent 30%,rgba(12,3,2,.95) 100%);"></div>
+      </div>
+      <div class="type-card-content">
+        <div class="type-card-header"><img class="type-card-icon" src="https://carlosknightiii.github.io/anavale-wiki/assets/icons/icon-flamerage.svg" alt="Flamerage"><div class="type-card-name">Flamerage</div></div>
+        <div class="type-element">Fire · Fury · Destruction</div>
+        <div class="type-desc">Responds to emotion before intent. The only type that can temporarily overpower Stage 1 Fading.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── S5 CREATURES ── -->
+<div class="slide" id="s5">
+  <div class="eyebrow">Things You Will Meet</div>
+  <h2 class="slide-title">The Merry</h2>
+  <div class="slide-sub">These are only four of the dozens of creatures in Anavale. You will meet many more.</div>
+  <div class="creature-grid">
+    <div class="creature-card">
+      <div class="creature-img-wrap"><img src="https://carlosknightiii.github.io/anavale-wiki/assets/images/creatures/fluffets.webp" alt="Fluffets"></div>
+      <div class="creature-body">
+        <div class="creature-name">Fluffets</div>
+        <div class="creature-desc">Tiny squirrels. Say "bwip" and mean it sincerely. Will bring you an acorn. Will not stop until you accept it.</div>
+      </div>
+    </div>
+    <div class="creature-card">
+      <div class="creature-img-wrap"><img src="https://carlosknightiii.github.io/anavale-wiki/assets/images/creatures/bumble-frogs.webp" alt="Bumble Frogs"></div>
+      <div class="creature-body">
+        <div class="creature-name">Bumble Frogs</div>
+        <div class="creature-desc">Hum constantly. Harmonize accidentally with any nearby music. Cannot match pitch. Somehow always sound right.</div>
+      </div>
+    </div>
+    <div class="creature-card">
+      <div class="creature-img-wrap"><img src="https://carlosknightiii.github.io/anavale-wiki/assets/images/creatures/tinywings.webp" alt="Tinywings"></div>
+      <div class="creature-body">
+        <div class="creature-name">Tinywings</div>
+        <div class="creature-desc">Thumb-sized dragons. Cannot fly straight. Very proud. Will argue about this at length.</div>
+      </div>
+    </div>
+    <div class="creature-card">
+      <div class="creature-img-wrap"><img src="https://carlosknightiii.github.io/anavale-wiki/assets/images/creatures/bounce-beetles.webp" alt="Bounce Beetles"></div>
+      <div class="creature-body">
+        <div class="creature-name">Bounce Beetles</div>
+        <div class="creature-desc">Navigate by bouncing. Make a satisfying "boing." Travel entirely by accident. Always arrive correctly.</div>
+      </div>
+    </div>
+  </div>
+  <p class="body-text" style="margin-top:1rem;font-size:.88rem;color:var(--text-muted);">Harming a creature unprovoked is not illegal — it is simply something the entire continent considers unforgivable. Enforced accordingly.</p>
+</div>
+
+<!-- ── S6 HOW DND WORKS ── -->
+<div class="slide" id="s6">
+  <div class="eyebrow">The Rules (The Ones That Matter Tonight)</div>
+  <h2 class="slide-title">How This Works</h2>
+  <div class="slide-sub">D&D has hundreds of rules. You need these.</div>
+  <div class="rules-list">
+    <div class="rule-row"><div class="rule-num">1</div><div class="rule-text"><strong>Describe what your character wants to do.</strong> That is your entire job. My job is to figure out how the rules handle it. You will never be wrong for trying something.</div></div>
+    <div class="rule-row"><div class="rule-num">2</div><div class="rule-text"><strong>Uncertain outcomes roll the d20.</strong> Higher is better. Your abilities (Strength, Dexterity, Wisdom, etc.) and proficiency add to that number. <strong>Advantage</strong> means roll twice and take the higher. <strong>Disadvantage</strong> means take the lower.</div></div>
+    <div class="rule-row"><div class="rule-num">3</div><div class="rule-text"><strong>Combat is turn-by-turn.</strong> On your turn: move somewhere, do one main thing (attack, cast, help someone), and optionally one small bonus thing. You have hit points — don't worry about what happens at zero yet.</div></div>
+    <div class="rule-row"><div class="rule-num">4</div><div class="rule-text"><strong>Story wins over rules. Always.</strong> This is Anavale's first law. If a rule would make a moment worse, we ignore it. You are here to live a story, not pass a test. Anything you're unsure about — just ask.</div></div>
+    <div class="rule-row"><div class="rule-num">5</div><div class="rule-text"><strong>"Yes, and."</strong> Whatever another player does, build on it. D&D is collaborative improv. There are no wrong moves — only interesting consequences.</div></div>
+  </div>
+</div>
+
+<!-- ── S7 DO/DONT/DM ── -->
+<div class="slide" id="s7">
+  <div class="eyebrow">Before We Play</div>
+  <h2 class="slide-title">The Ground Rules</h2>
+  <div class="three-col">
+    <div class="col-block yes">
+      <div class="col-head">✦ You Can</div>
+      <div class="col-item">Try <strong>anything</strong> your character might attempt</div>
+      <div class="col-item">Ask me questions <strong>at any time</strong></div>
+      <div class="col-item">Talk to NPCs, explore, ignore the quest</div>
+      <div class="col-item">Change your mind before a roll happens</div>
+      <div class="col-item">Say "I have no idea what to do" — that's fine</div>
+      <div class="col-item">Make jokes, be weird, go off script</div>
+      <div class="col-item">Speak as yourself any time</div>
+    </div>
+    <div class="col-block no">
+      <div class="col-head">✗ You Can't</div>
+      <div class="col-item">Undo something after the dice have been rolled</div>
+      <div class="col-item">Use information your <em>character</em> doesn't know</div>
+      <div class="col-item">Control another player's character</div>
+      <div class="col-item">Retroactively change a session's events</div>
+      <div class="col-item">Harm a creature unprovoked without consequence</div>
+      <div class="col-item">Know what's behind a door before opening it</div>
+    </div>
+    <div class="col-block dm">
+      <div class="col-head">⬡ The DM's Role</div>
+      <div class="col-item">Narrate the world around you</div>
+      <div class="col-item">Play every person you meet</div>
+      <div class="col-item">Decide when dice are needed</div>
+      <div class="col-item">Keep the story moving</div>
+      <div class="col-item">Make sure everyone gets a moment</div>
+      <div class="col-item">Know the rules so you don't have to</div>
+      <div class="col-item">Give Inspiration when you earn it</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── S8 ROLEPLAY VS CASUAL ── -->
+<div class="slide" id="s8">
+  <div class="eyebrow">Two Modes</div>
+  <h2 class="slide-title">Roleplay vs. Casual Chat</h2>
+  <div class="divider"></div>
+  <p class="body-text" style="margin-bottom:1.4rem;">You don't need to be in character the whole time. Switch freely. If you're not sure which mode we're in — just ask.</p>
+  <div class="card-grid cols-2" style="max-width:680px;">
+    <div class="card" style="border-color:rgba(232,200,74,.3);">
+      <div class="card-name" style="color:var(--gold);font-size:.9rem;margin-bottom:.4rem;">🎭 Roleplay mode</div>
+      <div class="card-desc" style="font-size:.93rem;">Speak as your character. Third person is fine: <em style="color:var(--gold);font-style:normal;">"Elara looks at the guard and says…"</em><br>Or just speak directly: <em style="color:var(--gold);font-style:normal;">"I don't think that's the whole story."</em><br><br>No performance required. Just intention.</div>
+    </div>
+    <div class="card" style="border-color:rgba(154,112,232,.3);">
+      <div class="card-name" style="color:var(--violet);font-size:.9rem;margin-bottom:.4rem;">💬 Casual mode</div>
+      <div class="card-desc" style="font-size:.93rem;">Talking as yourself. <em style="color:var(--violet);font-style:normal;">"Wait, what did that merchant say again?"</em> or <em style="color:var(--violet);font-style:normal;">"Can I even do that?"</em> or <em style="color:var(--violet);font-style:normal;">"I am so confused right now."</em><br><br>Out-of-character jokes are welcomed. The table is always safe.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── S9 INSPIRATION ── -->
+<div class="slide" id="s9">
+  <div class="eyebrow">A Special Reward</div>
+  <h2 class="slide-title">Inspiration</h2>
+  <div class="slide-sub">The game's way of saying: <em style="color:var(--gold);font-style:normal;">that was exactly right.</em></div>
+  <div class="inspo-wrap">
+    <div class="inspo-earn">
+      <div class="inspo-head">✦ What earns Inspiration</div>
+      <div class="inspo-ex">Acting on a <em>flaw</em> at the wrong moment — and doing it anyway because that's who your character is</div>
+      <div class="inspo-ex">Choosing the <em>kind thing</em> when the clever thing was right there and easier</div>
+      <div class="inspo-ex">A roleplay moment so specific it <em>surprises the table</em> — or makes everyone go quiet</div>
+      <div class="inspo-ex">Connecting your <em>backstory</em> to what's happening right now, unprompted</div>
+      <div class="inspo-ex">Doing what your character would do, <em>even when it costs you</em></div>
+      <div class="inspo-ex">Saying something so perfectly in-character that everyone else immediately agrees that's exactly what they would have said</div>
+    </div>
+    <div class="inspo-not">
+      <div class="inspo-head">✗ What doesn't earn it</div>
+      <div class="inspo-ex">Clever tactics alone</div>
+      <div class="inspo-ex">A lucky roll</div>
+      <div class="inspo-ex">Doing what's obviously best for the party</div>
+      <div class="inspo-ex">Winning a fight</div>
+      <div class="inspo-ex">Anything that isn't about <em>who your character is</em> as a person</div>
+      <div class="inspo-ex">Being the one who figures out a puzzle (that's great — but it's not Inspiration)</div>
+    </div>
+  </div>
+  <div class="inspo-use">
+    <span class="inspo-badge">How to use it</span> Spend before any single d20 roll. Roll twice. Take the higher result. You can only hold <strong>one at a time</strong> — if you already have one and I offer another, it goes to someone else.<br><br>
+    <em style="color:var(--text-faint);">You will not always notice when you've earned it. I will. That's part of my job.</em>
+  </div>
+</div>
+
+<!-- ── S10 NOTES ── -->
+<div class="slide" id="s10">
+  <div class="eyebrow">A Gift to Future You</div>
+  <h2 class="slide-title">Take Notes</h2>
+  <div class="slide-sub">In six weeks you will not remember the innkeeper's name. Future you will be very grateful to present you.</div>
+  <div class="notes-cols">
+    <div class="notes-col">
+      <div class="notes-col-head">People</div>
+      <div class="notes-desc">Name, where you met them, one word for their vibe. That's all you need. The details come back when you read those three things.</div>
+      <div class="notes-eg">"Pressa Vorn — Wanderkeep station, north bank — tired, trustworthy, definitely knows more than she's saying"</div>
+    </div>
+    <div class="notes-col">
+      <div class="notes-col-head">Places</div>
+      <div class="notes-desc">Name, what's there, why it might matter. Don't write everything. Write the thing that felt important when you were there.</div>
+      <div class="notes-eg">"Gobblewump Crossing — river junction, ancient bridge, Gerald lives here, Formery office predates the town"</div>
+    </div>
+    <div class="notes-col">
+      <div class="notes-col-head">Things I Don't Understand Yet</div>
+      <div class="notes-desc">The most important column. Hunches, strange details, things that gave you a feeling. The feeling is usually right.</div>
+      <div class="notes-eg">"Why did that merchant look scared when someone mentioned the word Drak? Nobody explained that."</div>
+    </div>
+  </div>
+  <p class="body-text" style="margin-top:1.2rem;font-size:.92rem;">You don't need to write <em>everything</em>. Write the things that felt <em>weird</em>.</p>
+</div>
+
+<!-- ── S11 WARMUP ── -->
+<div class="slide" id="s11">
+  <div class="eyebrow">Before We Make Characters</div>
+  <h2 class="slide-title">A Quick Warmup</h2>
+  <div class="divider"></div>
+  <div class="fluffet-stage">
+    <img class="fluffet-img" src="https://carlosknightiii.github.io/anavale-wiki/assets/images/creatures/fluffets.webp" alt="Fluffet">
+    <div class="warmup-bubble">
+      <p>
+        Your character is standing at a crossroads on a sunny afternoon.<br>
+        Out of nowhere, a tiny round squirrel with <em>pastel gold fur</em> runs up to your feet<br>
+        and sits down, looking up at you expectantly.<br><br>
+        It is holding a small acorn. It says <em>"bwip."</em><br>
+        It will not leave until you accept the acorn.
+      </p>
+      <div class="bwip-badge">bwip.</div>
+    </div>
+    <div class="warmup-prompt">What does your character do?</div>
+  </div>
+</div>
+
+<!-- ── S12 CHARACTER VISION ── -->
+<div class="slide" id="s12">
+  <div class="eyebrow">Before You Build Them</div>
+  <h2 class="slide-title">A Question for You</h2>
+  <div class="slide-sub">Think about the character you want to play. Not their stats — their story.</div>
+  <div class="vision-grid">
+    <div class="vision-box">
+      <div class="vision-q">Were they known?</div>
+      <div class="vision-hint">Famous, notorious, beloved by one village, feared by one person? Did the world know their name — or was it better that it didn't?</div>
+    </div>
+    <div class="vision-box">
+      <div class="vision-q">Were they changed?</div>
+      <div class="vision-hint">Did they find something they were looking for? Lose something they thought they had to keep? Did they become someone different — and was that good?</div>
+    </div>
+    <div class="vision-box">
+      <div class="vision-q">What did they leave behind?</div>
+      <div class="vision-hint">A thing, a place, a person, a story someone else will tell? A bridge they rebuilt, a wrong they righted, a creature they made sure was safe?</div>
+    </div>
+  </div>
+  <p class="body-text" style="margin-top:1.4rem;font-size:.95rem;max-width:600px;">
+    You don't need answers. Hold the question while you build.<br>The choices will start to feel different.
+  </p>
+</div>
+
+<!-- ── S13 FORMERY GAME ── -->
+<div class="slide" id="s13">
+  <div class="eyebrow">Your First In-World Moment</div>
+  <h2 class="slide-title">The Intake Form</h2>
+  <div class="slide-sub">Gobblewump Crossing is home to the oldest Formery office in Caparia not located in a capital city. Everyone who crosses gets one.</div>
+  <div class="formery-layout">
+    <div class="formery-explain">
+      <div>
+        <div class="formery-explain-head">What is the Formery?</div>
+        <div class="formery-explain-body">The oldest organization in Anavale. Predates the current bridge, the town, and possibly the calendar. Nobody knows what its original purpose was. It processes forms. Its clerks are always polite. They have seen everything before.<br><br>When you arrive in Gobblewump Crossing, a clerk will hand you <em>Form 6-E: Intent Uncertain — Please Clarify Before Crossing.</em></div>
+      </div>
+      <div>
+        <div class="formery-explain-head">The Game</div>
+        <div class="formery-steps">
+          <div class="fstep"><div class="fstep-num">1</div><div>Fill it out before Session One — in character, as the person you're going to play</div></div>
+          <div class="fstep"><div class="fstep-num">2</div><div>Bring it (or send it) to me before we start</div></div>
+          <div class="fstep"><div class="fstep-num">3</div><div>The clerk at the Formery will read your answers back to you at the start of Session One — gravely, without irony</div></div>
+          <div class="fstep"><div class="fstep-num">4</div><div>Your answers become part of the world. Choose carefully. Or don't.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-paper">
+      <div class="form-stamp">PENDING REVIEW</div>
+      <div class="form-paper-head">FORM 6-E · THE BUREAU OF THOROUGH CONSIDERATION<br>INTENT UNCERTAIN — PLEASE CLARIFY BEFORE CROSSING</div>
+      <div class="form-field-row">
+        <span class="form-label">1. YOUR NAME (as you wish to be recorded by this office)</span>
+        <span class="form-line"></span>
+      </div>
+      <div class="form-field-row">
+        <span class="form-label">2. YOUR PURPOSE FOR CROSSING THIS BRIDGE ("passing through" is not a purpose)</span>
+        <span class="form-line"></span>
+      </div>
+      <div class="form-field-row">
+        <span class="form-label">3. COLOR OF YOUR FEELINGS UPON APPROACHING (attach swatch if available)</span>
+        <span class="form-line"></span>
+      </div>
+      <div class="form-field-row">
+        <span class="form-label">4. HAVE YOU CROSSED THIS BRIDGE BEFORE? IF YES, EXPLAIN WHY AGAIN.</span>
+        <span class="form-line"></span>
+      </div>
+      <div class="form-field-row">
+        <span class="form-label">5. NATURE OF YOUR UNCERTAINTY — please be specific</span>
+        <span class="form-line"></span>
+      </div>
+      <div style="margin-top:.6rem;font-size:.6rem;color:#8a6820;">This form must be completed before crossing. Refusal to complete constitutes Intent Uncertain, Type B, which also requires Form 6-E.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── S14 TEASER ── -->
+<div class="slide teaser-backdrop" id="s14">
+  <div class="eyebrow">Session One · Something Is Wrong With Gerald</div>
+  <div class="teaser-layout">
+    <div class="teaser-img-col">
+      <img src="https://carlosknightiii.github.io/anavale-wiki/assets/images/regions/gobblewump-crossing.webp" alt="Gobblewump Crossing">
+    </div>
+    <div class="teaser-text-col">
+      <div id="teaser-beat-0" class="teaser-beat visible">
+        <p>Three travelers. Three roads. All of them led here.<br><br>
+        You arrive at <em>Gobblewump Crossing</em> — the most trafficked river junction in Caparia — for different reasons. Adrian's character is chasing something. Meeta's is running from something. Hema's was told to be here by someone they trust.<br><br>
+        None of you planned to stay.</p>
+        <div class="teaser-beat-divider"></div>
+        <p>But the town is quieter than it should be.<br>And the river sounds wrong.</p>
+      </div>
+      <div id="teaser-beat-1" class="teaser-beat">
+        <p><em>Gerald</em> is a Bumble Frog of extraordinary size and age. He has lived under the bridge longer than the town has had a name.<br><br>
+        Every traveler who has passed through in living memory has heard him at dawn — that low harmonic hum that somehow makes whatever you were carrying feel slightly lighter than before.<br><br>
+        <strong>Three weeks ago, Gerald stopped humming.</strong></p>
+      </div>
+      <div id="teaser-beat-2" class="teaser-beat">
+        <p>He is still there — still large, still under the bridge. But his glow is almost gone.<br><br>
+        The Bumble Frogs along the riverbank have gone quiet too, one by one, following his lead into silence.<br><br>
+        This morning, someone found a grey acorn on the bridge railing. Left there by a Fluffet whose fur has begun to wash out.<br><br>
+        <strong>The first grey acorn anyone has seen at Gobblewump Crossing.</strong></p>
+      </div>
+      <div id="teaser-beat-3" class="teaser-beat">
+        <p>The Wanderkeep station keeper, Pressa Vorn, sent word north ten days ago. No response.<br><br>
+        The Formery has filed Form 8-R (Report of Unusual Quiet, Creature, Non-Domestic).<br><em>They are awaiting processing.</em><br><br>
+        The townspeople talk about it every night at the inn.<br>Nobody knows what to do.<br><br>
+        <strong>No one is coming to help.</strong><br><br>That is where you arrive.</p>
+      </div>
+      <div class="teaser-progress" id="teaser-dots">
+        <div class="tp-dot active"></div>
+        <div class="tp-dot"></div>
+        <div class="tp-dot"></div>
+        <div class="tp-dot"></div>
+      </div>
+      <button class="teaser-btn" id="teaser-next-btn" onclick="advanceTeaser()">Continue the story →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── S15 BEGIN ── -->
+<div class="slide" id="s15">
+  <div class="eyebrow">Anavale · Session Zero · 2026</div>
+  <h1 class="slide-title begin-glow">Let's Make Your Characters</h1>
+  <div class="divider"></div>
+  <p class="body-text">
+    The world is waiting. Gerald is waiting.<br><br>
+    <em>Who are you going to be?</em>
+  </p>
+</div>
+
+</div><!-- /deck -->
+
+<div id="controls">
+  <button class="nav-btn" id="prev-btn" disabled onclick="navigate(-1)">← Prev</button>
+  <span id="slide-counter">1 / 15</span>
+  <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next →</button>
+</div>
+
+<script>
+const TOTAL = 15;
+let current = 1;
+let teaserBeat = 0;
+const TEASER_TOTAL = 4;
+
+function getSlide(n){return document.getElementById('s'+n);}
+
+function navigate(dir){
+  const next=current+dir;
+  if(next<1||next>TOTAL)return;
+  const cur=getSlide(current),nxt=getSlide(next);
+  cur.classList.add('exit');cur.classList.remove('active');
+  nxt.classList.add('active');nxt.classList.remove('exit');
+  setTimeout(()=>cur.classList.remove('exit'),600);
+  current=next;
+  updateUI();
+}
+
+function updateUI(){
+  document.getElementById('prev-btn').disabled=current===1;
+  document.getElementById('next-btn').disabled=current===TOTAL;
+  document.getElementById('slide-counter').textContent=current+' / '+TOTAL;
+  document.getElementById('progress-bar').style.width=((current/TOTAL)*100)+'%';
+}
+
+function advanceTeaser(){
+  if(teaserBeat>=TEASER_TOTAL-1){
+    document.getElementById('teaser-next-btn').style.display='none';
+    return;
+  }
+  document.getElementById('teaser-beat-'+teaserBeat).style.opacity='0';
+  document.getElementById('teaser-beat-'+teaserBeat).style.transform='translateY(-6px)';
+  setTimeout(()=>{
+    document.getElementById('teaser-beat-'+teaserBeat).classList.remove('visible');
+    teaserBeat++;
+    const nb=document.getElementById('teaser-beat-'+teaserBeat);
+    nb.classList.add('visible');
+    // force reflow for transition
+    nb.offsetHeight;
+    nb.style.opacity='1';nb.style.transform='translateY(0)';
+    document.querySelectorAll('.tp-dot').forEach((d,i)=>d.classList.toggle('active',i===teaserBeat));
+    if(teaserBeat>=TEASER_TOTAL-1)document.getElementById('teaser-next-btn').textContent='That\'s where you arrive.';
+  },300);
+}
+
+document.addEventListener('keydown',e=>{
+  if(current===14&&(e.key==='ArrowRight'||e.key===' ')&&teaserBeat<TEASER_TOTAL-1){e.preventDefault();advanceTeaser();return;}
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')navigate(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')navigate(-1);
+});
+
+// Starfield
+(function(){
+  const canvas=document.getElementById('stars'),ctx=canvas.getContext('2d');
+  let stars=[];
+  function resize(){
+    canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+    stars=Array.from({length:200},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:.3+Math.random()*1.2,a:Math.random(),s:(.002+Math.random()*.006)*(Math.random()<.5?1:-1)}));
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s=>{
+      s.a=Math.max(.04,Math.min(.85,s.a+s.s));
+      if(s.a<=.04||s.a>=.85)s.s*=-1;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(240,228,180,${s.a})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();draw();
+  window.addEventListener('resize',resize);
+})();
+
+updateUI();
+</script>
+</body>
+</html>
