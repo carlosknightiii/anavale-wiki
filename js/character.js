@@ -3161,7 +3161,7 @@ async function writeToGitHub(entry) {
         },
         body: JSON.stringify({
           event_type: 'add-character',
-          client_payload: payload
+          client_payload: { data: JSON.stringify(payload) }
         })
       }
     );

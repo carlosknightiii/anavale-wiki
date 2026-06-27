@@ -9,7 +9,10 @@ if (!raw) {
 }
 let entry;
 try {
-  entry = JSON.parse(raw);
+  // client_payload is wrapped in { data: "..." } to stay under GitHub's 10-property limit
+  const outer = JSON.parse(raw);
+  const inner = outer.data ? outer.data : raw;
+  entry = JSON.parse(inner);
 } catch (e) {
   console.error('Failed to parse CHARACTER_JSON:', e.message);
   process.exit(1);
