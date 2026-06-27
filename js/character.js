@@ -268,6 +268,14 @@ function jumpToStage(n) {
   // Allow jumping to any stage the player has already reached
   var highest = CHAR_STATE.highest_stage || CHAR_STATE.current_stage;
   if (n <= highest) {
+    // Block jumping to Stage 5 if gold is overspent
+    if (n === 5 && CHAR_STATE.current_stage === 4) {
+      var goldRemaining = getStartingGold() - calcGoldSpent();
+      if (goldRemaining < 0) {
+        showToast('You\'ve spent more than your starting gold. Remove some items before continuing.', 'error');
+        return;
+      }
+    }
     collectStageData(CHAR_STATE.current_stage);
     showStage(n);
   }
@@ -2807,9 +2815,10 @@ function renderSummaryCard() {
     var conMod   = Math.floor((conTotal - 10) / 2);
     hp = hpDie + conMod;
   }
-  var goldTotal   = bgObj ? (bgObj.starting_gold || 0) : 0;
+  var goldTotal   = typeof getStartingGold === 'function' ? getStartingGold() : (bgObj ? (bgObj.starting_gold || 0) : 0);
   var goldSpent   = typeof calcGoldSpent === 'function' ? calcGoldSpent() : 0;
-  var goldLeft    = Math.max(0, goldTotal - goldSpent);
+  var goldLeft    = goldTotal - goldSpent;
+  var goldOverspent = goldLeft < 0;
   // ── Class flavor name ─────────────────────────────────────────
   var classFlavorName = '';
   if (clsObj && typeKey && clsObj.gigglegloom === typeKey) {
@@ -2906,7 +2915,7 @@ function renderSummaryCard() {
     + '<div style="display:flex;flex-direction:column;gap:0.45rem;flex-shrink:0;width:130px;">'
     +   '<div title="Armor Class — how hard you are to hit. 10 is unarmored. Higher armor and Dexterity raise this." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:rgba(140,155,180,0.18);border:1px solid rgba(160,175,200,0.18);cursor:help;"><span style="font-size:1rem;">🛡</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:#fff;line-height:1;">' + ac + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">Armor Class</div></div></div>'
     +   '<div title="Hit Points — how much damage you can take before going down." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:rgba(200,50,50,0.18);border:1px solid rgba(224,80,80,0.22);cursor:help;"><span style="font-size:1rem;color:#e05050;">♥</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:#fff;line-height:1;">' + hp + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">Hit Points</div></div></div>'
-    +   '<div title="Gold remaining after buying your starting gear." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:rgba(200,148,10,0.16);border:1px solid rgba(200,148,10,0.22);cursor:help;"><span style="font-size:1rem;color:#f0c040;">◈</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:#ffe080;line-height:1;">' + goldLeft + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">Gold Left</div></div></div>'
+    +   '<div title="Gold remaining after buying your starting gear." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:' + (goldOverspent ? 'rgba(224,80,80,0.18)' : 'rgba(200,148,10,0.16)') + ';border:1px solid ' + (goldOverspent ? 'rgba(224,80,80,0.35)' : 'rgba(200,148,10,0.22)') + ';cursor:help;"><span style="font-size:1rem;color:' + (goldOverspent ? '#e05050' : '#f0c040') + ';">◈</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:' + (goldOverspent ? '#e05050' : '#ffe080') + ';line-height:1;">' + (goldOverspent ? '−' + Math.abs(goldLeft).toFixed(1) + ' gp' : goldLeft) + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">' + (goldOverspent ? 'Overspent' : 'Gold Left') + '</div></div></div>'
     + '</div>'
     + '</div>';
   // Ability scores zone
