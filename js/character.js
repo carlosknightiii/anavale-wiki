@@ -2800,9 +2800,13 @@ function renderSummaryCard() {
   // ── Combat stats ──────────────────────────────────────────────
   var ac = 10;
   if (scores.dex) ac += Math.floor((scores.dex - 10) / 2);
-  var hp = clsObj && clsObj.hit_die && scores.con
-    ? clsObj.hit_die + Math.floor(((scores.con + (bgBonus.con||0)) - 10) / 2)
-    : (clsObj ? clsObj.hit_die : '—');
+  var hp = '—';
+  if (clsObj && clsObj.hit_die) {
+    var hpDie = parseInt((clsObj.hit_die || 'd8').replace('d', '')) || 8;
+    var conTotal = (scores.con || 10) + (bgBonus.con || 0);
+    var conMod   = Math.floor((conTotal - 10) / 2);
+    hp = hpDie + conMod;
+  }
   var goldTotal   = bgObj ? (bgObj.starting_gold || 0) : 0;
   var goldSpent   = typeof calcGoldSpent === 'function' ? calcGoldSpent() : 0;
   var goldLeft    = Math.max(0, goldTotal - goldSpent);
