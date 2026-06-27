@@ -1681,7 +1681,16 @@ function restoreStage2Selections() {
 // ── STAGE VALIDATION ───────────────────────────────────────────────
 function validateStage(n) {
   if (n === 1) {
-    // Stage 1: Your Story — no hard gates, all optional lore fields
+    var firstName = (document.getElementById('char-first-name') || {}).value || '';
+    var lastName  = (document.getElementById('char-last-name')  || {}).value || '';
+    if (!firstName.trim()) {
+      showToast('Please enter your character\'s first name.', 'error');
+      return false;
+    }
+    if (!lastName.trim()) {
+      showToast('A last name is required — it keeps your character unique in the world.', 'error');
+      return false;
+    }
   }
   if (n === 2) {
     if (!CHAR_STATE.draft.gigglegloom_type) {
@@ -3259,7 +3268,11 @@ function buildCharacterEntry(d, token) {
     seeking: d.seeking,
     gender: d.gender,
     category: 'player-character',
-    player_facing: false,
+    player_facing: true,
+    appearance: d.appearance_prompt || null,
+    motivation: d.seeking || null,
+    contradiction: null,
+    associated: d.home_region ? [{ collection: 'regions', id: d.home_region }] : [],
     tags: ['player-character', d.gigglegloom_type || '', d.species_id || ''].filter(Boolean),
     role: (d.gigglegloom_type
       ? d.gigglegloom_type.charAt(0).toUpperCase() + d.gigglegloom_type.slice(1)
@@ -3324,7 +3337,11 @@ async function writeToGitHub(entry) {
       seeking:              entry.seeking || null,
       gender:               entry.gender || null,
       category:             'player-character',
-      player_facing:        false,
+      player_facing:        true,
+      appearance:           entry.appearance || null,
+      motivation:           entry.motivation || null,
+      contradiction:        null,
+      associated:           entry.associated || [],
       tags:                 entry.tags || [],
       role:                 entry.role || null,
       pronouns:             entry.pronouns || null,
