@@ -2261,98 +2261,100 @@
 
             <div class="cm-filter-bar">
               <input type="text" id="cm-search" class="cm-search" placeholder="Search name, summary, tags…" oninput="cmFilter()">
-              <select id="cm-type-filter" class="cm-select" onchange="cmTypeFilterChanged()">
-                <option value="">All Types</option>
-                <option value="region">🗺️ Regions</option>
-                <option value="city">🏙️ Cities</option>
-                <option value="creature">🐾 Creatures</option>
-                <option value="poi">📍 POIs</option>
-                <option value="character">🧙 Characters</option>
-                <option value="organization">🏛️ Organizations</option>
-                <option value="item">⚔️ Items</option>
-                <option value="quest">📜 Quests</option>
-              </select>
-              <select id="cm-vis-filter" class="cm-select" onchange="cmFilter()">
-                <option value="">All Visibility</option>
-                <option value="hidden">🔒 Hidden</option>
-                <option value="teaser">✨ Teaser</option>
-                <option value="visible">👁 Visible</option>
-              </select>
-              <select id="cm-continent-filter" class="cm-select" onchange="cmApplyFilters()">
-                <option value="">All Continents</option>
-                <option value="pogglewog">Pogglewog</option>
-              </select>
-              <select id="cm-region-filter" class="cm-select" onchange="cmApplyFilters()">
-                <option value="">All Regions</option>
-                <option value="caparia">Caparia</option>
-                <option value="nombi">Nombi</option>
-                <option value="sohot">Sohot</option>
-                <option value="jugabi">Jugabi</option>
-              </select>
-              <select id="cm-nation-filter" class="cm-select" onchange="cmApplyFilters()">
-                <option value="">All Nations</option>
-              </select>
-              <select id="cm-item-category-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
-                <option value="">All Categories</option>
-                <option value="weapon">⚔️ Weapon</option>
-                <option value="armor">🛡 Armor</option>
-                <option value="shield">🔰 Shield</option>
-                <option value="consumable">⚗️ Consumable</option>
-                <option value="tool">🔧 Tool</option>
-                <option value="accessory">💍 Accessory</option>
-                <option value="quest_item">📜 Quest Item</option>
-              </select>
-              <select id="cm-item-rarity-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
-                <option value="">All Rarities</option>
-                <option value="common">Common</option>
-                <option value="uncommon">Uncommon</option>
-                <option value="rare">Rare</option>
-                <option value="legendary">Legendary</option>
-                <option value="unique">Unique</option>
-              </select>
-              <select id="cm-item-addable-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
-                <option value="">All Addability</option>
-                <option value="true">✅ Player Addable</option>
-                <option value="false">🔒 DM Only</option>
-              </select>
-              <select id="cm-settlement-filter" class="cm-select" onchange="cmApplyFilters()">
-                <option value="">All Types</option>
-                <option value="capital">capital</option>
-                <option value="city">city</option>
-                <option value="town">town</option>
-                <option value="village">village</option>
-                <option value="outpost">outpost</option>
-                <option value="port">port</option>
-                <option value="major-port">major-port</option>
-                <option value="city-state">city-state</option>
-                <option value="hidden-settlement">hidden-settlement</option>
-                <option value="desert-town">desert-town</option>
-                <option value="outpost-town">outpost-town</option>
-                <option value="major-settlement">major-settlement</option>
-                <option value="ruin">ruin</option>
-              </select>
-              <select id="cm-vareth-filter" class="cm-select" onchange="cmApplyFilters()">
-                <option value="">All Vareth</option>
-                <option value="present">Vareth Present</option>
-                <option value="none">No Vareth</option>
-              </select>
-              <select id="cm-colorhealth-filter" class="cm-select" onchange="cmApplyFilters()">
-                <option value="">All Color Health</option>
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="moderate">Moderate</option>
-                <option value="dire">Dire</option>
-                <option value="unknown">Unknown</option>
-                <option value="compromised">Compromised</option>
-              </select>
-              <select id="cm-sort" class="cm-select" onchange="cmApplyFilters()">
-                <option value="name-asc">Name A→Z</option>
-                <option value="name-desc">Name Z→A</option>
-                <option value="type-asc">Type</option>
-                <option value="vis-asc">Visibility</option>
-              </select>
-              <button class="cm-btn" onclick="cmResetFilters()">Reset</button>
+              <button class="cm-btn cm-filter-toggle-btn" id="cm-filter-toggle" onclick="cmToggleFilters()">⚙ Filters</button>
+              <button class="cm-btn cm-clear-filters-btn" id="cm-clear-filters" onclick="cmResetFilters()" style="display:none">✕ Clear Filters</button>
               <span class="cm-count" id="cm-count"></span>
+            </div>
+
+            <!-- Collapsible filter drawer -->
+            <div class="cm-filter-drawer" id="cm-filter-drawer" style="display:none">
+              <div class="cm-filter-chips" id="cm-filter-chips"></div>
+              <div class="cm-filter-grid">
+                <select id="cm-type-filter" class="cm-select" onchange="cmTypeFilterChanged()">
+                  <option value="">All Types</option>
+                  <option value="character">🧙 Characters</option>
+                  <option value="city">🏙️ Cities</option>
+                  <option value="creature">🐾 Creatures</option>
+                  <option value="item">⚔️ Items</option>
+                  <option value="organization">🏛️ Organizations</option>
+                  <option value="poi">📍 POIs</option>
+                  <option value="quest">📜 Quests</option>
+                  <option value="region">🗺️ Regions</option>
+                </select>
+                <select id="cm-vis-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Visibility</option>
+                  <option value="hidden">🔒 Hidden</option>
+                  <option value="teaser">✨ Teaser</option>
+                  <option value="visible">👁 Visible</option>
+                </select>
+                <select id="cm-region-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Regions</option>
+                  <option value="caparia">Caparia</option>
+                  <option value="jugabi">Jugabi</option>
+                  <option value="nombi">Nombi</option>
+                  <option value="sohot">Sohot</option>
+                </select>
+                <select id="cm-nation-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Nations</option>
+                </select>
+                <select id="cm-continent-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Continents</option>
+                  <option value="pogglewog">Pogglewog</option>
+                </select>
+                <select id="cm-settlement-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Settlement Types</option>
+                  <option value="capital">Capital</option>
+                  <option value="city">City</option>
+                  <option value="city-state">City-state</option>
+                  <option value="desert-town">Desert Town</option>
+                  <option value="hidden-settlement">Hidden Settlement</option>
+                  <option value="major-port">Major Port</option>
+                  <option value="major-settlement">Major Settlement</option>
+                  <option value="outpost">Outpost</option>
+                  <option value="outpost-town">Outpost Town</option>
+                  <option value="port">Port</option>
+                  <option value="ruin">Ruin</option>
+                  <option value="town">Town</option>
+                  <option value="village">Village</option>
+                </select>
+                <select id="cm-vareth-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Vareth</option>
+                  <option value="none">No Vareth</option>
+                  <option value="present">Vareth Present</option>
+                </select>
+                <select id="cm-colorhealth-filter" class="cm-select" onchange="cmApplyFilters()">
+                  <option value="">All Color Health</option>
+                  <option value="compromised">Compromised</option>
+                  <option value="dire">Dire</option>
+                  <option value="excellent">Excellent</option>
+                  <option value="good">Good</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+                <select id="cm-item-category-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                  <option value="">All Categories</option>
+                  <option value="accessory">💍 Accessory</option>
+                  <option value="armor">🛡 Armor</option>
+                  <option value="consumable">⚗️ Consumable</option>
+                  <option value="quest_item">📜 Quest Item</option>
+                  <option value="shield">🔰 Shield</option>
+                  <option value="tool">🔧 Tool</option>
+                  <option value="weapon">⚔️ Weapon</option>
+                </select>
+                <select id="cm-item-rarity-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                  <option value="">All Rarities</option>
+                  <option value="common">Common</option>
+                  <option value="legendary">Legendary</option>
+                  <option value="rare">Rare</option>
+                  <option value="uncommon">Uncommon</option>
+                  <option value="unique">Unique</option>
+                </select>
+                <select id="cm-item-addable-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                  <option value="">All Addability</option>
+                  <option value="false">🔒 DM Only</option>
+                  <option value="true">✅ Player Addable</option>
+                </select>
+              </div>
             </div>
 
             <div class="cm-bulk-bar" id="cm-bulk-bar">
@@ -2368,10 +2370,11 @@
                 <thead>
                   <tr>
                     <th class="cm-th-check"><input type="checkbox" id="cm-select-all" onchange="cmSelectAll(this.checked)"></th>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Visibility</th>
-                    <th>Actions</th>
+                    <th class="cm-th-img"></th>
+                    <th class="cm-th-sortable" data-sort="name" onclick="cmSortByColumn('name')">Name <span class="cm-sort-arrow" id="cm-sort-name">↕</span></th>
+                    <th class="cm-th-sortable" data-sort="type" onclick="cmSortByColumn('type')">Type <span class="cm-sort-arrow" id="cm-sort-type">↕</span></th>
+                    <th class="cm-th-sortable" data-sort="vis" onclick="cmSortByColumn('vis')">Visibility <span class="cm-sort-arrow" id="cm-sort-vis">↕</span></th>
+                    <th class="cm-th-sortable" data-sort="modified" onclick="cmSortByColumn('modified')">Modified <span class="cm-sort-arrow" id="cm-sort-modified">↕</span></th>
                   </tr>
                 </thead>
                 <tbody id="cm-tbody">
@@ -3127,6 +3130,168 @@
   line-height: 1.5;
   border-top: 1px solid var(--dm-border);
   padding-top: 0.5rem;
+}
+
+/* ── Filter drawer & chips ── */
+.cm-filter-toggle-btn.active {
+  background: var(--dm-gold-dim);
+  border-color: var(--dm-gold);
+  color: var(--dm-gold);
+}
+.cm-filter-drawer {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--dm-border);
+  background: var(--dm-surface-mid);
+  flex-shrink: 0;
+}
+.cm-filter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.cm-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.cm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--dm-border-gold);
+  border-radius: 20px;
+  color: var(--dm-gold);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+.cm-chip-remove {
+  background: none;
+  border: none;
+  color: var(--dm-gold);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.7;
+  transition: var(--dm-transition);
+}
+.cm-chip-remove:hover { opacity: 1; }
+
+/* ── Sortable headers ── */
+.cm-th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.cm-th-sortable:hover { color: var(--dm-gold); }
+.cm-sort-arrow {
+  font-size: 0.7rem;
+  opacity: 0.35;
+  margin-left: 0.2rem;
+}
+.cm-th-img { width: 32px; padding: 0; }
+
+/* ── Thumbnail ── */
+.cm-row-thumb {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+  border: 1px solid var(--dm-border);
+}
+.cm-td-img { width: 32px; padding: 0.3rem 0.4rem; }
+
+/* ── Name as edit link ── */
+.cm-td-name {
+  max-width: 240px;
+}
+.cm-name-link {
+  background: none;
+  border: none;
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--dm-border-mid);
+  text-underline-offset: 3px;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.cm-name-link:hover {
+  color: var(--dm-gold);
+  text-decoration-color: var(--dm-gold);
+}
+.cm-name-text {
+  color: var(--dm-text-muted);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+}
+.cm-action-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  opacity: 0.3;
+  padding: 0 0 0 0.4rem;
+  transition: var(--dm-transition);
+  vertical-align: middle;
+}
+.cm-action-delete:hover { opacity: 1; }
+
+/* ── Modified column ── */
+.cm-td-modified {
+  color: var(--dm-text-faint);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+/* ── Pagination bar ── */
+.cm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.25rem;
+  border-top: 1px solid var(--dm-border);
+  background: var(--dm-surface);
+  flex-shrink: 0;
+}
+.cm-pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.cm-pagination-right {
+  display: flex;
+  gap: 0.3rem;
+}
+.cm-pagination-info {
+  color: var(--dm-text-faint);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+}
+.cm-per-page-select {
+  padding: 0.25rem 0.5rem;
+  font-size: var(--text-xs);
+}
+.cm-pagination .cm-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 </style>
 
@@ -4136,6 +4301,7 @@ function showOutput(entry, type) {
   PENDING_EDIT_ID    = null;
   PENDING_EDIT_IMAGE = null; // generators have already consumed this before calling showOutput
 
+  entry._modified = new Date().toISOString();
   LAST_GENERATED = { entry: entry, type: type, isEdit: !!editId, editId: editId || null };
   FORM_DIRTY = false;
 
@@ -4485,6 +4651,7 @@ function restoreEntry(index) {
   document.getElementById('json-output').textContent = jsStr;
   document.getElementById('file-target').innerHTML =
     '📁 Add this entry to: <strong>' + escHtml(item.target) + '</strong>';
+  item.entry._modified = new Date().toISOString();
   LAST_GENERATED = { entry: item.entry, type: item.type };
   FORM_DIRTY = false;
 }
@@ -4516,6 +4683,11 @@ var CM_ALL      = [];   // all entries as {_entry, _type, _array}
 var CM_FILTERED = [];   // currently displayed (after filters + sort)
 var CM_SELECTED = {};   // { "type:id": true }
 var CM_PENDING  = null; // { item, action } — pending save operation
+var CM_SORT_COL = 'name';   // current sort column
+var CM_SORT_DIR = 'asc';    // 'asc' | 'desc'
+var CM_PAGE     = 1;        // current page (1-based)
+var CM_PER_PAGE = 25;       // rows per page
+var CM_FILTERS_OPEN = false; // filter drawer state
 
 // Getters for in-memory global arrays (corrected variable names)
 var CM_ARRAYS = {
@@ -4599,89 +4771,160 @@ function escCM(str) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* ── FILTER ──────────────────────────────────── */
-function cmFilter() {
-  cmApplyFilters();
+/* ── FILTER DRAWER TOGGLE ───────────────────── */
+function cmToggleFilters() {
+  CM_FILTERS_OPEN = !CM_FILTERS_OPEN;
+  var drawer = document.getElementById('cm-filter-drawer');
+  var btn    = document.getElementById('cm-filter-toggle');
+  if (drawer) drawer.style.display = CM_FILTERS_OPEN ? 'block' : 'none';
+  if (btn)    btn.classList.toggle('active', CM_FILTERS_OPEN);
 }
 
+/* ── FILTER ──────────────────────────────────── */
+function cmFilter() { CM_PAGE = 1; cmApplyFilters(); }
+
 function cmTypeFilterChanged() {
-  var typeF = (document.getElementById('cm-type-filter') || {}).value || '';
-  var isItem = typeF === 'item';
-  var catFilter     = document.getElementById('cm-item-category-filter');
-  var rarFilter     = document.getElementById('cm-item-rarity-filter');
-  var addFilter     = document.getElementById('cm-item-addable-filter');
+  var typeF     = (document.getElementById('cm-type-filter') || {}).value || '';
+  var isItem    = typeF === 'item';
+  var catFilter = document.getElementById('cm-item-category-filter');
+  var rarFilter = document.getElementById('cm-item-rarity-filter');
+  var addFilter = document.getElementById('cm-item-addable-filter');
   if (catFilter) catFilter.style.display = isItem ? '' : 'none';
   if (rarFilter) rarFilter.style.display = isItem ? '' : 'none';
   if (addFilter) addFilter.style.display = isItem ? '' : 'none';
-  // Reset item filters when switching away from items
   if (!isItem) {
     if (catFilter) catFilter.value = '';
     if (rarFilter) rarFilter.value = '';
     if (addFilter) addFilter.value = '';
   }
+  CM_PAGE = 1;
   cmApplyFilters();
 }
 
 function cmResetFilters() {
-  var s  = document.getElementById('cm-search');
-  var t  = document.getElementById('cm-type-filter');
-  var v  = document.getElementById('cm-vis-filter');
-  var o  = document.getElementById('cm-sort');
-  var co = document.getElementById('cm-continent-filter');
-  var re = document.getElementById('cm-region-filter');
-  var na = document.getElementById('cm-nation-filter');
-  var se = document.getElementById('cm-settlement-filter');
-  var va = document.getElementById('cm-vareth-filter');
-  var ch = document.getElementById('cm-colorhealth-filter');
-  if (s)  s.value  = '';
-  if (t)  t.value  = '';
-  if (v)  v.value  = '';
-  if (o)  o.value  = 'name-asc';
-  if (co) co.value = '';
-  if (re) re.value = '';
-  if (na) na.value = '';
-  if (se) se.value = '';
-  if (va) va.value = '';
-  if (ch) ch.value = '';
+  var ids = ['cm-search','cm-type-filter','cm-vis-filter','cm-continent-filter',
+             'cm-region-filter','cm-nation-filter','cm-settlement-filter',
+             'cm-vareth-filter','cm-colorhealth-filter',
+             'cm-item-category-filter','cm-item-rarity-filter','cm-item-addable-filter'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   var ic = document.getElementById('cm-item-category-filter');
   var ir = document.getElementById('cm-item-rarity-filter');
   var ia = document.getElementById('cm-item-addable-filter');
-  if (ic) { ic.value = ''; ic.style.display = 'none'; }
-  if (ir) { ir.value = ''; ir.style.display = 'none'; }
-  if (ia) { ia.value = ''; ia.style.display = 'none'; }
+  if (ic) ic.style.display = 'none';
+  if (ir) ir.style.display = 'none';
+  if (ia) ia.style.display = 'none';
+  CM_PAGE = 1;
   cmApplyFilters();
 }
 
+/* ── ACTIVE FILTER CHIPS ─────────────────────── */
+function cmRenderFilterChips() {
+  var chips = document.getElementById('cm-filter-chips');
+  var clearBtn = document.getElementById('cm-clear-filters');
+  if (!chips) return;
+
+  var active = [];
+  var filterMap = [
+    { id: 'cm-type-filter',          label: 'Type' },
+    { id: 'cm-vis-filter',           label: 'Visibility' },
+    { id: 'cm-region-filter',        label: 'Region' },
+    { id: 'cm-nation-filter',        label: 'Nation' },
+    { id: 'cm-continent-filter',     label: 'Continent' },
+    { id: 'cm-settlement-filter',    label: 'Settlement' },
+    { id: 'cm-vareth-filter',        label: 'Vareth' },
+    { id: 'cm-colorhealth-filter',   label: 'Color Health' },
+    { id: 'cm-item-category-filter', label: 'Category' },
+    { id: 'cm-item-rarity-filter',   label: 'Rarity' },
+    { id: 'cm-item-addable-filter',  label: 'Addable' }
+  ];
+  filterMap.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    if (el && el.value) {
+      var text = el.options[el.selectedIndex] ? el.options[el.selectedIndex].text : el.value;
+      active.push({ id: f.id, label: f.label + ': ' + text });
+    }
+  });
+  var search = (document.getElementById('cm-search') || {}).value || '';
+  if (search) active.push({ id: 'cm-search', label: 'Search: "' + search + '"' });
+
+  chips.innerHTML = active.map(function(f) {
+    return '<span class="cm-chip">' + escCM(f.label)
+      + '<button class="cm-chip-remove" onclick="cmRemoveFilter(\'' + f.id + '\')" title="Remove filter">×</button>'
+      + '</span>';
+  }).join('');
+
+  var hasFilters = active.length > 0;
+  if (clearBtn) clearBtn.style.display = hasFilters ? '' : 'none';
+}
+
+function cmRemoveFilter(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.value = '';
+  if (id === 'cm-type-filter') cmTypeFilterChanged();
+  else { CM_PAGE = 1; cmApplyFilters(); }
+}
+
+/* ── COLUMN SORT ─────────────────────────────── */
+function cmSortByColumn(col) {
+  if (CM_SORT_COL === col) {
+    CM_SORT_DIR = CM_SORT_DIR === 'asc' ? 'desc' : 'asc';
+  } else {
+    CM_SORT_COL = col;
+    CM_SORT_DIR = 'asc';
+  }
+  CM_PAGE = 1;
+  cmApplyFilters();
+  cmUpdateSortArrows();
+}
+
+function cmUpdateSortArrows() {
+  ['name','type','vis','modified'].forEach(function(col) {
+    var el = document.getElementById('cm-sort-' + col);
+    if (!el) return;
+    if (col === CM_SORT_COL) {
+      el.textContent = CM_SORT_DIR === 'asc' ? '↑' : '↓';
+      el.style.opacity = '1';
+    } else {
+      el.textContent = '↕';
+      el.style.opacity = '0.35';
+    }
+  });
+}
+
+/* ── APPLY FILTERS & SORT ────────────────────── */
 function cmApplyFilters() {
-  var searchQ  = (document.getElementById('cm-search')           || {}).value || '';
-  var typeF    = (document.getElementById('cm-type-filter')      || {}).value || '';
-  var visF     = (document.getElementById('cm-vis-filter')       || {}).value || '';
-  var sortV    = (document.getElementById('cm-sort')             || {}).value || 'name-asc';
-  var contF    = (document.getElementById('cm-continent-filter') || {}).value || '';
-  var regionF  = (document.getElementById('cm-region-filter')    || {}).value || '';
-  var nationF  = (document.getElementById('cm-nation-filter')    || {}).value || '';
-  var settlF   = (document.getElementById('cm-settlement-filter')|| {}).value || '';
-  var varethF  = (document.getElementById('cm-vareth-filter')    || {}).value || '';
+  var searchQ  = (document.getElementById('cm-search')            || {}).value || '';
+  var typeF    = (document.getElementById('cm-type-filter')       || {}).value || '';
+  var visF     = (document.getElementById('cm-vis-filter')        || {}).value || '';
+  var contF    = (document.getElementById('cm-continent-filter')  || {}).value || '';
+  var regionF  = (document.getElementById('cm-region-filter')     || {}).value || '';
+  var nationF  = (document.getElementById('cm-nation-filter')     || {}).value || '';
+  var settlF   = (document.getElementById('cm-settlement-filter') || {}).value || '';
+  var varethF  = (document.getElementById('cm-vareth-filter')     || {}).value || '';
   var colorF   = (document.getElementById('cm-colorhealth-filter')|| {}).value || '';
-  var itemCatF    = (document.getElementById('cm-item-category-filter') || {}).value || '';
-  var itemRarF    = (document.getElementById('cm-item-rarity-filter')   || {}).value || '';
-  var itemAddF    = (document.getElementById('cm-item-addable-filter')  || {}).value || '';
+  var itemCatF = (document.getElementById('cm-item-category-filter') || {}).value || '';
+  var itemRarF = (document.getElementById('cm-item-rarity-filter')   || {}).value || '';
+  var itemAddF = (document.getElementById('cm-item-addable-filter')  || {}).value || '';
   var q = searchQ.toLowerCase().trim();
 
   var filtered = CM_ALL.filter(function(item) {
     var e = item._entry;
-    if (typeF    && item._type !== typeF)           return false;
-    if (visF     && cmGetVis(e) !== visF)           return false;
-    if (itemCatF && item._type === 'item' && (e.category || '') !== itemCatF)  return false;
-    if (itemRarF && item._type === 'item' && (e.rarity   || '') !== itemRarF)  return false;
+    if (typeF    && item._type !== typeF)                          return false;
+    if (visF     && cmGetVis(e) !== visF)                         return false;
+    if (itemCatF && item._type === 'item' && (e.category||'') !== itemCatF) return false;
+    if (itemRarF && item._type === 'item' && (e.rarity  ||'') !== itemRarF) return false;
     if (itemAddF && item._type === 'item') {
       var addable = e.player_addable === false ? 'false' : 'true';
       if (addable !== itemAddF) return false;
     }
-    if (contF    && (e.continent || '') !== contF)  return false;
-    if (regionF  && (e.region    || '') !== regionF) return false;
-    if (nationF  && (e.nation    || '') !== nationF) return false;
-    if (settlF   && (e.type      || '') !== settlF)  return false;
+    if (contF   && (e.continent||'') !== contF)  return false;
+    if (regionF && (e.region   ||'') !== regionF) return false;
+    if (nationF && (e.nation   ||'') !== nationF) return false;
+    if (settlF  && (e.type     ||'') !== settlF)  return false;
     if (varethF) {
       var vp = e.vareth_presence;
       var hasVareth = (vp !== false && vp !== undefined && vp !== null && vp !== '' && vp !== 'none' && vp !== 'false');
@@ -4689,52 +4932,43 @@ function cmApplyFilters() {
       if (varethF === 'none'    &&  hasVareth) return false;
     }
     if (colorF) {
-      var ch = (e.color_health || '').toLowerCase();
+      var ch = (e.color_health||'').toLowerCase();
       if (ch.indexOf(colorF.toLowerCase()) === -1) return false;
     }
     if (q) {
-      var hay = [
-        e.name        || '',
-        e.summary     || '',
-        e.description || '',
-        e.id          || '',
-        (e.tags || []).join(' ')
-      ].join(' ').toLowerCase();
+      var hay = [e.name||'', e.summary||'', e.description||'', e.id||'', (e.tags||[]).join(' ')].join(' ').toLowerCase();
       if (hay.indexOf(q) === -1) return false;
     }
     return true;
   });
 
-  CM_FILTERED = cmApplySort(filtered, sortV);
+  // Sort
+  var vOrder = { hidden: 0, teaser: 1, visible: 2 };
+  filtered.sort(function(a, b) {
+    var ea = a._entry, eb = b._entry;
+    var res = 0;
+    if (CM_SORT_COL === 'name')     res = (ea.name||'').localeCompare(eb.name||'');
+    if (CM_SORT_COL === 'type')     res = a._type.localeCompare(b._type) || (ea.name||'').localeCompare(eb.name||'');
+    if (CM_SORT_COL === 'vis')      res = (vOrder[cmGetVis(ea)]||0) - (vOrder[cmGetVis(eb)]||0);
+    if (CM_SORT_COL === 'modified') res = ((ea._modified||ea.name||'') < (eb._modified||eb.name||'') ? -1 : 1);
+    return CM_SORT_DIR === 'desc' ? -res : res;
+  });
+
+  CM_FILTERED = filtered;
+  cmRenderFilterChips();
+  cmUpdateSortArrows();
   renderCMTable();
 
   var countEl = document.getElementById('cm-count');
-  if (countEl) {
-    countEl.textContent = CM_FILTERED.length + ' of ' + CM_ALL.length + ' entries';
-  }
-}
-
-function cmApplySort(arr, sortV) {
-  var sorted = arr.slice();
-  var vOrder = { hidden: 0, teaser: 1, visible: 2 };
-  sorted.sort(function(a, b) {
-    var ea = a._entry, eb = b._entry;
-    if (sortV === 'name-desc') return (eb.name||'').localeCompare(ea.name||'');
-    if (sortV === 'type-asc')  return a._type.localeCompare(b._type) || (ea.name||'').localeCompare(eb.name||'');
-    if (sortV === 'vis-asc')   return (vOrder[cmGetVis(ea)]||0) - (vOrder[cmGetVis(eb)]||0) || (ea.name||'').localeCompare(eb.name||'');
-    // Default: name-asc
-    return (ea.name||'').localeCompare(eb.name||'');
-  });
-  return sorted;
+  if (countEl) countEl.textContent = CM_FILTERED.length + ' of ' + CM_ALL.length + ' entries';
 }
 
 /* ── SELECTION ───────────────────────────────── */
-function cmSelKey(item) {
-  return item._type + ':' + item._entry.id;
-}
+function cmSelKey(item) { return item._type + ':' + item._entry.id; }
 
 function cmSelectAll(checked) {
-  CM_FILTERED.forEach(function(item) {
+  var pageItems = cmGetPageItems();
+  pageItems.forEach(function(item) {
     if (checked) CM_SELECTED[cmSelKey(item)] = true;
     else delete CM_SELECTED[cmSelKey(item)];
   });
@@ -4751,80 +4985,135 @@ function cmToggleSelect(idx, checked) {
 }
 
 function cmUpdateBulkBar() {
-  var count = 0;
-  Object.keys(CM_SELECTED).forEach(function(k) { if (CM_SELECTED[k]) count++; });
+  var count = Object.keys(CM_SELECTED).filter(function(k) { return CM_SELECTED[k]; }).length;
   var bar     = document.getElementById('cm-bulk-bar');
   var countEl = document.getElementById('cm-bulk-count');
   if (bar)     bar.classList.toggle('visible', count > 0);
   if (countEl) countEl.textContent = count + ' selected';
-  // Keep select-all checkbox state accurate
   var selAll = document.getElementById('cm-select-all');
   if (selAll && CM_FILTERED.length > 0) {
-    selAll.checked = CM_FILTERED.every(function(item) { return CM_SELECTED[cmSelKey(item)]; });
+    var pageItems = cmGetPageItems();
+    selAll.checked = pageItems.length > 0 && pageItems.every(function(item) { return CM_SELECTED[cmSelKey(item)]; });
   }
 }
 
+/* ── PAGINATION ──────────────────────────────── */
+function cmGetPageItems() {
+  var start = (CM_PAGE - 1) * CM_PER_PAGE;
+  return CM_FILTERED.slice(start, start + CM_PER_PAGE);
+}
+
+function cmTotalPages() {
+  return Math.max(1, Math.ceil(CM_FILTERED.length / CM_PER_PAGE));
+}
+
+function cmGoToPage(p) {
+  CM_PAGE = Math.max(1, Math.min(p, cmTotalPages()));
+  renderCMTable();
+}
+
+function cmSetPerPage(n) {
+  CM_PER_PAGE = parseInt(n, 10) || 25;
+  CM_PAGE = 1;
+  renderCMTable();
+}
+
 /* ── RENDER TABLE ────────────────────────────── */
+var CM_PLACEHOLDER_IMG = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">'
+  + '<rect width="24" height="24" fill="%231e1e2a" rx="4"/>'
+  + '<text x="12" y="17" text-anchor="middle" font-size="13" fill="%23555">?</text>'
+  + '</svg>'
+);
+
 function renderCMTable() {
   var tbody = document.getElementById('cm-tbody');
   if (!tbody) return;
 
+  var pageItems = cmGetPageItems();
+  var totalPages = cmTotalPages();
+
   if (!CM_FILTERED.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-faint);padding:2rem;font-style:italic;">'
-      + (CM_ALL.length ? 'No entries match your filters.' : 'Click ↺ Refresh to load entries.')
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dm-text-faint);padding:2rem;font-style:italic;">'
+      + (CM_ALL.length ? 'No entries match your filters.' : 'Click ↺ Reload to load entries.')
       + '</td></tr>';
     var selAll = document.getElementById('cm-select-all');
     if (selAll) selAll.checked = false;
+    cmRenderPagination(0, 1);
     return;
   }
 
-  var allSel = CM_FILTERED.every(function(item) { return CM_SELECTED[cmSelKey(item)]; });
+  var pageItems = cmGetPageItems();
+  var allSel = pageItems.length > 0 && pageItems.every(function(item) { return CM_SELECTED[cmSelKey(item)]; });
   var selAll = document.getElementById('cm-select-all');
   if (selAll) selAll.checked = allSel;
 
-  tbody.innerHTML = CM_FILTERED.map(function(item, idx) {
-    var e    = item._entry;
-    var vis  = cmGetVis(e);
-    var key  = cmSelKey(item);
-    var sel  = CM_SELECTED[key];
+  tbody.innerHTML = pageItems.map(function(item, pageIdx) {
+    var idx = CM_FILTERED.indexOf(item); // real index in CM_FILTERED for callbacks
+    var e      = item._entry;
+    var vis    = cmGetVis(e);
+    var key    = cmSelKey(item);
+    var sel    = CM_SELECTED[key];
     var rowCls = sel ? ' class="cm-selected"' : '';
     var visCls = 'cm-vis-badge cm-vis-' + vis;
-    var visLabel = vis === 'visible' ? '👁 Visible'
-                 : vis === 'teaser'  ? '✨ Teaser'
-                 :                    '🔒 Hidden';
-    var icon = CM_ICONS[item._type] || '•';
+    var visLabel = vis === 'visible' ? '👁 Visible' : vis === 'teaser' ? '✨ Teaser' : '🔒 Hidden';
+    var icon   = CM_ICONS[item._type] || '•';
     var typeCap = item._type.charAt(0).toUpperCase() + item._type.slice(1);
 
-    // Regions have no creation form — show visibility cycling only, no edit/delete
-    var actions = (item._type === 'region')
-      ? '<span style="color:var(--ink-faint);font-size:var(--text-xs);font-style:italic;">visibility only</span>'
-      : '<button class="cm-action-btn" onclick="cmEditEntry(' + idx + ')">✎ Edit</button>'
-        + '<button class="cm-action-btn delete" onclick="cmDeleteEntry(' + idx + ')">🗑</button>';
+    // Thumbnail
+    var imgSrc = (e.image && e.image.trim()) ? e.image : CM_PLACEHOLDER_IMG;
+    var thumb  = '<img src="' + escCM(imgSrc) + '" class="cm-row-thumb" alt="" onerror="this.src=CM_PLACEHOLDER_IMG">';
 
-    // Build item-specific extra cell
-    var extraCell = '';
-    if (item._type === 'item') {
-      var catLabel = e.category ? e.category.replace('_', ' ') : '—';
-      var costLabel = e.cost_gp !== null && e.cost_gp !== undefined ? e.cost_gp + ' gp' : '—';
-      var weightLabel = e.weight_lb !== null && e.weight_lb !== undefined ? e.weight_lb + ' lb' : '—';
-      var addableLabel = e.player_addable === false ? '<span style="color:#aa3a1a;font-size:var(--text-xs);">🔒 DM</span>' : '<span style="color:#1a5a28;font-size:var(--text-xs);">✅ Player</span>';
-      extraCell = '<td style="font-size:var(--text-xs);color:var(--ink-faint);white-space:nowrap;">'
-        + '<strong>' + escCM(catLabel) + '</strong> · ' + escCM(costLabel) + ' · ' + escCM(weightLabel) + ' · ' + addableLabel
-        + '</td>';
-    } else {
-      extraCell = '<td></td>';
-    }
+    // Name as edit link (regions: not editable)
+    var nameCell = (item._type === 'region')
+      ? '<span class="cm-name-text">' + escCM(e.name || '—') + '</span>'
+      : '<button class="cm-name-link" onclick="cmEditEntry(' + idx + ')" title="Edit this entry">' + escCM(e.name || '—') + '</button>'
+        + '<button class="cm-action-delete" onclick="cmDeleteEntry(' + idx + ')" title="Delete">🗑</button>';
+
+    // Modified date
+    var modDate = e._modified ? new Date(e._modified).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
     return '<tr' + rowCls + '>'
-      + '<td class="cm-th-check"><input type="checkbox"' + (sel ? ' checked' : '')
-      +   ' onchange="cmToggleSelect(' + idx + ', this.checked)"></td>'
-      + '<td class="cm-td-name"><span title="' + escCM(e.name) + '">' + escCM(e.name || '—') + '</span></td>'
+      + '<td class="cm-th-check"><input type="checkbox"' + (sel ? ' checked' : '') + ' onchange="cmToggleSelect(' + idx + ', this.checked)"></td>'
+      + '<td class="cm-td-img">' + thumb + '</td>'
+      + '<td class="cm-td-name">' + nameCell + '</td>'
       + '<td><span class="cm-type-badge">' + icon + ' ' + escCM(typeCap) + '</span></td>'
-      + extraCell
-      + '<td><span class="' + visCls + '" onclick="cmCycleVisibility(' + idx + ')" title="Click to cycle: hidden → teaser → visible">' + visLabel + '</span></td>'
-      + '<td><div class="cm-row-actions">' + actions + '</div></td>'
+      + '<td><span class="' + visCls + '" onclick="cmCycleVisibility(' + idx + ')" title="Click to cycle visibility">' + visLabel + '</span></td>'
+      + '<td class="cm-td-modified">' + modDate + '</td>'
       + '</tr>';
   }).join('');
+
+  cmRenderPagination(CM_FILTERED.length, totalPages);
+}
+
+function cmRenderPagination(total, totalPages) {
+  var existing = document.getElementById('cm-pagination');
+  if (existing) existing.remove();
+
+  var wrap = document.querySelector('.cm-table-wrap');
+  if (!wrap) return;
+
+  var bar = document.createElement('div');
+  bar.id = 'cm-pagination';
+  bar.className = 'cm-pagination';
+  bar.innerHTML =
+    '<div class="cm-pagination-left">'
+    + '<span class="cm-pagination-info">'
+    + (total === 0 ? 'No results' : 'Page ' + CM_PAGE + ' of ' + totalPages + ' (' + total + ' entries)')
+    + '</span>'
+    + '<select class="cm-select cm-per-page-select" onchange="cmSetPerPage(this.value)">'
+    + [10, 25, 50, 100].map(function(n) {
+        return '<option value="' + n + '"' + (n === CM_PER_PAGE ? ' selected' : '') + '>' + n + ' per page</option>';
+      }).join('')
+    + '</select>'
+    + '</div>'
+    + '<div class="cm-pagination-right">'
+    + '<button class="cm-btn cm-btn-sm" onclick="cmGoToPage(1)" ' + (CM_PAGE <= 1 ? 'disabled' : '') + '>«</button>'
+    + '<button class="cm-btn cm-btn-sm" onclick="cmGoToPage(' + (CM_PAGE - 1) + ')" ' + (CM_PAGE <= 1 ? 'disabled' : '') + '>‹</button>'
+    + '<button class="cm-btn cm-btn-sm" onclick="cmGoToPage(' + (CM_PAGE + 1) + ')" ' + (CM_PAGE >= totalPages ? 'disabled' : '') + '>›</button>'
+    + '<button class="cm-btn cm-btn-sm" onclick="cmGoToPage(' + totalPages + ')" ' + (CM_PAGE >= totalPages ? 'disabled' : '') + '>»</button>'
+    + '</div>';
+  wrap.after(bar);
 }
 
 /* ── CYCLE VISIBILITY ────────────────────────── */
