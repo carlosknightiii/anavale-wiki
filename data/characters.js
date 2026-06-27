@@ -474,6 +474,54 @@ var CHARACTERS = [
       "solmeri"
     ]
   }
+,
+
+  {
+    "id": "hroga-caf36a",
+    "name": "Hroga",
+    "pc": true,
+    "player_email": "",
+    "token": "caf36acc89769964186b05d0343bddf1",
+    "level": 1,
+    "class_id": "cleric",
+    "class_gigglegloom": "bubbleseed",
+    "species": "rootwalker",
+    "background_id": "learned",
+    "alignment": "steelbound",
+    "alignment_trait": null,
+    "home_region": "nombi",
+    "ability_scores": {
+      "str": 10,
+      "dex": 8,
+      "con": 15,
+      "int": 13,
+      "wis": 12,
+      "cha": 14
+    },
+    "language_extra": "nombi-frost",
+    "summary": "A Rootwalker The Faithful who carries the Bubbleseed — from nombi. They are Disciplined — they do what they said they would do. They consider this uncomplicated.",
+    "personality_immediate": null,
+    "personality_wrong": null,
+    "personality_laugh": null,
+    "who_raised_you": null,
+    "dearest_friend": null,
+    "had_pet": null,
+    "fallen_in_love": null,
+    "organization_joined": "wanderkeep",
+    "left_behind": null,
+    "why_you_left": null,
+    "cares_about": null,
+    "deepest_fear": null,
+    "seeking": null,
+    "gender": "male",
+    "category": "player-character",
+    "player_facing": false,
+    "tags": [
+      "player-character",
+      "bubbleseed",
+      "rootwalker"
+    ]
+  }
 ];
 
 // Total: 16 entries
