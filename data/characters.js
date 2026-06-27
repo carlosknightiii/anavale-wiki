@@ -570,6 +570,61 @@ var CHARACTERS = [
       "verdathi"
     ]
   }
+,
+
+  {
+    "id": "bovine-d6c0ff",
+    "name": "BOVINE",
+    "pc": true,
+    "player_email": "",
+    "token": "d6c0ff00fbc2b3baf1000640aa261d24",
+    "level": 1,
+    "class_id": "bard",
+    "class_gigglegloom": "featherflow",
+    "species": "tallwalker",
+    "background_id": "faithful",
+    "alignment": "steelbound",
+    "alignment_trait": null,
+    "home_region": "nombi",
+    "ability_scores": {
+      "str": 10,
+      "dex": 15,
+      "con": 12,
+      "int": 14,
+      "wis": 8,
+      "cha": 13
+    },
+    "language_extra": "sohot-old",
+    "summary": "A Tallwalker The Reveler who carries the Featherflow — from nombi. They are Disciplined — they do what they said they would do. They consider this uncomplicated.",
+    "personality_immediate": "Overly cautious",
+    "personality_wrong": "Painfully honest",
+    "personality_laugh": "Overly cautious",
+    "who_raised_you": null,
+    "dearest_friend": null,
+    "had_pet": null,
+    "fallen_in_love": null,
+    "organization_joined": "merchant-guild",
+    "left_behind": null,
+    "why_you_left": null,
+    "cares_about": "People who can't protect themselves",
+    "deepest_fear": "Losing someone to the Dimming",
+    "seeking": "A reason to stay somewhere",
+    "gender": "non-binary",
+    "category": "player-character",
+    "player_facing": false,
+    "tags": [
+      "player-character",
+      "featherflow",
+      "tallwalker"
+    ],
+    "role": "Featherflow Bard, Nombi",
+    "pronouns": "they/them",
+    "status": "active",
+    "affiliation": "merchant-guild",
+    "gigglegloom_relationship": "You make things feel something. The Revel would call this a gift. The Vareth calls it a threat.",
+    "personality": "Overly cautious. Painfully honest. Overly cautious",
+    "color": null
+  }
 ];
 
 // Total: 16 entries
