@@ -2698,110 +2698,255 @@ function initStage5() {
 }
 
 function renderSummaryCard() {
-  var d = CHAR_STATE.draft;
+  var d    = CHAR_STATE.draft;
   var card = document.getElementById('char-summary-card');
   if (!card) return;
-
+  // ── Data lookups ──────────────────────────────────────────────
   var clsObj = d.class_id && typeof CLASS_DATA !== 'undefined'
     ? CLASS_DATA.find(function(c) { return c.id === d.class_id; }) : null;
   var bgObj = d.background_id && typeof ANAVALE_BACKGROUNDS !== 'undefined'
     ? ANAVALE_BACKGROUNDS.find(function(b) { return b.id === d.background_id; }) : null;
   var spObj = d.species_id && typeof ANAVALE_SPECIES !== 'undefined'
     ? ANAVALE_SPECIES.find(function(s) { return s.id === d.species_id; }) : null;
-
-  var TYPE_LABELS = {
-    bubbleseed: 'Bubbleseed', featherflow: 'Featherflow',
-    steelfist: 'Steelfist', flamerage: 'Flamerage'
-  };
-  var REGION_LABELS = {
-    caparia: 'Caparia', nombi: 'Nombi', sohot: 'Sohot', jugabi: 'Jugabi'
-  };
-  var ALIGNMENT_LABELS = {
-    'brightward':  'Brightward — Protective',
-    'colorful':    'Colorful — Freespirited',
-    'greywarden':  'Greywarden — Measured',
-    'steelbound':  'Steelbound — Disciplined',
-    'ashwalker':   'Ashwalker — Pragmatic'
-  };
-
-  // Color badge for Gigglegloom type
-  var typeColors = { bubbleseed:'#2a7a3a', featherflow:'#2266b8', steelfist:'#6a3aaa', flamerage:'#aa3a1a' };
-  var typeColor = typeColors[d.gigglegloom_type] || '#c8940a';
-  var typeBadge = d.gigglegloom_type
-    ? '<span style="display:inline-block;padding:0.2rem 0.7rem;border-radius:20px;background:' + typeColor + ';color:#fff;font-size:0.72rem;font-weight:700;letter-spacing:0.05em;margin-bottom:1.25rem;">'
-      + (TYPE_LABELS[d.gigglegloom_type] || d.gigglegloom_type) + '</span>'
-    : '';
-
-  // Portrait image
   var gender = d.gender || 'm';
   var suffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
-  var portraitHtml = d.species_id
-    ? '<img src="assets/images/species/sp-' + d.species_id + '-' + suffix + '.png" alt="'
-      + (spObj ? spObj.name : d.species_id) + '" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid rgba(200,148,10,0.4);flex-shrink:0;" onerror="this.style.display=\'none\'">'
-    : '';
-
-  // Stat rows
-  function statRow(label, value) {
-    if (!value || value === '—') return '';
-    return '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.06);font-family:var(--font-sans);font-size:0.82rem;">'
-      + '<span style="color:rgba(245,234,212,0.55);flex-shrink:0;">' + label + '</span>'
-      + '<span style="color:var(--parchment);text-align:right;">' + value + '</span>'
-      + '</div>';
-  }
-
-  // Ability scores
-  var scores = d.ability_scores || {};
-  var AB_LABELS = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
-  var scoreChips = Object.keys(AB_LABELS).map(function(ab) {
-    var val = scores[ab];
-    if (!val) return '';
-    var mod = Math.floor((val - 10) / 2);
+  // ── Lookup tables ─────────────────────────────────────────────
+  var TYPE_COLORS = { bubbleseed:'#2a7a3a', featherflow:'#2266b8', steelfist:'#6a3aaa', flamerage:'#aa3a1a' };
+  var TYPE_DOT_COLORS = { bubbleseed:'#4ecb6e', featherflow:'#60b0ff', steelfist:'#c080ff', flamerage:'#ff7040' };
+  var TYPE_GLOW  = { bubbleseed:'42,122,58', featherflow:'34,102,184', steelfist:'106,58,170', flamerage:'170,58,26' };
+  var REGION_IMG = { caparia:'img-caparia-landscape', nombi:'img-nombi-landscape', sohot:'img-sohot-landscape', jugabi:'img-jugabi-landscape' };
+  var REGION_LABELS = { caparia:'Caparia', nombi:'Nombi', sohot:'Sohot', jugabi:'Jugabi' };
+  var ALIGNMENT_PHB = { brightward:'Lawful Good', colorful:'Chaotic Good', greywarden:'True Neutral', steelbound:'Lawful Neutral', ashwalker:'Chaotic Neutral' };
+  var ALIGNMENT_DISPLAY = { brightward:'Brightward', colorful:'Colorful', greywarden:'Greywarden', steelbound:'Steelbound', ashwalker:'Ashwalker' };
+  var typeKey   = (d.gigglegloom_type || '').toLowerCase();
+  var typeColor = TYPE_COLORS[typeKey]    || '#c8940a';
+  var typeDot   = TYPE_DOT_COLORS[typeKey] || '#c8940a';
+  var typeGlow  = TYPE_GLOW[typeKey]      || '200,148,10';
+  var regionKey = (d.home_region || '').toLowerCase();
+  var regionImg = REGION_IMG[regionKey]   || 'img-caparia-landscape';
+  var regionLabel = REGION_LABELS[regionKey] || d.home_region || '';
+  // ── Ability scores ────────────────────────────────────────────
+  var scores   = d.ability_scores || {};
+  var bgBonus  = bgObj ? (function() {
+    var m = {}; var AB_MAP = { 'Str':'str','Dex':'dex','Con':'con','Int':'int','Wis':'wis','Cha':'cha' };
+    (bgObj.bonuses || []).forEach(function(b) {
+      var p = b.match(/([+-]\d+)\s+(\w+)/);
+      if (p && AB_MAP[p[2]]) m[AB_MAP[p[2]]] = parseInt(p[1]);
+    }); return m;
+  })() : {};
+  var AB_KEYS  = ['str','dex','con','int','wis','cha'];
+  var AB_NAMES = { str:'STR',dex:'DEX',con:'CON',int:'INT',wis:'WIS',cha:'CHA' };
+  var AB_TIPS  = {
+    str: 'Carrying, climbing, and melee attacks without finesse.',
+    dex: 'Speed, stealth, ranged attacks, and AC when unarmored.',
+    con: 'Hit points and concentration spells. Important for every class.',
+    int: 'Knowledge, history, and investigation checks.',
+    wis: 'Perception, insight, and survival. Helps you notice things others miss.',
+    cha: 'Persuasion, deception, performance, and some spells.'
+  };
+  // Find highest score for highlighting
+  var highestAb = 'str';
+  AB_KEYS.forEach(function(ab) { if ((scores[ab]||0) > (scores[highestAb]||0)) highestAb = ab; });
+  var abChips = AB_KEYS.map(function(ab) {
+    var raw   = scores[ab] || 0;
+    var bonus = bgBonus[ab] || 0;
+    var total = raw + bonus;
+    if (!raw) return '';
+    var mod   = Math.floor((total - 10) / 2);
     var modStr = (mod >= 0 ? '+' : '') + mod;
-    return '<div style="display:flex;flex-direction:column;align-items:center;gap:0.15rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:0.4rem 0.6rem;min-width:44px;">'
-      + '<span style="font-family:var(--font-sans);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">' + AB_LABELS[ab] + '</span>'
-      + '<span style="font-family:var(--font-sans);font-size:1.1rem;font-weight:700;color:var(--parchment);">' + val + '</span>'
-      + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:rgba(255,255,255,0.6);">' + modStr + '</span>'
+    var isHigh = (ab === highestAb);
+    var isLow  = (total <= 9);
+    var chipBorder = isHigh ? 'rgba(255,255,255,0.32)' : isLow ? 'rgba(224,80,80,0.3)' : 'rgba(255,255,255,0.08)';
+    var chipBg     = isHigh ? 'rgba(255,255,255,0.06)' : isLow ? 'rgba(224,80,80,0.04)' : 'rgba(255,255,255,0.03)';
+    var scoreColor = isLow ? '#e05050' : '#ffffff';
+    var nameColor  = isHigh ? 'rgba(255,255,255,0.62)' : isLow ? 'rgba(224,80,80,0.6)' : 'rgba(255,255,255,0.38)';
+    var modColor   = isHigh ? 'rgba(255,255,255,0.52)' : 'rgba(255,255,255,0.28)';
+    var bonusTag   = bonus ? '<span style="position:absolute;top:-7px;right:-5px;background:rgba(255,255,255,0.85);color:#0a0c14;font-size:0.5rem;font-weight:700;padding:0.08rem 0.28rem;border-radius:4px;line-height:1.3;">+' + bonus + '</span>' : '';
+    return '<div title="' + AB_NAMES[ab] + ' — ' + AB_TIPS[ab] + '" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.12rem;padding:0.65rem 0.4rem 0.5rem;border-radius:10px;border:1px solid ' + chipBorder + ';background:' + chipBg + ';position:relative;cursor:help;">'
+      + bonusTag
+      + '<span style="font-size:0.54rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:' + nameColor + ';">' + AB_NAMES[ab] + '</span>'
+      + '<span style="font-family:var(--font-serif);font-size:1.5rem;color:' + scoreColor + ';line-height:1;">' + total + '</span>'
+      + '<span style="font-size:0.68rem;font-weight:600;color:' + modColor + ';">' + modStr + '</span>'
       + '</div>';
   }).filter(Boolean).join('');
-  var scoresHtml = scoreChips
-    ? '<div style="margin-top:1rem;">'
-      + '<div style="font-family:var(--font-sans);font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(200,148,10,0.6);margin-bottom:0.5rem;">Ability Scores</div>'
-      + '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + scoreChips + '</div>'
-      + '</div>'
-    : '';
-
-  // Story sentence
-  var storySentence = document.getElementById('char-auto-summary');
-  var summaryText = storySentence ? storySentence.textContent : (d.summary || '');
-
-  card.innerHTML =
-    // Header row: portrait + name + type badge
-    '<div style="display:flex;align-items:flex-start;gap:1.25rem;margin-bottom:1.25rem;">'
-    + portraitHtml
-    + '<div style="flex:1;min-width:0;">'
-    +   '<div class="char-summary-name">' + (d.character_name || 'Your Character') + '</div>'
-    +   '<div class="char-summary-class">'
-    +     (clsObj ? clsObj.name : (d.class_id || '')) + (d.gender ? ' · ' + d.gender.charAt(0).toUpperCase() + d.gender.slice(1) : '')
+  // ── Skills ────────────────────────────────────────────────────
+  var profSkills = [];
+  if (d.class_id) { (d['skills_' + d.class_id] || []).forEach(function(s) { if (profSkills.indexOf(s) < 0) profSkills.push(s); }); }
+  if (bgObj && bgObj.skills) { bgObj.skills.forEach(function(s) { if (profSkills.indexOf(s) < 0) profSkills.push(s); }); }
+  profSkills.sort();
+  var PAST_SKILL_LOOKUP = { 'kind-parents':'History','the-streets':'Sleight of Hand','strict-religious':'Religion','single-parent':'Athletics','grandparent':'History','neighbor':'Insight','animal':'Animal Handling','imaginary':'Perception','no-one':'Survival','mentor':'History','wanderkeep':'Survival','merchant-guild':'Persuasion','brightcreed':'Religion','fighting-company':'Athletics' };
+  var modSkills = [];
+  ['who_raised_you','dearest_friend','organization'].forEach(function(k) {
+    var sk = PAST_SKILL_LOOKUP[d[k]];
+    if (sk) modSkills.push('+1 ' + sk);
+  });
+  var skillTagsHtml = profSkills.map(function(s) {
+    return '<span style="padding:0.18rem 0.55rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:5px;font-size:0.7rem;color:rgba(255,255,255,0.78);">' + s + '</span>';
+  }).join('') + modSkills.map(function(s) {
+    return '<span title="Flat +1 from your imagined past — not full proficiency, but still useful." style="padding:0.18rem 0.55rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:5px;font-size:0.7rem;color:rgba(255,255,255,0.9);cursor:help;">' + s + '</span>';
+  }).join('');
+  // ── Weapons ───────────────────────────────────────────────────
+  function weaponLabel(slotKey) {
+    var val = d.appearance_data ? d.appearance_data[slotKey] : '';
+    if (!val || typeof ITEMS === 'undefined') return '';
+    var item = ITEMS.find(function(i) { return i.id === val; });
+    if (!item) return '';
+    if (item.category === 'shield') return 'Shield +' + (item.ac_bonus || 2) + ' AC';
+    if (item.damage_dice) return item.damage_dice + ' ' + item.damage_type + (item.properties && item.properties.length ? ' <span style="color:rgba(255,255,255,0.28);font-size:0.68rem;">· ' + item.properties.filter(function(p){return p!=='versatile';}).join(' · ') + '</span>' : '');
+    return item.name || '';
+  }
+  var rhLabel = weaponLabel('hand_right');
+  var lhLabel = weaponLabel('hand_left');
+  // ── Combat stats ──────────────────────────────────────────────
+  var ac = 10;
+  if (scores.dex) ac += Math.floor((scores.dex - 10) / 2);
+  var hp = clsObj && clsObj.hit_die && scores.con
+    ? clsObj.hit_die + Math.floor(((scores.con + (bgBonus.con||0)) - 10) / 2)
+    : (clsObj ? clsObj.hit_die : '—');
+  var goldTotal   = bgObj ? (bgObj.starting_gold || 0) : 0;
+  var goldSpent   = typeof calcGoldSpent === 'function' ? calcGoldSpent() : 0;
+  var goldLeft    = Math.max(0, goldTotal - goldSpent);
+  // ── Class flavor name ─────────────────────────────────────────
+  var classFlavorName = '';
+  if (clsObj && typeKey && clsObj.gigglegloom === typeKey) {
+    // Look up Anavale class name from GIGGLEGLOOM_TYPES if available
+    if (typeof GIGGLEGLOOM_TYPES !== 'undefined') {
+      var typeData = GIGGLEGLOOM_TYPES[typeKey];
+      if (typeData && typeData.classes) {
+        var match = typeData.classes.find(function(c) { return c.id === d.class_id; });
+        if (match) classFlavorName = match.name;
+      }
+    }
+  }
+  // ── Alignment display ─────────────────────────────────────────
+  var alignKey = (d.alignment || '').toLowerCase();
+  var alignDisplay = ALIGNMENT_DISPLAY[alignKey] || d.alignment || '—';
+  var alignPhb     = ALIGNMENT_PHB[alignKey]     ? ' <span style="color:rgba(255,255,255,0.25);font-weight:400;">(' + ALIGNMENT_PHB[alignKey] + ')</span>' : '';
+  // ── Language display ──────────────────────────────────────────
+  var langDisplay = d.language
+    ? d.language.replace(/-/g,' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); })
+    : '—';
+  // ── Story sentence ────────────────────────────────────────────
+  var storyEl  = document.getElementById('char-auto-summary');
+  var storyText = storyEl ? storyEl.textContent.trim() : (d.summary || '');
+  // ── Build HTML ────────────────────────────────────────────────
+  card.style.cssText = 'background:rgba(10,12,22,0.99);border:1px solid rgba(255,255,255,0.1);border-radius:16px;overflow:hidden;position:relative;padding:0;';
+  // Animated background orbs (type-colored)
+  var orbHtml = '<div style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;border-radius:16px;">'
+    + '<div style="position:absolute;width:360px;height:360px;border-radius:50%;filter:blur(55px);background:radial-gradient(circle,rgba(' + typeGlow + ',0.5) 0%,transparent 65%);top:-110px;left:-90px;animation:sc-orb1 20s ease-in-out infinite;"></div>'
+    + '<div style="position:absolute;width:280px;height:280px;border-radius:50%;filter:blur(55px);background:radial-gradient(circle,rgba(' + typeGlow + ',0.32) 0%,transparent 65%);bottom:-50px;right:-70px;animation:sc-orb2 26s ease-in-out infinite;"></div>'
+    + '</div>';
+  // Hero zone
+  var heroHtml = '<div style="position:relative;height:260px;overflow:hidden;z-index:1;">'
+    // Region landscape
+    + '<div style="position:absolute;inset:0;background:url(\'assets/images/regions/' + regionImg + '.webp\') center 30%/cover;filter:brightness(0.45) saturate(1.2);animation:sc-ken 18s ease-in-out infinite alternate;"></div>'
+    // Shimmer sweep
+    + '<div style="position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(' + typeGlow + ',0.1) 50%,transparent 80%);background-size:250% 100%;animation:sc-shimmer 5s ease-in-out infinite;z-index:2;pointer-events:none;"></div>'
+    // Left-to-right overlay
+    + '<div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(10,12,22,0.96) 0%,rgba(10,12,22,0.75) 48%,rgba(10,12,22,0.05) 100%);z-index:2;"></div>'
+    // Bottom fade
+    + '<div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to bottom,transparent,rgba(10,12,22,0.99));z-index:3;pointer-events:none;"></div>'
+    // Species portrait
+    + (d.species_id ? '<img src="assets/images/species/sp-' + d.species_id + '-' + suffix + '.png" alt="" onerror="this.style.display=\'none\'" style="position:absolute;right:0;bottom:0;width:200px;height:235px;object-fit:cover;object-position:top center;border-radius:10px 10px 0 0;filter:drop-shadow(-12px 0 30px rgba(' + typeGlow + ',0.5));-webkit-mask-image:linear-gradient(to top,transparent 0%,black 15%);mask-image:linear-gradient(to top,transparent 0%,black 15%);z-index:3;">' : '')
+    // Region watermark
+    + '<div style="position:absolute;bottom:0.9rem;right:0.9rem;z-index:4;font-size:0.55rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.3);display:flex;align-items:center;gap:0.3rem;"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.35);display:inline-block;"></span>' + regionLabel + '</div>'
+    // Text content
+    + '<div style="position:relative;z-index:4;padding:2.25rem 2rem 1.75rem;height:100%;display:flex;flex-direction:column;justify-content:flex-end;max-width:62%;">'
+    +   '<div style="font-size:0.58rem;font-weight:700;letter-spacing:0.32em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin-bottom:0.3rem;">Your Character</div>'
+    +   '<div style="font-family:var(--font-headers);font-size:3.8rem;font-weight:700;color:#fff;line-height:0.95;text-shadow:0 2px 30px rgba(0,0,0,0.9);margin-bottom:0.5rem;">' + (d.character_name || 'Your Character') + '</div>'
+    +   '<div style="font-size:0.7rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.48);margin-bottom:1rem;">'
+    +     (clsObj ? clsObj.name : (d.class_id || ''))
+    +     (spObj ? ' &nbsp;·&nbsp; ' + spObj.name + ' <span style="color:rgba(255,255,255,0.25);font-weight:400;">(' + (spObj.phb || '') + ')</span>' : '')
+    +     (gender ? ' &nbsp;·&nbsp; ' + gender.charAt(0).toUpperCase() + gender.slice(1) : '')
     +   '</div>'
-    +   typeBadge
+    +   '<div style="display:inline-flex;align-items:center;gap:0.55rem;padding:0.32rem 1rem 0.32rem 0.65rem;border-radius:24px;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid rgba(255,255,255,0.12);background:rgba(' + typeGlow + ',0.28);color:#fff;width:fit-content;animation:sc-badge 3s ease-in-out infinite;">'
+    +     '<img src="assets/icons/icon-' + typeKey + '.svg" alt="" onerror="this.style.display=\'none\'" style="width:22px;height:22px;filter:brightness(0) invert(1);opacity:0.9;flex-shrink:0;">'
+    +     '<span style="width:7px;height:7px;border-radius:50%;background:' + typeDot + ';flex-shrink:0;box-shadow:0 0 8px ' + typeDot + ';animation:sc-dot 1.8s ease-in-out infinite;display:inline-block;"></span>'
+    +     (d.gigglegloom_type ? d.gigglegloom_type.charAt(0).toUpperCase() + d.gigglegloom_type.slice(1) : '')
+    +   '</div>'
     + '</div>'
+    + '</div>';
+  // Identity strip
+  var idItems = [
+    { icon:'🗺', label:'Region',     tip:'The part of Anavale your character grew up in.',                                     val: regionLabel },
+    { icon:'⚖️', label:'Alignment',  tip:'How your character approaches moral choices.',                                       val: alignDisplay + alignPhb },
+    { icon:'📖', label:'Background', tip:'Your life before adventure — gives you skills, starting gold, and a story hook.',    val: (bgObj ? bgObj.name : d.background_id || '—') + (bgObj && bgObj.phb ? ' <span style="color:rgba(255,255,255,0.25);font-weight:400;">(' + bgObj.phb + ')</span>' : '') },
+    { icon:'💬', label:'Language',   tip:'Your bonus language beyond Common.',                                                  val: langDisplay },
+    { icon:'🧬', label:'Species',    tip:'Called Race in older editions, Species in the 2024 Player\'s Handbook.',             val: (spObj ? spObj.name : d.species_id || '—') + (spObj && spObj.phb ? ' <span style="color:rgba(255,255,255,0.25);font-weight:400;">(' + spObj.phb + ')</span>' : '') }
+  ];
+  var idStripHtml = '<div style="position:relative;z-index:1;display:flex;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);">'
+    + idItems.map(function(item, i) {
+        return '<div title="' + item.tip + '" style="flex:1;padding:0.65rem 0.8rem;' + (i < idItems.length-1 ? 'border-right:1px solid rgba(255,255,255,0.05);' : '') + 'display:flex;flex-direction:column;gap:0.22rem;cursor:help;">'
+          + '<div style="font-size:0.5rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.32);display:flex;align-items:center;gap:0.25rem;">'
+          + '<span style="font-size:0.75rem;opacity:0.55;">' + item.icon + '</span>' + item.label + '</div>'
+          + '<div style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + item.val + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+  // Combat row
+  var combatHtml = '<div style="position:relative;z-index:1;display:flex;align-items:stretch;padding:1.25rem 1.75rem;gap:1.25rem;border-bottom:1px solid rgba(255,255,255,0.05);">'
+    // Class block
+    + '<div style="display:flex;align-items:flex-start;gap:1rem;flex:1;min-width:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem 1.1rem;">'
+    +   '<img src="assets/images/classes/class-' + (d.class_id||'') + '.webp" alt="" onerror="this.style.opacity=\'0\'" style="width:68px;height:68px;border-radius:12px;object-fit:cover;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;background:rgba(' + typeGlow + ',0.15);box-shadow:0 4px 16px rgba(0,0,0,0.4);">'
+    +   '<div style="min-width:0;flex:1;">'
+    +     '<div title="Your Class determines your abilities, spell list, and how you channel the Gigglegloom." style="font-size:1rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:0.3rem;margin-bottom:0.25rem;cursor:help;">'
+    +       (clsObj ? clsObj.name : (d.class_id || '—'))
+    +       (classFlavorName ? ' <span style="font-family:var(--font-headers);font-size:0.82rem;font-weight:400;letter-spacing:0;text-transform:none;color:rgba(255,255,255,0.4);">— ' + classFlavorName + '</span>' : '')
+    +     '</div>'
+    +     (clsObj ? '<div style="font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:0.1rem;line-height:1.5;"><strong style="color:rgba(255,255,255,0.65);">Primary ability:</strong> ' + clsObj.primary + '</div>' : '')
+    +     (clsObj ? '<div style="font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:0.1rem;line-height:1.5;"><strong style="color:rgba(255,255,255,0.65);">Saving throws:</strong> ' + clsObj.saves + '</div>' : '')
+    +     (bgObj  ? '<div style="font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:0.1rem;line-height:1.5;"><strong style="color:rgba(255,255,255,0.65);">Background:</strong> ' + (bgObj.name||'') + (bgObj.phb ? ' <span style="color:rgba(255,255,255,0.22);">(' + bgObj.phb + ')</span>' : '') + '</div>' : '')
+    +   '</div>'
     + '</div>'
-    // Stat rows
-    + '<div style="margin-bottom:1rem;">'
-    + statRow('Species',    spObj ? spObj.name : d.species_id)
-    + statRow('Background', bgObj ? bgObj.name : d.background_id)
-    + statRow('Home Region', REGION_LABELS[d.home_region] || d.home_region)
-    + statRow('Alignment',  ALIGNMENT_LABELS[d.alignment] || d.alignment)
-    + statRow('Language',   d.language ? d.language.replace(/-/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}) : null)
+    // Stat pills — vertical stack
+    + '<div style="display:flex;flex-direction:column;gap:0.45rem;flex-shrink:0;width:130px;">'
+    +   '<div title="Armor Class — how hard you are to hit. 10 is unarmored. Higher armor and Dexterity raise this." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:rgba(140,155,180,0.18);border:1px solid rgba(160,175,200,0.18);cursor:help;"><span style="font-size:1rem;">🛡</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:#fff;line-height:1;">' + ac + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">Armor Class</div></div></div>'
+    +   '<div title="Hit Points — how much damage you can take before going down." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:rgba(200,50,50,0.18);border:1px solid rgba(224,80,80,0.22);cursor:help;"><span style="font-size:1rem;color:#e05050;">♥</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:#fff;line-height:1;">' + hp + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">Hit Points</div></div></div>'
+    +   '<div title="Gold remaining after buying your starting gear." style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.75rem;border-radius:10px;background:rgba(200,148,10,0.16);border:1px solid rgba(200,148,10,0.22);cursor:help;"><span style="font-size:1rem;color:#f0c040;">◈</span><div><div style="font-family:var(--font-serif);font-size:1.1rem;color:#ffe080;line-height:1;">' + goldLeft + '</div><div style="font-size:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);">Gold Left</div></div></div>'
     + '</div>'
-    // Ability scores
-    + scoresHtml
-    // Story paragraph
-    + (summaryText ? '<div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(200,148,10,0.2);">'
-        + '<div style="font-family:var(--font-sans);font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(200,148,10,0.6);margin-bottom:0.5rem;">Your Story</div>'
-        + '<div class="char-summary-body">' + summaryText + '</div>'
-        + '</div>'
-      : '');
+    + '</div>';
+  // Ability scores zone
+  var abilityHtml = '<div style="position:relative;z-index:1;padding:1.1rem 1.75rem;border-bottom:1px solid rgba(255,255,255,0.05);">'
+    + '<div style="font-size:0.54rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.32);margin-bottom:0.65rem;">Ability Scores &nbsp;<span style="opacity:0.5;font-size:0.48rem;">— white border = highest · red = below average · +N = background bonus</span></div>'
+    + '<div style="display:flex;gap:0.45rem;">' + abChips + '</div>'
+    + '</div>';
+  // Skills + weapons zone
+  var swHtml = '<div style="position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;padding:1rem 1.75rem;border-bottom:1px solid rgba(255,255,255,0.05);">'
+    + '<div style="padding-right:1.5rem;">'
+    +   '<div style="font-size:0.54rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.32);margin-bottom:0.5rem;">Skills</div>'
+    +   '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">' + (skillTagsHtml || '<span style="font-size:0.75rem;color:rgba(255,255,255,0.3);font-style:italic;">None yet</span>') + '</div>'
+    + '</div>'
+    + '<div style="padding-left:1.5rem;border-left:1px solid rgba(255,255,255,0.06);">'
+    +   '<div style="font-size:0.54rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.32);margin-bottom:0.5rem;">Weapons</div>'
+    +   (rhLabel ? '<div style="display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.35rem;font-size:0.76rem;"><span style="font-size:0.54rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.28);width:28px;">Right</span><span style="color:rgba(255,255,255,0.85);font-weight:600;">' + rhLabel + '</span></div>' : '')
+    +   (lhLabel ? '<div style="display:flex;align-items:baseline;gap:0.5rem;font-size:0.76rem;"><span style="font-size:0.54rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.28);width:28px;">Left</span><span style="color:rgba(255,255,255,0.85);font-weight:600;">' + lhLabel + '</span></div>' : '')
+    +   (!rhLabel && !lhLabel ? '<span style="font-size:0.75rem;color:rgba(255,255,255,0.3);font-style:italic;">None equipped</span>' : '')
+    + '</div>'
+    + '</div>';
+  // Story zone
+  var storyHtml = '<div style="position:relative;z-index:1;padding:1.5rem 1.75rem 1.9rem;text-align:center;">'
+    + '<div style="font-size:0.6rem;letter-spacing:0.6em;color:rgba(255,255,255,0.18);margin-bottom:0.9rem;animation:sc-flicker 9s ease-in-out infinite;">✦ &nbsp; · &nbsp; · &nbsp; · &nbsp; ✦</div>'
+    + (storyText ? '<div style="font-size:0.88rem;font-style:italic;color:rgba(255,255,255,0.52);line-height:1.9;max-width:540px;margin:0 auto;">' + storyText + '</div>' : '')
+    + '</div>';
+  // Inject keyframes once
+  if (!document.getElementById('sc-keyframes')) {
+    var style = document.createElement('style');
+    style.id  = 'sc-keyframes';
+    style.textContent = [
+      '@keyframes sc-orb1{0%,100%{transform:translate(0,0) scale(1);opacity:.8}33%{transform:translate(40px,30px) scale(1.08);opacity:1}66%{transform:translate(-20px,50px) scale(.95);opacity:.7}}',
+      '@keyframes sc-orb2{0%,100%{transform:translate(0,0) scale(1);opacity:.7}50%{transform:translate(-50px,-30px) scale(1.12);opacity:1}}',
+      '@keyframes sc-ken{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.06) translate(-1%,-1%)}}',
+      '@keyframes sc-shimmer{0%{background-position:250% 0}100%{background-position:-250% 0}}',
+      '@keyframes sc-badge{0%,100%{box-shadow:0 0 14px rgba(170,58,26,.45),0 0 40px rgba(170,58,26,.12)}50%{box-shadow:0 0 28px rgba(170,58,26,.75),0 0 70px rgba(170,58,26,.28)}}',
+      '@keyframes sc-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.7}}',
+      '@keyframes sc-flicker{0%,88%,100%{opacity:.7}92%{opacity:.15}96%{opacity:.9}}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+  card.innerHTML = orbHtml + heroHtml + idStripHtml + combatHtml + abilityHtml + swHtml + storyHtml;
+  // Also hide the old char-stage3-summary panel on Stage 5 — it's now redundant
+  var oldPanel = document.getElementById('char-stage3-summary');
+  if (oldPanel) oldPanel.style.display = 'none';
 }
 
 function generateSummary() {
