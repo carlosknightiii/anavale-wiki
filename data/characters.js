@@ -522,6 +522,54 @@ var CHARACTERS = [
       "rootwalker"
     ]
   }
+,
+
+  {
+    "id": "wren-15d091",
+    "name": "Wren",
+    "pc": true,
+    "player_email": "",
+    "token": "15d0911617b8af263bdbaa917bb32a77",
+    "level": 1,
+    "class_id": "cleric",
+    "class_gigglegloom": "bubbleseed",
+    "species": "verdathi",
+    "background_id": "stillsought",
+    "alignment": "colorful",
+    "alignment_trait": null,
+    "home_region": "nombi",
+    "ability_scores": {
+      "str": 14,
+      "dex": 15,
+      "con": 12,
+      "int": 10,
+      "wis": 8,
+      "cha": 13
+    },
+    "language_extra": "pre-partition",
+    "summary": "A Verdathi The Faithful who carries the Bubbleseed — from nombi. They are Freespirited — they want to do right by people, they've just never been good at following someone else's idea of how.",
+    "personality_immediate": "Makes everyone laugh somehow",
+    "personality_wrong": "Makes everyone laugh somehow",
+    "personality_laugh": "Jumps in before thinking",
+    "who_raised_you": null,
+    "dearest_friend": null,
+    "had_pet": null,
+    "fallen_in_love": null,
+    "organization_joined": "kept-to-myself",
+    "left_behind": null,
+    "why_you_left": null,
+    "cares_about": "People who can't protect themselves",
+    "deepest_fear": "Losing someone to the Dimming",
+    "seeking": "A reason to stay somewhere",
+    "gender": "female",
+    "category": "player-character",
+    "player_facing": false,
+    "tags": [
+      "player-character",
+      "bubbleseed",
+      "verdathi"
+    ]
+  }
 ];
 
 // Total: 16 entries
