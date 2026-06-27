@@ -3949,8 +3949,12 @@ function calcGoldSpent() {
       return;
     }
     // app-top and app-lower use CLOTHING_TIERS / LOWER_TIERS string values (not item IDs)
-    // Fall back to those lookups for armor/clothing options
+    // Before charging, check if this matches the class's free starting armor
+    var clsGear = CHAR_STATE.draft.class_id ? (CLASS_STARTING_GEAR[CHAR_STATE.draft.class_id] || {}) : {};
+    var startingArmorStr = clsGear.armor ? clsGear.armor.toLowerCase() : '';
     if (slotId === 'app-top') {
+      // Free if it matches the class starting armor (e.g. "scale mail" for cleric)
+      if (startingArmorStr && id.toLowerCase() === startingArmorStr) return;
       var allTopOpts = [].concat(
         CLOTHING_TIERS.light || [],
         CLOTHING_TIERS.medium || [],
