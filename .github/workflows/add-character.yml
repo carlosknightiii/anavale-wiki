@@ -1,0 +1,27 @@
+name: Add Player Character
+on:
+  repository_dispatch:
+    types: [add-character]
+jobs:
+  add-character:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Write character entry
+        env:
+          CHARACTER_JSON: ${{ toJSON(github.event.client_payload) }}
+        run: node .github/scripts/add-character.js
+      - name: Commit and push
+        run: |
+          git config user.name "Anavale Bot"
+          git config user.email "bot@anavale"
+          git add data/characters.js
+          git diff --staged --quiet || git commit -m "feat: add player character ${{ github.event.client_payload.name }}"
+          git push

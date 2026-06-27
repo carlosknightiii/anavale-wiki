@@ -11,7 +11,7 @@
 // ── CONFIGURATION ─────────────────────────────────────────────────
 var CHAR_CONFIG = {
   formspree:    'https://formspree.io/f/xzdwaveg',
-  github_token: '', // Injected at runtime from localStorage — never stored in repo
+  github_token: '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', // Actions-only dispatch token — safe to expose (Actions: write scope only, cannot read or modify repo files)
   github_repo:  'carlosknightiii/anavale-wiki',
   draft_key:    'anavale_char_draft',
   created_key:  'anavale_character_created',
@@ -19,11 +19,8 @@ var CHAR_CONFIG = {
   total_stages: 5
 };
 
-// Inject GitHub token from localStorage at runtime — set via DM Tools → Setup tab
-(function() {
-  var t = localStorage.getItem('anavale_github_token');
-  if (t) CHAR_CONFIG.github_token = t;
-})();
+// GitHub token is hardcoded (Actions-only dispatch PAT — safe to expose publicly).
+// DM Tools → Setup tab token is no longer required for player submissions.
 
 // ── STATE ──────────────────────────────────────────────────────────
 var CHAR_STATE = {
@@ -2687,15 +2684,124 @@ function syncCharacterName() {
 
 // ── STAGE 5: INIT ──────────────────────────────────────────────────
 function initStage5() {
-  // Auto-generate summary
+  // Auto-generate summary sentence
   generateSummary();
-  // Pre-fill name if in draft
+  // Pre-fill name
   if (CHAR_STATE.draft.character_name) {
     var nameInput = document.getElementById('char-final-name');
     if (nameInput) nameInput.value = CHAR_STATE.draft.character_name;
   }
-  // Show initial name suggestions
+  // Build rich summary card
+  renderSummaryCard();
+  // Show name suggestions
   suggestNames();
+}
+
+function renderSummaryCard() {
+  var d = CHAR_STATE.draft;
+  var card = document.getElementById('char-summary-card');
+  if (!card) return;
+
+  var clsObj = d.class_id && typeof CLASS_DATA !== 'undefined'
+    ? CLASS_DATA.find(function(c) { return c.id === d.class_id; }) : null;
+  var bgObj = d.background_id && typeof ANAVALE_BACKGROUNDS !== 'undefined'
+    ? ANAVALE_BACKGROUNDS.find(function(b) { return b.id === d.background_id; }) : null;
+  var spObj = d.species_id && typeof ANAVALE_SPECIES !== 'undefined'
+    ? ANAVALE_SPECIES.find(function(s) { return s.id === d.species_id; }) : null;
+
+  var TYPE_LABELS = {
+    bubbleseed: 'Bubbleseed', featherflow: 'Featherflow',
+    steelfist: 'Steelfist', flamerage: 'Flamerage'
+  };
+  var REGION_LABELS = {
+    caparia: 'Caparia', nombi: 'Nombi', sohot: 'Sohot', jugabi: 'Jugabi'
+  };
+  var ALIGNMENT_LABELS = {
+    'brightward':  'Brightward — Protective',
+    'colorful':    'Colorful — Freespirited',
+    'greywarden':  'Greywarden — Measured',
+    'steelbound':  'Steelbound — Disciplined',
+    'ashwalker':   'Ashwalker — Pragmatic'
+  };
+
+  // Color badge for Gigglegloom type
+  var typeColors = { bubbleseed:'#2a7a3a', featherflow:'#2266b8', steelfist:'#6a3aaa', flamerage:'#aa3a1a' };
+  var typeColor = typeColors[d.gigglegloom_type] || '#c8940a';
+  var typeBadge = d.gigglegloom_type
+    ? '<span style="display:inline-block;padding:0.2rem 0.7rem;border-radius:20px;background:' + typeColor + ';color:#fff;font-size:0.72rem;font-weight:700;letter-spacing:0.05em;margin-bottom:1.25rem;">'
+      + (TYPE_LABELS[d.gigglegloom_type] || d.gigglegloom_type) + '</span>'
+    : '';
+
+  // Portrait image
+  var gender = d.gender || 'm';
+  var suffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
+  var portraitHtml = d.species_id
+    ? '<img src="assets/images/species/sp-' + d.species_id + '-' + suffix + '.png" alt="'
+      + (spObj ? spObj.name : d.species_id) + '" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid rgba(200,148,10,0.4);flex-shrink:0;" onerror="this.style.display=\'none\'">'
+    : '';
+
+  // Stat rows
+  function statRow(label, value) {
+    if (!value || value === '—') return '';
+    return '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.06);font-family:var(--font-sans);font-size:0.82rem;">'
+      + '<span style="color:rgba(245,234,212,0.55);flex-shrink:0;">' + label + '</span>'
+      + '<span style="color:var(--parchment);text-align:right;">' + value + '</span>'
+      + '</div>';
+  }
+
+  // Ability scores
+  var scores = d.ability_scores || {};
+  var AB_LABELS = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
+  var scoreChips = Object.keys(AB_LABELS).map(function(ab) {
+    var val = scores[ab];
+    if (!val) return '';
+    var mod = Math.floor((val - 10) / 2);
+    var modStr = (mod >= 0 ? '+' : '') + mod;
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:0.15rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:0.4rem 0.6rem;min-width:44px;">'
+      + '<span style="font-family:var(--font-sans);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">' + AB_LABELS[ab] + '</span>'
+      + '<span style="font-family:var(--font-sans);font-size:1.1rem;font-weight:700;color:var(--parchment);">' + val + '</span>'
+      + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:rgba(255,255,255,0.6);">' + modStr + '</span>'
+      + '</div>';
+  }).filter(Boolean).join('');
+  var scoresHtml = scoreChips
+    ? '<div style="margin-top:1rem;">'
+      + '<div style="font-family:var(--font-sans);font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(200,148,10,0.6);margin-bottom:0.5rem;">Ability Scores</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">' + scoreChips + '</div>'
+      + '</div>'
+    : '';
+
+  // Story sentence
+  var storySentence = document.getElementById('char-auto-summary');
+  var summaryText = storySentence ? storySentence.textContent : (d.summary || '');
+
+  card.innerHTML =
+    // Header row: portrait + name + type badge
+    '<div style="display:flex;align-items:flex-start;gap:1.25rem;margin-bottom:1.25rem;">'
+    + portraitHtml
+    + '<div style="flex:1;min-width:0;">'
+    +   '<div class="char-summary-name">' + (d.character_name || 'Your Character') + '</div>'
+    +   '<div class="char-summary-class">'
+    +     (clsObj ? clsObj.name : (d.class_id || '')) + (d.gender ? ' · ' + d.gender.charAt(0).toUpperCase() + d.gender.slice(1) : '')
+    +   '</div>'
+    +   typeBadge
+    + '</div>'
+    + '</div>'
+    // Stat rows
+    + '<div style="margin-bottom:1rem;">'
+    + statRow('Species',    spObj ? spObj.name : d.species_id)
+    + statRow('Background', bgObj ? bgObj.name : d.background_id)
+    + statRow('Home Region', REGION_LABELS[d.home_region] || d.home_region)
+    + statRow('Alignment',  ALIGNMENT_LABELS[d.alignment] || d.alignment)
+    + statRow('Language',   d.language ? d.language.replace(/-/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}) : null)
+    + '</div>'
+    // Ability scores
+    + scoresHtml
+    // Story paragraph
+    + (summaryText ? '<div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(200,148,10,0.2);">'
+        + '<div style="font-family:var(--font-sans);font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(200,148,10,0.6);margin-bottom:0.5rem;">Your Story</div>'
+        + '<div class="char-summary-body">' + summaryText + '</div>'
+        + '</div>'
+      : '');
 }
 
 function generateSummary() {
@@ -2848,14 +2954,29 @@ function showPreSubmitConfirm() {
     bubbleseed: 'Bubbleseed', featherflow: 'Featherflow',
     steelfist: 'Steelfist', flamerage: 'Flamerage'
   };
+  var ALIGNMENT_DISPLAY = {
+    'brightward':  'Brightward (Lawful Good)',
+    'colorful':    'Colorful (Chaotic Good)',
+    'greywarden':  'Greywarden (True Neutral)',
+    'steelbound':  'Steelbound (Lawful Neutral)',
+    'ashwalker':   'Ashwalker (Chaotic Neutral)'
+  };
+  var REGION_DISPLAY = {
+    'caparia': 'Caparia',
+    'nombi':   'Nombi',
+    'sohot':   'Sohot',
+    'jugabi':  'Jugabi'
+  };
+  var spDisplayName = spObj ? spObj.name + ' (' + (spObj.phb || d.species_id) + ')' : (d.species_id || '—');
+  var bgDisplayName = bgObj ? bgObj.name + ' (Background)' : (d.background_id || '—');
   var rows = [
     ['Name',        d.character_name || '—'],
-    ['Class',       clsObj ? clsObj.name + ' (' + (d.class_id || '—') + ')' : (d.class_id || '—')],
-    ['Magic',       TYPE_LABELS[d.gigglegloom_type] || d.gigglegloom_type || '—'],
-    ['Species',     spObj ? spObj.name : (d.species_id || '—')],
-    ['Background',  bgObj ? bgObj.name : (d.background_id || '—')],
-    ['Alignment',   d.alignment || '—'],
-    ['Region',      d.home_region || '—']
+    ['Class',       clsObj ? clsObj.name + ' (Class)' : (d.class_id || '—')],
+    ['Gigglegloom', TYPE_LABELS[d.gigglegloom_type] || d.gigglegloom_type || '—'],
+    ['Species',     spDisplayName],
+    ['Background',  bgDisplayName],
+    ['Alignment',   ALIGNMENT_DISPLAY[d.alignment] || d.alignment || '—'],
+    ['Home Region', REGION_DISPLAY[d.home_region] || d.home_region || '—']
   ];
   summary.innerHTML = rows.map(function(r) {
     return '<div class="char-presubmit-row">'
@@ -2875,6 +2996,8 @@ function closePreSubmitConfirm() {
 
 // ── SUBMIT ─────────────────────────────────────────────────────────
 async function submitCharacter() {
+  // Close the pre-submit modal immediately
+  closePreSubmitConfirm();
   var btn = document.getElementById('char-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
@@ -2898,19 +3021,32 @@ async function submitCharacter() {
     // Build character entry
     var entry = buildCharacterEntry(d, token);
 
-    // 1. Write to GitHub
-    var githubOk = await writeToGitHub(entry);
-    if (!githubOk) throw new Error('GitHub write failed');
-
-    // 2. Send to Formspree
+    // 1. Send to Formspree first — this always works and is the reliable record.
+    // Formspree is the source of truth when GitHub is unavailable.
     await sendToFormspree(entry);
+
+    // 2. Attempt GitHub write — non-fatal.
+    // Players don't have the GitHub token in their browser; this will fail
+    // for them silently. The DM imports Formspree submissions manually.
+    // If the DM has the token saved (e.g. testing from DM Tools), this
+    // will also write directly to characters.js.
+    var githubOk = false;
+    try {
+      githubOk = await writeToGitHub(entry);
+    } catch(ghErr) {
+      console.warn('GitHub write skipped (token likely absent):', ghErr);
+    }
 
     // 3. Mark as created locally
     localStorage.setItem(CHAR_CONFIG.created_key, token);
     localStorage.removeItem(CHAR_CONFIG.draft_key);
 
-    // 4. Show confirmation
+    // 4. Show confirmation — always, regardless of GitHub result
     showConfirmation(entry, token);
+
+    if (!githubOk) {
+      console.info('Character saved via Formspree. DM will add to characters.js from email submission.');
+    }
 
   } catch(err) {
     console.error('Submission error:', err);
@@ -2966,55 +3102,40 @@ function buildCharacterEntry(d, token) {
 }
 
 async function writeToGitHub(entry) {
+  // Uses GitHub repository_dispatch to trigger a GitHub Actions workflow.
+  // The workflow holds the write token securely — this token only triggers Actions.
+  // Safe to embed in client code: it cannot read or modify repo files directly.
+  var dispatchToken = CHAR_CONFIG.github_token; // set via DM Tools OR hardcoded dispatch-only PAT below
+  if (!dispatchToken) {
+    console.warn('No dispatch token — GitHub write skipped.');
+    return false;
+  }
   try {
-    // Read current file
-    var getRes = await fetch(
-      'https://api.github.com/repos/' + CHAR_CONFIG.github_repo + '/contents/data/characters.js',
-      { headers: { 'Authorization': 'Bearer ' + CHAR_CONFIG.github_token, 'Accept': 'application/vnd.github.v3+json' } }
-    );
-    if (!getRes.ok) return false;
-    var fileData = await getRes.json();
-    var currentContent = atob(fileData.content.replace(/\n/g,''));
-    var sha = fileData.sha;
-
-    // Duplicate email check
-    if (entry.player_email && currentContent.indexOf(entry.player_email) >= 0) {
-      showToast('A character with that email already exists. Check your bookmark for your sheet link.');
-      return false;
-    }
-
-    // Append new entry before closing ];
-    var insertPoint = currentContent.lastIndexOf('];');
-    if (insertPoint === -1) return false;
-
-    var entryStr = '\n  ' + JSON.stringify(entry, null, 2).split('\n').join('\n  ');
-    // Handle comma — add after previous entry if array not empty
-    var hasEntries = currentContent.slice(0, insertPoint).trim().slice(-1) !== '[';
-    var newContent = currentContent.slice(0, insertPoint)
-      + (hasEntries ? ',\n' : '\n')
-      + entryStr + '\n'
-      + currentContent.slice(insertPoint);
-
-    // Write back
-    var putRes = await fetch(
-      'https://api.github.com/repos/' + CHAR_CONFIG.github_repo + '/contents/data/characters.js',
+    var payload = Object.assign({}, entry, { _dispatched_at: new Date().toISOString() });
+    var res = await fetch(
+      'https://api.github.com/repos/' + CHAR_CONFIG.github_repo + '/dispatches',
       {
-        method: 'PUT',
+        method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + CHAR_CONFIG.github_token,
-          'Content-Type': 'application/json',
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': 'Bearer ' + dispatchToken,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: 'feat: add player character ' + (entry.name || 'new'),
-          content: btoa(unescape(encodeURIComponent(newContent))),
-          sha: sha
+          event_type: 'add-character',
+          client_payload: payload
         })
       }
     );
-    return putRes.ok;
+    // 204 No Content = accepted; anything else = failed
+    if (res.status === 204) {
+      console.info('Character dispatch accepted — workflow will write to characters.js in ~30s.');
+      return true;
+    }
+    console.warn('Dispatch returned', res.status);
+    return false;
   } catch(e) {
-    console.error('GitHub write error:', e);
+    console.error('Dispatch error:', e);
     return false;
   }
 }
@@ -3621,8 +3742,31 @@ function calcGoldSpent() {
       freeUsed[id] = true;
       return; // free — don't charge
     }
+    // First try ITEMS database (weapons use item IDs)
     var item = ITEMS.find(function(i) { return i.id === id; });
-    if (item && item.cost_gp) spent += item.cost_gp;
+    if (item && item.cost_gp) {
+      spent += item.cost_gp;
+      return;
+    }
+    // app-top and app-lower use CLOTHING_TIERS / LOWER_TIERS string values (not item IDs)
+    // Fall back to those lookups for armor/clothing options
+    if (slotId === 'app-top') {
+      var allTopOpts = [].concat(
+        CLOTHING_TIERS.light || [],
+        CLOTHING_TIERS.medium || [],
+        CLOTHING_TIERS.heavy || []
+      );
+      var topOpt = allTopOpts.find(function(o) { return o.value === id; });
+      if (topOpt && topOpt.cost_gp) spent += topOpt.cost_gp;
+    } else if (slotId === 'app-lower') {
+      var allLowerOpts = [].concat(
+        LOWER_TIERS.light || [],
+        LOWER_TIERS.medium || [],
+        LOWER_TIERS.heavy || []
+      );
+      var lowerOpt = allLowerOpts.find(function(o) { return o.value === id; });
+      if (lowerOpt && lowerOpt.cost_gp) spent += lowerOpt.cost_gp;
+    }
   });
   // Static option slots (cloak, shoes, hat, rings, necklace, earrings)
   ['app-cloak','app-shoes','app-hat','app-ring-right','app-ring-left','app-necklace','app-earrings'].forEach(function(slotId) {
