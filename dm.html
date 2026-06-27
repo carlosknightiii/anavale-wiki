@@ -248,6 +248,10 @@
   transform: translateY(-1px);
   box-shadow: var(--dm-gold-btn-shadow);
 }
+/* Hide +New Entry button while the Add form is already open */
+.dm-app:has(#form-add.active) .dm-btn-add-entry {
+  display: none;
+}
 
 /* ── MAIN TWO-COLUMN ───────────────────────── */
 .dm-main {
