@@ -625,6 +625,70 @@ var CHARACTERS = [
     "personality": "Overly cautious. Painfully honest. Overly cautious",
     "color": null
   }
+,
+
+  {
+    "id": "lundrak-opo-9ee5cb",
+    "name": "Lundrak Opo",
+    "pc": true,
+    "player_email": "",
+    "token": "9ee5cb4bb845832359bb5f6b38cf0aeb",
+    "level": 1,
+    "class_id": "warlock",
+    "class_gigglegloom": "flamerage",
+    "species": "tallwalker",
+    "background_id": "wildborn",
+    "alignment": "ashwalker",
+    "alignment_trait": null,
+    "home_region": "caparia",
+    "ability_scores": {
+      "str": 10,
+      "dex": 15,
+      "con": 13,
+      "int": 8,
+      "wis": 14,
+      "cha": 12
+    },
+    "language_extra": "caparian-deep",
+    "summary": "A Tallwalker The Bound who carries the Flamerage — from caparia. They are Pragmatic — they do what works for them, and they try to be honest about that.",
+    "personality_immediate": "Makes everyone laugh somehow",
+    "personality_wrong": "Jumps in before thinking",
+    "personality_laugh": "Makes everyone laugh somehow",
+    "who_raised_you": null,
+    "dearest_friend": null,
+    "had_pet": null,
+    "fallen_in_love": null,
+    "organization_joined": "merchant-guild",
+    "left_behind": null,
+    "why_you_left": null,
+    "cares_about": "People who can't protect themselves",
+    "deepest_fear": "Losing someone to the Dimming",
+    "seeking": "A reason to stay somewhere",
+    "gender": "non-binary",
+    "category": "player-character",
+    "player_facing": true,
+    "appearance": "Fantasy portrait of, tall, heavyset, adult, with #c8a070 skin, Oblong face, Almond Dark brown eyes, Braided Auburn hair, over a padded gambeson, and leather breeches, a pendant necklace, Soft warm lighting. Anavale high fantasy style..",
+    "motivation": "A reason to stay somewhere",
+    "contradiction": null,
+    "associated": [
+      {
+        "collection": "regions",
+        "id": "caparia"
+      }
+    ],
+    "tags": [
+      "player-character",
+      "flamerage",
+      "tallwalker"
+    ],
+    "role": "Flamerage Warlock, Caparia",
+    "pronouns": "they/them",
+    "status": "active",
+    "affiliation": "merchant-guild",
+    "gigglegloom_relationship": "You made an agreement with something old. The terms were worth it. Probably.",
+    "personality": "Makes everyone laugh somehow. Jumps in before thinking. Makes everyone laugh somehow",
+    "color": null
+  }
 ];
 
 // Total: 16 entries
