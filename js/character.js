@@ -2033,11 +2033,14 @@ function filterClothingByClass(cls) {
   if (topSel) {
     var topCurrent = topSel.value;
     topSel.innerHTML = '';
+    var startingArmorStr = (CLASS_STARTING_GEAR[cls] && CLASS_STARTING_GEAR[cls].armor)
+      ? CLASS_STARTING_GEAR[cls].armor.toLowerCase() : '';
     tiers.forEach(function(tier) {
       (CLOTHING_TIERS[tier] || []).forEach(function(opt) {
         var o = document.createElement('option');
         o.value = opt.value;
-        var costLbl = formatCost(opt.cost_gp);
+        var isFreeArmor = startingArmorStr && opt.value.toLowerCase() === startingArmorStr;
+        var costLbl = isFreeArmor ? '(free)' : formatCost(opt.cost_gp);
         o.textContent = costLbl ? opt.label + ' ' + costLbl : opt.label;
         topSel.appendChild(o);
       });
