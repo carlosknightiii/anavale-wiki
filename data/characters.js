@@ -426,6 +426,54 @@ var CHARACTERS = [
     ],
     player_facing: false
   }
+,
+
+  {
+    "id": "davin-e7e67d",
+    "name": "Davin",
+    "pc": true,
+    "player_email": "",
+    "token": "e7e67d0be43e77f6df5bd19da9744b45",
+    "level": 1,
+    "class_id": "cleric",
+    "class_gigglegloom": "bubbleseed",
+    "species": "solmeri",
+    "background_id": "craftborn",
+    "alignment": "steelbound",
+    "alignment_trait": null,
+    "home_region": "sohot",
+    "ability_scores": {
+      "str": 8,
+      "dex": 14,
+      "con": 12,
+      "int": 10,
+      "wis": 15,
+      "cha": 13
+    },
+    "language_extra": "conclave-script",
+    "summary": "A Solmeri The Faithful who carries the Bubbleseed — from sohot. They are Disciplined — they do what they said they would do. They consider this uncomplicated.",
+    "personality_immediate": "Makes everyone laugh somehow",
+    "personality_wrong": "Overly cautious",
+    "personality_laugh": "Makes everyone laugh somehow",
+    "who_raised_you": null,
+    "dearest_friend": null,
+    "had_pet": null,
+    "fallen_in_love": null,
+    "organization_joined": null,
+    "left_behind": null,
+    "why_you_left": null,
+    "cares_about": "People who can't protect themselves",
+    "deepest_fear": "Losing someone to the Dimming",
+    "seeking": "A reason to stay somewhere",
+    "gender": "female",
+    "category": "player-character",
+    "player_facing": false,
+    "tags": [
+      "player-character",
+      "bubbleseed",
+      "solmeri"
+    ]
+  }
 ];
 
 // Total: 16 entries
