@@ -542,8 +542,74 @@
 }
 
 /* ── IMAGE COMPRESS PANEL ──────────────────── */
-.img-compress-panel { display: none; margin-top: 0.75rem; }
+.img-compress-panel { display: block; margin-top: 0.75rem; }
 .img-compress-panel.visible { display: block; }
+.img-top-block {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1.25rem;
+  background: var(--dm-surface);
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  margin-bottom: 2rem;
+}
+.img-top-preview {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--dm-radius-sm);
+  border: 1px solid var(--dm-border-mid);
+  background: var(--dm-surface-high);
+  flex-shrink: 0;
+  display: block;
+}
+.img-top-preview.hidden { display: none; }
+.img-top-placeholder {
+  width: 160px;
+  height: 120px;
+  border-radius: var(--dm-radius-sm);
+  border: 2px dashed var(--dm-border-mid);
+  background: var(--dm-surface-high);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dm-text-faint);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  text-align: center;
+  cursor: pointer;
+}
+.img-top-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.img-top-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dm-text-faint);
+  margin-bottom: 0.1rem;
+}
+.form-section {
+  margin-bottom: 2rem;
+}
+.form-section-header {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-faint);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--dm-border);
+  margin-bottom: 1.25rem;
+}
 .img-compress-inner {
   display: flex; align-items: flex-start; gap: 1rem;
   padding: 0.75rem;
@@ -876,174 +942,185 @@
 
         <!-- ── CITY FORM ───────────────────────── -->
         <div id="form-city" class="dm-subform active">
-        <div class="dm-form-title">🏙️ New City or Settlement</div>
-        <div class="dm-form-subtitle">Generates a valid entry for <strong>data/cities.js</strong> — city, town, village, port, outpost, or ruin</div>
+          <div class="dm-form-title">🏙️ New City or Settlement</div>
+          <div class="dm-form-subtitle">Generates a valid entry for <strong>data/cities.js</strong> — city, town, village, port, outpost, or ruin</div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="city-name">Name <span class="req">✦</span></label>
-            <span class="field-help">Full name of the settlement as it appears on maps and in text</span>
-            <input class="field-input" type="text" id="city-name" oninput="autoId('city-name','city-id')" placeholder="e.g. Reveltown">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="city-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier (auto-filled from name, editable)</span>
-            <input class="field-input" type="text" id="city-id" placeholder="e.g. reveltown">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="city-region">Region <span class="req">✦</span></label>
-            <span class="field-help">Which of the four Pogglewog regions this settlement is in</span>
-            <select class="field-select" id="city-region" onchange="filterNations('city-nation','city-region')">
-              <option value="">— Select region —</option>
-              <option value="caparia">Caparia</option>
-              <option value="nombi">Nombi</option>
-              <option value="sohot">Sohot</option>
-              <option value="jugabi">Jugabi</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="city-nation">Nation</label>
-            <span class="field-help">Which nation controls or contains this settlement (filtered by region)</span>
-            <select class="field-select" id="city-nation">
-              <option value="">— Select region first —</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="city-type">Type <span class="req">✦</span></label>
-            <span class="field-help">Settlement classification used for search and display</span>
-            <select class="field-select" id="city-type">
-              <option value="">— Select type —</option>
-              <option value="capital">Capital</option>
-              <option value="major-city">Major City</option>
-              <option value="town">Town</option>
-              <option value="village">Village</option>
-              <option value="port">Port</option>
-              <option value="outpost">Outpost</option>
-              <option value="hidden">Hidden Settlement</option>
-              <option value="ruin">Ruin</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="city-color-health">Color Health</label>
-            <span class="field-help">Current Gigglegloom saturation and vitality of the settlement</span>
-            <select class="field-select" id="city-color-health">
-              <option value="">— Select —</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="moderate">Moderate</option>
-              <option value="faded">Faded</option>
-              <option value="dire">Dire</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="city-summary">Summary <span class="req">✦</span></label>
-          <span class="field-help">One or two sentences — what a traveller would know before arriving. This appears in search results.</span>
-          <textarea class="field-textarea" id="city-summary" placeholder="e.g. A colorful market town built around the Mirrenflow docks. Known for its twice-weekly creature festivals and the Formery's noisiest regional office."></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="city-description">Description</label>
-          <span class="field-help">Longer DM reference description — atmosphere, layout, sensory details, what makes this place feel alive</span>
-          <textarea class="field-textarea tall" id="city-description" placeholder="Streets, smells, sounds, the colour of the light in the evening…"></textarea>
-        </div>
-
-        <div class="repeating-group">
-          <div class="repeating-group-title">
-            <span>Landmarks</span>
-            <button class="btn-add" onclick="addLandmark()">+ Add Landmark</button>
-          </div>
-          <div id="city-landmarks-list"></div>
-          <div id="city-landmarks-empty" style="color:var(--ink-faint);font-style:italic;font-size:var(--text-sm)">No landmarks added yet.</div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="city-strategic">Strategic Importance</label>
-          <span class="field-help">Why this settlement matters — politically, militarily, magically, or economically</span>
-          <textarea class="field-textarea" id="city-strategic" placeholder="e.g. Controls the main mountain pass between Caparia and Sohot. All overland trade from the south passes through."></textarea>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">Formery Present</label>
-            <span class="field-help">Does the Bureau of Thorough Consideration have an office here?</span>
-            <div class="field-toggle">
-              <input type="radio" name="city-formery" id="city-formery-yes" value="true">
-              <label for="city-formery-yes">Yes</label>
-              <input type="radio" name="city-formery" id="city-formery-no" value="false" checked>
-              <label for="city-formery-no">No</label>
+          <!-- IMAGE -->
+          <div class="img-top-block">
+            <div class="img-top-placeholder" id="city-img-placeholder" onclick="document.getElementById('city-img-input').click()">
+              <span>Click to<br>add image</span>
+            </div>
+            <img id="city-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+            <div class="img-top-right">
+              <div class="img-top-label">Entry Image</div>
+              <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
+              <button class="btn-add" type="button" onclick="document.getElementById('city-img-input').click()">⬆ Upload Image</button>
+              <div id="city-img-size" class="img-compress-size"></div>
+              <div id="city-img-path" class="img-compress-error"></div>
+              <button class="img-save-btn" type="button" id="city-img-save-btn" disabled onclick="handleSaveImage('city')">⬇ Save Image to Disk</button>
+              <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
             </div>
           </div>
-          <div class="field-group">
-            <label class="field-label">Vareth Presence</label>
-            <span class="field-help">Is there active Vareth activity, Drakhold influence, or Dimming occurring here?</span>
-            <div class="field-toggle">
-              <input type="radio" name="city-vareth" id="city-vareth-yes" value="true">
-              <label for="city-vareth-yes">Yes</label>
-              <input type="radio" name="city-vareth" id="city-vareth-no" value="false" checked>
-              <label for="city-vareth-no">No</label>
+
+          <!-- IDENTITY -->
+          <div class="form-section">
+            <div class="form-section-header">Identity</div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="city-name">Name <span class="req">✦</span></label>
+                <span class="field-help">Full name of the settlement as it appears on maps and in text</span>
+                <input class="field-input" type="text" id="city-name" oninput="autoId('city-name','city-id')" placeholder="e.g. Reveltown">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="city-id">ID <span class="req">✦</span></label>
+                <span class="field-help">Lowercase kebab-case identifier (auto-filled from name)</span>
+                <input class="field-input" type="text" id="city-id" placeholder="e.g. reveltown">
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="city-tone">Tone</label>
-          <span class="field-help">The emotional register — how it feels to be here. A few words or a phrase.</span>
-          <input class="field-input" type="text" id="city-tone" placeholder="e.g. Cheerful and chaotic. Market energy. Bumble Frogs everywhere.">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="city-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords for search (region, nation, type, features)</span>
-          <input class="field-input" type="text" id="city-tags" placeholder="e.g. caparia, solenmere, capital, confederation, colorful">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Image</label>
-          <span class="field-help">Upload an image — save the file to assets/images/regions/ after generating</span>
-          <div class="image-upload-area" onclick="document.getElementById('city-img-input').click()">
-            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
-            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
-          </div>
-          <div id="city-img-panel" class="img-compress-panel">
-            <div class="img-compress-inner">
-              <img id="city-img-preview" class="img-compress-thumb" src="" alt="Preview">
-              <div class="img-compress-meta">
-                <div id="city-img-size" class="img-compress-size"></div>
-                <div id="city-img-path" class="img-compress-error"></div>
-                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('city')">⬇ Save Image</button>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="city-type">Type <span class="req">✦</span></label>
+                <span class="field-help">Settlement classification used for search and display</span>
+                <select class="field-select" id="city-type">
+                  <option value="">— Select type —</option>
+                  <option value="capital">Capital</option>
+                  <option value="hidden">Hidden Settlement</option>
+                  <option value="major-city">Major City</option>
+                  <option value="outpost">Outpost</option>
+                  <option value="port">Port</option>
+                  <option value="ruin">Ruin</option>
+                  <option value="town">Town</option>
+                  <option value="village">Village</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="city-color-health">Color Health</label>
+                <span class="field-help">Current Gigglegloom saturation and vitality</span>
+                <select class="field-select" id="city-color-health">
+                  <option value="">— Select —</option>
+                  <option value="dire">Dire</option>
+                  <option value="excellent">Excellent</option>
+                  <option value="faded">Faded</option>
+                  <option value="good">Good</option>
+                  <option value="moderate">Moderate</option>
+                </select>
               </div>
             </div>
           </div>
-          <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-        </div>
 
-        <div class="field-group">
-          <label class="field-label">Player Facing</label>
-          <span class="field-help">Hidden = DM only. Teaser = name, type, summary. Visible = full entry.</span>
-          <div class="field-toggle">
-            <input type="radio" name="city-pf" id="city-pf-false" value="false" checked>
-            <label for="city-pf-false">🔒 Hidden</label>
-            <input type="radio" name="city-pf" id="city-pf-teaser" value="teaser">
-            <label for="city-pf-teaser">✨ Teaser</label>
-            <input type="radio" name="city-pf" id="city-pf-true" value="true">
-            <label for="city-pf-true">👁 Visible</label>
+          <!-- LOCATION -->
+          <div class="form-section">
+            <div class="form-section-header">Location</div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="city-region">Region <span class="req">✦</span></label>
+                <span class="field-help">Which of the four Pogglewog regions this settlement is in</span>
+                <select class="field-select" id="city-region" onchange="filterNations('city-nation','city-region')">
+                  <option value="">— Select region —</option>
+                  <option value="caparia">Caparia</option>
+                  <option value="jugabi">Jugabi</option>
+                  <option value="nombi">Nombi</option>
+                  <option value="sohot">Sohot</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="city-nation">Nation</label>
+                <span class="field-help">Which nation contains this settlement (filtered by region)</span>
+                <select class="field-select" id="city-nation">
+                  <option value="">— Select region first —</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTENT -->
+          <div class="form-section">
+            <div class="form-section-header">Content</div>
+            <div class="field-group">
+              <label class="field-label" for="city-summary">Summary <span class="req">✦</span></label>
+              <span class="field-help">One or two sentences — what a traveller would know before arriving. Appears in search results.</span>
+              <textarea class="field-textarea" id="city-summary" placeholder="e.g. A colorful market town built around the Mirrenflow docks. Known for its twice-weekly creature festivals."></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="city-description">Description</label>
+              <span class="field-help">Longer DM reference — atmosphere, layout, sensory details, what makes this place feel alive</span>
+              <textarea class="field-textarea tall" id="city-description" placeholder="Streets, smells, sounds, the colour of the light in the evening…"></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="city-strategic">Strategic Importance</label>
+              <span class="field-help">Why this settlement matters — politically, militarily, magically, or economically</span>
+              <textarea class="field-textarea" id="city-strategic" placeholder="e.g. Controls the main mountain pass between Caparia and Sohot."></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="city-tone">Tone</label>
+              <span class="field-help">The feeling of this place in a few words — used for DM atmosphere notes</span>
+              <input class="field-input" type="text" id="city-tone" placeholder="e.g. Cheerful and chaotic. Market energy. Bumble Frogs everywhere.">
+            </div>
+            <div class="repeating-group">
+              <div class="repeating-group-title">
+                <span>Landmarks</span>
+                <button class="btn-add" onclick="addLandmark()">+ Add Landmark</button>
+              </div>
+              <div id="city-landmarks-list"></div>
+              <div id="city-landmarks-empty" class="repeating-empty">No landmarks added yet.</div>
+            </div>
+          </div>
+
+          <!-- WORLD SETTINGS -->
+          <div class="form-section">
+            <div class="form-section-header">World Settings</div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Formery Present</label>
+                <span class="field-help">Does this settlement have a Formery office?</span>
+                <div class="field-toggle">
+                  <input type="radio" name="city-formery" id="city-formery-false" value="false" checked>
+                  <label for="city-formery-false">No</label>
+                  <input type="radio" name="city-formery" id="city-formery-true" value="true">
+                  <label for="city-formery-true">Yes</label>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Vareth Presence</label>
+                <span class="field-help">Is the Vareth active here?</span>
+                <div class="field-toggle">
+                  <input type="radio" name="city-vareth" id="city-vareth-false" value="false" checked>
+                  <label for="city-vareth-false">No</label>
+                  <input type="radio" name="city-vareth" id="city-vareth-true" value="true">
+                  <label for="city-vareth-true">Yes</label>
+                </div>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="city-tags">Tags</label>
+              <span class="field-help">Comma-separated keywords for search (region, nation, type, features)</span>
+              <input class="field-input" type="text" id="city-tags" placeholder="e.g. caparia, solenmere, capital, confederation, colorful">
+            </div>
+          </div>
+
+          <!-- PUBLISH -->
+          <div class="form-section">
+            <div class="form-section-header">Publish</div>
+            <div class="field-group">
+              <label class="field-label">Player Facing</label>
+              <span class="field-help">Hidden = DM only. Teaser = name, type, summary. Visible = full entry.</span>
+              <div class="field-toggle">
+                <input type="radio" name="city-pf" id="city-pf-false" value="false" checked>
+                <label for="city-pf-false">🔒 Hidden</label>
+                <input type="radio" name="city-pf" id="city-pf-teaser" value="teaser">
+                <label for="city-pf-teaser">✨ Teaser</label>
+                <input type="radio" name="city-pf" id="city-pf-true" value="true">
+                <label for="city-pf-true">👁 Visible</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="dm-form-actions">
+            <button class="btn-generate" onclick="generateCity()">✦ Generate Entry</button>
+            <button class="btn-clear" onclick="clearForm('city')">Clear Form</button>
           </div>
         </div>
-
-        <div class="dm-form-actions">
-          <button class="btn-generate" onclick="generateCity()">✦ Generate Entry</button>
-          <button class="btn-clear" onclick="clearForm('city')">Clear Form</button>
-        </div>
-      </div>
 
 
       <!-- ── CREATURE FORM ──────────────────── -->
@@ -1051,133 +1128,142 @@
         <div class="dm-form-title">🐾 New Creature</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/creatures.js</strong></div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="creature-name">Name <span class="req">✦</span></label>
-            <span class="field-help">Common name for this creature</span>
-            <input class="field-input" type="text" id="creature-name" oninput="autoId('creature-name','creature-id')" placeholder="e.g. Dustwhump Badger">
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="creature-img-placeholder" onclick="document.getElementById('creature-img-input').click()">
+            <span>Click to<br>add image</span>
           </div>
-          <div class="field-group">
-            <label class="field-label" for="creature-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier</span>
-            <input class="field-input" type="text" id="creature-id" placeholder="e.g. dustwhump-badger">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="creature-tier">Tier <span class="req">✦</span></label>
-            <span class="field-help">Gigglegloom classification tier</span>
-            <select class="field-select" id="creature-tier">
-              <option value="">— Select tier —</option>
-              <option value="merry">The Merry — light territory, full saturation</option>
-              <option value="dimmed">The Dimmed — dark territory, near-zero saturation</option>
-              <option value="sparked">The Sparked — Gigglegloom overloaded</option>
-              <option value="unseen">The Unseen — outside the Gigglegloom entirely</option>
-              <option value="common">Common — aquatic, sky, domestic, etc.</option>
-              <option value="rare">Rare &amp; Mysterious</option>
-              <option value="ancient">Ancient &amp; Mythic</option>
-              <option value="corrupted">Vareth-Corrupted</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="creature-category">Category</label>
-            <span class="field-help">Sub-classification (e.g. aquatic, sky, domestic, the-merry, ancient)</span>
-            <input class="field-input" type="text" id="creature-category" placeholder="e.g. aquatic">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Regions <span class="req">✦</span></label>
-          <span class="field-help">Where this creature is found across Pogglewog — select all that apply</span>
-          <div class="field-checkboxes" id="creature-regions">
-            <label><input type="checkbox" value="caparia"><span>Caparia</span></label>
-            <label><input type="checkbox" value="nombi"><span>Nombi</span></label>
-            <label><input type="checkbox" value="sohot"><span>Sohot</span></label>
-            <label><input type="checkbox" value="jugabi"><span>Jugabi</span></label>
-            <label><input type="checkbox" value="all"><span>All Regions</span></label>
-            <label><input type="checkbox" value="ocean"><span>Ocean / Sea</span></label>
-            <label><input type="checkbox" value="underground"><span>Underground</span></label>
-            <label><input type="checkbox" value="sky"><span>Sky</span></label>
-            <label><input type="checkbox" value="vareth-territory"><span>Vareth Territory</span></label>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-habitat">Habitat</label>
-          <span class="field-help">Specific habitat within the region — forests, coasts, meadows, caverns, etc.</span>
-          <input class="field-input" type="text" id="creature-habitat" placeholder="e.g. Dense forest undergrowth near Gigglegloom surge sites">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-description">Description <span class="req">✦</span></label>
-          <span class="field-help">Physical appearance and defining features — what a player sees when encountering this creature</span>
-          <textarea class="field-textarea tall" id="creature-description" placeholder="What does this creature look like?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-behavior">Behavior</label>
-          <span class="field-help">How this creature acts — habits, social structure, what it does when approached</span>
-          <textarea class="field-textarea" id="creature-behavior" placeholder="How does this creature behave?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-gigglegloom">Gigglegloom Relationship</label>
-          <span class="field-help">How this creature interacts with the Gigglegloom — feeds on it, emits it, responds to types?</span>
-          <textarea class="field-textarea" id="creature-gigglegloom" placeholder="e.g. Naturally drawn to Bubbleseed surges. Will follow a Bubbleseed practitioner for days."></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-dimmed">Dimmed Version</label>
-          <span class="field-help">What this creature looks like or does differently in Vareth-touched territory (blank if no dimmed version)</span>
-          <textarea class="field-textarea" id="creature-dimmed" placeholder="e.g. Fur fades to pale grey. No longer makes sound. Still tries to bring gifts."></textarea>
-        </div>
-
-        <div class="form-section-divider">DM Only</div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-dm-notes">DM Notes</label>
-          <span class="field-help">Private notes — encounter hooks, plot uses, secrets that should never reach players</span>
-          <textarea class="field-textarea" id="creature-dm-notes" placeholder="Private DM information…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Player Facing</label>
-          <span class="field-help">Hidden = DM only. Teaser = name, tier, habitat, first sentence. Visible = full entry.</span>
-          <div class="field-toggle">
-            <input type="radio" name="creature-pf" id="creature-pf-false" value="false" checked>
-            <label for="creature-pf-false">🔒 Hidden</label>
-            <input type="radio" name="creature-pf" id="creature-pf-teaser" value="teaser">
-            <label for="creature-pf-teaser">✨ Teaser</label>
-            <input type="radio" name="creature-pf" id="creature-pf-true" value="true">
-            <label for="creature-pf-true">👁 Visible</label>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="creature-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords (tier, region, habitat, notable traits)</span>
-          <input class="field-input" type="text" id="creature-tags" placeholder="e.g. merry, caparia, forest, bubbleseed-aligned, friendly">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Image</label>
-          <span class="field-help">Upload an image — save to assets/images/creatures/ after generating</span>
-          <div class="image-upload-area" onclick="document.getElementById('creature-img-input').click()">
+          <img id="creature-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
             <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
-            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
+            <button class="btn-add" type="button" onclick="document.getElementById('creature-img-input').click()">⬆ Upload Image</button>
+            <div id="creature-img-size" class="img-compress-size"></div>
+            <div id="creature-img-path" class="img-compress-error"></div>
+            <button class="img-save-btn" type="button" id="creature-img-save-btn" disabled onclick="handleSaveImage('creature')">⬇ Save Image to Disk</button>
+            <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
-          <div id="creature-img-panel" class="img-compress-panel">
-            <div class="img-compress-inner">
-              <img id="creature-img-preview" class="img-compress-thumb" src="" alt="Preview">
-              <div class="img-compress-meta">
-                <div id="creature-img-size" class="img-compress-size"></div>
-                <div id="creature-img-path" class="img-compress-error"></div>
-                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('creature')">⬇ Save Image</button>
-              </div>
+        </div>
+
+        <!-- IDENTITY -->
+        <div class="form-section">
+          <div class="form-section-header">Identity</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="creature-name">Name <span class="req">✦</span></label>
+              <span class="field-help">Common name for this creature</span>
+              <input class="field-input" type="text" id="creature-name" oninput="autoId('creature-name','creature-id')" placeholder="e.g. Dustwhump Badger">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="creature-id">ID <span class="req">✦</span></label>
+              <span class="field-help">Lowercase kebab-case identifier</span>
+              <input class="field-input" type="text" id="creature-id" placeholder="e.g. dustwhump-badger">
             </div>
           </div>
-          <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="creature-tier">Tier <span class="req">✦</span></label>
+              <span class="field-help">Gigglegloom classification tier</span>
+              <select class="field-select" id="creature-tier">
+                <option value="">— Select tier —</option>
+                <option value="ancient">Ancient &amp; Mythic</option>
+                <option value="common">Common — aquatic, sky, domestic, etc.</option>
+                <option value="corrupted">Vareth-Corrupted</option>
+                <option value="dimmed">The Dimmed — dark territory, near-zero saturation</option>
+                <option value="merry">The Merry — light territory, full saturation</option>
+                <option value="rare">Rare &amp; Mysterious</option>
+                <option value="sparked">The Sparked — Gigglegloom overloaded</option>
+                <option value="unseen">The Unseen — outside the Gigglegloom entirely</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="creature-category">Category</label>
+              <span class="field-help">Sub-classification (e.g. aquatic, sky, domestic, the-merry, ancient)</span>
+              <input class="field-input" type="text" id="creature-category" placeholder="e.g. aquatic">
+            </div>
+          </div>
+        </div>
+
+        <!-- LOCATION -->
+        <div class="form-section">
+          <div class="form-section-header">Location</div>
+          <div class="field-group">
+            <label class="field-label">Regions <span class="req">✦</span></label>
+            <span class="field-help">Where this creature is found — select all that apply</span>
+            <div class="field-checkboxes" id="creature-regions">
+              <label><input type="checkbox" value="all"><span>All Regions</span></label>
+              <label><input type="checkbox" value="caparia"><span>Caparia</span></label>
+              <label><input type="checkbox" value="jugabi"><span>Jugabi</span></label>
+              <label><input type="checkbox" value="nombi"><span>Nombi</span></label>
+              <label><input type="checkbox" value="ocean"><span>Ocean / Sea</span></label>
+              <label><input type="checkbox" value="sky"><span>Sky</span></label>
+              <label><input type="checkbox" value="sohot"><span>Sohot</span></label>
+              <label><input type="checkbox" value="underground"><span>Underground</span></label>
+              <label><input type="checkbox" value="vareth-territory"><span>Vareth Territory</span></label>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-habitat">Habitat</label>
+            <span class="field-help">Specific habitat within the region — forests, coasts, meadows, caverns, etc.</span>
+            <input class="field-input" type="text" id="creature-habitat" placeholder="e.g. Dense forest undergrowth near Gigglegloom surge sites">
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="form-section">
+          <div class="form-section-header">Content</div>
+          <div class="field-group">
+            <label class="field-label" for="creature-description">Description <span class="req">✦</span></label>
+            <span class="field-help">Physical appearance and defining features — what a player sees when encountering this creature</span>
+            <textarea class="field-textarea tall" id="creature-description" placeholder="What does this creature look like?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-behavior">Behavior</label>
+            <span class="field-help">How this creature acts — habits, social structure, what it does when approached</span>
+            <textarea class="field-textarea" id="creature-behavior" placeholder="How does this creature behave?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-gigglegloom">Gigglegloom Relationship</label>
+            <span class="field-help">How this creature interacts with the Gigglegloom — feeds on it, emits it, responds to types?</span>
+            <textarea class="field-textarea" id="creature-gigglegloom" placeholder="e.g. Naturally drawn to Bubbleseed surges. Will follow a Bubbleseed practitioner for days."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-dimmed">Dimmed Version</label>
+            <span class="field-help">What this creature looks like in Vareth-touched territory (blank if none)</span>
+            <textarea class="field-textarea" id="creature-dimmed" placeholder="e.g. Fur fades to pale grey. No longer makes sound. Still tries to bring gifts."></textarea>
+          </div>
+        </div>
+
+        <!-- WORLD SETTINGS -->
+        <div class="form-section">
+          <div class="form-section-header">World Settings</div>
+          <div class="field-group">
+            <label class="field-label" for="creature-tags">Tags</label>
+            <span class="field-help">Comma-separated keywords (tier, region, habitat, notable traits)</span>
+            <input class="field-input" type="text" id="creature-tags" placeholder="e.g. merry, caparia, forest, bubbleseed-aligned, friendly">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-dm-notes">DM Notes</label>
+            <span class="field-help">Private notes — encounter hooks, plot uses, secrets that should never reach players</span>
+            <textarea class="field-textarea" id="creature-dm-notes" placeholder="Private DM information…"></textarea>
+          </div>
+        </div>
+
+        <!-- PUBLISH -->
+        <div class="form-section">
+          <div class="form-section-header">Publish</div>
+          <div class="field-group">
+            <label class="field-label">Player Facing</label>
+            <span class="field-help">Hidden = DM only. Teaser = name, tier, habitat, first sentence. Visible = full entry.</span>
+            <div class="field-toggle">
+              <input type="radio" name="creature-pf" id="creature-pf-false" value="false" checked>
+              <label for="creature-pf-false">🔒 Hidden</label>
+              <input type="radio" name="creature-pf" id="creature-pf-teaser" value="teaser">
+              <label for="creature-pf-teaser">✨ Teaser</label>
+              <input type="radio" name="creature-pf" id="creature-pf-true" value="true">
+              <label for="creature-pf-true">👁 Visible</label>
+            </div>
+          </div>
         </div>
 
         <div class="dm-form-actions">
@@ -1192,100 +1278,145 @@
         <div class="dm-form-title">📍 New Point of Interest</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/pois.js</strong> — landmark, sacred site, ruin, dark zone, or Drakhold outpost</div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="poi-name">Name <span class="req">✦</span></label>
-            <span class="field-help">The name of this location as it appears on maps and in lore</span>
-            <input class="field-input" type="text" id="poi-name" oninput="autoId('poi-name','poi-id')" placeholder="e.g. The Hollow Scar">
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="poi-img-placeholder" onclick="document.getElementById('poi-img-input').click()">
+            <span>Click to<br>add image</span>
           </div>
-          <div class="field-group">
-            <label class="field-label" for="poi-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier</span>
-            <input class="field-input" type="text" id="poi-id" placeholder="e.g. hollow-scar">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="poi-region">Region <span class="req">✦</span></label>
-            <span class="field-help">Which Pogglewog region contains this location</span>
-            <select class="field-select" id="poi-region" onchange="filterNations('poi-nation','poi-region')">
-              <option value="">— Select region —</option>
-              <option value="caparia">Caparia</option>
-              <option value="nombi">Nombi</option>
-              <option value="sohot">Sohot</option>
-              <option value="jugabi">Jugabi</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="poi-nation">Nation</label>
-            <span class="field-help">Which nation's territory this falls within (if any)</span>
-            <select class="field-select" id="poi-nation">
-              <option value="">— Select region first —</option>
-            </select>
+          <img id="poi-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
+            <button class="btn-add" type="button" onclick="document.getElementById('poi-img-input').click()">⬆ Upload Image</button>
+            <div id="poi-img-size" class="img-compress-size"></div>
+            <div id="poi-img-path" class="img-compress-error"></div>
+            <button class="img-save-btn" type="button" id="poi-img-save-btn" disabled onclick="handleSaveImage('poi')">⬇ Save Image to Disk</button>
+            <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="poi-type">Type <span class="req">✦</span></label>
-            <span class="field-help">The classification of this location</span>
-            <select class="field-select" id="poi-type">
-              <option value="">— Select type —</option>
-              <option value="world-wonder">World Wonder</option>
-              <option value="sacred-site">Sacred Site</option>
-              <option value="ruin">Ruin</option>
-              <option value="dark-zone">Dark Zone (Vareth)</option>
-              <option value="natural">Natural Landmark</option>
-              <option value="site">Notable Site</option>
-              <option value="drakhold-outpost">Drakhold Outpost</option>
-              <option value="mosskin-site">Mosskin Site</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="poi-color-health">Color Health</label>
-            <span class="field-help">Gigglegloom saturation at this location</span>
-            <select class="field-select" id="poi-color-health">
-              <option value="">— Select —</option>
-              <option value="excellent">Excellent / Surging</option>
-              <option value="good">Good</option>
-              <option value="moderate">Moderate</option>
-              <option value="faded">Faded</option>
-              <option value="dire">Dire / Absent</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="poi-summary">Summary <span class="req">✦</span></label>
-          <span class="field-help">One or two sentences — what a traveller would hear about this place before visiting</span>
-          <textarea class="field-textarea" id="poi-summary" placeholder="e.g. A crack in the bedrock where raw Prior Gigglegloom seeps through. The air shimmers. Maps stop working reliably within half a mile."></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="poi-description">Description</label>
-          <span class="field-help">Sensory description for DM use — what characters experience when they arrive</span>
-          <textarea class="field-textarea tall" id="poi-description" placeholder="What does it look, feel, sound, and smell like to be here?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="poi-gigglegloom">Gigglegloom Notes</label>
-          <span class="field-help">How the Gigglegloom behaves here — surges, anomalies, suppression, wild effects</span>
-          <textarea class="field-textarea" id="poi-gigglegloom" placeholder="e.g. Flamerage practitioners report their magic becoming unpredictable within 200 feet."></textarea>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">Vareth Presence</label>
-            <span class="field-help">Active Vareth corruption, Drakhold activity, or Dimming at this location?</span>
-            <div class="field-toggle">
-              <input type="radio" name="poi-vareth" id="poi-vareth-yes" value="true">
-              <label for="poi-vareth-yes">Yes</label>
-              <input type="radio" name="poi-vareth" id="poi-vareth-no" value="false" checked>
-              <label for="poi-vareth-no">No</label>
+        <!-- IDENTITY -->
+        <div class="form-section">
+          <div class="form-section-header">Identity</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="poi-name">Name <span class="req">✦</span></label>
+              <span class="field-help">The name of this location as it appears on maps and in lore</span>
+              <input class="field-input" type="text" id="poi-name" oninput="autoId('poi-name','poi-id')" placeholder="e.g. The Hollow Scar">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="poi-id">ID <span class="req">✦</span></label>
+              <span class="field-help">Lowercase kebab-case identifier</span>
+              <input class="field-input" type="text" id="poi-id" placeholder="e.g. hollow-scar">
             </div>
           </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="poi-type">Type <span class="req">✦</span></label>
+              <span class="field-help">The classification of this location</span>
+              <select class="field-select" id="poi-type">
+                <option value="">— Select type —</option>
+                <option value="dark-zone">Dark Zone (Vareth)</option>
+                <option value="drakhold-outpost">Drakhold Outpost</option>
+                <option value="mosskin-site">Mosskin Site</option>
+                <option value="natural">Natural Landmark</option>
+                <option value="other">Other</option>
+                <option value="ruin">Ruin</option>
+                <option value="sacred-site">Sacred Site</option>
+                <option value="site">Notable Site</option>
+                <option value="world-wonder">World Wonder</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="poi-color-health">Color Health</label>
+              <span class="field-help">Gigglegloom saturation at this location</span>
+              <select class="field-select" id="poi-color-health">
+                <option value="">— Select —</option>
+                <option value="dire">Dire / Absent</option>
+                <option value="excellent">Excellent / Surging</option>
+                <option value="faded">Faded</option>
+                <option value="good">Good</option>
+                <option value="moderate">Moderate</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOCATION -->
+        <div class="form-section">
+          <div class="form-section-header">Location</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="poi-region">Region <span class="req">✦</span></label>
+              <span class="field-help">Which Pogglewog region contains this location</span>
+              <select class="field-select" id="poi-region" onchange="filterNations('poi-nation','poi-region')">
+                <option value="">— Select region —</option>
+                <option value="caparia">Caparia</option>
+                <option value="jugabi">Jugabi</option>
+                <option value="nombi">Nombi</option>
+                <option value="sohot">Sohot</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="poi-nation">Nation</label>
+              <span class="field-help">Which nation's territory this falls within (if any)</span>
+              <select class="field-select" id="poi-nation">
+                <option value="">— Select region first —</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="form-section">
+          <div class="form-section-header">Content</div>
+          <div class="field-group">
+            <label class="field-label" for="poi-summary">Summary <span class="req">✦</span></label>
+            <span class="field-help">One or two sentences — what a traveller would hear about this place before visiting</span>
+            <textarea class="field-textarea" id="poi-summary" placeholder="e.g. A crack in the bedrock where raw Prior Gigglegloom seeps through. The air shimmers."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-description">Description</label>
+            <span class="field-help">Sensory description for DM use — what characters experience when they arrive</span>
+            <textarea class="field-textarea tall" id="poi-description" placeholder="What does it look, feel, sound, and smell like to be here?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-gigglegloom">Gigglegloom Notes</label>
+            <span class="field-help">How the Gigglegloom behaves here — surges, anomalies, suppression, wild effects</span>
+            <textarea class="field-textarea" id="poi-gigglegloom" placeholder="e.g. Flamerage practitioners report their magic becoming unpredictable within 200 feet."></textarea>
+          </div>
+        </div>
+
+        <!-- WORLD SETTINGS -->
+        <div class="form-section">
+          <div class="form-section-header">World Settings</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Vareth Presence</label>
+              <span class="field-help">Active Vareth corruption, Drakhold activity, or Dimming at this location?</span>
+              <div class="field-toggle">
+                <input type="radio" name="poi-vareth" id="poi-vareth-no" value="false" checked>
+                <label for="poi-vareth-no">No</label>
+                <input type="radio" name="poi-vareth" id="poi-vareth-yes" value="true">
+                <label for="poi-vareth-yes">Yes</label>
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-dm-notes">DM Notes</label>
+            <span class="field-help">Private notes — secrets, plot hooks, hidden dangers, things players haven't discovered yet</span>
+            <textarea class="field-textarea" id="poi-dm-notes" placeholder="Private DM information…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-tags">Tags</label>
+            <span class="field-help">Comma-separated keywords for search</span>
+            <input class="field-input" type="text" id="poi-tags" placeholder="e.g. caparia, sacred, gigglegloom, brightcreed, world-wonder">
+          </div>
+        </div>
+
+        <!-- PUBLISH -->
+        <div class="form-section">
+          <div class="form-section-header">Publish</div>
           <div class="field-group">
             <label class="field-label">Player Facing</label>
             <span class="field-help">Hidden = DM only. Teaser = name, type, summary. Visible = full entry.</span>
@@ -1300,40 +1431,6 @@
           </div>
         </div>
 
-        <div class="form-section-divider">DM Only</div>
-
-        <div class="field-group">
-          <label class="field-label" for="poi-dm-notes">DM Notes</label>
-          <span class="field-help">Private notes — secrets, plot hooks, hidden dangers, things players haven't discovered yet</span>
-          <textarea class="field-textarea" id="poi-dm-notes" placeholder="Private DM information…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="poi-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords for search</span>
-          <input class="field-input" type="text" id="poi-tags" placeholder="e.g. caparia, sacred, gigglegloom, brightcreed, world-wonder">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Image</label>
-          <span class="field-help">Upload an image — save to assets/images/regions/ after generating</span>
-          <div class="image-upload-area" onclick="document.getElementById('poi-img-input').click()">
-            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
-            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
-          </div>
-          <div id="poi-img-panel" class="img-compress-panel">
-            <div class="img-compress-inner">
-              <img id="poi-img-preview" class="img-compress-thumb" src="" alt="Preview">
-              <div class="img-compress-meta">
-                <div id="poi-img-size" class="img-compress-size"></div>
-                <div id="poi-img-path" class="img-compress-error"></div>
-                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('poi')">⬇ Save Image</button>
-              </div>
-            </div>
-          </div>
-          <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-        </div>
-
         <div class="dm-form-actions">
           <button class="btn-generate" onclick="generatePoi()">✦ Generate Entry</button>
           <button class="btn-clear" onclick="clearForm('poi')">Clear Form</button>
@@ -1346,186 +1443,190 @@
         <div class="dm-form-title">🧙 New Character</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/characters.js</strong> — NPC, ally, villain, god, or faction leader</div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="char-name">Name <span class="req">✦</span></label>
-            <span class="field-help">Full name or title of this character</span>
-            <input class="field-input" type="text" id="char-name" oninput="autoId('char-name','char-id')" placeholder="e.g. Mira of the Wanderkeep">
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="char-img-placeholder" onclick="document.getElementById('char-img-input').click()">
+            <span>Click to<br>add image</span>
           </div>
-          <div class="field-group">
-            <label class="field-label" for="char-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier</span>
-            <input class="field-input" type="text" id="char-id" placeholder="e.g. mira-wanderkeep">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="char-role">Role</label>
-            <span class="field-help">Brief role descriptor shown in search results and character summaries</span>
-            <input class="field-input" type="text" id="char-role" placeholder="e.g. Senior Wanderkeep Protector, Southern Routes">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="char-category">Category <span class="req">✦</span></label>
-            <span class="field-help">The broad type of character — used for display and filtering</span>
-            <select class="field-select" id="char-category">
-              <option value="">— Select —</option>
-              <option value="god">God</option>
-              <option value="villain">Villain / Vareth Lieutenant</option>
-              <option value="ally">Ally / Hero</option>
-              <option value="npc">NPC</option>
-              <option value="faction-leader">Faction Leader</option>
-              <option value="monarch">Monarch / Ruler</option>
-              <option value="wanderer">Wanderer</option>
-              <option value="criminal">Criminal</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="char-pronouns">Pronouns</label>
-            <span class="field-help">Character's pronouns — used exactly as written</span>
-            <input class="field-input" type="text" id="char-pronouns" placeholder="e.g. she/her, he/him, they/them">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="char-status">Status</label>
-            <span class="field-help">Current state of this character in the world</span>
-            <select class="field-select" id="char-status">
-              <option value="">— Select —</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="unknown">Unknown</option>
-              <option value="deceased">Deceased</option>
-              <option value="missing">Missing</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="char-location">Location</label>
-            <span class="field-help">Where this character is currently based or most often found</span>
-            <input class="field-input" type="text" id="char-location" placeholder="e.g. Frostgate, Nombi">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="char-affiliation">Affiliation</label>
-            <span class="field-help">Organization, faction, or group this character belongs to</span>
-            <input class="field-input" type="text" id="char-affiliation" placeholder="e.g. The Wanderkeep, The Vareth">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-summary">Summary <span class="req">✦</span></label>
-          <span class="field-help">One or two sentences — what players would know or hear about this character before meeting them</span>
-          <textarea class="field-textarea" id="char-summary" placeholder="Public-facing summary of who this character is…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-appearance">Appearance</label>
-          <span class="field-help">Physical description — what players see when they encounter this character</span>
-          <textarea class="field-textarea" id="char-appearance" placeholder="What does this character look like?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-personality">Personality</label>
-          <span class="field-help">How this character behaves, speaks, and relates to others</span>
-          <textarea class="field-textarea" id="char-personality" placeholder="Personality traits, speech patterns, how they treat people…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-motivation">Motivation</label>
-          <span class="field-help">What this character wants — their driving goal or desire</span>
-          <textarea class="field-textarea" id="char-motivation" placeholder="What does this character want above all else?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-contradiction">Contradiction</label>
-          <span class="field-help">The tension at the heart of this character — what makes them complex and interesting to play against</span>
-          <textarea class="field-textarea" id="char-contradiction" placeholder="What is the gap between who they are and what they do?"></textarea>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="char-gigglegloom">Gigglegloom Relationship</label>
-            <span class="field-help">Type affinity, abilities, sensitivity to the Dimming, or any notable Gigglegloom interactions</span>
-            <textarea class="field-textarea" id="char-gigglegloom" placeholder="e.g. Featherflow practitioner. Can sense Dimming at distance."></textarea>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="char-color">Color</label>
-            <span class="field-help">This character's associated color — aura, Gigglegloom hue, or identifying shade</span>
-            <input class="field-input" type="text" id="char-color" placeholder="e.g. Deep teal, shifting, never quite still">
-          </div>
-        </div>
-
-        <div class="form-section-divider">DM Only</div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-secret">Secret</label>
-          <span class="field-help">What this character is hiding — DM eyes only, never shown in the player wiki</span>
-          <textarea class="field-textarea" id="char-secret" placeholder="Hidden truth, hidden agenda, hidden grief…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-player-knowledge">Player Knowledge</label>
-          <span class="field-help">What players currently know or believe about this character (may differ significantly from reality)</span>
-          <textarea class="field-textarea" id="char-player-knowledge" placeholder="What do the players know at this point in the campaign?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-dm-notes">DM Notes</label>
-          <span class="field-help">Private reference notes — session uses, plot hooks, things to remember when running this character</span>
-          <textarea class="field-textarea" id="char-dm-notes" placeholder="Private DM information…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Player Facing</label>
-          <span class="field-help">Hidden = DM only. Teaser = name, role, summary. Visible = full entry.</span>
-          <div class="field-toggle">
-            <input type="radio" name="char-pf" id="char-pf-false" value="false" checked>
-            <label for="char-pf-false">🔒 Hidden</label>
-            <input type="radio" name="char-pf" id="char-pf-teaser" value="teaser">
-            <label for="char-pf-teaser">✨ Teaser</label>
-            <input type="radio" name="char-pf" id="char-pf-true" value="true">
-            <label for="char-pf-true">👁 Visible</label>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="char-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords for search</span>
-          <input class="field-input" type="text" id="char-tags" placeholder="e.g. wanderkeep, caparia, ally, featherflow, active">
-        </div>
-
-        <div class="repeating-group">
-          <div class="repeating-group-title">
-            World Associations
-            <button class="btn-add" onclick="addAssociation()">+ Add Association</button>
-          </div>
-          <span class="field-help" style="display:block;margin-bottom:0.75rem">Link this character to cities, nations, regions, organizations, POIs, creatures, or items. Used to display this character on those wiki pages.</span>
-          <div id="char-assoc-list"></div>
-          <div id="char-assoc-empty" class="repeating-empty">No associations added yet.</div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Image</label>
-          <span class="field-help">Upload an image — save to assets/images/characters/ after generating</span>
-          <div class="image-upload-area" onclick="document.getElementById('char-img-input').click()">
+          <img id="char-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
             <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
-            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
+            <button class="btn-add" type="button" onclick="document.getElementById('char-img-input').click()">⬆ Upload Image</button>
+            <div id="char-img-size" class="img-compress-size"></div>
+            <div id="char-img-path" class="img-compress-error"></div>
+            <button class="img-save-btn" type="button" id="char-img-save-btn" disabled onclick="handleSaveImage('char')">⬇ Save Image to Disk</button>
+            <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
-          <div id="char-img-panel" class="img-compress-panel">
-            <div class="img-compress-inner">
-              <img id="char-img-preview" class="img-compress-thumb" src="" alt="Preview">
-              <div class="img-compress-meta">
-                <div id="char-img-size" class="img-compress-size"></div>
-                <div id="char-img-path" class="img-compress-error"></div>
-                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('char')">⬇ Save Image</button>
-              </div>
+        </div>
+
+        <!-- IDENTITY -->
+        <div class="form-section">
+          <div class="form-section-header">Identity</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="char-name">Name <span class="req">✦</span></label>
+              <span class="field-help">Full name or title of this character</span>
+              <input class="field-input" type="text" id="char-name" oninput="autoId('char-name','char-id')" placeholder="e.g. Mira of the Wanderkeep">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="char-id">ID <span class="req">✦</span></label>
+              <span class="field-help">Lowercase kebab-case identifier</span>
+              <input class="field-input" type="text" id="char-id" placeholder="e.g. mira-wanderkeep">
             </div>
           </div>
-          <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="char-category">Category <span class="req">✦</span></label>
+              <span class="field-help">The broad type of character — used for display and filtering</span>
+              <select class="field-select" id="char-category">
+                <option value="">— Select —</option>
+                <option value="ally">Ally / Hero</option>
+                <option value="criminal">Criminal</option>
+                <option value="faction-leader">Faction Leader</option>
+                <option value="god">God</option>
+                <option value="monarch">Monarch / Ruler</option>
+                <option value="npc">NPC</option>
+                <option value="other">Other</option>
+                <option value="villain">Villain / Vareth Lieutenant</option>
+                <option value="wanderer">Wanderer</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="char-status">Status</label>
+              <span class="field-help">Current state of this character in the world</span>
+              <select class="field-select" id="char-status">
+                <option value="">— Select —</option>
+                <option value="active">Active</option>
+                <option value="deceased">Deceased</option>
+                <option value="inactive">Inactive</option>
+                <option value="missing">Missing</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="char-role">Role</label>
+              <span class="field-help">Brief role descriptor shown in search results and character summaries</span>
+              <input class="field-input" type="text" id="char-role" placeholder="e.g. Senior Wanderkeep Protector, Southern Routes">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="char-pronouns">Pronouns</label>
+              <span class="field-help">Character's pronouns — used exactly as written</span>
+              <input class="field-input" type="text" id="char-pronouns" placeholder="e.g. she/her, he/him, they/them">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="char-location">Location</label>
+              <span class="field-help">Where this character is currently based or most often found</span>
+              <input class="field-input" type="text" id="char-location" placeholder="e.g. Frostgate, Nombi">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="char-affiliation">Affiliation</label>
+              <span class="field-help">Organization, faction, or group this character belongs to</span>
+              <input class="field-input" type="text" id="char-affiliation" placeholder="e.g. The Wanderkeep, The Vareth">
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="form-section">
+          <div class="form-section-header">Content</div>
+          <div class="field-group">
+            <label class="field-label" for="char-summary">Summary <span class="req">✦</span></label>
+            <span class="field-help">One or two sentences — what players would know or hear about this character before meeting them</span>
+            <textarea class="field-textarea" id="char-summary" placeholder="Public-facing summary of who this character is…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-appearance">Appearance</label>
+            <span class="field-help">Physical description — what players see when they encounter this character</span>
+            <textarea class="field-textarea" id="char-appearance" placeholder="What does this character look like?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-personality">Personality</label>
+            <span class="field-help">How this character behaves, speaks, and relates to others</span>
+            <textarea class="field-textarea" id="char-personality" placeholder="Personality traits, speech patterns, how they treat people…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-motivation">Motivation</label>
+            <span class="field-help">What this character wants — their driving goal or desire</span>
+            <textarea class="field-textarea" id="char-motivation" placeholder="What does this character want above all else?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-contradiction">Contradiction</label>
+            <span class="field-help">The tension at the heart of this character — what makes them complex and interesting to play against</span>
+            <textarea class="field-textarea" id="char-contradiction" placeholder="What is the gap between who they are and what they do?"></textarea>
+          </div>
+        </div>
+
+        <!-- WORLD SETTINGS -->
+        <div class="form-section">
+          <div class="form-section-header">World Settings</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="char-gigglegloom">Gigglegloom Relationship</label>
+              <span class="field-help">Type affinity, abilities, sensitivity to the Dimming, or notable interactions</span>
+              <textarea class="field-textarea" id="char-gigglegloom" placeholder="e.g. Featherflow practitioner. Can sense Dimming at distance."></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="char-color">Color</label>
+              <span class="field-help">This character's associated color — aura, Gigglegloom hue, or identifying shade</span>
+              <input class="field-input" type="text" id="char-color" placeholder="e.g. Deep teal, shifting, never quite still">
+            </div>
+          </div>
+          <div class="repeating-group">
+            <div class="repeating-group-title">
+              World Associations
+              <button class="btn-add" onclick="addAssociation()">+ Add Association</button>
+            </div>
+            <span class="field-help" style="display:block;margin-bottom:0.75rem">Link this character to cities, nations, regions, organizations, POIs, creatures, or items.</span>
+            <div id="char-assoc-list"></div>
+            <div id="char-assoc-empty" class="repeating-empty">No associations added yet.</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-tags">Tags</label>
+            <span class="field-help">Comma-separated keywords for search</span>
+            <input class="field-input" type="text" id="char-tags" placeholder="e.g. wanderkeep, caparia, ally, featherflow, active">
+          </div>
+        </div>
+
+        <!-- DM ONLY -->
+        <div class="form-section">
+          <div class="form-section-header">DM Only</div>
+          <div class="field-group">
+            <label class="field-label" for="char-secret">Secret</label>
+            <span class="field-help">What this character is hiding — never shown in the player wiki</span>
+            <textarea class="field-textarea" id="char-secret" placeholder="Hidden truth, hidden agenda, hidden grief…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-player-knowledge">Player Knowledge</label>
+            <span class="field-help">What players currently know or believe about this character</span>
+            <textarea class="field-textarea" id="char-player-knowledge" placeholder="What do the players know at this point in the campaign?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-dm-notes">DM Notes</label>
+            <span class="field-help">Private reference notes — session uses, plot hooks, things to remember when running this character</span>
+            <textarea class="field-textarea" id="char-dm-notes" placeholder="Private DM information…"></textarea>
+          </div>
+        </div>
+
+        <!-- PUBLISH -->
+        <div class="form-section">
+          <div class="form-section-header">Publish</div>
+          <div class="field-group">
+            <label class="field-label">Player Facing</label>
+            <span class="field-help">Hidden = DM only. Teaser = name, role, summary. Visible = full entry.</span>
+            <div class="field-toggle">
+              <input type="radio" name="char-pf" id="char-pf-false" value="false" checked>
+              <label for="char-pf-false">🔒 Hidden</label>
+              <input type="radio" name="char-pf" id="char-pf-teaser" value="teaser">
+              <label for="char-pf-teaser">✨ Teaser</label>
+              <input type="radio" name="char-pf" id="char-pf-true" value="true">
+              <label for="char-pf-true">👁 Visible</label>
+            </div>
+          </div>
         </div>
 
         <div class="dm-form-actions">
@@ -1540,159 +1641,170 @@
         <div class="dm-form-title">🏛️ New Organization</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/organizations.js</strong> — guild, faction, government body, or criminal syndicate</div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="org-name">Name <span class="req">✦</span></label>
-            <span class="field-help">Short name used in navigation, search results, and quick references</span>
-            <input class="field-input" type="text" id="org-name" oninput="autoId('org-name','org-id')" placeholder="e.g. The Inkweavers">
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="org-img-placeholder" onclick="document.getElementById('org-img-input').click()">
+            <span>Click to<br>add image</span>
           </div>
-          <div class="field-group">
-            <label class="field-label" for="org-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier</span>
-            <input class="field-input" type="text" id="org-id" placeholder="e.g. inkweavers">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-full-name">Full Name</label>
-          <span class="field-help">Complete formal name if different from the short name (e.g. "The Bureau of Thorough Consideration" for "The Formery"). Leave blank if they are the same.</span>
-          <input class="field-input" type="text" id="org-full-name" placeholder="e.g. The Sovereign Guild of Inkweavers and Mapmakers">
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="org-alignment">Alignment <span class="req">✦</span></label>
-            <span class="field-help">The moral alignment of this organization within Anavale — determines wiki visibility</span>
-            <select class="field-select" id="org-alignment">
-              <option value="">— Select —</option>
-              <option value="light">Light — allied with color, joy, and resistance</option>
-              <option value="neutral">Neutral — neither side, or complicated</option>
-              <option value="dark">Dark — allied with the Vareth, Dimming, or silence</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="org-type">Type</label>
-            <span class="field-help">Organizational category (guild, government body, religious order, criminal syndicate, etc.)</span>
-            <input class="field-input" type="text" id="org-type" placeholder="e.g. Thieves' Guild">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="org-age">Age</label>
-            <span class="field-help">How long this organization has existed — years or a vague descriptor</span>
-            <input class="field-input" type="text" id="org-age" placeholder="e.g. 300 years, ancient, founded after the Partition">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="org-headquarters">Headquarters</label>
-            <span class="field-help">Primary base of operations, if it has one</span>
-            <input class="field-input" type="text" id="org-headquarters" placeholder="e.g. Solenveil, Caparia">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="org-leadership">Leadership</label>
-            <span class="field-help">Who leads this organization and how leadership is structured</span>
-            <input class="field-input" type="text" id="org-leadership" placeholder="e.g. A rotating council of seven, identity unknown">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="org-membership">Membership</label>
-            <span class="field-help">Who belongs and how one joins</span>
-            <input class="field-input" type="text" id="org-membership" placeholder="e.g. Invitation only. ~200 active members across Pogglewog.">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-summary">Summary <span class="req">✦</span></label>
-          <span class="field-help">One or two sentences — what everyone in Anavale knows about this organization. Appears in search results.</span>
-          <textarea class="field-textarea" id="org-summary" placeholder="Public-facing summary…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-purpose">Purpose</label>
-          <span class="field-help">What this organization exists to do — stated mission and actual goals (may differ)</span>
-          <textarea class="field-textarea" id="org-purpose" placeholder="What does this organization do and why does it exist?"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-public-perception">Public Perception</label>
-          <span class="field-help">How the general public of Anavale views this organization — reputation, rumors, feelings</span>
-          <textarea class="field-textarea" id="org-public-perception" placeholder="How is this organization regarded by ordinary people?"></textarea>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="org-vareth">Vareth Relationship</label>
-            <span class="field-help">How this organization relates to the Vareth — opposed, unaware, allied, or complicated</span>
-            <input class="field-input" type="text" id="org-vareth" placeholder="e.g. Actively opposed. Monitors color health across all regions.">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="org-gigglegloom">Gigglegloom Relationship</label>
-            <span class="field-help">How this organization relates to or uses the Gigglegloom</span>
-            <input class="field-input" type="text" id="org-gigglegloom" placeholder="e.g. Governs all licensed Gigglegloom use. Answers to no government.">
-          </div>
-        </div>
-
-        <div class="form-section-divider">DM Only</div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-secret">Secret</label>
-          <span class="field-help">What this organization is hiding — DM eyes only, never shown in the player wiki</span>
-          <textarea class="field-textarea" id="org-secret" placeholder="Hidden agenda, true nature, dark secret…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-session-role">Session Role</label>
-          <span class="field-help">How this organization might appear in a session — as quest givers, recurring comedy beats, obstacles, or allies</span>
-          <textarea class="field-textarea" id="org-session-role" placeholder="e.g. Appears once per session with a new absurdity. Never blocks the plot for long."></textarea>
-        </div>
-
-        <div class="repeating-group">
-          <div class="repeating-group-title">
-            <span>Notable Facts</span>
-            <button class="btn-add" onclick="addNotableFact()">+ Add Fact</button>
-          </div>
-          <div id="org-facts-list"></div>
-          <div id="org-facts-empty" style="color:var(--ink-faint);font-style:italic;font-size:var(--text-sm)">No facts added yet.</div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="org-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords for search</span>
-          <input class="field-input" type="text" id="org-tags" placeholder="e.g. guild, caparia, neutral, trade, goldenway">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Image</label>
-          <span class="field-help">Upload a sigil, seal, or image — save to assets/images/organizations/ after generating</span>
-          <div class="image-upload-area" onclick="document.getElementById('org-img-input').click()">
+          <img id="org-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
             <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
-            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
+            <button class="btn-add" type="button" onclick="document.getElementById('org-img-input').click()">⬆ Upload Image</button>
+            <div id="org-img-size" class="img-compress-size"></div>
+            <div id="org-img-path" class="img-compress-error"></div>
+            <button class="img-save-btn" type="button" id="org-img-save-btn" disabled onclick="handleSaveImage('org')">⬇ Save Image to Disk</button>
+            <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
-          <div id="org-img-panel" class="img-compress-panel">
-            <div class="img-compress-inner">
-              <img id="org-img-preview" class="img-compress-thumb" src="" alt="Preview">
-              <div class="img-compress-meta">
-                <div id="org-img-size" class="img-compress-size"></div>
-                <div id="org-img-path" class="img-compress-error"></div>
-                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('org')">⬇ Save Image</button>
-              </div>
+        </div>
+
+        <!-- IDENTITY -->
+        <div class="form-section">
+          <div class="form-section-header">Identity</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="org-name">Name <span class="req">✦</span></label>
+              <span class="field-help">Short name used in navigation, search results, and quick references</span>
+              <input class="field-input" type="text" id="org-name" oninput="autoId('org-name','org-id')" placeholder="e.g. The Inkweavers">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="org-id">ID <span class="req">✦</span></label>
+              <span class="field-help">Lowercase kebab-case identifier</span>
+              <input class="field-input" type="text" id="org-id" placeholder="e.g. inkweavers">
             </div>
           </div>
-          <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+          <div class="field-group">
+            <label class="field-label" for="org-full-name">Full Name</label>
+            <span class="field-help">Complete formal name if different from the short name (e.g. "The Bureau of Thorough Consideration" for "The Formery"). Leave blank if the same.</span>
+            <input class="field-input" type="text" id="org-full-name" placeholder="e.g. The Sovereign Guild of Inkweavers and Mapmakers">
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="org-alignment">Alignment <span class="req">✦</span></label>
+              <span class="field-help">Moral alignment within Anavale — determines wiki visibility</span>
+              <select class="field-select" id="org-alignment">
+                <option value="">— Select —</option>
+                <option value="dark">Dark — allied with the Vareth, Dimming, or silence</option>
+                <option value="light">Light — allied with color, joy, and resistance</option>
+                <option value="neutral">Neutral — neither side, or complicated</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="org-type">Type</label>
+              <span class="field-help">Organizational category (guild, government body, religious order, criminal syndicate, etc.)</span>
+              <input class="field-input" type="text" id="org-type" placeholder="e.g. Thieves' Guild">
+            </div>
+          </div>
         </div>
 
-        <div class="field-group">
-          <label class="field-label">Player Facing</label>
-          <span class="field-help">Hidden = DM only. Teaser = name, alignment, summary. Visible = full entry.</span>
-          <div class="field-toggle">
-            <input type="radio" name="org-pf" id="org-pf-false" value="false" checked>
-            <label for="org-pf-false">🔒 Hidden</label>
-            <input type="radio" name="org-pf" id="org-pf-teaser" value="teaser">
-            <label for="org-pf-teaser">✨ Teaser</label>
-            <input type="radio" name="org-pf" id="org-pf-true" value="true">
-            <label for="org-pf-true">👁 Visible</label>
+        <!-- STRUCTURE -->
+        <div class="form-section">
+          <div class="form-section-header">Structure</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="org-age">Age</label>
+              <span class="field-help">How long this organization has existed</span>
+              <input class="field-input" type="text" id="org-age" placeholder="e.g. 300 years, ancient, founded after the Partition">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="org-headquarters">Headquarters</label>
+              <span class="field-help">Primary base of operations, if it has one</span>
+              <input class="field-input" type="text" id="org-headquarters" placeholder="e.g. Solenveil, Caparia">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="org-leadership">Leadership</label>
+              <span class="field-help">Who leads this organization and how leadership is structured</span>
+              <input class="field-input" type="text" id="org-leadership" placeholder="e.g. A rotating council of seven, identity unknown">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="org-membership">Membership</label>
+              <span class="field-help">Who belongs and how one joins</span>
+              <input class="field-input" type="text" id="org-membership" placeholder="e.g. Invitation only. ~200 active members across Pogglewog.">
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="form-section">
+          <div class="form-section-header">Content</div>
+          <div class="field-group">
+            <label class="field-label" for="org-summary">Summary <span class="req">✦</span></label>
+            <span class="field-help">One or two sentences — what everyone in Anavale knows about this organization. Appears in search results.</span>
+            <textarea class="field-textarea" id="org-summary" placeholder="Public-facing summary…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-purpose">Purpose</label>
+            <span class="field-help">What this organization exists to do — stated mission and actual goals (may differ)</span>
+            <textarea class="field-textarea" id="org-purpose" placeholder="What does this organization do and why does it exist?"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-public-perception">Public Perception</label>
+            <span class="field-help">How the general public of Anavale views this organization — reputation, rumors, feelings</span>
+            <textarea class="field-textarea" id="org-public-perception" placeholder="How is this organization regarded by ordinary people?"></textarea>
+          </div>
+          <div class="repeating-group">
+            <div class="repeating-group-title">
+              <span>Notable Facts</span>
+              <button class="btn-add" onclick="addNotableFact()">+ Add Fact</button>
+            </div>
+            <div id="org-facts-list"></div>
+            <div id="org-facts-empty" class="repeating-empty">No facts added yet.</div>
+          </div>
+        </div>
+
+        <!-- WORLD SETTINGS -->
+        <div class="form-section">
+          <div class="form-section-header">World Settings</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="org-vareth">Vareth Relationship</label>
+              <span class="field-help">How this organization relates to the Vareth — opposed, unaware, allied, or complicated</span>
+              <input class="field-input" type="text" id="org-vareth" placeholder="e.g. Actively opposed. Monitors color health across all regions.">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="org-gigglegloom">Gigglegloom Relationship</label>
+              <span class="field-help">How this organization relates to or uses the Gigglegloom</span>
+              <input class="field-input" type="text" id="org-gigglegloom" placeholder="e.g. Governs all licensed Gigglegloom use. Answers to no government.">
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-tags">Tags</label>
+            <span class="field-help">Comma-separated keywords for search</span>
+            <input class="field-input" type="text" id="org-tags" placeholder="e.g. guild, caparia, light, ancient, conclave">
+          </div>
+        </div>
+
+        <!-- DM ONLY -->
+        <div class="form-section">
+          <div class="form-section-header">DM Only</div>
+          <div class="field-group">
+            <label class="field-label" for="org-secret">Secret</label>
+            <span class="field-help">What this organization is hiding — never shown in the player wiki</span>
+            <textarea class="field-textarea" id="org-secret" placeholder="Hidden agenda, true nature, dark secret…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="org-session-role">Session Role</label>
+            <span class="field-help">How this organization might appear in a session — quest givers, comedy beats, obstacles, or allies</span>
+            <textarea class="field-textarea" id="org-session-role" placeholder="e.g. Appears once per session with a new absurdity. Never blocks the plot for long."></textarea>
+          </div>
+        </div>
+
+        <!-- PUBLISH -->
+        <div class="form-section">
+          <div class="form-section-header">Publish</div>
+          <div class="field-group">
+            <label class="field-label">Player Facing</label>
+            <span class="field-help">Hidden = DM only. Teaser = name, alignment, summary. Visible = full entry.</span>
+            <div class="field-toggle">
+              <input type="radio" name="org-pf" id="org-pf-false" value="false" checked>
+              <label for="org-pf-false">🔒 Hidden</label>
+              <input type="radio" name="org-pf" id="org-pf-teaser" value="teaser">
+              <label for="org-pf-teaser">✨ Teaser</label>
+              <input type="radio" name="org-pf" id="org-pf-true" value="true">
+              <label for="org-pf-true">👁 Visible</label>
+            </div>
           </div>
         </div>
 
@@ -1708,192 +1820,195 @@
         <div class="dm-form-title">⚔️ New Item</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/items.js</strong> — weapon, armor, shield, consumable, tool, accessory, or quest item</div>
 
-        <!-- ── UNIVERSAL FIELDS (always visible) ── -->
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="item-name">Name <span class="req">✦</span></label>
-            <span class="field-help">Item name as it appears in inventory and wiki</span>
-            <input class="field-input" type="text" id="item-name" oninput="autoId('item-name','item-id')" placeholder="e.g. Health Potion">
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="item-img-placeholder" onclick="document.getElementById('item-img-input').click()">
+            <span>Click to<br>add image</span>
           </div>
-          <div class="field-group">
-            <label class="field-label" for="item-id">ID <span class="req">✦</span></label>
-            <span class="field-help">Lowercase kebab-case identifier (auto-filled)</span>
-            <input class="field-input" type="text" id="item-id" placeholder="e.g. health-potion">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="item-summary">Summary <span class="req">✦</span></label>
-          <span class="field-help">One sentence — shown in search results and inventory list</span>
-          <input class="field-input" type="text" id="item-summary" placeholder="e.g. Restores HP when consumed.">
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="item-category">Category <span class="req">✦</span></label>
-            <span class="field-help">Determines which fields appear below</span>
-            <select class="field-select" id="item-category" onchange="itemCategoryChanged()">
-              <option value="">— Select category —</option>
-              <option value="weapon">⚔️ Weapon</option>
-              <option value="armor">🛡 Armor</option>
-              <option value="shield">🔰 Shield</option>
-              <option value="consumable">⚗️ Consumable</option>
-              <option value="tool">🔧 Tool</option>
-              <option value="accessory">💍 Accessory</option>
-              <option value="quest_item">📜 Quest Item</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="item-rarity">Rarity</label>
-            <span class="field-help">How difficult to find or acquire</span>
-            <select class="field-select" id="item-rarity">
-              <option value="">— Select —</option>
-              <option value="common">Common</option>
-              <option value="uncommon">Uncommon</option>
-              <option value="rare">Rare</option>
-              <option value="legendary">Legendary</option>
-              <option value="unique">Unique — one exists in all of Anavale</option>
-            </select>
+          <img id="item-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
+            <button class="btn-add" type="button" onclick="document.getElementById('item-img-input').click()">⬆ Upload Image</button>
+            <div id="item-img-size" class="img-compress-size"></div>
+            <div id="item-img-path" class="img-compress-error"></div>
+            <button class="img-save-btn" type="button" id="item-img-save-btn" disabled onclick="handleSaveImage('item')">⬇ Save Image to Disk</button>
+            <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="item-cost-gp">Cost (gp)</label>
-            <span class="field-help">Cost in gold pieces — enter a number (e.g. 50 or 0.5)</span>
-            <input class="field-input" type="number" id="item-cost-gp" min="0" step="0.01" placeholder="e.g. 50">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="item-weight-lb">Weight (lb)</label>
-            <span class="field-help">Weight in pounds — enter a number (e.g. 2 or 0.25)</span>
-            <input class="field-input" type="number" id="item-weight-lb" min="0" step="0.01" placeholder="e.g. 1">
-          </div>
-        </div>
-
-        <!-- ── WEAPON FIELDS ── -->
-        <div id="item-fields-weapon" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Weapon Stats</div>
+        <!-- IDENTITY -->
+        <div class="form-section">
+          <div class="form-section-header">Identity</div>
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label" for="item-damage-dice">Damage Dice <span class="req">✦</span></label>
-              <span class="field-help">Format: NdN (e.g. 1d8, 2d6)</span>
-              <input class="field-input" type="text" id="item-damage-dice" placeholder="e.g. 1d8">
+              <label class="field-label" for="item-name">Name <span class="req">✦</span></label>
+              <span class="field-help">Item name as it appears in inventory and wiki</span>
+              <input class="field-input" type="text" id="item-name" oninput="autoId('item-name','item-id')" placeholder="e.g. Health Potion">
             </div>
             <div class="field-group">
-              <label class="field-label" for="item-damage-type">Damage Type <span class="req">✦</span></label>
-              <span class="field-help">Physical damage type</span>
-              <select class="field-select" id="item-damage-type">
+              <label class="field-label" for="item-id">ID <span class="req">✦</span></label>
+              <span class="field-help">Lowercase kebab-case identifier (auto-filled)</span>
+              <input class="field-input" type="text" id="item-id" placeholder="e.g. health-potion">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-category">Category <span class="req">✦</span></label>
+              <span class="field-help">Determines which stat fields appear below</span>
+              <select class="field-select" id="item-category" onchange="itemCategoryChanged()">
+                <option value="">— Select category —</option>
+                <option value="accessory">💍 Accessory</option>
+                <option value="armor">🛡 Armor</option>
+                <option value="consumable">⚗️ Consumable</option>
+                <option value="quest_item">📜 Quest Item</option>
+                <option value="shield">🔰 Shield</option>
+                <option value="tool">🔧 Tool</option>
+                <option value="weapon">⚔️ Weapon</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-rarity">Rarity</label>
+              <span class="field-help">How difficult to find or acquire</span>
+              <select class="field-select" id="item-rarity">
                 <option value="">— Select —</option>
-                <option value="slashing">Slashing</option>
-                <option value="piercing">Piercing</option>
-                <option value="bludgeoning">Bludgeoning</option>
+                <option value="common">Common</option>
+                <option value="legendary">Legendary</option>
+                <option value="rare">Rare</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="unique">Unique — one exists in all of Anavale</option>
               </select>
             </div>
           </div>
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label" for="item-versatile-dice">Versatile Dice</label>
-              <span class="field-help">Two-handed damage if versatile (e.g. 1d10). Leave blank if not versatile.</span>
-              <input class="field-input" type="text" id="item-versatile-dice" placeholder="e.g. 1d10">
+              <label class="field-label" for="item-cost-gp">Cost (gp)</label>
+              <span class="field-help">Cost in gold pieces</span>
+              <input class="field-input" type="number" id="item-cost-gp" min="0" step="0.01" placeholder="e.g. 50">
             </div>
             <div class="field-group">
-              <label class="field-label" for="item-magic-bonus-weapon">Magic Bonus</label>
-              <span class="field-help">+1, +2, or +3 magical enhancement</span>
-              <select class="field-select" id="item-magic-bonus-weapon">
-                <option value="0">None</option>
-                <option value="1">+1</option>
-                <option value="2">+2</option>
-                <option value="3">+3</option>
-              </select>
+              <label class="field-label" for="item-weight-lb">Weight (lb)</label>
+              <span class="field-help">Weight in pounds</span>
+              <input class="field-input" type="number" id="item-weight-lb" min="0" step="0.01" placeholder="e.g. 1">
             </div>
           </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-range-normal">Normal Range (ft)</label>
-              <span class="field-help">Leave blank for melee weapons</span>
-              <input class="field-input" type="number" id="item-range-normal" min="0" placeholder="e.g. 80">
+        </div>
+
+        <!-- CATEGORY STATS (contextual — shown by itemCategoryChanged()) -->
+        <div class="form-section" id="item-stats-section" style="display:none">
+          <div class="form-section-header" id="item-stats-header">Stats</div>
+
+          <!-- WEAPON FIELDS -->
+          <div id="item-fields-weapon" class="item-category-fields" style="display:none">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-damage-dice">Damage Dice <span class="req">✦</span></label>
+                <span class="field-help">Format: NdN (e.g. 1d8, 2d6)</span>
+                <input class="field-input" type="text" id="item-damage-dice" placeholder="e.g. 1d8">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-damage-type">Damage Type <span class="req">✦</span></label>
+                <select class="field-select" id="item-damage-type">
+                  <option value="">— Select —</option>
+                  <option value="bludgeoning">Bludgeoning</option>
+                  <option value="piercing">Piercing</option>
+                  <option value="slashing">Slashing</option>
+                </select>
+              </div>
             </div>
-            <div class="field-group">
-              <label class="field-label" for="item-range-long">Long Range (ft)</label>
-              <span class="field-help">Leave blank for melee weapons</span>
-              <input class="field-input" type="number" id="item-range-long" min="0" placeholder="e.g. 320">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-versatile-dice">Versatile Dice</label>
+                <span class="field-help">Two-handed damage if versatile (e.g. 1d10)</span>
+                <input class="field-input" type="text" id="item-versatile-dice" placeholder="e.g. 1d10">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-magic-bonus-weapon">Magic Bonus</label>
+                <select class="field-select" id="item-magic-bonus-weapon">
+                  <option value="0">None</option>
+                  <option value="1">+1</option>
+                  <option value="2">+2</option>
+                  <option value="3">+3</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-str-requirement-weapon">Strength Requirement</label>
-              <span class="field-help">Minimum Strength score needed (leave blank if none)</span>
-              <input class="field-input" type="number" id="item-str-requirement-weapon" min="0" placeholder="e.g. 13">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-range-normal">Normal Range (ft)</label>
+                <span class="field-help">Leave blank for melee</span>
+                <input class="field-input" type="number" id="item-range-normal" min="0" placeholder="e.g. 30">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-range-long">Long Range (ft)</label>
+                <input class="field-input" type="number" id="item-range-long" min="0" placeholder="e.g. 120">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-str-requirement-weapon">Strength Requirement</label>
+                <input class="field-input" type="number" id="item-str-requirement-weapon" min="0" placeholder="e.g. 13">
+              </div>
+              <div class="field-group">
+                <label class="field-label">Named Weapon</label>
+                <span class="field-help">Is this a unique named weapon (not a generic type)?</span>
+                <div class="field-toggle">
+                  <input type="radio" name="item-named" id="item-named-false" value="false" checked>
+                  <label for="item-named-false">No</label>
+                  <input type="radio" name="item-named" id="item-named-true" value="true">
+                  <label for="item-named-true">Yes</label>
+                </div>
+              </div>
             </div>
             <div class="field-group">
               <label class="field-label">Properties</label>
-              <span class="field-help">Select all that apply</span>
               <div class="field-checkboxes" id="item-weapon-properties">
                 <label><input type="checkbox" value="finesse"><span>Finesse</span></label>
-                <label><input type="checkbox" value="light"><span>Light</span></label>
                 <label><input type="checkbox" value="heavy"><span>Heavy</span></label>
-                <label><input type="checkbox" value="versatile"><span>Versatile</span></label>
-                <label><input type="checkbox" value="two-handed"><span>Two-Handed</span></label>
-                <label><input type="checkbox" value="thrown"><span>Thrown</span></label>
-                <label><input type="checkbox" value="reach"><span>Reach</span></label>
+                <label><input type="checkbox" value="light"><span>Light</span></label>
                 <label><input type="checkbox" value="loading"><span>Loading</span></label>
-                <label><input type="checkbox" value="ammunition"><span>Ammunition</span></label>
+                <label><input type="checkbox" value="reach"><span>Reach</span></label>
+                <label><input type="checkbox" value="thrown"><span>Thrown</span></label>
+                <label><input type="checkbox" value="two-handed"><span>Two-Handed</span></label>
+                <label><input type="checkbox" value="versatile"><span>Versatile</span></label>
               </div>
             </div>
           </div>
-          <div class="field-group">
-            <label class="field-label">Named / Legendary Item</label>
-            <span class="field-help">Toggle on for unique named weapons with their own history</span>
-            <div class="field-toggle">
-              <input type="radio" name="item-named" id="item-named-false" value="false" checked>
-              <label for="item-named-false">Standard</label>
-              <input type="radio" name="item-named" id="item-named-true" value="true">
-              <label for="item-named-true">Named / Legendary</label>
-            </div>
-          </div>
-        </div><!-- /weapon fields -->
 
-        <!-- ── ARMOR FIELDS ── -->
-        <div id="item-fields-armor" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Armor Stats</div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-base-ac">Base AC <span class="req">✦</span></label>
-              <span class="field-help">The armor's base AC value as a number (e.g. 16 for Chain Mail)</span>
-              <input class="field-input" type="number" id="item-base-ac" min="0" placeholder="e.g. 16">
+          <!-- ARMOR FIELDS -->
+          <div id="item-fields-armor" class="item-category-fields" style="display:none">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-base-ac">Base AC <span class="req">✦</span></label>
+                <span class="field-help">AC before Dex modifier (e.g. 16 for Chain Mail)</span>
+                <input class="field-input" type="number" id="item-base-ac" min="0" placeholder="e.g. 16">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-armor-weight-class">Armor Class <span class="req">✦</span></label>
+                <select class="field-select" id="item-armor-weight-class">
+                  <option value="">— Select —</option>
+                  <option value="heavy">Heavy — no Dex bonus</option>
+                  <option value="light">Light — full Dex bonus applies</option>
+                  <option value="medium">Medium — max +2 Dex bonus</option>
+                </select>
+              </div>
             </div>
-            <div class="field-group">
-              <label class="field-label" for="item-armor-weight-class">Armor Class <span class="req">✦</span></label>
-              <span class="field-help">Determines how Dexterity applies to AC</span>
-              <select class="field-select" id="item-armor-weight-class">
-                <option value="">— Select —</option>
-                <option value="light">Light — full Dex bonus applies</option>
-                <option value="medium">Medium — max +2 Dex bonus</option>
-                <option value="heavy">Heavy — no Dex bonus</option>
-              </select>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-magic-bonus-armor">Magic Bonus</label>
+                <select class="field-select" id="item-magic-bonus-armor">
+                  <option value="0">None</option>
+                  <option value="1">+1</option>
+                  <option value="2">+2</option>
+                  <option value="3">+3</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-str-requirement-armor">Strength Requirement</label>
+                <input class="field-input" type="number" id="item-str-requirement-armor" min="0" placeholder="e.g. 15">
+              </div>
             </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-magic-bonus-armor">Magic Bonus</label>
-              <span class="field-help">+1, +2, or +3 magical enhancement to AC</span>
-              <select class="field-select" id="item-magic-bonus-armor">
-                <option value="0">None</option>
-                <option value="1">+1</option>
-                <option value="2">+2</option>
-                <option value="3">+3</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-str-requirement-armor">Strength Requirement</label>
-              <span class="field-help">Minimum Strength score needed (leave blank if none)</span>
-              <input class="field-input" type="number" id="item-str-requirement-armor" min="0" placeholder="e.g. 15">
-            </div>
-          </div>
-          <div class="field-row">
             <div class="field-group">
               <label class="field-label">Stealth Disadvantage</label>
-              <span class="field-help">Does this armor impose disadvantage on Stealth checks?</span>
               <div class="field-toggle">
                 <input type="radio" name="item-stealth-disadvantage" id="item-stealth-false" value="false" checked>
                 <label for="item-stealth-false">No</label>
@@ -1902,247 +2017,225 @@
               </div>
             </div>
           </div>
-        </div><!-- /armor fields -->
 
-        <!-- ── SHIELD FIELDS ── -->
-        <div id="item-fields-shield" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Shield Stats</div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-ac-bonus">AC Bonus</label>
-              <span class="field-help">AC bonus granted — standard shield is +2</span>
-              <input class="field-input" type="number" id="item-ac-bonus" value="2" min="0">
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-magic-bonus-shield">Magic Bonus</label>
-              <span class="field-help">+1, +2, or +3 magical enhancement</span>
-              <select class="field-select" id="item-magic-bonus-shield">
-                <option value="0">None</option>
-                <option value="1">+1</option>
-                <option value="2">+2</option>
-                <option value="3">+3</option>
-              </select>
-            </div>
-          </div>
-        </div><!-- /shield fields -->
-
-        <!-- ── CONSUMABLE FIELDS ── -->
-        <div id="item-fields-consumable" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Consumable Stats</div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-effect-type">Effect Type <span class="req">✦</span></label>
-              <span class="field-help">What this consumable does when used</span>
-              <select class="field-select" id="item-effect-type">
-                <option value="">— Select —</option>
-                <option value="heal">Heal HP</option>
-                <option value="buff">Buff (temporary bonus)</option>
-                <option value="condition_remove">Remove Condition</option>
-                <option value="damage">Deal Damage</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-gigglegloom-type">Gigglegloom Type</label>
-              <span class="field-help">Magic type this consumable channels (if any)</span>
-              <select class="field-select" id="item-gigglegloom-type">
-                <option value="">None</option>
-                <option value="Bubbleseed">Bubbleseed</option>
-                <option value="Featherflow">Featherflow</option>
-                <option value="Steelfist">Steelfist</option>
-                <option value="Flamerage">Flamerage</option>
-              </select>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-effect-dice">Effect Dice</label>
-              <span class="field-help">Format: NdN (e.g. 2d4). Leave blank if flat value only.</span>
-              <input class="field-input" type="text" id="item-effect-dice" placeholder="e.g. 2d4">
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-effect-flat">Effect Flat Bonus</label>
-              <span class="field-help">Flat number added to dice roll (e.g. 2 for "2d4+2")</span>
-              <input class="field-input" type="number" id="item-effect-flat" min="0" placeholder="e.g. 2">
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-uses-max">Uses</label>
-              <span class="field-help">Total uses (1 for a potion, 10 for a healer's kit)</span>
-              <input class="field-input" type="number" id="item-uses-max" min="1" value="1">
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-effect-duration">Effect Duration</label>
-              <span class="field-help">Leave blank for instant. Otherwise: "1 hour", "10 minutes", etc.</span>
-              <input class="field-input" type="text" id="item-effect-duration" placeholder="e.g. 1 hour">
-            </div>
-          </div>
-        </div><!-- /consumable fields -->
-
-        <!-- ── TOOL FIELDS ── -->
-        <div id="item-fields-tool" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Tool Stats</div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-proficiency-name">Proficiency Name</label>
-              <span class="field-help">The proficiency this tool grants or requires (e.g. "Thieves' tools")</span>
-              <input class="field-input" type="text" id="item-proficiency-name" placeholder="e.g. Thieves' tools">
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-tool-uses">Uses</label>
-              <span class="field-help">Number of uses if limited (e.g. 10 for Healer's Kit). Leave blank for unlimited.</span>
-              <input class="field-input" type="number" id="item-tool-uses" min="1" placeholder="blank = unlimited">
-            </div>
-          </div>
-        </div><!-- /tool fields -->
-
-        <!-- ── ACCESSORY FIELDS ── -->
-        <div id="item-fields-accessory" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Accessory Stats</div>
-          <div class="field-group">
-            <label class="field-label" for="item-effect-accessory">Effect</label>
-            <span class="field-help">What this accessory does when carried or worn</span>
-            <textarea class="field-textarea" id="item-effect-accessory" placeholder="e.g. Advantage on Religion checks. Recognized by Brightcreed communities as a mark of faith."></textarea>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-equip-slot-accessory">Equip Slot</label>
-              <span class="field-help">Where this item is worn or carried</span>
-              <select class="field-select" id="item-equip-slot-accessory">
-                <option value="accessory">Accessory slot (worn)</option>
-                <option value="none">Carried — no slot</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-magic-bonus-accessory">Magic Bonus</label>
-              <span class="field-help">+1, +2, or +3 if this accessory grants a magical bonus</span>
-              <select class="field-select" id="item-magic-bonus-accessory">
-                <option value="0">None</option>
-                <option value="1">+1</option>
-                <option value="2">+2</option>
-                <option value="3">+3</option>
-              </select>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="item-grants-proficiency">Grants Proficiency</label>
-              <span class="field-help">Comma-separated skills or tools this item grants proficiency in (leave blank if none)</span>
-              <input class="field-input" type="text" id="item-grants-proficiency" placeholder="e.g. Survival, Animal Handling">
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="item-grants-advantage">Grants Advantage On</label>
-              <span class="field-help">Comma-separated checks this item grants advantage on (leave blank if none)</span>
-              <input class="field-input" type="text" id="item-grants-advantage" placeholder="e.g. Religion, Perception">
-            </div>
-          </div>
-        </div><!-- /accessory fields -->
-
-        <!-- ── QUEST ITEM FIELDS ── -->
-        <div id="item-fields-quest_item" class="item-category-fields" style="display:none">
-          <div class="form-section-divider">Quest Item</div>
-          <div class="field-group">
-            <label class="field-label" for="item-story-note">Story Note</label>
-            <span class="field-help">What this item means narratively — DM reference for when and how it matters</span>
-            <textarea class="field-textarea" id="item-story-note" placeholder="e.g. The scroll Skiv left behind. Contains a single line in Veilborn cipher. Players won't be able to read it until Session 3."></textarea>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="item-associated-quest">Associated Quest</label>
-            <span class="field-help">Quest ID this item belongs to (e.g. the-missing-shipment)</span>
-            <input class="field-input" type="text" id="item-associated-quest" placeholder="e.g. the-missing-shipment">
-          </div>
-        </div><!-- /quest item fields -->
-
-        <!-- ── UNIVERSAL LOWER FIELDS (always visible) ── -->
-        <div class="field-group">
-          <label class="field-label" for="item-description">Description <span class="req">✦</span></label>
-          <span class="field-help">Physical appearance, feel, and properties — what it looks like and what it does</span>
-          <textarea class="field-textarea tall" id="item-description" placeholder="Appearance, properties, and effects…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="item-gigglegloom">Gigglegloom Relationship</label>
-          <span class="field-help">How this item interacts with the Gigglegloom — channels, absorbs, suppresses, or responds to specific types?</span>
-          <textarea class="field-textarea" id="item-gigglegloom" placeholder="e.g. Bubbleseed-infused. Glows faintly gold near healthy color zones."></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="item-history">History</label>
-          <span class="field-help">Where this item came from — who made it, how it was found, what events shaped it</span>
-          <textarea class="field-textarea" id="item-history" placeholder="Origin, creation, notable past events…"></textarea>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label" for="item-location">Current Location</label>
-            <span class="field-help">Where this item is now, if known</span>
-            <input class="field-input" type="text" id="item-location" placeholder="e.g. Prism Exchange vault, Prismhold">
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="item-owner">Current Owner</label>
-            <span class="field-help">Who currently possesses this item, if known</span>
-            <input class="field-input" type="text" id="item-owner" placeholder="e.g. Unknown — seven assassination attempts to recover it">
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">Player Facing</label>
-            <span class="field-help">Hidden = DM only. Teaser = name + summary. Visible = full entry.</span>
-            <div class="field-toggle">
-              <input type="radio" name="item-pf" id="item-pf-false" value="false" checked>
-              <label for="item-pf-false">🔒 Hidden</label>
-              <input type="radio" name="item-pf" id="item-pf-teaser" value="teaser">
-              <label for="item-pf-teaser">✨ Teaser</label>
-              <input type="radio" name="item-pf" id="item-pf-true" value="true">
-              <label for="item-pf-true">👁 Visible</label>
-            </div>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Player Addable</label>
-            <span class="field-help">Can players add this to their own sheet? No = DM places only.</span>
-            <div class="field-toggle">
-              <input type="radio" name="item-addable" id="item-addable-true" value="true" checked>
-              <label for="item-addable-true">✅ Yes</label>
-              <input type="radio" name="item-addable" id="item-addable-false" value="false">
-              <label for="item-addable-false">🔒 DM Only</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section-divider">DM Only</div>
-
-        <div class="field-group">
-          <label class="field-label" for="item-dm-notes">DM Notes</label>
-          <span class="field-help">Private notes — plot hooks, mechanical effects, secrets players haven't uncovered</span>
-          <textarea class="field-textarea" id="item-dm-notes" placeholder="Private DM information…"></textarea>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="item-tags">Tags</label>
-          <span class="field-help">Comma-separated keywords for search and filtering</span>
-          <input class="field-input" type="text" id="item-tags" placeholder="e.g. weapon, caparia, common, shortsword">
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Image</label>
-          <span class="field-help">Upload an image — save to assets/images/items/ after generating</span>
-          <div class="image-upload-area" onclick="document.getElementById('item-img-input').click()">
-            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
-            <label class="image-upload-label">Click to select image (JPG, PNG, WebP)</label>
-          </div>
-          <div id="item-img-panel" class="img-compress-panel">
-            <div class="img-compress-inner">
-              <img id="item-img-preview" class="img-compress-thumb" src="" alt="Preview">
-              <div class="img-compress-meta">
-                <div id="item-img-size" class="img-compress-size"></div>
-                <div id="item-img-path" class="img-compress-error"></div>
-                <button class="img-save-btn" type="button" disabled onclick="handleSaveImage('item')">⬇ Save Image</button>
+          <!-- SHIELD FIELDS -->
+          <div id="item-fields-shield" class="item-category-fields" style="display:none">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-ac-bonus">AC Bonus</label>
+                <input class="field-input" type="number" id="item-ac-bonus" value="2" min="0">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-magic-bonus-shield">Magic Bonus</label>
+                <select class="field-select" id="item-magic-bonus-shield">
+                  <option value="0">None</option>
+                  <option value="1">+1</option>
+                  <option value="2">+2</option>
+                  <option value="3">+3</option>
+                </select>
               </div>
             </div>
           </div>
-          <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+
+          <!-- CONSUMABLE FIELDS -->
+          <div id="item-fields-consumable" class="item-category-fields" style="display:none">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-effect-type">Effect Type <span class="req">✦</span></label>
+                <select class="field-select" id="item-effect-type">
+                  <option value="">— Select —</option>
+                  <option value="buff">Buff (temporary bonus)</option>
+                  <option value="condition_remove">Remove Condition</option>
+                  <option value="damage">Deal Damage</option>
+                  <option value="heal">Heal HP</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-gigglegloom-type">Gigglegloom Type</label>
+                <select class="field-select" id="item-gigglegloom-type">
+                  <option value="">None</option>
+                  <option value="Bubbleseed">Bubbleseed</option>
+                  <option value="Featherflow">Featherflow</option>
+                  <option value="Flamerage">Flamerage</option>
+                  <option value="Steelfist">Steelfist</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-effect-dice">Effect Dice</label>
+                <input class="field-input" type="text" id="item-effect-dice" placeholder="e.g. 2d4">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-effect-flat">Effect Flat Bonus</label>
+                <input class="field-input" type="number" id="item-effect-flat" min="0" placeholder="e.g. 2">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-uses-max">Uses</label>
+                <input class="field-input" type="number" id="item-uses-max" min="1" value="1">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-effect-duration">Effect Duration</label>
+                <input class="field-input" type="text" id="item-effect-duration" placeholder="e.g. 1 hour">
+              </div>
+            </div>
+          </div>
+
+          <!-- TOOL FIELDS -->
+          <div id="item-fields-tool" class="item-category-fields" style="display:none">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-proficiency-name">Proficiency Name</label>
+                <input class="field-input" type="text" id="item-proficiency-name" placeholder="e.g. Thieves' tools">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-tool-uses">Uses</label>
+                <span class="field-help">Leave blank for unlimited</span>
+                <input class="field-input" type="number" id="item-tool-uses" min="1" placeholder="blank = unlimited">
+              </div>
+            </div>
+          </div>
+
+          <!-- ACCESSORY FIELDS -->
+          <div id="item-fields-accessory" class="item-category-fields" style="display:none">
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-equip-slot-accessory">Equip Slot</label>
+                <select class="field-select" id="item-equip-slot-accessory">
+                  <option value="none">No slot</option>
+                  <option value="neck">Neck</option>
+                  <option value="finger">Finger</option>
+                  <option value="wrist">Wrist</option>
+                  <option value="head">Head</option>
+                  <option value="waist">Waist</option>
+                  <option value="feet">Feet</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-magic-bonus-accessory">Magic Bonus</label>
+                <select class="field-select" id="item-magic-bonus-accessory">
+                  <option value="0">None</option>
+                  <option value="1">+1</option>
+                  <option value="2">+2</option>
+                  <option value="3">+3</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-effect-accessory">Effect</label>
+              <textarea class="field-textarea" id="item-effect-accessory" placeholder="e.g. Advantage on Religion checks."></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="item-grants-proficiency">Grants Proficiency</label>
+                <span class="field-help">Comma-separated proficiencies granted</span>
+                <input class="field-input" type="text" id="item-grants-proficiency" placeholder="e.g. Persuasion, Deception">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="item-grants-advantage">Grants Advantage</label>
+                <span class="field-help">Comma-separated checks that gain advantage</span>
+                <input class="field-input" type="text" id="item-grants-advantage" placeholder="e.g. Stealth, Perception">
+              </div>
+            </div>
+          </div>
+
+          <!-- QUEST ITEM FIELDS -->
+          <div id="item-fields-quest_item" class="item-category-fields" style="display:none">
+            <div class="field-group">
+              <label class="field-label" for="item-story-note">Story Note</label>
+              <span class="field-help">DM context — what this item means in the campaign</span>
+              <textarea class="field-textarea" id="item-story-note" placeholder="e.g. The scroll Skiv left behind. Contains a single line in Veilborn cipher."></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-associated-quest">Associated Quest</label>
+              <span class="field-help">Quest ID this item belongs to (e.g. the-missing-shipment)</span>
+              <input class="field-input" type="text" id="item-associated-quest" placeholder="e.g. the-missing-shipment">
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="form-section">
+          <div class="form-section-header">Content</div>
+          <div class="field-group">
+            <label class="field-label" for="item-summary">Summary <span class="req">✦</span></label>
+            <span class="field-help">One sentence — shown in search results and inventory list</span>
+            <input class="field-input" type="text" id="item-summary" placeholder="e.g. Restores HP when consumed.">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-description">Description <span class="req">✦</span></label>
+            <span class="field-help">Physical appearance, feel, and properties — what it looks like and what it does</span>
+            <textarea class="field-textarea tall" id="item-description" placeholder="Appearance, properties, and effects…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-gigglegloom">Gigglegloom Relationship</label>
+            <span class="field-help">How this item interacts with the Gigglegloom</span>
+            <textarea class="field-textarea" id="item-gigglegloom" placeholder="e.g. Bubbleseed-infused. Glows faintly gold near healthy color zones."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-history">History</label>
+            <span class="field-help">Where this item came from — who made it, how it was found, what events shaped it</span>
+            <textarea class="field-textarea" id="item-history" placeholder="Origin, creation, notable past events…"></textarea>
+          </div>
+        </div>
+
+        <!-- WORLD SETTINGS -->
+        <div class="form-section">
+          <div class="form-section-header">World Settings</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="item-location">Current Location</label>
+              <span class="field-help">Where this item is now, if known</span>
+              <input class="field-input" type="text" id="item-location" placeholder="e.g. Prism Exchange vault, Prismhold">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="item-owner">Current Owner</label>
+              <span class="field-help">Who currently possesses this item, if known</span>
+              <input class="field-input" type="text" id="item-owner" placeholder="e.g. Unknown — seven assassination attempts to recover it">
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-tags">Tags</label>
+            <span class="field-help">Comma-separated keywords for search</span>
+            <input class="field-input" type="text" id="item-tags" placeholder="e.g. weapon, caparia, common, shortsword">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-dm-notes">DM Notes</label>
+            <span class="field-help">Private notes — plot hooks, secrets, campaign context</span>
+            <textarea class="field-textarea" id="item-dm-notes" placeholder="Private DM information…"></textarea>
+          </div>
+        </div>
+
+        <!-- PUBLISH -->
+        <div class="form-section">
+          <div class="form-section-header">Publish</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Player Facing</label>
+              <span class="field-help">Hidden = DM only. Teaser = name + summary. Visible = full entry.</span>
+              <div class="field-toggle">
+                <input type="radio" name="item-pf" id="item-pf-false" value="false" checked>
+                <label for="item-pf-false">🔒 Hidden</label>
+                <input type="radio" name="item-pf" id="item-pf-teaser" value="teaser">
+                <label for="item-pf-teaser">✨ Teaser</label>
+                <input type="radio" name="item-pf" id="item-pf-true" value="true">
+                <label for="item-pf-true">👁 Visible</label>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Player Addable</label>
+              <span class="field-help">Can players add this to their inventory from the wiki?</span>
+              <div class="field-toggle">
+                <input type="radio" name="item-addable" id="item-addable-true" value="true" checked>
+                <label for="item-addable-true">✅ Player Addable</label>
+                <input type="radio" name="item-addable" id="item-addable-false" value="false">
+                <label for="item-addable-false">🔒 DM Only</label>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="dm-form-actions">
@@ -3256,7 +3349,6 @@
   opacity: 1;
   padding: 0;
   transition: var(--dm-transition);
-  color: var(--dm-text-faint);
 }
 .cm-action-delete:hover { color: var(--dm-red); }
 
@@ -3613,8 +3705,7 @@ async function handleSaveImage(prefix) {
   }
   var filename = entryId + '.webp';
 
-  var panel   = document.getElementById(prefix + '-img-panel');
-  var saveBtn = panel && panel.querySelector('.img-save-btn');
+  var saveBtn = document.getElementById(prefix + '-img-save-btn');
 
   try {
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
@@ -3627,7 +3718,7 @@ async function handleSaveImage(prefix) {
       // Momentary success state on the button
       if (saveBtn) {
         saveBtn.textContent      = '✓ Saved';
-        saveBtn.style.background = '#2a7a3a';
+        saveBtn.style.background = 'var(--dm-green-dim)';
         saveBtn.disabled         = false;
         setTimeout(function() {
           saveBtn.textContent      = '⬇ Save Image';
@@ -3653,18 +3744,17 @@ function previewImage(input, previewId, errorId, sizeId, folder, idFieldId, name
   if (!file) return;
 
   // Derive the form prefix from previewId (e.g. 'creature-img-preview' → 'creature')
-  var prefix   = previewId.replace('-img-preview', '');
-  var preview  = document.getElementById(previewId);
-  var sizeEl   = document.getElementById(sizeId);
-  var errorEl  = document.getElementById(errorId);
-  var panel    = document.getElementById(prefix + '-img-panel');
-  var saveBtn  = panel && panel.querySelector('.img-save-btn');
+  var prefix      = previewId.replace('-img-preview', '');
+  var preview     = document.getElementById(previewId);
+  var placeholder = document.getElementById(prefix + '-img-placeholder');
+  var sizeEl      = document.getElementById(sizeId);
+  var errorEl     = document.getElementById(errorId);
+  var saveBtn     = document.getElementById(prefix + '-img-save-btn');
 
   // Reset UI to loading state
   if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
   if (sizeEl)  { sizeEl.textContent  = 'Compressing…'; }
-  if (panel)   { panel.style.display = 'block'; }
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⬇ Save Image'; saveBtn.style.background = ''; }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⬇ Save Image to Disk'; saveBtn.style.background = ''; }
 
   var origKB = Math.round(file.size / 1024);
 
@@ -3676,24 +3766,25 @@ function previewImage(input, previewId, errorId, sizeId, folder, idFieldId, name
       preview._blob    = blob;
       preview.src      = preview._blobUrl;
 
+      // Show preview, hide placeholder
+      if (preview)     { preview.classList.remove('hidden'); }
+      if (placeholder) { placeholder.style.display = 'none'; }
+
       var compKB = Math.round(blob.size / 1024);
       var over   = compKB > 200;
       if (sizeEl) {
         sizeEl.innerHTML = origKB !== compKB
           ? 'Original: ' + origKB + ' KB &rarr; Compressed: <strong>' + compKB + ' KB WebP</strong>'
-              + (over ? ' <span style="color:#aa3a1a">⚠ still over 200 KB</span>'
-                      : ' <span style="color:#2a7a3a">✓</span>')
+              + (over ? ' <span style="color:var(--dm-red)">⚠ still over 200 KB</span>'
+                      : ' <span style="color:var(--dm-green)">✓</span>')
           : compKB + ' KB WebP'
-              + (over ? ' <span style="color:#aa3a1a">⚠ over 200 KB</span>'
-                      : ' <span style="color:#2a7a3a">✓</span>');
+              + (over ? ' <span style="color:var(--dm-red)">⚠ over 200 KB</span>'
+                      : ' <span style="color:var(--dm-green)">✓</span>');
         if (over) sizeEl.innerHTML += ' — lowest quality used, file is still large';
       }
       if (saveBtn) saveBtn.disabled = false;
     })
     .catch(function(err) {
-      if (panel)   panel.style.display = 'block';
-      if (sizeEl)  sizeEl.textContent  = '';
-      if (saveBtn) saveBtn.disabled     = true;
       if (errorEl) {
         errorEl.style.display = 'block';
         errorEl.textContent   = (err && err.decodeError)
@@ -4135,10 +4226,18 @@ function itemCategoryChanged() {
   document.querySelectorAll('.item-category-fields').forEach(function(el) {
     el.style.display = 'none';
   });
-  // Show the matching panel
+  // Show/hide the stats section wrapper
+  var statsSection = document.getElementById('item-stats-section');
+  var statsHeader  = document.getElementById('item-stats-header');
+  if (statsSection) statsSection.style.display = cat ? 'block' : 'none';
+  // Show the matching panel and update header label
   if (cat) {
     var panel = document.getElementById('item-fields-' + cat);
     if (panel) panel.style.display = 'block';
+    var labels = { weapon:'Weapon Stats', armor:'Armor Stats', shield:'Shield Stats',
+                   consumable:'Consumable Stats', tool:'Tool Stats',
+                   accessory:'Accessory Stats', quest_item:'Quest Item Details' };
+    if (statsHeader) statsHeader.textContent = labels[cat] || 'Stats';
   }
   // Quest items are always DM-only / not player-addable
   if (cat === 'quest_item') {
