@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Character Sheet — Anavale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Roboto:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Load world data — characters.js declares var CHARACTERS = [...] -->
+  <script src="../data/characters.js"></script>
+  <!-- Load class/species/background reference data for label lookups -->
+  <script src="../data/index.js"></script>
+
+  <style>
+    /* ── CSS Variables (mirrors character.css :root exactly) ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font-headers:  'Charm', serif;
+      --font-serif:    'Cinzel Decorative', Georgia, serif;
+      --font-sans:     'Roboto', system-ui, sans-serif;
+      --font-mono:     'Courier New', Courier, monospace;
+
+      --parchment:        #f5ead4;
+      --parchment-light:  #f8f1e2;
+      --parchment-dark:   #e8d4a8;
+      --ink:              #2a1f0e;
+      --ink-light:        #4a3520;
+      --ink-faint:        #7a6548;
+      --gold:             #c8940a;
+      --gold-light:       #e8b830;
+      --amber:            #7a5200;
+      --white:            #ffffff;
+      --teal:             #1a6a5a;
+      --violet:           #4a2878;
+      --green:            #2a5818;
+      --bubbleseed:       #2a7a3a;
+      --featherflow:      #2266b8;
+      --steelfist:        #6a3aaa;
+      --flamerage:        #aa3a1a;
+      --gradient-colorful: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
+
+      --char-bg:               #0a0e18;
+      --char-panel:            rgba(10, 14, 24, 0.85);
+      --char-border:           var(--ink-faint);
+      --char-border-gold:      var(--gold);
+      --char-radius:           12px;
+      --char-card-bg:          rgba(18, 24, 42, 0.95);
+      --char-card-bg-hover:    rgba(22, 30, 54, 0.98);
+      --char-card-bg-selected: rgba(40, 30, 10, 0.95);
+      --char-accent-tint:      rgba(255, 255, 255, 0.08);
+      --char-accent-border:    rgba(255, 255, 255, 0.3);
+      --char-accent-border-mid:rgba(255, 255, 255, 0.4);
+      --char-section-bg:       rgba(10, 14, 24, 0.75);
+      --char-text-muted:       rgba(255, 255, 255, 0.8);
+      --char-text-faint:       rgba(245, 234, 212, 0.65);
+      --char-highlight-tint:   rgba(200, 148, 10, 0.1);
+      --char-highlight-border: rgba(200, 148, 10, 0.3);
+      --char-card-bg-subtle:   rgba(255, 255, 255, 0.03);
+    }
+
+    /* ── Page Shell ── */
+    body {
+      background:
+        linear-gradient(rgba(3,4,12,0.88), rgba(3,4,12,0.88)),
+        url('../assets/images/regions/img-caparia-landscape.webp') center/cover fixed;
+      color: var(--parchment);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav Bar ── */
+    .cs-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5, 7, 15, 0.92);
+      border-bottom: 1px solid rgba(200,148,10,0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .cs-nav-title {
+      font-family: var(--font-headers);
+      font-size: 1.25rem;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .cs-nav-back {
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      color: var(--char-text-faint);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      opacity: 0.7;
+      transition: opacity 0.2s, color 0.2s;
+    }
+    .cs-nav-back:hover { opacity: 1; color: var(--gold); }
+
+    /* ── Main content wrapper ── */
+    .cs-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    /* ── Hero Section ── */
+    .cs-hero {
+      position: relative;
+      border-radius: var(--char-radius);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .cs-hero-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center 30%;
+      filter: brightness(0.4) saturate(1.2);
+    }
+    .cs-hero-orb-a {
+      position: absolute;
+      width: 420px; height: 420px;
+      border-radius: 50%;
+      filter: blur(60px);
+      top: -140px; left: -100px;
+      pointer-events: none;
+      opacity: 0.55;
+      animation: cs-orb1 20s ease-in-out infinite;
+    }
+    .cs-hero-orb-b {
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      filter: blur(60px);
+      bottom: -60px; right: -80px;
+      pointer-events: none;
+      opacity: 0.35;
+      animation: cs-orb2 26s ease-in-out infinite;
+    }
+    .cs-hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(3,4,12,0.97) 0%, rgba(3,4,12,0.80) 50%, rgba(3,4,12,0.15) 100%);
+    }
+    .cs-hero-bottom-fade {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background: linear-gradient(to bottom, transparent, rgba(3,4,12,0.97));
+      pointer-events: none;
+    }
+    .cs-hero-portrait {
+      position: absolute;
+      right: 1.5rem; bottom: 1rem;
+      width: 110px; height: 110px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid rgba(200,148,10,0.4);
+      box-shadow: 0 0 24px rgba(0,0,0,0.7);
+      opacity: 0.85;
+    }
+    .cs-hero-content {
+      position: relative;
+      z-index: 2;
+      padding: 1.75rem 1.5rem 1.5rem;
+    }
+    .cs-hero-eyebrow {
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+    }
+    .cs-hero-name {
+      font-family: var(--font-headers);
+      font-size: clamp(2.2rem, 8vw, 3.5rem);
+      color: var(--white);
+      line-height: 1.05;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.9);
+    }
+    .cs-hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .cs-hero-tag {
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.05);
+    }
+    .cs-hero-tag--type {
+      color: #fff;
+      border-color: transparent;
+    }
+
+    /* ── Stat row (ability scores) ── */
+    .cs-stat-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .cs-stat-block {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 0.75rem 0.4rem;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .cs-stat-block:hover {
+      border-color: var(--char-highlight-border);
+      background: var(--char-card-bg-hover);
+    }
+    .cs-stat-val {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 0.2rem;
+    }
+    .cs-stat-mod {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--gold-light);
+      margin-bottom: 0.3rem;
+    }
+    .cs-stat-label {
+      font-family: var(--font-sans);
+      font-size: 0.5rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      font-weight: 700;
+    }
+
+    /* ── Section headers ── */
+    .cs-section {
+      margin-bottom: 1.75rem;
+    }
+    .cs-section-label {
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--char-highlight-border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cs-section-label::before {
+      content: '✦';
+      font-size: 0.55rem;
+      opacity: 0.6;
+    }
+
+    /* ── Identity grid ── */
+    .cs-identity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+    .cs-identity-row {
+      background: var(--char-card-bg-subtle);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .cs-identity-key {
+      font-family: var(--font-sans);
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      font-weight: 700;
+    }
+    .cs-identity-val {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--parchment);
+      font-weight: 400;
+    }
+
+    /* ── Appearance block ── */
+    .cs-appearance-block {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--char-radius);
+      padding: 1.25rem 1.5rem;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--char-text-muted);
+      line-height: 1.8;
+      font-style: italic;
+    }
+    .cs-appearance-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 1rem;
+    }
+    .cs-chip {
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.14);
+      color: var(--char-text-faint);
+      background: var(--char-accent-tint);
+    }
+    .cs-chip-label {
+      color: rgba(200,148,10,0.7);
+      font-weight: 700;
+      margin-right: 0.3rem;
+    }
+
+    /* ── Story panel ── */
+    .cs-story-block {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--char-radius);
+      overflow: hidden;
+    }
+    .cs-story-row {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 0.75rem;
+      align-items: start;
+    }
+    .cs-story-row:last-child { border-bottom: none; }
+    .cs-story-key {
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+      padding-top: 0.05rem;
+      line-height: 1.4;
+    }
+    .cs-story-val {
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      color: var(--char-text-muted);
+      line-height: 1.7;
+    }
+    .cs-story-val em {
+      color: var(--char-text-faint);
+      font-style: italic;
+    }
+
+    /* ── Gear list ── */
+    .cs-gear-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+    .cs-gear-item {
+      background: var(--char-card-bg-subtle);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--char-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cs-gear-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    /* ── Gold display ── */
+    .cs-gold-block {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      background: var(--char-highlight-tint);
+      border: 1px solid var(--char-highlight-border);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+    }
+    .cs-gold-icon {
+      font-size: 1.4rem;
+      color: var(--gold-light);
+      flex-shrink: 0;
+    }
+    .cs-gold-val {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      color: var(--gold-light);
+      line-height: 1;
+    }
+    .cs-gold-label {
+      font-family: var(--font-sans);
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(200,148,10,0.6);
+      font-weight: 700;
+      margin-top: 0.15rem;
+    }
+
+    /* ── Gigglegloom type banner ── */
+    .cs-type-banner {
+      border-radius: var(--char-radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .cs-type-banner-bg {
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+    }
+    .cs-type-icon {
+      width: 40px; height: 40px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 0 10px currentColor);
+    }
+    .cs-type-name {
+      font-family: var(--font-headers);
+      font-size: 1.5rem;
+      color: var(--white);
+      line-height: 1.1;
+      position: relative;
+      z-index: 1;
+    }
+    .cs-type-element {
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-top: 0.15rem;
+      position: relative;
+      z-index: 1;
+    }
+    .cs-type-desc {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--char-text-muted);
+      line-height: 1.65;
+      margin-top: 0.65rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Not-found state ── */
+    .cs-not-found {
+      text-align: center;
+      padding: 6rem 2rem;
+    }
+    .cs-not-found-glyph {
+      font-family: var(--font-headers);
+      font-size: 5rem;
+      color: rgba(200,148,10,0.15);
+      margin-bottom: 1.5rem;
+      line-height: 1;
+    }
+    .cs-not-found-title {
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      color: var(--char-text-faint);
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .cs-not-found-body {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: rgba(245,234,212,0.4);
+      line-height: 1.8;
+      max-width: 380px;
+      margin: 0 auto 2rem;
+    }
+    .cs-not-found-link {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--gold);
+      text-decoration: none;
+      border: 1px solid var(--char-highlight-border);
+      padding: 0.55rem 1.25rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .cs-not-found-link:hover {
+      background: var(--char-highlight-tint);
+      border-color: var(--gold);
+    }
+
+    /* ── Divider ornament ── */
+    .cs-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.25rem 0 1.5rem;
+      opacity: 0.25;
+    }
+    .cs-divider::before, .cs-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gold);
+    }
+    .cs-divider-glyph {
+      font-family: var(--font-headers);
+      font-size: 0.85rem;
+      color: var(--gold);
+    }
+
+    /* ── Footer ── */
+    .cs-footer {
+      text-align: center;
+      padding: 2.5rem 1rem 1rem;
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(200,148,10,0.15);
+    }
+
+    /* ── Animations ── */
+    @keyframes cs-orb1 {
+      0%, 100% { transform: translate(0, 0); }
+      50%       { transform: translate(30px, 20px); }
+    }
+    @keyframes cs-orb2 {
+      0%, 100% { transform: translate(0, 0); }
+      50%       { transform: translate(-20px, -30px); }
+    }
+    @keyframes cs-fadein {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .cs-wrap { animation: cs-fadein 0.5s ease forwards; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .cs-stat-row { grid-template-columns: repeat(3, 1fr); }
+      .cs-identity-grid { grid-template-columns: 1fr; }
+      .cs-story-row { grid-template-columns: 1fr; gap: 0.2rem; }
+      .cs-gear-grid { grid-template-columns: 1fr; }
+      .cs-hero-portrait { display: none; }
+      .cs-nav { padding: 0.6rem 1rem; }
+    }
+    @media (max-width: 380px) {
+      .cs-stat-row { grid-template-columns: repeat(3, 1fr); gap: 0.35rem; }
+      .cs-stat-val { font-size: 1.25rem; }
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      .cs-wrap { animation: none; }
+      .cs-hero-orb-a, .cs-hero-orb-b { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="cs-nav">
+    <a class="cs-nav-title" href="../index.html">✦ Anavale</a>
+    <a class="cs-nav-back" href="../index.html">← Return to Wiki</a>
+  </nav>
+
+  <!-- Main content — rendered by JS below -->
+  <main class="cs-wrap" id="cs-main">
+    <!-- populated by renderSheet() -->
+  </main>
+
+  <footer class="cs-footer" id="cs-footer"></footer>
+
+  <script>
+  'use strict';
+
+  // ── Lookup tables (mirrors character.js) ──────────────────────────
+  var TYPE_META = {
+    bubbleseed:  { name:'Bubbleseed',  color:'#2a7a3a', glow:'42,122,58',   element:'Earth · Growth · Joy',           desc:'Warm, generous magic. Tends to overshoot. Smells like fresh soil after rain. Emotionally attached to what it nurtures.' },
+    featherflow: { name:'Featherflow', color:'#2266b8', glow:'34,102,184',  element:'Wind · Water · Freedom',          desc:'Never goes straight. Values freedom above all. Subtly resists anything that cages it. May counteract early Fading.' },
+    steelfist:   { name:'Steelfist',   color:'#6a3aaa', glow:'106,58,170',  element:'Metal · Resolve · Order',         desc:'Does exactly what it is told. Rewards discipline and punishes sloppiness. Its grey shines — never confuse it with the Dimming\'s flat grey.' },
+    flamerage:   { name:'Flamerage',   color:'#aa3a1a', glow:'170,58,26',   element:'Fire · Destruction · Fury',       desc:'Responds to emotion before intent. Spectacular and unpredictable. The only type that can temporarily overpower Stage 1 Fading.' }
+  };
+
+  var ALIGNMENT_LABELS = {
+    brightward:  'Brightward  —  Lawful Good',
+    colorful:    'Colorful  —  Chaotic Good',
+    greywarden:  'Greywarden  —  True Neutral',
+    steelbound:  'Steelbound  —  Lawful Neutral',
+    ashwalker:   'Ashwalker  —  Chaotic Neutral'
+  };
+
+  var REGION_LABELS = {
+    caparia: 'Caparia',
+    nombi:   'Nombi',
+    sohot:   'Sohot',
+    jugabi:  'Jugabi'
+  };
+
+  var REGION_IMG = {
+    caparia: 'img-caparia-landscape',
+    nombi:   'img-nombi-landscape',
+    sohot:   'img-sohot-landscape',
+    jugabi:  'img-jugabi-landscape'
+  };
+
+  // Background starting gold — mirrors ANAVALE_BACKGROUNDS in character.js
+  var BG_GOLD = {
+    cobblewise:   10, craftborn:    15, faithful:     10, greywitnessed: 10,
+    learned:      10, masquerader:  15, reveler:      15, ringscarred:   15,
+    rootborn:     10, stillsought:   5, streetwise:   25, tested:        10,
+    threadpuller: 10, waykeeper:    10, wellborn:     20
+  };
+
+  // ── Human-readable label helpers ──────────────────────────────────
+  var RAISED_LABELS = {
+    'single-parent':   'raised by a single parent',
+    'two-parents':     'raised by two parents',
+    'grandparents':    'raised by grandparents',
+    'older-sibling':   'raised by an older sibling',
+    'extended-family': 'raised by extended family',
+    'community':       'raised by a community',
+    'institution':     'raised in an institution',
+    'self-raised':     'largely self-raised',
+    'mentor':          'raised by a mentor or teacher',
+    'unusual':         'raised in unusual circumstances'
+  };
+
+  var LEFT_BEHIND_LABELS = {
+    'family':        'family',
+    'home':          'a home',
+    'a-love':        'someone they loved',
+    'a-friend':      'a dear friend',
+    'a-debt':        'an unresolved debt',
+    'a-promise':     'a promise not yet kept',
+    'a-community':   'a community',
+    'nothing':       'nothing — they left clean'
+  };
+
+  var WHY_LEFT_LABELS = {
+    'called':        'felt called toward something',
+    'fled':          'had to leave in a hurry',
+    'searched':      'left searching for answers',
+    'sent':          'were sent away by someone they trust',
+    'lost':          'left after losing something important',
+    'curious':       'simply needed to see more of the world',
+    'duty':          'left out of a sense of duty',
+    'accident':      'did not plan to leave at all'
+  };
+
+  var ORG_LABELS = {
+    'brightcreed':   'The Brightcreed',
+    'stillkeep':     'The Stillkeep',
+    'veilborn':      'The Veilborn',
+    'conclave':      'The Gigglegloom Conclave',
+    'wanderkeep':    'The Wanderkeep',
+    'formery':       'The Formery',
+    'prism-exchange':'The Prism Exchange',
+    'nimblewood':    'The Nimblewood',
+    'the-revel':     'The Revel',
+    'chromeguard':   'The Chromeguard',
+    'none':          'No formal organization'
+  };
+
+  var PET_LABELS = {
+    'yes-still':     'Yes — still has them',
+    'yes-lost':      'Yes — but they\'re gone now',
+    'no':            'No',
+    'not-exactly':   'Not exactly a pet, but close enough'
+  };
+
+  var LOVE_LABELS = {
+    'yes':           'Yes',
+    'no':            'No',
+    'complicated':   'It\'s complicated',
+    'not-sure':      'Not sure if it counts'
+  };
+
+  // ── Ability score modifier ─────────────────────────────────────────
+  function abMod(score) {
+    var m = Math.floor((score - 10) / 2);
+    return (m >= 0 ? '+' : '') + m;
+  }
+
+  // ── Capitalize first letter ────────────────────────────────────────
+  function cap(str) {
+    if (!str) return '—';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // ── Safe label with fallback ───────────────────────────────────────
+  function label(map, key) {
+    if (!key) return '—';
+    return map[key] || cap(key.replace(/-/g,' '));
+  }
+
+  // ── Parse token from URL pathname ─────────────────────────────────
+  // URL is .../sheet/abc123.html  →  token = "abc123"
+  function getTokenFromPath() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('token') || '';
+  }
+
+  // ── Build appearance description from appearance_data ─────────────
+  function buildAppearanceDesc(app) {
+    if (!app) return null;
+    var parts = [];
+    if (app.height && app.build) {
+      parts.push(cap(app.height) + ', ' + app.build + ' build.');
+    } else if (app.height) {
+      parts.push(cap(app.height) + '.');
+    }
+    if (app.age) parts.push(cap(app.age) + '.');
+    var faceArr = [];
+    if (app.face_shape) faceArr.push(app.face_shape + ' face');
+    if (app.skin_tone)  faceArr.push(app.skin_tone + ' skin');
+    if (faceArr.length) parts.push(cap(faceArr.join(', ')) + '.');
+    var eyeArr = [];
+    if (app.eye_color) eyeArr.push(app.eye_color);
+    if (app.eye_shape) eyeArr.push(app.eye_shape);
+    if (eyeArr.length) parts.push(cap(eyeArr.join(', ')) + ' eyes.');
+    var hairArr = [];
+    if (app.hair_color) hairArr.push(app.hair_color);
+    if (app.hair_style) hairArr.push(app.hair_style + ' hair');
+    if (hairArr.length) parts.push(cap(hairArr.join(', ')) + '.');
+    if (app.facial_hair && app.facial_hair !== 'none' && app.facial_hair !== '') {
+      parts.push(cap(app.facial_hair) + '.');
+    }
+    if (Array.isArray(app.facial_markings) && app.facial_markings.length) {
+      parts.push('Markings: ' + app.facial_markings.join(', ') + '.');
+    }
+    return parts.join(' ') || null;
+  }
+
+  // ── Collect visible gear slots from appearance_data ───────────────
+  function buildGearList(app, bgId) {
+    if (!app) return [];
+    var gear = [];
+    var slotLabels = {
+      cloak: 'Cloak', top: 'Top', lower: 'Lower', shoes: 'Shoes',
+      hat: 'Hat', hand_right: 'Right Hand', hand_left: 'Left Hand',
+      ring_right: 'Ring (R)', ring_left: 'Ring (L)',
+      necklace: 'Necklace', earrings: 'Earrings'
+    };
+    Object.keys(slotLabels).forEach(function(k) {
+      var v = app[k];
+      if (v && v !== 'none' && v !== '') {
+        gear.push({ slot: slotLabels[k], val: cap(v.replace(/-/g,' ')) });
+      }
+    });
+    return gear;
+  }
+
+  // ── Render the sheet ──────────────────────────────────────────────
+  function renderSheet() {
+    var main = document.getElementById('cs-main');
+    var token = getTokenFromPath();
+
+    // Guard: no CHARACTERS array loaded
+    if (typeof CHARACTERS === 'undefined' || !Array.isArray(CHARACTERS)) {
+      main.innerHTML = renderNotFound('Character data is not yet loaded.', 'The DM will add your character shortly — try again in a few minutes.');
+      return;
+    }
+
+    // Find character by token
+    var ch = null;
+    for (var i = 0; i < CHARACTERS.length; i++) {
+      if (CHARACTERS[i].token === token) { ch = CHARACTERS[i]; break; }
+    }
+
+    if (!ch) {
+      main.innerHTML = renderNotFound('No character found for this link.', 'Make sure you\'re using the exact URL from your confirmation page. If you just created your character, the DM may not have added your entry yet.');
+      return;
+    }
+
+    // ── Resolved display values ────────────────────────────────────
+    var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
+    var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey), color: '#c8940a', glow:'200,148,10', element:'', desc:'' };
+    var regionKey  = (ch.home_region || '').toLowerCase();
+    var regionImg  = REGION_IMG[regionKey] || 'img-caparia-landscape';
+    var regionLabel = REGION_LABELS[regionKey] || cap(ch.home_region || '');
+    var scores     = ch.ability_scores || {};
+    var bgGold     = BG_GOLD[ch.background_id] || '—';
+    var app        = ch.appearance_data || {};
+    var gender     = ch.gender || 'm';
+    var portraitSuffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
+
+    // Human-readable class/species/bg
+    var classDisplay = cap((ch.class_id || '').replace(/-/g,' '));
+    var speciesDisplay = cap((ch.species || '').replace(/-/g,' '));
+    var bgDisplay = cap((ch.background_id || '').replace(/-/g,' '));
+
+    // Try to look up proper names from loaded data files
+    if (typeof CLASS_DATA !== 'undefined' && Array.isArray(CLASS_DATA)) {
+      CLASS_DATA.forEach(function(g) {
+        if (g.classes) g.classes.forEach(function(c) {
+          if (c.id === ch.class_id) classDisplay = c.name;
+        });
+      });
+    }
+    if (typeof ANAVALE_BACKGROUNDS !== 'undefined' && Array.isArray(ANAVALE_BACKGROUNDS)) {
+      ANAVALE_BACKGROUNDS.forEach(function(b) {
+        if (b.id === ch.background_id) bgDisplay = b.name;
+      });
+    }
+    if (typeof ANAVALE_SPECIES !== 'undefined' && Array.isArray(ANAVALE_SPECIES)) {
+      ANAVALE_SPECIES.forEach(function(s) {
+        if (s.id === ch.species) speciesDisplay = s.name || s.phb || speciesDisplay;
+      });
+    }
+
+    // Portrait — same pattern as character.js species card
+    var portraitSrc = ch.species
+      ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp'
+      : '';
+
+    // Appearance description
+    var appearanceDesc = ch.appearance_prompt || buildAppearanceDesc(app) || null;
+
+    // Story fields
+    var storyRows = [
+      { key: 'Who raised you',       val: label(RAISED_LABELS, ch.who_raised_you) },
+      { key: 'Dearest friend',       val: ch.dearest_friend || '—' },
+      { key: 'Had a pet',            val: label(PET_LABELS, ch.had_pet) },
+      { key: 'Fallen in love',       val: label(LOVE_LABELS, ch.fallen_in_love) },
+      { key: 'Organization',         val: label(ORG_LABELS, ch.organization_joined) },
+      { key: 'Left behind',          val: label(LEFT_BEHIND_LABELS, ch.left_behind) },
+      { key: 'Why you left',         val: label(WHY_LEFT_LABELS, ch.why_you_left) },
+      { key: 'Cares about',          val: ch.cares_about || '—' },
+      { key: 'Deepest fear',         val: ch.deepest_fear || '—' },
+      { key: 'What you seek',        val: ch.seeking || '—' }
+    ];
+
+    // Gear
+    var gearList = buildGearList(app, ch.background_id);
+
+    // ── Ability score cells ────────────────────────────────────────
+    var AB_KEYS  = ['str','dex','con','int','wis','cha'];
+    var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
+    var statCells = AB_KEYS.map(function(ab) {
+      var raw = parseInt(scores[ab]) || 0;
+      var mod = raw ? abMod(raw) : '—';
+      return '<div class="cs-stat-block">'
+        + '<div class="cs-stat-val">' + (raw || '—') + '</div>'
+        + '<div class="cs-stat-mod">' + mod + '</div>'
+        + '<div class="cs-stat-label">' + AB_NAMES[ab] + '</div>'
+        + '</div>';
+    }).join('');
+
+    // ── Identity rows ──────────────────────────────────────────────
+    var identity = [
+      { k:'Class',       v: classDisplay },
+      { k:'Species',     v: speciesDisplay },
+      { k:'Background',  v: bgDisplay },
+      { k:'Alignment',   v: label(ALIGNMENT_LABELS, ch.alignment) },
+      { k:'Home Region', v: regionLabel },
+      { k:'Level',       v: ch.level || 1 },
+      { k:'Pronouns',    v: ch.pronouns || '—' },
+      { k:'Language',    v: ch.language_extra ? cap(ch.language_extra.replace(/-/g,' ')) : '—' }
+    ];
+    var identityHtml = identity.map(function(r) {
+      return '<div class="cs-identity-row">'
+        + '<div class="cs-identity-key">' + r.k + '</div>'
+        + '<div class="cs-identity-val">' + r.v + '</div>'
+        + '</div>';
+    }).join('');
+
+    // ── Story rows HTML ────────────────────────────────────────────
+    var storyHtml = storyRows
+      .filter(function(r) { return r.val && r.val !== '—'; })
+      .map(function(r) {
+        return '<div class="cs-story-row">'
+          + '<div class="cs-story-key">' + r.key + '</div>'
+          + '<div class="cs-story-val">' + r.val + '</div>'
+          + '</div>';
+      }).join('');
+
+    // ── Gear HTML ─────────────────────────────────────────────────
+    var gearHtml = gearList.length
+      ? gearList.map(function(g) {
+          return '<div class="cs-gear-item">'
+            + '<div class="cs-gear-dot"></div>'
+            + '<span><span style="color:var(--char-text-faint);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">' + g.slot + '</span>  ' + g.val + '</span>'
+            + '</div>';
+        }).join('')
+      : '<div class="cs-gear-item"><div class="cs-gear-dot"></div><em style="color:var(--char-text-faint);">Starting gear to be determined</em></div>';
+
+    // ── Appearance chips ───────────────────────────────────────────
+    var chipSlots = ['height','build','age','skin_tone','face_shape','eye_color','eye_shape','hair_color','hair_style'];
+    var chipsHtml = chipSlots.filter(function(k) { return app[k]; }).map(function(k) {
+      return '<span class="cs-chip"><span class="cs-chip-label">'
+        + k.replace(/_/g,' ') + '</span>'
+        + cap((app[k] || '').replace(/-/g,' '))
+        + '</span>';
+    }).join('');
+
+    // ── Type banner HTML ───────────────────────────────────────────
+    var typeIconSrc = typeKey ? '../assets/icons/icon-' + typeKey + '.svg' : '';
+    var typeBannerHtml = '<div class="cs-type-banner" style="border-color:' + typeMeta.color + '33;">'
+      + '<div class="cs-type-banner-bg" style="background:radial-gradient(circle at left, ' + typeMeta.color + ' 0%, transparent 70%);"></div>'
+      + (typeIconSrc ? '<img class="cs-type-icon" src="' + typeIconSrc + '" alt="" aria-hidden="true" style="color:' + typeMeta.color + ';">' : '')
+      + '<div>'
+        + '<div class="cs-type-name">' + typeMeta.name + '</div>'
+        + '<div class="cs-type-element" style="color:' + typeMeta.color + ';">' + typeMeta.element + '</div>'
+        + (typeMeta.desc ? '<div class="cs-type-desc">' + typeMeta.desc + '</div>' : '')
+      + '</div>'
+      + '</div>';
+
+    // ── Portrait img ───────────────────────────────────────────────
+    var portraitHtml = portraitSrc
+      ? '<img class="cs-hero-portrait" src="' + portraitSrc + '" alt="' + (ch.name||'') + ' portrait" onerror="this.style.display=\'none\'">'
+      : '';
+
+    // ── Assemble full page ─────────────────────────────────────────
+    main.innerHTML =
+      // Hero
+      '<div class="cs-hero">'
+        + '<div class="cs-hero-bg" style="background-image:url(\'../assets/images/regions/' + regionImg + '.webp\');"></div>'
+        + '<div class="cs-hero-orb-a" style="background:radial-gradient(circle, rgba(' + typeMeta.glow + ',0.6) 0%, transparent 65%);"></div>'
+        + '<div class="cs-hero-orb-b" style="background:radial-gradient(circle, rgba(' + typeMeta.glow + ',0.4) 0%, transparent 65%);"></div>'
+        + '<div class="cs-hero-overlay"></div>'
+        + '<div class="cs-hero-bottom-fade"></div>'
+        + portraitHtml
+        + '<div class="cs-hero-content">'
+          + '<div class="cs-hero-eyebrow">Anavale · Character Sheet</div>'
+          + '<div class="cs-hero-name">' + (ch.name || 'Unknown') + '</div>'
+          + '<div class="cs-hero-tags">'
+            + '<span class="cs-hero-tag cs-hero-tag--type" style="background:' + typeMeta.color + '22;border-color:' + typeMeta.color + '55;color:#fff;">' + typeMeta.name + '</span>'
+            + '<span class="cs-hero-tag">' + classDisplay + '</span>'
+            + '<span class="cs-hero-tag">' + speciesDisplay + '</span>'
+            + '<span class="cs-hero-tag">' + regionLabel + '</span>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+
+      // Gigglegloom type
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Gigglegloom Affinity</div>'
+        + typeBannerHtml
+      + '</div>'
+
+      // Ability scores
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Ability Scores</div>'
+        + '<div class="cs-stat-row">' + statCells + '</div>'
+      + '</div>'
+
+      // Identity
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Identity</div>'
+        + '<div class="cs-identity-grid">' + identityHtml + '</div>'
+      + '</div>'
+
+      // Appearance
+      + (appearanceDesc || chipsHtml ? (
+        '<div class="cs-section">'
+          + '<div class="cs-section-label">Appearance</div>'
+          + (appearanceDesc ? '<div class="cs-appearance-block">' + appearanceDesc + '</div>' : '')
+          + (chipsHtml ? '<div class="cs-appearance-chips">' + chipsHtml + '</div>' : '')
+        + '</div>'
+      ) : '')
+
+      // Starting gear
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Starting Gear</div>'
+        + '<div class="cs-gear-grid">' + gearHtml + '</div>'
+      + '</div>'
+
+      // Starting gold
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Starting Gold</div>'
+        + '<div class="cs-gold-block">'
+          + '<div class="cs-gold-icon">◈</div>'
+          + '<div>'
+            + '<div class="cs-gold-val">' + bgGold + ' gp</div>'
+            + '<div class="cs-gold-label">Starting gold · ' + bgDisplay + ' background</div>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+
+      // Background story
+      + (storyHtml ? (
+        '<div class="cs-section">'
+          + '<div class="cs-section-label">Your Past</div>'
+          + '<div class="cs-story-block">' + storyHtml + '</div>'
+        + '</div>'
+      ) : '')
+
+      // Divider
+      + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
+
+    // Footer
+    document.getElementById('cs-footer').textContent = '✦ · Anavale · ' + (ch.name || '') + ' · Level ' + (ch.level || 1) + ' · ✦';
+
+    // Page title
+    document.title = (ch.name || 'Character') + ' — Anavale';
+  }
+
+  // ── Not-found HTML template ────────────────────────────────────────
+  function renderNotFound(title, body) {
+    return '<div class="cs-not-found">'
+      + '<div class="cs-not-found-glyph">✦</div>'
+      + '<div class="cs-not-found-title">' + title + '</div>'
+      + '<div class="cs-not-found-body">' + body + '</div>'
+      + '<a class="cs-not-found-link" href="../index.html">← Return to Anavale Wiki</a>'
+      + '</div>';
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', renderSheet);
+  </script>
+</body>
+</html>

@@ -59,7 +59,7 @@ function checkAlreadyCreated() {
     if (banner) {
       banner.style.display = 'flex';
       var link = banner.querySelector('.char-sheet-link');
-      if (link) link.href = 'sheet/' + token + '.html';
+      if (link) link.href = 'sheet/?token=' + token;
     }
   }
 }
@@ -3438,7 +3438,7 @@ function showConfirmation(entry, token) {
   }
 
   // Sheet URL
-  var sheetUrl = window.location.origin + '/anavale-wiki/sheet/' + token + '.html';
+  var sheetUrl = window.location.origin + '/anavale-wiki/sheet/?token=' + token;
   var urlEl = document.getElementById('char-confirm-url');
   if (urlEl) urlEl.textContent = sheetUrl;
 
