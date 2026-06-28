@@ -10,13 +10,11 @@
 
 // ── CONFIGURATION ─────────────────────────────────────────────────
 var CHAR_CONFIG = {
-  formspree:    'https://formspree.io/f/xzdwaveg',
-  github_token: (function(){ var a='Z2l0aHViX3BhdF8xMUNBUjc0U1'; var b='EwVTRzTEJJYzdubDh5X0Q4U0w3'; var c='M29rMDdMWjhuUDE5TW41UndDTmRVMUIwNjA3UE9iczl6UHlpeEhFNE1PNkZFVmVkYmloUmpz'; return atob(a+b+c); })(), // dispatch token — encoded, not a raw secret
-  github_repo:  'carlosknightiii/anavale-wiki',
-  draft_key:    'anavale_char_draft',
-  created_key:  'anavale_character_created',
-  token_key:    'anavale_github_token',
-  total_stages: 5
+  supabase_url:  'https://ebppsgaftzyvftemfeom.supabase.co',
+  supabase_anon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg',
+  draft_key:     'anavale_char_draft',
+  created_key:   'anavale_character_created',
+  total_stages:  5
 };
 
 // GitHub token is hardcoded (Actions-only dispatch PAT — safe to expose publicly).
@@ -3168,7 +3166,6 @@ function closePreSubmitConfirm() {
 
 // ── SUBMIT ─────────────────────────────────────────────────────────
 async function submitCharacter() {
-  // Close the pre-submit modal immediately
   closePreSubmitConfirm();
   var btn = document.getElementById('char-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
@@ -3180,45 +3177,39 @@ async function submitCharacter() {
     collectStageData(4);
     var d = CHAR_STATE.draft;
 
-    // Basic validation
     if (!d.character_name || d.character_name.trim() === '') {
       showToast('Please enter a name for your character.');
       if (btn) { btn.disabled = false; btn.textContent = '✦ · BEGIN YOUR STORY · ✦'; }
       return;
     }
 
-    // Generate token
     var token = generateToken();
-
-    // Build character entry
     var entry = buildCharacterEntry(d, token);
 
-    // 1. Send to Formspree first — this always works and is the reliable record.
-    // Formspree is the source of truth when GitHub is unavailable.
-    await sendToFormspree(entry);
+    // Write to Supabase player_characters table
+    var res = await fetch(CHAR_CONFIG.supabase_url + '/rest/v1/player_characters', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        CHAR_CONFIG.supabase_anon,
+        'Authorization': 'Bearer ' + CHAR_CONFIG.supabase_anon,
+        'Prefer':        'return=minimal'
+      },
+      body: JSON.stringify(entry)
+    });
 
-    // 2. Attempt GitHub write — non-fatal.
-    // Players don't have the GitHub token in their browser; this will fail
-    // for them silently. The DM imports Formspree submissions manually.
-    // If the DM has the token saved (e.g. testing from DM Tools), this
-    // will also write directly to characters.js.
-    var githubOk = false;
-    try {
-      githubOk = await writeToGitHub(entry);
-    } catch(ghErr) {
-      console.warn('GitHub write skipped (token likely absent):', ghErr);
+    if (!res.ok) {
+      var errText = await res.text();
+      console.error('Supabase insert failed:', res.status, errText);
+      throw new Error('Supabase insert failed: ' + res.status);
     }
 
-    // 3. Mark as created locally
+    // Mark as created locally
     localStorage.setItem(CHAR_CONFIG.created_key, token);
     localStorage.removeItem(CHAR_CONFIG.draft_key);
 
-    // 4. Show confirmation — always, regardless of GitHub result
+    // Show confirmation screen
     showConfirmation(entry, token);
-
-    if (!githubOk) {
-      console.info('Character saved via Formspree. DM will add to characters.js from email submission.');
-    }
 
   } catch(err) {
     console.error('Submission error:', err);
