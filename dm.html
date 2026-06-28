@@ -601,14 +601,45 @@
 }
 .form-section-header {
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--dm-text-faint);
+  letter-spacing: 0.01em;
+  color: var(--dm-text);
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--dm-border);
   margin-bottom: 1.25rem;
+}
+/* Edit mode — hide the Add type selector, show a back link */
+.dm-edit-mode .add-type-selector { display: none; }
+.dm-edit-back {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0 1.25rem;
+  border-bottom: 1px solid var(--dm-border);
+  margin-bottom: 1.5rem;
+}
+.dm-edit-mode .dm-edit-back { display: flex; }
+.dm-edit-back-btn {
+  background: none;
+  border: 1px solid var(--dm-border-mid);
+  color: var(--dm-text-muted);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.3rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.dm-edit-back-btn:hover {
+  border-color: var(--dm-text-muted);
+  color: var(--dm-text);
+}
+.dm-edit-mode-label {
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 .img-compress-inner {
   display: flex; align-items: flex-start; gap: 1rem;
@@ -927,6 +958,11 @@
       <!-- ── ADD WRAPPER ──────────────────────── -->
       <div id="form-add" class="dm-form">
 
+        <!-- Edit mode bar (hidden unless .dm-edit-mode is active) -->
+        <div class="dm-edit-back">
+          <button class="dm-edit-back-btn" onclick="cmCancelEdit()">← Back to Manage</button>
+          <span class="dm-edit-mode-label" id="dm-edit-mode-label">Editing entry</span>
+        </div>
         <!-- Type selector at top of Add panel -->
         <div class="add-type-selector">
           <label class="add-type-label" for="add-type-select">Add new entry:</label>
@@ -5252,21 +5288,88 @@ function cmCycleVisibility(idx) {
 function cmEditEntry(idx) {
   var item = CM_FILTERED[idx];
   if (!item) return;
+  var entry = item._entry;
 
   // Signal to showOutput() / saveToFile() that the next Generate+Save is a replace, not an append
-  PENDING_EDIT_ID    = item._entry.id;
-  PENDING_EDIT_IMAGE = item._entry.image || null; // preserve existing image through the edit cycle
+  PENDING_EDIT_ID    = entry.id;
+  PENDING_EDIT_IMAGE = entry.image || null;
 
   switchTab('add');
   switchAddType(item._type);
-  cmPopulateForm(item._entry, item._type);
+  cmPopulateForm(entry, item._type);
   CM_PENDING = { item: item, action: 'edit' };
 
+  // ── Edit mode UI ──
+  var formAdd = document.getElementById('form-add');
+  if (formAdd) formAdd.classList.add('dm-edit-mode');
+
+  // Update title and subtitle to reflect editing, not creating
+  var typeLabels = {
+    city: 'City / Settlement', creature: 'Creature', poi: 'Point of Interest',
+    character: 'Character', organization: 'Organization', item: 'Item'
+  };
+  var subform = document.getElementById('form-' + item._type);
+  if (subform) {
+    var titleEl = subform.querySelector('.dm-form-title');
+    var subEl   = subform.querySelector('.dm-form-subtitle');
+    if (titleEl) titleEl.textContent = '✎ Edit ' + (typeLabels[item._type] || item._type);
+    if (subEl)   subEl.textContent   = 'Editing: ' + (entry.name || entry.id);
+  }
+
+  // Relabel generate button to "Save Changes"
+  var genBtn = subform && subform.querySelector('.btn-generate');
+  if (genBtn) { genBtn.textContent = '✦ Save Changes'; genBtn.dataset.editMode = '1'; }
+
+  // Update the edit-mode label
+  var label = document.getElementById('dm-edit-mode-label');
+  if (label) label.textContent = 'Editing: ' + (entry.name || entry.id);
+
   cmSetOutput(
-    'Editing: "' + item._entry.name + '" — form loaded above. Modify fields, click ✦ Generate Entry, then 💾 Save to File.',
-    '// Edit the form and click ✦ Generate Entry.\n// The generated JSON will appear in the main output panel.\n// Use the main 💾 Save to Data File button to write changes.',
+    'Editing: "' + entry.name + '" — modify fields, click ✦ Save Changes, then 💾 Save to File.',
+    '// Edit the form and click ✦ Save Changes.\n// The updated JSON will appear in the main output panel.',
     item
   );
+}
+
+function cmCancelEdit() {
+  // Restore all form titles and generate buttons to their default state
+  var types = ['city','creature','poi','character','organization','item'];
+  var defaultTitles = {
+    city: '🏙️ New City or Settlement', creature: '🐾 New Creature',
+    poi: '📍 New Point of Interest', character: '🧙 New Character',
+    organization: '🏛️ New Organization', item: '⚔️ New Item'
+  };
+  var defaultSubs = {
+    city: 'Generates a valid entry for data/cities.js — city, town, village, port, outpost, or ruin',
+    creature: 'Generates a valid entry for data/creatures.js',
+    poi: 'Generates a valid entry for data/pois.js — landmark, sacred site, ruin, dark zone, or Drakhold outpost',
+    character: 'Generates a valid entry for data/characters.js — NPC, ally, villain, god, or faction leader',
+    organization: 'Generates a valid entry for data/organizations.js — guild, faction, government body, or criminal syndicate',
+    item: 'Generates a valid entry for data/items.js — weapon, armor, shield, consumable, tool, accessory, or quest item'
+  };
+  var defaultBtns = {
+    city: '✦ Generate Entry', creature: '✦ Generate Entry', poi: '✦ Generate Entry',
+    character: '✦ Generate Entry', organization: '✦ Generate Entry', item: '✦ Generate Entry'
+  };
+  types.forEach(function(type) {
+    var subform = document.getElementById('form-' + type);
+    if (!subform) return;
+    var titleEl = subform.querySelector('.dm-form-title');
+    var subEl   = subform.querySelector('.dm-form-subtitle');
+    var genBtn  = subform.querySelector('.btn-generate');
+    if (titleEl) titleEl.textContent = defaultTitles[type] || '';
+    if (subEl)   subEl.textContent   = defaultSubs[type]   || '';
+    if (genBtn)  { genBtn.textContent = defaultBtns[type]; delete genBtn.dataset.editMode; }
+  });
+  // Remove edit mode class and reset pending state
+  var formAdd = document.getElementById('form-add');
+  if (formAdd) formAdd.classList.remove('dm-edit-mode');
+  PENDING_EDIT_ID    = null;
+  PENDING_EDIT_IMAGE = null;
+  CM_PENDING         = null;
+  FORM_DIRTY         = false;
+  // Switch back to Manage
+  switchTab('manage');
 }
 
 /* ── POPULATE FORM ───────────────────────────── */
@@ -5284,14 +5387,23 @@ function cmPopulateForm(entry, type) {
   // Show existing image path and thumbnail for edit flow
   function showExistingImage(previewId, pathId) {
     if (!entry.image) return;
+    // Show path hint in the error/path element
     var pathHint = document.getElementById(pathId);
     if (pathHint) pathHint.innerHTML = '🖼 Current: <code>' + escHtml(entry.image) + '</code> — upload a new image to replace';
+    // Show preview using new img-top-preview pattern
     var prev = document.getElementById(previewId);
     if (prev) {
       prev.src = entry.image;
-      prev.classList.add('visible');
-      prev.onerror = function() { prev.classList.remove('visible'); };
+      prev.classList.remove('hidden'); // new layout: remove hidden to show
+      prev.onerror = function() { prev.classList.add('hidden'); };
     }
+    // Hide the placeholder
+    var prefix      = previewId.replace('-img-preview', '');
+    var placeholder = document.getElementById(prefix + '-img-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+    // Pre-fill the image path field
+    var pathField = document.getElementById(prefix + '-img-field');
+    if (pathField && !pathField.value) pathField.value = entry.image;
   }
 
   if (type === 'city') {
