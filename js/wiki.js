@@ -27,10 +27,8 @@ function escapeRe(str) { return escapeRegex(str); }
 
 function creatureSubtitle(c) {
   if (!c) return '';
-  var h = (c.habitat || '').split(' — ')[0].split(',')[0];
-  if (h.length > 60) h = h.slice(0, 57) + '…';
   return (c.tier ? c.tier.charAt(0).toUpperCase() + c.tier.slice(1) : '')
-       + (h ? ' · ' + h : '');
+       + (c.habitat ? ' · ' + c.habitat : '');
 }
 
 // Build a breadcrumb HTML string from segments [{label, hash}]
@@ -1590,7 +1588,7 @@ function renderCreature(id, el) {
   var vis = getVisibility(creature);
   if (vis === 'hidden') { renderNotFound(el, 'creature/' + id); return; }
 
-  var tierLabel = titleCase(creature.tier || creature.category);
+  var tierLabel = titleCase(creature.tier || '');
 
   if (vis === 'teaser') {
     var desc = creature.description || '';
@@ -1625,22 +1623,36 @@ function renderCreature(id, el) {
   }
 
   var regionTagsHtml = (creature.regions || []).map(function(r) {
-    return '<span style="margin-right:0.5rem;font-size:0.8rem;color:var(--amber);">' + titleCase(r) + '</span>';
+    return '<span class="entry-wiki-tag">' + esc(titleCase(r)) + '</span>';
   }).join('');
+
+  var tagsHtml = (creature.tags || []).length
+    ? '<div class="entry-tags-row">'
+      + creature.tags.map(function(t) {
+          return '<span class="entry-wiki-tag entry-wiki-tag--link" onclick="navigate(\'search?q=' + esc(encodeURIComponent(t)) + '\')" title="Search for: ' + esc(t) + '">' + esc(t) + '</span>';
+        }).join('')
+      + '</div>'
+    : '';
+
+  var habitatHtml = creature.habitat
+    ? '<div class="creature-meta-row"><span class="creature-meta-label">Habitat</span><span class="creature-meta-value">' + esc(creature.habitat) + '</span></div>'
+    : '';
 
   el.innerHTML = breadcrumb([
       { label: 'Creatures', hash: 'creature/' + id },
       { label: tierLabel, hash: 'creature/' + id },
       { label: creature.name, hash: 'creature/' + id }
     ])
-    + pageHeader('Bestiary · ' + tierLabel, creature.name, creatureSubtitle(creature))
+    + pageHeader('Bestiary · ' + tierLabel, creature.name, '')
     + '<div class="wiki-body">'
     + entryImage(creature.image, creature.name, 'entry-hero-image--creature')
-    + (regionTagsHtml ? '<div style="margin-bottom:1rem;">' + regionTagsHtml + '</div>' : '')
+    + (regionTagsHtml ? '<div class="entry-tags-row" style="margin-bottom:0.5rem;">' + regionTagsHtml + '</div>' : '')
+    + habitatHtml
     + '<p>' + esc(creature.description) + '</p>'
     + (creature.behavior ? '<div class="section-heading">Behavior</div><p>' + esc(creature.behavior) + '</p>' : '')
     + (creature.gigglegloom_relationship ? '<div class="section-heading">Gigglegloom Relationship</div><p>' + esc(creature.gigglegloom_relationship) + '</p>' : '')
     + dimmedHtml
+    + tagsHtml
     + '</div>';
 }
 

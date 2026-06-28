@@ -874,6 +874,55 @@ background-image: var(--gradient-colorful);
   font-size: 0.9rem;
 }
 
+/* ── Entry tags row — shared across creature, poi, org, character pages ── */
+.entry-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.entry-wiki-tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  background: rgba(200,148,10,0.08);
+  border: 1px solid rgba(200,148,10,0.25);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-family: var(--font-sans);
+  color: var(--amber);
+}
+.entry-wiki-tag--link {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.entry-wiki-tag--link:hover {
+  background: rgba(200,148,10,0.18);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Creature habitat meta row ── */
+.creature-meta-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+.creature-meta-label {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+.creature-meta-value {
+  color: var(--ink-light);
+  line-height: 1.5;
+}
+
 
 /* ============================================================
    15. REGION PAGE

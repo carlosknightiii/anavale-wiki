@@ -1196,27 +1196,20 @@
               <input class="field-input" type="text" id="creature-id" placeholder="e.g. dustwhump-badger">
             </div>
           </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="creature-tier">Tier <span class="req">✦</span></label>
-              <span class="field-help">Gigglegloom classification tier</span>
-              <select class="field-select" id="creature-tier">
-                <option value="">— Select tier —</option>
-                <option value="ancient">Ancient &amp; Mythic</option>
-                <option value="common">Common — aquatic, sky, domestic, etc.</option>
-                <option value="corrupted">Vareth-Corrupted</option>
-                <option value="dimmed">The Dimmed — dark territory, near-zero saturation</option>
-                <option value="merry">The Merry — light territory, full saturation</option>
-                <option value="rare">Rare &amp; Mysterious</option>
-                <option value="sparked">The Sparked — Gigglegloom overloaded</option>
-                <option value="unseen">The Unseen — outside the Gigglegloom entirely</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="creature-category">Category</label>
-              <span class="field-help">Sub-classification (e.g. aquatic, sky, domestic, the-merry, ancient)</span>
-              <input class="field-input" type="text" id="creature-category" placeholder="e.g. aquatic">
-            </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-tier">Gigglegloom Classification <span class="req">✦</span></label>
+            <span class="field-help">Where this creature sits in Anavale's magical order — drives wiki grouping and navigation</span>
+            <select class="field-select" id="creature-tier">
+              <option value="">— Select classification —</option>
+              <option value="ancient">Ancient &amp; Mythic — predates the Partition</option>
+              <option value="common">Common — aquatic, sky, domestic, widespread</option>
+              <option value="corrupted">Vareth-Corrupted — touched by the Dimming</option>
+              <option value="dimmed">The Dimmed — dark territory, near-zero saturation</option>
+              <option value="merry">The Merry — light territory, full saturation</option>
+              <option value="rare">Rare &amp; Mysterious</option>
+              <option value="sparked">The Sparked — Gigglegloom overloaded</option>
+              <option value="unseen">The Unseen — outside the Gigglegloom entirely</option>
+            </select>
           </div>
         </div>
 
@@ -4120,7 +4113,6 @@ function generateCreature() {
     id:                       entryId,
     name:                     name,
     tier:                     tier,
-    category:                 orNull(val('creature-category')),
     regions:                  regions,
     habitat:                  orNull(val('creature-habitat')),
     description:              desc,
@@ -5451,7 +5443,6 @@ function cmPopulateForm(entry, type) {
     sv('creature-dm-notes',    entry.dm_notes);
     sv('creature-tags',        (entry.tags || []).join(', '));
     sv('creature-tier',        entry.tier);
-    sv('creature-category',    entry.category);
     // Region checkboxes (no name attr — select by container + value)
     var regions = entry.regions || [];
     document.querySelectorAll('#creature-regions input[type=checkbox]').forEach(function(cb) {
