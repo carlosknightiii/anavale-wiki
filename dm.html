@@ -557,7 +557,7 @@
 .img-top-preview {
   width: 160px;
   height: 120px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--dm-radius-sm);
   border: 1px solid var(--dm-border-mid);
   background: var(--dm-surface-high);
@@ -650,7 +650,7 @@
 }
 .img-compress-thumb {
   width: 80px; height: 80px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--dm-radius-sm);
   border: 1px solid var(--dm-border-mid);
 }
@@ -1037,6 +1037,7 @@
               <div class="img-top-label">Entry Image</div>
               <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
               <button class="btn-add" type="button" id="city-img-upload-btn" onclick="uploadImageToSupabase('city','cities')">⬆ Upload Image to Supabase</button>
+              <button class="btn-add" type="button" id="city-img-remove-btn" onclick="removeEntryImage('city')" style="display:none;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;">✕ Remove Image</button>
               <div id="city-img-size" class="img-compress-size"></div>
               <div id="city-img-path" class="img-compress-error"></div>
               <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
@@ -1151,7 +1152,7 @@
           </div>
 
           <div class="dm-form-actions">
-            <button class="btn-generate" onclick="generateCity()">✦ Generate Entry</button>
+            <button class="btn-generate" onclick="generateCity()">✦ Save Entry</button>
             <button class="btn-clear" onclick="clearForm('city')">Clear Form</button>
           </div>
         </div>
@@ -1204,6 +1205,7 @@
             <div class="img-top-label">Entry Image</div>
             <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
             <button class="btn-add" type="button" id="creature-img-upload-btn" onclick="uploadImageToSupabase('creature','creatures')">⬆ Upload Image to Supabase</button>
+            <button class="btn-add" type="button" id="creature-img-remove-btn" onclick="removeEntryImage('creature')" style="display:none;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;">✕ Remove Image</button>
             <div id="creature-img-size" class="img-compress-size"></div>
             <div id="creature-img-path" class="img-compress-error"></div>
             <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
@@ -1293,7 +1295,7 @@
         </div>
 
         <div class="dm-form-actions">
-          <button class="btn-generate" onclick="generateCreature()">✦ Generate Entry</button>
+          <button class="btn-generate" onclick="generateCreature()">✦ Save Entry</button>
           <button class="btn-clear" onclick="clearForm('creature')">Clear Form</button>
         </div>
       </div>
@@ -1361,6 +1363,7 @@
             <div class="img-top-label">Entry Image</div>
             <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
             <button class="btn-add" type="button" id="poi-img-upload-btn" onclick="uploadImageToSupabase('poi','pois')">⬆ Upload Image to Supabase</button>
+            <button class="btn-add" type="button" id="poi-img-remove-btn" onclick="removeEntryImage('poi')" style="display:none;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;">✕ Remove Image</button>
             <div id="poi-img-size" class="img-compress-size"></div>
             <div id="poi-img-path" class="img-compress-error"></div>
             <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
@@ -1457,7 +1460,7 @@
         </div>
 
         <div class="dm-form-actions">
-          <button class="btn-generate" onclick="generatePoi()">✦ Generate Entry</button>
+          <button class="btn-generate" onclick="generatePoi()">✦ Save Entry</button>
           <button class="btn-clear" onclick="clearForm('poi')">Clear Form</button>
         </div>
       </div>
@@ -1549,6 +1552,7 @@
             <div class="img-top-label">Entry Image</div>
             <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
             <button class="btn-add" type="button" id="char-img-upload-btn" onclick="uploadImageToSupabase('char','characters')">⬆ Upload Image to Supabase</button>
+            <button class="btn-add" type="button" id="char-img-remove-btn" onclick="removeEntryImage('char')" style="display:none;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;">✕ Remove Image</button>
             <div id="char-img-size" class="img-compress-size"></div>
             <div id="char-img-path" class="img-compress-error"></div>
             <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
@@ -1654,7 +1658,7 @@
         </div>
 
         <div class="dm-form-actions">
-          <button class="btn-generate" onclick="generateCharacter()">✦ Generate Entry</button>
+          <button class="btn-generate" onclick="generateCharacter()">✦ Save Entry</button>
           <button class="btn-clear" onclick="clearForm('character')">Clear Form</button>
         </div>
       </div>
@@ -1714,6 +1718,7 @@
             <div class="img-top-label">Entry Image</div>
             <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
             <button class="btn-add" type="button" id="org-img-upload-btn" onclick="uploadImageToSupabase('org','organizations')">⬆ Upload Image to Supabase</button>
+            <button class="btn-add" type="button" id="org-img-remove-btn" onclick="removeEntryImage('org')" style="display:none;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;">✕ Remove Image</button>
             <div id="org-img-size" class="img-compress-size"></div>
             <div id="org-img-path" class="img-compress-error"></div>
             <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
@@ -1832,7 +1837,7 @@
         </div>
 
         <div class="dm-form-actions">
-          <button class="btn-generate" onclick="generateOrganization()">✦ Generate Entry</button>
+          <button class="btn-generate" onclick="generateOrganization()">✦ Save Entry</button>
           <button class="btn-clear" onclick="clearForm('organization')">Clear Form</button>
         </div>
       </div>
@@ -1910,6 +1915,7 @@
             <div class="img-top-label">Entry Image</div>
             <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
             <button class="btn-add" type="button" id="item-img-upload-btn" onclick="uploadImageToSupabase('item','items')">⬆ Upload Image to Supabase</button>
+            <button class="btn-add" type="button" id="item-img-remove-btn" onclick="removeEntryImage('item')" style="display:none;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;">✕ Remove Image</button>
             <div id="item-img-size" class="img-compress-size"></div>
             <div id="item-img-path" class="img-compress-error"></div>
             <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
@@ -2261,7 +2267,7 @@
         </div>
 
         <div class="dm-form-actions">
-          <button class="btn-generate" onclick="generateItem()">✦ Generate Entry</button>
+          <button class="btn-generate" onclick="generateItem()">✦ Save Entry</button>
           <button class="btn-clear" onclick="clearForm('item')">Clear Form</button>
         </div>
       </div><!-- /form-item subform -->
@@ -2591,6 +2597,7 @@
       body: JSON.stringify(entry)
     }).then(function(r) {
       if (r.ok) {
+        showDMToast(entry.name + ' saved to Supabase ✓', 'success');
         showSaveStatus('success', '✓ Saved to Supabase — wiki will update on next reload.');
       } else {
         r.text().then(function(t) {
@@ -2633,6 +2640,24 @@
   };
 
 })();
+</script>
+<script>
+function showDMToast(msg, type) {
+  var toast = document.getElementById('dm-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'dm-toast';
+    toast.style.cssText = 'position:fixed;bottom:2rem;right:2rem;padding:0.75rem 1.5rem;border-radius:8px;font-family:var(--font-sans);font-size:0.9rem;font-weight:600;z-index:9999;transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.background = type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(248,113,113,0.15)';
+  toast.style.border = type === 'success' ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(248,113,113,0.4)';
+  toast.style.color = type === 'success' ? '#4ade80' : '#f87171';
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(function() { toast.style.opacity = '0'; }, 3000);
+}
 </script>
 <style>
 /* ── SETUP TAB ─────────────────────────────────────────────────── */
@@ -3772,6 +3797,8 @@ async function uploadImageToSupabase(prefix, folder) {
       if (pathInput) pathInput.value = url;
       if (sizeEl) sizeEl.innerHTML = '<span style="color:var(--dm-green)">✓ Uploaded to Supabase</span>';
       if (uploadBtn) { uploadBtn.textContent = '✓ Uploaded'; uploadBtn.disabled = false; }
+      var removeBtn = document.getElementById(prefix + '-img-remove-btn');
+      if (removeBtn) removeBtn.style.display = '';
     } else {
       if (sizeEl) sizeEl.innerHTML = '<span style="color:var(--dm-red)">⚠ Upload failed — check console</span>';
       if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '⬆ Upload Image'; }
@@ -3780,6 +3807,29 @@ async function uploadImageToSupabase(prefix, folder) {
     console.error(err);
     if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '⬆ Upload Image'; }
   }
+}
+
+async function removeEntryImage(prefix) {
+  var fieldEl  = document.getElementById(prefix + '-img-field');
+  var preview  = document.getElementById(prefix + '-img-preview');
+  var placeholder = document.getElementById(prefix + '-img-placeholder');
+  var removeBtn   = document.getElementById(prefix + '-img-remove-btn');
+  var currentUrl  = fieldEl ? fieldEl.value : '';
+
+  if (currentUrl && currentUrl.includes('supabase')) {
+    // Extract path from full URL and delete from Storage
+    var path = currentUrl.replace('https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/', '');
+    var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+    await fetch('https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/world-images/' + path, {
+      method: 'DELETE',
+      headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON }
+    });
+  }
+  if (fieldEl)     fieldEl.value = '';
+  if (preview)     { preview.src = ''; preview.classList.add('hidden'); preview._blob = null; }
+  if (placeholder) placeholder.style.display = '';
+  if (removeBtn)   removeBtn.style.display = 'none';
+  showDMToast('Image removed', 'success');
 }
 
 /* ── IMAGE UPLOAD PREVIEW ────────────────────── */
@@ -4453,6 +4503,19 @@ function showOutput(entry, type) {
   saveToRecent(entry, type);
   renderRecent();
   if (typeof sbUpsertEntry === 'function') sbUpsertEntry(entry, type);
+  // Auto-upload any pending compressed image to Supabase Storage
+  var prefix = (type === 'character') ? 'char' : (type === 'organization') ? 'org' : type;
+  var folder = { city:'cities', creature:'creatures', poi:'pois', char:'characters', org:'organizations', item:'items' }[prefix] || prefix;
+  var preview = document.getElementById(prefix + '-img-preview');
+  if (preview && preview._blob && entry.id) {
+    uploadImageToSupabase(prefix, folder).then(function() {
+      var urlEl = document.getElementById(prefix + '-img-field');
+      if (urlEl && urlEl.value) {
+        entry.image = urlEl.value;
+        if (typeof sbUpsertEntry === 'function') sbUpsertEntry(entry, type);
+      }
+    });
+  }
 }
 
 /* ── COPY JSON ───────────────────────────────── */
@@ -5128,8 +5191,8 @@ function cmCancelEdit() {
     item: 'Generates a valid entry for data/items.js — weapon, armor, shield, consumable, tool, accessory, or quest item'
   };
   var defaultBtns = {
-    city: '✦ Generate Entry', creature: '✦ Generate Entry', poi: '✦ Generate Entry',
-    character: '✦ Generate Entry', organization: '✦ Generate Entry', item: '✦ Generate Entry'
+    city: '✦ Save Entry', creature: '✦ Save Entry', poi: '✦ Save Entry',
+    character: '✦ Save Entry', organization: '✦ Save Entry', item: '✦ Save Entry'
   };
   types.forEach(function(type) {
     var subform = document.getElementById('form-' + type);
