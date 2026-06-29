@@ -51,6 +51,67 @@
   <script src="js/router.js"></script>
   <script src="js/wiki.js"></script>
 
+<script>
+// ── SUPABASE LIVE SYNC ────────────────────────────────────────────
+// Fetches live world data from Supabase after static files load.
+// On success, replaces WORLD_DATA collections and re-renders the page.
+// Static data/*.js files remain the instant fallback if Supabase is slow.
+(function() {
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+
+  var TABLES = [
+    { table: 'regions',       key: 'regions' },
+    { table: 'nations',       key: 'nations' },
+    { table: 'cities',        key: 'cities' },
+    { table: 'creatures',     key: 'creatures' },
+    { table: 'organizations', key: 'organizations' },
+    { table: 'world_characters', key: 'characters' },
+    { table: 'pois',          key: 'pois' },
+    { table: 'religions',     key: 'religions' },
+    { table: 'items',         key: 'items' },
+    { table: 'quests',        key: 'quests' }
+  ];
+
+  function sbFetch(table) {
+    return fetch(SB_URL + '/rest/v1/' + table + '?select=*&limit=1000', {
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': 'Bearer ' + SB_ANON
+      }
+    }).then(function(r) { return r.json(); });
+  }
+
+  function syncFromSupabase() {
+    Promise.all(TABLES.map(function(t) {
+      return sbFetch(t.table).then(function(rows) {
+        return { key: t.key, rows: rows };
+      });
+    })).then(function(results) {
+      var updated = false;
+      results.forEach(function(r) {
+        if (Array.isArray(r.rows) && r.rows.length > 0) {
+          WORLD_DATA[r.key] = r.rows;
+          updated = true;
+        }
+      });
+      if (updated && typeof renderCurrentPage === 'function') {
+        renderCurrentPage();
+      }
+    }).catch(function(err) {
+      console.warn('Supabase sync failed — using static data.', err);
+    });
+  }
+
+  // Run after wiki.js has initialised
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncFromSupabase);
+  } else {
+    syncFromSupabase();
+  }
+})();
+</script>
+
 <div class="spell-modal-overlay" id="spell-modal-overlay" onclick="if(event.target===this)closeSpellModal()">
   <div class="spell-modal">
     <button class="spell-modal-close" onclick="closeSpellModal()" title="Close">&times;</button>
