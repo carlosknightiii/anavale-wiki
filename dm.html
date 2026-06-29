@@ -938,13 +938,12 @@
 
   <div class="dm-header">
     <div class="dm-header-title">Anavale DM Tools</div>
-    <div class="dm-header-sub">Content Management System — generate entries for the wiki data files</div>
+    <div class="dm-header-sub">Content Management System — all changes save to Supabase automatically</div>
   </div>
 
   <div class="dm-tabs">
     <button class="dm-tab active" data-tab="manage" onclick="switchTab('manage')">📋 Manage</button>
     <button class="dm-tab"        data-tab="quests" onclick="switchTab('quests')">⚔️ Quests</button>
-    <button class="dm-tab"        data-tab="setup"  onclick="switchTab('setup')">⚙️ Setup</button>
     <button class="dm-btn-add-entry" onclick="switchTab('add')" title="Add a new world entry">＋ New Entry</button>
   </div>
 
@@ -2276,32 +2275,7 @@
       </div><!-- /form-add wrapper -->
 
 
-      <!-- ══ SETUP TAB ══ -->
-      <div id="form-setup" class="dm-form">
-        <div class="dm-form-title">⚙️ DM Setup</div>
-        <div class="dm-form-subtitle">Store your GitHub token securely in your browser. Never committed to the repo.</div>
 
-        <div class="setup-token-status" id="setup-status-bar"></div>
-
-        <div class="field-group" style="margin-top:1.5rem; max-width:560px;">
-          <label class="field-label" for="setup-token-input">GitHub Personal Access Token</label>
-          <span class="field-help">Fine-grained token with Contents: Read+Write scope on the anavale-wiki repo only. Generate at github.com → Settings → Developer settings → Fine-grained tokens.</span>
-          <input class="field-input" type="password" id="setup-token-input" placeholder="github_pat_…" autocomplete="off" style="font-family:var(--font-mono); font-size:0.78rem; letter-spacing:0.04em;">
-        </div>
-
-        <div style="display:flex; gap:0.75rem; margin-top:1rem;">
-          <button class="btn-primary" onclick="setupSaveToken()">💾 Save Token</button>
-          <button class="btn-clear"   onclick="setupClearToken()">✕ Clear Saved Token</button>
-        </div>
-
-        <div class="setup-token-note" style="margin-top:2rem; max-width:560px;">
-          <strong>How this works:</strong> Your token is saved to this browser's localStorage only — it never touches the repo or leaves your machine. When a player submits their character on this device, the token is read at runtime and used to write their entry to <code>data/characters.js</code> via the GitHub API. You only need to do this once per browser.
-          <br><br>
-          <strong>Token scope required:</strong> Repository: <code>carlosknightiii/anavale-wiki</code> · Permissions: Contents — Read and Write.
-          <br><br>
-          <strong>If submissions stop working:</strong> Your token may have expired. Generate a new one and save it here.
-        </div>
-      </div><!-- /form-setup -->
 
       <!-- ── QUESTS PANEL ─────────────────────── -->
       <div id="form-quests" class="dm-form">
@@ -2508,24 +2482,7 @@
 
           </div><!-- /cm-left -->
 
-          <!-- Right: output panel -->
-          <div class="cm-right">
-            <div class="cm-output-panel">
-              <div class="cm-output-label">Output</div>
-              <div class="cm-output-info" id="cm-output-info">Select an entry to edit or perform an action.</div>
-              <pre class="cm-json-pre" id="cm-json-output">// No action taken yet.</pre>
-              <div class="cm-output-actions">
-                <button class="cm-btn" onclick="cmCopyOutput()">📋 Copy</button>
-                <button class="cm-btn cm-btn-primary" onclick="cmSaveOutput()">💾 Save to File</button>
-              </div>
-              <div id="cm-save-status" class="dm-save-status"></div>
-              <div class="cm-save-note">
-                <strong>Note:</strong> Visibility changes and deletions modify in-memory data only.
-                Click <em>💾 Save to File</em> to write the changes to the data file on disk.
-                Save works in Chrome/Edge. In VS Code Live Preview, use <em>📋 Copy</em> instead.
-              </div>
-            </div>
-          </div><!-- /cm-right -->
+
 
         </div><!-- /cm-body -->
 
@@ -2536,28 +2493,14 @@
     <!-- ════════════════════════════════════════
          SIDE PANEL — Output + Recently Added
          ════════════════════════════════════════ -->
-    <div class="dm-side-panel">
+    
 
       <div class="dm-output">
-        <div class="dm-vscode-notice">💡 <strong>Save to Data File</strong> works in Chrome/Edge. In VS Code Live Preview, use <strong>Copy JSON</strong> instead.</div>
-        <div class="dm-output-label">Output</div>
-        <div class="dm-file-target" id="file-target">📁 Generate an entry to see the target file</div>
-        <pre class="dm-json-pre" id="json-output">// Fill out the form and click
-// ✦ Generate Entry to see
-// the JS object here.</pre>
-        <div class="dm-output-actions">
-          <button class="btn-copy" id="copy-btn" onclick="copyJson()">📋 Copy JSON</button>
-          <button class="btn-save" id="save-btn" onclick="saveToFile()">💾 Save to Data File</button>
-        </div>
+
         <div class="dm-save-status" id="save-status"></div>
       </div>
 
-      <div class="dm-recent">
-        <h3>Recently Added</h3>
-        <div id="recent-list"></div>
-      </div>
 
-    </div><!-- /dm-side-panel -->
 
   </div><!-- /dm-main -->
 </div><!-- /dm-app -->
@@ -5398,7 +5341,7 @@ function cmCycleVisibility(idx) {
   // Sync visibility change to Supabase immediately
   if (typeof sbUpdateVisibility === 'function') sbUpdateVisibility(entry, item._type);
   cmSetOutput(
-    '"' + entry.name + '" visibility → ' + newVis.toUpperCase() + '. Click 💾 Save to File to write the change.',
+    '"' + entry.name + '" visibility → ' + newVis.toUpperCase() + '. Saved to Supabase.',
     JSON.stringify({ id: entry.id, player_facing: newPf }, null, 2),
     item
   );
