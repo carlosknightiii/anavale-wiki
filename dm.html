@@ -2348,7 +2348,10 @@
             <div class="dm-form-title" style="margin-bottom:0">📋 Content Manager</div>
             <div class="dm-form-subtitle" style="margin-bottom:0">Browse, edit, and manage visibility of all world entries</div>
           </div>
-          <button class="cm-refresh-btn" onclick="cmRefresh()">↺ Refresh</button>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <span id="cm-last-sync" style="font-size:0.72rem;color:var(--dm-text-faint);font-family:var(--font-sans);"></span>
+            <button class="cm-refresh-btn" onclick="cmRefreshFromSupabase()">↺ Refresh</button>
+          </div>
         </div>
 
         <div class="cm-body">
@@ -2560,6 +2563,11 @@
       });
       // Refresh Content Manager with live data
       if (typeof cmRefresh === 'function') cmRefresh();
+      var syncEl = document.getElementById('cm-last-sync');
+      if (syncEl) {
+        var now = new Date();
+        syncEl.textContent = 'Last updated: ' + now.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+      }
     }).catch(function(err) {
       console.warn('Supabase sync failed — using static data.', err);
     });
@@ -2600,6 +2608,20 @@
       if (r.ok) {
         showDMToast(entry.name + ' saved to Supabase ✓', 'success');
         showSaveStatus('success', '✓ Saved to Supabase — wiki will update on next reload.');
+        // Add new entry to in-memory array so Content Manager shows it immediately
+        if (entry && entry.id && typeof CM_ARRAYS !== 'undefined') {
+          var typeKey = type === 'organization' ? 'organization' : type === 'character' ? 'character' : type;
+          var arr = CM_ARRAYS[typeKey] ? CM_ARRAYS[typeKey]() : null;
+          if (arr) {
+            var exists = arr.some(function(e) { return e.id === entry.id; });
+            if (!exists) {
+              arr.push(entry);
+            } else {
+              var idx = arr.findIndex(function(e) { return e.id === entry.id; });
+              if (idx >= 0) arr[idx] = entry;
+            }
+          }
+        }
       } else {
         r.text().then(function(t) {
           console.error('Supabase upsert failed:', r.status, t);
@@ -2641,6 +2663,45 @@
   };
 
 })();
+</script>
+<script>
+function cmRefreshFromSupabase() {
+  var syncEl = document.getElementById('cm-last-sync');
+  if (syncEl) syncEl.textContent = 'Refreshing…';
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  var TABLES = [
+    { table: 'regions',          global: 'REGIONS' },
+    { table: 'nations',          global: 'NATIONS' },
+    { table: 'cities',           global: 'CITIES' },
+    { table: 'creatures',        global: 'CREATURES' },
+    { table: 'organizations',    global: 'ORGANIZATIONS' },
+    { table: 'world_characters', global: 'CHARACTERS' },
+    { table: 'pois',             global: 'POIS' },
+    { table: 'religions',        global: 'RELIGIONS' },
+    { table: 'items',            global: 'ITEMS' },
+    { table: 'quests',           global: 'QUESTS' }
+  ];
+  Promise.all(TABLES.map(function(t) {
+    return fetch(SB_URL + '/rest/v1/' + t.table + '?select=*&limit=1000', {
+      headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON }
+    }).then(function(r) { return r.json(); }).then(function(rows) {
+      return { global: t.global, rows: rows };
+    });
+  })).then(function(results) {
+    results.forEach(function(r) {
+      if (Array.isArray(r.rows) && r.rows.length > 0) window[r.global] = r.rows;
+    });
+    cmRefresh();
+    var now = new Date();
+    var syncEl = document.getElementById('cm-last-sync');
+    if (syncEl) syncEl.textContent = 'Last updated: ' + now.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+    showDMToast('Content refreshed from Supabase ✓', 'success');
+  }).catch(function() {
+    if (syncEl) syncEl.textContent = 'Refresh failed';
+    showDMToast('Refresh failed — check connection', 'error');
+  });
+}
 </script>
 <script>
 function showDMToast(msg, type) {
@@ -3594,7 +3655,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var cmSearchEl = document.getElementById('cm-search');
   if (cmSearchEl) {
     cmSearchEl.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') cmRefresh();
+      if (e.key === 'Enter') cmFilter();
     });
   }
   // Mark form dirty on any input change inside the Add form
