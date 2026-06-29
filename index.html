@@ -110,8 +110,9 @@
           updated = true;
         }
       });
-      if (updated && typeof handleRoute === 'function') {
-        handleRoute();
+      if (updated) {
+        if (typeof buildSidebar === 'function') buildSidebar();
+        if (typeof handleRoute === 'function') handleRoute();
       }
     }).catch(function(err) {
       console.warn('Supabase sync failed — using static data.', err);
