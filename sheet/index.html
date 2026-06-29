@@ -1493,10 +1493,7 @@
       .then(function(res) {
         if (res.error) { showToast('Upload failed — ' + res.error.message, true); return; }
         // Get public URL — note: bucket is private, so we use a signed URL via RLS-allowed select
-        sb.storage.from('character-photos').createSignedUrl(path, 60 * 60 * 24 * 365)
-          .then(function(urlRes) {
-            if (urlRes.error) { showToast('Could not get photo URL', true); return; }
-            var url = urlRes.data.signedUrl;
+            var url = SB_URL + '/storage/v1/object/public/character-photos/' + path;
             PHOTO_URL = url;
             // Save storage_path to character_photo table
             sb.from('character_photo')
@@ -1575,10 +1572,7 @@
     return sb.from('character_photo').select('*').eq('character_id', CHAR_ID).maybeSingle()
       .then(function(res) {
         if (res.error || !res.data || !res.data.storage_path) return;
-        return sb.storage.from('character-photos').createSignedUrl(res.data.storage_path, 60 * 60 * 24 * 365)
-          .then(function(urlRes) {
-            if (!urlRes.error && urlRes.data) PHOTO_URL = urlRes.data.signedUrl;
-          });
+        PHOTO_URL = SB_URL + '/storage/v1/object/public/character-photos/' + res.data.storage_path;
       });
   }
 
