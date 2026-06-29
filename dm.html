@@ -982,178 +982,17 @@
 
           <!-- IMAGE -->
           <div class="img-top-block">
-            <div class="img-top-placeholder" id="city-img-placeholder" onclick="document.getElementById('city-img-input').click()">
-              <span>Click to<br>add image</span>
-            </div>
-            <img id="city-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-            <div class="img-top-right">
-              <div class="img-top-label">Entry Image</div>
-              <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
-              <button class="btn-add" type="button" onclick="document.getElementById('city-img-input').click()">⬆ Upload Image</button>
-              <div id="city-img-size" class="img-compress-size"></div>
-              <div id="city-img-path" class="img-compress-error"></div>
-              <button class="img-save-btn" type="button" id="city-img-save-btn" disabled onclick="handleSaveImage('city')">⬇ Save Image to Disk</button>
-              <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-            </div>
+          <div class="img-top-placeholder" id="city-img-placeholder" onclick="document.getElementById('city-img-input').click()">
+            <span>Click to<br>add image</span>
           </div>
-
-          <!-- IDENTITY -->
-          <div class="form-section">
-            <div class="form-section-header">Identity</div>
-            <div class="field-row">
-              <div class="field-group">
-                <label class="field-label" for="city-name">Name <span class="req">✦</span></label>
-                <span class="field-help">Full name of the settlement as it appears on maps and in text</span>
-                <input class="field-input" type="text" id="city-name" oninput="autoId('city-name','city-id')" placeholder="e.g. Reveltown">
-              </div>
-              <div class="field-group">
-                <label class="field-label" for="city-id">ID <span class="req">✦</span></label>
-                <span class="field-help">Lowercase kebab-case identifier (auto-filled from name)</span>
-                <input class="field-input" type="text" id="city-id" placeholder="e.g. reveltown">
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field-group">
-                <label class="field-label" for="city-type">Type <span class="req">✦</span></label>
-                <span class="field-help">Settlement classification used for search and display</span>
-                <select class="field-select" id="city-type">
-                  <option value="">— Select type —</option>
-                  <option value="capital">Capital</option>
-                  <option value="hidden">Hidden Settlement</option>
-                  <option value="major-city">Major City</option>
-                  <option value="outpost">Outpost</option>
-                  <option value="port">Port</option>
-                  <option value="ruin">Ruin</option>
-                  <option value="town">Town</option>
-                  <option value="village">Village</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label class="field-label" for="city-color-health">Color Health</label>
-                <span class="field-help">Current Gigglegloom saturation and vitality</span>
-                <select class="field-select" id="city-color-health">
-                  <option value="">— Select —</option>
-                  <option value="dire">Dire</option>
-                  <option value="excellent">Excellent</option>
-                  <option value="faded">Faded</option>
-                  <option value="good">Good</option>
-                  <option value="moderate">Moderate</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- LOCATION -->
-          <div class="form-section">
-            <div class="form-section-header">Location</div>
-            <div class="field-row">
-              <div class="field-group">
-                <label class="field-label" for="city-region">Region <span class="req">✦</span></label>
-                <span class="field-help">Which of the four Pogglewog regions this settlement is in</span>
-                <select class="field-select" id="city-region" onchange="filterNations('city-nation','city-region')">
-                  <option value="">— Select region —</option>
-                  <option value="caparia">Caparia</option>
-                  <option value="jugabi">Jugabi</option>
-                  <option value="nombi">Nombi</option>
-                  <option value="sohot">Sohot</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label class="field-label" for="city-nation">Nation</label>
-                <span class="field-help">Which nation contains this settlement (filtered by region)</span>
-                <select class="field-select" id="city-nation">
-                  <option value="">— Select region first —</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- CONTENT -->
-          <div class="form-section">
-            <div class="form-section-header">Content</div>
-            <div class="field-group">
-              <label class="field-label" for="city-summary">Summary <span class="req">✦</span></label>
-              <span class="field-help">One or two sentences — what a traveller would know before arriving. Appears in search results.</span>
-              <textarea class="field-textarea" id="city-summary" placeholder="e.g. A colorful market town built around the Mirrenflow docks. Known for its twice-weekly creature festivals."></textarea>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="city-description">Description</label>
-              <span class="field-help">Longer DM reference — atmosphere, layout, sensory details, what makes this place feel alive</span>
-              <textarea class="field-textarea tall" id="city-description" placeholder="Streets, smells, sounds, the colour of the light in the evening…"></textarea>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="city-strategic">Strategic Importance</label>
-              <span class="field-help">Why this settlement matters — politically, militarily, magically, or economically</span>
-              <textarea class="field-textarea" id="city-strategic" placeholder="e.g. Controls the main mountain pass between Caparia and Sohot."></textarea>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="city-tone">Tone</label>
-              <span class="field-help">The feeling of this place in a few words — used for DM atmosphere notes</span>
-              <input class="field-input" type="text" id="city-tone" placeholder="e.g. Cheerful and chaotic. Market energy. Bumble Frogs everywhere.">
-            </div>
-            <div class="repeating-group">
-              <div class="repeating-group-title">
-                <span>Landmarks</span>
-                <button class="btn-add" onclick="addLandmark()">+ Add Landmark</button>
-              </div>
-              <div id="city-landmarks-list"></div>
-              <div id="city-landmarks-empty" class="repeating-empty">No landmarks added yet.</div>
-            </div>
-          </div>
-
-          <!-- WORLD SETTINGS -->
-          <div class="form-section">
-            <div class="form-section-header">World Settings</div>
-            <div class="field-row">
-              <div class="field-group">
-                <label class="field-label">Formery Present</label>
-                <span class="field-help">Does this settlement have a Formery office?</span>
-                <div class="field-toggle">
-                  <input type="radio" name="city-formery" id="city-formery-false" value="false" checked>
-                  <label for="city-formery-false">No</label>
-                  <input type="radio" name="city-formery" id="city-formery-true" value="true">
-                  <label for="city-formery-true">Yes</label>
-                </div>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Vareth Presence</label>
-                <span class="field-help">Is the Vareth active here?</span>
-                <div class="field-toggle">
-                  <input type="radio" name="city-vareth" id="city-vareth-false" value="false" checked>
-                  <label for="city-vareth-false">No</label>
-                  <input type="radio" name="city-vareth" id="city-vareth-true" value="true">
-                  <label for="city-vareth-true">Yes</label>
-                </div>
-              </div>
-            </div>
-            <div class="field-group">
-              <label class="field-label" for="city-tags">Tags</label>
-              <span class="field-help">Comma-separated keywords for search (region, nation, type, features)</span>
-              <input class="field-input" type="text" id="city-tags" placeholder="e.g. caparia, solenmere, capital, confederation, colorful">
-            </div>
-          </div>
-
-          <!-- PUBLISH -->
-          <div class="form-section">
-            <div class="form-section-header">Publish</div>
-            <div class="field-group">
-              <label class="field-label">Player Facing</label>
-              <span class="field-help">Hidden = DM only. Teaser = name, type, summary. Visible = full entry.</span>
-              <div class="field-toggle">
-                <input type="radio" name="city-pf" id="city-pf-false" value="false" checked>
-                <label for="city-pf-false">🔒 Hidden</label>
-                <input type="radio" name="city-pf" id="city-pf-teaser" value="teaser">
-                <label for="city-pf-teaser">✨ Teaser</label>
-                <input type="radio" name="city-pf" id="city-pf-true" value="true">
-                <label for="city-pf-true">👁 Visible</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="dm-form-actions">
-            <button class="btn-generate" onclick="generateCity()">✦ Generate Entry</button>
-            <button class="btn-clear" onclick="clearForm('city')">Clear Form</button>
+          <img id="city-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-error','city-img-size','cities','city-id','city-name')">
+            <button class="btn-add" type="button" id="city-img-upload-btn" onclick="uploadImageToSupabase('city','cities')">⬆ Upload Image to Supabase</button>
+            <div id="city-img-size" class="img-compress-size"></div>
+            <div id="city-img-error" class="img-compress-error"></div>
+            <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
           </div>
         </div>
 
@@ -1171,12 +1010,11 @@
           <img id="creature-img-preview" class="img-top-preview hidden" src="" alt="Preview">
           <div class="img-top-right">
             <div class="img-top-label">Entry Image</div>
-            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
-            <button class="btn-add" type="button" onclick="document.getElementById('creature-img-input').click()">⬆ Upload Image</button>
+            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-error','creature-img-size','creatures','creature-id','creature-name')">
+            <button class="btn-add" type="button" id="creature-img-upload-btn" onclick="uploadImageToSupabase('creature','creatures')">⬆ Upload Image to Supabase</button>
             <div id="creature-img-size" class="img-compress-size"></div>
-            <div id="creature-img-path" class="img-compress-error"></div>
-            <button class="img-save-btn" type="button" id="creature-img-save-btn" disabled onclick="handleSaveImage('creature')">⬇ Save Image to Disk</button>
-            <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+            <div id="creature-img-error" class="img-compress-error"></div>
+            <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
           </div>
         </div>
 
@@ -1314,12 +1152,11 @@
           <img id="poi-img-preview" class="img-top-preview hidden" src="" alt="Preview">
           <div class="img-top-right">
             <div class="img-top-label">Entry Image</div>
-            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
-            <button class="btn-add" type="button" onclick="document.getElementById('poi-img-input').click()">⬆ Upload Image</button>
+            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-error','poi-img-size','pois','poi-id','poi-name')">
+            <button class="btn-add" type="button" id="poi-img-upload-btn" onclick="uploadImageToSupabase('poi','pois')">⬆ Upload Image to Supabase</button>
             <div id="poi-img-size" class="img-compress-size"></div>
-            <div id="poi-img-path" class="img-compress-error"></div>
-            <button class="img-save-btn" type="button" id="poi-img-save-btn" disabled onclick="handleSaveImage('poi')">⬇ Save Image to Disk</button>
-            <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+            <div id="poi-img-error" class="img-compress-error"></div>
+            <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
           </div>
         </div>
 
@@ -1479,12 +1316,11 @@
           <img id="char-img-preview" class="img-top-preview hidden" src="" alt="Preview">
           <div class="img-top-right">
             <div class="img-top-label">Entry Image</div>
-            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
-            <button class="btn-add" type="button" onclick="document.getElementById('char-img-input').click()">⬆ Upload Image</button>
+            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-error','char-img-size','characters','char-id','char-name')">
+            <button class="btn-add" type="button" id="char-img-upload-btn" onclick="uploadImageToSupabase('char','characters')">⬆ Upload Image to Supabase</button>
             <div id="char-img-size" class="img-compress-size"></div>
-            <div id="char-img-path" class="img-compress-error"></div>
-            <button class="img-save-btn" type="button" id="char-img-save-btn" disabled onclick="handleSaveImage('char')">⬇ Save Image to Disk</button>
-            <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+            <div id="char-img-error" class="img-compress-error"></div>
+            <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
           </div>
         </div>
 
@@ -1677,12 +1513,11 @@
           <img id="org-img-preview" class="img-top-preview hidden" src="" alt="Preview">
           <div class="img-top-right">
             <div class="img-top-label">Entry Image</div>
-            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
-            <button class="btn-add" type="button" onclick="document.getElementById('org-img-input').click()">⬆ Upload Image</button>
+            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-error','org-img-size','organizations','org-id','org-name')">
+            <button class="btn-add" type="button" id="org-img-upload-btn" onclick="uploadImageToSupabase('org','organizations')">⬆ Upload Image to Supabase</button>
             <div id="org-img-size" class="img-compress-size"></div>
-            <div id="org-img-path" class="img-compress-error"></div>
-            <button class="img-save-btn" type="button" id="org-img-save-btn" disabled onclick="handleSaveImage('org')">⬇ Save Image to Disk</button>
-            <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+            <div id="org-img-error" class="img-compress-error"></div>
+            <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
           </div>
         </div>
 
@@ -1856,12 +1691,11 @@
           <img id="item-img-preview" class="img-top-preview hidden" src="" alt="Preview">
           <div class="img-top-right">
             <div class="img-top-label">Entry Image</div>
-            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
-            <button class="btn-add" type="button" onclick="document.getElementById('item-img-input').click()">⬆ Upload Image</button>
+            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-error','item-img-size','items','item-id','item-name')">
+            <button class="btn-add" type="button" id="item-img-upload-btn" onclick="uploadImageToSupabase('item','items')">⬆ Upload Image to Supabase</button>
             <div id="item-img-size" class="img-compress-size"></div>
-            <div id="item-img-path" class="img-compress-error"></div>
-            <button class="img-save-btn" type="button" id="item-img-save-btn" disabled onclick="handleSaveImage('item')">⬇ Save Image to Disk</button>
-            <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
+            <div id="item-img-error" class="img-compress-error"></div>
+            <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Image URL — auto-filled after upload">
           </div>
         </div>
 
@@ -3749,85 +3583,76 @@ function compressToWebP(file, maxKB, maxDimension) {
   });
 }
 
-/* ── SAVE IMAGE TO FOLDER ────────────────────── */
-// Uses the File System Access API. Prompts the user to pick the wiki root
-// folder, navigates into assets/images/<subfolder>/, writes the blob, and
-// returns the relative path string (e.g. "assets/images/creatures/foo.webp").
-// Returns null if the user cancelled the picker.
-var IMG_SUBFOLDER_MAP = {
-  creature: 'creatures',
-  city:     'cities',
-  char:     'characters',
-  org:      'organizations',
-  poi:      'pois',
-  item:     'items'
-};
-
-async function saveImageToFolder(blob, filename, type) {
-  var subfolder    = IMG_SUBFOLDER_MAP[type] || type;
-  var relativePath = 'assets/images/' + subfolder + '/' + filename;
-
-  try {
-    var rootHandle   = await window.showDirectoryPicker({ mode: 'readwrite' });
-    var assetsHandle = await rootHandle.getDirectoryHandle('assets',  { create: true });
-    var imagesHandle = await assetsHandle.getDirectoryHandle('images', { create: true });
-    var typeHandle   = await imagesHandle.getDirectoryHandle(subfolder, { create: true });
-    var fileHandle   = await typeHandle.getFileHandle(filename, { create: true });
-    var writable     = await fileHandle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    return relativePath;
-  } catch (e) {
-    if (e && e.name === 'AbortError') return null; // user cancelled picker
-    throw e;
-  }
-}
-
-/* ── HANDLE SAVE IMAGE BUTTON ────────────────── */
-// Called from the "Save Image" button in each form's compress panel.
-// prefix is the form prefix: 'creature', 'city', 'char', 'org', 'poi', 'item'.
-async function handleSaveImage(prefix) {
+/* ── UPLOAD IMAGE TO SUPABASE STORAGE ───────── */
+// Single function replaces handleSaveImage + saveImageToFolder.
+// Called by the "Upload Image" button in each form.
+// prefix: 'creature' | 'city' | 'char' | 'org' | 'poi' | 'item'
+// folder: Supabase Storage subfolder e.g. 'creatures'
+async function uploadImageToSupabase(prefix, folder) {
   var thumb = document.getElementById(prefix + '-img-preview');
   var blob  = thumb && thumb._blob;
-  if (!blob) { alert('No compressed image ready. Select an image first.'); return; }
+  if (!blob) {
+    alert('Select an image first — it needs to load in the preview before uploading.');
+    return;
+  }
 
-  // Build filename from the entry ID field (or name, as fallback)
   var idEl    = document.getElementById(prefix + '-id');
   var nameEl  = document.getElementById(prefix + '-name');
   var entryId = (idEl && idEl.value.trim()) || slugify((nameEl && nameEl.value.trim()) || '');
   if (!entryId) {
-    alert('Please fill in the entry Name or ID before saving the image — the filename is derived from it.');
+    alert('Fill in the entry Name or ID first — the filename is derived from it.');
     return;
   }
-  var filename = entryId + '.webp';
 
-  var saveBtn = document.getElementById(prefix + '-img-save-btn');
+  var filename   = folder + '/' + entryId + '.webp';
+  var uploadBtn  = document.getElementById(prefix + '-img-upload-btn');
+  var pathInput  = document.getElementById(prefix + '-img-field');
+  var sizeEl     = document.getElementById(prefix + '-img-size');
+
+  if (uploadBtn) { uploadBtn.disabled = true; uploadBtn.textContent = '⏳ Uploading…'; }
 
   try {
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
-    var relativePath = await saveImageToFolder(blob, filename, prefix);
+    var res = await fetch(
+      'https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/world-images/' + filename,
+      {
+        method: 'POST',
+        headers: {
+          'apikey':        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg',
+          'Content-Type':  'image/webp',
+          'x-upsert':      'true'
+        },
+        body: blob
+      }
+    );
 
-    if (relativePath) {
-      // Populate the image path text input
-      var pathInput = document.getElementById(prefix + '-img-field');
-      if (pathInput) pathInput.value = relativePath;
-      // Momentary success state on the button
-      if (saveBtn) {
-        saveBtn.textContent      = '✓ Saved';
-        saveBtn.style.background = 'var(--dm-green-dim)';
-        saveBtn.disabled         = false;
+    if (res.ok) {
+      var publicUrl = 'https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/' + filename;
+      if (pathInput) pathInput.value = publicUrl;
+      if (sizeEl)    sizeEl.innerHTML = '<span style="color:var(--dm-green)">✓ Uploaded to Supabase</span>';
+      if (uploadBtn) {
+        uploadBtn.textContent = '✓ Uploaded';
+        uploadBtn.style.background = 'var(--dm-green-dim)';
+        uploadBtn.style.borderColor = 'var(--dm-border-green)';
+        uploadBtn.style.color = 'var(--dm-green)';
         setTimeout(function() {
-          saveBtn.textContent      = '⬇ Save Image';
-          saveBtn.style.background = '';
-        }, 3000);
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = '⬆ Upload Image to Supabase';
+          uploadBtn.style.background = '';
+          uploadBtn.style.borderColor = '';
+          uploadBtn.style.color = '';
+        }, 4000);
       }
     } else {
-      // User cancelled the picker — re-enable button quietly
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '⬇ Save Image'; }
+      var errText = await res.text();
+      console.error('Supabase Storage upload failed:', res.status, errText);
+      if (sizeEl) sizeEl.innerHTML = '<span style="color:var(--dm-red)">⚠ Upload failed (' + res.status + ') — check console</span>';
+      if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '⬆ Upload Image to Supabase'; }
     }
-  } catch (e) {
-    alert('Save failed: ' + ((e && e.message) || 'unknown error'));
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '⬇ Save Image'; }
+  } catch (err) {
+    console.error('Upload error:', err);
+    if (sizeEl) sizeEl.innerHTML = '<span style="color:var(--dm-red)">⚠ Upload error — check console</span>';
+    if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '⬆ Upload Image to Supabase'; }
   }
 }
 
