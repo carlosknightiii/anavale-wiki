@@ -611,6 +611,7 @@
 }
 /* Edit mode — hide the Add type selector, show a back link */
 .dm-edit-mode .add-type-selector { display: none; }
+.dm-edit-mode .btn-clear { display: none; }
 .dm-edit-back {
   display: none;
   align-items: center;
@@ -3655,7 +3656,6 @@ function switchTab(tab) {
   resetOutput();
   if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
   if (tab === 'quests') questsRefresh();
-  if (tab === 'setup')  setupRenderStatus();
   if (tab === 'add') { FORM_DIRTY = false; sortAllDropdowns(); } // re-sort on open; reset dirty flag
 }
 
@@ -4505,7 +4505,7 @@ function showOutput(entry, type) {
   if (typeof sbUpsertEntry === 'function') sbUpsertEntry(entry, type);
   // Auto-upload any pending compressed image to Supabase Storage
   var prefix = (type === 'character') ? 'char' : (type === 'organization') ? 'org' : type;
-  var folder = { city:'cities', creature:'creatures', poi:'pois', char:'characters', org:'organizations', item:'items' }[prefix] || prefix;
+  var folder = { city:'cities', creature:'creatures', poi:'pois', char:'characters', org:'organizations', item:'items', character:'characters' }[type] || type;
   var preview = document.getElementById(prefix + '-img-preview');
   if (preview && preview._blob && entry.id) {
     uploadImageToSupabase(prefix, folder).then(function() {
@@ -4529,41 +4529,6 @@ function showSaveStatus(state, msg) {
   console.info('DM status:', state, msg);
 }
 
-/* ── REPLACE ENTRY IN FILE CONTENT ────────────
-   Finds the entry whose `id` field matches entryId and replaces the entire
-   object (from its opening `  {` to its closing `  }`) with newEntryStr.
-   Returns the updated content string, or null if the entry wasn't found.
-
-   Strategy: locate the `id: "entryId"` declaration, walk backwards to the
-   preceding `  {` (2-space-indented opening brace — all top-level array
-   entries use this indent), then walk forwards to the next `\n  }` at the
-   same 2-space indent level (nested objects are always deeper-indented).
-   This avoids brittle brace-counting and is safe for our data file format.
-*/
-function replaceEntryInContent(content, entryId, newEntryStr) {
-  // Match: `id: "entryId"` or `"id": "entryId"` with flexible whitespace
-  var escapedId = entryId.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-  var idPattern = new RegExp('"?id"?\\s*:\\s*["\']' + escapedId + '["\']');
-  var idMatch   = idPattern.exec(content);
-  if (!idMatch) return null; // entry not found in this file
-
-  // Walk backwards to the `\n  {` that opens this entry
-  var entryOpen = content.lastIndexOf('\n  {', idMatch.index);
-  if (entryOpen === -1) return null;
-  entryOpen += 1; // skip the \n — land on the `  {`
-
-  // Walk forwards to the first `\n  }` (top-level closing brace) after the opening
-  // Nested objects use 6+ spaces, so `\n  }` is unambiguous as the entry close
-  var closePattern = /\n  \}/g;
-  closePattern.lastIndex = entryOpen;
-  var closeMatch = closePattern.exec(content);
-  if (!closeMatch) return null;
-
-  var entryEnd = closeMatch.index + closeMatch[0].length; // position just after the `}`
-
-  // Splice: keep everything before the entry, insert replacement, keep everything after
-  return content.slice(0, entryOpen) + newEntryStr + content.slice(entryEnd);
-}
 
 /* ── SAVE TO DATA FILE (safe append or replace) ── */
 async function saveToFile() { /* removed — saves go to Supabase */ }
@@ -4936,7 +4901,11 @@ function cmApplyFilters() {
     if (CM_SORT_COL === 'name')     res = (ea.name||'').localeCompare(eb.name||'');
     if (CM_SORT_COL === 'type')     res = a._type.localeCompare(b._type) || (ea.name||'').localeCompare(eb.name||'');
     if (CM_SORT_COL === 'vis')      res = (vOrder[cmGetVis(ea)]||0) - (vOrder[cmGetVis(eb)]||0);
-    if (CM_SORT_COL === 'modified') res = ((ea._modified||ea.name||'') < (eb._modified||eb.name||'') ? -1 : 1);
+    if (CM_SORT_COL === 'modified') {
+      var aDate = ea._modified ? new Date(ea._modified).getTime() : 0;
+      var bDate = eb._modified ? new Date(eb._modified).getTime() : 0;
+      res = aDate - bDate;
+    }
     return CM_SORT_DIR === 'desc' ? -res : res;
   });
 
@@ -5169,7 +5138,7 @@ function cmEditEntry(idx) {
   if (label) label.textContent = 'Editing: ' + (entry.name || entry.id);
 
   cmSetOutput(
-    'Editing: "' + entry.name + '" — modify fields, click ✦ Save Changes, then 💾 Save to File.',
+    'Editing: "' + entry.name + '" — modify fields and click ✦ Save Changes to save to Supabase.',
     '// Edit the form and click ✦ Save Changes.\n// The updated JSON will appear in the main output panel.',
     item
   );
@@ -5248,6 +5217,8 @@ function cmPopulateForm(entry, type) {
     // Pre-fill the image path field
     var pathField = document.getElementById(prefix + '-img-field');
     if (pathField && !pathField.value) pathField.value = entry.image;
+    var removeBtn = document.getElementById(prefix + '-img-remove-btn');
+    if (removeBtn) removeBtn.style.display = '';
   }
 
   if (type === 'city') {
@@ -5506,11 +5477,7 @@ function cmDeleteEntry(idx) {
   delete CM_SELECTED[cmSelKey(item)];
   CM_PENDING = { item: item, action: 'delete' };
 
-  cmSetOutput(
-    'Deleted "' + name + '" from memory. Click 💾 Save to File to write the change to ' + FILE_TARGETS[item._type] + '.',
-    JSON.stringify({ id: entry.id, name: name, _action: 'deleted' }, null, 2),
-    item
-  );
+  showDMToast('"' + name + '" deleted', 'success');
 
   // Rebuild and re-filter
   cmRefreshFromArrays();
@@ -5582,78 +5549,6 @@ function fallbackCMCopy(text, cb) {
 /* ── SAVE TO FILE ────────────────────────────── */
 async function cmSaveOutput() { /* removed — saves go to Supabase */ }
 
-async function cmWriteArrayToFile(arrayName, arr, targetFile) {
-  try {
-    showCMStatus('pending', '⏳ Select ' + targetFile + ' in the file picker…');
-
-    var [fileHandle] = await window.showOpenFilePicker({
-      types: [{ description: 'JavaScript Data File', accept: { 'text/javascript': ['.js'] } }],
-      multiple: false
-    });
-
-    var file     = await fileHandle.getFile();
-    var existing = await file.text();
-
-    // Validate correct file
-    if (!existing.includes('var ' + arrayName)) {
-      showCMStatus('error',
-        '⚠ Wrong file selected. Please open the file containing var ' + arrayName + ' (' + targetFile + '). Nothing was written.');
-      return false;
-    }
-
-    // Find array bounds: keep the header (var X = [) and footer (];)
-    var arrStart = existing.indexOf('[');
-    var arrEnd   = existing.lastIndexOf('];');
-    if (arrStart === -1 || arrEnd === -1) {
-      showCMStatus('error', '⚠ Could not locate array boundaries in the file. Nothing was written.');
-      return false;
-    }
-
-    var header = existing.slice(0, arrStart + 1);
-    var footer = existing.slice(arrEnd);
-
-    // Serialize entries using JSON format (quoted keys — valid JS, consistent with saveToFile)
-    var entries = arr.map(function(e) {
-      return JSON.stringify(e, null, 2)
-        .split('\n')
-        .map(function(l) { return '  ' + l; })
-        .join('\n');
-    }).join(',\n');
-
-    var updated = header + (arr.length ? '\n' + entries + '\n' : '') + footer;
-
-    // Sanity check — don't silently truncate a file (allow if we just deleted entries)
-    if (updated.length < existing.length * 0.5 && arr.length > 0) {
-      if (!confirm(
-        'The updated file is significantly shorter than the original.\n' +
-        'Updated: ' + updated.length + ' chars  |  Original: ' + existing.length + ' chars\n\n' +
-        'Proceed anyway?'
-      )) {
-        showCMStatus('', '');
-        return false;
-      }
-    }
-
-    showCMStatus('pending', '⏳ Writing ' + arr.length + ' entries to ' + targetFile + '…');
-
-    var writable = await fileHandle.createWritable();
-    await writable.write(updated);
-    await writable.close();
-
-    showCMStatus('success', '✓ Saved ' + arr.length + ' entries to ' + targetFile);
-    CM_PENDING = null;
-    return true;
-
-  } catch (e) {
-    if (e.name === 'AbortError') {
-      showCMStatus('', '');
-      return false;
-    }
-    console.error('CM write failed:', e);
-    showCMStatus('error', '⚠ Save failed: ' + e.message);
-    return false;
-  }
-}
 
 /* ── STATUS DISPLAY ──────────────────────────── */
 function showCMStatus(state, msg) {

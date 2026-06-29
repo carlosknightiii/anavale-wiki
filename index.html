@@ -45,7 +45,6 @@
   <script src="data/characters.js"></script>
   <script src="data/pois.js"></script>
   <script src="data/items.js"></script>
-  <script src="data/backgrounds.js"></script>
   <script src="data/religions.js"></script>
   <script src="data/index.js"></script>
   <script src="js/router.js"></script>
@@ -112,6 +111,7 @@
       });
       if (updated) {
         if (typeof buildSidebar === 'function') buildSidebar();
+        if (typeof buildSearchIndex === 'function') { _searchIndex = null; buildSearchIndex(); }
         if (typeof handleRoute === 'function') handleRoute();
       }
     }).catch(function(err) {

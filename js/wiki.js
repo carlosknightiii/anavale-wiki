@@ -1162,11 +1162,9 @@ function renderGods(el) {
   };
 
   var cardsHtml = '';
-  console.log('[renderGods] CHARACTERS length:', chars.length, 'ids:', chars.map(function(c){return c.id;}).join(','));
   godOrder.forEach(function(godId) {
     var c = null;
     for (var i = 0; i < chars.length; i++) { if (chars[i].id === godId) { c = chars[i]; break; } }
-    console.log('[renderGods] looking for', godId, '→', c ? 'FOUND player_facing=' + c.player_facing : 'NOT FOUND');
     if (!c) return;
     var cfg    = GOD_CFG[godId] || {};
     var accent = cfg.accent || 'var(--gold)';
@@ -1954,13 +1952,15 @@ function renderSpells() {
   var list  = document.getElementById('sb-list');
   var count = document.getElementById('sb-count');
   var pager = document.getElementById('sb-pagination');
-  if (!list || typeof SPELL_DATA === 'undefined') return;
+  var spellSource = (typeof SPELL_DATA !== 'undefined' && SPELL_DATA.length) ? SPELL_DATA : (WORLD_DATA && WORLD_DATA.spells && WORLD_DATA.spells.length ? WORLD_DATA.spells : null);
+  if (!list || !spellSource) return;
 
-  _sbFiltered = SPELL_DATA.filter(function(s) {
+  _sbFiltered = spellSource.filter(function(s) {
     if (_sbType !== 'all' && s.types.indexOf(_sbType) === -1) return false;
     if (_sbLvl  !== 'all' && String(s.level) !== String(_sbLvl)) return false;
+    var spellDesc = s.spell_desc || s.desc || '';
     if (query && s.name.toLowerCase().indexOf(query) === -1 &&
-        s.desc.toLowerCase().indexOf(query) === -1) return false;
+        spellDesc.toLowerCase().indexOf(query) === -1) return false;
     return true;
   }).sort(function(a, b) { return a.name.localeCompare(b.name); });
 
@@ -2073,7 +2073,7 @@ function openSpellModal(idx) {
 
   var descHtml   = st ? '<div class="spell-modal-desc">' + st.desc + '</div>' : '';
   var higherHtml = (st && st.higher) ? '<div class="spell-modal-higher"><strong>Using a Higher-Level Spell Slot.</strong> ' + st.higher + '</div>' : '';
-  var flavorHtml = '<div class="spell-modal-flavor">"' + s.desc + '"</div>';
+  var flavorHtml = s.desc || s.spell_desc ? '<div class="spell-modal-flavor">"' + (s.desc || s.spell_desc) + '"</div>' : '';
 
   document.getElementById('sm-type-row').innerHTML   = typeBadges;
   document.getElementById('sm-name').textContent     = s.name;
