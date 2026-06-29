@@ -8,11 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Roboto:wght@300;400;600&display=swap" rel="stylesheet">
 
-  <!-- Load world data — characters.js declares var CHARACTERS = [...] -->
-  <script src="../data/characters.js"></script>
-  <!-- Load class/species/background reference data for label lookups -->
-  <script src="../data/index.js"></script>
-
   <style>
     /* ── CSS Variables (mirrors character.css :root exactly) ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -613,283 +608,513 @@
 
   <footer class="cs-footer" id="cs-footer"></footer>
 
+  <div id="cs-toast" class="cs-toast"></div>
+
+  <!-- Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <style>
+    /* ── Loading state ── */
+    .cs-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1.5rem;
+    }
+    .cs-loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(200,148,10,0.15);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: cs-spin 0.9s linear infinite;
+    }
+    .cs-loading-text {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(200,148,10,0.4);
+    }
+    @keyframes cs-spin { to { transform: rotate(360deg); } }
+
+    /* ── HP tracker ── */
+    .cs-hp-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .cs-hp-cell {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--char-radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .cs-hp-cell--current { border-color: rgba(180,60,60,0.35); background: rgba(180,60,60,0.07); }
+    .cs-hp-label {
+      font-family: var(--font-sans);
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      font-weight: 700;
+    }
+    .cs-hp-val {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      color: var(--white);
+      line-height: 1;
+    }
+    .cs-hp-cell--current .cs-hp-val { color: #f87171; }
+    .cs-hp-controls {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+    }
+    .cs-hp-btn {
+      flex: 1;
+      padding: 0.35rem 0;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-hp-btn:hover { background: rgba(255,255,255,0.12); }
+    .cs-hp-input-row {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+    }
+    .cs-hp-input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 0.3rem 0.5rem;
+      text-align: center;
+      width: 60px;
+    }
+    .cs-hp-apply {
+      padding: 0.3rem 0.75rem;
+      background: rgba(200,148,10,0.2);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-hp-apply:hover { background: rgba(200,148,10,0.35); }
+
+    /* ── Gold tracker ── */
+    .cs-gold-edit-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      align-items: center;
+    }
+    .cs-gold-input {
+      width: 90px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(200,148,10,0.3);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      padding: 0.3rem 0.5rem;
+      text-align: center;
+    }
+    .cs-gold-save {
+      padding: 0.3rem 0.75rem;
+      background: rgba(200,148,10,0.2);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-gold-save:hover { background: rgba(200,148,10,0.35); }
+
+    /* ── Inventory ── */
+    .cs-inv-add-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .cs-inv-input {
+      flex: 1;
+      min-width: 140px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      padding: 0.45rem 0.75rem;
+    }
+    .cs-inv-input::placeholder { color: rgba(255,255,255,0.25); }
+    .cs-inv-add-btn {
+      padding: 0.45rem 1rem;
+      background: rgba(200,148,10,0.2);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .cs-inv-add-btn:hover { background: rgba(200,148,10,0.35); }
+    .cs-inv-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .cs-inv-row {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .cs-inv-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.45; flex-shrink: 0; }
+    .cs-inv-name { flex: 1; font-family: var(--font-sans); font-size: 0.86rem; color: var(--char-text-muted); }
+    .cs-inv-qty {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--char-text-faint);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 0.1rem 0.45rem;
+    }
+    .cs-inv-del {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.2);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 0.25rem;
+      transition: color 0.15s;
+    }
+    .cs-inv-del:hover { color: #f87171; }
+    .cs-inv-empty {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.2);
+      font-style: italic;
+      padding: 0.75rem 0;
+      text-align: center;
+    }
+
+    /* ── Notes tabs ── */
+    .cs-notes-tabs {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .cs-notes-tab {
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--char-text-faint);
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cs-notes-tab.active {
+      background: rgba(200,148,10,0.18);
+      border-color: rgba(200,148,10,0.45);
+      color: var(--gold-light);
+    }
+    .cs-notes-textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--char-radius);
+      color: var(--char-text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      line-height: 1.75;
+      padding: 1rem 1.25rem;
+      resize: vertical;
+    }
+    .cs-notes-textarea:focus { outline: none; border-color: rgba(200,148,10,0.35); }
+    .cs-notes-save {
+      margin-top: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(200,148,10,0.2);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-notes-save:hover { background: rgba(200,148,10,0.35); }
+
+    /* ── Photo upload ── */
+    .cs-photo-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .cs-photo-img {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(200,148,10,0.35);
+    }
+    .cs-photo-placeholder {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      border: 2px dashed rgba(200,148,10,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(200,148,10,0.3);
+    }
+    .cs-photo-upload-btn {
+      padding: 0.45rem 1.1rem;
+      background: rgba(200,148,10,0.15);
+      border: 1px solid rgba(200,148,10,0.35);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-photo-upload-btn:hover { background: rgba(200,148,10,0.28); }
+    .cs-photo-input { display: none; }
+
+    /* ── Toast ── */
+    .cs-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: rgba(18,24,42,0.97);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--gold-light);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    .cs-toast.visible { opacity: 1; transform: translateY(0); }
+    .cs-toast.error { border-color: rgba(248,113,113,0.5); color: #f87171; }
+  </style>
+
   <script>
   'use strict';
 
-  // ── Lookup tables (mirrors character.js) ──────────────────────────
+  // ── Supabase client ───────────────────────────────────────────────
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  var sb      = window.supabase.createClient(SB_URL, SB_KEY);
+
+  // ── Live state ────────────────────────────────────────────────────
+  var SHEET      = null;   // character_sheet row
+  var INVENTORY  = [];     // inventory rows
+  var NOTES      = {};     // { general:'', places:'', names:'', things:'', misc:'' }
+  var PHOTO_URL  = null;   // public URL of character photo
+  var CHAR_ID    = null;   // player_characters.id
+  var TOKEN      = null;   // from URL query string
+  var ACTIVE_NOTE_TAB = 'general';
+
+  // ── Lookup tables ─────────────────────────────────────────────────
   var TYPE_META = {
-    bubbleseed:  { name:'Bubbleseed',  color:'#2a7a3a', glow:'42,122,58',   element:'Earth · Growth · Joy',           desc:'Warm, generous magic. Tends to overshoot. Smells like fresh soil after rain. Emotionally attached to what it nurtures.' },
-    featherflow: { name:'Featherflow', color:'#2266b8', glow:'34,102,184',  element:'Wind · Water · Freedom',          desc:'Never goes straight. Values freedom above all. Subtly resists anything that cages it. May counteract early Fading.' },
-    steelfist:   { name:'Steelfist',   color:'#6a3aaa', glow:'106,58,170',  element:'Metal · Resolve · Order',         desc:'Does exactly what it is told. Rewards discipline and punishes sloppiness. Its grey shines — never confuse it with the Dimming\'s flat grey.' },
-    flamerage:   { name:'Flamerage',   color:'#aa3a1a', glow:'170,58,26',   element:'Fire · Destruction · Fury',       desc:'Responds to emotion before intent. Spectacular and unpredictable. The only type that can temporarily overpower Stage 1 Fading.' }
-  };
-
-  var ALIGNMENT_LABELS = {
-    brightward:  'Brightward  —  Lawful Good',
-    colorful:    'Colorful  —  Chaotic Good',
-    greywarden:  'Greywarden  —  True Neutral',
-    steelbound:  'Steelbound  —  Lawful Neutral',
-    ashwalker:   'Ashwalker  —  Chaotic Neutral'
-  };
-
-  var REGION_LABELS = {
-    caparia: 'Caparia',
-    nombi:   'Nombi',
-    sohot:   'Sohot',
-    jugabi:  'Jugabi'
+    bubbleseed:  { name:'Bubbleseed',  color:'#2a7a3a', glow:'42,122,58',   element:'Earth · Growth · Joy',     desc:'Warm, generous magic. Tends to overshoot. Smells like fresh soil after rain. Emotionally attached to what it nurtures.' },
+    featherflow: { name:'Featherflow', color:'#2266b8', glow:'34,102,184',  element:'Wind · Water · Freedom',   desc:'Never goes straight. Values freedom above all. Subtly resists anything that cages it. May counteract early Fading.' },
+    steelfist:   { name:'Steelfist',   color:'#6a3aaa', glow:'106,58,170',  element:'Metal · Resolve · Order',  desc:'Does exactly what it is told. Steelfist grey shines — the Dimming\'s grey is flat.' },
+    flamerage:   { name:'Flamerage',   color:'#aa3a1a', glow:'170,58,26',   element:'Fire · Destruction · Fury',desc:'Responds to emotion before intent. The only type that can temporarily overpower Stage 1 Fading.' }
   };
 
   var REGION_IMG = {
-    caparia: 'img-caparia-landscape',
-    nombi:   'img-nombi-landscape',
-    sohot:   'img-sohot-landscape',
-    jugabi:  'img-jugabi-landscape'
+    caparia:'img-caparia-landscape', nombi:'img-nombi-landscape',
+    sohot:'img-sohot-landscape',     jugabi:'img-jugabi-landscape'
   };
-
-  // Background starting gold — mirrors ANAVALE_BACKGROUNDS in character.js
+  var REGION_LABELS = { caparia:'Caparia', nombi:'Nombi', sohot:'Sohot', jugabi:'Jugabi' };
+  var ALIGNMENT_LABELS = {
+    brightward:'Brightward', colorful:'Colorful', greywarden:'Greywarden',
+    steelbound:'Steelbound', ashwalker:'Ashwalker'
+  };
   var BG_GOLD = {
-    cobblewise:   10, craftborn:    15, faithful:     10, greywitnessed: 10,
-    learned:      10, masquerader:  15, reveler:      15, ringscarred:   15,
-    rootborn:     10, stillsought:   5, streetwise:   25, tested:        10,
-    threadpuller: 10, waykeeper:    10, wellborn:     20
+    faithful:50, streetwise:50, learned:50, tested:50, wellborn:75, rootborn:50,
+    masquerader:50, reveler:50, craftborn:50, stillsought:50, wildborn:50,
+    tidemarked:50, cobblewise:50, greywitnessed:50, threadpuller:50, ringscarred:50
   };
-
-  // ── Human-readable label helpers ──────────────────────────────────
   var RAISED_LABELS = {
-    'single-parent':   'raised by a single parent',
-    'two-parents':     'raised by two parents',
-    'grandparents':    'raised by grandparents',
-    'older-sibling':   'raised by an older sibling',
-    'extended-family': 'raised by extended family',
-    'community':       'raised by a community',
-    'institution':     'raised in an institution',
-    'self-raised':     'largely self-raised',
-    'mentor':          'raised by a mentor or teacher',
-    'unusual':         'raised in unusual circumstances'
+    'both-parents':'Both parents', 'single-parent':'A single parent', 'grandparent':'A grandparent',
+    'older-sibling':'An older sibling', 'extended-family':'Extended family', 'guardian':'A guardian',
+    'institution':'An institution', 'streets':'The streets', 'wilderness':'The wilderness', 'nobody':'Nobody'
   };
-
-  var LEFT_BEHIND_LABELS = {
-    'family':        'family',
-    'home':          'a home',
-    'a-love':        'someone they loved',
-    'a-friend':      'a dear friend',
-    'a-debt':        'an unresolved debt',
-    'a-promise':     'a promise not yet kept',
-    'a-community':   'a community',
-    'nothing':       'nothing — they left clean'
-  };
-
-  var WHY_LEFT_LABELS = {
-    'called':        'felt called toward something',
-    'fled':          'had to leave in a hurry',
-    'searched':      'left searching for answers',
-    'sent':          'were sent away by someone they trust',
-    'lost':          'left after losing something important',
-    'curious':       'simply needed to see more of the world',
-    'duty':          'left out of a sense of duty',
-    'accident':      'did not plan to leave at all'
-  };
-
-  var ORG_LABELS = {
-    'brightcreed':   'The Brightcreed',
-    'stillkeep':     'The Stillkeep',
-    'veilborn':      'The Veilborn',
-    'conclave':      'The Gigglegloom Conclave',
-    'wanderkeep':    'The Wanderkeep',
-    'formery':       'The Formery',
-    'prism-exchange':'The Prism Exchange',
-    'nimblewood':    'The Nimblewood',
-    'the-revel':     'The Revel',
-    'chromeguard':   'The Chromeguard',
-    'none':          'No formal organization'
-  };
-
   var PET_LABELS = {
-    'yes-still':     'Yes — still has them',
-    'yes-lost':      'Yes — but they\'re gone now',
-    'no':            'No',
-    'not-exactly':   'Not exactly a pet, but close enough'
+    'yes-still-have':'Yes — still have them', 'yes-gone-now':'Yes — gone now',
+    'wanted-never-did':'Wanted one but never did', 'no':'No'
   };
-
   var LOVE_LABELS = {
-    'yes':           'Yes',
-    'no':            'No',
-    'complicated':   'It\'s complicated',
-    'not-sure':      'Not sure if it counts'
+    'yes-together':'Yes — still together', 'yes-ended':'Yes — ended',
+    'unrequited':'Unrequited', 'no':'Not yet'
+  };
+  var ORG_LABELS = {
+    'yes-still':'Yes — still a member', 'yes-left':'Yes — left',
+    'tried-to-join':'Tried but couldn\'t join', 'no':'No'
+  };
+  var LEFT_BEHIND_LABELS = {
+    person:'A person', place:'A place', 'object':'An object',
+    'unfinished-business':'Unfinished business', 'responsibility':'A responsibility', nothing:'Nothing'
+  };
+  var WHY_LEFT_LABELS = {
+    'someone-disappeared':'Left searching for someone who disappeared',
+    'saw-the-grey':'Left after watching the grey arrive',
+    'received-message':'Left after receiving a message that couldn\'t be ignored',
+    'ran-from-something':'Ran from something',
+    'called-to-wander':'Always planned to leave',
+    'forced-out':'Was forced out',
+    'opportunity':'Left for an opportunity'
   };
 
-  // ── Ability score modifier ─────────────────────────────────────────
-  function abMod(score) {
-    var m = Math.floor((score - 10) / 2);
-    return (m >= 0 ? '+' : '') + m;
+  // ── Helpers ───────────────────────────────────────────────────────
+  function cap(str) { if (!str) return '—'; return str.charAt(0).toUpperCase() + str.slice(1); }
+  function label(map, key) { if (!key) return '—'; return map[key] || cap((key+'').replace(/-/g,' ')); }
+  function abMod(v) { var m = Math.floor((v-10)/2); return (m>=0?'+':'')+m; }
+
+  function getToken() {
+    return new URLSearchParams(window.location.search).get('token') || '';
   }
 
-  // ── Capitalize first letter ────────────────────────────────────────
-  function cap(str) {
-    if (!str) return '—';
-    return str.charAt(0).toUpperCase() + str.slice(1);
+  function showToast(msg, isError) {
+    var t = document.getElementById('cs-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'cs-toast' + (isError ? ' error' : '');
+    void t.offsetWidth;
+    t.classList.add('visible');
+    setTimeout(function() { t.classList.remove('visible'); }, 3000);
   }
 
-  // ── Safe label with fallback ───────────────────────────────────────
-  function label(map, key) {
-    if (!key) return '—';
-    return map[key] || cap(key.replace(/-/g,' '));
-  }
-
-  // ── Parse token from URL pathname ─────────────────────────────────
-  // URL is .../sheet/abc123.html  →  token = "abc123"
-  function getTokenFromPath() {
-    var params = new URLSearchParams(window.location.search);
-    return params.get('token') || '';
-  }
-
-  // ── Build appearance description from appearance_data ─────────────
+  // ── Appearance helpers ────────────────────────────────────────────
   function buildAppearanceDesc(app) {
     if (!app) return null;
     var parts = [];
-    if (app.height && app.build) {
-      parts.push(cap(app.height) + ', ' + app.build + ' build.');
-    } else if (app.height) {
-      parts.push(cap(app.height) + '.');
-    }
+    if (app.height && app.build) parts.push(cap(app.height) + ', ' + app.build + ' build.');
+    else if (app.height) parts.push(cap(app.height) + '.');
     if (app.age) parts.push(cap(app.age) + '.');
-    var faceArr = [];
-    if (app.face_shape) faceArr.push(app.face_shape + ' face');
-    if (app.skin_tone)  faceArr.push(app.skin_tone + ' skin');
-    if (faceArr.length) parts.push(cap(faceArr.join(', ')) + '.');
-    var eyeArr = [];
-    if (app.eye_color) eyeArr.push(app.eye_color);
-    if (app.eye_shape) eyeArr.push(app.eye_shape);
-    if (eyeArr.length) parts.push(cap(eyeArr.join(', ')) + ' eyes.');
-    var hairArr = [];
-    if (app.hair_color) hairArr.push(app.hair_color);
-    if (app.hair_style) hairArr.push(app.hair_style + ' hair');
-    if (hairArr.length) parts.push(cap(hairArr.join(', ')) + '.');
-    if (app.facial_hair && app.facial_hair !== 'none' && app.facial_hair !== '') {
-      parts.push(cap(app.facial_hair) + '.');
-    }
+    var face = [];
+    if (app.face_shape) face.push(app.face_shape + ' face');
+    if (app.skin_tone)  face.push(app.skin_tone + ' skin');
+    if (face.length) parts.push(cap(face.join(', ')) + '.');
+    var eyes = [];
+    if (app.eye_color) eyes.push(app.eye_color);
+    if (app.eye_shape) eyes.push(app.eye_shape);
+    if (eyes.length) parts.push(cap(eyes.join(', ')) + ' eyes.');
+    var hair = [];
+    if (app.hair_color) hair.push(app.hair_color);
+    if (app.hair_style) hair.push(app.hair_style + ' hair');
+    if (hair.length) parts.push(cap(hair.join(', ')) + '.');
+    if (app.facial_hair && app.facial_hair !== 'none') parts.push(cap(app.facial_hair) + '.');
     if (Array.isArray(app.facial_markings) && app.facial_markings.length) {
       parts.push('Markings: ' + app.facial_markings.join(', ') + '.');
     }
     return parts.join(' ') || null;
   }
 
-  // ── Collect visible gear slots from appearance_data ───────────────
-  function buildGearList(app, bgId) {
+  function buildGearList(app) {
     if (!app) return [];
-    var gear = [];
     var slotLabels = {
-      cloak: 'Cloak', top: 'Top', lower: 'Lower', shoes: 'Shoes',
-      hat: 'Hat', hand_right: 'Right Hand', hand_left: 'Left Hand',
-      ring_right: 'Ring (R)', ring_left: 'Ring (L)',
-      necklace: 'Necklace', earrings: 'Earrings'
+      cloak:'Cloak', top:'Top', lower:'Lower', shoes:'Shoes', hat:'Hat',
+      hand_right:'Right Hand', hand_left:'Left Hand',
+      ring_right:'Ring (R)', ring_left:'Ring (L)',
+      necklace:'Necklace', earrings:'Earrings'
     };
-    Object.keys(slotLabels).forEach(function(k) {
-      var v = app[k];
-      if (v && v !== 'none' && v !== '') {
-        gear.push({ slot: slotLabels[k], val: cap(v.replace(/-/g,' ')) });
-      }
+    return Object.keys(slotLabels).filter(function(k) {
+      return app[k] && app[k] !== 'none' && app[k] !== '';
+    }).map(function(k) {
+      return { slot: slotLabels[k], val: cap((app[k]||'').replace(/-/g,' ')) };
     });
-    return gear;
   }
 
-  // ── Render the sheet ──────────────────────────────────────────────
-  function renderSheet() {
+  // ── Not-found template ────────────────────────────────────────────
+  function renderNotFound(title, body) {
+    return '<div class="cs-not-found">'
+      + '<div class="cs-not-found-glyph">✦</div>'
+      + '<div class="cs-not-found-title">' + title + '</div>'
+      + '<div class="cs-not-found-body">' + body + '</div>'
+      + '<a class="cs-not-found-link" href="../index.html">← Return to Anavale Wiki</a>'
+      + '</div>';
+  }
+
+  // ── Render static character data (from player_characters) ─────────
+  function renderCharacter(ch) {
     var main = document.getElementById('cs-main');
-    var token = getTokenFromPath();
 
-    // Guard: no CHARACTERS array loaded
-    if (typeof CHARACTERS === 'undefined' || !Array.isArray(CHARACTERS)) {
-      main.innerHTML = renderNotFound('Character data is not yet loaded.', 'The DM will add your character shortly — try again in a few minutes.');
-      return;
-    }
-
-    // Find character by token
-    var ch = null;
-    for (var i = 0; i < CHARACTERS.length; i++) {
-      if (CHARACTERS[i].token === token) { ch = CHARACTERS[i]; break; }
-    }
-
-    if (!ch) {
-      main.innerHTML = renderNotFound('No character found for this link.', 'Make sure you\'re using the exact URL from your confirmation page. If you just created your character, the DM may not have added your entry yet.');
-      return;
-    }
-
-    // ── Resolved display values ────────────────────────────────────
-    var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
-    var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey), color: '#c8940a', glow:'200,148,10', element:'', desc:'' };
-    var regionKey  = (ch.home_region || '').toLowerCase();
-    var regionImg  = REGION_IMG[regionKey] || 'img-caparia-landscape';
+    var typeKey     = (ch.class_gigglegloom || '').toLowerCase();
+    var typeMeta    = TYPE_META[typeKey] || { name: cap(typeKey), color:'#c8940a', glow:'200,148,10', element:'', desc:'' };
+    var regionKey   = (ch.home_region || '').toLowerCase();
+    var regionImg   = REGION_IMG[regionKey] || 'img-caparia-landscape';
     var regionLabel = REGION_LABELS[regionKey] || cap(ch.home_region || '');
-    var scores     = ch.ability_scores || {};
-    var bgGold     = BG_GOLD[ch.background_id] || '—';
-    var app        = ch.appearance_data || {};
-    var gender     = ch.gender || 'm';
+    var scores      = (typeof ch.ability_scores === 'object' && ch.ability_scores) ? ch.ability_scores : {};
+    var app         = (typeof ch.appearance_data === 'object' && ch.appearance_data) ? ch.appearance_data : {};
+    var gender      = ch.gender || 'm';
     var portraitSuffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
+    var portraitSrc = ch.species ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp' : '';
 
-    // Human-readable class/species/bg
-    var classDisplay = cap((ch.class_id || '').replace(/-/g,' '));
-    var speciesDisplay = cap((ch.species || '').replace(/-/g,' '));
-    var bgDisplay = cap((ch.background_id || '').replace(/-/g,' '));
+    var classDisplay   = cap((ch.class_id      || '').replace(/-/g,' '));
+    var speciesDisplay = cap((ch.species        || '').replace(/-/g,' '));
+    var bgDisplay      = cap((ch.background_id  || '').replace(/-/g,' '));
 
-    // Try to look up proper names from loaded data files
-    if (typeof CLASS_DATA !== 'undefined' && Array.isArray(CLASS_DATA)) {
-      CLASS_DATA.forEach(function(g) {
-        if (g.classes) g.classes.forEach(function(c) {
-          if (c.id === ch.class_id) classDisplay = c.name;
-        });
-      });
-    }
-    if (typeof ANAVALE_BACKGROUNDS !== 'undefined' && Array.isArray(ANAVALE_BACKGROUNDS)) {
-      ANAVALE_BACKGROUNDS.forEach(function(b) {
-        if (b.id === ch.background_id) bgDisplay = b.name;
-      });
-    }
-    if (typeof ANAVALE_SPECIES !== 'undefined' && Array.isArray(ANAVALE_SPECIES)) {
-      ANAVALE_SPECIES.forEach(function(s) {
-        if (s.id === ch.species) speciesDisplay = s.name || s.phb || speciesDisplay;
-      });
-    }
-
-    // Portrait — same pattern as character.js species card
-    var portraitSrc = ch.species
-      ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp'
-      : '';
-
-    // Appearance description
     var appearanceDesc = ch.appearance_prompt || buildAppearanceDesc(app) || null;
+    var gearList       = buildGearList(app);
 
-    // Story fields
-    var storyRows = [
-      { key: 'Who raised you',       val: label(RAISED_LABELS, ch.who_raised_you) },
-      { key: 'Dearest friend',       val: ch.dearest_friend || '—' },
-      { key: 'Had a pet',            val: label(PET_LABELS, ch.had_pet) },
-      { key: 'Fallen in love',       val: label(LOVE_LABELS, ch.fallen_in_love) },
-      { key: 'Organization',         val: label(ORG_LABELS, ch.organization_joined) },
-      { key: 'Left behind',          val: label(LEFT_BEHIND_LABELS, ch.left_behind) },
-      { key: 'Why you left',         val: label(WHY_LEFT_LABELS, ch.why_you_left) },
-      { key: 'Cares about',          val: ch.cares_about || '—' },
-      { key: 'Deepest fear',         val: ch.deepest_fear || '—' },
-      { key: 'What you seek',        val: ch.seeking || '—' }
-    ];
-
-    // Gear
-    var gearList = buildGearList(app, ch.background_id);
-
-    // ── Ability score cells ────────────────────────────────────────
+    // Ability score cells
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
     var statCells = AB_KEYS.map(function(ab) {
       var raw = parseInt(scores[ab]) || 0;
       var mod = raw ? abMod(raw) : '—';
-      return '<div class="cs-stat-block">'
-        + '<div class="cs-stat-val">' + (raw || '—') + '</div>'
+      return '<div class="cs-stat-block"><div class="cs-stat-val">' + (raw||'—') + '</div>'
         + '<div class="cs-stat-mod">' + mod + '</div>'
-        + '<div class="cs-stat-label">' + AB_NAMES[ab] + '</div>'
-        + '</div>';
+        + '<div class="cs-stat-label">' + AB_NAMES[ab] + '</div></div>';
     }).join('');
 
-    // ── Identity rows ──────────────────────────────────────────────
+    // Identity grid
     var identity = [
       { k:'Class',       v: classDisplay },
       { k:'Species',     v: speciesDisplay },
@@ -898,74 +1123,76 @@
       { k:'Home Region', v: regionLabel },
       { k:'Level',       v: ch.level || 1 },
       { k:'Pronouns',    v: ch.pronouns || '—' },
-      { k:'Language',    v: ch.language_extra ? cap(ch.language_extra.replace(/-/g,' ')) : '—' }
+      { k:'Language',    v: ch.language_extra ? cap((ch.language_extra+'').replace(/-/g,' ')) : '—' }
     ];
     var identityHtml = identity.map(function(r) {
-      return '<div class="cs-identity-row">'
-        + '<div class="cs-identity-key">' + r.k + '</div>'
-        + '<div class="cs-identity-val">' + r.v + '</div>'
-        + '</div>';
+      return '<div class="cs-identity-row"><div class="cs-identity-key">' + r.k + '</div>'
+        + '<div class="cs-identity-val">' + r.v + '</div></div>';
     }).join('');
 
-    // ── Story rows HTML ────────────────────────────────────────────
-    var storyHtml = storyRows
-      .filter(function(r) { return r.val && r.val !== '—'; })
+    // Story rows
+    var storyRows = [
+      { k:'Who raised you',  v: label(RAISED_LABELS, ch.who_raised_you) },
+      { k:'Dearest friend',  v: ch.dearest_friend || '—' },
+      { k:'Had a pet',       v: label(PET_LABELS, ch.had_pet) },
+      { k:'Fallen in love',  v: label(LOVE_LABELS, ch.fallen_in_love) },
+      { k:'Organization',    v: label(ORG_LABELS, ch.organization_joined) },
+      { k:'Left behind',     v: label(LEFT_BEHIND_LABELS, ch.left_behind) },
+      { k:'Why you left',    v: label(WHY_LEFT_LABELS, ch.why_you_left) },
+      { k:'Cares about',     v: ch.cares_about || '—' },
+      { k:'Deepest fear',    v: ch.deepest_fear || '—' },
+      { k:'What you seek',   v: ch.seeking || '—' }
+    ];
+    var storyHtml = storyRows.filter(function(r) { return r.v && r.v !== '—'; })
       .map(function(r) {
-        return '<div class="cs-story-row">'
-          + '<div class="cs-story-key">' + r.key + '</div>'
-          + '<div class="cs-story-val">' + r.val + '</div>'
-          + '</div>';
+        return '<div class="cs-story-row"><div class="cs-story-key">' + r.k + '</div>'
+          + '<div class="cs-story-val">' + r.v + '</div></div>';
       }).join('');
 
-    // ── Gear HTML ─────────────────────────────────────────────────
+    // Gear HTML
     var gearHtml = gearList.length
       ? gearList.map(function(g) {
-          return '<div class="cs-gear-item">'
-            + '<div class="cs-gear-dot"></div>'
-            + '<span><span style="color:var(--char-text-faint);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">' + g.slot + '</span>  ' + g.val + '</span>'
-            + '</div>';
+          return '<div class="cs-gear-item"><div class="cs-gear-dot"></div>'
+            + '<span><span style="color:var(--char-text-faint);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">'
+            + g.slot + '</span>  ' + g.val + '</span></div>';
         }).join('')
       : '<div class="cs-gear-item"><div class="cs-gear-dot"></div><em style="color:var(--char-text-faint);">Starting gear to be determined</em></div>';
 
-    // ── Appearance chips ───────────────────────────────────────────
+    // Appearance chips
     var chipSlots = ['height','build','age','skin_tone','face_shape','eye_color','eye_shape','hair_color','hair_style'];
     var chipsHtml = chipSlots.filter(function(k) { return app[k]; }).map(function(k) {
-      return '<span class="cs-chip"><span class="cs-chip-label">'
-        + k.replace(/_/g,' ') + '</span>'
-        + cap((app[k] || '').replace(/-/g,' '))
-        + '</span>';
+      return '<span class="cs-chip"><span class="cs-chip-label">' + k.replace(/_/g,' ') + '</span>'
+        + cap((app[k]||'').replace(/-/g,' ')) + '</span>';
     }).join('');
 
-    // ── Type banner HTML ───────────────────────────────────────────
+    // Type banner
     var typeIconSrc = typeKey ? '../assets/icons/icon-' + typeKey + '.svg' : '';
     var typeBannerHtml = '<div class="cs-type-banner" style="border-color:' + typeMeta.color + '33;">'
-      + '<div class="cs-type-banner-bg" style="background:radial-gradient(circle at left, ' + typeMeta.color + ' 0%, transparent 70%);"></div>'
-      + (typeIconSrc ? '<img class="cs-type-icon" src="' + typeIconSrc + '" alt="" aria-hidden="true" style="color:' + typeMeta.color + ';">' : '')
-      + '<div>'
-        + '<div class="cs-type-name">' + typeMeta.name + '</div>'
-        + '<div class="cs-type-element" style="color:' + typeMeta.color + ';">' + typeMeta.element + '</div>'
-        + (typeMeta.desc ? '<div class="cs-type-desc">' + typeMeta.desc + '</div>' : '')
-      + '</div>'
-      + '</div>';
+      + '<div class="cs-type-banner-bg" style="background:radial-gradient(circle at left,' + typeMeta.color + ' 0%,transparent 70%);"></div>'
+      + (typeIconSrc ? '<img class="cs-type-icon" src="' + typeIconSrc + '" alt="" aria-hidden="true">' : '')
+      + '<div><div class="cs-type-name">' + typeMeta.name + '</div>'
+      + '<div class="cs-type-element" style="color:' + typeMeta.color + ';">' + typeMeta.element + '</div>'
+      + (typeMeta.desc ? '<div class="cs-type-desc">' + typeMeta.desc + '</div>' : '')
+      + '</div></div>';
 
-    // ── Portrait img ───────────────────────────────────────────────
+    // Portrait
     var portraitHtml = portraitSrc
       ? '<img class="cs-hero-portrait" src="' + portraitSrc + '" alt="' + (ch.name||'') + ' portrait" onerror="this.style.display=\'none\'">'
       : '';
 
-    // ── Assemble full page ─────────────────────────────────────────
+    // Assemble
     main.innerHTML =
       // Hero
       '<div class="cs-hero">'
         + '<div class="cs-hero-bg" style="background-image:url(\'../assets/images/regions/' + regionImg + '.webp\');"></div>'
-        + '<div class="cs-hero-orb-a" style="background:radial-gradient(circle, rgba(' + typeMeta.glow + ',0.6) 0%, transparent 65%);"></div>'
-        + '<div class="cs-hero-orb-b" style="background:radial-gradient(circle, rgba(' + typeMeta.glow + ',0.4) 0%, transparent 65%);"></div>'
+        + '<div class="cs-hero-orb-a" style="background:radial-gradient(circle,rgba(' + typeMeta.glow + ',0.6) 0%,transparent 65%);"></div>'
+        + '<div class="cs-hero-orb-b" style="background:radial-gradient(circle,rgba(' + typeMeta.glow + ',0.4) 0%,transparent 65%);"></div>'
         + '<div class="cs-hero-overlay"></div>'
         + '<div class="cs-hero-bottom-fade"></div>'
         + portraitHtml
         + '<div class="cs-hero-content">'
           + '<div class="cs-hero-eyebrow">Anavale · Character Sheet</div>'
-          + '<div class="cs-hero-name">' + (ch.name || 'Unknown') + '</div>'
+          + '<div class="cs-hero-name">' + (ch.name||'Unknown') + '</div>'
           + '<div class="cs-hero-tags">'
             + '<span class="cs-hero-tag cs-hero-tag--type" style="background:' + typeMeta.color + '22;border-color:' + typeMeta.color + '55;color:#fff;">' + typeMeta.name + '</span>'
             + '<span class="cs-hero-tag">' + classDisplay + '</span>'
@@ -976,80 +1203,433 @@
       + '</div>'
 
       // Gigglegloom type
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Gigglegloom Affinity</div>'
-        + typeBannerHtml
-      + '</div>'
+      + '<div class="cs-section"><div class="cs-section-label">Gigglegloom Affinity</div>'
+        + typeBannerHtml + '</div>'
 
       // Ability scores
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Ability Scores</div>'
-        + '<div class="cs-stat-row">' + statCells + '</div>'
-      + '</div>'
+      + '<div class="cs-section"><div class="cs-section-label">Ability Scores</div>'
+        + '<div class="cs-stat-row">' + statCells + '</div></div>'
 
       // Identity
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Identity</div>'
-        + '<div class="cs-identity-grid">' + identityHtml + '</div>'
-      + '</div>'
+      + '<div class="cs-section"><div class="cs-section-label">Identity</div>'
+        + '<div class="cs-identity-grid">' + identityHtml + '</div></div>'
 
       // Appearance
       + (appearanceDesc || chipsHtml ? (
-        '<div class="cs-section">'
-          + '<div class="cs-section-label">Appearance</div>'
+          '<div class="cs-section"><div class="cs-section-label">Appearance</div>'
           + (appearanceDesc ? '<div class="cs-appearance-block">' + appearanceDesc + '</div>' : '')
           + (chipsHtml ? '<div class="cs-appearance-chips">' + chipsHtml + '</div>' : '')
-        + '</div>'
-      ) : '')
+          + '</div>'
+        ) : '')
 
       // Starting gear
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Starting Gear</div>'
-        + '<div class="cs-gear-grid">' + gearHtml + '</div>'
-      + '</div>'
+      + '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
+        + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
 
-      // Starting gold
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Starting Gold</div>'
-        + '<div class="cs-gold-block">'
-          + '<div class="cs-gold-icon">◈</div>'
-          + '<div>'
-            + '<div class="cs-gold-val">' + bgGold + ' gp</div>'
-            + '<div class="cs-gold-label">Starting gold · ' + bgDisplay + ' background</div>'
-          + '</div>'
-        + '</div>'
-      + '</div>'
-
-      // Background story
+      // Story
       + (storyHtml ? (
-        '<div class="cs-section">'
-          + '<div class="cs-section-label">Your Past</div>'
-          + '<div class="cs-story-block">' + storyHtml + '</div>'
-        + '</div>'
-      ) : '')
+          '<div class="cs-section"><div class="cs-section-label">Your Past</div>'
+          + '<div class="cs-story-block">' + storyHtml + '</div></div>'
+        ) : '')
 
-      // Divider
+      + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>'
+
+      // ── Live-play sections (populated by renderLivePlay) ──────────
+
+      // HP
+      + '<div class="cs-section" id="cs-hp-section">'
+        + '<div class="cs-section-label">Hit Points</div>'
+        + '<div class="cs-hp-block" id="cs-hp-block"></div>'
+      + '</div>'
+
+      // Gold
+      + '<div class="cs-section" id="cs-gold-section">'
+        + '<div class="cs-section-label">Gold</div>'
+        + '<div id="cs-gold-block"></div>'
+      + '</div>'
+
+      // Inventory
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Inventory</div>'
+        + '<div class="cs-inv-add-row">'
+          + '<input class="cs-inv-input" id="cs-inv-name-input" placeholder="Item name…">'
+          + '<input class="cs-inv-input" id="cs-inv-qty-input" placeholder="Qty" style="width:60px;flex:none;">'
+          + '<button class="cs-inv-add-btn" onclick="addInventoryItem()">+ Add</button>'
+        + '</div>'
+        + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
+      + '</div>'
+
+      // Notes
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Notes</div>'
+        + '<div class="cs-notes-tabs" id="cs-notes-tabs">'
+          + ['general','places','names','things','misc'].map(function(t) {
+              return '<button class="cs-notes-tab' + (t==='general'?' active':'') + '" onclick="switchNoteTab(\'' + t + '\')">' + cap(t) + '</button>';
+            }).join('')
+        + '</div>'
+        + '<textarea class="cs-notes-textarea" id="cs-notes-area" placeholder="Notes go here…" oninput="notesDirty=true"></textarea>'
+        + '<button class="cs-notes-save" onclick="saveNotes()">Save Notes</button>'
+      + '</div>'
+
+      // Photo
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Character Photo</div>'
+        + '<div class="cs-photo-block" id="cs-photo-block">'
+          + '<div class="cs-photo-placeholder" id="cs-photo-placeholder">No photo yet</div>'
+          + '<button class="cs-photo-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">⬆ Upload Photo</button>'
+          + '<input class="cs-photo-input" type="file" id="cs-photo-input" accept="image/*" onchange="uploadPhoto(this)">'
+        + '</div>'
+      + '</div>'
+
       + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
 
-    // Footer
-    document.getElementById('cs-footer').textContent = '✦ · Anavale · ' + (ch.name || '') + ' · Level ' + (ch.level || 1) + ' · ✦';
-
-    // Page title
-    document.title = (ch.name || 'Character') + ' — Anavale';
+    // Footer + title
+    document.getElementById('cs-footer').textContent = '✦ · Anavale · ' + (ch.name||'') + ' · Level ' + (ch.level||1) + ' · ✦';
+    document.title = (ch.name||'Character') + ' — Anavale';
   }
 
-  // ── Not-found HTML template ────────────────────────────────────────
-  function renderNotFound(title, body) {
-    return '<div class="cs-not-found">'
-      + '<div class="cs-not-found-glyph">✦</div>'
-      + '<div class="cs-not-found-title">' + title + '</div>'
-      + '<div class="cs-not-found-body">' + body + '</div>'
-      + '<a class="cs-not-found-link" href="../index.html">← Return to Anavale Wiki</a>'
+  // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
+  function renderLivePlay() {
+    renderHP();
+    renderGold();
+    renderInventory();
+    renderNotes();
+    renderPhoto();
+  }
+
+  // ── HP ────────────────────────────────────────────────────────────
+  function renderHP() {
+    var block  = document.getElementById('cs-hp-block');
+    if (!block) return;
+    var hpCur  = SHEET ? SHEET.hp_current : '—';
+    var hpMax  = SHEET ? SHEET.hp_max     : '—';
+    var hpTemp = SHEET ? (SHEET.hp_temp || 0) : '—';
+    block.innerHTML =
+      '<div class="cs-hp-cell cs-hp-cell--current">'
+        + '<div class="cs-hp-label">Current HP</div>'
+        + '<div class="cs-hp-val" id="cs-hp-current">' + hpCur + '</div>'
+        + '<div class="cs-hp-controls">'
+          + '<button class="cs-hp-btn" onclick="adjustHP(-1)" title="−1">−</button>'
+          + '<button class="cs-hp-btn" onclick="adjustHP(1)"  title="+1">+</button>'
+        + '</div>'
+        + '<div class="cs-hp-input-row">'
+          + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="±">'
+          + '<button class="cs-hp-apply" onclick="applyHPDelta()">Apply</button>'
+        + '</div>'
+      + '</div>'
+      + '<div class="cs-hp-cell">'
+        + '<div class="cs-hp-label">Max HP</div>'
+        + '<div class="cs-hp-val">' + hpMax + '</div>'
+      + '</div>'
+      + '<div class="cs-hp-cell">'
+        + '<div class="cs-hp-label">Temp HP</div>'
+        + '<div class="cs-hp-val" id="cs-hp-temp">' + hpTemp + '</div>'
       + '</div>';
   }
 
-  // ── Boot ──────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', renderSheet);
+  function adjustHP(delta) {
+    if (!SHEET) return;
+    var cur = parseInt(SHEET.hp_current) || 0;
+    var max = parseInt(SHEET.hp_max)     || 0;
+    SHEET.hp_current = Math.max(0, Math.min(max, cur + delta));
+    document.getElementById('cs-hp-current').textContent = SHEET.hp_current;
+    saveSheet({ hp_current: SHEET.hp_current });
+  }
+
+  function applyHPDelta() {
+    if (!SHEET) return;
+    var input = document.getElementById('cs-hp-delta');
+    var delta = parseInt(input.value) || 0;
+    if (!delta) return;
+    adjustHP(delta);
+    input.value = '';
+  }
+
+  // ── Gold ──────────────────────────────────────────────────────────
+  function renderGold() {
+    var block = document.getElementById('cs-gold-block');
+    if (!block) return;
+    var cp     = SHEET ? (SHEET.gold_cp || 0) : 0;
+    var gpWhole = Math.floor(cp / 100);
+    var spRem   = Math.floor((cp % 100) / 10);
+    var cpRem   = cp % 10;
+    var display = gpWhole + ' gp';
+    if (spRem) display += ' ' + spRem + ' sp';
+    if (cpRem) display += ' ' + cpRem + ' cp';
+    block.innerHTML =
+      '<div class="cs-gold-block">'
+        + '<div class="cs-gold-icon">◈</div>'
+        + '<div>'
+          + '<div class="cs-gold-val" id="cs-gold-val">' + display + '</div>'
+          + '<div class="cs-gold-label">Current gold</div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="cs-gold-edit-row">'
+        + '<input class="cs-gold-input" id="cs-gold-input" type="number" placeholder="gp" title="Enter gold pieces">'
+        + '<button class="cs-gold-save" onclick="setGold()">Set Gold</button>'
+      + '</div>';
+  }
+
+  function setGold() {
+    if (!SHEET) return;
+    var input = document.getElementById('cs-gold-input');
+    var gp = parseFloat(input.value);
+    if (isNaN(gp)) return;
+    SHEET.gold_cp = Math.round(gp * 100);
+    saveSheet({ gold_cp: SHEET.gold_cp });
+    input.value = '';
+    renderGold();
+    showToast('Gold updated');
+  }
+
+  // ── Inventory ─────────────────────────────────────────────────────
+  function renderInventory() {
+    var list = document.getElementById('cs-inv-list');
+    if (!list) return;
+    if (!INVENTORY.length) {
+      list.innerHTML = '<div class="cs-inv-empty">No items yet — add something above.</div>';
+      return;
+    }
+    list.innerHTML = INVENTORY.map(function(item) {
+      return '<div class="cs-inv-row" id="inv-' + item.id + '">'
+        + '<div class="cs-inv-dot"></div>'
+        + '<div class="cs-inv-name">' + (item.custom_name || item.item_id || '—') + (item.notes ? ' <em style="color:var(--char-text-faint);font-size:0.76rem;">— ' + item.notes + '</em>' : '') + '</div>'
+        + '<div class="cs-inv-qty">×' + (item.quantity || 1) + '</div>'
+        + '<button class="cs-inv-del" onclick="deleteInventoryItem(\'' + item.id + '\')" title="Remove">×</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  function addInventoryItem() {
+    var nameInput = document.getElementById('cs-inv-name-input');
+    var qtyInput  = document.getElementById('cs-inv-qty-input');
+    var name = (nameInput.value || '').trim();
+    if (!name) { nameInput.focus(); return; }
+    var qty  = parseInt(qtyInput.value) || 1;
+    var row  = { character_id: CHAR_ID, token: TOKEN, custom_name: name, quantity: qty };
+    sb.from('inventory').insert(row).select().then(function(res) {
+      if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
+      INVENTORY.push(res.data[0]);
+      nameInput.value = '';
+      qtyInput.value  = '';
+      renderInventory();
+      showToast('Item added');
+    });
+  }
+
+  function deleteInventoryItem(id) {
+    sb.from('inventory').delete().eq('id', id).then(function(res) {
+      if (res.error) { showToast('Could not remove item', true); return; }
+      INVENTORY = INVENTORY.filter(function(i) { return i.id !== id; });
+      renderInventory();
+      showToast('Item removed');
+    });
+  }
+
+  // ── Notes ─────────────────────────────────────────────────────────
+  var notesDirty = false;
+
+  function renderNotes() {
+    var area = document.getElementById('cs-notes-area');
+    if (!area) return;
+    area.value = NOTES[ACTIVE_NOTE_TAB] || '';
+    notesDirty = false;
+  }
+
+  function switchNoteTab(tab) {
+    if (notesDirty) saveNotes(true);
+    ACTIVE_NOTE_TAB = tab;
+    document.querySelectorAll('.cs-notes-tab').forEach(function(b) {
+      b.classList.toggle('active', b.textContent.toLowerCase() === tab);
+    });
+    renderNotes();
+  }
+
+  function saveNotes(silent) {
+    if (!CHAR_ID) return;
+    var content = (document.getElementById('cs-notes-area') || {}).value || '';
+    NOTES[ACTIVE_NOTE_TAB] = content;
+    notesDirty = false;
+    // Upsert: match on character_id + tab
+    sb.from('character_notes')
+      .upsert({ character_id: CHAR_ID, token: TOKEN, tab: ACTIVE_NOTE_TAB, content: content },
+              { onConflict: 'character_id,tab' })
+      .then(function(res) {
+        if (res.error) { showToast('Notes not saved — ' + res.error.message, true); return; }
+        if (!silent) showToast('Notes saved');
+      });
+  }
+
+  // ── Photo ─────────────────────────────────────────────────────────
+  function renderPhoto() {
+    var block = document.getElementById('cs-photo-block');
+    if (!block) return;
+    var placeholder = document.getElementById('cs-photo-placeholder');
+    if (PHOTO_URL) {
+      if (placeholder) placeholder.style.display = 'none';
+      var existing = document.getElementById('cs-photo-img');
+      if (!existing) {
+        var img = document.createElement('img');
+        img.className = 'cs-photo-img';
+        img.id = 'cs-photo-img';
+        img.src = PHOTO_URL;
+        img.alt = 'Character photo';
+        block.insertBefore(img, block.firstChild);
+      } else {
+        existing.src = PHOTO_URL;
+      }
+    }
+  }
+
+  function uploadPhoto(input) {
+    var file = input.files && input.files[0];
+    if (!file || !CHAR_ID) return;
+    showToast('Uploading…');
+    var ext  = file.name.split('.').pop() || 'jpg';
+    var path = 'characters/' + CHAR_ID + '.' + ext;
+    var fd   = new FormData();
+    fd.append('', file, path);
+    sb.storage.from('character-photos').upload(path, file, { upsert: true, contentType: file.type })
+      .then(function(res) {
+        if (res.error) { showToast('Upload failed — ' + res.error.message, true); return; }
+        // Get public URL — note: bucket is private, so we use a signed URL via RLS-allowed select
+        sb.storage.from('character-photos').createSignedUrl(path, 60 * 60 * 24 * 365)
+          .then(function(urlRes) {
+            if (urlRes.error) { showToast('Could not get photo URL', true); return; }
+            var url = urlRes.data.signedUrl;
+            PHOTO_URL = url;
+            // Save storage_path to character_photo table
+            sb.from('character_photo')
+              .upsert({ character_id: CHAR_ID, token: TOKEN, storage_path: path, mime_type: file.type, file_size_bytes: file.size },
+                      { onConflict: 'character_id' })
+              .then(function(saveRes) {
+                if (saveRes.error) { showToast('Photo saved but record not updated', true); return; }
+                renderPhoto();
+                showToast('Photo uploaded ✦');
+              });
+          });
+      });
+  }
+
+  // ── Save sheet fields ─────────────────────────────────────────────
+  function saveSheet(fields) {
+    if (!CHAR_ID) return;
+    sb.from('character_sheet')
+      .update(fields)
+      .eq('character_id', CHAR_ID)
+      .then(function(res) {
+        if (res.error) showToast('Save failed — ' + res.error.message, true);
+      });
+  }
+
+  // ── Fetch or create character_sheet row ───────────────────────────
+  function fetchOrCreateSheet(ch) {
+    return sb.from('character_sheet').select('*').eq('character_id', CHAR_ID).maybeSingle()
+      .then(function(res) {
+        if (res.error) { console.warn('Sheet fetch error:', res.error); return; }
+        if (res.data) {
+          SHEET = res.data;
+        } else {
+          // First load: create row with HP from player_characters
+          var scores = (typeof ch.ability_scores === 'object' && ch.ability_scores) ? ch.ability_scores : {};
+          var conMod = Math.floor(((parseInt(scores.con) || 10) - 10) / 2);
+          // Derive hit die from class_id — basic mapping
+          var hitDie = { barbarian:12, fighter:10, paladin:10, ranger:10, monk:8, druid:8,
+                         cleric:8, rogue:8, bard:8, warlock:8, wizard:6, sorcerer:6 };
+          var hpMax  = (hitDie[ch.class_id] || 8) + conMod;
+          var newRow = {
+            character_id: CHAR_ID, token: TOKEN,
+            hp_max: hpMax, hp_current: hpMax, hp_temp: 0,
+            gold_cp: (BG_GOLD[ch.background_id] || 50) * 100,
+            proficiency_bonus: 2
+          };
+          return sb.from('character_sheet').insert(newRow).select().single()
+            .then(function(ins) {
+              if (ins.error) { console.warn('Sheet create error:', ins.error); return; }
+              SHEET = ins.data;
+            });
+        }
+      });
+  }
+
+  // ── Fetch inventory ───────────────────────────────────────────────
+  function fetchInventory() {
+    return sb.from('inventory').select('*').eq('character_id', CHAR_ID).order('created_at')
+      .then(function(res) {
+        if (res.error) { console.warn('Inventory fetch error:', res.error); return; }
+        INVENTORY = res.data || [];
+      });
+  }
+
+  // ── Fetch notes ───────────────────────────────────────────────────
+  function fetchNotes() {
+    return sb.from('character_notes').select('*').eq('character_id', CHAR_ID)
+      .then(function(res) {
+        if (res.error) { console.warn('Notes fetch error:', res.error); return; }
+        (res.data || []).forEach(function(row) { NOTES[row.tab] = row.content; });
+      });
+  }
+
+  // ── Fetch photo ───────────────────────────────────────────────────
+  function fetchPhoto() {
+    return sb.from('character_photo').select('*').eq('character_id', CHAR_ID).maybeSingle()
+      .then(function(res) {
+        if (res.error || !res.data || !res.data.storage_path) return;
+        return sb.storage.from('character-photos').createSignedUrl(res.data.storage_path, 60 * 60 * 24 * 365)
+          .then(function(urlRes) {
+            if (!urlRes.error && urlRes.data) PHOTO_URL = urlRes.data.signedUrl;
+          });
+      });
+  }
+
+  // ── Main boot ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    TOKEN = getToken();
+    var main = document.getElementById('cs-main');
+
+    if (!TOKEN) {
+      main.innerHTML = renderNotFound('No character link provided.', 'Use the URL from your character creation confirmation page.');
+      return;
+    }
+
+    // Show loading state immediately — never render stale static data
+    main.innerHTML = '<div class="cs-loading">'
+      + '<div class="cs-loading-spinner"></div>'
+      + '<div class="cs-loading-text">Loading your character…</div>'
+      + '</div>';
+
+    // 1. Fetch character from Supabase
+    sb.from('player_characters').select('*').eq('token', TOKEN).maybeSingle()
+      .then(function(res) {
+        if (res.error) {
+          main.innerHTML = renderNotFound('Could not load character.', 'There was a problem reaching the server. Please try again in a moment.');
+          return;
+        }
+        if (!res.data) {
+          main.innerHTML = renderNotFound('No character found for this link.', 'Make sure you\'re using the exact URL from your confirmation page.');
+          return;
+        }
+
+        var ch  = res.data;
+        CHAR_ID = ch.id;
+
+        // 2. Render static character data immediately
+        renderCharacter(ch);
+
+        // 3. Fetch live-play data in parallel, then render all at once
+        Promise.all([
+          fetchOrCreateSheet(ch),
+          fetchInventory(),
+          fetchNotes(),
+          fetchPhoto()
+        ]).then(function() {
+          renderLivePlay();
+        }).catch(function(err) {
+          console.warn('Live-play fetch error:', err);
+          renderLivePlay(); // render what we have
+        });
+      });
+  });
   </script>
 </body>
 </html>
