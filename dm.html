@@ -3647,10 +3647,7 @@ function switchAddType(type) {
 }
 
 function updateFileTarget() {
-  var type = (CURRENT_TAB === 'add') ? CURRENT_ADD_TYPE : CURRENT_TAB;
-  var target = FILE_TARGETS[type] || '—';
-  document.getElementById('file-target').innerHTML =
-    '📁 Add this entry to: <strong>' + target + '</strong>';
+  // file-target element removed — saves go directly to Supabase
 }
 
 function resetOutput() {
