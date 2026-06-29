@@ -980,22 +980,6 @@
           <div class="dm-form-title">🏙️ New City or Settlement</div>
           <div class="dm-form-subtitle">Generates a valid entry for <strong>data/cities.js</strong> — city, town, village, port, outpost, or ruin</div>
 
-          <!-- IMAGE -->
-          <div class="img-top-block">
-            <div class="img-top-placeholder" id="city-img-placeholder" onclick="document.getElementById('city-img-input').click()">
-              <span>Click to<br>add image</span>
-            </div>
-            <img id="city-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-            <div class="img-top-right">
-              <div class="img-top-label">Entry Image</div>
-              <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
-              <button class="btn-add" type="button" id="city-img-upload-btn" onclick="uploadImageToSupabase('city','cities')">⬆ Upload Image to Supabase</button>
-              <div id="city-img-size" class="img-compress-size"></div>
-              <div id="city-img-path" class="img-compress-error"></div>
-              <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-            </div>
-          </div>
-
           <!-- IDENTITY -->
           <div class="form-section">
             <div class="form-section-header">Identity</div>
@@ -1040,6 +1024,22 @@
                   <option value="moderate">Moderate</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          <!-- IMAGE -->
+          <div class="img-top-block">
+            <div class="img-top-placeholder" id="city-img-placeholder" onclick="document.getElementById('city-img-input').click()">
+              <span>Click to<br>add image</span>
+            </div>
+            <img id="city-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+            <div class="img-top-right">
+              <div class="img-top-label">Entry Image</div>
+              <input type="file" id="city-img-input" accept="image/*" onchange="previewImage(this,'city-img-preview','city-img-path','city-img-size','assets/images/cities/','city-id','city-name')">
+              <button class="btn-add" type="button" id="city-img-upload-btn" onclick="uploadImageToSupabase('city','cities')">⬆ Upload Image to Supabase</button>
+              <div id="city-img-size" class="img-compress-size"></div>
+              <div id="city-img-path" class="img-compress-error"></div>
+              <input type="text" id="city-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
             </div>
           </div>
 
@@ -1162,22 +1162,6 @@
         <div class="dm-form-title">🐾 New Creature</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/creatures.js</strong></div>
 
-        <!-- IMAGE -->
-        <div class="img-top-block">
-          <div class="img-top-placeholder" id="creature-img-placeholder" onclick="document.getElementById('creature-img-input').click()">
-            <span>Click to<br>add image</span>
-          </div>
-          <img id="creature-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-          <div class="img-top-right">
-            <div class="img-top-label">Entry Image</div>
-            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
-            <button class="btn-add" type="button" id="creature-img-upload-btn" onclick="uploadImageToSupabase('creature','creatures')">⬆ Upload Image to Supabase</button>
-            <div id="creature-img-size" class="img-compress-size"></div>
-            <div id="creature-img-path" class="img-compress-error"></div>
-            <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-          </div>
-        </div>
-
         <!-- IDENTITY -->
         <div class="form-section">
           <div class="form-section-header">Identity</div>
@@ -1207,6 +1191,22 @@
               <option value="sparked">The Sparked — Gigglegloom overloaded</option>
               <option value="unseen">The Unseen — outside the Gigglegloom entirely</option>
             </select>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="creature-img-placeholder" onclick="document.getElementById('creature-img-input').click()">
+            <span>Click to<br>add image</span>
+          </div>
+          <img id="creature-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="creature-img-input" accept="image/*" onchange="previewImage(this,'creature-img-preview','creature-img-path','creature-img-size','assets/images/creatures/','creature-id','creature-name')">
+            <button class="btn-add" type="button" id="creature-img-upload-btn" onclick="uploadImageToSupabase('creature','creatures')">⬆ Upload Image to Supabase</button>
+            <div id="creature-img-size" class="img-compress-size"></div>
+            <div id="creature-img-path" class="img-compress-error"></div>
+            <input type="text" id="creature-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
@@ -1304,22 +1304,6 @@
         <div class="dm-form-title">📍 New Point of Interest</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/pois.js</strong> — landmark, sacred site, ruin, dark zone, or Drakhold outpost</div>
 
-        <!-- IMAGE -->
-        <div class="img-top-block">
-          <div class="img-top-placeholder" id="poi-img-placeholder" onclick="document.getElementById('poi-img-input').click()">
-            <span>Click to<br>add image</span>
-          </div>
-          <img id="poi-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-          <div class="img-top-right">
-            <div class="img-top-label">Entry Image</div>
-            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
-            <button class="btn-add" type="button" id="poi-img-upload-btn" onclick="uploadImageToSupabase('poi','pois')">⬆ Upload Image to Supabase</button>
-            <div id="poi-img-size" class="img-compress-size"></div>
-            <div id="poi-img-path" class="img-compress-error"></div>
-            <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-          </div>
-        </div>
-
         <!-- IDENTITY -->
         <div class="form-section">
           <div class="form-section-header">Identity</div>
@@ -1364,6 +1348,22 @@
                 <option value="moderate">Moderate</option>
               </select>
             </div>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="poi-img-placeholder" onclick="document.getElementById('poi-img-input').click()">
+            <span>Click to<br>add image</span>
+          </div>
+          <img id="poi-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="poi-img-input" accept="image/*" onchange="previewImage(this,'poi-img-preview','poi-img-path','poi-img-size','assets/images/pois/','poi-id','poi-name')">
+            <button class="btn-add" type="button" id="poi-img-upload-btn" onclick="uploadImageToSupabase('poi','pois')">⬆ Upload Image to Supabase</button>
+            <div id="poi-img-size" class="img-compress-size"></div>
+            <div id="poi-img-path" class="img-compress-error"></div>
+            <input type="text" id="poi-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
@@ -1468,22 +1468,6 @@
         <div class="dm-form-title">🧙 New Character</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/characters.js</strong> — NPC, ally, villain, god, or faction leader</div>
 
-        <!-- IMAGE -->
-        <div class="img-top-block">
-          <div class="img-top-placeholder" id="char-img-placeholder" onclick="document.getElementById('char-img-input').click()">
-            <span>Click to<br>add image</span>
-          </div>
-          <img id="char-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-          <div class="img-top-right">
-            <div class="img-top-label">Entry Image</div>
-            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
-            <button class="btn-add" type="button" id="char-img-upload-btn" onclick="uploadImageToSupabase('char','characters')">⬆ Upload Image to Supabase</button>
-            <div id="char-img-size" class="img-compress-size"></div>
-            <div id="char-img-path" class="img-compress-error"></div>
-            <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-          </div>
-        </div>
-
         <!-- IDENTITY -->
         <div class="form-section">
           <div class="form-section-header">Identity</div>
@@ -1552,6 +1536,22 @@
               <span class="field-help">Organization, faction, or group this character belongs to</span>
               <input class="field-input" type="text" id="char-affiliation" placeholder="e.g. The Wanderkeep, The Vareth">
             </div>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="char-img-placeholder" onclick="document.getElementById('char-img-input').click()">
+            <span>Click to<br>add image</span>
+          </div>
+          <img id="char-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="char-img-input" accept="image/*" onchange="previewImage(this,'char-img-preview','char-img-path','char-img-size','assets/images/characters/','char-id','char-name')">
+            <button class="btn-add" type="button" id="char-img-upload-btn" onclick="uploadImageToSupabase('char','characters')">⬆ Upload Image to Supabase</button>
+            <div id="char-img-size" class="img-compress-size"></div>
+            <div id="char-img-path" class="img-compress-error"></div>
+            <input type="text" id="char-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
@@ -1665,22 +1665,6 @@
         <div class="dm-form-title">🏛️ New Organization</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/organizations.js</strong> — guild, faction, government body, or criminal syndicate</div>
 
-        <!-- IMAGE -->
-        <div class="img-top-block">
-          <div class="img-top-placeholder" id="org-img-placeholder" onclick="document.getElementById('org-img-input').click()">
-            <span>Click to<br>add image</span>
-          </div>
-          <img id="org-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-          <div class="img-top-right">
-            <div class="img-top-label">Entry Image</div>
-            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
-            <button class="btn-add" type="button" id="org-img-upload-btn" onclick="uploadImageToSupabase('org','organizations')">⬆ Upload Image to Supabase</button>
-            <div id="org-img-size" class="img-compress-size"></div>
-            <div id="org-img-path" class="img-compress-error"></div>
-            <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-          </div>
-        </div>
-
         <!-- IDENTITY -->
         <div class="form-section">
           <div class="form-section-header">Identity</div>
@@ -1717,6 +1701,22 @@
               <span class="field-help">Organizational category (guild, government body, religious order, criminal syndicate, etc.)</span>
               <input class="field-input" type="text" id="org-type" placeholder="e.g. Thieves' Guild">
             </div>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="org-img-placeholder" onclick="document.getElementById('org-img-input').click()">
+            <span>Click to<br>add image</span>
+          </div>
+          <img id="org-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="org-img-input" accept="image/*" onchange="previewImage(this,'org-img-preview','org-img-path','org-img-size','assets/images/organizations/','org-id','org-name')">
+            <button class="btn-add" type="button" id="org-img-upload-btn" onclick="uploadImageToSupabase('org','organizations')">⬆ Upload Image to Supabase</button>
+            <div id="org-img-size" class="img-compress-size"></div>
+            <div id="org-img-path" class="img-compress-error"></div>
+            <input type="text" id="org-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
@@ -1843,22 +1843,6 @@
         <div class="dm-form-title">⚔️ New Item</div>
         <div class="dm-form-subtitle">Generates a valid entry for <strong>data/items.js</strong> — weapon, armor, shield, consumable, tool, accessory, or quest item</div>
 
-        <!-- IMAGE -->
-        <div class="img-top-block">
-          <div class="img-top-placeholder" id="item-img-placeholder" onclick="document.getElementById('item-img-input').click()">
-            <span>Click to<br>add image</span>
-          </div>
-          <img id="item-img-preview" class="img-top-preview hidden" src="" alt="Preview">
-          <div class="img-top-right">
-            <div class="img-top-label">Entry Image</div>
-            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
-            <button class="btn-add" type="button" id="item-img-upload-btn" onclick="uploadImageToSupabase('item','items')">⬆ Upload Image to Supabase</button>
-            <div id="item-img-size" class="img-compress-size"></div>
-            <div id="item-img-path" class="img-compress-error"></div>
-            <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
-          </div>
-        </div>
-
         <!-- IDENTITY -->
         <div class="form-section">
           <div class="form-section-header">Identity</div>
@@ -1913,6 +1897,22 @@
               <span class="field-help">Weight in pounds</span>
               <input class="field-input" type="number" id="item-weight-lb" min="0" step="0.01" placeholder="e.g. 1">
             </div>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="img-top-block">
+          <div class="img-top-placeholder" id="item-img-placeholder" onclick="document.getElementById('item-img-input').click()">
+            <span>Click to<br>add image</span>
+          </div>
+          <img id="item-img-preview" class="img-top-preview hidden" src="" alt="Preview">
+          <div class="img-top-right">
+            <div class="img-top-label">Entry Image</div>
+            <input type="file" id="item-img-input" accept="image/*" onchange="previewImage(this,'item-img-preview','item-img-path','item-img-size','assets/images/items/','item-id','item-name')">
+            <button class="btn-add" type="button" id="item-img-upload-btn" onclick="uploadImageToSupabase('item','items')">⬆ Upload Image to Supabase</button>
+            <div id="item-img-size" class="img-compress-size"></div>
+            <div id="item-img-path" class="img-compress-error"></div>
+            <input type="text" id="item-img-field" class="field-input img-path-input" placeholder="Path auto-filled after saving — or type manually">
           </div>
         </div>
 
