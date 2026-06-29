@@ -3760,10 +3760,12 @@ async function uploadImageToSupabase(prefix, folder) {
   try {
     var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
     var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+    var formData = new FormData();
+    formData.append('', blob, filename.split('/').pop());
     var res = await fetch(SB_URL + '/storage/v1/object/world-images/' + filename, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'Content-Type': 'image/webp', 'x-upsert': 'true' },
-      body: blob
+      headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'x-upsert': 'true' },
+      body: formData
     });
     if (res.ok) {
       var url = SB_URL + '/storage/v1/object/public/world-images/' + filename;
@@ -3794,12 +3796,9 @@ function previewImage(input, previewId, errorId, sizeId, folder, idFieldId, name
   var placeholder = document.getElementById(prefix + '-img-placeholder');
   var sizeEl      = document.getElementById(sizeId);
   var errorEl     = document.getElementById(errorId);
-  var saveBtn     = document.getElementById(prefix + '-img-save-btn');
-
   // Reset UI to loading state
   if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
   if (sizeEl)  { sizeEl.textContent  = 'Compressing…'; }
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⬇ Save Image to Disk'; saveBtn.style.background = ''; }
 
   var origKB = Math.round(file.size / 1024);
 
@@ -3827,7 +3826,6 @@ function previewImage(input, previewId, errorId, sizeId, folder, idFieldId, name
                       : ' <span style="color:var(--dm-green)">✓</span>');
         if (over) sizeEl.innerHTML += ' — lowest quality used, file is still large';
       }
-      if (saveBtn) saveBtn.disabled = false;
     })
     .catch(function(err) {
       if (errorEl) {
@@ -4446,77 +4444,26 @@ function generateItem() {
 
 /* ── SHOW OUTPUT ─────────────────────────────── */
 function showOutput(entry, type) {
-  // Capture any pending edit context before clearing it
   var editId  = PENDING_EDIT_ID;
   PENDING_EDIT_ID    = null;
-  PENDING_EDIT_IMAGE = null; // generators have already consumed this before calling showOutput
-
+  PENDING_EDIT_IMAGE = null;
   entry._modified = new Date().toISOString();
   LAST_GENERATED = { entry: entry, type: type, isEdit: !!editId, editId: editId || null };
   FORM_DIRTY = false;
-
-  var jsStr = formatJsObj(entry, 0);
-  document.getElementById('json-output').textContent = jsStr;
-  var target = FILE_TARGETS[type];
-  var editNote = editId ? ' <em style="color:var(--amber);">(replacing existing entry)</em>' : '';
-  document.getElementById('file-target').innerHTML =
-    '📁 Add this entry to: <strong>' + target + '</strong>' + editNote;
   saveToRecent(entry, type);
   renderRecent();
-  // Auto-save to Supabase whenever an entry is generated
   if (typeof sbUpsertEntry === 'function') sbUpsertEntry(entry, type);
 }
 
 /* ── COPY JSON ───────────────────────────────── */
-function copyJson() {
-  var text = document.getElementById('json-output').textContent;
-  if (!text || text.startsWith('//')) { alert('Generate an entry first.'); return; }
-  var btn = document.getElementById('copy-btn');
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function() {
-      btn.textContent = '✓ Copied!';
-      btn.classList.add('copied');
-      setTimeout(function() {
-        btn.textContent = '📋 Copy JSON';
-        btn.classList.remove('copied');
-      }, 2200);
-    }).catch(fallbackCopy.bind(null, text, btn));
-  } else {
-    fallbackCopy(text, btn);
-  }
-}
+function copyJson() { /* removed — saves go to Supabase */ }
 
-function fallbackCopy(text, btn) {
-  var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.focus(); ta.select();
-  try { document.execCommand('copy'); } catch(e) {}
-  document.body.removeChild(ta);
-  if (btn) {
-    btn.textContent = '✓ Copied!';
-    btn.classList.add('copied');
-    setTimeout(function() {
-      btn.textContent = '📋 Copy JSON';
-      btn.classList.remove('copied');
-    }, 2200);
-  }
-}
+function fallbackCopy(text, btn) { /* removed */ }
 
 /* ── SAVE STATUS HELPERS ─────────────────────── */
 function showSaveStatus(state, msg) {
-  var el = document.getElementById('save-status');
-  if (!el) return;
-  el.className = 'dm-save-status ' + state;
-  el.textContent = msg;
-  if (state === 'success') {
-    setTimeout(function() {
-      el.className = 'dm-save-status';
-      el.textContent = '';
-    }, 6000);
-  }
+  // Route all status messages to Supabase sync status instead
+  console.info('DM status:', state, msg);
 }
 
 /* ── REPLACE ENTRY IN FILE CONTENT ────────────
@@ -4556,152 +4503,7 @@ function replaceEntryInContent(content, entryId, newEntryStr) {
 }
 
 /* ── SAVE TO DATA FILE (safe append or replace) ── */
-async function saveToFile() {
-  if (!LAST_GENERATED) { showSaveStatus('error', '⚠ Generate an entry first.'); return; }
-  var jsStr = document.getElementById('json-output').textContent;
-  if (!jsStr || jsStr.startsWith('//')) { showSaveStatus('error', '⚠ Generate an entry first.'); return; }
-
-  // File System Access API not available (Firefox, Safari, VS Code Live Preview)
-  if (!window.showOpenFilePicker) {
-    copyJson();
-    showSaveStatus('error',
-      '⚠ Direct file saving is not supported in this browser or environment. ' +
-      'The entry has been copied to your clipboard — paste it before the closing ]; in ' +
-      FILE_TARGETS[LAST_GENERATED.type] + '.'
-    );
-    return;
-  }
-
-  var type       = LAST_GENERATED.type;
-  var entry      = LAST_GENERATED.entry;
-  var isEdit     = LAST_GENERATED.isEdit;   // true when invoked after cmEditEntry()
-  var editId     = LAST_GENERATED.editId;   // the original id being replaced
-  var targetFile = FILE_TARGETS[type];
-  var arrayName  = ARRAY_NAMES[type];
-  var entryName  = entry.name || 'Entry';
-
-  try {
-    // 1. Ask the user to select the file
-    var [fileHandle] = await window.showOpenFilePicker({
-      types: [{ description: 'JavaScript Data File', accept: { 'text/javascript': ['.js'] } }],
-      multiple: false
-    });
-
-    // 2. Read existing content
-    var file            = await fileHandle.getFile();
-    var existingContent = await file.text();
-
-    // 3. Validate correct file was selected
-    if (!existingContent.includes('var ' + arrayName)) {
-      showSaveStatus('error',
-        '⚠ Wrong file selected. This is a ' + type.charAt(0).toUpperCase() + type.slice(1) +
-        ' entry — please select ' + targetFile + ' (which contains the ' + arrayName + ' array). Nothing was written.'
-      );
-      return;
-    }
-
-    // 4. Format the entry as indented JSON (valid JS, quoted keys accepted)
-    var newEntryLines = JSON.stringify(entry, null, 2)
-      .split('\n')
-      .map(function(line) { return '  ' + line; })
-      .join('\n');
-
-    var updatedContent;
-
-    if (isEdit && editId) {
-      // ── REPLACE MODE: find the existing entry by id and replace it in place ──
-      // replaceEntryInContent() locates `  { ... }` by id and splices in the new JSON.
-      updatedContent = replaceEntryInContent(existingContent, editId, newEntryLines);
-      if (!updatedContent) {
-        copyJson();
-        showSaveStatus('error',
-          '⚠ Could not locate entry "' + editId + '" in the file. ' +
-          'Nothing was written. Entry copied to clipboard — paste manually into ' + targetFile + '.'
-        );
-        return;
-      }
-      if (updatedContent === existingContent) {
-        showSaveStatus('error',
-          '⚠ Replacement produced no change — the entry may already be identical. Nothing was written.'
-        );
-        return;
-      }
-
-    } else {
-      // ── APPEND MODE: add the new entry before the closing ]; ──
-      // Replace the last `}` immediately followed (only whitespace) by `];` at EOF.
-      var appendPattern = /(\})([\s\n\r]*)(];\s*)$/;
-      if (appendPattern.test(existingContent)) {
-        // Array has existing entries — add comma + new entry before ];
-        updatedContent = existingContent.replace(
-          appendPattern,
-          '},\n' + newEntryLines + '\n$3'
-        );
-      } else {
-        // Array appears to be empty: var ARRAY = [];
-        var emptyPattern = new RegExp('(var\\s+' + arrayName + '\\s*=\\s*\\[)(\\s*\\]\\s*;)');
-        if (emptyPattern.test(existingContent)) {
-          updatedContent = existingContent.replace(
-            emptyPattern,
-            '$1\n' + newEntryLines + '\n$2'
-          );
-        } else {
-          // Could not find insertion point — refuse to write, fall back to clipboard
-          copyJson();
-          showSaveStatus('error',
-            '⚠ Could not find the insertion point in the file. ' +
-            'Nothing was written. The entry has been copied to your clipboard — ' +
-            'paste it manually before the closing ]; in ' + targetFile + '.'
-          );
-          return;
-        }
-      }
-
-      // Safety check for append: updated content must be longer than the original
-      if (updatedContent.length <= existingContent.length) {
-        copyJson();
-        showSaveStatus('error',
-          '⚠ Insertion produced no change or a shorter file. Nothing was written. ' +
-          'Entry copied to clipboard — paste manually before the closing ]; in ' + targetFile + '.'
-        );
-        return;
-      }
-    }
-
-    // 5. Show "writing…" status before committing
-    var verb = isEdit ? 'Updating' : 'Adding';
-    showSaveStatus('pending', '⏳ ' + verb + ' ' + entryName + ' in ' + targetFile + '… do not close this window.');
-
-    // 6. Write the updated content back
-    var writable = await fileHandle.createWritable();
-    await writable.write(updatedContent);
-    await writable.close();
-
-    // 7. Count entries for the success message (count top-level id: occurrences)
-    var idCount = (updatedContent.match(/^\s{2}"?id"?:/gm) || []).length;
-    var countStr = idCount > 0 ? ' — ' + idCount + ' entries total' : '';
-    var verb2 = isEdit ? 'updated in' : 'saved to';
-    showSaveStatus('success', '✓ ' + entryName + ' ' + verb2 + ' ' + targetFile + countStr);
-
-    var btn = document.getElementById('save-btn');
-    btn.textContent = '✓ Saved!';
-    setTimeout(function() { btn.textContent = '💾 Save to Data File'; }, 3000);
-
-  } catch(e) {
-    if (e.name === 'AbortError') {
-      // User cancelled the file picker — do nothing
-      showSaveStatus('pending', '');
-      document.getElementById('save-status').className = 'dm-save-status';
-    } else {
-      console.error('Save failed:', e);
-      copyJson();
-      showSaveStatus('error',
-        '⚠ Save failed: ' + e.message + '. ' +
-        'Nothing was written. Entry copied to clipboard — paste manually before the closing ]; in ' + targetFile + '.'
-      );
-    }
-  }
-}
+async function saveToFile() { /* removed — saves go to Supabase */ }
 
 /* ── CLEAR FORM ──────────────────────────────── */
 function clearForm(formType) {
@@ -4743,9 +4545,6 @@ function clearForm(formType) {
   form.querySelectorAll('.img-compress-size, .img-compress-error').forEach(function(el) {
     el.textContent = ''; el.style.display = '';
   });
-  form.querySelectorAll('.img-save-btn').forEach(function(btn) {
-    btn.disabled = true; btn.textContent = '⬇ Save Image'; btn.style.background = '';
-  });
   form.querySelectorAll('input[type=file]').forEach(function(el) { el.value = ''; });
   PENDING_EDIT_IMAGE = null;
   // Reset nation dropdowns
@@ -4773,40 +4572,9 @@ function saveToRecent(entry, type) {
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(RECENT_ITEMS)); } catch(e) {}
 }
 
-function renderRecent() {
-  try { RECENT_ITEMS = JSON.parse(localStorage.getItem(RECENT_KEY)) || []; }
-  catch(e) { RECENT_ITEMS = []; }
-  var list = document.getElementById('recent-list');
-  if (!list) return;
-  if (!RECENT_ITEMS.length) {
-    list.innerHTML = '<div class="dm-recent-empty">No entries yet.<br>Generate one using the form.</div>';
-    return;
-  }
-  list.innerHTML = RECENT_ITEMS.map(function(item, i) {
-    var d = new Date(item.timestamp);
-    var ds = d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) +
-             ' ' + d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
-    var icon = TAB_ICONS[item.type] || '•';
-    return '<div class="recent-item" onclick="restoreEntry(' + i + ')">' +
-      '<div class="recent-item-name">' + icon + ' ' + escHtml(item.name) + '</div>' +
-      '<div class="recent-item-meta">' + escHtml(item.target) + ' · ' + ds + '</div>' +
-    '</div>';
-  }).join('');
-}
+function renderRecent() { /* recent-list element removed */ }
 
-function restoreEntry(index) {
-  var item = RECENT_ITEMS[index];
-  if (!item) return;
-  switchTab('add');
-  switchAddType(item.type);
-  var jsStr = formatJsObj(item.entry, 0);
-  document.getElementById('json-output').textContent = jsStr;
-  document.getElementById('file-target').innerHTML =
-    '📁 Add this entry to: <strong>' + escHtml(item.target) + '</strong>';
-  item.entry._modified = new Date().toISOString();
-  LAST_GENERATED = { entry: item.entry, type: item.type };
-  FORM_DIRTY = false;
-}
+function restoreEntry(index) { /* removed — recent-list panel no longer exists */ }
 
 /* ── UTILITIES ───────────────────────────────── */
 function slugify(str) {
@@ -5714,58 +5482,30 @@ function cmBulkSetVisibility(newVis) {
   var typeList = Object.keys(typeGroups).map(function(t) {
     return typeGroups[t] + ' ' + t + (typeGroups[t] > 1 ? 's' : '');
   }).join(', ');
-  cmSetOutput(
-    'Set ' + selected.length + ' entries to ' + newVis.toUpperCase() + ' (' + typeList + '). Click 💾 Save to File — save each file type separately.',
-    JSON.stringify({ action: 'bulk_visibility', count: selected.length, new_player_facing: newPf, types: Object.keys(typeGroups) }, null, 2),
-    null
-  );
   CM_PENDING = { action: 'bulk', items: selected };
 }
 
 function cmBulkDelete() {
   var selected = CM_FILTERED.filter(function(item) { return CM_SELECTED[cmSelKey(item)]; });
   if (!selected.length) { alert('Select at least one entry first.'); return; }
-  if (!confirm('Delete ' + selected.length + ' selected entries from memory?\n\nClick 💾 Save to File to write each affected data file.')) return;
-
+  if (!confirm('Delete ' + selected.length + ' selected entries? This cannot be undone.')) return;
   selected.forEach(function(item) {
     var arr = item._array;
     var pos = arr.indexOf(item._entry);
     if (pos >= 0) arr.splice(pos, 1);
     delete CM_SELECTED[cmSelKey(item)];
   });
-
-  var count = selected.length;
   CM_PENDING = { action: 'bulk-delete', items: selected };
-  cmSetOutput(
-    'Deleted ' + count + ' entries from memory. Click 💾 Save to File for each affected type.',
-    JSON.stringify({ action: 'bulk_delete', count: count }, null, 2),
-    null
-  );
   cmRefreshFromArrays();
 }
 
 /* ── OUTPUT PANEL HELPERS ────────────────────── */
 function cmSetOutput(info, json, item) {
-  var infoEl = document.getElementById('cm-output-info');
-  var jsonEl = document.getElementById('cm-json-output');
-  if (infoEl) infoEl.textContent = info || '';
-  if (jsonEl) jsonEl.textContent = json || '';
+  // cm-output-info and cm-json-output removed — visibility changes auto-save to Supabase
   if (item && !CM_PENDING) CM_PENDING = { item: item };
 }
 
-function cmCopyOutput() {
-  var text = (document.getElementById('cm-json-output') || {}).textContent || '';
-  if (!text || text === '// No action taken yet.') { alert('No output to copy.'); return; }
-  function afterCopy() {
-    showCMStatus('success', '✓ Copied!');
-    setTimeout(function() { showCMStatus('', ''); }, 2200);
-  }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(afterCopy).catch(function() { fallbackCMCopy(text, afterCopy); });
-  } else {
-    fallbackCMCopy(text, afterCopy);
-  }
-}
+function cmCopyOutput() { /* removed */ }
 function fallbackCMCopy(text, cb) {
   var ta = document.createElement('textarea');
   ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
@@ -5776,39 +5516,7 @@ function fallbackCMCopy(text, cb) {
 }
 
 /* ── SAVE TO FILE ────────────────────────────── */
-async function cmSaveOutput() {
-  if (!CM_PENDING) { showCMStatus('error', '⚠ Perform an action first (cycle visibility, delete, etc.)'); return; }
-
-  if (!window.showOpenFilePicker) {
-    cmCopyOutput();
-    showCMStatus('error', '⚠ Direct file saving not supported here. Content copied to clipboard.');
-    return;
-  }
-
-  // Determine which type to save
-  var type = null;
-  if (CM_PENDING.item) {
-    type = CM_PENDING.item._type;
-  } else if (CM_PENDING.items && CM_PENDING.items.length) {
-    // For bulk: collect unique types
-    var typeSet = {};
-    CM_PENDING.items.forEach(function(item) { typeSet[item._type] = true; });
-    var types = Object.keys(typeSet);
-    if (types.length > 1) {
-      showCMStatus('error', '⚠ Multiple types affected (' + types.join(', ') + '). Save each type one at a time by clicking 💾 Save to File for each.');
-      return;
-    }
-    type = types[0];
-  }
-
-  if (!type) { showCMStatus('error', '⚠ Could not determine which file to save.'); return; }
-
-  var arrayName  = CM_ARRAY_NAMES[type];
-  var targetFile = FILE_TARGETS[type];
-  var arr        = CM_ARRAYS[type]();
-
-  await cmWriteArrayToFile(arrayName, arr, targetFile);
-}
+async function cmSaveOutput() { /* removed — saves go to Supabase */ }
 
 async function cmWriteArrayToFile(arrayName, arr, targetFile) {
   try {
@@ -5885,16 +5593,7 @@ async function cmWriteArrayToFile(arrayName, arr, targetFile) {
 
 /* ── STATUS DISPLAY ──────────────────────────── */
 function showCMStatus(state, msg) {
-  var el = document.getElementById('cm-save-status');
-  if (!el) return;
-  el.className = 'dm-save-status' + (state ? ' ' + state : '');
-  el.textContent = msg || '';
-  if (state === 'success') {
-    setTimeout(function() {
-      el.className = 'dm-save-status';
-      el.textContent = '';
-    }, 5000);
-  }
+  console.info('CM status:', state, msg);
 }
 
 /* ══════════════════════════════════════════════
@@ -5905,34 +5604,8 @@ var QUESTS_FILTERED = [];
 var SELECTED_QUEST_ID = null;
 
 /* ── SETUP TAB ─────────────────────────────────────────────────── */
-function setupRenderStatus() {
-  var bar = document.getElementById('setup-status-bar');
-  if (!bar) return;
-  var existing = localStorage.getItem('anavale_github_token');
-  if (existing) {
-    bar.className = 'setup-token-status has-token';
-    bar.textContent = '✓ Token saved — submissions are active. Last 6 characters: …' + existing.slice(-6);
-  } else {
-    bar.className = 'setup-token-status no-token';
-    bar.textContent = '⚠ No token saved. Player submissions will fail until a token is stored here.';
-  }
-}
-
-function setupSaveToken() {
-  var input = document.getElementById('setup-token-input');
-  if (!input) return;
-  var val = input.value.trim();
-  if (!val) {
-    alert('Please paste your GitHub token before saving.');
-    return;
-  }
-  if (!val.startsWith('github_pat_') && !val.startsWith('ghp_')) {
-    if (!confirm('This doesn\'t look like a GitHub token (expected to start with github_pat_ or ghp_). Save anyway?')) return;
-  }
-  localStorage.setItem('anavale_github_token', val);
-  input.value = '';
-  setupRenderStatus();
-}
+function setupRenderStatus() { /* setup tab removed */ }
+function setupSaveToken() { /* setup tab removed */ }
 
 function setupClearToken() {
   if (!confirm('Remove the saved GitHub token? Player submissions will stop working until you save a new one.')) return;
