@@ -2626,6 +2626,75 @@
   } else {
     syncFromSupabase();
   }
+
+  // ── TYPE TO SUPABASE TABLE MAP ──────────────────────────────────
+  var TYPE_TO_TABLE = {
+    city:         'cities',
+    creature:     'creatures',
+    poi:          'pois',
+    character:    'world_characters',
+    organization: 'organizations',
+    item:         'items',
+    quest:        'quests',
+    region:       'regions'
+  };
+
+  // ── UPSERT ENTRY TO SUPABASE ────────────────────────────────────
+  window.sbUpsertEntry = function(entry, type) {
+    var table = TYPE_TO_TABLE[type];
+    if (!table) { console.warn('No Supabase table for type:', type); return Promise.resolve(); }
+    return fetch(SB_URL + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SB_ANON,
+        'Authorization': 'Bearer ' + SB_ANON,
+        'Prefer':        'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify(entry)
+    }).then(function(r) {
+      if (r.ok) {
+        showSaveStatus('success', '✓ Saved to Supabase — wiki will update on next reload.');
+      } else {
+        r.text().then(function(t) {
+          console.error('Supabase upsert failed:', r.status, t);
+          showSaveStatus('error', '⚠ Supabase save failed (' + r.status + ') — check console.');
+        });
+      }
+    }).catch(function(err) {
+      console.error('Supabase upsert error:', err);
+      showSaveStatus('error', '⚠ Supabase save failed — check console.');
+    });
+  };
+
+  // ── UPDATE VISIBILITY IN SUPABASE ───────────────────────────────
+  window.sbUpdateVisibility = function(entry, type) {
+    var table = TYPE_TO_TABLE[type];
+    if (!table) return Promise.resolve();
+    return fetch(SB_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(entry.id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SB_ANON,
+        'Authorization': 'Bearer ' + SB_ANON,
+        'Prefer':        'return=minimal'
+      },
+      body: JSON.stringify({ player_facing: entry.player_facing })
+    }).then(function(r) {
+      if (r.ok) {
+        showSaveStatus('success', '✓ Visibility updated in Supabase.');
+      } else {
+        r.text().then(function(t) {
+          console.error('Supabase visibility update failed:', r.status, t);
+          showSaveStatus('error', '⚠ Visibility update failed — check console.');
+        });
+      }
+    }).catch(function(err) {
+      console.error('Supabase visibility error:', err);
+      showSaveStatus('error', '⚠ Visibility update failed — check console.');
+    });
+  };
+
 })();
 </script>
 <style>
@@ -4502,6 +4571,8 @@ function showOutput(entry, type) {
     '📁 Add this entry to: <strong>' + target + '</strong>' + editNote;
   saveToRecent(entry, type);
   renderRecent();
+  // Auto-save to Supabase whenever an entry is generated
+  if (typeof sbUpsertEntry === 'function') sbUpsertEntry(entry, type);
 }
 
 /* ── COPY JSON ───────────────────────────────── */
@@ -5324,6 +5395,8 @@ function cmCycleVisibility(idx) {
   renderCMTable();
 
   var newVis = cmGetVis(entry);
+  // Sync visibility change to Supabase immediately
+  if (typeof sbUpdateVisibility === 'function') sbUpdateVisibility(entry, item._type);
   cmSetOutput(
     '"' + entry.name + '" visibility → ' + newVis.toUpperCase() + '. Click 💾 Save to File to write the change.',
     JSON.stringify({ id: entry.id, player_facing: newPf }, null, 2),
