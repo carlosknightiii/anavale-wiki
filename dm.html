@@ -2573,6 +2573,61 @@
 <script src="data/organizations.js"></script>
 <script src="data/items.js"></script>
 <script src="data/quests.js"></script>
+<script>
+// ── SUPABASE LIVE SYNC — DM Tools ────────────────────────────────
+// Fetches live world data from Supabase after static files load.
+// Updates global JS arrays and refreshes the Content Manager.
+(function() {
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+
+  var TABLES = [
+    { table: 'regions',          global: 'REGIONS' },
+    { table: 'nations',          global: 'NATIONS' },
+    { table: 'cities',           global: 'CITIES' },
+    { table: 'creatures',        global: 'CREATURES' },
+    { table: 'organizations',    global: 'ORGANIZATIONS' },
+    { table: 'world_characters', global: 'CHARACTERS' },
+    { table: 'pois',             global: 'POIS' },
+    { table: 'religions',        global: 'RELIGIONS' },
+    { table: 'items',            global: 'ITEMS' },
+    { table: 'quests',           global: 'QUESTS' }
+  ];
+
+  function sbFetch(table) {
+    return fetch(SB_URL + '/rest/v1/' + table + '?select=*&limit=1000', {
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': 'Bearer ' + SB_ANON
+      }
+    }).then(function(r) { return r.json(); });
+  }
+
+  function syncFromSupabase() {
+    Promise.all(TABLES.map(function(t) {
+      return sbFetch(t.table).then(function(rows) {
+        return { global: t.global, rows: rows };
+      });
+    })).then(function(results) {
+      results.forEach(function(r) {
+        if (Array.isArray(r.rows) && r.rows.length > 0) {
+          window[r.global] = r.rows;
+        }
+      });
+      // Refresh Content Manager with live data
+      if (typeof cmRefresh === 'function') cmRefresh();
+    }).catch(function(err) {
+      console.warn('Supabase sync failed — using static data.', err);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncFromSupabase);
+  } else {
+    syncFromSupabase();
+  }
+})();
+</script>
 <style>
 /* ── SETUP TAB ─────────────────────────────────────────────────── */
 /* All raw values are --dm-* tokens defined in the first :root block */
