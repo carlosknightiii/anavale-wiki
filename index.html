@@ -89,9 +89,24 @@
       });
     })).then(function(results) {
       var updated = false;
+      var keyToGlobal = {
+        regions:       'REGIONS',
+        nations:       'NATIONS',
+        cities:        'CITIES',
+        creatures:     'CREATURES',
+        organizations: 'ORGANIZATIONS',
+        characters:    'CHARACTERS',
+        pois:          'POIS',
+        religions:     'RELIGIONS',
+        items:         'ITEMS'
+      };
       results.forEach(function(r) {
         if (Array.isArray(r.rows) && r.rows.length > 0) {
           WORLD_DATA[r.key] = r.rows;
+          var globalName = keyToGlobal[r.key];
+          if (globalName && typeof window[globalName] !== 'undefined') {
+            window[globalName] = r.rows;
+          }
           updated = true;
         }
       });
