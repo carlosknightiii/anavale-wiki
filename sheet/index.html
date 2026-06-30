@@ -2155,6 +2155,15 @@
       .then(function(res) {
         if (res.error) { console.warn('Inventory fetch error:', res.error); return; }
         INVENTORY = res.data || [];
+        var ids = INVENTORY.filter(function(i){ return i.item_id; }).map(function(i){ return i.item_id; });
+        var uniqueIds = ids.filter(function(id, idx){ return ids.indexOf(id) === idx; });
+        if (!uniqueIds.length) return;
+        return sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,image')
+          .in('id', uniqueIds)
+          .then(function(catRes) {
+            if (catRes.error || !catRes.data) { console.warn('Catalog hydrate error:', catRes.error); return; }
+            catRes.data.forEach(function(it) { CATALOG_CACHE[it.id] = it; });
+          });
       });
   }
 
