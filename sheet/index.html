@@ -932,6 +932,9 @@
       text-overflow: ellipsis;
     }
     .cs-inv-sortable { display: flex; flex-direction: column; gap: 0.4rem; }
+    .cs-inv-row-wrap.dragging { opacity: 0.4; }
+    .cs-inv-row { cursor: grab; }
+    .cs-inv-row:active { cursor: grabbing; }
     .cs-inv-search-wrap { position: relative; }
     .cs-inv-search-dropdown {
       display: none;
@@ -1741,6 +1744,7 @@
       html += '<div class="cs-inv-sortable" data-group="regular">' + regular.map(renderInvRow).join('') + '</div>';
     }
     list.innerHTML = html;
+    wireInventoryDragDrop();
   }
   var TYPE_ICONS = {
     weapon:'⚔️', armor:'🛡️', shield:'🛡️', consumable:'🧪', tool:'🔧',
@@ -1779,6 +1783,63 @@
       + '</div>'
       + (desc ? '<div class="cs-inv-desc-panel" id="desc-' + item.id + '" style="display:none;">' + desc + '</div>' : '')
     + '</div>';
+  }
+  var DRAG_ITEM_ID = null;
+  function wireInventoryDragDrop() {
+    document.querySelectorAll('.cs-inv-row').forEach(function(row) {
+      row.addEventListener('dragstart', function(e) {
+        DRAG_ITEM_ID = row.dataset.id;
+        row.closest('.cs-inv-row-wrap').classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', function() {
+        document.querySelectorAll('.cs-inv-row-wrap.dragging').forEach(function(el) { el.classList.remove('dragging'); });
+        DRAG_ITEM_ID = null;
+      });
+    });
+    document.querySelectorAll('.cs-inv-sortable').forEach(function(container) {
+      container.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        var dragging = container.querySelector('.cs-inv-row-wrap.dragging');
+        if (!dragging) return;
+        var afterEl = getDragAfterElement(container, e.clientY);
+        if (afterEl == null) {
+          container.appendChild(dragging);
+        } else {
+          container.insertBefore(dragging, afterEl);
+        }
+      });
+      container.addEventListener('drop', function(e) {
+        e.preventDefault();
+        persistDragOrder(container);
+      });
+    });
+  }
+  function getDragAfterElement(container, y) {
+    var els = Array.prototype.slice.call(container.querySelectorAll('.cs-inv-row-wrap:not(.dragging)'));
+    return els.reduce(function(closest, el) {
+      var box = el.getBoundingClientRect();
+      var offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: el };
+      } else {
+        return closest;
+      }
+    }, { offset: -Infinity, element: null }).element;
+  }
+  function persistDragOrder(container) {
+    var isFavorite = container.dataset.group === 'favorite';
+    var rows = Array.prototype.slice.call(container.querySelectorAll('.cs-inv-row'));
+    var updates = rows.map(function(row, idx) {
+      var item = INVENTORY.find(function(i){ return i.id === row.dataset.id; });
+      if (item) item.sort_order = idx;
+      return { id: row.dataset.id, sort_order: idx };
+    });
+    updates.forEach(function(u) {
+      sb.from('inventory').update({ sort_order: u.sort_order }).eq('id', u.id).then(function(res) {
+        if (res.error) console.warn('Sort order save failed for', u.id, res.error);
+      });
+    });
   }
   function toggleInvDesc(id) {
     var panel = document.getElementById('desc-' + id);
