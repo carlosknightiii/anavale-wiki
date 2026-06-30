@@ -1320,9 +1320,11 @@
   function renderHP() {
     var block  = document.getElementById('cs-hp-block');
     if (!block) return;
-    var hpCur  = SHEET ? SHEET.hp_current : '—';
-    var hpMax  = SHEET ? SHEET.hp_max     : '—';
-    var hpTemp = SHEET ? (SHEET.hp_temp || 0) : '—';
+    var hpCur     = SHEET ? SHEET.hp_current : '—';
+    var hpMaxBase = SHEET ? SHEET.hp_max : 0;
+    var hpModifier = SHEET ? (SHEET.hp_max_modifier || 0) : 0;
+    var hpMaxEffective = hpMaxBase + hpModifier;
+    var hpTemp    = SHEET ? (SHEET.hp_temp || 0) : 0;
     block.innerHTML =
       '<div class="cs-hp-cell cs-hp-cell--current">'
         + '<div class="cs-hp-label">Current HP</div>'
@@ -1338,21 +1340,49 @@
       + '</div>'
       + '<div class="cs-hp-cell">'
         + '<div class="cs-hp-label">Max HP</div>'
-        + '<div class="cs-hp-val">' + hpMax + '</div>'
+        + '<div class="cs-hp-val">' + hpMaxEffective + (hpModifier !== 0 ? ' <span style="font-size:0.7rem;color:' + (hpModifier > 0 ? '#6ecf6e' : '#f87171') + ';">(' + (hpModifier > 0 ? '+' : '') + hpModifier + ')</span>' : '') + '</div>'
+        + '<div class="cs-hp-input-row">'
+          + '<input class="cs-hp-input" id="cs-hp-max-modifier" type="number" placeholder="±" title="Temporary max HP change from a status effect">'
+          + '<button class="cs-hp-apply" onclick="setMaxHPModifier()">Set</button>'
+        + '</div>'
       + '</div>'
       + '<div class="cs-hp-cell">'
         + '<div class="cs-hp-label">Temp HP</div>'
         + '<div class="cs-hp-val" id="cs-hp-temp">' + hpTemp + '</div>'
+        + '<div class="cs-hp-input-row">'
+          + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="0">'
+          + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
+        + '</div>'
       + '</div>';
   }
 
   function adjustHP(delta) {
     if (!SHEET) return;
     var cur = parseInt(SHEET.hp_current) || 0;
-    var max = parseInt(SHEET.hp_max)     || 0;
-    SHEET.hp_current = Math.max(0, Math.min(max, cur + delta));
+    var maxEffective = (parseInt(SHEET.hp_max) || 0) + (parseInt(SHEET.hp_max_modifier) || 0);
+    SHEET.hp_current = Math.max(0, Math.min(maxEffective, cur + delta));
     document.getElementById('cs-hp-current').textContent = SHEET.hp_current;
     saveSheet({ hp_current: SHEET.hp_current });
+  }
+  function setTempHP() {
+    if (!SHEET) return;
+    var input = document.getElementById('cs-hp-temp-input');
+    var val = parseInt(input.value);
+    if (isNaN(val) || val < 0) return;
+    SHEET.hp_temp = val;
+    saveSheet({ hp_temp: val });
+    input.value = '';
+    renderHP();
+  }
+  function setMaxHPModifier() {
+    if (!SHEET) return;
+    var input = document.getElementById('cs-hp-max-modifier');
+    var val = parseInt(input.value);
+    if (isNaN(val)) return;
+    SHEET.hp_max_modifier = val;
+    saveSheet({ hp_max_modifier: val });
+    input.value = '';
+    renderHP();
   }
 
   function applyHPDelta() {
