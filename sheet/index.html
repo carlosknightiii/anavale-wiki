@@ -1485,23 +1485,20 @@
     showToast('Uploading…');
     var ext  = file.name.split('.').pop() || 'jpg';
     var path = 'characters/' + CHAR_ID + '.' + ext;
-    var fd   = new FormData();
-    fd.append('', file, path);
     sb.storage.from('character-photos').upload(path, file, { upsert: true, contentType: file.type })
       .then(function(res) {
         if (res.error) { showToast('Upload failed — ' + res.error.message, true); return; }
-        // Get public URL — note: bucket is private, so we use a signed URL via RLS-allowed select
-            var url = SB_URL + '/storage/v1/object/public/character-photos/' + path;
-            PHOTO_URL = url;
-            // Save storage_path to character_photo table
-            sb.from('character_photo')
-              .upsert({ character_id: CHAR_ID, token: TOKEN, storage_path: path, mime_type: file.type, file_size_bytes: file.size },
-                      { onConflict: 'character_id' })
-              .then(function(saveRes) {
-                if (saveRes.error) { showToast('Photo saved but record not updated', true); return; }
-                renderPhoto();
-                showToast('Photo uploaded ✦');
-              });
+        var url = SB_URL + '/storage/v1/object/public/character-photos/' + path;
+        PHOTO_URL = url;
+        sb.from('character_photo')
+          .upsert({ character_id: CHAR_ID, token: TOKEN, storage_path: path, mime_type: file.type, file_size_bytes: file.size },
+                  { onConflict: 'character_id' })
+          .then(function(saveRes) {
+            if (saveRes.error) { showToast('Photo saved but record not updated', true); return; }
+            renderPhoto();
+            showToast('Photo uploaded ✦');
+          });
+      });
   }
 
   // ── Save sheet fields ─────────────────────────────────────────────
