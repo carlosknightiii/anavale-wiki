@@ -843,11 +843,140 @@
     .cs-inv-empty {
       font-family: var(--font-sans);
       font-size: 0.82rem;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255, 255, 255, 0.2);
       font-style: italic;
       padding: 0.75rem 0;
       text-align: center;
     }
+    .cs-inv-weight-total {
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      color: var(--char-text-faint);
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.05em;
+    }
+    .cs-inv-search-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .cs-inv-cat-select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      padding: 0.45rem 0.6rem;
+      flex: none;
+    }
+    .cs-inv-search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .cs-inv-result-row {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.15s;
+    }
+    .cs-inv-result-row:hover { background: rgba(200,148,10,0.12); }
+    .cs-inv-result-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--white); }
+    .cs-inv-result-meta { font-family: var(--font-sans); font-size: 0.72rem; color: var(--char-text-faint); }
+    .cs-inv-custom-link {
+      background: none;
+      border: none;
+      color: rgba(200,148,10,0.7);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+    .cs-inv-custom-link:hover { color: var(--gold-light); }
+    .cs-inv-custom-form {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--char-radius);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .cs-inv-section-label {
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(200,148,10,0.55);
+      margin: 0.6rem 0 0.35rem;
+      font-weight: 700;
+    }
+    .cs-inv-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .cs-inv-drag-handle {
+      color: rgba(255,255,255,0.2);
+      cursor: grab;
+      font-size: 0.9rem;
+      flex: none;
+    }
+    .cs-inv-fav-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.2);
+      font-size: 1rem;
+      cursor: pointer;
+      flex: none;
+      padding: 0;
+    }
+    .cs-inv-fav-btn.active { color: var(--gold); }
+    .cs-inv-type-tag {
+      font-family: var(--font-sans);
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      flex: none;
+    }
+    .cs-inv-qty-input {
+      width: 45px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px;
+      color: var(--white);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-align: center;
+      padding: 0.25rem;
+      flex: none;
+    }
+    .cs-inv-cost, .cs-inv-weight {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--char-text-faint);
+      flex: none;
+      min-width: 50px;
+      text-align: right;
+    }
+    .cs-inv-desc-hint {
+      cursor: help;
+      color: rgba(200,148,10,0.5);
+      font-size: 0.75rem;
+    }
+    .cs-inv-sortable { display: flex; flex-direction: column; gap: 0.4rem; }
 
     /* ── Notes tabs ── */
     .cs-notes-tabs {
@@ -1277,11 +1406,22 @@
       // Inventory
       + '<div class="cs-section">'
         + '<div class="cs-section-label">Inventory</div>'
-        + '<div class="cs-inv-add-row">'
-          + '<input class="cs-inv-input" id="cs-inv-name-input" placeholder="Item name…">'
-          + '<input class="cs-inv-input" id="cs-inv-qty-input" placeholder="Qty" style="width:60px;flex:none;">'
-          + '<button class="cs-inv-add-btn" onclick="addInventoryItem()">+ Add</button>'
+        + '<div class="cs-inv-weight-total" id="cs-inv-weight-total">Carrying: 0 lb</div>'
+        + '<div class="cs-inv-search-row">'
+          + '<input class="cs-inv-input" id="cs-inv-search-input" placeholder="Search items…" autocomplete="off" oninput="onInventorySearchInput()">'
+          + '<select class="cs-inv-cat-select" id="cs-inv-cat-select" onchange="onInventorySearchInput()">'
+            + '<option value="">All</option>'
+            + '<option value="weapon">Weapon</option>'
+            + '<option value="armor">Armor</option>'
+            + '<option value="shield">Shield</option>'
+            + '<option value="consumable">Consumable</option>'
+            + '<option value="tool">Tool</option>'
+            + '<option value="accessory">Accessory</option>'
+          + '</select>'
         + '</div>'
+        + '<div class="cs-inv-search-results" id="cs-inv-search-results"></div>'
+        + '<button class="cs-inv-custom-link" id="cs-inv-custom-link" onclick="toggleCustomItemForm()">Can\'t find it? Add a custom item.</button>'
+        + '<div class="cs-inv-custom-form" id="cs-inv-custom-form" style="display:none"></div>'
         + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
       + '</div>'
 
@@ -1435,34 +1575,211 @@
   function renderInventory() {
     var list = document.getElementById('cs-inv-list');
     if (!list) return;
+    // Weight total
+    var totalWeight = INVENTORY.reduce(function(sum, item) {
+      var w = item.item_id ? (catalogWeightFor(item.item_id) || 0) : (parseFloat(item.weight_lb) || 0);
+      return sum + (w * (parseInt(item.quantity) || 0));
+    }, 0);
+    var weightEl = document.getElementById('cs-inv-weight-total');
+    if (weightEl) weightEl.textContent = 'Carrying: ' + (Math.round(totalWeight * 10) / 10) + ' lb';
     if (!INVENTORY.length) {
-      list.innerHTML = '<div class="cs-inv-empty">No items yet — add something above.</div>';
+      list.innerHTML = '<div class="cs-inv-empty">No items yet — search above or add a custom item.</div>';
       return;
     }
-    list.innerHTML = INVENTORY.map(function(item) {
-      return '<div class="cs-inv-row" id="inv-' + item.id + '">'
-        + '<div class="cs-inv-dot"></div>'
-        + '<div class="cs-inv-name">' + (item.custom_name || item.item_id || '—') + (item.notes ? ' <em style="color:var(--char-text-faint);font-size:0.76rem;">— ' + item.notes + '</em>' : '') + '</div>'
-        + '<div class="cs-inv-qty">×' + (item.quantity || 1) + '</div>'
-        + '<button class="cs-inv-del" onclick="deleteInventoryItem(\'' + item.id + '\')" title="Remove">×</button>'
-        + '</div>';
-    }).join('');
+    var favorites = INVENTORY.filter(function(i) { return i.is_favorite; }).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
+    var regular   = INVENTORY.filter(function(i) { return !i.is_favorite; }).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
+    var html = '';
+    if (favorites.length) {
+      html += '<div class="cs-inv-section-label">★ Favorites</div>';
+      html += '<div class="cs-inv-sortable" data-group="favorite">' + favorites.map(renderInvRow).join('') + '</div>';
+    }
+    if (regular.length) {
+      if (favorites.length) html += '<div class="cs-inv-section-label">Items</div>';
+      html += '<div class="cs-inv-sortable" data-group="regular">' + regular.map(renderInvRow).join('') + '</div>';
+    }
+    list.innerHTML = html;
+  }
+  function renderInvRow(item) {
+    var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+    var name = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
+    var type = catalogItem ? catalogItem.category : (item.item_type || 'other');
+    var costGp = catalogItem ? (catalogItem.cost_gp || 0) : (item.cost_gp || 0);
+    var costSp = item.item_id ? 0 : (item.cost_sp || 0);
+    var costCp = item.item_id ? 0 : (item.cost_cp || 0);
+    var costStr = [costGp ? costGp + 'gp' : '', costSp ? costSp + 'sp' : '', costCp ? costCp + 'cp' : ''].filter(Boolean).join(' ') || '—';
+    var weight = catalogItem ? (catalogItem.weight_lb || 0) : (item.weight_lb || 0);
+    var desc = catalogItem ? catalogItem.summary : item.custom_desc;
+    return '<div class="cs-inv-row" draggable="true" data-id="' + item.id + '" id="inv-' + item.id + '">'
+      + '<span class="cs-inv-drag-handle">⠿</span>'
+      + '<button class="cs-inv-fav-btn' + (item.is_favorite ? ' active' : '') + '" onclick="toggleFavorite(\'' + item.id + '\')" title="Favorite">★</button>'
+      + '<div class="cs-inv-name">' + name + (desc ? ' <span class="cs-inv-desc-hint" title="' + desc.replace(/"/g,'&quot;') + '">ⓘ</span>' : '') + '</div>'
+      + '<span class="cs-inv-type-tag">' + type + '</span>'
+      + '<input class="cs-inv-qty-input" type="number" min="0" value="' + (item.quantity||0) + '" onchange="updateInvQuantity(\'' + item.id + '\', this.value)">'
+      + '<span class="cs-inv-cost">' + costStr + '</span>'
+      + '<span class="cs-inv-weight">' + (weight||0) + 'lb</span>'
+      + '<button class="cs-inv-del" onclick="deleteInventoryItem(\'' + item.id + '\')" title="Remove">×</button>'
+      + '</div>';
   }
 
-  function addInventoryItem() {
-    var nameInput = document.getElementById('cs-inv-name-input');
-    var qtyInput  = document.getElementById('cs-inv-qty-input');
-    var name = (nameInput.value || '').trim();
-    if (!name) { nameInput.focus(); return; }
-    var qty  = parseInt(qtyInput.value) || 1;
-    var row  = { character_id: CHAR_ID, token: TOKEN, custom_name: name, quantity: qty };
+  var CATALOG_CACHE = {};
+  var SEARCH_DEBOUNCE = null;
+  function catalogWeightFor(itemId) {
+    return CATALOG_CACHE[itemId] ? CATALOG_CACHE[itemId].weight_lb : 0;
+  }
+  function onInventorySearchInput() {
+    clearTimeout(SEARCH_DEBOUNCE);
+    var q = (document.getElementById('cs-inv-search-input').value || '').trim();
+    var resultsEl = document.getElementById('cs-inv-search-results');
+    if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+    SEARCH_DEBOUNCE = setTimeout(function() { runInventorySearch(q); }, 250);
+  }
+  function runInventorySearch(q) {
+    var cat = document.getElementById('cs-inv-cat-select').value;
+    var query = sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,base_ac,damage_dice,damage_type')
+      .eq('player_facing', true)
+      .ilike('name', '%' + q + '%')
+      .limit(8);
+    if (cat) query = query.eq('category', cat);
+    query.then(function(res) {
+      var resultsEl = document.getElementById('cs-inv-search-results');
+      if (res.error || !res.data || !res.data.length) {
+        resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>';
+        return;
+      }
+      LAST_SEARCH_RESULTS = res.data;
+      res.data.forEach(function(it) { CATALOG_CACHE[it.id] = it; });
+      resultsEl.innerHTML = res.data.map(function(it) {
+        return '<div class="cs-inv-result-row" onclick="selectCatalogItem(\'' + it.id + '\')">'
+          + '<span class="cs-inv-result-name">' + it.name + '</span>'
+          + '<span class="cs-inv-result-meta">' + (it.category||'') + ' · ' + (it.cost_gp||0) + 'gp · ' + (it.weight_lb||0) + 'lb</span>'
+          + '</div>';
+      }).join('');
+    });
+  }
+  var LAST_SEARCH_RESULTS = [];
+  function selectCatalogItem(itemId) {
+    var it = CATALOG_CACHE[itemId];
+    if (!it) return;
+    var qty = prompt('How many "' + it.name + '"?', '1');
+    if (qty === null) return;
+    qty = parseInt(qty) || 1;
+    var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+    var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
     sb.from('inventory').insert(row).select().then(function(res) {
       if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
       INVENTORY.push(res.data[0]);
-      nameInput.value = '';
-      qtyInput.value  = '';
+      document.getElementById('cs-inv-search-input').value = '';
+      document.getElementById('cs-inv-search-results').innerHTML = '';
       renderInventory();
-      showToast('Item added');
+      showToast(it.name + ' added');
+    });
+  }
+  function toggleCustomItemForm() {
+    var form = document.getElementById('cs-inv-custom-form');
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+      form.innerHTML =
+        '<input class="cs-inv-input" id="ci-name" placeholder="Item name">'
+        + '<select class="cs-inv-cat-select" id="ci-type">'
+          + ['weapon','armor','shield','consumable','tool','accessory','spell','food','resource','treasure','other'].map(function(t){
+              return '<option value="' + t + '">' + t.charAt(0).toUpperCase()+t.slice(1) + '</option>';
+            }).join('')
+        + '</select>'
+        + '<textarea class="cs-inv-input" id="ci-desc" placeholder="Description" style="width:100%;min-height:60px;margin-top:0.4rem;"></textarea>'
+        + '<div class="cs-inv-add-row" style="margin-top:0.4rem;">'
+          + '<input class="cs-inv-input" id="ci-qty" type="number" min="0" value="1" placeholder="Qty" style="width:60px;flex:none;">'
+          + '<input class="cs-inv-input" id="ci-gp" type="number" min="0" placeholder="gp" style="width:60px;flex:none;">'
+          + '<input class="cs-inv-input" id="ci-sp" type="number" min="0" placeholder="sp" style="width:60px;flex:none;">'
+          + '<input class="cs-inv-input" id="ci-cp" type="number" min="0" placeholder="cp" style="width:60px;flex:none;">'
+          + '<input class="cs-inv-input" id="ci-weight" type="number" min="0" step="0.1" placeholder="lb" style="width:70px;flex:none;">'
+        + '</div>'
+        + '<label style="display:inline-block;margin-top:0.4rem;font-size:0.8rem;"><input type="checkbox" id="ci-magical"> Magical</label>'
+        + '<label style="display:inline-block;margin-top:0.4rem;margin-left:1rem;font-size:0.8rem;"><input type="checkbox" id="ci-consumable"> Consumable</label>'
+        + '<div id="ci-warning" style="display:none;margin-top:0.5rem;padding:0.6rem;background:rgba(200,148,10,0.12);border:1px solid rgba(200,148,10,0.4);border-radius:6px;font-size:0.82rem;"></div>'
+        + '<button class="cs-inv-add-btn" style="margin-top:0.6rem;" onclick="submitCustomItem()">+ Add Custom Item</button>';
+    } else {
+      form.style.display = 'none';
+    }
+  }
+  function levenshteinSimilarity(a, b) {
+    a = a.toLowerCase(); b = b.toLowerCase();
+    var m = a.length, n = b.length;
+    if (!m) return n ? 0 : 1;
+    if (!n) return 0;
+    var d = [];
+    for (var i = 0; i <= m; i++) d[i] = [i];
+    for (var j = 0; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) {
+      for (j = 1; j <= n; j++) {
+        var cost = a[i-1] === b[j-1] ? 0 : 1;
+        d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost);
+      }
+    }
+    var dist = d[m][n];
+    var maxLen = Math.max(m, n);
+    return 1 - (dist / maxLen);
+  }
+  function submitCustomItem() {
+    var name = (document.getElementById('ci-name').value || '').trim();
+    if (!name) { showToast('Item name required', true); return; }
+    var match = LAST_SEARCH_RESULTS.find(function(it) { return levenshteinSimilarity(name, it.name) >= 0.7; });
+    var warningEl = document.getElementById('ci-warning');
+    if (match) {
+      warningEl.style.display = 'block';
+      warningEl.innerHTML = 'This looks like <strong>' + match.name + '</strong> — did you mean to search for that instead? '
+        + '<button class="cs-inv-add-btn" style="margin-top:0.4rem;" onclick="useMatchInstead(\'' + match.id + '\')">Use ' + match.name + '</button>';
+      return;
+    }
+    warningEl.style.display = 'none';
+    var qty = parseInt(document.getElementById('ci-qty').value) || 1;
+    var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+    var row = {
+      character_id: CHAR_ID, token: TOKEN,
+      custom_name: name,
+      item_type: document.getElementById('ci-type').value,
+      custom_desc: (document.getElementById('ci-desc').value || '').trim() || null,
+      quantity: qty,
+      cost_gp: parseFloat(document.getElementById('ci-gp').value) || 0,
+      cost_sp: parseFloat(document.getElementById('ci-sp').value) || 0,
+      cost_cp: parseFloat(document.getElementById('ci-cp').value) || 0,
+      weight_lb: parseFloat(document.getElementById('ci-weight').value) || 0,
+      is_magical: document.getElementById('ci-magical').checked,
+      is_consumable: document.getElementById('ci-consumable').checked,
+      sort_order: maxSort + 1
+    };
+    sb.from('inventory').insert(row).select().then(function(res) {
+      if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
+      INVENTORY.push(res.data[0]);
+      toggleCustomItemForm();
+      renderInventory();
+      showToast(name + ' added');
+    });
+  }
+  function useMatchInstead(itemId) {
+    toggleCustomItemForm();
+    document.getElementById('cs-inv-search-input').value = CATALOG_CACHE[itemId].name;
+    runInventorySearch(CATALOG_CACHE[itemId].name);
+  }
+  function toggleFavorite(id) {
+    var item = INVENTORY.find(function(i) { return i.id === id; });
+    if (!item) return;
+    item.is_favorite = !item.is_favorite;
+    var section = item.is_favorite ? 'favorite' : 'regular';
+    var maxSort = Math.max(0, ...INVENTORY.filter(function(i){ return i.is_favorite === item.is_favorite && i.id !== id; }).map(function(i){return i.sort_order||0;}));
+    item.sort_order = maxSort + 1;
+    sb.from('inventory').update({ is_favorite: item.is_favorite, sort_order: item.sort_order }).eq('id', id).then(function(res) {
+      if (res.error) { showToast('Could not update favorite', true); return; }
+      renderInventory();
+    });
+  }
+  function updateInvQuantity(id, val) {
+    var qty = parseInt(val);
+    if (isNaN(qty) || qty < 0) return;
+    var item = INVENTORY.find(function(i) { return i.id === id; });
+    if (item) item.quantity = qty;
+    sb.from('inventory').update({ quantity: qty }).eq('id', id).then(function(res) {
+      if (res.error) { showToast('Could not update quantity', true); return; }
+      renderInventory();
     });
   }
 
