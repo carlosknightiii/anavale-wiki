@@ -1493,8 +1493,7 @@
     var file = input.files && input.files[0];
     if (!file || !CHAR_ID) return;
     showToast('Uploading…');
-    var ext  = file.name.split('.').pop() || 'jpg';
-    var path = 'characters/' + CHAR_ID + '.' + ext;
+    var path = 'characters/' + CHAR_ID;
     sb.storage.from('character-photos').remove([path]).then(function() {
       sb.storage.from('character-photos').upload(path, file, { cacheControl: '3600', contentType: file.type })
       .then(function(res) {
