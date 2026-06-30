@@ -633,6 +633,7 @@
   <main class="cs-wrap" id="cs-main">
     <!-- populated by renderSheet() -->
   </main>
+  <div id="cs-modal-root"></div>
 
   <footer class="cs-footer" id="cs-footer"></footer>
 
@@ -1567,24 +1568,6 @@
         + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
         + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
       + '</div>'
-      + '<div class="cs-modal-overlay" id="cs-item-modal-overlay" style="display:none" onclick="if(event.target===this)closeCustomItemModal()">'
-        + '<div class="cs-modal">'
-          + '<div class="cs-modal-title" id="cs-item-modal-title">Create New Item</div>'
-          + '<div class="cs-modal-body" id="cs-item-modal-body"></div>'
-        + '</div>'
-      + '</div>'
-      + '<div class="cs-modal-overlay" id="cs-delete-confirm-overlay" style="display:none" onclick="if(event.target===this)closeDeleteConfirm()">'
-        + '<div class="cs-modal cs-modal-sm">'
-          + '<div class="cs-modal-title">Remove Item</div>'
-          + '<div class="cs-modal-body">'
-            + '<p id="cs-delete-confirm-text" style="font-family:var(--font-sans);font-size:0.86rem;color:var(--char-text-muted);margin-bottom:1rem;"></p>'
-            + '<div style="display:flex;gap:0.6rem;justify-content:flex-end;">'
-              + '<button class="cs-modal-btn-secondary" onclick="closeDeleteConfirm()">Cancel</button>'
-              + '<button class="cs-modal-btn-danger" id="cs-delete-confirm-btn">Remove</button>'
-            + '</div>'
-          + '</div>'
-        + '</div>'
-      + '</div>'
 
       // Notes
       + '<div class="cs-section">'
@@ -2189,6 +2172,28 @@
 
   // ── Main boot ─────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function() {
+    var modalRoot = document.getElementById('cs-modal-root');
+    if (modalRoot) {
+      modalRoot.innerHTML =
+        '<div class="cs-modal-overlay" id="cs-item-modal-overlay" style="display:none" onclick="if(event.target===this)closeCustomItemModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title" id="cs-item-modal-title">Create New Item</div>'
+            + '<div class="cs-modal-body" id="cs-item-modal-body"></div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="cs-modal-overlay" id="cs-delete-confirm-overlay" style="display:none" onclick="if(event.target===this)closeDeleteConfirm()">'
+          + '<div class="cs-modal cs-modal-sm">'
+            + '<div class="cs-modal-title">Remove Item</div>'
+            + '<div class="cs-modal-body">'
+              + '<p id="cs-delete-confirm-text" style="font-family:var(--font-sans);font-size:0.86rem;color:var(--char-text-muted);margin-bottom:1rem;"></p>'
+              + '<div style="display:flex;gap:0.6rem;justify-content:flex-end;">'
+                + '<button class="cs-modal-btn-secondary" onclick="closeDeleteConfirm()">Cancel</button>'
+                + '<button class="cs-modal-btn-danger" id="cs-delete-confirm-btn">Remove</button>'
+              + '</div>'
+            + '</div>'
+          + '</div>'
+        + '</div>';
+    }
     TOKEN = getToken();
     var main = document.getElementById('cs-main');
 
