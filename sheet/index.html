@@ -1495,10 +1495,10 @@
     showToast('Uploading…');
     var ext  = file.name.split('.').pop() || 'jpg';
     var path = 'characters/' + CHAR_ID + '.' + ext;
-    sb.storage.from('character-photos').upload(path, file, { upsert: true, contentType: file.type })
+    sb.storage.from('character-photos').remove([path]).then(function() {
+      sb.storage.from('character-photos').upload(path, file, { cacheControl: '3600', contentType: file.type })
       .then(function(res) {
-        if (res.error && res.error.statusCode !== '400') { showToast('Upload failed — ' + res.error.message, true); return; }
-        if (res.error) { /* file already exists — treat as success, URL is still valid */ }
+        if (res.error) { showToast('Upload failed — ' + res.error.message, true); return; }
         var url = SB_URL + '/storage/v1/object/public/character-photos/' + path;
         PHOTO_URL = url;
         sb.from('character_photo')
@@ -1511,6 +1511,7 @@
             showToast('Photo uploaded ✦');
           });
       });
+    });
   }
 
   // ── Save sheet fields ─────────────────────────────────────────────
