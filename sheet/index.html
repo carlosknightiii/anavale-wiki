@@ -169,26 +169,22 @@
     }
     .cs-portrait-upload-btn {
       position: absolute;
-      bottom: 1rem;
+      bottom: 0.75rem;
       right: 0.5rem;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.25);
-      background: rgba(10,14,24,0.75);
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(10,14,24,0.88);
       color: white;
-      font-size: 0.9rem;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s;
+      opacity: 1;
       z-index: 10;
-      line-height: 1;
     }
-    .cs-portrait-upload-btn { opacity: 0.45; }
-    .cs-hero-portrait-wrap:hover .cs-portrait-upload-btn { opacity: 1; }
+    .cs-portrait-upload-btn:hover { background: rgba(200,148,10,0.35); border-color: rgba(200,148,10,0.6); }
     .cs-hero-portrait {
       position: absolute;
       right: 1.5rem; bottom: 1rem;
@@ -1207,7 +1203,7 @@
     // Portrait
     var portraitHtml = '<div class="cs-hero-portrait-wrap">'
       + '<img class="cs-hero-portrait" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name||'') + ' portrait" onerror="this.style.display=\'none\'">'
-      + '<button class="cs-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()" title="Upload photo">📷</button>'
+      + '<button class="cs-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
       + '</div>';
 
     // Assemble
