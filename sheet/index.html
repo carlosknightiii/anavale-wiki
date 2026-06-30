@@ -786,15 +786,15 @@
     .cs-inv-input {
       flex: 1;
       min-width: 140px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.22);
       border-radius: 6px;
       color: var(--white);
       font-family: var(--font-sans);
       font-size: 0.85rem;
       padding: 0.45rem 0.75rem;
     }
-    .cs-inv-input::placeholder { color: rgba(255,255,255,0.25); }
+    .cs-inv-input::placeholder { color: rgba(255,255,255,0.38); }
     .cs-inv-add-btn {
       padding: 0.45rem 1rem;
       background: rgba(200,148,10,0.2);
@@ -810,17 +810,8 @@
     }
     .cs-inv-add-btn:hover { background: rgba(200,148,10,0.35); }
     .cs-inv-list { display: flex; flex-direction: column; gap: 0.4rem; }
-    .cs-inv-row {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px;
-      padding: 0.65rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
     .cs-inv-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.45; flex-shrink: 0; }
-    .cs-inv-name { flex: 1; font-family: var(--font-sans); font-size: 0.86rem; color: var(--char-text-muted); }
+    .cs-inv-name { font-family: var(--font-sans); font-size: 0.86rem; color: var(--char-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cs-inv-qty {
       font-family: var(--font-mono);
       font-size: 0.75rem;
@@ -880,7 +871,12 @@
       font-weight: 700;
     }
     .cs-inv-row {
-      display: flex;
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      display: grid;
+      grid-template-columns: auto auto auto 1fr auto 55px 110px 55px auto auto;
       align-items: center;
       gap: 0.6rem;
     }
@@ -902,17 +898,19 @@
     .cs-inv-fav-btn.active { color: var(--gold); }
     .cs-inv-type-tag {
       font-family: var(--font-sans);
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
       color: var(--char-text-faint);
       background: rgba(255,255,255,0.05);
       border-radius: 4px;
-      padding: 0.15rem 0.4rem;
-      flex: none;
+      padding: 0.2rem 0.5rem;
+      text-align: center;
+      white-space: nowrap;
     }
     .cs-inv-qty-input {
-      width: 45px;
+      width: 100%;
+      box-sizing: border-box;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 5px;
@@ -920,16 +918,16 @@
       font-family: var(--font-mono);
       font-size: 0.78rem;
       text-align: center;
-      padding: 0.25rem;
-      flex: none;
+      padding: 0.2rem 0.3rem;
     }
     .cs-inv-cost, .cs-inv-weight {
       font-family: var(--font-mono);
       font-size: 0.72rem;
       color: var(--char-text-faint);
-      flex: none;
-      min-width: 50px;
       text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .cs-inv-sortable { display: flex; flex-direction: column; gap: 0.4rem; }
     .cs-inv-search-wrap { position: relative; }
@@ -955,8 +953,11 @@
       gap: 0.6rem;
       padding: 0.55rem 0.75rem;
       border-bottom: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: background 0.15s;
     }
     .cs-inv-result-row:last-child { border-bottom: none; }
+    .cs-inv-result-row:hover { background: rgba(255,255,255,0.04); }
     .cs-inv-result-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; cursor: default; }
     .cs-inv-result-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--white); }
     .cs-inv-result-meta { font-family: var(--font-sans); font-size: 0.7rem; color: var(--char-text-faint); }
@@ -978,16 +979,16 @@
       width: 100%;
       padding: 0.6rem;
       margin-bottom: 0.75rem;
-      background: rgba(255,255,255,0.04);
-      border: 1px dashed rgba(255,255,255,0.2);
+      background: rgba(200,148,10,0.07);
+      border: 1px dashed rgba(200,148,10,0.3);
       border-radius: 8px;
-      color: var(--char-text-faint);
+      color: var(--gold);
       font-family: var(--font-sans);
       font-size: 0.8rem;
       cursor: pointer;
       transition: all 0.15s;
     }
-    .cs-inv-custom-btn:hover { background: rgba(200,148,10,0.1); border-color: rgba(200,148,10,0.35); color: var(--gold-light); }
+    .cs-inv-custom-btn:hover { background: rgba(200,148,10,0.15); border-color: rgba(200,148,10,0.5); color: var(--gold-light); }
     .cs-inv-thumb {
       width: 32px;
       height: 32px;
@@ -1004,16 +1005,18 @@
     }
     .cs-inv-row-wrap { display: flex; flex-direction: column; }
     .cs-inv-name-wrap { flex: 1; min-width: 0; }
-    .cs-inv-expand-arrow { font-size: 0.65rem; color: var(--char-text-faint); }
+    .cs-inv-expand-arrow { font-size: 0.95rem; color: var(--char-text-faint); margin-left: 0.1rem; }
     .cs-inv-desc-panel {
       font-family: var(--font-sans);
       font-size: 0.8rem;
       color: var(--char-text-faint);
       line-height: 1.6;
-      padding: 0.5rem 0.75rem 0.5rem 4.2rem;
+      padding: 0.6rem 0.85rem 0.6rem 4.2rem;
       background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-top: none;
       border-radius: 0 0 8px 8px;
-      margin-top: -0.3rem;
+      margin-top: -4px;
     }
     .cs-inv-edit {
       background: none;
@@ -1028,12 +1031,16 @@
     .cs-modal-overlay {
       display: none;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background: rgba(0,0,0,0.65);
       z-index: 200;
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
+      box-sizing: border-box;
     }
     .cs-modal {
       background: rgba(16,20,34,0.98);
@@ -1041,10 +1048,11 @@
       border-radius: 14px;
       padding: 1.5rem;
       width: 100%;
-      max-width: 440px;
+      max-width: 520px;
       max-height: 85vh;
       overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      box-sizing: border-box;
     }
     .cs-modal-sm { max-width: 380px; }
     .cs-modal-title {
@@ -1064,7 +1072,8 @@
       margin-bottom: 0.3rem;
       font-weight: 600;
     }
-    .cs-field-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .cs-field-row-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0.5rem; }
+    .cs-field-row-4 .cs-inv-input { min-width: 0; }
     .cs-checkbox-label {
       font-family: var(--font-sans);
       font-size: 0.8rem;
@@ -1978,8 +1987,19 @@
   }
   function useMatchInstead(itemId) {
     closeCustomItemModal();
-    document.getElementById('cs-inv-search-input').value = CATALOG_CACHE[itemId] ? CATALOG_CACHE[itemId].name : '';
-    runInventorySearch(document.getElementById('cs-inv-search-input').value);
+    sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,image').eq('id', itemId).single().then(function(res) {
+      if (res.error || !res.data) { showToast('Could not find that item', true); return; }
+      CATALOG_CACHE[itemId] = res.data;
+      var qty = parseInt(document.getElementById('ci-qty') ? document.getElementById('ci-qty').value : 1) || 1;
+      var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+      var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
+      sb.from('inventory').insert(row).select().then(function(insertRes) {
+        if (insertRes.error) { showToast('Could not add item — ' + insertRes.error.message, true); return; }
+        INVENTORY.push(insertRes.data[0]);
+        renderInventory();
+        showToast(res.data.name + ' added');
+      });
+    });
   }
   function toggleFavorite(id) {
     var item = INVENTORY.find(function(i) { return i.id === id; });
