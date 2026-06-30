@@ -870,46 +870,6 @@
       padding: 0.45rem 0.6rem;
       flex: none;
     }
-    .cs-inv-search-results {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      margin-bottom: 0.5rem;
-    }
-    .cs-inv-result-row {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: background 0.15s;
-    }
-    .cs-inv-result-row:hover { background: rgba(200,148,10,0.12); }
-    .cs-inv-result-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--white); }
-    .cs-inv-result-meta { font-family: var(--font-sans); font-size: 0.72rem; color: var(--char-text-faint); }
-    .cs-inv-custom-link {
-      background: none;
-      border: none;
-      color: rgba(200,148,10,0.7);
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      cursor: pointer;
-      text-decoration: underline;
-      padding: 0;
-      margin-bottom: 0.6rem;
-      display: block;
-    }
-    .cs-inv-custom-link:hover { color: var(--gold-light); }
-    .cs-inv-custom-form {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--char-radius);
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-    }
     .cs-inv-section-label {
       font-family: var(--font-sans);
       font-size: 0.68rem;
@@ -971,12 +931,183 @@
       min-width: 50px;
       text-align: right;
     }
-    .cs-inv-desc-hint {
-      cursor: help;
-      color: rgba(200,148,10,0.5);
-      font-size: 0.75rem;
-    }
     .cs-inv-sortable { display: flex; flex-direction: column; gap: 0.4rem; }
+    .cs-inv-search-wrap { position: relative; }
+    .cs-inv-search-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      background: rgba(12,16,28,0.98);
+      border: 1px solid rgba(200,148,10,0.3);
+      border-radius: 8px;
+      margin-top: 0.3rem;
+      max-height: 320px;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .cs-inv-search-dropdown.visible { display: block; }
+    .cs-inv-result-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .cs-inv-result-row:last-child { border-bottom: none; }
+    .cs-inv-result-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; cursor: default; }
+    .cs-inv-result-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--white); }
+    .cs-inv-result-meta { font-family: var(--font-sans); font-size: 0.7rem; color: var(--char-text-faint); }
+    .cs-inv-result-add { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+    .cs-inv-result-add-btn {
+      padding: 0.3rem 0.7rem;
+      background: rgba(200,148,10,0.2);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 6px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cs-inv-result-add-btn:hover { background: rgba(200,148,10,0.35); }
+    .cs-inv-custom-btn {
+      display: block;
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 0.75rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: var(--char-text-faint);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cs-inv-custom-btn:hover { background: rgba(200,148,10,0.1); border-color: rgba(200,148,10,0.35); color: var(--gold-light); }
+    .cs-inv-thumb {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex: none;
+      background: rgba(255,255,255,0.05);
+    }
+    .cs-inv-thumb-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .cs-inv-row-wrap { display: flex; flex-direction: column; }
+    .cs-inv-name-wrap { flex: 1; min-width: 0; }
+    .cs-inv-expand-arrow { font-size: 0.65rem; color: var(--char-text-faint); }
+    .cs-inv-desc-panel {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--char-text-faint);
+      line-height: 1.6;
+      padding: 0.5rem 0.75rem 0.5rem 4.2rem;
+      background: rgba(255,255,255,0.02);
+      border-radius: 0 0 8px 8px;
+      margin-top: -0.3rem;
+    }
+    .cs-inv-edit {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.25);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0 0.25rem;
+      flex: none;
+    }
+    .cs-inv-edit:hover { color: var(--gold-light); }
+    .cs-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .cs-modal {
+      background: rgba(16,20,34,0.98);
+      border: 1px solid rgba(200,148,10,0.3);
+      border-radius: 14px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 440px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .cs-modal-sm { max-width: 380px; }
+    .cs-modal-title {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      color: var(--gold-light);
+      margin-bottom: 1rem;
+    }
+    .cs-field-group { margin-bottom: 0.7rem; }
+    .cs-field-label {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+    .cs-field-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .cs-checkbox-label {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--char-text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .cs-modal-btn-primary {
+      padding: 0.5rem 1.1rem;
+      background: rgba(200,148,10,0.25);
+      border: 1px solid rgba(200,148,10,0.5);
+      border-radius: 7px;
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cs-modal-btn-primary:hover { background: rgba(200,148,10,0.4); }
+    .cs-modal-btn-secondary {
+      padding: 0.5rem 1.1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 7px;
+      color: var(--char-text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .cs-modal-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .cs-modal-btn-danger {
+      padding: 0.5rem 1.1rem;
+      background: rgba(180,50,50,0.25);
+      border: 1px solid rgba(180,50,50,0.5);
+      border-radius: 7px;
+      color: #f87171;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cs-modal-btn-danger:hover { background: rgba(180,50,50,0.4); }
 
     /* ── Notes tabs ── */
     .cs-notes-tabs {
@@ -1407,22 +1538,41 @@
       + '<div class="cs-section">'
         + '<div class="cs-section-label">Inventory</div>'
         + '<div class="cs-inv-weight-total" id="cs-inv-weight-total">Carrying: 0 lb</div>'
-        + '<div class="cs-inv-search-row">'
-          + '<input class="cs-inv-input" id="cs-inv-search-input" placeholder="Search items…" autocomplete="off" oninput="onInventorySearchInput()">'
-          + '<select class="cs-inv-cat-select" id="cs-inv-cat-select" onchange="onInventorySearchInput()">'
-            + '<option value="">All</option>'
-            + '<option value="weapon">Weapon</option>'
-            + '<option value="armor">Armor</option>'
-            + '<option value="shield">Shield</option>'
-            + '<option value="consumable">Consumable</option>'
-            + '<option value="tool">Tool</option>'
-            + '<option value="accessory">Accessory</option>'
-          + '</select>'
+        + '<div class="cs-inv-search-wrap">'
+          + '<div class="cs-inv-search-row">'
+            + '<input class="cs-inv-input" id="cs-inv-search-input" placeholder="Search items…" autocomplete="off" oninput="onInventorySearchInput()">'
+            + '<select class="cs-inv-cat-select" id="cs-inv-cat-select" onchange="onInventorySearchInput()">'
+              + '<option value="">All</option>'
+              + '<option value="accessory">Accessory</option>'
+              + '<option value="armor">Armor</option>'
+              + '<option value="consumable">Consumable</option>'
+              + '<option value="shield">Shield</option>'
+              + '<option value="tool">Tool</option>'
+              + '<option value="weapon">Weapon</option>'
+            + '</select>'
+          + '</div>'
+          + '<div class="cs-inv-search-dropdown" id="cs-inv-search-results"></div>'
         + '</div>'
-        + '<div class="cs-inv-search-results" id="cs-inv-search-results"></div>'
-        + '<button class="cs-inv-custom-link" id="cs-inv-custom-link" onclick="toggleCustomItemForm()">Can\'t find it? Add a custom item.</button>'
-        + '<div class="cs-inv-custom-form" id="cs-inv-custom-form" style="display:none"></div>'
+        + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
         + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
+      + '</div>'
+      + '<div class="cs-modal-overlay" id="cs-item-modal-overlay" style="display:none" onclick="if(event.target===this)closeCustomItemModal()">'
+        + '<div class="cs-modal">'
+          + '<div class="cs-modal-title" id="cs-item-modal-title">Create New Item</div>'
+          + '<div class="cs-modal-body" id="cs-item-modal-body"></div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="cs-modal-overlay" id="cs-delete-confirm-overlay" style="display:none" onclick="if(event.target===this)closeDeleteConfirm()">'
+        + '<div class="cs-modal cs-modal-sm">'
+          + '<div class="cs-modal-title">Remove Item</div>'
+          + '<div class="cs-modal-body">'
+            + '<p id="cs-delete-confirm-text" style="font-family:var(--font-sans);font-size:0.86rem;color:var(--char-text-muted);margin-bottom:1rem;"></p>'
+            + '<div style="display:flex;gap:0.6rem;justify-content:flex-end;">'
+              + '<button class="cs-modal-btn-secondary" onclick="closeDeleteConfirm()">Cancel</button>'
+              + '<button class="cs-modal-btn-danger" id="cs-delete-confirm-btn">Remove</button>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
       + '</div>'
 
       // Notes
@@ -1575,7 +1725,6 @@
   function renderInventory() {
     var list = document.getElementById('cs-inv-list');
     if (!list) return;
-    // Weight total
     var totalWeight = INVENTORY.reduce(function(sum, item) {
       var w = item.item_id ? (catalogWeightFor(item.item_id) || 0) : (parseFloat(item.weight_lb) || 0);
       return sum + (w * (parseInt(item.quantity) || 0));
@@ -1599,6 +1748,10 @@
     }
     list.innerHTML = html;
   }
+  var TYPE_ICONS = {
+    weapon:'⚔️', armor:'🛡️', shield:'🛡️', consumable:'🧪', tool:'🔧',
+    accessory:'💍', spell:'📜', food:'🍖', resource:'🪵', treasure:'💰', other:'📦'
+  };
   function renderInvRow(item) {
     var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
     var name = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
@@ -1609,20 +1762,41 @@
     var costStr = [costGp ? costGp + 'gp' : '', costSp ? costSp + 'sp' : '', costCp ? costCp + 'cp' : ''].filter(Boolean).join(' ') || '—';
     var weight = catalogItem ? (catalogItem.weight_lb || 0) : (item.weight_lb || 0);
     var desc = catalogItem ? catalogItem.summary : item.custom_desc;
-    return '<div class="cs-inv-row" draggable="true" data-id="' + item.id + '" id="inv-' + item.id + '">'
-      + '<span class="cs-inv-drag-handle">⠿</span>'
-      + '<button class="cs-inv-fav-btn' + (item.is_favorite ? ' active' : '') + '" onclick="toggleFavorite(\'' + item.id + '\')" title="Favorite">★</button>'
-      + '<div class="cs-inv-name">' + name + (desc ? ' <span class="cs-inv-desc-hint" title="' + desc.replace(/"/g,'&quot;') + '">ⓘ</span>' : '') + '</div>'
-      + '<span class="cs-inv-type-tag">' + type + '</span>'
-      + '<input class="cs-inv-qty-input" type="number" min="0" value="' + (item.quantity||0) + '" onchange="updateInvQuantity(\'' + item.id + '\', this.value)">'
-      + '<span class="cs-inv-cost">' + costStr + '</span>'
-      + '<span class="cs-inv-weight">' + (weight||0) + 'lb</span>'
-      + '<button class="cs-inv-del" onclick="deleteInventoryItem(\'' + item.id + '\')" title="Remove">×</button>'
-      + '</div>';
+    var thumb = (catalogItem && catalogItem.image)
+      ? '<img class="cs-inv-thumb" src="' + catalogItem.image + '" alt="">'
+      : '<div class="cs-inv-thumb cs-inv-thumb-icon">' + (TYPE_ICONS[type] || '📦') + '</div>';
+    var editBtn = !item.item_id
+      ? '<button class="cs-inv-edit" onclick="openCustomItemModal(\'' + item.id + '\')" title="Edit">✎</button>'
+      : '';
+    return '<div class="cs-inv-row-wrap">'
+      + '<div class="cs-inv-row" draggable="true" data-id="' + item.id + '" id="inv-' + item.id + '">'
+        + '<span class="cs-inv-drag-handle">⠿</span>'
+        + thumb
+        + '<button class="cs-inv-fav-btn' + (item.is_favorite ? ' active' : '') + '" onclick="toggleFavorite(\'' + item.id + '\')" title="Favorite">★</button>'
+        + '<div class="cs-inv-name-wrap">'
+          + '<div class="cs-inv-name"' + (desc ? ' onclick="toggleInvDesc(\'' + item.id + '\')" style="cursor:pointer;"' : '') + '>' + name + (desc ? ' <span class="cs-inv-expand-arrow" id="arrow-' + item.id + '">▾</span>' : '') + '</div>'
+        + '</div>'
+        + '<span class="cs-inv-type-tag">' + type + '</span>'
+        + '<input class="cs-inv-qty-input" type="number" min="0" value="' + (item.quantity||0) + '" onchange="updateInvQuantity(\'' + item.id + '\', this.value)">'
+        + '<span class="cs-inv-cost">' + costStr + '</span>'
+        + '<span class="cs-inv-weight">' + (weight||0) + 'lb</span>'
+        + editBtn
+        + '<button class="cs-inv-del" onclick="confirmDeleteItem(\'' + item.id + '\', \'' + name.replace(/'/g,"\\'") + '\')" title="Remove">×</button>'
+      + '</div>'
+      + (desc ? '<div class="cs-inv-desc-panel" id="desc-' + item.id + '" style="display:none;">' + desc + '</div>' : '')
+    + '</div>';
   }
-
+  function toggleInvDesc(id) {
+    var panel = document.getElementById('desc-' + id);
+    var arrow = document.getElementById('arrow-' + id);
+    if (!panel) return;
+    var open = panel.style.display !== 'none';
+    panel.style.display = open ? 'none' : 'block';
+    if (arrow) arrow.textContent = open ? '▾' : '▴';
+  }
   var CATALOG_CACHE = {};
   var SEARCH_DEBOUNCE = null;
+  var EDITING_ITEM_ID = null;
   function catalogWeightFor(itemId) {
     return CATALOG_CACHE[itemId] ? CATALOG_CACHE[itemId].weight_lb : 0;
   }
@@ -1630,39 +1804,46 @@
     clearTimeout(SEARCH_DEBOUNCE);
     var q = (document.getElementById('cs-inv-search-input').value || '').trim();
     var resultsEl = document.getElementById('cs-inv-search-results');
-    if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+    if (q.length < 2) { resultsEl.innerHTML = ''; resultsEl.classList.remove('visible'); return; }
     SEARCH_DEBOUNCE = setTimeout(function() { runInventorySearch(q); }, 250);
   }
   function runInventorySearch(q) {
     var cat = document.getElementById('cs-inv-cat-select').value;
-    var query = sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,base_ac,damage_dice,damage_type')
+    var query = sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,base_ac,damage_dice,damage_type,image')
       .eq('player_facing', true)
       .ilike('name', '%' + q + '%')
+      .order('name')
       .limit(8);
     if (cat) query = query.eq('category', cat);
     query.then(function(res) {
       var resultsEl = document.getElementById('cs-inv-search-results');
+      resultsEl.classList.add('visible');
       if (res.error || !res.data || !res.data.length) {
         resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>';
         return;
       }
-      LAST_SEARCH_RESULTS = res.data;
       res.data.forEach(function(it) { CATALOG_CACHE[it.id] = it; });
       resultsEl.innerHTML = res.data.map(function(it) {
-        return '<div class="cs-inv-result-row" onclick="selectCatalogItem(\'' + it.id + '\')">'
-          + '<span class="cs-inv-result-name">' + it.name + '</span>'
-          + '<span class="cs-inv-result-meta">' + (it.category||'') + ' · ' + (it.cost_gp||0) + 'gp · ' + (it.weight_lb||0) + 'lb</span>'
-          + '</div>';
+        var thumb = it.image ? '<img class="cs-inv-thumb" src="' + it.image + '" alt="">' : '<div class="cs-inv-thumb cs-inv-thumb-icon">' + (TYPE_ICONS[it.category] || '📦') + '</div>';
+        return '<div class="cs-inv-result-row">'
+          + thumb
+          + '<div class="cs-inv-result-info" onclick="event.stopPropagation()">'
+            + '<span class="cs-inv-result-name">' + it.name + '</span>'
+            + '<span class="cs-inv-result-meta">' + (it.category||'') + ' · ' + (it.cost_gp||0) + 'gp · ' + (it.weight_lb||0) + 'lb</span>'
+          + '</div>'
+          + '<div class="cs-inv-result-add">'
+            + '<input class="cs-inv-qty-input" type="number" min="1" value="1" id="qty-' + it.id + '" onclick="event.stopPropagation()">'
+            + '<button class="cs-inv-result-add-btn" onclick="selectCatalogItem(\'' + it.id + '\')">Add</button>'
+          + '</div>'
+        + '</div>';
       }).join('');
     });
   }
-  var LAST_SEARCH_RESULTS = [];
   function selectCatalogItem(itemId) {
     var it = CATALOG_CACHE[itemId];
     if (!it) return;
-    var qty = prompt('How many "' + it.name + '"?', '1');
-    if (qty === null) return;
-    qty = parseInt(qty) || 1;
+    var qtyInput = document.getElementById('qty-' + itemId);
+    var qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
     var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
     var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
     sb.from('inventory').insert(row).select().then(function(res) {
@@ -1670,36 +1851,53 @@
       INVENTORY.push(res.data[0]);
       document.getElementById('cs-inv-search-input').value = '';
       document.getElementById('cs-inv-search-results').innerHTML = '';
+      document.getElementById('cs-inv-search-results').classList.remove('visible');
       renderInventory();
       showToast(it.name + ' added');
     });
   }
-  function toggleCustomItemForm() {
-    var form = document.getElementById('cs-inv-custom-form');
-    if (form.style.display === 'none') {
-      form.style.display = 'block';
-      form.innerHTML =
-        '<input class="cs-inv-input" id="ci-name" placeholder="Item name">'
-        + '<select class="cs-inv-cat-select" id="ci-type">'
-          + ['weapon','armor','shield','consumable','tool','accessory','spell','food','resource','treasure','other'].map(function(t){
-              return '<option value="' + t + '">' + t.charAt(0).toUpperCase()+t.slice(1) + '</option>';
+  var ITEM_TYPE_LIST = ['accessory','armor','consumable','food','other','resource','shield','spell','tool','treasure','weapon'];
+  function openCustomItemModal(editId) {
+    EDITING_ITEM_ID = editId || null;
+    var existing = editId ? INVENTORY.find(function(i){ return i.id === editId; }) : null;
+    var prefillName = existing ? existing.custom_name : (document.getElementById('cs-inv-search-input').value || '').trim();
+    document.getElementById('cs-item-modal-title').textContent = existing ? 'Edit Item' : 'Create New Item';
+    var body = document.getElementById('cs-item-modal-body');
+    body.innerHTML =
+      '<div class="cs-field-group"><label class="cs-field-label">Item Name</label>'
+        + '<input class="cs-inv-input" id="ci-name" value="' + (prefillName||'').replace(/"/g,'&quot;') + '"></div>'
+      + '<div class="cs-field-group"><label class="cs-field-label">Item Type</label>'
+        + '<select class="cs-inv-cat-select" id="ci-type" style="width:100%;">'
+          + '<option value="">Select</option>'
+          + ITEM_TYPE_LIST.map(function(t){
+              var sel = existing && existing.item_type === t ? ' selected' : '';
+              return '<option value="' + t + '"' + sel + '>' + t.charAt(0).toUpperCase()+t.slice(1) + '</option>';
             }).join('')
-        + '</select>'
-        + '<textarea class="cs-inv-input" id="ci-desc" placeholder="Description" style="width:100%;min-height:60px;margin-top:0.4rem;"></textarea>'
-        + '<div class="cs-inv-add-row" style="margin-top:0.4rem;">'
-          + '<input class="cs-inv-input" id="ci-qty" type="number" min="0" value="1" placeholder="Qty" style="width:60px;flex:none;">'
-          + '<input class="cs-inv-input" id="ci-gp" type="number" min="0" placeholder="gp" style="width:60px;flex:none;">'
-          + '<input class="cs-inv-input" id="ci-sp" type="number" min="0" placeholder="sp" style="width:60px;flex:none;">'
-          + '<input class="cs-inv-input" id="ci-cp" type="number" min="0" placeholder="cp" style="width:60px;flex:none;">'
-          + '<input class="cs-inv-input" id="ci-weight" type="number" min="0" step="0.1" placeholder="lb" style="width:70px;flex:none;">'
-        + '</div>'
-        + '<label style="display:inline-block;margin-top:0.4rem;font-size:0.8rem;"><input type="checkbox" id="ci-magical"> Magical</label>'
-        + '<label style="display:inline-block;margin-top:0.4rem;margin-left:1rem;font-size:0.8rem;"><input type="checkbox" id="ci-consumable"> Consumable</label>'
-        + '<div id="ci-warning" style="display:none;margin-top:0.5rem;padding:0.6rem;background:rgba(200,148,10,0.12);border:1px solid rgba(200,148,10,0.4);border-radius:6px;font-size:0.82rem;"></div>'
-        + '<button class="cs-inv-add-btn" style="margin-top:0.6rem;" onclick="submitCustomItem()">+ Add Custom Item</button>';
-    } else {
-      form.style.display = 'none';
-    }
+        + '</select></div>'
+      + '<div class="cs-field-group"><label class="cs-field-label">Description</label>'
+        + '<textarea class="cs-inv-input" id="ci-desc" style="width:100%;min-height:70px;">' + (existing && existing.custom_desc ? existing.custom_desc : '') + '</textarea></div>'
+      + '<div class="cs-field-row-4">'
+        + '<div class="cs-field-group"><label class="cs-field-label">Qty</label><input class="cs-inv-input" id="ci-qty" type="number" min="0" value="' + (existing ? existing.quantity : 1) + '"></div>'
+        + '<div class="cs-field-group"><label class="cs-field-label">GP</label><input class="cs-inv-input" id="ci-gp" type="number" min="0" value="' + (existing ? (existing.cost_gp||0) : 0) + '"></div>'
+        + '<div class="cs-field-group"><label class="cs-field-label">SP</label><input class="cs-inv-input" id="ci-sp" type="number" min="0" value="' + (existing ? (existing.cost_sp||0) : 0) + '"></div>'
+        + '<div class="cs-field-group"><label class="cs-field-label">CP</label><input class="cs-inv-input" id="ci-cp" type="number" min="0" value="' + (existing ? (existing.cost_cp||0) : 0) + '"></div>'
+      + '</div>'
+      + '<div class="cs-field-group"><label class="cs-field-label">Weight (lb)</label>'
+        + '<input class="cs-inv-input" id="ci-weight" type="number" min="0" step="0.1" value="' + (existing ? (existing.weight_lb||0) : 0) + '"></div>'
+      + '<div style="margin-top:0.5rem;">'
+        + '<label class="cs-checkbox-label"><input type="checkbox" id="ci-magical"' + (existing && existing.is_magical ? ' checked' : '') + '> Magical</label>'
+        + '<label class="cs-checkbox-label" style="margin-left:1.2rem;"><input type="checkbox" id="ci-consumable"' + (existing && existing.is_consumable ? ' checked' : '') + '> Consumable</label>'
+      + '</div>'
+      + '<div id="ci-warning" style="display:none;margin-top:0.75rem;padding:0.6rem;background:rgba(200,148,10,0.12);border:1px solid rgba(200,148,10,0.4);border-radius:6px;font-size:0.82rem;"></div>'
+      + '<div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:1rem;">'
+        + '<button class="cs-modal-btn-secondary" onclick="closeCustomItemModal()">Cancel</button>'
+        + '<button class="cs-modal-btn-primary" onclick="submitCustomItem()">' + (existing ? 'Save Changes' : 'Save and Add') + '</button>'
+      + '</div>';
+    document.getElementById('cs-item-modal-overlay').style.display = 'flex';
+  }
+  function closeCustomItemModal() {
+    document.getElementById('cs-item-modal-overlay').style.display = 'none';
+    EDITING_ITEM_ID = null;
   }
   function levenshteinSimilarity(a, b) {
     a = a.toLowerCase(); b = b.toLowerCase();
@@ -1719,52 +1917,74 @@
     var maxLen = Math.max(m, n);
     return 1 - (dist / maxLen);
   }
+  function checkCatalogForMatch(name) {
+    return sb.from('items').select('id,name').eq('player_facing', true).limit(200).then(function(res) {
+      if (res.error || !res.data) return null;
+      var best = null, bestScore = 0;
+      res.data.forEach(function(it) {
+        var score = levenshteinSimilarity(name, it.name);
+        if (score > bestScore) { bestScore = score; best = it; }
+      });
+      return bestScore >= 0.7 ? best : null;
+    });
+  }
   function submitCustomItem() {
     var name = (document.getElementById('ci-name').value || '').trim();
     if (!name) { showToast('Item name required', true); return; }
-    var match = LAST_SEARCH_RESULTS.find(function(it) { return levenshteinSimilarity(name, it.name) >= 0.7; });
     var warningEl = document.getElementById('ci-warning');
-    if (match) {
-      warningEl.style.display = 'block';
-      warningEl.innerHTML = 'This looks like <strong>' + match.name + '</strong> — did you mean to search for that instead? '
-        + '<button class="cs-inv-add-btn" style="margin-top:0.4rem;" onclick="useMatchInstead(\'' + match.id + '\')">Use ' + match.name + '</button>';
-      return;
-    }
-    warningEl.style.display = 'none';
-    var qty = parseInt(document.getElementById('ci-qty').value) || 1;
-    var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
-    var row = {
-      character_id: CHAR_ID, token: TOKEN,
-      custom_name: name,
-      item_type: document.getElementById('ci-type').value,
-      custom_desc: (document.getElementById('ci-desc').value || '').trim() || null,
-      quantity: qty,
-      cost_gp: parseFloat(document.getElementById('ci-gp').value) || 0,
-      cost_sp: parseFloat(document.getElementById('ci-sp').value) || 0,
-      cost_cp: parseFloat(document.getElementById('ci-cp').value) || 0,
-      weight_lb: parseFloat(document.getElementById('ci-weight').value) || 0,
-      is_magical: document.getElementById('ci-magical').checked,
-      is_consumable: document.getElementById('ci-consumable').checked,
-      sort_order: maxSort + 1
-    };
-    sb.from('inventory').insert(row).select().then(function(res) {
-      if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
-      INVENTORY.push(res.data[0]);
-      toggleCustomItemForm();
-      renderInventory();
-      showToast(name + ' added');
+    checkCatalogForMatch(name).then(function(match) {
+      if (match && !EDITING_ITEM_ID) {
+        warningEl.style.display = 'block';
+        warningEl.innerHTML = 'This looks like <strong>' + match.name + '</strong> — did you mean to search for that instead? '
+          + '<button class="cs-modal-btn-secondary" style="margin-top:0.5rem;" onclick="useMatchInstead(\'' + match.id + '\')">Use ' + match.name + '</button>';
+        return;
+      }
+      warningEl.style.display = 'none';
+      var fields = {
+        custom_name: name,
+        item_type: document.getElementById('ci-type').value || 'other',
+        custom_desc: (document.getElementById('ci-desc').value || '').trim() || null,
+        quantity: parseInt(document.getElementById('ci-qty').value) || 0,
+        cost_gp: parseFloat(document.getElementById('ci-gp').value) || 0,
+        cost_sp: parseFloat(document.getElementById('ci-sp').value) || 0,
+        cost_cp: parseFloat(document.getElementById('ci-cp').value) || 0,
+        weight_lb: parseFloat(document.getElementById('ci-weight').value) || 0,
+        is_magical: document.getElementById('ci-magical').checked,
+        is_consumable: document.getElementById('ci-consumable').checked
+      };
+      if (EDITING_ITEM_ID) {
+        sb.from('inventory').update(fields).eq('id', EDITING_ITEM_ID).select().then(function(res) {
+          if (res.error) { showToast('Could not save changes — ' + res.error.message, true); return; }
+          var idx = INVENTORY.findIndex(function(i){ return i.id === EDITING_ITEM_ID; });
+          if (idx >= 0) INVENTORY[idx] = res.data[0];
+          closeCustomItemModal();
+          renderInventory();
+          showToast('Item updated');
+        });
+      } else {
+        var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+        fields.character_id = CHAR_ID;
+        fields.token = TOKEN;
+        fields.sort_order = maxSort + 1;
+        sb.from('inventory').insert(fields).select().then(function(res) {
+          if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
+          INVENTORY.push(res.data[0]);
+          closeCustomItemModal();
+          renderInventory();
+          showToast(name + ' added');
+        });
+      }
     });
   }
   function useMatchInstead(itemId) {
-    toggleCustomItemForm();
-    document.getElementById('cs-inv-search-input').value = CATALOG_CACHE[itemId].name;
-    runInventorySearch(CATALOG_CACHE[itemId].name);
+    closeCustomItemModal();
+    document.getElementById('cs-inv-search-input').value = CATALOG_CACHE[itemId] ? CATALOG_CACHE[itemId].name : '';
+    runInventorySearch(document.getElementById('cs-inv-search-input').value);
   }
   function toggleFavorite(id) {
     var item = INVENTORY.find(function(i) { return i.id === id; });
     if (!item) return;
     item.is_favorite = !item.is_favorite;
-    var section = item.is_favorite ? 'favorite' : 'regular';
     var maxSort = Math.max(0, ...INVENTORY.filter(function(i){ return i.is_favorite === item.is_favorite && i.id !== id; }).map(function(i){return i.sort_order||0;}));
     item.sort_order = maxSort + 1;
     sb.from('inventory').update({ is_favorite: item.is_favorite, sort_order: item.sort_order }).eq('id', id).then(function(res) {
@@ -1782,7 +2002,15 @@
       renderInventory();
     });
   }
-
+  function confirmDeleteItem(id, name) {
+    document.getElementById('cs-delete-confirm-text').textContent = 'Remove "' + name + '" from your inventory? This cannot be undone.';
+    var btn = document.getElementById('cs-delete-confirm-btn');
+    btn.onclick = function() { deleteInventoryItem(id); closeDeleteConfirm(); };
+    document.getElementById('cs-delete-confirm-overlay').style.display = 'flex';
+  }
+  function closeDeleteConfirm() {
+    document.getElementById('cs-delete-confirm-overlay').style.display = 'none';
+  }
   function deleteInventoryItem(id) {
     sb.from('inventory').delete().eq('id', id).then(function(res) {
       if (res.error) { showToast('Could not remove item', true); return; }
