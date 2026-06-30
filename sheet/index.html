@@ -1092,7 +1092,7 @@
     var app         = (typeof ch.appearance_data === 'object' && ch.appearance_data) ? ch.appearance_data : {};
     var gender      = ch.gender || 'm';
     var portraitSuffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
-    var portraitSrc = PHOTO_URL || (ch.species ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp' : '');
+    var portraitSrc = ch.species ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp' : '';
 
     var classDisplay   = cap((ch.class_id      || '').replace(/-/g,' '));
     var speciesDisplay = cap((ch.species        || '').replace(/-/g,' '));
@@ -1174,9 +1174,7 @@
       + '</div></div>';
 
     // Portrait
-    var portraitHtml = portraitSrc
-      ? '<img class="cs-hero-portrait" src="' + portraitSrc + '" alt="' + (ch.name||'') + ' portrait" onerror="this.style.display=\'none\'">'
-      : '';
+    var portraitHtml = '<img class="cs-hero-portrait" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name||'') + ' portrait" onerror="this.style.display=\'none\'">';
 
     // Assemble
     main.innerHTML =
@@ -1460,10 +1458,11 @@
 
   // ── Photo ─────────────────────────────────────────────────────────
   function renderPhoto() {
-    // Photo displays in the hero portrait — nothing to render in the upload section
-    if (PHOTO_URL) {
-      var portrait = document.querySelector('.cs-hero-portrait');
-      if (portrait) portrait.src = PHOTO_URL;
+    if (!PHOTO_URL) return;
+    var portrait = document.getElementById('cs-hero-portrait-img');
+    if (portrait) {
+      portrait.src = PHOTO_URL;
+      portrait.style.display = '';
     }
   }
 
@@ -1484,8 +1483,8 @@
                   { onConflict: 'character_id' })
           .then(function(saveRes) {
             if (saveRes.error) { showToast('Photo saved but record not updated', true); return; }
-            var portrait = document.querySelector('.cs-hero-portrait');
-            if (portrait) portrait.src = PHOTO_URL;
+            var portrait = document.getElementById('cs-hero-portrait-img');
+            if (portrait) { portrait.src = PHOTO_URL; portrait.style.display = ''; }
             showToast('Photo uploaded ✦');
           });
       });
