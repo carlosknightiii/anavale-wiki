@@ -1128,55 +1128,253 @@
     .cs-notes-tabs {
       display: flex;
       gap: 0.35rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
       flex-wrap: wrap;
     }
     .cs-notes-tab {
-      padding: 0.35rem 0.85rem;
+      padding: 0.3rem 0.8rem;
       border-radius: 6px;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.04);
       color: var(--char-text-faint);
       font-family: var(--font-sans);
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       cursor: pointer;
       transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
     }
     .cs-notes-tab.active {
       background: rgba(200,148,10,0.18);
       border-color: rgba(200,148,10,0.45);
       color: var(--gold-light);
     }
-    .cs-notes-textarea {
+    .cs-notes-tab-icon { font-size: 0.8rem; }
+    /* Notes global search */
+    .cs-notes-search-wrap {
+      position: relative;
+      margin-bottom: 0.85rem;
+    }
+    .cs-notes-search {
       width: 100%;
-      min-height: 140px;
+      box-sizing: border-box;
       background: var(--char-card-bg);
       border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--char-text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      padding: 0.55rem 0.9rem 0.55rem 2rem;
+      transition: border-color 0.15s;
+    }
+    .cs-notes-search:focus { outline: none; border-color: rgba(200,148,10,0.35); }
+    .cs-notes-search-icon {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .cs-notes-search-results {
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .cs-notes-search-results.visible { display: block; }
+    .cs-notes-search-hit {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      margin-bottom: 0.4rem;
+      cursor: pointer;
+    }
+    .cs-notes-search-hit:hover { border-color: rgba(200,148,10,0.3); }
+    .cs-notes-search-hit-tab {
+      font-family: var(--font-sans);
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.2rem;
+    }
+    .cs-notes-search-hit-title {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--char-text-muted);
+      font-weight: 600;
+    }
+    .cs-notes-search-hit-excerpt {
+      font-family: var(--font-sans);
+      font-size: 0.76rem;
+      color: var(--char-text-faint);
+      margin-top: 0.15rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Note cards */
+    .cs-notes-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .cs-notes-empty {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--char-text-faint);
+      font-style: italic;
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .cs-note-card {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: var(--char-radius);
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .cs-note-card:hover { border-color: rgba(255,255,255,0.14); }
+    .cs-note-card.cs-note-open { border-color: rgba(200,148,10,0.3); }
+    .cs-note-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 0.9rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cs-note-chevron {
+      font-size: 0.6rem;
+      color: var(--char-text-faint);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .cs-note-card.cs-note-open .cs-note-chevron { transform: rotate(90deg); }
+    .cs-note-title-input {
+      flex: 1;
+      background: transparent;
+      border: none;
       color: var(--char-text-muted);
       font-family: var(--font-sans);
       font-size: 0.86rem;
-      line-height: 1.75;
-      padding: 1rem 1.25rem;
-      resize: vertical;
-    }
-    .cs-notes-textarea:focus { outline: none; border-color: rgba(200,148,10,0.35); }
-    .cs-notes-save {
-      margin-top: 0.5rem;
-      padding: 0.4rem 1rem;
-      background: rgba(200,148,10,0.2);
-      border: 1px solid rgba(200,148,10,0.4);
-      border-radius: 6px;
-      color: var(--gold-light);
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
       font-weight: 600;
+      padding: 0;
       cursor: pointer;
-      transition: background 0.15s;
     }
-    .cs-notes-save:hover { background: rgba(200,148,10,0.35); }
+    .cs-note-title-input:focus {
+      outline: none;
+      cursor: text;
+    }
+    .cs-note-title-input::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; }
+    .cs-note-delete-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.2);
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0 0.2rem;
+      line-height: 1;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .cs-note-delete-btn:hover { color: #f87171; }
+    .cs-note-body-wrap {
+      display: none;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 0.75rem 0.9rem 0.85rem;
+      position: relative;
+    }
+    .cs-note-card.cs-note-open .cs-note-body-wrap { display: block; }
+    .cs-note-body {
+      min-height: 80px;
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      line-height: 1.75;
+      color: var(--char-text-muted);
+      outline: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .cs-note-body:empty::before {
+      content: attr(data-placeholder);
+      color: rgba(255,255,255,0.2);
+      pointer-events: none;
+      font-style: italic;
+    }
+    .cs-note-body a.cs-wiki-link {
+      color: var(--gold-light);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .cs-note-body a.cs-wiki-link:hover { color: var(--gold); }
+    .cs-note-save-status {
+      font-family: var(--font-sans);
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.2);
+      text-align: right;
+      margin-top: 0.4rem;
+      min-height: 0.9rem;
+      transition: color 0.3s;
+    }
+    .cs-note-save-status.saving { color: var(--gold); }
+    .cs-note-save-status.saved  { color: rgba(110,207,110,0.7); }
+    /* Wiki autocomplete dropdown */
+    .cs-wiki-ac-dropdown {
+      position: absolute;
+      z-index: 200;
+      background: rgba(14,18,32,0.98);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      min-width: 220px;
+      max-width: 320px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+    .cs-wiki-ac-dropdown.visible { display: block; }
+    .cs-wiki-ac-item {
+      padding: 0.5rem 0.85rem;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--char-text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .cs-wiki-ac-item:last-child { border-bottom: none; }
+    .cs-wiki-ac-item:hover,
+    .cs-wiki-ac-item.cs-wiki-ac-active { background: rgba(200,148,10,0.14); color: var(--gold-light); }
+    .cs-wiki-ac-item-type {
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      opacity: 0.6;
+    }
+    /* New note button */
+    .cs-notes-add-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.45rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: var(--char-text-faint);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cs-notes-add-btn:hover {
+      background: rgba(200,148,10,0.1);
+      border-color: rgba(200,148,10,0.3);
+      color: var(--gold-light);
+    }
 
     /* ── Photo upload ── */
     .cs-photo-block {
@@ -1252,7 +1450,8 @@
   // ── Live state ────────────────────────────────────────────────────
   var SHEET      = null;   // character_sheet row
   var INVENTORY  = [];     // inventory rows
-  var NOTES      = {};     // { general:'', places:'', names:'', things:'', misc:'' }
+  var NOTES      = { general:[], places:[], names:[], things:[], misc:[] }; // arrays of {id,title,content,sort_order}
+  var WIKI_AC_CACHE = null; // loaded once on first autocomplete trigger
   var PHOTO_URL  = null;   // public URL of character photo
   var CHAR_ID    = null;   // player_characters.id
   var TOKEN      = null;   // from URL query string
@@ -1575,13 +1774,14 @@
       // Notes
       + '<div class="cs-section">'
         + '<div class="cs-section-label">Notes</div>'
-        + '<div class="cs-notes-tabs" id="cs-notes-tabs">'
-          + ['general','places','names','things','misc'].map(function(t) {
-              return '<button class="cs-notes-tab' + (t==='general'?' active':'') + '" onclick="switchNoteTab(\'' + t + '\')">' + cap(t) + '</button>';
-            }).join('')
+        + '<div class="cs-notes-tabs" id="cs-notes-tabs"></div>'
+        + '<div class="cs-notes-search-wrap">'
+          + '<span class="cs-notes-search-icon">🔍</span>'
+          + '<input class="cs-notes-search" id="cs-notes-search" type="text" placeholder="Search all notes…" oninput="onNotesSearchInput(this)">'
         + '</div>'
-        + '<textarea class="cs-notes-textarea" id="cs-notes-area" placeholder="Notes go here…" oninput="notesDirty=true"></textarea>'
-        + '<button class="cs-notes-save" onclick="saveNotes()">Save Notes</button>'
+        + '<div class="cs-notes-search-results" id="cs-notes-search-results"></div>'
+        + '<div class="cs-notes-list" id="cs-notes-list"></div>'
+        + '<button class="cs-notes-add-btn" onclick="addNote()">＋ New note</button>'
       + '</div>'
 
       // Photo input — hidden, triggered from hero overlay
@@ -2087,37 +2287,331 @@
   }
 
   // ── Notes ─────────────────────────────────────────────────────────
-  var notesDirty = false;
-
+  // Tab config: id, label, icon
+  var NOTE_TABS = [
+    { id:'general', label:'General', icon:'📝' },
+    { id:'places',  label:'Places',  icon:'🗺' },
+    { id:'names',   label:'Names',   icon:'👤' },
+    { id:'things',  label:'Things',  icon:'🎒' },
+    { id:'misc',    label:'Misc',    icon:'✦'  }
+  ];
+  // Wiki route lookup — explicit, never derived from table names
+  var WIKI_ROUTES = {
+    world_characters: function(id) { return '#character/' + id; },
+    organizations:    function(id) { return '#org/' + id; },
+    items:            function(id) { return '#item/' + id; },
+    cities:           function(id) { return '#city/' + id; },
+    creatures:        function(id) { return '#creature/' + id; },
+    pois:             function(id) { return '#poi/' + id; },
+    regions:          function(id) { return '#region/' + id; },
+    nations:          function(id) { return '#nation/' + id; },
+    religions:        function(id) { return '#religion/' + id; }
+  };
   function renderNotes() {
-    var area = document.getElementById('cs-notes-area');
-    if (!area) return;
-    area.value = NOTES[ACTIVE_NOTE_TAB] || '';
-    notesDirty = false;
+    var tabsEl   = document.getElementById('cs-notes-tabs');
+    var listEl   = document.getElementById('cs-notes-list');
+    var searchEl = document.getElementById('cs-notes-search');
+    if (!tabsEl || !listEl) return;
+    // Render tab pills
+    tabsEl.innerHTML = NOTE_TABS.map(function(t) {
+      return '<button class="cs-notes-tab' + (t.id === ACTIVE_NOTE_TAB ? ' active' : '') + '" onclick="switchNoteTab(\'' + t.id + '\')">'
+        + '<span class="cs-notes-tab-icon">' + t.icon + '</span>' + t.label + '</button>';
+    }).join('');
+    // Clear search if tab switched
+    if (searchEl) searchEl.value = '';
+    hideNotesSearch();
+    renderNoteCards();
   }
-
-  function switchNoteTab(tab) {
-    if (notesDirty) saveNotes(true);
-    ACTIVE_NOTE_TAB = tab;
-    document.querySelectorAll('.cs-notes-tab').forEach(function(b) {
-      b.classList.toggle('active', b.textContent.toLowerCase() === tab);
+  function renderNoteCards() {
+    var listEl = document.getElementById('cs-notes-list');
+    if (!listEl) return;
+    var notes = NOTES[ACTIVE_NOTE_TAB] || [];
+    if (!notes.length) {
+      listEl.innerHTML = '<div class="cs-notes-empty">No notes yet. Add one below.</div>';
+      return;
+    }
+    listEl.innerHTML = notes.map(function(n) {
+      return buildNoteCardHtml(n);
+    }).join('');
+    // Wire up contenteditable blur saves and autocomplete
+    listEl.querySelectorAll('.cs-note-card').forEach(wireNoteCard);
+  }
+  function buildNoteCardHtml(note) {
+    var safeId    = note.id ? String(note.id).replace(/[^a-zA-Z0-9-]/g,'') : '';
+    var safeTitle = (note.title||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var safeBody  = (note.content||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<div class="cs-note-card" data-note-id="' + safeId + '">'
+      + '<div class="cs-note-header" onclick="toggleNoteCard(this.closest(\'.cs-note-card\'))">'
+        + '<span class="cs-note-chevron">▶</span>'
+        + '<input class="cs-note-title-input" type="text" placeholder="Untitled note" value="' + safeTitle + '"'
+          + ' onclick="event.stopPropagation()"'
+          + ' onchange="saveNoteTitle(this)">'
+        + '<button class="cs-note-delete-btn" title="Delete note" onclick="event.stopPropagation();deleteNote(\'' + safeId + '\')">✕</button>'
+      + '</div>'
+      + '<div class="cs-note-body-wrap">'
+        + '<div class="cs-note-body" contenteditable="true" data-note-id="' + safeId + '" data-placeholder="Write your note… type a name to link a wiki entry">' + safeBody + '</div>'
+        + '<div class="cs-note-save-status" id="cs-note-status-' + safeId + '"></div>'
+        + '<div class="cs-wiki-ac-dropdown" id="cs-wiki-ac-' + safeId + '"></div>'
+      + '</div>'
+    + '</div>';
+  }
+  function wireNoteCard(cardEl) {
+    var bodyEl = cardEl.querySelector('.cs-note-body');
+    if (!bodyEl) return;
+    var noteId = bodyEl.dataset.noteId;
+    var saveTimer = null;
+    bodyEl.addEventListener('input', function() {
+      // Trigger autocomplete
+      handleNoteBodyInput(bodyEl, noteId);
+      // Schedule save
+      clearTimeout(saveTimer);
+      setNoteStatus(noteId, 'saving');
+      saveTimer = setTimeout(function() { saveNoteBody(bodyEl, noteId); }, 1200);
     });
+    bodyEl.addEventListener('blur', function() {
+      clearTimeout(saveTimer);
+      saveNoteBody(bodyEl, noteId);
+      closeWikiAc(noteId);
+    });
+  }
+  function toggleNoteCard(cardEl) {
+    cardEl.classList.toggle('cs-note-open');
+  }
+  function saveNoteTitle(inputEl) {
+    var cardEl = inputEl.closest('.cs-note-card');
+    if (!cardEl) return;
+    var noteId = cardEl.dataset.noteId;
+    var title  = inputEl.value;
+    // Update local cache
+    var notes = NOTES[ACTIVE_NOTE_TAB] || [];
+    var note  = notes.find(function(n) { return n.id === noteId; });
+    if (note) note.title = title;
+    if (!CHAR_ID || !noteId) return;
+    sb.from('character_notes').update({ title: title }).eq('id', noteId).then(function(res) {
+      if (res.error) showToast('Title not saved — ' + res.error.message, true);
+    });
+  }
+  function saveNoteBody(bodyEl, noteId) {
+    if (!CHAR_ID || !noteId) return;
+    var content = bodyEl.innerText || '';
+    var notes   = NOTES[ACTIVE_NOTE_TAB] || [];
+    var note    = notes.find(function(n) { return n.id === noteId; });
+    if (note) note.content = content;
+    sb.from('character_notes').update({ content: content }).eq('id', noteId).then(function(res) {
+      if (res.error) { setNoteStatus(noteId, ''); showToast('Note not saved — ' + res.error.message, true); return; }
+      setNoteStatus(noteId, 'saved');
+      setTimeout(function() { setNoteStatus(noteId, ''); }, 2000);
+    });
+  }
+  function setNoteStatus(noteId, state) {
+    var el = document.getElementById('cs-note-status-' + noteId);
+    if (!el) return;
+    el.className = 'cs-note-save-status' + (state ? ' ' + state : '');
+    el.textContent = state === 'saving' ? 'Saving…' : state === 'saved' ? 'Saved ✓' : '';
+  }
+  function switchNoteTab(tab) {
+    ACTIVE_NOTE_TAB = tab;
     renderNotes();
   }
-
-  function saveNotes(silent) {
+  function addNote() {
     if (!CHAR_ID) return;
-    var content = (document.getElementById('cs-notes-area') || {}).value || '';
-    NOTES[ACTIVE_NOTE_TAB] = content;
-    notesDirty = false;
-    // Upsert: match on character_id + tab
+    var tab      = ACTIVE_NOTE_TAB;
+    var existing = NOTES[tab] || [];
+    var nextOrder = existing.length ? Math.max.apply(null, existing.map(function(n) { return n.sort_order || 0; })) + 1 : 0;
     sb.from('character_notes')
-      .upsert({ character_id: CHAR_ID, token: TOKEN, tab: ACTIVE_NOTE_TAB, content: content },
-              { onConflict: 'character_id,tab' })
+      .insert({ character_id: CHAR_ID, token: TOKEN, tab: tab, title: '', content: '', sort_order: nextOrder })
+      .select('id,tab,title,content,sort_order')
+      .single()
       .then(function(res) {
-        if (res.error) { showToast('Notes not saved — ' + res.error.message, true); return; }
-        if (!silent) showToast('Notes saved');
+        if (res.error) { showToast('Could not create note — ' + res.error.message, true); return; }
+        NOTES[tab].push({ id: res.data.id, title: '', content: '', sort_order: nextOrder });
+        renderNoteCards();
+        // Auto-open the new card
+        var listEl = document.getElementById('cs-notes-list');
+        if (listEl) {
+          var newCard = listEl.querySelector('.cs-note-card:last-child');
+          if (newCard) {
+            newCard.classList.add('cs-note-open');
+            var titleInput = newCard.querySelector('.cs-note-title-input');
+            if (titleInput) titleInput.focus();
+          }
+        }
       });
+  }
+  function deleteNote(noteId) {
+    // Reuse the existing styled delete confirm modal
+    var textEl = document.getElementById('cs-delete-confirm-text');
+    if (textEl) textEl.textContent = 'Delete this note? This cannot be undone.';
+    var btn = document.getElementById('cs-delete-confirm-btn');
+    btn.onclick = function() { doDeleteNote(noteId); closeDeleteConfirm(); };
+    document.getElementById('cs-delete-confirm-overlay').style.display = 'flex';
+  }
+  function doDeleteNote(noteId) {
+    sb.from('character_notes').delete().eq('id', noteId).then(function(res) {
+      if (res.error) { showToast('Could not delete note — ' + res.error.message, true); return; }
+      var tab = ACTIVE_NOTE_TAB;
+      NOTES[tab] = (NOTES[tab] || []).filter(function(n) { return n.id !== noteId; });
+      renderNoteCards();
+      showToast('Note deleted');
+    });
+  }
+  // ── Global notes search ───────────────────────────────────────────
+  function onNotesSearchInput(input) {
+    var q = (input.value || '').toLowerCase().trim();
+    var resultsEl = document.getElementById('cs-notes-search-results');
+    if (!resultsEl) return;
+    if (!q) { hideNotesSearch(); return; }
+    var hits = [];
+    NOTE_TABS.forEach(function(t) {
+      (NOTES[t.id] || []).forEach(function(n) {
+        var inTitle   = (n.title   || '').toLowerCase().indexOf(q) !== -1;
+        var inContent = (n.content || '').toLowerCase().indexOf(q) !== -1;
+        if (inTitle || inContent) {
+          hits.push({ tab: t, note: n, inContent: inContent });
+        }
+      });
+    });
+    if (!hits.length) {
+      resultsEl.innerHTML = '<div class="cs-notes-empty">No matches found.</div>';
+    } else {
+      resultsEl.innerHTML = hits.map(function(h) {
+        var excerpt = '';
+        if (h.inContent) {
+          var idx = (h.note.content||'').toLowerCase().indexOf(q);
+          var start = Math.max(0, idx - 30);
+          excerpt = (start > 0 ? '…' : '') + (h.note.content||'').slice(start, idx + q.length + 40) + '…';
+        }
+        return '<div class="cs-notes-search-hit" onclick="jumpToNote(\'' + h.tab.id + '\',\'' + h.note.id + '\')">'
+          + '<div class="cs-notes-search-hit-tab">' + h.tab.icon + ' ' + h.tab.label + '</div>'
+          + '<div class="cs-notes-search-hit-title">' + ((h.note.title||'').replace(/</g,'&lt;') || '<em>Untitled</em>') + '</div>'
+          + (excerpt ? '<div class="cs-notes-search-hit-excerpt">' + excerpt.replace(/</g,'&lt;') + '</div>' : '')
+        + '</div>';
+      }).join('');
+    }
+    resultsEl.classList.add('visible');
+  }
+  function hideNotesSearch() {
+    var el = document.getElementById('cs-notes-search-results');
+    if (el) el.classList.remove('visible');
+  }
+  function jumpToNote(tabId, noteId) {
+    hideNotesSearch();
+    var searchEl = document.getElementById('cs-notes-search');
+    if (searchEl) searchEl.value = '';
+    ACTIVE_NOTE_TAB = tabId;
+    renderNotes();
+    // After render, open and scroll to the target card
+    setTimeout(function() {
+      var listEl = document.getElementById('cs-notes-list');
+      if (!listEl) return;
+      var card = listEl.querySelector('[data-note-id="' + noteId + '"]');
+      if (card) {
+        card.classList.add('cs-note-open');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+  }
+  // ── Wiki autocomplete ─────────────────────────────────────────────
+  var WIKI_TABLES = ['cities','world_characters','creatures','organizations','pois','nations','regions','religions','items'];
+  function loadWikiAcCache() {
+    if (WIKI_AC_CACHE !== null) return Promise.resolve();
+    return Promise.all(WIKI_TABLES.map(function(table) {
+      return sb.from(table).select('id,name,player_facing').then(function(res) {
+        if (res.error || !res.data) return [];
+        return res.data
+          .filter(function(r) { return r.player_facing === true || r.player_facing === 'teaser'; })
+          .map(function(r) { return { id: r.id, name: r.name, table: table }; });
+      });
+    })).then(function(results) {
+      WIKI_AC_CACHE = [];
+      results.forEach(function(rows) { WIKI_AC_CACHE = WIKI_AC_CACHE.concat(rows); });
+    });
+  }
+  function handleNoteBodyInput(bodyEl, noteId) {
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    var text  = range.startContainer.textContent || '';
+    var pos   = range.startOffset;
+    // Get the word being typed (letters/apostrophes only, min 2 chars)
+    var before = text.slice(0, pos);
+    var match  = before.match(/([A-Za-z'][A-Za-z' ]{1,})$/);
+    if (!match || match[1].trim().length < 2) { closeWikiAc(noteId); return; }
+    var query = match[1].trim().toLowerCase();
+    loadWikiAcCache().then(function() {
+      var hits = (WIKI_AC_CACHE || []).filter(function(e) {
+        return e.name.toLowerCase().indexOf(query) === 0 || e.name.toLowerCase().indexOf(query) !== -1;
+      }).slice(0, 8);
+      showWikiAc(noteId, hits, bodyEl, range, match[1]);
+    });
+  }
+  function showWikiAc(noteId, hits, bodyEl, range, matchedText) {
+    var dropdown = document.getElementById('cs-wiki-ac-' + noteId);
+    if (!dropdown) return;
+    if (!hits.length) { dropdown.classList.remove('visible'); return; }
+    var TABLE_LABELS = {
+      cities:'City', world_characters:'Character', creatures:'Creature',
+      organizations:'Organization', pois:'Place of Interest',
+      nations:'Nation', regions:'Region', religions:'Religion', items:'Item'
+    };
+    dropdown.innerHTML = hits.map(function(h, idx) {
+      return '<div class="cs-wiki-ac-item" data-idx="' + idx + '">'
+        + '<span class="cs-wiki-ac-item-type">' + (TABLE_LABELS[h.table]||h.table) + '</span>'
+        + h.name.replace(/</g,'&lt;')
+      + '</div>';
+    }).join('');
+    dropdown.classList.add('visible');
+    // Position below caret
+    var bodyRect  = bodyEl.getBoundingClientRect();
+    var caretRect = range.getBoundingClientRect();
+    dropdown.style.top  = (caretRect.bottom - bodyRect.top + 4) + 'px';
+    dropdown.style.left = (caretRect.left   - bodyRect.left)    + 'px';
+    // Wire click
+    dropdown.querySelectorAll('.cs-wiki-ac-item').forEach(function(itemEl, idx) {
+      itemEl.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        insertWikiLink(bodyEl, noteId, hits[idx], matchedText, range);
+      });
+    });
+  }
+  function closeWikiAc(noteId) {
+    var el = document.getElementById('cs-wiki-ac-' + noteId);
+    if (el) el.classList.remove('visible');
+  }
+  function insertWikiLink(bodyEl, noteId, entry, matchedText, range) {
+    closeWikiAc(noteId);
+    var routeFn  = WIKI_ROUTES[entry.table];
+    var href     = routeFn ? routeFn(entry.id) : '#';
+    var wikiBase = window.location.origin + '/anavale-wiki/';
+    var link     = document.createElement('a');
+    link.href      = wikiBase + href;
+    link.className = 'cs-wiki-link';
+    link.target    = '_blank';
+    link.rel       = 'noopener';
+    link.textContent = entry.name;
+    // Replace the typed text with the link
+    var textNode   = range.startContainer;
+    var pos        = range.startOffset;
+    var text       = textNode.textContent || '';
+    var matchStart = pos - matchedText.length;
+    if (matchStart < 0) matchStart = 0;
+    // Split text node and insert link
+    var before = document.createTextNode(text.slice(0, matchStart));
+    var after  = document.createTextNode(text.slice(pos) + ' ');
+    var parent = textNode.parentNode;
+    parent.insertBefore(before, textNode);
+    parent.insertBefore(link, textNode);
+    parent.insertBefore(after, textNode);
+    parent.removeChild(textNode);
+    // Move caret after link
+    var newRange = document.createRange();
+    newRange.setStart(after, 1);
+    newRange.collapse(true);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    // Save immediately
+    saveNoteBody(bodyEl, noteId);
   }
 
   // ── Photo ─────────────────────────────────────────────────────────
@@ -2215,10 +2709,16 @@
 
   // ── Fetch notes ───────────────────────────────────────────────────
   function fetchNotes() {
-    return sb.from('character_notes').select('*').eq('character_id', CHAR_ID)
+    return sb.from('character_notes')
+      .select('id,tab,title,content,sort_order')
+      .eq('character_id', CHAR_ID)
+      .order('sort_order', { ascending: true })
       .then(function(res) {
         if (res.error) { console.warn('Notes fetch error:', res.error); return; }
-        (res.data || []).forEach(function(row) { NOTES[row.tab] = row.content; });
+        NOTES = { general:[], places:[], names:[], things:[], misc:[] };
+        (res.data || []).forEach(function(row) {
+          if (NOTES[row.tab]) NOTES[row.tab].push({ id: row.id, title: row.title || '', content: row.content || '', sort_order: row.sort_order || 0 });
+        });
       });
   }
 
