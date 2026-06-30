@@ -1092,7 +1092,7 @@
     var app         = (typeof ch.appearance_data === 'object' && ch.appearance_data) ? ch.appearance_data : {};
     var gender      = ch.gender || 'm';
     var portraitSuffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
-    var portraitSrc = ch.species ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp' : '';
+    var portraitSrc = PHOTO_URL || (ch.species ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp' : '');
 
     var classDisplay   = cap((ch.class_id      || '').replace(/-/g,' '));
     var speciesDisplay = cap((ch.species        || '').replace(/-/g,' '));
@@ -1460,22 +1460,10 @@
 
   // ── Photo ─────────────────────────────────────────────────────────
   function renderPhoto() {
-    var block = document.getElementById('cs-photo-block');
-    if (!block) return;
-    var placeholder = document.getElementById('cs-photo-placeholder');
+    // Photo displays in the hero portrait — nothing to render in the upload section
     if (PHOTO_URL) {
-      if (placeholder) placeholder.style.display = 'none';
-      var existing = document.getElementById('cs-photo-img');
-      if (!existing) {
-        var img = document.createElement('img');
-        img.className = 'cs-photo-img';
-        img.id = 'cs-photo-img';
-        img.src = PHOTO_URL;
-        img.alt = 'Character photo';
-        block.insertBefore(img, block.firstChild);
-      } else {
-        existing.src = PHOTO_URL;
-      }
+      var portrait = document.querySelector('.cs-hero-portrait');
+      if (portrait) portrait.src = PHOTO_URL;
     }
   }
 
@@ -1487,7 +1475,8 @@
     var path = 'characters/' + CHAR_ID + '.' + ext;
     sb.storage.from('character-photos').upload(path, file, { upsert: true, contentType: file.type })
       .then(function(res) {
-        if (res.error) { showToast('Upload failed — ' + res.error.message, true); return; }
+        if (res.error && res.error.statusCode !== '400') { showToast('Upload failed — ' + res.error.message, true); return; }
+        if (res.error) { /* file already exists — treat as success, URL is still valid */ }
         var url = SB_URL + '/storage/v1/object/public/character-photos/' + path;
         PHOTO_URL = url;
         sb.from('character_photo')
@@ -1495,7 +1484,8 @@
                   { onConflict: 'character_id' })
           .then(function(saveRes) {
             if (saveRes.error) { showToast('Photo saved but record not updated', true); return; }
-            renderPhoto();
+            var portrait = document.querySelector('.cs-hero-portrait');
+            if (portrait) portrait.src = PHOTO_URL;
             showToast('Photo uploaded ✦');
           });
       });
