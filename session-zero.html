@@ -582,7 +582,7 @@ html,body{width:100%;height:100%;background:var(--ink);color:var(--text);font-fa
 <div class="slide" id="s13">
   <div class="eyebrow">Your First In-World Moment</div>
   <h2 class="slide-title">The Intake Form</h2>
-  <div class="slide-sub">Gobblewump Crossing is home to the oldest Formery office in Caparia not located in a capital city. Everyone who crosses gets one.</div>
+  <div class="slide-sub">The Formery has an office at every bridge, crossing, and waypoint in Anavale. When your character arrives at Gobblewump Crossing, a clerk will hand you this form. This is yours to fill out.</div>
   <div class="formery-layout">
     <div class="formery-explain">
       <div>
@@ -637,7 +637,7 @@ html,body{width:100%;height:100%;background:var(--ink);color:var(--text);font-fa
     <div class="teaser-text-col">
       <div id="teaser-beat-0" class="teaser-beat visible">
         <p>Three travelers. Three roads. All of them led here.<br><br>
-        You arrive at <em>Gobblewump Crossing</em> — the most trafficked river junction in Caparia — for different reasons. Adrian's character is chasing something. Meeta's is running from something. Hema's was told to be here by someone they trust.<br><br>
+        You arrive at <em>Gobblewump Crossing</em> — the most trafficked river junction in Caparia — each for your own reasons. Maybe you are heading somewhere. Maybe you are leaving something behind. Maybe someone sent you.<br><br>
         None of you planned to stay.</p>
         <div class="teaser-beat-divider"></div>
         <p>But the town is quieter than it should be.<br>And the river sounds wrong.</p>
@@ -665,7 +665,10 @@ html,body{width:100%;height:100%;background:var(--ink);color:var(--text);font-fa
         <div class="tp-dot"></div>
         <div class="tp-dot"></div>
       </div>
-      <button class="teaser-btn" id="teaser-next-btn" onclick="advanceTeaser()">Continue the story →</button>
+      <div style="display:flex;gap:.6rem;margin-top:1.1rem;align-items:center;">
+        <button class="teaser-btn" id="teaser-back-btn" onclick="retreatTeaser()" style="display:none;opacity:.7;">← Back</button>
+        <button class="teaser-btn" id="teaser-next-btn" onclick="advanceTeaser()">Continue the story →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -716,10 +719,7 @@ function updateUI(){
 }
 
 function advanceTeaser(){
-  if(teaserBeat>=TEASER_TOTAL-1){
-    document.getElementById('teaser-next-btn').style.display='none';
-    return;
-  }
+  if(teaserBeat>=TEASER_TOTAL-1) return;
   document.getElementById('teaser-beat-'+teaserBeat).style.opacity='0';
   document.getElementById('teaser-beat-'+teaserBeat).style.transform='translateY(-6px)';
   setTimeout(()=>{
@@ -727,16 +727,37 @@ function advanceTeaser(){
     teaserBeat++;
     const nb=document.getElementById('teaser-beat-'+teaserBeat);
     nb.classList.add('visible');
-    // force reflow for transition
     nb.offsetHeight;
     nb.style.opacity='1';nb.style.transform='translateY(0)';
     document.querySelectorAll('.tp-dot').forEach((d,i)=>d.classList.toggle('active',i===teaserBeat));
-    if(teaserBeat>=TEASER_TOTAL-1)document.getElementById('teaser-next-btn').textContent='That\'s where you arrive.';
+    document.getElementById('teaser-back-btn').style.display='inline-block';
+    if(teaserBeat>=TEASER_TOTAL-1){
+      document.getElementById('teaser-next-btn').textContent='That\'s where you arrive.';
+      document.getElementById('teaser-next-btn').style.display='none';
+    }
+  },300);
+}
+function retreatTeaser(){
+  if(teaserBeat<=0) return;
+  document.getElementById('teaser-beat-'+teaserBeat).style.opacity='0';
+  document.getElementById('teaser-beat-'+teaserBeat).style.transform='translateY(8px)';
+  setTimeout(()=>{
+    document.getElementById('teaser-beat-'+teaserBeat).classList.remove('visible');
+    teaserBeat--;
+    const nb=document.getElementById('teaser-beat-'+teaserBeat);
+    nb.classList.add('visible');
+    nb.offsetHeight;
+    nb.style.opacity='1';nb.style.transform='translateY(0)';
+    document.querySelectorAll('.tp-dot').forEach((d,i)=>d.classList.toggle('active',i===teaserBeat));
+    document.getElementById('teaser-next-btn').style.display='inline-block';
+    document.getElementById('teaser-next-btn').textContent='Continue the story →';
+    if(teaserBeat<=0) document.getElementById('teaser-back-btn').style.display='none';
   },300);
 }
 
 document.addEventListener('keydown',e=>{
   if(current===14&&(e.key==='ArrowRight'||e.key===' ')&&teaserBeat<TEASER_TOTAL-1){e.preventDefault();advanceTeaser();return;}
+  if(current===14&&e.key==='ArrowLeft'&&teaserBeat>0){e.preventDefault();retreatTeaser();return;}
   if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')navigate(1);
   if(e.key==='ArrowLeft'||e.key==='ArrowUp')navigate(-1);
 });
