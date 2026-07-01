@@ -2735,12 +2735,21 @@
       + '</div>';
     }).join('');
     dropdown.classList.add('visible');
-    // Position below caret
+    // Position dropdown: use caret rect when valid, else fall back to bottom of body
     var bodyRect  = bodyEl.getBoundingClientRect();
     var caretRect = range.getBoundingClientRect();
-    dropdown.style.top  = (caretRect.bottom - bodyRect.top + 4) + 'px';
-    dropdown.style.left = (caretRect.left   - bodyRect.left)    + 'px';
-    // Wire click
+    var topOffset, leftOffset;
+    if (caretRect && caretRect.bottom > 0 && caretRect.bottom > bodyRect.top) {
+      topOffset  = caretRect.bottom - bodyRect.top + 4;
+      leftOffset = Math.max(0, caretRect.left - bodyRect.left);
+    } else {
+      // Fallback: position below the body element's current scroll height
+      topOffset  = bodyEl.scrollHeight + 4;
+      leftOffset = 0;
+    }
+    dropdown.style.top  = topOffset  + 'px';
+    dropdown.style.left = leftOffset + 'px';
+    // Wire click — capture range for link insertion
     dropdown.querySelectorAll('.cs-wiki-ac-item').forEach(function(itemEl, idx) {
       itemEl.addEventListener('mousedown', function(e) {
         e.preventDefault();
