@@ -5092,13 +5092,21 @@ function showDMToast(msg, type) {
   border: 1px solid var(--scc-border-gold);
   border-radius: var(--dm-radius);
   z-index: 1000;
-  max-height: 360px;
-  overflow-y: auto;
+  max-height: 400px;
+  overflow: hidden;
   display: none;
+  flex-direction: column;
   box-shadow: 0 12px 32px rgba(0,0,0,0.6);
   width: 420px;
 }
-.scc-browse-panel.open { display: block; }
+.scc-browse-panel.open {
+  display: flex;
+}
+.scc-browse-panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
 .scc-browse-group-header {
   position: sticky;
   top: 0;
@@ -8314,8 +8322,8 @@ function sccRenderBrowsePanel(type, panel) {
     });
   }
 
-  html += '<div class="scc-browse-done"><button class="scc-btn-primary" onclick="sccCloseBrowse(\'' + type + '\')">Done</button><span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">Click entries to select, click again to deselect</span></div>';
-  panel.innerHTML = html;
+  panel.innerHTML = '<div class="scc-browse-panel-scroll">' + html + '</div>'
+    + '<div class="scc-browse-done"><button class="scc-btn-primary" onclick="sccCloseBrowse(\'' + type + '\')">Done</button><span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">Click entries to select, click again to deselect</span></div>';
 }
 
 function sccBrowseSelect(type, id, name, el) {
