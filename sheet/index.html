@@ -2629,7 +2629,7 @@
     var text   = range.startContainer.textContent || '';
     var pos    = range.startOffset;
     var before = text.slice(0, pos);
-    var match  = before.match(/([A-Za-z'][A-Za-z']*(?:\s[A-Za-z']+)*)$/);
+    var match  = before.match(/([A-Za-z'][A-Za-z']*)$/);
     if (!match || match[1].trim().length < 2) { closeWikiAc(noteId); return; }
     var query       = match[1].trim().toLowerCase();
     var matchedText = match[1];
