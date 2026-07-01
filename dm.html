@@ -5036,7 +5036,7 @@ function switchTab(tab) {
   updateFileTarget();
   resetOutput();
   if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
-  if (tab === 'quests') questsRefresh();
+  if (tab === 'quests') { questsResetFilters(); questsRefresh(); }
   if (tab === 'players') playersRefresh();
   if (tab === 'add') { FORM_DIRTY = false; sortAllDropdowns(); } // re-sort on open; reset dirty flag
 }
