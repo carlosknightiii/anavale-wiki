@@ -2391,7 +2391,8 @@
             <div class="scc-setup-grid">
               <div class="scc-setup-card">
                 <div class="scc-setup-card-label">Session Number</div>
-                <input type="number" id="scc-session-number" class="scc-input" min="1" placeholder="Auto">
+                <div id="scc-session-number-display" style="font-family:var(--font-headers);font-size:1.8rem;color:var(--dm-gold);font-weight:700;padding:0.25rem 0;line-height:1;">—</div>
+                <input type="hidden" id="scc-session-number" value="">
               </div>
               <div class="scc-setup-card">
                 <div class="scc-setup-card-label">Session Date</div>
@@ -4149,7 +4150,7 @@ function showDMToast(msg, type) {
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
 }
-.scc-picker-group {}
+.scc-picker-group { position: relative; }
 .scc-picker-label {
   font-family: var(--font-sans);
   font-size: 0.72rem;
@@ -7739,7 +7740,9 @@ function sccLoadLatestSession() {
     // Auto-populate session number as next in sequence
     var nextNum = sessions.length ? (sessions[0].session_number + 1) : 1;
     var numEl = document.getElementById('scc-session-number');
-    if (numEl && !numEl.value) numEl.value = nextNum;
+    if (numEl) numEl.value = nextNum;
+    var dispEl = document.getElementById('scc-session-number-display');
+    if (dispEl) dispEl.textContent = nextNum;
     if (SCC_SESSION) {
       sccPopulateSetupForm(SCC_SESSION);
       sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
@@ -7769,6 +7772,8 @@ function sccUpdateHeaderSub() {
 function sccPopulateSetupForm(s) {
   var setV = function(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; };
   setV('scc-session-number',  s.session_number);
+  var dispEl = document.getElementById('scc-session-number-display');
+  if (dispEl) dispEl.textContent = s.session_number || '—';
   setV('scc-session-date',    s.session_date);
   setV('scc-session-premise', s.premise);
   setV('scc-prep-notes',      s.prep_notes);
@@ -7992,7 +7997,7 @@ function sccCloseBrowse(type) {
 
 // Close browse panels on outside click
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.scc-picker-group')) {
+  if (!e.target.closest('.scc-picker-group') && !e.target.closest('.scc-browse-btn')) {
     document.querySelectorAll('.scc-browse-panel.open').forEach(function(p) { p.classList.remove('open'); });
     document.querySelectorAll('.scc-picker-dropdown.open').forEach(function(d) { d.classList.remove('open'); d.innerHTML = ''; });
   }
