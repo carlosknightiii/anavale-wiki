@@ -2312,12 +2312,11 @@
     var listEl   = document.getElementById('cs-notes-list');
     var searchEl = document.getElementById('cs-notes-search');
     if (!tabsEl || !listEl) return;
-    // Render tab pills
+    // Render proper tab bar
     tabsEl.innerHTML = NOTE_TABS.map(function(t) {
       return '<button class="cs-notes-tab' + (t.id === ACTIVE_NOTE_TAB ? ' active' : '') + '" onclick="switchNoteTab(\'' + t.id + '\')">'
         + '<span class="cs-notes-tab-icon">' + t.icon + '</span>' + t.label + '</button>';
     }).join('');
-    // Clear search if tab switched
     if (searchEl) searchEl.value = '';
     hideNotesSearch();
     renderNoteCards();
@@ -2325,57 +2324,90 @@
   function renderNoteCards() {
     var listEl = document.getElementById('cs-notes-list');
     if (!listEl) return;
-    var notes = NOTES[ACTIVE_NOTE_TAB] || [];
-    if (!notes.length) {
-      listEl.innerHTML = '<div class="cs-notes-empty">No notes yet. Add one below.</div>';
+    var allNotes = NOTES[ACTIVE_NOTE_TAB] || [];
+    var favorites = allNotes.filter(function(n) { return n.is_favorite; }).sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+    var regular   = allNotes.filter(function(n) { return !n.is_favorite; }).sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+    if (!allNotes.length) {
+      listEl.innerHTML = '<div class="cs-notes-tab-content"><div class="cs-notes-empty">No notes yet. Add one below.</div></div>';
       return;
     }
-    listEl.innerHTML = notes.map(function(n) {
-      return buildNoteCardHtml(n);
-    }).join('');
-    // Wire up contenteditable blur saves and autocomplete
+    var html = '<div class="cs-notes-tab-content">';
+    if (favorites.length) {
+      html += '<div class="cs-inv-section-label">★ Pinned</div>';
+      html += '<div class="cs-note-sortable" data-group="favorite">' + favorites.map(buildNoteCardHtml).join('') + '</div>';
+    }
+    if (regular.length) {
+      if (favorites.length) html += '<div class="cs-inv-section-label">Notes</div>';
+      html += '<div class="cs-note-sortable" data-group="regular">' + regular.map(buildNoteCardHtml).join('') + '</div>';
+    }
+    html += '</div>';
+    listEl.innerHTML = html;
     listEl.querySelectorAll('.cs-note-card').forEach(wireNoteCard);
+    wireNoteDragDrop();
   }
   function buildNoteCardHtml(note) {
     var safeId    = note.id ? String(note.id).replace(/[^a-zA-Z0-9-]/g,'') : '';
     var safeTitle = (note.title||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    var safeBody  = (note.content||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Body stored as HTML — render directly (wiki links must survive round-trip)
+    var bodyHtml  = note.content || '';
     return '<div class="cs-note-card" data-note-id="' + safeId + '">'
       + '<div class="cs-note-header" onclick="toggleNoteCard(this.closest(\'.cs-note-card\'))">'
+        + '<span class="cs-note-drag-handle" onclick="event.stopPropagation()">⠿</span>'
         + '<span class="cs-note-chevron">▶</span>'
         + '<input class="cs-note-title-input" type="text" placeholder="Untitled note" value="' + safeTitle + '"'
           + ' onclick="event.stopPropagation()"'
           + ' onchange="saveNoteTitle(this)">'
-        + '<button class="cs-note-delete-btn" title="Delete note" onclick="event.stopPropagation();deleteNote(\'' + safeId + '\')">✕</button>'
+        + '<button class="cs-note-fav-btn' + (note.is_favorite ? ' active' : '') + '" title="' + (note.is_favorite ? 'Unpin' : 'Pin') + '" onclick="event.stopPropagation();toggleNotePin(\'' + safeId + '\')">★</button>'
+        + '<button class="cs-note-edit-btn" title="Edit note" onclick="event.stopPropagation();openNoteCard(\'' + safeId + '\')">✎</button>'
+        + '<button class="cs-note-delete-btn" title="Delete note" onclick="event.stopPropagation();deleteNote(\'' + safeId + '\')">🗑</button>'
       + '</div>'
       + '<div class="cs-note-body-wrap">'
-        + '<div class="cs-note-body" contenteditable="true" data-note-id="' + safeId + '" data-placeholder="Write your note… type a name to link a wiki entry">' + safeBody + '</div>'
+        + '<div class="cs-note-body" contenteditable="true" data-note-id="' + safeId + '" data-placeholder="Write your note… type a wiki entry name to insert a link">' + bodyHtml + '</div>'
         + '<div class="cs-note-save-status" id="cs-note-status-' + safeId + '"></div>'
         + '<div class="cs-wiki-ac-dropdown" id="cs-wiki-ac-' + safeId + '"></div>'
+        + '<button class="cs-note-done-btn" onclick="closeNoteCard(this.closest(\'.cs-note-card\'))">Done</button>'
       + '</div>'
     + '</div>';
   }
   function wireNoteCard(cardEl) {
     var bodyEl = cardEl.querySelector('.cs-note-body');
     if (!bodyEl) return;
-    var noteId = bodyEl.dataset.noteId;
+    var noteId    = bodyEl.dataset.noteId;
     var saveTimer = null;
     bodyEl.addEventListener('input', function() {
-      // Trigger autocomplete
       handleNoteBodyInput(bodyEl, noteId);
-      // Schedule save
       clearTimeout(saveTimer);
       setNoteStatus(noteId, 'saving');
       saveTimer = setTimeout(function() { saveNoteBody(bodyEl, noteId); }, 1200);
     });
     bodyEl.addEventListener('blur', function() {
-      clearTimeout(saveTimer);
-      saveNoteBody(bodyEl, noteId);
-      closeWikiAc(noteId);
+      // Only save-on-blur if the focus didn't move to the autocomplete dropdown
+      setTimeout(function() {
+        var ac = document.getElementById('cs-wiki-ac-' + noteId);
+        if (ac && ac.matches(':hover')) return;
+        clearTimeout(saveTimer);
+        saveNoteBody(bodyEl, noteId);
+        closeWikiAc(noteId);
+      }, 150);
+    });
+    // Re-wire any existing wiki links in restored content
+    bodyEl.querySelectorAll('a.cs-wiki-link').forEach(function(a) {
+      a.addEventListener('click', function(e) { e.stopPropagation(); });
     });
   }
   function toggleNoteCard(cardEl) {
     cardEl.classList.toggle('cs-note-open');
+  }
+  function openNoteCard(noteId) {
+    var card = document.querySelector('.cs-note-card[data-note-id="' + noteId + '"]');
+    if (!card) return;
+    card.classList.add('cs-note-open');
+    var body = card.querySelector('.cs-note-body');
+    if (body) { body.focus(); }
+  }
+  function closeNoteCard(cardEl) {
+    if (!cardEl) return;
+    cardEl.classList.remove('cs-note-open');
   }
   function saveNoteTitle(inputEl) {
     var cardEl = inputEl.closest('.cs-note-card');
@@ -2393,7 +2425,8 @@
   }
   function saveNoteBody(bodyEl, noteId) {
     if (!CHAR_ID || !noteId) return;
-    var content = bodyEl.innerText || '';
+    // Save innerHTML to preserve wiki link anchors
+    var content = bodyEl.innerHTML || '';
     var notes   = NOTES[ACTIVE_NOTE_TAB] || [];
     var note    = notes.find(function(n) { return n.id === noteId; });
     if (note) note.content = content;
@@ -2533,16 +2566,92 @@
     var range = sel.getRangeAt(0);
     var text  = range.startContainer.textContent || '';
     var pos   = range.startOffset;
-    // Get the word being typed (letters/apostrophes only, min 2 chars)
+    // Match any word sequence of 2+ chars before caret (letters, apostrophes, spaces)
     var before = text.slice(0, pos);
-    var match  = before.match(/([A-Za-z'][A-Za-z' ]{1,})$/);
+    var match  = before.match(/([A-Za-z'][A-Za-z']*(?:\s[A-Za-z']+)*)$/);
     if (!match || match[1].trim().length < 2) { closeWikiAc(noteId); return; }
     var query = match[1].trim().toLowerCase();
     loadWikiAcCache().then(function() {
       var hits = (WIKI_AC_CACHE || []).filter(function(e) {
-        return e.name.toLowerCase().indexOf(query) === 0 || e.name.toLowerCase().indexOf(query) !== -1;
+        return e.name.toLowerCase().indexOf(query) !== -1;
+      }).sort(function(a, b) {
+        // Prefer names that start with the query
+        var aStarts = a.name.toLowerCase().indexOf(query) === 0 ? 0 : 1;
+        var bStarts = b.name.toLowerCase().indexOf(query) === 0 ? 0 : 1;
+        return aStarts - bStarts || a.name.localeCompare(b.name);
       }).slice(0, 8);
-      showWikiAc(noteId, hits, bodyEl, range, match[1]);
+      if (hits.length) {
+        showWikiAc(noteId, hits, bodyEl, range, match[1]);
+      } else {
+        closeWikiAc(noteId);
+      }
+    });
+  }
+  function toggleNotePin(noteId) {
+    var tab   = ACTIVE_NOTE_TAB;
+    var notes = NOTES[tab] || [];
+    var note  = notes.find(function(n) { return n.id === noteId; });
+    if (!note) return;
+    note.is_favorite = !note.is_favorite;
+    var groupNotes = notes.filter(function(n) { return n.is_favorite === note.is_favorite && n.id !== noteId; });
+    var maxSort = groupNotes.length ? Math.max.apply(null, groupNotes.map(function(n){ return n.sort_order||0; })) : -1;
+    note.sort_order = maxSort + 1;
+    sb.from('character_notes').update({ is_favorite: note.is_favorite, sort_order: note.sort_order }).eq('id', noteId).then(function(res) {
+      if (res.error) { showToast('Could not pin note', true); return; }
+      renderNoteCards();
+    });
+  }
+  function wireNoteDragDrop() {
+    document.querySelectorAll('.cs-note-card').forEach(function(card) {
+      card.setAttribute('draggable', 'true');
+      card.addEventListener('dragstart', function(e) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.noteId);
+        card.classList.add('dragging');
+      });
+      card.addEventListener('dragend', function() {
+        document.querySelectorAll('.cs-note-card.dragging').forEach(function(el){ el.classList.remove('dragging'); });
+      });
+    });
+    document.querySelectorAll('.cs-note-sortable').forEach(function(container) {
+      container.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        var dragging = document.querySelector('.cs-note-card.dragging');
+        if (!dragging) return;
+        var afterEl = getNoteAfterElement(container, e.clientY);
+        if (afterEl == null) {
+          container.appendChild(dragging);
+        } else {
+          container.insertBefore(dragging, afterEl);
+        }
+      });
+      container.addEventListener('drop', function(e) {
+        e.preventDefault();
+        persistNoteDragOrder(container);
+      });
+    });
+  }
+  function getNoteAfterElement(container, y) {
+    var els = Array.prototype.slice.call(container.querySelectorAll('.cs-note-card:not(.dragging)'));
+    return els.reduce(function(closest, el) {
+      var box    = el.getBoundingClientRect();
+      var offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: el };
+      }
+      return closest;
+    }, { offset: -Infinity, element: null }).element;
+  }
+  function persistNoteDragOrder(container) {
+    var tab   = ACTIVE_NOTE_TAB;
+    var cards = Array.prototype.slice.call(container.querySelectorAll('.cs-note-card'));
+    cards.forEach(function(card, idx) {
+      var noteId = card.dataset.noteId;
+      var note   = (NOTES[tab] || []).find(function(n){ return n.id === noteId; });
+      if (note) note.sort_order = idx;
+      sb.from('character_notes').update({ sort_order: idx }).eq('id', noteId).then(function(res) {
+        if (res.error) console.warn('Note sort save failed', noteId, res.error);
+      });
     });
   }
   function showWikiAc(noteId, hits, bodyEl, range, matchedText) {
@@ -2710,14 +2819,14 @@
   // ── Fetch notes ───────────────────────────────────────────────────
   function fetchNotes() {
     return sb.from('character_notes')
-      .select('id,tab,title,content,sort_order')
+      .select('id,tab,title,content,sort_order,is_favorite')
       .eq('character_id', CHAR_ID)
       .order('sort_order', { ascending: true })
       .then(function(res) {
         if (res.error) { console.warn('Notes fetch error:', res.error); return; }
         NOTES = { general:[], places:[], names:[], things:[], misc:[] };
         (res.data || []).forEach(function(row) {
-          if (NOTES[row.tab]) NOTES[row.tab].push({ id: row.id, title: row.title || '', content: row.content || '', sort_order: row.sort_order || 0 });
+          if (NOTES[row.tab]) NOTES[row.tab].push({ id: row.id, title: row.title || '', content: row.content || '', sort_order: row.sort_order || 0, is_favorite: !!row.is_favorite });
         });
       });
   }
