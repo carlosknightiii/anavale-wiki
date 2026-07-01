@@ -1590,6 +1590,70 @@ function renderCity(id, el) {
     + renderAssociatedCharacters(getAssociatedCharacters('cities', id));
 }
 
+function renderCharacter(id, el) {
+  var chars   = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  var character = null;
+  for (var i = 0; i < chars.length; i++) { if (chars[i].id === id) { character = chars[i]; break; } }
+  if (!character) { renderNotFound(el, 'character/' + id); return; }
+  var vis = getVisibility(character);
+  if (vis === 'hidden') { renderNotFound(el, 'character/' + id); return; }
+  var categoryLabel = titleCase(character.category || 'Character');
+  if (vis === 'teaser') {
+    el.innerHTML = breadcrumb([
+        { label: 'Characters', hash: 'character/' + id },
+        { label: character.name, hash: 'character/' + id }
+      ])
+      + pageHeader(categoryLabel, character.name, character.role || '')
+      + '<div class="wiki-body">'
+      + entryImage(character.image, character.name)
+      + '<p>' + esc(character.summary || '') + '</p>'
+      + teaserFooter('character')
+      + '</div>';
+    return;
+  }
+  // Visible — full render
+  var factsHtml = [
+    ['Role',        character.role],
+    ['Pronouns',    character.pronouns],
+    ['Status',      titleCase(character.status || '')],
+    ['Location',    character.location],
+    ['Affiliation', character.affiliation],
+    ['Color',       character.color],
+  ].filter(function(r) { return r[1]; }).map(function(r) {
+    return '<div class="nation-fact-row">'
+      + '<div class="nation-fact-label">' + esc(r[0]) + '</div>'
+      + '<div class="nation-fact-value">' + esc(r[1]) + '</div>'
+      + '</div>';
+  }).join('');
+  var tagsHtml = (character.tags || []).length
+    ? '<div class="entry-tags-row">'
+      + character.tags.map(function(t) {
+          return '<span class="entry-wiki-tag entry-wiki-tag--link" onclick="navigate(\'search?q=' + esc(encodeURIComponent(t)) + '\')" title="Search for: ' + esc(t) + '">' + esc(t) + '</span>';
+        }).join('')
+      + '</div>'
+    : '';
+  var bodyHtml = '';
+  if (character.summary)     bodyHtml += '<p>' + esc(character.summary) + '</p>';
+  if (character.appearance)  bodyHtml += '<div class="nation-section-heading">Appearance</div><p>' + esc(character.appearance) + '</p>';
+  if (character.personality) bodyHtml += '<div class="nation-section-heading">Personality</div><p>' + esc(character.personality) + '</p>';
+  if (character.motivation)  bodyHtml += '<div class="nation-section-heading">Motivation</div><p>' + esc(character.motivation) + '</p>';
+  if (character.gigglegloom_relationship) bodyHtml += '<div class="nation-section-heading">Gigglegloom</div><p>' + esc(character.gigglegloom_relationship) + '</p>';
+  if (character.player_knowledge) bodyHtml += '<div class="nation-section-heading">What You Know</div><p>' + esc(character.player_knowledge) + '</p>';
+  el.innerHTML = breadcrumb([
+      { label: 'Characters', hash: 'character/' + id },
+      { label: character.name, hash: 'character/' + id }
+    ])
+    + pageHeader(categoryLabel, character.name, character.role || '')
+    + entryImage(character.image, character.name)
+    + '<div class="nation-layout">'
+    + '<div class="nation-body">'
+    + tagsHtml
+    + bodyHtml
+    + '</div>'
+    + (factsHtml ? '<div class="nation-facts"><div class="nation-facts-title">⚑ Quick Facts</div>' + factsHtml + '</div>' : '')
+    + '</div>';
+}
+
 function renderCreature(id, el) {
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = null;
