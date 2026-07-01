@@ -2412,6 +2412,7 @@
               <div class="scc-setup-card">
                 <div class="scc-setup-card-label">Session Date</div>
                 <input type="date" id="scc-session-date" class="scc-input">
+                <div id="scc-session-date-display" class="scc-audit-readonly-val" style="display:none;">—</div>
               </div>
             </div>
 
@@ -5030,6 +5031,25 @@ function showDMToast(msg, type) {
   text-align: center;
 }
 .scc-readonly-banner.visible { display: block; }
+/* Read-only audit mode — hide action elements */
+.scc-audit-mode .scc-setup-actions { display: none !important; }
+.scc-audit-mode .scc-session-complete-bar { display: none !important; }
+.scc-audit-mode .scc-input { display: none !important; }
+.scc-audit-mode .scc-textarea { display: none !important; }
+.scc-audit-mode .scc-picker-controls { pointer-events: none; opacity: 0.5; }
+.scc-audit-mode .scc-chip-remove { display: none !important; }
+.scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }
+.scc-audit-readonly-val {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--dm-text);
+  padding: 0.45rem 0;
+  line-height: 1.5;
+}
+.scc-audit-readonly-val.empty {
+  color: var(--dm-text-muted);
+  font-style: italic;
+}
 /* ── NPC Relationship Colors ── */
 :root {
   --scc-rel-ally-border:   rgba(34,197,94,0.5);
@@ -8002,18 +8022,30 @@ function sccRenderHistoryList() {
 function sccLoadHistorySession(sessionNum) {
   var session = SCC_ALL_SESSIONS.find(function(s) { return s.session_number === sessionNum; });
   if (!session) return;
-  // Close history panel
   var panel = document.getElementById('scc-history-panel');
   if (panel) panel.classList.remove('open');
-  // Show read-only banner
   SCC_VIEWING_HISTORY = true;
+  // Apply audit mode to the SCC form
+  var form = document.getElementById('form-session');
+  if (form) form.classList.add('scc-audit-mode');
+  // Show read-only banner
   var banner = document.getElementById('scc-readonly-banner');
   var bannerNum = document.getElementById('scc-readonly-session-num');
   if (banner) banner.classList.add('visible');
   if (bannerNum) bannerNum.textContent = sessionNum;
-  // Populate form fields read-only
+  // Populate form
   sccPopulateSetupForm(session);
   sccSetSessionDisplay(sessionNum);
+  // Show static date display, hide input
+  var dateInput = document.getElementById('scc-session-date');
+  var dateDisplay = document.getElementById('scc-session-date-display');
+  if (dateInput && dateDisplay) {
+    var dateVal = session.session_date ? String(session.session_date).slice(0,10) : null;
+    dateDisplay.textContent = dateVal
+      ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })
+      : '—';
+    dateDisplay.className = 'scc-audit-readonly-val' + (dateVal ? '' : ' empty');
+  }
   sccLoadQuestProgress(session.quest_ids_active || []).then(function() {
     sccRenderQuestPanel();
   });
@@ -8030,14 +8062,19 @@ function sccUpdateHeaderSubHistory(num, session) {
     + ' <span class="scc-viewing-badge">Audit View</span>';
 }
 function sccLoadCurrentSession() {
-  // Close history panel if open
   var panel = document.getElementById('scc-history-panel');
   if (panel) panel.classList.remove('open');
-  // Hide read-only banner
   var banner = document.getElementById('scc-readonly-banner');
   if (banner) banner.classList.remove('visible');
+  // Remove audit mode from form
+  var form = document.getElementById('form-session');
+  if (form) form.classList.remove('scc-audit-mode');
+  // Restore date input, hide static display
+  var dateInput   = document.getElementById('scc-session-date');
+  var dateDisplay = document.getElementById('scc-session-date-display');
+  if (dateInput)   dateInput.style.display   = '';
+  if (dateDisplay) dateDisplay.style.display = 'none';
   SCC_VIEWING_HISTORY = false;
-  // Reload the active session
   sccLoadLatestSession();
 }
 function sccCompleteSession() {
@@ -8106,7 +8143,11 @@ function sccPopulateSetupForm(s) {
   setV('scc-session-number',  s.session_number);
   var dispEl = document.getElementById('scc-session-number-display');
   if (dispEl) dispEl.textContent = s.session_number || '—';
-  setV('scc-session-date',    s.session_date);
+  // Date input requires YYYY-MM-DD format — ensure no time component
+  var dateEl = document.getElementById('scc-session-date');
+  if (dateEl && s.session_date) {
+    dateEl.value = String(s.session_date).slice(0, 10);
+  }
   setV('scc-session-premise', s.premise);
   setV('scc-prep-notes',      s.prep_notes);
   setV('scc-note-decisions',  s.player_decisions);
