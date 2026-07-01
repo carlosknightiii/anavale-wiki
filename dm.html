@@ -3849,8 +3849,8 @@ function showDMToast(msg, type) {
   height: 100%;
   overflow: hidden;
 }
-.scc-form {
-  display: flex;
+/* scc-form only controls layout when active — do not set display here */
+#form-session.active.scc-form {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
@@ -7224,7 +7224,10 @@ function sccEsc(str) {
 var _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
-  if (tab === 'session') sccInit();
+  if (tab === 'session') {
+    // Defer sccInit until after switchTab has finished updating DOM classes
+    setTimeout(sccInit, 0);
+  }
 };
 // ── Initialise ───────────────────────────────────────────────────
 function sccInit() {
