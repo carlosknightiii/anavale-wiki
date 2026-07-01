@@ -943,8 +943,9 @@
   </div>
 
   <div class="dm-tabs">
-    <button class="dm-tab active" data-tab="manage" onclick="switchTab('manage')">📋 Manage</button>
-    <button class="dm-tab"        data-tab="quests" onclick="switchTab('quests')">⚔️ Quests</button>
+    <button class="dm-tab active" data-tab="manage"  onclick="switchTab('manage')">📋 Manage</button>
+    <button class="dm-tab"        data-tab="quests"  onclick="switchTab('quests')">⚔️ Quests</button>
+    <button class="dm-tab"        data-tab="players" onclick="switchTab('players')">👥 Players</button>
     <button class="dm-btn-add-entry" onclick="switchTab('add')" title="Add a new world entry">＋ New Entry</button>
   </div>
 
@@ -2340,6 +2341,19 @@
       </div><!-- /form-quests -->
 
 
+      <!-- ── PLAYERS PANEL ─────────────────────── -->
+      <div id="form-players" class="dm-form">
+        <div class="cm-header">
+          <div>
+            <div class="dm-form-title" style="margin-bottom:0">👥 Player Characters</div>
+            <div class="dm-form-subtitle" style="margin-bottom:0">All submitted characters — token links, sheet access, and quick stats</div>
+          </div>
+          <button class="cm-refresh-btn" onclick="playersRefresh()">↺ Refresh</button>
+        </div>
+        <div id="players-body" style="padding:1.5rem;overflow-y:auto;flex:1;">
+          <div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">Click ↺ Refresh to load characters.</div>
+        </div>
+      </div>
       <!-- ── MANAGE PANEL ──────────────────────── -->
       <div id="form-manage" class="dm-form active">
 
@@ -3717,6 +3731,7 @@ function switchTab(tab) {
   resetOutput();
   if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
   if (tab === 'quests') questsRefresh();
+  if (tab === 'players') playersRefresh();
   if (tab === 'add') { FORM_DIRTY = false; sortAllDropdowns(); } // re-sort on open; reset dirty flag
 }
 
@@ -5778,6 +5793,69 @@ function statusLabel(status) {
 
 function escQ(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// ── PLAYERS PANEL ────────────────────────────
+var PLAYERS_DATA = [];
+function playersRefresh() {
+  var body = document.getElementById('players-body');
+  if (!body) return;
+  body.innerHTML = '<div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">Loading…</div>';
+  var SB_URL = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_name,player_email,class_id,species,home_region,level,token,created_at&order=created_at.asc', {
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    PLAYERS_DATA = data || [];
+    renderPlayers();
+  })
+  .catch(function(err) {
+    body.innerHTML = '<div style="color:var(--dm-red);padding:2rem;">Failed to load characters — ' + err.message + '</div>';
+  });
+}
+function renderPlayers() {
+  var body = document.getElementById('players-body');
+  if (!body) return;
+  if (!PLAYERS_DATA.length) {
+    body.innerHTML = '<div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">No characters submitted yet.</div>';
+    return;
+  }
+  var SHEET_BASE = 'https://carlosknightiii.github.io/anavale-wiki/sheet/?token=';
+  var CLASS_LABELS = {
+    barbarian:'Barbarian', bard:'Bard', cleric:'Cleric', druid:'Druid',
+    fighter:'Fighter', monk:'Monk', paladin:'Paladin', ranger:'Ranger',
+    rogue:'Rogue', sorcerer:'Sorcerer', warlock:'Warlock', wizard:'Wizard'
+  };
+  body.innerHTML = '<div style="display:flex;flex-direction:column;gap:1rem;">'
+    + PLAYERS_DATA.map(function(pc) {
+        var sheetUrl = SHEET_BASE + pc.token;
+        var cls = CLASS_LABELS[pc.class_id] || pc.class_id || '—';
+        var submitted = pc.created_at ? new Date(pc.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+        return '<div style="background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:10px;padding:1.25rem 1.5rem;">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'
+            + '<div>'
+              + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-text);margin-bottom:0.2rem;">' + escQ(pc.name || '—') + '</div>'
+              + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);">'
+                + escQ(pc.player_name || '—') + ' · ' + escQ(pc.player_email || '—')
+              + '</div>'
+            + '</div>'
+            + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
+              + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="padding:0.4rem 1rem;background:var(--dm-gold-dim);border:1px solid var(--dm-border-gold);border-radius:6px;color:var(--dm-gold);font-family:var(--font-sans);font-size:0.75rem;font-weight:600;text-decoration:none;white-space:nowrap;">Open Sheet ↗</a>'
+              + '<button onclick="navigator.clipboard.writeText(\'' + escQ(sheetUrl) + '\').then(function(){showDMToast(\'Link copied\',\'success\')})" style="padding:0.4rem 1rem;background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:6px;color:var(--dm-text-muted);font-family:var(--font-sans);font-size:0.75rem;cursor:pointer;white-space:nowrap;">Copy Link</button>'
+            + '</div>'
+          + '</div>'
+          + '<div style="display:flex;gap:1.5rem;margin-top:0.85rem;flex-wrap:wrap;">'
+            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Class</span><br>' + escQ(cls) + '</div>'
+            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Species</span><br>' + escQ(pc.species || '—') + '</div>'
+            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Region</span><br>' + escQ(pc.home_region || '—') + '</div>'
+            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Level</span><br>' + escQ(String(pc.level || 1)) + '</div>'
+            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Submitted</span><br>' + submitted + '</div>'
+          + '</div>'
+          + '<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:var(--dm-bg);border-radius:6px;font-family:var(--font-mono);font-size:0.68rem;color:var(--dm-text-muted);word-break:break-all;">' + escQ(sheetUrl) + '</div>'
+        + '</div>';
+      }).join('')
+    + '</div>';
 }
 </script>
 </body>
