@@ -8506,18 +8506,27 @@ function sccSaveSetup() {
     item_ids_awarded:  (SCC_SELECTED.item      || []).map(function(s){return s.id;}),
     npc_relationships: JSON.stringify(SCC_NPC_RELATIONSHIPS)
   };
-  sccPost('session_notes', body).then(function(r) {
-    if (r.ok) {
-      SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
-      showDMToast('Session ' + num + ' saved ✓', 'success');
-      var st = document.getElementById('scc-setup-status');
-      if (st) { st.textContent = '✓ Saved'; setTimeout(function(){ st.textContent=''; }, 3000); }
-      sccUpdateHeaderSub();
-      sccRenderNpcPanel();
-      sccRenderLocationPanel();
-      sccRenderQuestPanel();
-    } else { showDMToast('Save failed — check console', 'error'); }
-  }).catch(function() { showDMToast('Save failed', 'error'); });
+  var onSuccess = function() {
+    SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
+    showDMToast('Session ' + num + ' saved ✓', 'success');
+    var st = document.getElementById('scc-setup-status');
+    if (st) { st.textContent = '✓ Saved'; setTimeout(function(){ st.textContent=''; }, 3000); }
+    sccUpdateHeaderSub();
+    sccRenderNpcPanel();
+    sccRenderLocationPanel();
+    sccRenderQuestPanel();
+  };
+  var onFail = function() { showDMToast('Save failed — check console', 'error'); };
+  // Use PATCH if session already exists, POST if new
+  if (SCC_SESSION && SCC_SESSION.session_number === num) {
+    sccPatch('session_notes', '?session_number=eq.' + num, body)
+      .then(function(r) { if (r.ok) onSuccess(); else onFail(); })
+      .catch(onFail);
+  } else {
+    sccPost('session_notes', body)
+      .then(function(r) { if (r.ok) onSuccess(); else onFail(); })
+      .catch(onFail);
+  }
 }
 
 // ── NPC Panel ────────────────────────────────────────────────────
