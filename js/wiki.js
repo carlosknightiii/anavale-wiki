@@ -362,6 +362,19 @@ function buildSidebar() {
     societyContent += makeAccordion('items', 'Notable Items', itemLinks);
   }
 
+  // Characters — filtered by visibility, sorted by name
+  var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  var visChars = chars.filter(function(c) { return getVisibility(c) !== 'hidden'; })
+    .sort(function(a,b) { return a.name.localeCompare(b.name); });
+  if (visChars.length) {
+    var charLinks = visChars.map(function(c) {
+      var cVis   = getVisibility(c);
+      var cLabel = cVis === 'teaser' ? '✨ ' + c.name : c.name;
+      return '<div class="nav-level-2">' + navLink(cLabel, 'character/' + c.id, currentHash) + '</div>';
+    }).join('');
+    societyContent += makeAccordion('characters', 'Characters', charLinks);
+  }
+
   // POIs — filtered by visibility
   var visPois = pois.filter(function(p) { return getVisibility(p) !== 'hidden'; })
     .sort(function(a,b) { return a.name.localeCompare(b.name); });

@@ -55,6 +55,7 @@ function handleRoute() {
   else if (type === 'org'     && id) renderOrg(id, el);
   else if (type === 'item'    && id) renderItem(id, el);
   else if (type === 'poi'     && id) renderPOI(id, el);
+  else if (type === 'character'&& id) renderCharacter(id, el);
   else if (type === 'religion'&& id) renderReligion(id, el);
   else                               renderNotFound(el, hash);
 

@@ -937,10 +937,17 @@
      ══════════════════════════════════════════ -->
 <div id="dm-app" class="dm-app" style="display:none">
 
-  <div class="dm-header">
-    <div class="dm-header-title">Anavale DM Tools</div>
-    <div class="dm-header-sub">Content Management System — all changes save to Supabase automatically</div>
+  <div class="dm-header" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+    <div>
+      <div class="dm-header-title">Anavale DM Tools</div>
+      <div class="dm-header-sub">Content Management System — all changes save to Supabase automatically</div>
+    </div>
+    <div class="scc-global-search-wrap">
+      <span class="scc-global-search-icon">🔍</span>
+      <input type="text" class="scc-global-search" id="scc-global-search" placeholder="Search all world entries…" oninput="sccGlobalSearch(this.value)" autocomplete="off">
+    </div>
   </div>
+  <div class="scc-global-results" id="scc-global-results"></div>
 
   <div class="dm-tabs">
     <button class="dm-tab active" data-tab="manage"  onclick="switchTab('manage')">📋 Manage</button>
@@ -2382,67 +2389,101 @@
           <div class="scc-panel-inner">
             <div class="scc-section-title">Session Setup</div>
             <div class="scc-setup-grid">
-              <!-- Session identity -->
               <div class="scc-setup-card">
                 <div class="scc-setup-card-label">Session Number</div>
-                <input type="number" id="scc-session-number" class="scc-input" min="1" placeholder="1">
+                <input type="number" id="scc-session-number" class="scc-input" min="1" placeholder="Auto">
               </div>
               <div class="scc-setup-card">
                 <div class="scc-setup-card-label">Session Date</div>
                 <input type="date" id="scc-session-date" class="scc-input">
               </div>
-              <div class="scc-setup-card scc-setup-card--wide">
+            </div>
+
+            <!-- Collapsible prep notes -->
+            <div class="scc-collapsible-toggle" id="scc-prep-toggle" onclick="sccTogglePrep()">
+              <span class="scc-toggle-arrow">▶</span>
+              <span>Prep Notes (optional)</span>
+            </div>
+            <div class="scc-collapsible-body" id="scc-prep-body">
+              <div class="scc-setup-card" style="margin-bottom:0.75rem;">
                 <div class="scc-setup-card-label">Session Premise</div>
                 <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
               </div>
-              <div class="scc-setup-card scc-setup-card--wide">
+              <div class="scc-setup-card">
                 <div class="scc-setup-card-label">Prep Notes</div>
                 <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
               </div>
             </div>
+
             <!-- Entity pickers -->
-            <div class="scc-section-title" style="margin-top:2rem">Assign Session Entities</div>
+            <div class="scc-section-title" style="margin-top:1.5rem">Assign Session Entities</div>
             <div class="scc-entity-pickers">
+
               <div class="scc-picker-group">
                 <div class="scc-picker-label">📍 Locations</div>
-                <div class="scc-picker-search-wrap">
-                  <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities & POIs…" oninput="sccPickerSearch('location', this.value)">
-                  <div class="scc-picker-dropdown" id="scc-drop-location"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities, POIs, nations…" oninput="sccPickerSearch('location', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-location"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('location')">Browse All ▾</button>
                 </div>
+                <div class="scc-browse-panel" id="scc-browse-location"></div>
                 <div class="scc-picker-chips" id="scc-chips-location"></div>
               </div>
+
               <div class="scc-picker-group">
                 <div class="scc-picker-label">🧙 NPCs</div>
-                <div class="scc-picker-search-wrap">
-                  <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)">
-                  <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('npc')">Browse All ▾</button>
                 </div>
+                <div class="scc-browse-panel" id="scc-browse-npc"></div>
                 <div class="scc-picker-chips" id="scc-chips-npc"></div>
               </div>
+
               <div class="scc-picker-group">
-                <div class="scc-picker-label">🐾 Hostile Creatures</div>
-                <div class="scc-picker-search-wrap">
-                  <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)">
-                  <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
+                <div class="scc-picker-label">🐾 Creatures</div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('creature')">Browse All ▾</button>
                 </div>
+                <div class="scc-browse-panel" id="scc-browse-creature"></div>
                 <div class="scc-picker-chips" id="scc-chips-creature"></div>
               </div>
+
               <div class="scc-picker-group">
                 <div class="scc-picker-label">📜 Quests</div>
-                <div class="scc-picker-search-wrap">
-                  <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)">
-                  <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('quest')">Browse All ▾</button>
                 </div>
+                <div class="scc-browse-panel" id="scc-browse-quest"></div>
                 <div class="scc-picker-chips" id="scc-chips-quest"></div>
               </div>
+
               <div class="scc-picker-group">
-                <div class="scc-picker-label">⚔️ Magic Items / Treasure</div>
-                <div class="scc-picker-search-wrap">
-                  <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)">
-                  <div class="scc-picker-dropdown" id="scc-drop-item"></div>
+                <div class="scc-picker-label">⚔️ Items</div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-item"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('item')">Browse All ▾</button>
                 </div>
+                <div class="scc-browse-panel" id="scc-browse-item"></div>
                 <div class="scc-picker-chips" id="scc-chips-item"></div>
               </div>
+
             </div>
             <div class="scc-setup-actions">
               <button class="scc-btn-primary" onclick="sccSaveSetup()">✦ Save Session Setup</button>
@@ -4806,6 +4847,355 @@ function showDMToast(msg, type) {
   padding: 2rem;
   text-align: center;
 }
+/* ── NPC Relationship Colors ── */
+:root {
+  --scc-rel-ally-border:   rgba(34,197,94,0.5);
+  --scc-rel-ally-bg:       rgba(34,197,94,0.06);
+  --scc-rel-ally-badge:    rgba(34,197,94,0.15);
+  --scc-rel-ally-text:     var(--dm-green);
+  --scc-rel-neutral-border: rgba(96,165,250,0.4);
+  --scc-rel-neutral-bg:     rgba(96,165,250,0.05);
+  --scc-rel-neutral-badge:  rgba(96,165,250,0.12);
+  --scc-rel-neutral-text:   var(--dm-blue);
+  --scc-rel-caution-border: rgba(240,180,41,0.45);
+  --scc-rel-caution-bg:     rgba(240,180,41,0.05);
+  --scc-rel-caution-badge:  rgba(240,180,41,0.15);
+  --scc-rel-caution-text:   var(--dm-gold);
+  --scc-rel-hostile-border: rgba(248,113,113,0.5);
+  --scc-rel-hostile-bg:     rgba(248,113,113,0.05);
+  --scc-rel-hostile-badge:  rgba(248,113,113,0.14);
+  --scc-rel-hostile-text:   var(--dm-red);
+  --scc-rel-deity-border:   rgba(192,132,252,0.5);
+  --scc-rel-deity-bg:       rgba(192,132,252,0.05);
+  --scc-rel-deity-badge:    rgba(192,132,252,0.14);
+  --scc-rel-deity-text:     #c084fc;
+}
+/* NPC card relationship variants */
+.scc-npc-card.rel-ally    { border-color: var(--scc-rel-ally-border);    background: var(--scc-rel-ally-bg); }
+.scc-npc-card.rel-neutral { border-color: var(--scc-rel-neutral-border); background: var(--scc-rel-neutral-bg); }
+.scc-npc-card.rel-caution { border-color: var(--scc-rel-caution-border); background: var(--scc-rel-caution-bg); }
+.scc-npc-card.rel-hostile { border-color: var(--scc-rel-hostile-border); background: var(--scc-rel-hostile-bg); }
+.scc-npc-card.rel-deity   { border-color: var(--scc-rel-deity-border);   background: var(--scc-rel-deity-bg); }
+.scc-npc-card.rel-ally    .scc-npc-card-header { border-bottom-color: var(--scc-rel-ally-border); }
+.scc-npc-card.rel-neutral .scc-npc-card-header { border-bottom-color: var(--scc-rel-neutral-border); }
+.scc-npc-card.rel-caution .scc-npc-card-header { border-bottom-color: var(--scc-rel-caution-border); }
+.scc-npc-card.rel-hostile .scc-npc-card-header { border-bottom-color: var(--scc-rel-hostile-border); }
+.scc-npc-card.rel-deity   .scc-npc-card-header { border-bottom-color: var(--scc-rel-deity-border); }
+.scc-rel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  user-select: none;
+}
+.scc-rel-badge.rel-ally    { background: var(--scc-rel-ally-badge);    color: var(--scc-rel-ally-text); }
+.scc-rel-badge.rel-neutral { background: var(--scc-rel-neutral-badge); color: var(--scc-rel-neutral-text); }
+.scc-rel-badge.rel-caution { background: var(--scc-rel-caution-badge); color: var(--scc-rel-caution-text); }
+.scc-rel-badge.rel-hostile { background: var(--scc-rel-hostile-badge); color: var(--scc-rel-hostile-text); }
+.scc-rel-badge.rel-deity   { background: var(--scc-rel-deity-badge);   color: var(--scc-rel-deity-text); }
+.scc-rel-badge:hover { filter: brightness(1.2); }
+/* ── Browse All panel ── */
+.scc-browse-panel {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0; right: 0;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 300;
+  max-height: 320px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.scc-browse-panel.open { display: block; }
+.scc-browse-group-header {
+  position: sticky;
+  top: 0;
+  padding: 0.35rem 0.85rem;
+  background: var(--dm-surface-mid);
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-gold);
+  border-bottom: 1px solid var(--scc-border);
+  z-index: 1;
+}
+.scc-browse-subheader {
+  padding: 0.25rem 1.1rem;
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+  background: var(--dm-surface);
+  border-bottom: 1px solid var(--scc-border);
+  position: sticky;
+  top: 24px;
+}
+.scc-browse-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.85rem 0.45rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.83rem;
+  color: var(--dm-text);
+  cursor: pointer;
+  transition: var(--dm-transition);
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-browse-option:last-child { border-bottom: none; }
+.scc-browse-option:hover { background: var(--dm-gold-dim); color: var(--dm-gold); }
+.scc-browse-option.selected { background: rgba(34,197,94,0.08); color: var(--dm-green); }
+.scc-browse-option-cat {
+  font-size: 0.65rem;
+  color: var(--dm-text-muted);
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+.scc-browse-done {
+  position: sticky;
+  bottom: 0;
+  padding: 0.5rem 0.85rem;
+  background: var(--dm-surface-mid);
+  border-top: 1px solid var(--scc-border-gold);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.scc-picker-controls {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  align-items: center;
+}
+.scc-browse-btn {
+  padding: 0.28rem 0.65rem;
+  background: transparent;
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-browse-btn:hover { color: var(--dm-gold); border-color: var(--scc-border-gold); }
+/* ── Global search bar in DM header ── */
+.scc-global-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 340px;
+}
+.scc-global-search {
+  width: 100%;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.83rem;
+  padding: 0.38rem 0.75rem 0.38rem 2rem;
+  box-sizing: border-box;
+  transition: var(--dm-transition);
+}
+.scc-global-search:focus {
+  outline: none;
+  border-color: var(--dm-gold);
+  box-shadow: var(--dm-gold-glow);
+}
+.scc-global-search-icon {
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dm-text-muted);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+.scc-global-results {
+  position: fixed;
+  top: 48px;
+  right: 1rem;
+  width: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 9000;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  display: none;
+}
+.scc-global-results.open { display: block; }
+.scc-global-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--scc-border);
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-global-result-item:last-child { border-bottom: none; }
+.scc-global-result-item:hover { background: var(--dm-gold-dim); }
+.scc-global-result-type {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+  padding: 0.1rem 0.4rem;
+  background: var(--dm-surface);
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+.scc-global-result-name {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--dm-text);
+  margin-bottom: 0.1rem;
+}
+.scc-global-result-summary {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  line-height: 1.4;
+}
+.scc-global-empty {
+  padding: 1.5rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.83rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+}
+/* ── Collapsible prep section ── */
+.scc-collapsible-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color 0.15s;
+}
+.scc-collapsible-toggle:hover { color: var(--dm-gold); }
+.scc-collapsible-toggle .scc-toggle-arrow {
+  font-size: 0.6rem;
+  transition: transform 0.2s;
+}
+.scc-collapsible-toggle.open .scc-toggle-arrow { transform: rotate(90deg); }
+.scc-collapsible-body {
+  display: none;
+}
+.scc-collapsible-body.open { display: block; }
+/* ── Loot panel on staging rows ── */
+.scc-loot-panel {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  display: none;
+}
+.scc-loot-panel.open { display: block; }
+.scc-loot-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+.scc-loot-coin-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.scc-coin-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.scc-coin-input {
+  width: 56px;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+}
+.scc-coin-label {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.scc-coin-label.gp { color: #f0c040; }
+.scc-coin-label.sp { color: #c8d4e0; }
+.scc-coin-label.cp { color: #d4845a; }
+.scc-loot-item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.65rem;
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.2);
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-blue);
+}
+.scc-loot-item-remove {
+  background: none;
+  border: none;
+  color: var(--dm-text-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0;
+  line-height: 1;
+}
+.scc-award-btn {
+  padding: 0.25rem 0.65rem;
+  background: var(--dm-green-dim);
+  border: 1px solid var(--dm-border-green);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-green);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-award-btn:hover { background: var(--dm-green-dim-hover); }
 /* ── Stat Block (creature lookup) ── */
 .scc-stat-block {
   border: 1px solid var(--scc-border-gold);
@@ -7169,32 +7559,42 @@ function renderPlayers() {
    SESSION COMMAND CENTER — SCC JavaScript
    All Supabase reads/writes use the anon key.
    ══════════════════════════════════════════════ */
+
 var SCC_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
 var SCC_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+
 // ── State ────────────────────────────────────────────────────────
-var SCC_SESSION    = null;   // current session_notes row
-var SCC_PROGRESS   = {};     // { quest_id: { beat_order: status } }
-var SCC_PLAYERS    = [];     // player_characters rows
-var SCC_SHEETS     = {};     // { character_id: character_sheet row }
-var SCC_COMBATANTS = [];     // staging list before combat starts
-var SCC_INITIATIVE = [];     // sorted list during combat
+var SCC_SESSION    = null;
+var SCC_PROGRESS   = {};
+var SCC_PLAYERS    = [];
+var SCC_SHEETS     = {};
+var SCC_COMBATANTS = [];
+var SCC_INITIATIVE = [];
 var SCC_ROUND      = 1;
 var SCC_TURN_IDX   = 0;
 var SCC_IN_COMBAT  = false;
-// Entity selection state per picker type
+
+// NPC relationship labels stored per session (npc_id → relationship string)
+var SCC_NPC_RELATIONSHIPS = {};
+
+// Loot per combatant staging index
+var SCC_COMBATANT_LOOT = {};
+
 var SCC_SELECTED = {
   location: [], npc: [], creature: [], quest: [], item: [], combatant: []
 };
-// ── Supabase helper ──────────────────────────────────────────────
+
+// ── Supabase helpers ─────────────────────────────────────────────
 function sccFetch(table, params) {
   var url = SCC_URL + '/rest/v1/' + table + '?select=*' + (params || '') + '&limit=500';
   return fetch(url, {
     headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
   }).then(function(r) { return r.json(); });
 }
-function sccPost(table, body, method, query) {
-  return fetch(SCC_URL + '/rest/v1/' + table + (query || ''), {
-    method: method || 'POST',
+
+function sccPost(table, body) {
+  return fetch(SCC_URL + '/rest/v1/' + table, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'apikey': SCC_ANON,
@@ -7204,6 +7604,7 @@ function sccPost(table, body, method, query) {
     body: JSON.stringify(body)
   });
 }
+
 function sccPatch(table, query, body) {
   return fetch(SCC_URL + '/rest/v1/' + table + query, {
     method: 'PATCH',
@@ -7216,25 +7617,27 @@ function sccPatch(table, query, body) {
     body: JSON.stringify(body)
   });
 }
+
 function sccEsc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
 // ── Tab hook ─────────────────────────────────────────────────────
-// Extend switchTab to initialise SCC when the tab is first opened
 var _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
   if (tab === 'session') {
-    // Defer sccInit until after switchTab has finished updating DOM classes
     setTimeout(sccInit, 0);
   }
 };
-// ── Initialise ───────────────────────────────────────────────────
+
+// ── Init ─────────────────────────────────────────────────────────
 function sccInit() {
   sccLoadPlayers();
   sccLoadLatestSession();
 }
-// ── PHB 2024 XP table by CR ──────────────────────────────────────
+
+// ── PHB 2024 XP / CR tables ──────────────────────────────────────
 var SCC_CR_XP = {
   0:0, 0.125:25, 0.25:50, 0.5:100,
   1:200, 2:450, 3:700, 4:1100, 5:1800, 6:2300, 7:2900, 8:3900,
@@ -7242,7 +7645,7 @@ var SCC_CR_XP = {
   16:15000, 17:18000, 18:20000, 19:22000, 20:25000,
   21:33000, 22:41000, 23:50000, 24:62000, 30:155000
 };
-// PHB 2024 encounter multipliers by number of monsters
+
 function sccEncounterMultiplier(count) {
   if (count <= 1)  return 1;
   if (count === 2) return 1.5;
@@ -7251,35 +7654,28 @@ function sccEncounterMultiplier(count) {
   if (count <= 14) return 3;
   return 4;
 }
-// PHB 2024 XP thresholds per character per level (Low/Moderate/High/Deadly)
+
 var SCC_XP_THRESHOLDS = {
-  1:  [25,  50,  75,  100],
-  2:  [50,  100, 150, 200],
-  3:  [75,  150, 225, 400],
-  4:  [125, 250, 375, 500],
-  5:  [250, 500, 750, 1100],
-  6:  [300, 600, 900, 1400],
-  7:  [350, 750, 1100, 1700],
-  8:  [450, 900, 1400, 2100],
-  9:  [550, 1100, 1600, 2400],
-  10: [600, 1200, 1900, 2800]
+  1:[25,50,75,100], 2:[50,100,150,200], 3:[75,150,225,400],
+  4:[125,250,375,500], 5:[250,500,750,1100], 6:[300,600,900,1400],
+  7:[350,750,1100,1700], 8:[450,900,1400,2100], 9:[550,1100,1600,2400],
+  10:[600,1200,1900,2800]
 };
+
 // ── Player bar ───────────────────────────────────────────────────
 function sccLoadPlayers() {
   sccFetch('player_characters', '&pc=eq.true&order=name').then(function(rows) {
     SCC_PLAYERS = Array.isArray(rows) ? rows : [];
-    // Load sheets in parallel
     var ids = SCC_PLAYERS.map(function(p) { return p.id; });
     if (!ids.length) { sccRenderPlayerBar(); return; }
     sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')').then(function(sheets) {
       SCC_SHEETS = {};
-      (Array.isArray(sheets) ? sheets : []).forEach(function(s) {
-        SCC_SHEETS[s.character_id] = s;
-      });
+      (Array.isArray(sheets) ? sheets : []).forEach(function(s) { SCC_SHEETS[s.character_id] = s; });
       sccRenderPlayerBar();
     });
   }).catch(function() { sccRenderPlayerBar(); });
 }
+
 function sccRenderPlayerBar() {
   var el = document.getElementById('scc-player-cards');
   if (!el) return;
@@ -7288,14 +7684,13 @@ function sccRenderPlayerBar() {
     return;
   }
   el.innerHTML = SCC_PLAYERS.map(function(p) {
-    var sheet   = SCC_SHEETS[p.id] || {};
-    var hpCur   = sheet.hp_current != null ? sheet.hp_current : '—';
-    var hpMax   = sheet.hp_max     != null ? sheet.hp_max     : '—';
-    var level   = p.level || 1;
-    var scores  = p.ability_scores || {};
-    var dexMod  = scores.dex ? Math.floor((scores.dex - 10) / 2) : 0;
+    var sheet  = SCC_SHEETS[p.id] || {};
+    var hpCur  = sheet.hp_current != null ? sheet.hp_current : '—';
+    var hpMax  = sheet.hp_max     != null ? sheet.hp_max     : '—';
+    var level  = p.level || 1;
+    var scores = p.ability_scores || {};
+    var dexMod = scores.dex ? Math.floor((scores.dex - 10) / 2) : 0;
     var modSign = dexMod >= 0 ? '+' : '';
-    // HP colour
     var hpClass = '';
     if (hpMax && hpCur !== '—') {
       var pct = hpCur / hpMax;
@@ -7305,10 +7700,7 @@ function sccRenderPlayerBar() {
     return '<div class="scc-player-card">'
       + '<div>'
         + '<div class="scc-player-card-name">' + sccEsc(p.name || 'Unknown') + '</div>'
-        + '<div class="scc-player-card-sub">'
-          + sccEsc((p.class_id || '').replace(/-/g,' ')) + ' · '
-          + 'DEX ' + modSign + dexMod
-        + '</div>'
+        + '<div class="scc-player-card-sub">' + sccEsc((p.class_id||'').replace(/-/g,' ')) + ' · DEX ' + modSign + dexMod + '</div>'
       + '</div>'
       + '<div class="scc-player-card-hp">'
         + '<div class="scc-player-hp-val ' + hpClass + '">' + hpCur + '/' + hpMax + '</div>'
@@ -7318,6 +7710,7 @@ function sccRenderPlayerBar() {
     + '</div>';
   }).join('');
 }
+
 // ── Sub-panel switching ───────────────────────────────────────────
 function sccSwitchPanel(name) {
   document.querySelectorAll('.scc-tab-btn').forEach(function(b) {
@@ -7327,11 +7720,26 @@ function sccSwitchPanel(name) {
     p.classList.toggle('active', p.id === 'scc-panel-' + name);
   });
 }
-// ── Load latest (or active) session ──────────────────────────────
+
+// ── Collapsible prep notes ────────────────────────────────────────
+function sccTogglePrep() {
+  var toggle = document.getElementById('scc-prep-toggle');
+  var body   = document.getElementById('scc-prep-body');
+  if (!toggle || !body) return;
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+// ── Load latest session ───────────────────────────────────────────
 function sccLoadLatestSession() {
   sccFetch('session_notes', '&order=session_number.desc').then(function(rows) {
     var sessions = Array.isArray(rows) ? rows : [];
     SCC_SESSION = sessions.length ? sessions[0] : null;
+    // Auto-populate session number as next in sequence
+    var nextNum = sessions.length ? (sessions[0].session_number + 1) : 1;
+    var numEl = document.getElementById('scc-session-number');
+    if (numEl && !numEl.value) numEl.value = nextNum;
     if (SCC_SESSION) {
       sccPopulateSetupForm(SCC_SESSION);
       sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
@@ -7341,11 +7749,14 @@ function sccLoadLatestSession() {
     sccRenderQuestPanel();
     sccUpdateHeaderSub();
   }).catch(function() {
+    var numEl = document.getElementById('scc-session-number');
+    if (numEl && !numEl.value) numEl.value = 1;
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
   });
 }
+
 function sccUpdateHeaderSub() {
   var el = document.getElementById('scc-header-sub');
   if (!el) return;
@@ -7354,18 +7765,24 @@ function sccUpdateHeaderSub() {
     + (SCC_SESSION.session_date ? ' · ' + SCC_SESSION.session_date : '')
     + (SCC_SESSION.premise ? ' — ' + SCC_SESSION.premise : '');
 }
+
 function sccPopulateSetupForm(s) {
   var setV = function(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; };
-  setV('scc-session-number', s.session_number);
-  setV('scc-session-date',   s.session_date);
+  setV('scc-session-number',  s.session_number);
+  setV('scc-session-date',    s.session_date);
   setV('scc-session-premise', s.premise);
-  setV('scc-prep-notes',     s.prep_notes);
-  setV('scc-note-decisions', s.player_decisions);
+  setV('scc-prep-notes',      s.prep_notes);
+  setV('scc-note-decisions',  s.player_decisions);
   setV('scc-note-unexpected', s.unexpected_moments);
-  setV('scc-note-threads',   s.loose_threads);
-  setV('scc-note-followup',  s.follow_up_needed);
-  setV('scc-note-milestone', s.milestone_notes);
-  // Restore chips from session arrays
+  setV('scc-note-threads',    s.loose_threads);
+  setV('scc-note-followup',   s.follow_up_needed);
+  setV('scc-note-milestone',  s.milestone_notes);
+
+  // Restore NPC relationships from session extra data
+  if (s.npc_relationships) {
+    try { SCC_NPC_RELATIONSHIPS = JSON.parse(s.npc_relationships); } catch(e) { SCC_NPC_RELATIONSHIPS = {}; }
+  }
+
   var restore = function(type, ids) {
     SCC_SELECTED[type] = [];
     (ids || []).forEach(function(id) { sccAddChipById(type, id); });
@@ -7376,13 +7793,220 @@ function sccPopulateSetupForm(s) {
   restore('quest',    s.quest_ids_active);
   restore('item',     s.item_ids_awarded);
 }
-// ── Entity Pickers ───────────────────────────────────────────────
+
+// ── Browse All grouped panel ──────────────────────────────────────
+
+// Returns grouped data for each picker type
+function sccBrowseGroups(type) {
+  if (type === 'location') {
+    var cities = typeof CITIES !== 'undefined' ? CITIES : [];
+    var pois   = typeof POIS   !== 'undefined' ? POIS   : [];
+    var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
+    // Group by region → nation
+    var groups = {};
+    var addEntry = function(entry, cat) {
+      var region = (entry.region || 'unknown').replace(/-/g,' ');
+      var nation = (entry.nation || 'unknown').replace(/-/g,' ');
+      var rKey = region.charAt(0).toUpperCase() + region.slice(1);
+      var nKey = nation.charAt(0).toUpperCase() + nation.slice(1);
+      if (!groups[rKey]) groups[rKey] = {};
+      if (!groups[rKey][nKey]) groups[rKey][nKey] = [];
+      groups[rKey][nKey].push({ id: entry.id, name: entry.name, cat: cat });
+    };
+    cities.forEach(function(c) { addEntry(c, c.city_type || 'settlement'); });
+    pois.forEach(function(p)   { addEntry(p, p.poi_type  || 'POI'); });
+    nations.forEach(function(n){ addEntry(n, 'Nation'); });
+    return groups;
+  }
+
+  if (type === 'npc') {
+    var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+    // Group by rank category
+    var rankOrder = ['god','villain','faction-leader','npc-villain','creature-notable','npc-ally','npc-neutral','light','deceased','other'];
+    var rankLabels = {
+      'god': 'Deity', 'villain': 'Villain', 'faction-leader': 'Faction Leader',
+      'npc-villain': 'Villain', 'creature-notable': 'Notable Creature',
+      'npc-ally': 'Ally', 'npc-neutral': 'Neutral', 'light': 'Light-Aligned',
+      'deceased': 'Deceased', 'other': 'Other'
+    };
+    var groups = {};
+    chars.forEach(function(c) {
+      var cat   = c.category || 'other';
+      var label = rankLabels[cat] || 'Other';
+      if (!groups[label]) groups[label] = [];
+      var rel = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
+      groups[label].push({ id: c.id, name: c.name, cat: c.role || cat, rel: rel });
+    });
+    // Sort within each group
+    Object.keys(groups).forEach(function(g) {
+      groups[g].sort(function(a,b) { return a.name.localeCompare(b.name); });
+    });
+    return groups;
+  }
+
+  if (type === 'creature') {
+    var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+    var tierLabels = {
+      'merry': 'The Merry', 'sparked': 'The Sparked', 'dimmed': 'The Dimmed',
+      'corrupted': 'Vareth-Corrupted', 'ancient': 'Ancient & Mythic',
+      'humanoid': 'Humanoid', 'hostile': 'Hostile', 'common': 'Common',
+      'unknown': 'Other'
+    };
+    var groups = {};
+    creatures.forEach(function(c) {
+      var label = tierLabels[c.tier || c.category] || 'Other';
+      if (!groups[label]) groups[label] = [];
+      var cr = c.challenge_rating != null ? 'CR ' + c.challenge_rating : '';
+      groups[label].push({ id: c.id, name: c.name, cat: cr });
+    });
+    Object.keys(groups).forEach(function(g) {
+      groups[g].sort(function(a,b) { return a.name.localeCompare(b.name); });
+    });
+    return groups;
+  }
+
+  if (type === 'quest') {
+    var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+    // Auto-tier by beat count
+    var tierLabel = function(q) {
+      var count = (q.beats || []).length;
+      if (count <= 2) return 'Local (1–2 parts)';
+      if (count <= 4) return 'Regional (3–4 parts)';
+      if (count <= 7) return 'Arc (5–7 parts)';
+      return 'Campaign (8+ parts)';
+    };
+    var groups = {};
+    quests.forEach(function(q) {
+      var label = tierLabel(q);
+      if (!groups[label]) groups[label] = [];
+      groups[label].push({ id: q.id, name: q.name, cat: q.stakes || '' });
+    });
+    Object.keys(groups).forEach(function(g) {
+      groups[g].sort(function(a,b) { return a.name.localeCompare(b.name); });
+    });
+    return groups;
+  }
+
+  if (type === 'item') {
+    var items = typeof ITEMS !== 'undefined' ? ITEMS : [];
+    var catLabels = {
+      'weapon':'Weapons','armor':'Armor','shield':'Shields',
+      'consumable':'Consumables','accessory':'Accessories',
+      'tool':'Tools','quest_item':'Quest Items'
+    };
+    var groups = {};
+    items.forEach(function(i) {
+      var label = catLabels[i.category] || 'Other';
+      if (!groups[label]) groups[label] = [];
+      groups[label].push({ id: i.id, name: i.name, cat: i.rarity || '' });
+    });
+    Object.keys(groups).forEach(function(g) {
+      groups[g].sort(function(a,b) { return a.name.localeCompare(b.name); });
+    });
+    return groups;
+  }
+
+  return {};
+}
+
+function sccToggleBrowse(type) {
+  var panel = document.getElementById('scc-browse-' + type);
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  // Close all other browse panels
+  document.querySelectorAll('.scc-browse-panel.open').forEach(function(p) {
+    p.classList.remove('open');
+  });
+  if (isOpen) return; // was open, now closed — done
+  // Build and open
+  sccRenderBrowsePanel(type, panel);
+  panel.classList.add('open');
+}
+
+function sccRenderBrowsePanel(type, panel) {
+  var groups = sccBrowseGroups(type);
+  var selected = SCC_SELECTED[type] || [];
+  var selectedIds = selected.map(function(s) { return s.id; });
+  var isFlat = (type === 'npc'); // NPC has single-level groups (no sub-header)
+  var hasSubGroups = (type === 'location'); // location has region → nation hierarchy
+
+  var html = '';
+  var regionKeys = Object.keys(groups).sort();
+
+  if (hasSubGroups) {
+    regionKeys.forEach(function(region) {
+      html += '<div class="scc-browse-group-header">' + sccEsc(region) + '</div>';
+      var nationKeys = Object.keys(groups[region]).sort();
+      nationKeys.forEach(function(nation) {
+        html += '<div class="scc-browse-subheader">' + sccEsc(nation) + '</div>';
+        groups[region][nation].sort(function(a,b){return a.name.localeCompare(b.name);}).forEach(function(item) {
+          var sel = selectedIds.indexOf(item.id) >= 0 ? ' selected' : '';
+          html += '<div class="scc-browse-option' + sel + '" onclick="sccBrowseSelect(\'' + type + '\',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\',this)">'
+            + sccEsc(item.name)
+            + '<span class="scc-browse-option-cat">(' + sccEsc(item.cat) + ')</span>'
+          + '</div>';
+        });
+      });
+    });
+  } else {
+    regionKeys.forEach(function(groupKey) {
+      html += '<div class="scc-browse-group-header">' + sccEsc(groupKey) + '</div>';
+      (groups[groupKey] || []).forEach(function(item) {
+        var sel = selectedIds.indexOf(item.id) >= 0 ? ' selected' : '';
+        var extra = item.rel ? ' <span style="font-size:0.6rem;opacity:0.7">(' + sccEsc(item.rel) + ')</span>' : '';
+        html += '<div class="scc-browse-option' + sel + '" onclick="sccBrowseSelect(\'' + type + '\',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\',this)">'
+          + sccEsc(item.name) + extra
+          + '<span class="scc-browse-option-cat">(' + sccEsc(item.cat) + ')</span>'
+        + '</div>';
+      });
+    });
+  }
+
+  html += '<div class="scc-browse-done"><button class="scc-btn-primary" onclick="sccCloseBrowse(\'' + type + '\')">Done</button><span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">Click entries to select, click again to deselect</span></div>';
+  panel.innerHTML = html;
+}
+
+function sccBrowseSelect(type, id, name, el) {
+  var existing = SCC_SELECTED[type] || [];
+  var idx = existing.findIndex(function(s) { return s.id === id; });
+  if (idx >= 0) {
+    // Deselect
+    existing.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    // Select
+    existing.push({ id: id, name: name });
+    el.classList.add('selected');
+  }
+  SCC_SELECTED[type] = existing;
+  sccRenderChips(type);
+  if (type === 'npc')      sccRenderNpcPanel();
+  if (type === 'location') sccRenderLocationPanel();
+  if (type === 'quest')    { sccLoadQuestProgress([id]); setTimeout(sccRenderQuestPanel, 400); }
+}
+
+function sccCloseBrowse(type) {
+  var panel = document.getElementById('scc-browse-' + type);
+  if (panel) panel.classList.remove('open');
+}
+
+// Close browse panels on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.scc-picker-group')) {
+    document.querySelectorAll('.scc-browse-panel.open').forEach(function(p) { p.classList.remove('open'); });
+    document.querySelectorAll('.scc-picker-dropdown.open').forEach(function(d) { d.classList.remove('open'); d.innerHTML = ''; });
+  }
+});
+
+// ── Entity Pickers (search) ───────────────────────────────────────
 var SCC_PICKER_SOURCES = {
   location: function() {
-    var cities = (typeof CITIES !== 'undefined' ? CITIES : []);
-    var pois   = (typeof POIS   !== 'undefined' ? POIS   : []);
-    return cities.map(function(c) { return { id: c.id, name: c.name, sub: c.type || 'City' }; })
-      .concat(pois.map(function(p) { return { id: p.id, name: p.name, sub: p.type || 'POI' }; }));
+    var cities  = (typeof CITIES   !== 'undefined' ? CITIES   : []);
+    var pois    = (typeof POIS     !== 'undefined' ? POIS     : []);
+    var nations = (typeof NATIONS  !== 'undefined' ? NATIONS  : []);
+    return cities.map(function(c)  { return { id: c.id, name: c.name, sub: (c.city_type||'settlement') + ' · ' + (c.region||'') }; })
+      .concat(pois.map(function(p) { return { id: p.id, name: p.name, sub: 'POI · ' + (p.region||'') }; }))
+      .concat(nations.map(function(n) { return { id: n.id, name: n.name, sub: 'Nation · ' + (n.region||'') }; }));
   },
   npc: function() {
     return (typeof CHARACTERS !== 'undefined' ? CHARACTERS : [])
@@ -7390,15 +8014,18 @@ var SCC_PICKER_SOURCES = {
   },
   creature: function() {
     return (typeof CREATURES !== 'undefined' ? CREATURES : [])
-      .map(function(c) { return { id: c.id, name: c.name, sub: c.tier || '' }; });
+      .map(function(c) { return { id: c.id, name: c.name, sub: (c.tier||'') + (c.challenge_rating != null ? ' · CR '+c.challenge_rating : '') }; });
   },
   quest: function() {
     return (typeof QUESTS !== 'undefined' ? QUESTS : [])
-      .map(function(q) { return { id: q.id, name: q.name, sub: q.status || '' }; });
+      .map(function(q) {
+        var tier = (q.beats||[]).length <= 2 ? 'Local' : (q.beats||[]).length <= 4 ? 'Regional' : (q.beats||[]).length <= 7 ? 'Arc' : 'Campaign';
+        return { id: q.id, name: q.name, sub: tier + ' · ' + (q.stakes||'') };
+      });
   },
   item: function() {
     return (typeof ITEMS !== 'undefined' ? ITEMS : [])
-      .map(function(i) { return { id: i.id, name: i.name, sub: i.category || '' }; });
+      .map(function(i) { return { id: i.id, name: i.name, sub: (i.category||'') + (i.rarity ? ' · '+i.rarity : '') }; });
   },
   combatant: function() {
     var creatures = (typeof CREATURES !== 'undefined' ? CREATURES : [])
@@ -7409,6 +8036,7 @@ var SCC_PICKER_SOURCES = {
     return creatures.concat(pcs);
   }
 };
+
 function sccPickerSearch(type, query) {
   var dropId = 'scc-drop-' + type;
   var drop   = document.getElementById(dropId);
@@ -7429,8 +8057,8 @@ function sccPickerSearch(type, query) {
   }).join('');
   drop.classList.add('open');
 }
+
 function sccPickerSelect(type, id, name) {
-  // Avoid duplicates
   if (SCC_SELECTED[type] && SCC_SELECTED[type].some(function(s) { return s.id === id; })) {
     sccPickerClose(type); return;
   }
@@ -7438,15 +8066,12 @@ function sccPickerSelect(type, id, name) {
   SCC_SELECTED[type].push({ id: id, name: name });
   sccRenderChips(type);
   sccPickerClose(type);
-  // If adding to combat staging, update encounter builder
-  if (type === 'combatant') {
-    sccAddToCombatStaging(id, name);
-  }
-  // Live-update the relevant panel
-  if (type === 'npc')      sccRenderNpcPanel();
-  if (type === 'location') sccRenderLocationPanel();
-  if (type === 'quest')    { sccLoadQuestProgress([id]); setTimeout(sccRenderQuestPanel, 400); }
+  if (type === 'combatant') sccAddToCombatStaging(id, name);
+  if (type === 'npc')       sccRenderNpcPanel();
+  if (type === 'location')  sccRenderLocationPanel();
+  if (type === 'quest')     { sccLoadQuestProgress([id]); setTimeout(sccRenderQuestPanel, 400); }
 }
+
 function sccAddChipById(type, id) {
   var source = SCC_PICKER_SOURCES[type];
   if (!source) return;
@@ -7457,6 +8082,7 @@ function sccAddChipById(type, id) {
   SCC_SELECTED[type].push({ id: id, name: item.name });
   sccRenderChips(type);
 }
+
 function sccPickerClose(type) {
   var inputId = 'scc-pick-' + type;
   var dropId  = 'scc-drop-' + type;
@@ -7465,6 +8091,7 @@ function sccPickerClose(type) {
   if (input) input.value = '';
   if (drop)  { drop.classList.remove('open'); drop.innerHTML = ''; }
 }
+
 function sccRemoveChip(type, id) {
   SCC_SELECTED[type] = (SCC_SELECTED[type] || []).filter(function(s) { return s.id !== id; });
   sccRenderChips(type);
@@ -7473,6 +8100,7 @@ function sccRemoveChip(type, id) {
   if (type === 'quest')    sccRenderQuestPanel();
   if (type === 'combatant') sccRenderStagingList();
 }
+
 function sccRenderChips(type) {
   var el = document.getElementById('scc-chips-' + type);
   if (!el) return;
@@ -7483,44 +8111,55 @@ function sccRenderChips(type) {
     + '</span>';
   }).join('');
 }
-// Close dropdowns on outside click
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.scc-picker-search-wrap')) {
-    document.querySelectorAll('.scc-picker-dropdown.open').forEach(function(d) {
-      d.classList.remove('open'); d.innerHTML = '';
-    });
+
+// ── NPC relationship cycling ──────────────────────────────────────
+var SCC_REL_CYCLE = ['neutral','ally','caution','hostile','deity'];
+var SCC_REL_LABELS = { neutral:'Neutral', ally:'Ally', caution:'Caution', hostile:'Hostile', deity:'Deity' };
+var SCC_REL_ICONS  = { neutral:'🔵', ally:'🟢', caution:'🟡', hostile:'🔴', deity:'🟣' };
+
+function sccCycleRelationship(npcId) {
+  var cur = SCC_NPC_RELATIONSHIPS[npcId] || 'neutral';
+  var idx = SCC_REL_CYCLE.indexOf(cur);
+  var next = SCC_REL_CYCLE[(idx + 1) % SCC_REL_CYCLE.length];
+  SCC_NPC_RELATIONSHIPS[npcId] = next;
+  sccRenderNpcPanel();
+  // Re-render browse panel if open
+  var browsePanel = document.getElementById('scc-browse-npc');
+  if (browsePanel && browsePanel.classList.contains('open')) {
+    sccRenderBrowsePanel('npc', browsePanel);
   }
-});
+}
+
 // ── Save Session Setup ────────────────────────────────────────────
 function sccSaveSetup() {
   var num = parseInt((document.getElementById('scc-session-number') || {}).value) || null;
   if (!num) { showDMToast('Session number is required', 'error'); return; }
   var body = {
-    session_number:   num,
-    session_date:     (document.getElementById('scc-session-date') || {}).value || null,
-    premise:          (document.getElementById('scc-session-premise') || {}).value.trim() || null,
-    prep_notes:       (document.getElementById('scc-prep-notes') || {}).value.trim() || null,
-    location_ids:     (SCC_SELECTED.location || []).map(function(s) { return s.id; }),
-    npc_ids:          (SCC_SELECTED.npc      || []).map(function(s) { return s.id; }),
-    creature_ids:     (SCC_SELECTED.creature  || []).map(function(s) { return s.id; }),
-    quest_ids_active: (SCC_SELECTED.quest     || []).map(function(s) { return s.id; }),
-    item_ids_awarded: (SCC_SELECTED.item      || []).map(function(s) { return s.id; })
+    session_number:    num,
+    session_date:      (document.getElementById('scc-session-date')    || {}).value || null,
+    premise:           (document.getElementById('scc-session-premise') || {}).value.trim() || null,
+    prep_notes:        (document.getElementById('scc-prep-notes')      || {}).value.trim() || null,
+    location_ids:      (SCC_SELECTED.location || []).map(function(s){return s.id;}),
+    npc_ids:           (SCC_SELECTED.npc      || []).map(function(s){return s.id;}),
+    creature_ids:      (SCC_SELECTED.creature  || []).map(function(s){return s.id;}),
+    quest_ids_active:  (SCC_SELECTED.quest     || []).map(function(s){return s.id;}),
+    item_ids_awarded:  (SCC_SELECTED.item      || []).map(function(s){return s.id;}),
+    npc_relationships: JSON.stringify(SCC_NPC_RELATIONSHIPS)
   };
   sccPost('session_notes', body).then(function(r) {
     if (r.ok) {
       SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
       showDMToast('Session ' + num + ' saved ✓', 'success');
       var st = document.getElementById('scc-setup-status');
-      if (st) { st.textContent = '✓ Saved'; setTimeout(function() { st.textContent = ''; }, 3000); }
+      if (st) { st.textContent = '✓ Saved'; setTimeout(function(){ st.textContent=''; }, 3000); }
       sccUpdateHeaderSub();
       sccRenderNpcPanel();
       sccRenderLocationPanel();
       sccRenderQuestPanel();
-    } else {
-      showDMToast('Save failed — check console', 'error');
-    }
-  }).catch(function() { showDMToast('Save failed — check connection', 'error'); });
+    } else { showDMToast('Save failed — check console', 'error'); }
+  }).catch(function() { showDMToast('Save failed', 'error'); });
 }
+
 // ── NPC Panel ────────────────────────────────────────────────────
 function sccRenderNpcPanel() {
   var el = document.getElementById('scc-npc-cards');
@@ -7530,53 +8169,47 @@ function sccRenderNpcPanel() {
     el.innerHTML = '<div class="scc-empty-state">No NPCs assigned to this session yet. Go to Setup to add them.</div>';
     return;
   }
-  var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
-  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var chars  = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  var quests = typeof QUESTS     !== 'undefined' ? QUESTS     : [];
+
   el.innerHTML = selected.map(function(sel) {
     var c = chars.find(function(x) { return x.id === sel.id; });
     if (!c) return '';
-    // Find quests this NPC appears in
-    var linkedQuests = quests.filter(function(q) {
-      return q.related && q.related.some(function(r) {
-        return r.collection === 'characters' && r.id === c.id;
-      });
-    });
-    // Personality — first sentence only for glance view
+    var rel = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
+    var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
+    var relIcon  = SCC_REL_ICONS[rel]  || '🔵';
     var personality = c.personality ? c.personality.split('.')[0] + '.' : '';
-    var questPills = linkedQuests.map(function(q) {
-      return '<span class="scc-npc-quest-pill" onclick="sccSwitchPanel(\'quests\')" title="' + sccEsc(q.name) + '">'
-        + sccEsc(q.name) + '</span>';
-    }).join('');
-    return '<div class="scc-npc-card">'
+    var linkedQuests = quests.filter(function(q) {
+      return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === c.id; });
+    });
+    return '<div class="scc-npc-card rel-' + rel + '">'
       + '<div class="scc-npc-card-header">'
         + '<div>'
           + '<div class="scc-npc-name">' + sccEsc(c.name) + '</div>'
           + '<div class="scc-npc-role">' + sccEsc(c.role || c.category || '') + (c.location ? ' · ' + sccEsc(c.location) : '') + '</div>'
         + '</div>'
-        + '<button class="scc-lookup-btn" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">◈ Details</button>'
+        + '<div style="display:flex;gap:0.4rem;align-items:center;">'
+          + '<span class="scc-rel-badge rel-' + rel + '" onclick="sccCycleRelationship(\'' + sccEsc(c.id) + '\')" title="Click to change relationship">' + relIcon + ' ' + relLabel + '</span>'
+          + '<button class="scc-lookup-btn" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">◈ Details</button>'
+        + '</div>'
       + '</div>'
       + '<div class="scc-npc-body">'
         + (personality ? '<div class="scc-npc-personality">' + sccEsc(personality) + '</div>' : '')
-        /* Player Knowledge — normal styling */
-        + (c.player_knowledge
-          ? '<div class="scc-pk-block">'
-              + '<div class="scc-pk-label">What Players Know</div>'
-              + '<div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div>'
-            + '</div>'
-          : '')
-        /* DM Only — red warning block */
-        + (c.secret || c.dm_notes
-          ? '<div class="scc-dm-block">'
-              + '<div class="scc-dm-label">⚠ DM Only — Do Not Read Aloud</div>'
-              + (c.secret   ? '<div class="scc-dm-text"><strong>Secret:</strong> ' + sccEsc(c.secret)   + '</div>' : '')
-              + (c.dm_notes ? '<div class="scc-dm-text" style="margin-top:0.4rem;"><strong>Notes:</strong> ' + sccEsc(c.dm_notes) + '</div>' : '')
-            + '</div>'
-          : '')
-        + (linkedQuests.length ? '<div class="scc-npc-quests">' + questPills + '</div>' : '')
+        + (c.player_knowledge ? '<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div></div>' : '')
+        + (c.secret || c.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Only — Do Not Read Aloud</div>'
+            + (c.secret   ? '<div class="scc-dm-text"><strong>Secret:</strong> '   + sccEsc(c.secret)   + '</div>' : '')
+            + (c.dm_notes ? '<div class="scc-dm-text" style="margin-top:0.35rem;"><strong>Notes:</strong> ' + sccEsc(c.dm_notes) + '</div>' : '')
+          + '</div>' : '')
+        + (linkedQuests.length ? '<div class="scc-npc-quests">'
+            + linkedQuests.map(function(q) {
+                return '<span class="scc-npc-quest-pill" onclick="sccSwitchPanel(\'quests\')">' + sccEsc(q.name) + '</span>';
+              }).join('')
+          + '</div>' : '')
       + '</div>'
     + '</div>';
   }).join('');
 }
+
 // ── Location Panel ────────────────────────────────────────────────
 function sccRenderLocationPanel() {
   var el = document.getElementById('scc-location-cards');
@@ -7586,57 +8219,45 @@ function sccRenderLocationPanel() {
     el.innerHTML = '<div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>';
     return;
   }
-  var cities = typeof CITIES !== 'undefined' ? CITIES : [];
-  var pois   = typeof POIS   !== 'undefined' ? POIS   : [];
-  var all    = cities.concat(pois);
+  var cities  = typeof CITIES   !== 'undefined' ? CITIES   : [];
+  var pois    = typeof POIS     !== 'undefined' ? POIS     : [];
+  var nations = typeof NATIONS  !== 'undefined' ? NATIONS  : [];
+  var all = cities.concat(pois).concat(nations);
+
   el.innerHTML = selected.map(function(sel) {
     var loc = all.find(function(x) { return x.id === sel.id; });
     if (!loc) return '';
-    // Color health badge class
     var ch = (loc.color_health || '').toLowerCase();
     var healthCls = ch.indexOf('excellent') >= 0 ? 'scc-color-health--excellent'
-                  : ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0 ? 'scc-color-health--fading'
-                  : ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 ? 'scc-color-health--dimmed'
+                  : (ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0) ? 'scc-color-health--fading'
+                  : (ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0) ? 'scc-color-health--dimmed'
                   : 'scc-color-health--excellent';
     return '<div class="scc-location-card">'
       + '<div class="scc-location-name">' + sccEsc(loc.name) + '</div>'
-      + '<div class="scc-location-meta">'
-        + sccEsc((loc.type || '').replace(/-/g,' '))
-        + (loc.region ? ' · ' + sccEsc(loc.region) : '')
-        + (loc.nation ? ' · ' + sccEsc(loc.nation) : '')
-      + '</div>'
-      + (loc.color_health
-        ? '<span class="scc-color-health ' + healthCls + '">' + sccEsc(loc.color_health.replace(/-/g,' ')) + '</span>'
-        : '')
+      + '<div class="scc-location-meta">' + sccEsc((loc.city_type || loc.type || 'nation').replace(/-/g,' ')) + (loc.region ? ' · ' + sccEsc(loc.region) : '') + (loc.nation ? ' · ' + sccEsc(loc.nation) : '') + '</div>'
+      + (loc.color_health ? '<span class="scc-color-health ' + healthCls + '">' + sccEsc(loc.color_health.replace(/-/g,' ')) + '</span>' : '')
       + (loc.summary ? '<div class="scc-location-desc">' + sccEsc(loc.summary) + '</div>' : '')
-      /* DM notes — red block */
-      + (loc.dm_notes
-        ? '<div class="scc-dm-block" style="margin-top:0.5rem;">'
-            + '<div class="scc-dm-label">⚠ DM Only</div>'
-            + '<div class="scc-dm-text">' + sccEsc(loc.dm_notes) + '</div>'
-          + '</div>'
-        : '')
+      + (loc.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.5rem;"><div class="scc-dm-label">⚠ DM Only</div><div class="scc-dm-text">' + sccEsc(loc.dm_notes) + '</div></div>' : '')
       + '<div class="scc-location-flags">'
         + (loc.formery_present ? '<span class="scc-flag scc-flag--formery">📋 Formery</span>' : '')
-        + (loc.vareth_presence ? '<span class="scc-flag scc-flag--vareth">⚠ Vareth Presence</span>' : '')
+        + (loc.vareth_presence ? '<span class="scc-flag scc-flag--vareth">⚠ Vareth</span>' : '')
       + '</div>'
-      + '<div style="margin-top:0.6rem;">'
-        + '<button class="scc-lookup-btn" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">◈ Full Details</button>'
-      + '</div>'
+      + '<div style="margin-top:0.6rem;"><button class="scc-lookup-btn" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">◈ Full Details</button></div>'
     + '</div>';
   }).join('');
 }
+
 // ── Quest Progress Panel ──────────────────────────────────────────
 function sccLoadQuestProgress(questIds) {
   if (!questIds || !questIds.length) return Promise.resolve();
-  var idList = questIds.join(',');
-  return sccFetch('quest_progress', '&quest_id=in.(' + idList + ')').then(function(rows) {
+  return sccFetch('quest_progress', '&quest_id=in.(' + questIds.join(',') + ')').then(function(rows) {
     (Array.isArray(rows) ? rows : []).forEach(function(r) {
       if (!SCC_PROGRESS[r.quest_id]) SCC_PROGRESS[r.quest_id] = {};
       SCC_PROGRESS[r.quest_id][r.beat_order] = r.status;
     });
   });
 }
+
 function sccRenderQuestPanel() {
   var el = document.getElementById('scc-quest-cards');
   if (!el) return;
@@ -7649,20 +8270,17 @@ function sccRenderQuestPanel() {
   el.innerHTML = selected.map(function(sel) {
     var q = quests.find(function(x) { return x.id === sel.id; });
     if (!q) return '';
-    var beats   = q.beats || [];
-    var prog    = SCC_PROGRESS[q.id] || {};
-    // Progress rail
+    var beats = q.beats || [];
+    var prog  = SCC_PROGRESS[q.id] || {};
+    var tierLabel = beats.length <= 2 ? 'Local' : beats.length <= 4 ? 'Regional' : beats.length <= 7 ? 'Arc' : 'Campaign';
     var railHtml = beats.map(function(b) {
       var st = prog[b.order] || 'not_started';
       var label = st === 'completed' ? '✓' : st === 'in_progress' ? '▶' : b.order;
-      return '<div class="scc-beat-seg scc-beat-seg--' + st + '" '
-        + 'onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')" '
-        + 'title="' + sccEsc(b.title || b.description || '') + '">'
+      return '<div class="scc-beat-seg scc-beat-seg--' + st + '" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')" title="' + sccEsc(b.title || b.description || '') + '">'
         + label
         + (b.title ? '<br><span style="font-size:0.6rem;opacity:0.8">' + sccEsc(b.title) + '</span>' : '')
-        + '</div>';
+      + '</div>';
     }).join('');
-    // Beat detail list
     var beatsHtml = beats.map(function(b) {
       var st = prog[b.order] || 'not_started';
       var stLabel = st === 'completed' ? '✓ Done' : st === 'in_progress' ? '▶ In Progress' : 'To Do';
@@ -7673,9 +8291,7 @@ function sccRenderQuestPanel() {
           + '<div class="scc-beat-desc">' + sccEsc(b.description || '') + '</div>'
           + '<div class="scc-beat-meta">'
             + (b.xp ? '<span class="scc-beat-xp">+' + b.xp + ' XP</span>' : '')
-            + '<button class="scc-beat-status-btn" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')">'
-              + stLabel
-            + '</button>'
+            + '<button class="scc-beat-status-btn" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')">' + stLabel + '</button>'
           + '</div>'
         + '</div>'
       + '</div>';
@@ -7684,6 +8300,7 @@ function sccRenderQuestPanel() {
       + '<div class="scc-quest-card-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">'
         + '<div class="scc-quest-name">' + sccEsc(q.name) + '</div>'
         + '<div style="display:flex;gap:0.4rem;align-items:center;">'
+          + '<span class="q-badge" style="background:rgba(96,165,250,0.1);color:var(--dm-blue);border:1px solid rgba(96,165,250,0.2);">' + tierLabel + '</span>'
           + '<span class="q-badge q-status-' + (q.status||'available') + '">' + sccEsc(statusLabel(q.status)) + '</span>'
           + '<span class="q-badge q-stakes-' + (q.stakes||'low') + '">' + sccEsc(q.stakes||'') + '</span>'
         + '</div>'
@@ -7697,52 +8314,46 @@ function sccRenderQuestPanel() {
     + '</div>';
   }).join('');
 }
-// Cycle beat status: not_started → in_progress → completed → not_started
+
 function sccCycleBeatStatus(questId, beatOrder) {
   if (!SCC_PROGRESS[questId]) SCC_PROGRESS[questId] = {};
-  var cur = SCC_PROGRESS[questId][beatOrder] || 'not_started';
-  var next = cur === 'not_started' ? 'in_progress'
-           : cur === 'in_progress' ? 'completed'
-           : 'not_started';
+  var cur  = SCC_PROGRESS[questId][beatOrder] || 'not_started';
+  var next = cur === 'not_started' ? 'in_progress' : cur === 'in_progress' ? 'completed' : 'not_started';
   SCC_PROGRESS[questId][beatOrder] = next;
-  // Determine session number for completed beats
   var sessionNum = SCC_SESSION ? SCC_SESSION.session_number : null;
   sccPatch('quest_progress',
     '?quest_id=eq.' + encodeURIComponent(questId) + '&beat_order=eq.' + beatOrder,
-    {
-      status: next,
-      completed_in_session: next === 'completed' ? sessionNum : null
-    }
+    { status: next, completed_in_session: next === 'completed' ? sessionNum : null }
   ).then(function(r) {
     if (r.ok) showDMToast('Beat ' + beatOrder + ' → ' + next, 'success');
     else showDMToast('Save failed', 'error');
   });
   sccRenderQuestPanel();
 }
+
 // ── Combat Tracker ────────────────────────────────────────────────
 function sccAddToCombatStaging(id, name) {
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = creatures.find(function(c) { return c.id === id; });
   var pc        = SCC_PLAYERS.find(function(p) { return p.id === id; });
   var combatant = {
-    id:    id,
-    name:  name,
-    isPC:  !!pc,
+    id: id, name: name, isPC: !!pc,
     cr:    creature ? creature.challenge_rating : null,
-    hpMax: creature ? (creature.hp_max || 10) : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max : 20),
-    hpCur: creature ? (creature.hp_max || 10) : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
+    hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
+    hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
     dexMod: (function() {
-      var scores = pc ? (pc.ability_scores || {}) : (creature ? {} : {});
       var dex = creature ? creature.dex : (pc ? (pc.ability_scores || {}).dex : 10);
       return dex ? Math.floor((dex - 10) / 2) : 0;
     })(),
     initiative: null,
-    conditions: []
+    conditions: [],
+    loot: { items: [], gp: 0, sp: 0, cp: 0 }
   };
   SCC_COMBATANTS.push(combatant);
   sccRenderStagingList();
   sccUpdateDifficulty();
 }
+
 function sccRenderStagingList() {
   var el = document.getElementById('scc-combatant-staging');
   if (!el) return;
@@ -7753,76 +8364,150 @@ function sccRenderStagingList() {
   }
   el.innerHTML = SCC_COMBATANTS.map(function(c, idx) {
     var modSign = c.dexMod >= 0 ? '+' : '';
+    var lootChips = c.loot.items.map(function(item, iIdx) {
+      return '<span class="scc-loot-item-chip">' + sccEsc(item.name)
+        + '<button class="scc-loot-item-remove" onclick="sccRemoveLootItem(' + idx + ',' + iIdx + ')">✕</button>'
+      + '</span>';
+    }).join('');
     return '<div class="scc-staging-row">'
       + '<span class="scc-staging-name">' + sccEsc(c.name) + '</span>'
-      + '<span class="scc-staging-type">' + (c.isPC ? 'PC' : 'Hostile Creature') + '</span>'
+      + '<span class="scc-staging-type">' + (c.isPC ? 'PC' : 'Creature') + '</span>'
       + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
       + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
       + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
+      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">🎒 Loot</button>' : '')
       + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
-    + '</div>';
+      + '</div>'
+      + (!c.isPC
+        ? '<div class="scc-loot-panel" id="scc-loot-' + idx + '">'
+            + '<div class="scc-section-subtitle" style="margin-bottom:0.5rem;">Assign Loot for ' + sccEsc(c.name) + '</div>'
+            + '<div class="scc-loot-coin-row">'
+              + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-gp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.gp||0) + '"><span class="scc-coin-label gp">GP</span></div>'
+              + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-sp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.sp||0) + '"><span class="scc-coin-label sp">SP</span></div>'
+              + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-cp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.cp||0) + '"><span class="scc-coin-label cp">CP</span></div>'
+              + '<button class="scc-btn-sm" onclick="sccSaveLootCoins(' + idx + ')">Set</button>'
+            + '</div>'
+            + '<div class="scc-loot-row">'
+              + '<div style="position:relative;flex:1;">'
+                + '<input type="text" class="scc-picker-search" id="scc-loot-item-search-' + idx + '" placeholder="Search items to add…" oninput="sccLootItemSearch(' + idx + ',this.value)" autocomplete="off">'
+                + '<div class="scc-picker-dropdown" id="scc-loot-item-drop-' + idx + '"></div>'
+              + '</div>'
+            + '</div>'
+            + '<div id="scc-loot-chips-' + idx + '">' + lootChips + '</div>'
+          + '</div>'
+        : '');
   }).join('');
   document.getElementById('scc-start-combat-btn').style.display = '';
 }
+
+function sccToggleLoot(idx) {
+  var panel = document.getElementById('scc-loot-' + idx);
+  if (panel) panel.classList.toggle('open');
+}
+
+function sccSaveLootCoins(idx) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c) return;
+  c.loot.gp = parseInt((document.getElementById('scc-loot-gp-' + idx)||{}).value) || 0;
+  c.loot.sp = parseInt((document.getElementById('scc-loot-sp-' + idx)||{}).value) || 0;
+  c.loot.cp = parseInt((document.getElementById('scc-loot-cp-' + idx)||{}).value) || 0;
+  showDMToast('Loot coins saved for ' + c.name, 'success');
+}
+
+function sccLootItemSearch(idx, query) {
+  var dropId = 'scc-loot-item-drop-' + idx;
+  var drop   = document.getElementById(dropId);
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var items = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var results = items.filter(function(i) {
+    return i.name.toLowerCase().indexOf(query) >= 0;
+  }).slice(0, 10);
+  if (!results.length) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  drop.innerHTML = results.map(function(item) {
+    return '<div class="scc-picker-option" onclick="sccAddLootItem(' + idx + ',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\')">'
+      + sccEsc(item.name)
+      + '<div class="scc-picker-option-sub">' + sccEsc(item.category||'') + (item.rarity ? ' · ' + sccEsc(item.rarity) : '') + '</div>'
+    + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+
+function sccAddLootItem(idx, itemId, itemName) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c) return;
+  if (!c.loot.items.some(function(i){ return i.id === itemId; })) {
+    c.loot.items.push({ id: itemId, name: itemName });
+  }
+  var input = document.getElementById('scc-loot-item-search-' + idx);
+  var drop  = document.getElementById('scc-loot-item-drop-' + idx);
+  if (input) input.value = '';
+  if (drop)  { drop.classList.remove('open'); drop.innerHTML = ''; }
+  // Re-render chips only
+  var chipsEl = document.getElementById('scc-loot-chips-' + idx);
+  if (chipsEl) {
+    chipsEl.innerHTML = c.loot.items.map(function(item, iIdx) {
+      return '<span class="scc-loot-item-chip">' + sccEsc(item.name)
+        + '<button class="scc-loot-item-remove" onclick="sccRemoveLootItem(' + idx + ',' + iIdx + ')">✕</button>'
+      + '</span>';
+    }).join('');
+  }
+}
+
+function sccRemoveLootItem(idx, itemIdx) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c) return;
+  c.loot.items.splice(itemIdx, 1);
+  sccRenderStagingList();
+}
+
 function sccRemoveCombatant(idx) {
   SCC_COMBATANTS.splice(idx, 1);
   sccRenderStagingList();
   sccUpdateDifficulty();
 }
-// PHB 2024 encounter difficulty
+
 function sccUpdateDifficulty() {
   var badge = document.getElementById('scc-diff-value');
   if (!badge) return;
-  // Party level — average across all PCs
   var levels = SCC_PLAYERS.map(function(p) { return p.level || 1; });
   var avgLevel = levels.length ? Math.round(levels.reduce(function(a,b){return a+b;},0) / levels.length) : 1;
   var thresholds = SCC_XP_THRESHOLDS[Math.min(avgLevel, 10)] || SCC_XP_THRESHOLDS[1];
-  // Sum XP from hostile creatures only
   var enemies = SCC_COMBATANTS.filter(function(c) { return !c.isPC; });
   if (!enemies.length) { badge.textContent = '—'; badge.className = 'scc-diff-value'; return; }
   var rawXP = enemies.reduce(function(sum, c) {
-    var cr = parseFloat(c.cr);
-    var xp = SCC_CR_XP[cr] || 0;
-    return sum + xp;
+    var cr = parseFloat(c.cr); var xp = SCC_CR_XP[cr] || 0; return sum + xp;
   }, 0);
-  var mult     = sccEncounterMultiplier(enemies.length);
-  var adjXP    = Math.round(rawXP * mult);
+  var adjXP = Math.round(rawXP * sccEncounterMultiplier(enemies.length));
   var partySize = SCC_PLAYERS.length || 3;
-  // Compare against party thresholds (multiplied by party size)
   var diff, cls;
-  if      (adjXP < thresholds[0] * partySize) { diff = 'Trivial';  cls = 'low'; }
-  else if (adjXP < thresholds[1] * partySize) { diff = 'Low';      cls = 'low'; }
-  else if (adjXP < thresholds[2] * partySize) { diff = 'Moderate'; cls = 'moderate'; }
-  else if (adjXP < thresholds[3] * partySize) { diff = 'High';     cls = 'high'; }
-  else                                          { diff = 'Deadly';  cls = 'deadly'; }
+  if      (adjXP < thresholds[0] * partySize) { diff='Trivial';  cls='low'; }
+  else if (adjXP < thresholds[1] * partySize) { diff='Low';      cls='low'; }
+  else if (adjXP < thresholds[2] * partySize) { diff='Moderate'; cls='moderate'; }
+  else if (adjXP < thresholds[3] * partySize) { diff='High';     cls='high'; }
+  else                                          { diff='Deadly';  cls='deadly'; }
   badge.textContent = diff;
   badge.className   = 'scc-diff-value ' + cls;
 }
+
 function sccStartCombat() {
-  // Read initiative values entered by DM, roll automatically for any blanks
   SCC_COMBATANTS.forEach(function(c, idx) {
     var input = document.getElementById('scc-init-input-' + idx);
     var val   = input ? parseInt(input.value) : NaN;
-    if (isNaN(val)) {
-      // Auto-roll d20 + DEX modifier
-      c.initiative = Math.floor(Math.random() * 20) + 1 + c.dexMod;
-    } else {
-      c.initiative = val;
-    }
+    c.initiative = isNaN(val) ? Math.floor(Math.random() * 20) + 1 + c.dexMod : val;
   });
-  // Sort descending by initiative, ties broken by DEX modifier
   SCC_INITIATIVE = SCC_COMBATANTS.slice().sort(function(a, b) {
     if (b.initiative !== a.initiative) return b.initiative - a.initiative;
     return b.dexMod - a.dexMod;
   });
-  SCC_ROUND     = 1;
-  SCC_TURN_IDX  = 0;
-  SCC_IN_COMBAT = true;
+  SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_IN_COMBAT = true;
   document.getElementById('scc-combatant-staging').style.display = 'none';
   document.getElementById('scc-start-combat-btn').style.display  = 'none';
   document.getElementById('scc-initiative-tracker').style.display = '';
   sccRenderInitiativeList();
 }
+
 function sccRenderInitiativeList() {
   var counter = document.getElementById('scc-round-counter');
   if (counter) counter.textContent = SCC_ROUND;
@@ -7834,9 +8519,13 @@ function sccRenderInitiativeList() {
     var hpCls    = hpPct <= 0.25 ? 'danger' : hpPct <= 0.5 ? 'warning' : '';
     var modSign  = c.dexMod >= 0 ? '+' : '';
     var condTags = (c.conditions || []).map(function(cond) {
-      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove">'
-        + sccEsc(cond) + '</span>';
+      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove">' + sccEsc(cond) + '</span>';
     }).join('');
+
+    // Loot available badge if creature is at 0 HP
+    var lootBtn = (!c.isPC && c.hpCur === 0 && c.loot && (c.loot.items.length || c.loot.gp || c.loot.sp || c.loot.cp))
+      ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">🎒 Award Loot</button>' : '';
+
     return '<div class="scc-init-row' + (isActive ? ' active-turn' : '') + (c.isPC ? ' is-pc' : ' is-enemy') + '">'
       + '<div class="scc-init-num">' + c.initiative + '</div>'
       + '<div class="scc-init-name">' + sccEsc(c.name) + (c.isPC ? ' <span style="font-size:0.65rem;color:var(--dm-blue);">PC</span>' : '') + '</div>'
@@ -7850,29 +8539,27 @@ function sccRenderInitiativeList() {
         + condTags
         + '<button class="scc-add-condition-btn" onclick="sccPromptCondition(' + idx + ')">+ Condition</button>'
       + '</div>'
+      + lootBtn
     + '</div>';
   }).join('');
 }
+
 function sccNextTurn() {
   SCC_TURN_IDX++;
-  if (SCC_TURN_IDX >= SCC_INITIATIVE.length) {
-    SCC_TURN_IDX = 0;
-    SCC_ROUND++;
-  }
+  if (SCC_TURN_IDX >= SCC_INITIATIVE.length) { SCC_TURN_IDX = 0; SCC_ROUND++; }
   sccRenderInitiativeList();
 }
+
 function sccAdjustHP(idx, delta) {
   var c = SCC_INITIATIVE[idx];
   if (!c) return;
-  // For larger adjustments, prompt
-  var adj = delta === 1 || delta === -1 ? delta : delta;
-  c.hpCur = Math.max(0, Math.min(c.hpMax, c.hpCur + adj));
+  c.hpCur = Math.max(0, Math.min(c.hpMax, c.hpCur + delta));
   sccRenderInitiativeList();
-  // If PC, write back to Supabase
   if (c.isPC && SCC_SHEETS[c.id]) {
     sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), { hp_current: c.hpCur });
   }
 }
+
 function sccPromptCondition(idx) {
   var CONDITIONS = ['Blinded','Charmed','Deafened','Exhaustion','Frightened','Grappled',
     'Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
@@ -7880,8 +8567,8 @@ function sccPromptCondition(idx) {
   if (!pick) return;
   var num = parseInt(pick);
   var cond = !isNaN(num) && num >= 1 && num <= CONDITIONS.length
-    ? CONDITIONS[num - 1]
-    : CONDITIONS.find(function(c) { return c.toLowerCase().startsWith(pick.toLowerCase()); });
+    ? CONDITIONS[num-1]
+    : CONDITIONS.find(function(c){ return c.toLowerCase().startsWith(pick.toLowerCase()); });
   if (cond) {
     if (!SCC_INITIATIVE[idx].conditions) SCC_INITIATIVE[idx].conditions = [];
     if (!SCC_INITIATIVE[idx].conditions.includes(cond)) {
@@ -7890,81 +8577,207 @@ function sccPromptCondition(idx) {
     }
   }
 }
+
 function sccRemoveCondition(idx, cond) {
   var c = SCC_INITIATIVE[idx];
   if (!c || !c.conditions) return;
-  c.conditions = c.conditions.filter(function(x) { return x !== cond; });
+  c.conditions = c.conditions.filter(function(x){ return x !== cond; });
   sccRenderInitiativeList();
 }
+
+// ── Loot Award Flow ───────────────────────────────────────────────
+function sccOpenLootAward(idx) {
+  var c = SCC_INITIATIVE[idx];
+  if (!c || !c.loot) return;
+  var players = SCC_PLAYERS.map(function(p, pIdx) {
+    return '<option value="' + pIdx + '">' + sccEsc(p.name) + '</option>';
+  }).join('');
+
+  var itemRows = c.loot.items.map(function(item, iIdx) {
+    return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">'
+      + '<span style="flex:1;font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);">' + sccEsc(item.name) + '</span>'
+      + '<select class="scc-input" id="scc-award-player-' + idx + '-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;">' + players + '</select>'
+      + '<button class="scc-award-btn" onclick="sccAwardItem(' + idx + ',' + iIdx + ')">Award</button>'
+    + '</div>';
+  }).join('');
+
+  var coinLine = '';
+  if (c.loot.gp || c.loot.sp || c.loot.cp) {
+    coinLine = '<div style="margin-bottom:0.75rem;font-family:var(--font-sans);font-size:0.82rem;color:var(--dm-gold);">'
+      + '💰 Coins: ' + (c.loot.gp ? c.loot.gp + ' GP ' : '') + (c.loot.sp ? c.loot.sp + ' SP ' : '') + (c.loot.cp ? c.loot.cp + ' CP' : '')
+      + '<select class="scc-input" id="scc-award-coins-player-' + idx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;margin-left:0.5rem;">' + players + '</select>'
+      + '<button class="scc-award-btn" onclick="sccAwardCoins(' + idx + ')" style="margin-left:0.4rem;">Award Coins</button>'
+    + '</div>';
+  }
+
+  var panel = document.createElement('div');
+  panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.5rem;z-index:9999;min-width:360px;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,0.7);';
+  panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:1rem;color:var(--dm-gold);margin-bottom:1rem;">🎒 Loot from ' + sccEsc(c.name) + '</div>'
+    + coinLine
+    + (itemRows || '<div style="font-family:var(--font-sans);font-size:0.82rem;color:var(--dm-text-muted);font-style:italic;">No items assigned.</div>')
+    + '<div style="margin-top:1rem;text-align:right;"><button class="scc-btn-secondary" onclick="this.closest(\'div[style]\').remove()">Close</button></div>';
+  document.body.appendChild(panel);
+}
+
+function sccAwardItem(combatantIdx, itemIdx) {
+  var c = SCC_INITIATIVE[combatantIdx];
+  if (!c || !c.loot || !c.loot.items[itemIdx]) return;
+  var item = c.loot.items[itemIdx];
+  var playerSelEl = document.getElementById('scc-award-player-' + combatantIdx + '-' + itemIdx);
+  var playerIdx   = playerSelEl ? parseInt(playerSelEl.value) : 0;
+  var player      = SCC_PLAYERS[playerIdx];
+  if (!player) return;
+  // Write to inventory
+  fetch(SCC_URL + '/rest/v1/inventory', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
+    body: JSON.stringify({ character_id: player.id, item_id: item.id, quantity: 1, is_favorite: false, sort_order: 999 })
+  }).then(function(r) {
+    if (r.ok) showDMToast(item.name + ' → ' + player.name + ' ✓', 'success');
+    else      showDMToast('Award failed', 'error');
+  });
+}
+
+function sccAwardCoins(combatantIdx) {
+  var c = SCC_INITIATIVE[combatantIdx];
+  if (!c || !c.loot) return;
+  var playerSelEl = document.getElementById('scc-award-coins-player-' + combatantIdx);
+  var playerIdx   = playerSelEl ? parseInt(playerSelEl.value) : 0;
+  var player      = SCC_PLAYERS[playerIdx];
+  if (!player) return;
+  var sheet = SCC_SHEETS[player.id];
+  if (!sheet) { showDMToast('No character sheet found for ' + player.name, 'error'); return; }
+  var addCP = (c.loot.gp * 100) + (c.loot.sp * 10) + c.loot.cp;
+  var newTotal = (sheet.gold_cp || 0) + addCP;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(player.id), { gold_cp: newTotal })
+    .then(function(r) {
+      if (r.ok) {
+        sheet.gold_cp = newTotal;
+        showDMToast('Coins awarded to ' + player.name + ' ✓', 'success');
+      } else { showDMToast('Coin award failed', 'error'); }
+    });
+}
+
 function sccEndCombat() {
   if (!confirm('End combat and reset the encounter tracker?')) return;
-  SCC_IN_COMBAT  = false;
-  SCC_COMBATANTS = [];
-  SCC_INITIATIVE = [];
-  SCC_ROUND      = 1;
-  SCC_TURN_IDX   = 0;
-  SCC_SELECTED.combatant = [];
-  document.getElementById('scc-initiative-tracker').style.display    = 'none';
-  document.getElementById('scc-combatant-staging').style.display      = '';
-  document.getElementById('scc-start-combat-btn').style.display       = 'none';
-  sccRenderStagingList();
-  sccUpdateDifficulty();
+  SCC_IN_COMBAT = false; SCC_COMBATANTS = []; SCC_INITIATIVE = [];
+  SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_SELECTED.combatant = [];
+  document.getElementById('scc-initiative-tracker').style.display = 'none';
+  document.getElementById('scc-combatant-staging').style.display  = '';
+  document.getElementById('scc-start-combat-btn').style.display   = 'none';
+  sccRenderStagingList(); sccUpdateDifficulty();
 }
-// ── Session Notes Save ────────────────────────────────────────────
+
+// ── Session Notes ─────────────────────────────────────────────────
 function sccSaveNotes() {
   var num = SCC_SESSION ? SCC_SESSION.session_number
-          : parseInt((document.getElementById('scc-session-number') || {}).value) || null;
+          : parseInt((document.getElementById('scc-session-number')||{}).value) || null;
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
   var body = {
     session_number:     num,
-    player_decisions:   (document.getElementById('scc-note-decisions')  || {}).value || null,
-    unexpected_moments: (document.getElementById('scc-note-unexpected') || {}).value || null,
-    loose_threads:      (document.getElementById('scc-note-threads')    || {}).value || null,
-    follow_up_needed:   (document.getElementById('scc-note-followup')   || {}).value || null,
-    milestone_notes:    (document.getElementById('scc-note-milestone')  || {}).value || null
+    player_decisions:   (document.getElementById('scc-note-decisions') ||{}).value || null,
+    unexpected_moments: (document.getElementById('scc-note-unexpected')||{}).value || null,
+    loose_threads:      (document.getElementById('scc-note-threads')   ||{}).value || null,
+    follow_up_needed:   (document.getElementById('scc-note-followup')  ||{}).value || null,
+    milestone_notes:    (document.getElementById('scc-note-milestone') ||{}).value || null
   };
   sccPost('session_notes', body).then(function(r) {
     if (r.ok) {
       SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
       showDMToast('Session notes saved ✓', 'success');
       var st = document.getElementById('scc-notes-status');
-      if (st) { st.textContent = '✓ Saved'; setTimeout(function() { st.textContent = ''; }, 3000); }
-    } else {
-      showDMToast('Save failed', 'error');
-    }
+      if (st) { st.textContent = '✓ Saved'; setTimeout(function(){ st.textContent=''; }, 3000); }
+    } else { showDMToast('Save failed', 'error'); }
   }).catch(function() { showDMToast('Save failed', 'error'); });
 }
-// ── Post-Session Summary Copy ─────────────────────────────────────
+
 function sccCopyPostSessionSummary() {
   var s = SCC_SESSION || {};
   var lines = [
     '# Session ' + (s.session_number || '?') + ' Summary',
     s.session_date ? 'Date: ' + s.session_date : '',
     s.premise ? 'Premise: ' + s.premise : '',
-    '',
-    '## Player Decisions',
-    (document.getElementById('scc-note-decisions') || {}).value || '(none recorded)',
-    '',
-    '## Unexpected Moments',
-    (document.getElementById('scc-note-unexpected') || {}).value || '(none recorded)',
-    '',
-    '## Loose Threads',
-    (document.getElementById('scc-note-threads') || {}).value || '(none recorded)',
-    '',
-    '## Follow-Up Needed',
-    (document.getElementById('scc-note-followup') || {}).value || '(none recorded)',
-    '',
-    '## Milestone Notes',
-    (document.getElementById('scc-note-milestone') || {}).value || '(none recorded)',
-  ].filter(function(l) { return l !== null; }).join('\n');
+    '', '## Player Decisions',
+    (document.getElementById('scc-note-decisions') ||{}).value || '(none recorded)',
+    '', '## Unexpected Moments',
+    (document.getElementById('scc-note-unexpected')||{}).value || '(none recorded)',
+    '', '## Loose Threads',
+    (document.getElementById('scc-note-threads')   ||{}).value || '(none recorded)',
+    '', '## Follow-Up Needed',
+    (document.getElementById('scc-note-followup')  ||{}).value || '(none recorded)',
+    '', '## Milestone Notes',
+    (document.getElementById('scc-note-milestone') ||{}).value || '(none recorded)',
+  ].filter(function(l){ return l !== null; }).join('\n');
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(lines).then(function() {
-      showDMToast('Post-session summary copied ✓', 'success');
-    });
-  } else {
-    prompt('Copy this summary:', lines);
-  }
+    navigator.clipboard.writeText(lines).then(function(){ showDMToast('Post-session summary copied ✓','success'); });
+  } else { prompt('Copy this summary:', lines); }
 }
+
+// ── Global Search ─────────────────────────────────────────────────
+function sccGlobalSearch(query) {
+  var resultsEl = document.getElementById('scc-global-results');
+  if (!resultsEl) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
+
+  var allEntries = [];
+  var addCollection = function(arr, type, typeLabel) {
+    (arr || []).forEach(function(e) {
+      if (!e.name) return;
+      if (e.name.toLowerCase().indexOf(query) >= 0 || (e.summary||'').toLowerCase().indexOf(query) >= 0) {
+        allEntries.push({ type: typeLabel, typeKey: type, id: e.id, name: e.name, summary: (e.summary||e.description||'').slice(0,80) });
+      }
+    });
+  };
+
+  addCollection(typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [], 'character',    'NPC');
+  addCollection(typeof CITIES        !== 'undefined' ? CITIES        : [], 'city',         'Location');
+  addCollection(typeof POIS          !== 'undefined' ? POIS          : [], 'city',         'POI');
+  addCollection(typeof NATIONS       !== 'undefined' ? NATIONS       : [], 'nation',       'Nation');
+  addCollection(typeof CREATURES     !== 'undefined' ? CREATURES     : [], 'creature',     'Creature');
+  addCollection(typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [], 'organization', 'Organization');
+  addCollection(typeof ITEMS         !== 'undefined' ? ITEMS         : [], 'item',         'Item');
+  addCollection(typeof QUESTS        !== 'undefined' ? QUESTS        : [], 'quest',        'Quest');
+
+  allEntries.sort(function(a,b){ return a.name.localeCompare(b.name); });
+  allEntries = allEntries.slice(0, 20);
+
+  if (!allEntries.length) {
+    resultsEl.innerHTML = '<div class="scc-global-empty">No results for "' + sccEsc(query) + '"</div>';
+    resultsEl.classList.add('open');
+    return;
+  }
+
+  resultsEl.innerHTML = allEntries.map(function(e) {
+    return '<div class="scc-global-result-item" onclick="sccGlobalResultClick(\'' + sccEsc(e.typeKey) + '\',\'' + sccEsc(e.id) + '\')">'
+      + '<span class="scc-global-result-type">' + sccEsc(e.type) + '</span>'
+      + '<div>'
+        + '<div class="scc-global-result-name">' + sccEsc(e.name) + '</div>'
+        + (e.summary ? '<div class="scc-global-result-summary">' + sccEsc(e.summary) + '…</div>' : '')
+      + '</div>'
+    + '</div>';
+  }).join('');
+  resultsEl.classList.add('open');
+}
+
+function sccGlobalResultClick(typeKey, id) {
+  var resultsEl = document.getElementById('scc-global-results');
+  var searchEl  = document.getElementById('scc-global-search');
+  if (resultsEl) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; }
+  if (searchEl)  searchEl.value = '';
+  // Open the quick lookup panel with the result
+  var lookupType = typeKey === 'nation' ? 'city' : typeKey === 'organization' ? 'city' : typeKey;
+  sccOpenLookup(lookupType, id);
+}
+
+// Close global search on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.scc-global-search-wrap') && !e.target.closest('.scc-global-results')) {
+    var r = document.getElementById('scc-global-results');
+    if (r) { r.classList.remove('open'); r.innerHTML = ''; }
+  }
+});
+
 // ── Quick Lookup Panel ────────────────────────────────────────────
 function sccOpenLookup(type, id) {
   var panel    = document.getElementById('scc-lookup-panel');
@@ -7977,107 +8790,71 @@ function sccOpenLookup(type, id) {
   var html = '';
   if (type === 'character') {
     var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
-    var c = chars.find(function(x) { return x.id === id; });
+    var c = chars.find(function(x){ return x.id === id; });
     if (!c) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
-    // Related quests
     var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
-    var relQ   = quests.filter(function(q) {
-      return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === c.id; });
-    });
+    var relQ = quests.filter(function(q){ return q.related && q.related.some(function(r){ return r.collection==='characters'&&r.id===c.id; }); });
     html = '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(c.name) + '</div>'
-      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">'
-        + sccEsc(c.role || c.category || '') + (c.location ? ' · ' + sccEsc(c.location) : '') + '</div>'
-      + (c.appearance ? '<div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);line-height:1.55;margin-bottom:0.75rem;font-style:italic;">' + sccEsc(c.appearance) + '</div>' : '')
-      + (c.personality ? '<div class="scc-pk-block"><div class="scc-pk-label">Personality</div><div class="scc-pk-text">' + sccEsc(c.personality) + '</div></div>' : '')
-      + (c.motivation  ? '<div class="scc-pk-block"><div class="scc-pk-label">Motivation</div><div class="scc-pk-text">' + sccEsc(c.motivation) + '</div></div>' : '')
-      + (c.player_knowledge ? '<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div></div>' : '')
-      + (c.contradiction ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ Contradiction</div><div class="scc-dm-text">' + sccEsc(c.contradiction) + '</div></div>' : '')
-      + (c.secret   ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ Secret</div><div class="scc-dm-text">' + sccEsc(c.secret) + '</div></div>' : '')
-      + (c.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(c.dm_notes) + '</div></div>' : '')
-      + (relQ.length ? '<div class="scc-pk-block"><div class="scc-pk-label">Appears in Quests</div>'
-          + relQ.map(function(q) { return '<div class="scc-pk-text">📜 ' + sccEsc(q.name) + '</div>'; }).join('')
-        + '</div>' : '');
+      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">' + sccEsc(c.role||c.category||'') + (c.location?' · '+sccEsc(c.location):'') + '</div>'
+      + (c.appearance?'<div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);line-height:1.55;margin-bottom:0.75rem;font-style:italic;">'+sccEsc(c.appearance)+'</div>':'')
+      + (c.personality?'<div class="scc-pk-block"><div class="scc-pk-label">Personality</div><div class="scc-pk-text">'+sccEsc(c.personality)+'</div></div>':'')
+      + (c.motivation?'<div class="scc-pk-block"><div class="scc-pk-label">Motivation</div><div class="scc-pk-text">'+sccEsc(c.motivation)+'</div></div>':'')
+      + (c.player_knowledge?'<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">'+sccEsc(c.player_knowledge)+'</div></div>':'')
+      + (c.contradiction?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ Contradiction</div><div class="scc-dm-text">'+sccEsc(c.contradiction)+'</div></div>':'')
+      + (c.secret?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ Secret</div><div class="scc-dm-text">'+sccEsc(c.secret)+'</div></div>':'')
+      + (c.dm_notes?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">'+sccEsc(c.dm_notes)+'</div></div>':'')
+      + (relQ.length?'<div class="scc-pk-block"><div class="scc-pk-label">Appears in Quests</div>'+relQ.map(function(q){return '<div class="scc-pk-text">📜 '+sccEsc(q.name)+'</div>';}).join('')+'</div>':'');
   } else if (type === 'city') {
-    var cities = (typeof CITIES !== 'undefined' ? CITIES : []).concat(typeof POIS !== 'undefined' ? POIS : []);
-    var loc    = cities.find(function(x) { return x.id === id; });
+    var allLocs = (typeof CITIES!=='undefined'?CITIES:[]).concat(typeof POIS!=='undefined'?POIS:[]).concat(typeof NATIONS!=='undefined'?NATIONS:[]);
+    var loc = allLocs.find(function(x){ return x.id===id; });
     if (!loc) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
     html = '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(loc.name) + '</div>'
-      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);margin-bottom:1rem;">' + sccEsc((loc.type||'').replace(/-/g,' ')) + (loc.region ? ' · ' + sccEsc(loc.region) : '') + '</div>'
-      + (loc.description ? '<div class="scc-pk-block"><div class="scc-pk-label">Description</div><div class="scc-pk-text">' + sccEsc(loc.description) + '</div></div>' : '')
-      + (loc.strategic_importance ? '<div class="scc-pk-block"><div class="scc-pk-label">Strategic Importance</div><div class="scc-pk-text">' + sccEsc(loc.strategic_importance) + '</div></div>' : '')
-      + (loc.tone ? '<div class="scc-pk-block"><div class="scc-pk-label">Tone</div><div class="scc-pk-text">' + sccEsc(loc.tone) + '</div></div>' : '')
-      + (loc.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(loc.dm_notes) + '</div></div>' : '');
-    // Landmarks
+      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);margin-bottom:1rem;">' + sccEsc((loc.city_type||loc.type||'nation').replace(/-/g,' ')) + (loc.region?' · '+sccEsc(loc.region):'') + '</div>'
+      + (loc.description?'<div class="scc-pk-block"><div class="scc-pk-label">Description</div><div class="scc-pk-text">'+sccEsc(loc.description)+'</div></div>':'')
+      + (loc.strategic_importance?'<div class="scc-pk-block"><div class="scc-pk-label">Strategic Importance</div><div class="scc-pk-text">'+sccEsc(loc.strategic_importance)+'</div></div>':'')
+      + (loc.tone?'<div class="scc-pk-block"><div class="scc-pk-label">Tone</div><div class="scc-pk-text">'+sccEsc(loc.tone)+'</div></div>':'')
+      + (loc.dm_notes?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">'+sccEsc(loc.dm_notes)+'</div></div>':'');
     if (loc.landmarks && loc.landmarks.length) {
       html += '<div class="scc-pk-block"><div class="scc-pk-label">Landmarks</div>'
-        + loc.landmarks.map(function(lm) {
-            return '<div class="scc-pk-text" style="margin-bottom:0.4rem;"><strong style="color:var(--dm-gold);">' + sccEsc(lm.name) + '</strong> — ' + sccEsc(lm.description || '') + '</div>';
-          }).join('')
-        + '</div>';
+        + loc.landmarks.map(function(lm){ return '<div class="scc-pk-text" style="margin-bottom:0.4rem;"><strong style="color:var(--dm-gold);">'+sccEsc(lm.name)+'</strong> — '+sccEsc(lm.description||'')+'</div>'; }).join('')
+      + '</div>';
     }
   } else if (type === 'creature') {
-    var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
-    var cr = creatures.find(function(x) { return x.id === id; });
+    var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
+    var cr = creatures.find(function(x){ return x.id===id; });
     if (!cr) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
-    // Ability score modifiers
-    var abMod = function(score) {
-      if (!score) return '—';
-      var mod = Math.floor((score - 10) / 2);
-      return (mod >= 0 ? '+' : '') + mod;
-    };
-    var hasAbilities = cr.str || cr.dex || cr.con || cr.int || cr.wis || cr.cha;
+    var abMod = function(score){ if(!score) return '—'; var m=Math.floor((score-10)/2); return (m>=0?'+':'')+m; };
+    var hasAbilities = cr.str||cr.dex||cr.con||cr.int||cr.wis||cr.cha;
     html = '<div class="scc-stat-block">'
-      + '<div class="scc-stat-block-header">'
-        + '<div class="scc-stat-block-name">' + sccEsc(cr.name) + '</div>'
-        + '<div class="scc-stat-block-type">' + sccEsc((cr.size||'') + (cr.creature_type ? ' ' + cr.creature_type : '') + (cr.creature_alignment ? ', ' + cr.creature_alignment : '')) + '</div>'
-      + '</div>'
+      + '<div class="scc-stat-block-header"><div class="scc-stat-block-name">'+sccEsc(cr.name)+'</div><div class="scc-stat-block-type">'+sccEsc((cr.size||'')+' '+(cr.creature_type||'')+(cr.creature_alignment?', '+cr.creature_alignment:''))+'</div></div>'
       + '<div class="scc-stat-block-body">'
         + '<div class="scc-combat-stats-row">'
-          + (cr.ac    != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.ac    + '</div><div class="scc-combat-stat-label">AC' + (cr.ac_notes ? '<br><span style="font-size:0.6rem">'+sccEsc(cr.ac_notes)+'</span>' : '') + '</div></div>' : '')
-          + (cr.hp_max != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.hp_max + '</div><div class="scc-combat-stat-label">HP' + (cr.hit_dice ? '<br><span style="font-size:0.6rem">'+sccEsc(cr.hit_dice)+'</span>' : '') + '</div></div>' : '')
-          + (cr.speed_ft != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.speed_ft + ' ft</div><div class="scc-combat-stat-label">Speed</div></div>' : '')
-          + (cr.challenge_rating != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.challenge_rating + '</div><div class="scc-combat-stat-label">CR</div></div>' : '')
-          + (cr.xp_value != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.xp_value + '</div><div class="scc-combat-stat-label">XP</div></div>' : '')
+          + (cr.ac!=null?'<div class="scc-combat-stat"><div class="scc-combat-stat-val">'+cr.ac+'</div><div class="scc-combat-stat-label">AC'+(cr.ac_notes?'<br><span style="font-size:0.6rem">'+sccEsc(cr.ac_notes)+'</span>':'')+'</div></div>':'')
+          + (cr.hp_max!=null?'<div class="scc-combat-stat"><div class="scc-combat-stat-val">'+cr.hp_max+'</div><div class="scc-combat-stat-label">HP'+(cr.hit_dice?'<br><span style="font-size:0.6rem">'+sccEsc(cr.hit_dice)+'</span>':'')+'</div></div>':'')
+          + (cr.speed_ft!=null?'<div class="scc-combat-stat"><div class="scc-combat-stat-val">'+cr.speed_ft+' ft</div><div class="scc-combat-stat-label">Speed</div></div>':'')
+          + (cr.challenge_rating!=null?'<div class="scc-combat-stat"><div class="scc-combat-stat-val">'+cr.challenge_rating+'</div><div class="scc-combat-stat-label">CR</div></div>':'')
+          + (cr.xp_value!=null?'<div class="scc-combat-stat"><div class="scc-combat-stat-val">'+cr.xp_value+'</div><div class="scc-combat-stat-label">XP</div></div>':'')
         + '</div>'
-        + (hasAbilities
-          ? '<div class="scc-stat-row-grid">'
-              + ['STR','DEX','CON','INT','WIS','CHA'].map(function(ab) {
-                  var key = ab.toLowerCase();
-                  var val = cr[key];
-                  return '<div class="scc-stat-cell">'
-                    + '<div class="scc-stat-cell-val">' + (val || '—') + '</div>'
-                    + '<div class="scc-stat-cell-mod">' + abMod(val) + '</div>'
-                    + '<div class="scc-stat-cell-label">' + ab + '</div>'
-                  + '</div>';
-                }).join('')
-            + '</div>'
-          : '')
-        + (cr.senses   ? '<div class="scc-pk-block"><div class="scc-pk-label">Senses</div><div class="scc-pk-text">' + sccEsc(cr.senses) + '</div></div>' : '')
-        + (cr.languages ? '<div class="scc-pk-block"><div class="scc-pk-label">Languages</div><div class="scc-pk-text">' + sccEsc(cr.languages) + '</div></div>' : '')
-        + (cr.traits && cr.traits.length
-          ? '<div class="scc-pk-block"><div class="scc-pk-label">Traits</div><div class="scc-trait-list">'
-              + cr.traits.map(function(t) { return '<div class="scc-trait-item"><span class="scc-trait-name">' + sccEsc(t.name||'') + '.</span> ' + sccEsc(t.description||'') + '</div>'; }).join('')
-            + '</div></div>'
-          : '')
-        + (cr.actions && cr.actions.length
-          ? '<div class="scc-pk-block"><div class="scc-pk-label">Actions</div><div class="scc-trait-list">'
-              + cr.actions.map(function(a) { return '<div class="scc-trait-item"><span class="scc-trait-name">' + sccEsc(a.name||'') + '.</span> ' + sccEsc(a.description||'') + '</div>'; }).join('')
-            + '</div></div>'
-          : '')
-        + (cr.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(cr.dm_notes) + '</div></div>' : '')
-      + '</div>'
-    + '</div>'
-    + (cr.description ? '<div class="scc-pk-block" style="margin-top:0.5rem;"><div class="scc-pk-label">Description</div><div class="scc-pk-text">' + sccEsc(cr.description) + '</div></div>' : '')
-    + (cr.behavior    ? '<div class="scc-pk-block"><div class="scc-pk-label">Behavior</div><div class="scc-pk-text">' + sccEsc(cr.behavior) + '</div></div>' : '');
+        + (hasAbilities?'<div class="scc-stat-row-grid">'+['STR','DEX','CON','INT','WIS','CHA'].map(function(ab){ var key=ab.toLowerCase(); var val=cr[key]; return '<div class="scc-stat-cell"><div class="scc-stat-cell-val">'+(val||'—')+'</div><div class="scc-stat-cell-mod">'+abMod(val)+'</div><div class="scc-stat-cell-label">'+ab+'</div></div>'; }).join('')+'</div>':'')
+        + (cr.senses?'<div class="scc-pk-block"><div class="scc-pk-label">Senses</div><div class="scc-pk-text">'+sccEsc(cr.senses)+'</div></div>':'')
+        + (cr.languages?'<div class="scc-pk-block"><div class="scc-pk-label">Languages</div><div class="scc-pk-text">'+sccEsc(cr.languages)+'</div></div>':'')
+        + (cr.traits&&cr.traits.length?'<div class="scc-pk-block"><div class="scc-pk-label">Traits</div><div class="scc-trait-list">'+cr.traits.map(function(t){return '<div class="scc-trait-item"><span class="scc-trait-name">'+sccEsc(t.name||'')+'.</span> '+sccEsc(t.description||'')+'</div>';}).join('')+'</div></div>':'')
+        + (cr.actions&&cr.actions.length?'<div class="scc-pk-block"><div class="scc-pk-label">Actions</div><div class="scc-trait-list">'+cr.actions.map(function(a){return '<div class="scc-trait-item"><span class="scc-trait-name">'+sccEsc(a.name||'')+'.</span> '+sccEsc(a.description||'')+'</div>';}).join('')+'</div></div>':'')
+        + (cr.dm_notes?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">'+sccEsc(cr.dm_notes)+'</div></div>':'')
+      + '</div></div>'
+      + (cr.description?'<div class="scc-pk-block" style="margin-top:0.5rem;"><div class="scc-pk-label">Description</div><div class="scc-pk-text">'+sccEsc(cr.description)+'</div></div>':'')
+      + (cr.behavior?'<div class="scc-pk-block"><div class="scc-pk-label">Behavior</div><div class="scc-pk-text">'+sccEsc(cr.behavior)+'</div></div>':'');
   }
   content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
 }
+
 function sccCloseLookup() {
   var panel    = document.getElementById('scc-lookup-panel');
   var backdrop = document.getElementById('scc-lookup-backdrop');
   if (panel)    panel.classList.remove('open');
   if (backdrop) backdrop.classList.remove('open');
 }
+
 </script>
 </body>
 </html>
