@@ -5802,7 +5802,7 @@ function playersRefresh() {
   body.innerHTML = '<div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">Loading…</div>';
   var SB_URL = 'https://ebppsgaftzyvftemfeom.supabase.co';
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
-  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_name,player_email,class_id,species,home_region,level,token,created_at&order=created_at.asc', {
+  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_email,class_id,species,home_region,level,token,created_at&order=created_at.asc', {
     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
   })
   .then(function(res) { return res.json(); })
@@ -5837,7 +5837,7 @@ function renderPlayers() {
             + '<div>'
               + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-text);margin-bottom:0.2rem;">' + escQ(pc.name || '—') + '</div>'
               + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);">'
-                + escQ(pc.player_name || '—') + ' · ' + escQ(pc.player_email || '—')
+                + escQ(pc.player_email || '—')
               + '</div>'
             + '</div>'
             + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
