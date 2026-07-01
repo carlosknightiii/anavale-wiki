@@ -2369,6 +2369,16 @@
             <div class="scc-header-sub" id="scc-header-sub">No active session — set up a session below</div>
           </div>
           <div class="scc-header-right">
+            <div class="scc-history-wrap">
+              <button class="scc-browse-btn" id="scc-history-btn" onclick="sccToggleHistory()">📋 Session History ▾</button>
+              <div class="scc-history-panel" id="scc-history-panel">
+                <div class="scc-browse-group-header">Previous Sessions</div>
+                <div id="scc-history-list"><div class="scc-lookup-loading">Loading…</div></div>
+                <div class="scc-browse-done">
+                  <button class="scc-btn-primary" onclick="sccLoadCurrentSession()">↩ Back to Current Session</button>
+                </div>
+              </div>
+            </div>
             <button class="scc-tab-btn active" data-scc="setup"     onclick="sccSwitchPanel('setup')">Setup</button>
             <button class="scc-tab-btn"        data-scc="npcs"      onclick="sccSwitchPanel('npcs')">NPCs</button>
             <button class="scc-tab-btn"        data-scc="locations" onclick="sccSwitchPanel('locations')">Locations</button>
@@ -2383,6 +2393,11 @@
           <div id="scc-player-cards" class="scc-player-cards">
             <div class="scc-player-loading">Loading player data…</div>
           </div>
+        </div>
+        <!-- ── READ-ONLY AUDIT BANNER ─────── -->
+        <div class="scc-readonly-banner" id="scc-readonly-banner">
+          📋 Viewing Session <span id="scc-readonly-session-num"></span> (read-only audit) —
+          <button class="scc-btn-sm" onclick="sccLoadCurrentSession()" style="margin-left:0.5rem;">↩ Back to Current Session</button>
         </div>
         <!-- ══ PANEL: SETUP ══════════════════ -->
         <div class="scc-panel active" id="scc-panel-setup">
@@ -2588,6 +2603,10 @@
               <button class="scc-btn-primary" onclick="sccSaveNotes()">✦ Save Notes</button>
               <button class="scc-btn-secondary" onclick="sccCopyPostSessionSummary()">📋 Copy Post-Session Summary</button>
               <span class="scc-save-status" id="scc-notes-status"></span>
+            </div>
+            <div class="scc-session-complete-bar">
+              <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks the session for audit and opens the next one.</div>
+              <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
             </div>
           </div>
         </div><!-- /scc-panel-notes -->
@@ -4848,6 +4867,143 @@ function showDMToast(msg, type) {
   padding: 2rem;
   text-align: center;
 }
+/* ── Session History Panel ── */
+.scc-history-wrap {
+  position: relative;
+}
+.scc-history-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 340px;
+  max-height: 400px;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 500;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.scc-history-panel.open {
+  display: flex;
+}
+#scc-history-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.scc-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--scc-border);
+  cursor: pointer;
+  transition: var(--dm-transition);
+  gap: 0.5rem;
+}
+.scc-history-item:last-child { border-bottom: none; }
+.scc-history-item:hover { background: var(--dm-gold-dim); }
+.scc-history-item-left {}
+.scc-history-session-num {
+  font-family: var(--font-headers);
+  font-size: 0.95rem;
+  color: var(--dm-gold);
+  font-weight: 600;
+}
+.scc-history-session-date {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  color: var(--dm-text-muted);
+  margin-top: 0.1rem;
+}
+.scc-history-session-premise {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text);
+  margin-top: 0.15rem;
+  font-style: italic;
+}
+.scc-history-status {
+  padding: 0.1rem 0.45rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+.scc-history-status.completed {
+  background: rgba(34,197,94,0.1);
+  color: var(--dm-green);
+  border: 1px solid rgba(34,197,94,0.25);
+}
+.scc-history-status.active {
+  background: var(--dm-gold-dim);
+  color: var(--dm-gold);
+  border: 1px solid var(--scc-border-gold);
+}
+.scc-viewing-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  background: rgba(96,165,250,0.12);
+  border: 1px solid rgba(96,165,250,0.3);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-blue);
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+/* ── Session Complete Bar ── */
+.scc-session-complete-bar {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(34,197,94,0.04);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: var(--dm-radius);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.scc-session-complete-desc {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--dm-text-muted);
+  line-height: 1.5;
+  flex: 1;
+}
+.scc-btn-complete {
+  padding: 0.6rem 1.4rem;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.4);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-green);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-btn-complete:hover {
+  background: rgba(34,197,94,0.2);
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+}
+.scc-readonly-banner {
+  display: none;
+  padding: 0.6rem 1rem;
+  background: rgba(96,165,250,0.08);
+  border-bottom: 1px solid rgba(96,165,250,0.2);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-blue);
+  text-align: center;
+}
+.scc-readonly-banner.visible { display: block; }
 /* ── NPC Relationship Colors ── */
 :root {
   --scc-rel-ally-border:   rgba(34,197,94,0.5);
@@ -7733,32 +7889,175 @@ function sccTogglePrep() {
 }
 
 // ── Load latest session ───────────────────────────────────────────
+// All sessions cache — loaded once per tab open
+var SCC_ALL_SESSIONS = [];
+var SCC_VIEWING_HISTORY = false;
 function sccLoadLatestSession() {
   sccFetch('session_notes', '&order=session_number.desc').then(function(rows) {
-    var sessions = Array.isArray(rows) ? rows : [];
-    SCC_SESSION = sessions.length ? sessions[0] : null;
-    // Auto-populate session number as next in sequence
-    var nextNum = sessions.length ? (sessions[0].session_number + 1) : 1;
-    var numEl = document.getElementById('scc-session-number');
-    if (numEl) numEl.value = nextNum;
-    var dispEl = document.getElementById('scc-session-number-display');
-    if (dispEl) dispEl.textContent = nextNum;
-    if (SCC_SESSION) {
+    SCC_ALL_SESSIONS = Array.isArray(rows) ? rows : [];
+    // Find the active (in-progress) session — most recent with status 'active' or null
+    var activeSession = SCC_ALL_SESSIONS.find(function(s) {
+      return !s.session_status || s.session_status === 'active';
+    });
+    // If no active session exists, calculate next number from completed sessions
+    var completedSessions = SCC_ALL_SESSIONS.filter(function(s) {
+      return s.session_status === 'completed';
+    });
+    if (activeSession) {
+      SCC_SESSION = activeSession;
       sccPopulateSetupForm(SCC_SESSION);
       sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
+      sccSetSessionDisplay(SCC_SESSION.session_number);
+    } else {
+      // No active session — show next number ready for new session
+      var nextNum = completedSessions.length
+        ? Math.max.apply(null, completedSessions.map(function(s){ return s.session_number; })) + 1
+        : 1;
+      SCC_SESSION = null;
+      sccSetSessionDisplay(nextNum);
+      // Pre-populate the hidden input for saving
+      var numEl = document.getElementById('scc-session-number');
+      if (numEl) numEl.value = nextNum;
     }
+    SCC_VIEWING_HISTORY = false;
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
     sccUpdateHeaderSub();
   }).catch(function() {
-    var numEl = document.getElementById('scc-session-number');
-    if (numEl && !numEl.value) numEl.value = 1;
+    sccSetSessionDisplay(1);
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
   });
 }
+function sccSetSessionDisplay(num) {
+  var dispEl = document.getElementById('scc-session-number-display');
+  var numEl  = document.getElementById('scc-session-number');
+  if (dispEl) dispEl.textContent = num;
+  if (numEl)  numEl.value = num;
+}
+function sccToggleHistory() {
+  var panel = document.getElementById('scc-history-panel');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  if (isOpen) { panel.classList.remove('open'); return; }
+  // Populate history list
+  sccRenderHistoryList();
+  panel.classList.add('open');
+}
+function sccRenderHistoryList() {
+  var listEl = document.getElementById('scc-history-list');
+  if (!listEl) return;
+  if (!SCC_ALL_SESSIONS.length) {
+    listEl.innerHTML = '<div class="scc-empty-state">No previous sessions found.</div>';
+    return;
+  }
+  listEl.innerHTML = SCC_ALL_SESSIONS.map(function(s) {
+    var status    = s.session_status || 'active';
+    var statusLabel = status === 'completed' ? 'Completed' : 'Active';
+    return '<div class="scc-history-item" onclick="sccLoadHistorySession(' + s.session_number + ')">'
+      + '<div class="scc-history-item-left">'
+        + '<div class="scc-history-session-num">Session ' + s.session_number + '</div>'
+        + (s.session_date ? '<div class="scc-history-session-date">' + s.session_date + '</div>' : '')
+        + (s.premise ? '<div class="scc-history-session-premise">' + sccEsc(s.premise) + '</div>' : '')
+      + '</div>'
+      + '<span class="scc-history-status ' + status + '">' + statusLabel + '</span>'
+    + '</div>';
+  }).join('');
+}
+function sccLoadHistorySession(sessionNum) {
+  var session = SCC_ALL_SESSIONS.find(function(s) { return s.session_number === sessionNum; });
+  if (!session) return;
+  // Close history panel
+  var panel = document.getElementById('scc-history-panel');
+  if (panel) panel.classList.remove('open');
+  // Show read-only banner
+  SCC_VIEWING_HISTORY = true;
+  var banner = document.getElementById('scc-readonly-banner');
+  var bannerNum = document.getElementById('scc-readonly-session-num');
+  if (banner) banner.classList.add('visible');
+  if (bannerNum) bannerNum.textContent = sessionNum;
+  // Populate form fields read-only
+  sccPopulateSetupForm(session);
+  sccSetSessionDisplay(sessionNum);
+  sccLoadQuestProgress(session.quest_ids_active || []).then(function() {
+    sccRenderQuestPanel();
+  });
+  sccRenderNpcPanel();
+  sccRenderLocationPanel();
+  sccUpdateHeaderSubHistory(sessionNum, session);
+}
+function sccUpdateHeaderSubHistory(num, session) {
+  var el = document.getElementById('scc-header-sub');
+  if (!el) return;
+  el.innerHTML = 'Session ' + num
+    + (session.session_date ? ' · ' + session.session_date : '')
+    + (session.premise ? ' — ' + sccEsc(session.premise) : '')
+    + ' <span class="scc-viewing-badge">Audit View</span>';
+}
+function sccLoadCurrentSession() {
+  // Close history panel if open
+  var panel = document.getElementById('scc-history-panel');
+  if (panel) panel.classList.remove('open');
+  // Hide read-only banner
+  var banner = document.getElementById('scc-readonly-banner');
+  if (banner) banner.classList.remove('visible');
+  SCC_VIEWING_HISTORY = false;
+  // Reload the active session
+  sccLoadLatestSession();
+}
+function sccCompleteSession() {
+  if (!SCC_SESSION) {
+    showDMToast('No active session to complete — save session setup first', 'error');
+    return;
+  }
+  if (!confirm('Mark Session ' + SCC_SESSION.session_number + ' as completed? This locks it for audit and opens Session ' + (SCC_SESSION.session_number + 1) + '.')) return;
+  var completedNum = SCC_SESSION.session_number;
+  var nextNum      = completedNum + 1;
+  // Mark current session as completed
+  sccPatch('session_notes',
+    '?session_number=eq.' + completedNum,
+    { session_status: 'completed' }
+  ).then(function(r) {
+    if (!r.ok) { showDMToast('Could not complete session — try again', 'error'); return; }
+    showDMToast('Session ' + completedNum + ' completed ✓ — opening Session ' + nextNum, 'success');
+    // Clear the form and reset state
+    SCC_SESSION = null;
+    SCC_SELECTED = { location:[], npc:[], creature:[], quest:[], item:[], combatant:[] };
+    SCC_NPC_RELATIONSHIPS = {};
+    SCC_PROGRESS = {};
+    // Clear all form fields
+    ['scc-session-date','scc-session-premise','scc-prep-notes',
+     'scc-note-decisions','scc-note-unexpected','scc-note-threads',
+     'scc-note-followup','scc-note-milestone'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    // Clear all chips
+    ['location','npc','creature','quest','item'].forEach(function(type) {
+      sccRenderChips(type);
+    });
+    // Set new session number
+    sccSetSessionDisplay(nextNum);
+    // Refresh history cache
+    SCC_ALL_SESSIONS = SCC_ALL_SESSIONS.map(function(s) {
+      if (s.session_number === completedNum) s.session_status = 'completed';
+      return s;
+    });
+    sccUpdateHeaderSub();
+    sccRenderNpcPanel();
+    sccRenderLocationPanel();
+    sccRenderQuestPanel();
+  }).catch(function() { showDMToast('Could not complete session', 'error'); });
+}
+// Close history panel on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.scc-history-wrap')) {
+    var p = document.getElementById('scc-history-panel');
+    if (p) p.classList.remove('open');
+  }
+});
 
 function sccUpdateHeaderSub() {
   var el = document.getElementById('scc-header-sub');
