@@ -2516,16 +2516,18 @@
       .single()
       .then(function(res) {
         if (res.error) { showToast('Could not create note — ' + res.error.message, true); return; }
-        NOTES[tab].push({ id: res.data.id, title: '', content: '', sort_order: nextOrder });
+        var newId = res.data.id;
+        NOTES[tab].push({ id: newId, title: '', content: '', sort_order: nextOrder, is_favorite: false });
         renderNoteCards();
-        // Auto-open the new card
+        // Auto-open the new card by its actual ID
         var listEl = document.getElementById('cs-notes-list');
         if (listEl) {
-          var newCard = listEl.querySelector('.cs-note-card:last-child');
+          var safeNewId = String(newId).replace(/[^a-zA-Z0-9-]/g, '');
+          var newCard = listEl.querySelector('.cs-note-card[data-note-id="' + safeNewId + '"]');
           if (newCard) {
             newCard.classList.add('cs-note-open');
-            var titleInput = newCard.querySelector('.cs-note-title-input');
-            if (titleInput) titleInput.focus();
+            var bodyEl = newCard.querySelector('.cs-note-body');
+            if (bodyEl) bodyEl.focus();
           }
         }
       });
@@ -2620,27 +2622,31 @@
     });
   }
   function handleNoteBodyInput(bodyEl, noteId) {
+    // Capture query synchronously before any async gap
     var sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
-    var range = sel.getRangeAt(0);
-    var text  = range.startContainer.textContent || '';
-    var pos   = range.startOffset;
-    // Match any word sequence of 2+ chars before caret (letters, apostrophes, spaces)
+    var range  = sel.getRangeAt(0);
+    var text   = range.startContainer.textContent || '';
+    var pos    = range.startOffset;
     var before = text.slice(0, pos);
     var match  = before.match(/([A-Za-z'][A-Za-z']*(?:\s[A-Za-z']+)*)$/);
     if (!match || match[1].trim().length < 2) { closeWikiAc(noteId); return; }
-    var query = match[1].trim().toLowerCase();
+    var query       = match[1].trim().toLowerCase();
+    var matchedText = match[1];
     loadWikiAcCache().then(function() {
+      // Re-capture selection after async gap — caret may have moved
+      var sel2 = window.getSelection();
+      if (!sel2 || !sel2.rangeCount) return;
+      var range2 = sel2.getRangeAt(0);
       var hits = (WIKI_AC_CACHE || []).filter(function(e) {
         return e.name.toLowerCase().indexOf(query) !== -1;
       }).sort(function(a, b) {
-        // Prefer names that start with the query
         var aStarts = a.name.toLowerCase().indexOf(query) === 0 ? 0 : 1;
         var bStarts = b.name.toLowerCase().indexOf(query) === 0 ? 0 : 1;
         return aStarts - bStarts || a.name.localeCompare(b.name);
       }).slice(0, 8);
       if (hits.length) {
-        showWikiAc(noteId, hits, bodyEl, range, match[1]);
+        showWikiAc(noteId, hits, bodyEl, range2, matchedText);
       } else {
         closeWikiAc(noteId);
       }
