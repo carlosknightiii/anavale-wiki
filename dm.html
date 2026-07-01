@@ -946,6 +946,7 @@
     <button class="dm-tab active" data-tab="manage"  onclick="switchTab('manage')">📋 Manage</button>
     <button class="dm-tab"        data-tab="quests"  onclick="switchTab('quests')">⚔️ Quests</button>
     <button class="dm-tab"        data-tab="players" onclick="switchTab('players')">👥 Players</button>
+    <button class="dm-tab" data-tab="session" onclick="switchTab('session')">🎲 Session</button>
     <button class="dm-btn-add-entry" onclick="switchTab('add')" title="Add a new world entry">＋ New Entry</button>
   </div>
 
@@ -2340,6 +2341,216 @@
 
       </div><!-- /form-quests -->
 
+      <!-- ══════════════════════════════════════
+           SESSION COMMAND CENTER
+           ══════════════════════════════════════ -->
+      <div id="form-session" class="dm-form scc-form">
+        <!-- ── SLIDE-IN QUICK LOOKUP PANEL ─── -->
+        <div id="scc-lookup-panel" class="scc-lookup-panel" aria-hidden="true">
+          <div class="scc-lookup-inner">
+            <button class="scc-lookup-close" onclick="sccCloseLookup()" aria-label="Close">✕</button>
+            <div id="scc-lookup-content" class="scc-lookup-content">
+              <div class="scc-lookup-loading">Loading…</div>
+            </div>
+          </div>
+        </div>
+        <div id="scc-lookup-backdrop" class="scc-lookup-backdrop" onclick="sccCloseLookup()"></div>
+        <!-- ── HEADER ──────────────────────── -->
+        <div class="scc-header">
+          <div class="scc-header-left">
+            <div class="scc-header-title">🎲 Session Command Center</div>
+            <div class="scc-header-sub" id="scc-header-sub">No active session — set up a session below</div>
+          </div>
+          <div class="scc-header-right">
+            <button class="scc-tab-btn active" data-scc="setup"     onclick="sccSwitchPanel('setup')">Setup</button>
+            <button class="scc-tab-btn"        data-scc="npcs"      onclick="sccSwitchPanel('npcs')">NPCs</button>
+            <button class="scc-tab-btn"        data-scc="locations" onclick="sccSwitchPanel('locations')">Locations</button>
+            <button class="scc-tab-btn"        data-scc="quests"    onclick="sccSwitchPanel('quests')">Quests</button>
+            <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
+            <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
+          </div>
+        </div>
+        <!-- ── PLAYER BAR (always visible) ─── -->
+        <div class="scc-player-bar" id="scc-player-bar">
+          <div class="scc-player-bar-label">Party</div>
+          <div id="scc-player-cards" class="scc-player-cards">
+            <div class="scc-player-loading">Loading player data…</div>
+          </div>
+        </div>
+        <!-- ══ PANEL: SETUP ══════════════════ -->
+        <div class="scc-panel active" id="scc-panel-setup">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">Session Setup</div>
+            <div class="scc-setup-grid">
+              <!-- Session identity -->
+              <div class="scc-setup-card">
+                <div class="scc-setup-card-label">Session Number</div>
+                <input type="number" id="scc-session-number" class="scc-input" min="1" placeholder="1">
+              </div>
+              <div class="scc-setup-card">
+                <div class="scc-setup-card-label">Session Date</div>
+                <input type="date" id="scc-session-date" class="scc-input">
+              </div>
+              <div class="scc-setup-card scc-setup-card--wide">
+                <div class="scc-setup-card-label">Session Premise</div>
+                <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
+              </div>
+              <div class="scc-setup-card scc-setup-card--wide">
+                <div class="scc-setup-card-label">Prep Notes</div>
+                <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
+              </div>
+            </div>
+            <!-- Entity pickers -->
+            <div class="scc-section-title" style="margin-top:2rem">Assign Session Entities</div>
+            <div class="scc-entity-pickers">
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">📍 Locations</div>
+                <div class="scc-picker-search-wrap">
+                  <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities & POIs…" oninput="sccPickerSearch('location', this.value)">
+                  <div class="scc-picker-dropdown" id="scc-drop-location"></div>
+                </div>
+                <div class="scc-picker-chips" id="scc-chips-location"></div>
+              </div>
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">🧙 NPCs</div>
+                <div class="scc-picker-search-wrap">
+                  <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)">
+                  <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
+                </div>
+                <div class="scc-picker-chips" id="scc-chips-npc"></div>
+              </div>
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">🐾 Hostile Creatures</div>
+                <div class="scc-picker-search-wrap">
+                  <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)">
+                  <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
+                </div>
+                <div class="scc-picker-chips" id="scc-chips-creature"></div>
+              </div>
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">📜 Quests</div>
+                <div class="scc-picker-search-wrap">
+                  <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)">
+                  <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
+                </div>
+                <div class="scc-picker-chips" id="scc-chips-quest"></div>
+              </div>
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">⚔️ Magic Items / Treasure</div>
+                <div class="scc-picker-search-wrap">
+                  <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)">
+                  <div class="scc-picker-dropdown" id="scc-drop-item"></div>
+                </div>
+                <div class="scc-picker-chips" id="scc-chips-item"></div>
+              </div>
+            </div>
+            <div class="scc-setup-actions">
+              <button class="scc-btn-primary" onclick="sccSaveSetup()">✦ Save Session Setup</button>
+              <span class="scc-save-status" id="scc-setup-status"></span>
+            </div>
+          </div>
+        </div><!-- /scc-panel-setup -->
+        <!-- ══ PANEL: NPCs ════════════════════ -->
+        <div class="scc-panel" id="scc-panel-npcs">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">NPCs This Session</div>
+            <div class="scc-hint">Add NPCs in Setup first. Click any card to open the full quick-lookup panel.</div>
+            <div id="scc-npc-cards" class="scc-npc-grid">
+              <div class="scc-empty-state">No NPCs assigned to this session yet. Go to Setup to add them.</div>
+            </div>
+          </div>
+        </div>
+        <!-- ══ PANEL: LOCATIONS ═══════════════ -->
+        <div class="scc-panel" id="scc-panel-locations">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">Locations This Session</div>
+            <div class="scc-hint">Click any card to expand full details and DM reference.</div>
+            <div id="scc-location-cards" class="scc-location-grid">
+              <div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>
+            </div>
+          </div>
+        </div>
+        <!-- ══ PANEL: QUESTS ══════════════════ -->
+        <div class="scc-panel" id="scc-panel-quests">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">Active Quests This Session</div>
+            <div id="scc-quest-cards" class="scc-quest-list">
+              <div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>
+            </div>
+          </div>
+        </div>
+        <!-- ══ PANEL: COMBAT ══════════════════ -->
+        <div class="scc-panel" id="scc-panel-combat">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">Combat Encounter Tracker</div>
+            <!-- Encounter builder -->
+            <div class="scc-combat-builder">
+              <div class="scc-section-subtitle">Build Encounter</div>
+              <div class="scc-combat-top-row">
+                <div class="scc-picker-group" style="flex:1">
+                  <div class="scc-picker-search-wrap">
+                    <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccPickerSearch('combatant', this.value)">
+                    <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
+                  </div>
+                </div>
+                <div class="scc-difficulty-badge" id="scc-difficulty-badge">
+                  <span class="scc-diff-label">Difficulty</span>
+                  <span class="scc-diff-value" id="scc-diff-value">—</span>
+                </div>
+              </div>
+              <div id="scc-combatant-staging" class="scc-combatant-staging">
+                <div class="scc-empty-state">Add creatures and players above to build the encounter.</div>
+              </div>
+              <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none">⚔️ Start Combat — Roll Initiative</button>
+            </div>
+            <!-- Initiative tracker (hidden until combat starts) -->
+            <div class="scc-initiative-tracker" id="scc-initiative-tracker" style="display:none">
+              <div class="scc-combat-header-row">
+                <div class="scc-section-subtitle">Initiative Order — Round <span id="scc-round-counter">1</span></div>
+                <div class="scc-combat-controls">
+                  <button class="scc-btn-sm" onclick="sccNextTurn()">Next Turn →</button>
+                  <button class="scc-btn-sm scc-btn-danger" onclick="sccEndCombat()">End Combat</button>
+                </div>
+              </div>
+              <div id="scc-initiative-list" class="scc-initiative-list"></div>
+            </div>
+          </div>
+        </div><!-- /scc-panel-combat -->
+        <!-- ══ PANEL: NOTES ═══════════════════ -->
+        <div class="scc-panel" id="scc-panel-notes">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">Session Notes</div>
+            <div class="scc-notes-grid">
+              <div class="scc-note-block">
+                <label class="scc-note-label">Player Decisions</label>
+                <textarea id="scc-note-decisions" class="scc-textarea scc-textarea--tall" placeholder="What choices did the players make? What surprised you?"></textarea>
+              </div>
+              <div class="scc-note-block">
+                <label class="scc-note-label">Unexpected Moments</label>
+                <textarea id="scc-note-unexpected" class="scc-textarea scc-textarea--tall" placeholder="What went sideways? What made the table laugh or go quiet?"></textarea>
+              </div>
+              <div class="scc-note-block">
+                <label class="scc-note-label">Loose Threads</label>
+                <textarea id="scc-note-threads" class="scc-textarea scc-textarea--tall" placeholder="Hooks that weren't resolved, NPCs who said something odd, things to revisit…"></textarea>
+              </div>
+              <div class="scc-note-block">
+                <label class="scc-note-label">Follow-Up Needed</label>
+                <textarea id="scc-note-followup" class="scc-textarea scc-textarea--tall" placeholder="What do you need to prepare before the next session? What do you need to ask me about?"></textarea>
+              </div>
+              <div class="scc-note-block">
+                <label class="scc-note-label">Milestone Notes</label>
+                <textarea id="scc-note-milestone" class="scc-textarea" placeholder="XP awarded, level ups, major story beats completed…"></textarea>
+              </div>
+            </div>
+            <div class="scc-setup-actions">
+              <button class="scc-btn-primary" onclick="sccSaveNotes()">✦ Save Notes</button>
+              <button class="scc-btn-secondary" onclick="sccCopyPostSessionSummary()">📋 Copy Post-Session Summary</button>
+              <span class="scc-save-status" id="scc-notes-status"></span>
+            </div>
+          </div>
+        </div><!-- /scc-panel-notes -->
+      </div><!-- /form-session -->
+
 
       <!-- ── PLAYERS PANEL ─────────────────────── -->
       <div id="form-players" class="dm-form">
@@ -3583,6 +3794,1101 @@ function showDMToast(msg, type) {
   opacity: 0.3;
   cursor: not-allowed;
 }
+</style>
+<style>
+/* ══════════════════════════════════════════════
+   SESSION COMMAND CENTER — SCC
+   All raw values defined as --scc-* or --dm-* tokens.
+   No hardcoded hex anywhere below.
+   ══════════════════════════════════════════════ */
+:root {
+  /* SCC surfaces */
+  --scc-bg:              var(--dm-bg);
+  --scc-surface:         var(--dm-surface);
+  --scc-surface-mid:     var(--dm-surface-mid);
+  --scc-surface-high:    var(--dm-surface-high);
+  --scc-border:          var(--dm-border);
+  --scc-border-mid:      var(--dm-border-mid);
+  --scc-border-gold:     var(--dm-border-gold);
+  /* SCC DM-Only warning — red theme */
+  --scc-dm-only-bg:      rgba(248,113,113,0.06);
+  --scc-dm-only-border:  rgba(248,113,113,0.45);
+  --scc-dm-only-text:    var(--dm-red);
+  --scc-dm-only-label:   rgba(248,113,113,0.9);
+  /* SCC player knowledge — neutral */
+  --scc-pk-bg:           rgba(255,255,255,0.03);
+  --scc-pk-border:       var(--dm-border-mid);
+  --scc-pk-label:        var(--dm-text-muted);
+  /* SCC beat status */
+  --scc-beat-done-bg:    rgba(34,197,94,0.12);
+  --scc-beat-done-text:  var(--dm-green);
+  --scc-beat-prog-bg:    rgba(240,180,41,0.12);
+  --scc-beat-prog-text:  var(--dm-gold);
+  --scc-beat-todo-bg:    rgba(255,255,255,0.04);
+  --scc-beat-todo-text:  var(--dm-text-muted);
+  /* SCC difficulty */
+  --scc-diff-low:        var(--dm-green);
+  --scc-diff-moderate:   var(--dm-gold);
+  --scc-diff-high:       #c084fc;
+  --scc-diff-deadly:     var(--dm-red);
+  /* SCC initiative */
+  --scc-init-active-bg:  rgba(240,180,41,0.12);
+  --scc-init-active-border: var(--dm-border-gold);
+  --scc-init-pc-border:  rgba(96,165,250,0.4);
+  --scc-init-enemy-border: rgba(248,113,113,0.4);
+}
+/* ── Full-bleed layout (same pattern as Manage/Quests) ── */
+.dm-main:has(#form-session.active) .dm-side-panel { display: none; }
+.dm-main:has(#form-session.active) .dm-forms-panel {
+  border-right: none;
+  padding: 0;
+}
+#form-session.active {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.scc-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+/* ── SCC Header ── */
+.scc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--scc-border);
+  background: var(--scc-surface);
+  flex-shrink: 0;
+}
+.scc-header-left {}
+.scc-header-title {
+  font-family: var(--font-headers);
+  font-size: 1.1rem;
+  color: var(--dm-gold);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.scc-header-sub {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  margin-top: 0.1rem;
+}
+.scc-header-right {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.scc-tab-btn {
+  padding: 0.35rem 0.85rem;
+  background: transparent;
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-tab-btn:hover {
+  color: var(--dm-text);
+  border-color: var(--dm-border-mid);
+  background: var(--scc-surface-high);
+}
+.scc-tab-btn.active {
+  background: var(--dm-gold-dim);
+  border-color: var(--scc-border-gold);
+  color: var(--dm-gold);
+}
+/* ── Player Bar ── */
+.scc-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--scc-surface-mid);
+  border-bottom: 1px solid var(--scc-border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.scc-player-bar-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.scc-player-cards {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+.scc-player-loading {
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+.scc-player-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.85rem 0.4rem 0.6rem;
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius);
+  white-space: nowrap;
+  min-width: 180px;
+}
+.scc-player-card-name {
+  font-family: var(--font-headers);
+  font-size: 0.9rem;
+  color: var(--dm-text);
+  font-weight: 600;
+}
+.scc-player-card-sub {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-text-muted);
+  margin-top: 0.1rem;
+}
+.scc-player-card-hp {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.scc-player-hp-val {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dm-green);
+}
+.scc-player-hp-label {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  color: var(--dm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.scc-player-hp-val.warning { color: var(--dm-gold); }
+.scc-player-hp-val.danger  { color: var(--dm-red); }
+.scc-player-level-badge {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  background: var(--dm-gold-dim);
+  color: var(--dm-gold);
+  border: 1px solid var(--scc-border-gold);
+  white-space: nowrap;
+}
+/* ── SCC Panels ── */
+.scc-panel {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.scc-panel.active { display: block; }
+.scc-panel-inner {
+  padding: 1.5rem 2rem 3rem;
+  max-width: 1100px;
+}
+.scc-section-title {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-text);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-section-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.75rem;
+}
+.scc-hint {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+.scc-empty-state {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}
+/* ── Setup Grid ── */
+.scc-setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.scc-setup-card {
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  padding: 1rem;
+}
+.scc-setup-card--wide { grid-column: 1 / -1; }
+.scc-setup-card-label {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.5rem;
+}
+/* ── Inputs ── */
+.scc-input {
+  width: 100%;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 0.45rem 0.75rem;
+  transition: var(--dm-transition);
+  box-sizing: border-box;
+}
+.scc-input:focus {
+  outline: none;
+  border-color: var(--dm-gold);
+  box-shadow: var(--dm-gold-glow);
+}
+.scc-textarea {
+  width: 100%;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.6;
+  transition: var(--dm-transition);
+  box-sizing: border-box;
+}
+.scc-textarea:focus {
+  outline: none;
+  border-color: var(--dm-gold);
+  box-shadow: var(--dm-gold-glow);
+}
+.scc-textarea--tall { min-height: 120px; }
+/* ── Entity Pickers ── */
+.scc-entity-pickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.scc-picker-group {}
+.scc-picker-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.4rem;
+}
+.scc-picker-search-wrap {
+  position: relative;
+}
+.scc-picker-search {
+  width: 100%;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+  box-sizing: border-box;
+  transition: var(--dm-transition);
+}
+.scc-picker-search:focus {
+  outline: none;
+  border-color: var(--dm-gold);
+}
+.scc-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0; right: 0;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius-sm);
+  z-index: 200;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.scc-picker-dropdown.open { display: block; }
+.scc-picker-option {
+  padding: 0.5rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--dm-text);
+  cursor: pointer;
+  transition: var(--dm-transition);
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-picker-option:last-child { border-bottom: none; }
+.scc-picker-option:hover { background: var(--dm-gold-dim); color: var(--dm-gold); }
+.scc-picker-option-sub {
+  font-size: 0.7rem;
+  color: var(--dm-text-muted);
+  margin-top: 0.1rem;
+}
+.scc-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  min-height: 28px;
+}
+.scc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.7rem;
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: 20px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--dm-gold);
+  cursor: default;
+}
+.scc-chip-remove {
+  background: none;
+  border: none;
+  color: var(--dm-gold);
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.scc-chip-remove:hover { opacity: 1; }
+/* ── Buttons ── */
+.scc-btn-primary {
+  padding: 0.55rem 1.25rem;
+  background: var(--dm-gold);
+  color: var(--dm-gold-text-on);
+  border: none;
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-btn-primary:hover {
+  background: var(--dm-gold-bright);
+  box-shadow: var(--dm-gold-btn-shadow);
+}
+.scc-btn-secondary {
+  padding: 0.55rem 1.25rem;
+  background: transparent;
+  color: var(--dm-text-muted);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-btn-secondary:hover {
+  color: var(--dm-text);
+  border-color: var(--dm-text-muted);
+  background: var(--scc-surface-high);
+}
+.scc-btn-sm {
+  padding: 0.3rem 0.75rem;
+  background: transparent;
+  color: var(--dm-text-muted);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-btn-sm:hover { color: var(--dm-text); border-color: var(--dm-text-muted); }
+.scc-btn-danger { color: var(--dm-red); border-color: var(--dm-red); }
+.scc-btn-danger:hover { background: var(--dm-red-dim); }
+.scc-setup-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.scc-save-status {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--dm-green);
+  font-style: italic;
+}
+/* ── NPC Cards ── */
+.scc-npc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+.scc-npc-card {
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  overflow: hidden;
+  transition: var(--dm-transition);
+}
+.scc-npc-card:hover { border-color: var(--scc-border-gold); }
+.scc-npc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--scc-border);
+  background: var(--scc-surface-mid);
+}
+.scc-npc-name {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-gold);
+  font-weight: 600;
+}
+.scc-npc-role {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.1rem;
+}
+.scc-npc-body { padding: 0.85rem 1rem; }
+.scc-npc-personality {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--dm-text);
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+/* Player Knowledge block */
+.scc-pk-block {
+  background: var(--scc-pk-bg);
+  border: 1px solid var(--scc-pk-border);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.6rem;
+}
+.scc-pk-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--scc-pk-label);
+  margin-bottom: 0.35rem;
+}
+.scc-pk-text {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--dm-text);
+  line-height: 1.55;
+}
+/* DM Only block — red warning */
+.scc-dm-block {
+  background: var(--scc-dm-only-bg);
+  border: 1px solid var(--scc-dm-only-border);
+  border-left: 3px solid var(--scc-dm-only-border);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.6rem;
+}
+.scc-dm-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--scc-dm-only-label);
+  margin-bottom: 0.35rem;
+}
+.scc-dm-text {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--dm-red);
+  line-height: 1.55;
+}
+/* Linked quests on NPC cards */
+.scc-npc-quests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+}
+.scc-npc-quest-pill {
+  padding: 0.15rem 0.55rem;
+  background: var(--dm-related-bg);
+  border: 1px solid var(--dm-related-border);
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-blue);
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-npc-quest-pill:hover {
+  background: rgba(96,165,250,0.18);
+  color: var(--dm-text);
+}
+.scc-lookup-btn {
+  padding: 0.25rem 0.65rem;
+  background: transparent;
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-lookup-btn:hover {
+  border-color: var(--scc-border-gold);
+  color: var(--dm-gold);
+}
+/* ── Location Cards ── */
+.scc-location-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+}
+.scc-location-card {
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  padding: 1rem;
+  transition: var(--dm-transition);
+}
+.scc-location-card:hover { border-color: var(--scc-border-gold); }
+.scc-location-name {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-gold);
+  margin-bottom: 0.2rem;
+}
+.scc-location-meta {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.65rem;
+}
+.scc-color-health {
+  display: inline-block;
+  padding: 0.12rem 0.55rem;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+.scc-color-health--excellent { background: rgba(34,197,94,0.12); color: var(--dm-green); border: 1px solid rgba(34,197,94,0.25); }
+.scc-color-health--fading    { background: rgba(240,180,41,0.12); color: var(--dm-gold);  border: 1px solid rgba(240,180,41,0.25); }
+.scc-color-health--dimmed    { background: rgba(248,113,113,0.1); color: var(--dm-red);   border: 1px solid rgba(248,113,113,0.2); }
+.scc-location-desc {
+  font-family: var(--font-sans);
+  font-size: 0.83rem;
+  color: var(--dm-text);
+  line-height: 1.55;
+  margin-bottom: 0.6rem;
+}
+.scc-location-flags {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.scc-flag {
+  padding: 0.12rem 0.5rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.scc-flag--formery { background: rgba(240,180,41,0.08); color: var(--dm-gold); border: 1px solid rgba(240,180,41,0.2); }
+.scc-flag--vareth  { background: rgba(248,113,113,0.08); color: var(--dm-red);  border: 1px solid rgba(248,113,113,0.2); }
+/* ── Quest Cards (SCC) ── */
+.scc-quest-list { display: flex; flex-direction: column; gap: 1rem; }
+.scc-quest-card {
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  overflow: hidden;
+}
+.scc-quest-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--scc-surface-mid);
+  border-bottom: 1px solid var(--scc-border);
+  cursor: pointer;
+}
+.scc-quest-card-header:hover { background: var(--scc-surface-high); }
+.scc-quest-name {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-gold);
+}
+.scc-quest-card-body { padding: 0.85rem 1rem; }
+/* Beat progress rail */
+.scc-beat-rail {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1rem;
+  border-radius: var(--dm-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--scc-border);
+}
+.scc-beat-seg {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  text-align: center;
+  border-right: 1px solid var(--scc-border);
+  cursor: pointer;
+  transition: var(--dm-transition);
+  line-height: 1.3;
+}
+.scc-beat-seg:last-child { border-right: none; }
+.scc-beat-seg--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); }
+.scc-beat-seg--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); font-weight: 700; }
+.scc-beat-seg--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); }
+.scc-beat-seg:hover { filter: brightness(1.2); }
+/* Beat detail list */
+.scc-beat-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.scc-beat-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--dm-radius-sm);
+  border: 1px solid var(--scc-border);
+  background: var(--scc-surface);
+}
+.scc-beat-item--completed { border-color: rgba(34,197,94,0.2); background: var(--scc-beat-done-bg); }
+.scc-beat-item--in_progress { border-color: rgba(240,180,41,0.3); background: var(--scc-beat-prog-bg); }
+.scc-beat-num {
+  font-family: var(--font-headers);
+  color: var(--dm-gold);
+  font-size: 1rem;
+  min-width: 1.2rem;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.scc-beat-content { flex: 1; }
+.scc-beat-title {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--dm-text);
+  margin-bottom: 0.2rem;
+}
+.scc-beat-desc {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-text-muted);
+  line-height: 1.5;
+}
+.scc-beat-meta {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  flex-wrap: wrap;
+}
+.scc-beat-xp {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--dm-gold);
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--scc-border-gold);
+  padding: 0.1rem 0.45rem;
+  border-radius: 8px;
+}
+.scc-beat-status-btn {
+  padding: 0.1rem 0.45rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--scc-border-mid);
+  background: var(--scc-surface-high);
+  color: var(--dm-text-muted);
+  transition: var(--dm-transition);
+}
+.scc-beat-status-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+/* ── Combat Tracker ── */
+.scc-combat-builder {
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+.scc-combat-top-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+.scc-difficulty-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+.scc-diff-label {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.2rem;
+}
+.scc-diff-value {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dm-text-muted);
+}
+.scc-diff-value.low      { color: var(--scc-diff-low); }
+.scc-diff-value.moderate { color: var(--scc-diff-moderate); }
+.scc-diff-value.high     { color: var(--scc-diff-high); }
+.scc-diff-value.deadly   { color: var(--scc-diff-deadly); }
+.scc-combatant-staging {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.scc-staging-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-staging-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text); flex: 1; }
+.scc-staging-type { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-text-muted); }
+.scc-staging-cr { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-gold); font-weight: 700; }
+.scc-staging-init {
+  width: 60px;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  padding: 0.2rem 0.4rem;
+  text-align: center;
+}
+.scc-staging-remove {
+  background: none;
+  border: none;
+  color: var(--dm-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  transition: color 0.15s;
+}
+.scc-staging-remove:hover { color: var(--dm-red); }
+/* Initiative list */
+.scc-combat-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.scc-combat-controls { display: flex; gap: 0.5rem; }
+.scc-initiative-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.scc-init-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius-sm);
+  transition: var(--dm-transition);
+}
+.scc-init-row.active-turn {
+  background: var(--scc-init-active-bg);
+  border-color: var(--scc-init-active-border);
+  box-shadow: 0 0 0 1px var(--scc-init-active-border);
+}
+.scc-init-row.is-pc   { border-left: 3px solid var(--scc-init-pc-border); }
+.scc-init-row.is-enemy { border-left: 3px solid var(--scc-init-enemy-border); }
+.scc-init-num {
+  font-family: var(--font-headers);
+  font-size: 1.1rem;
+  color: var(--dm-gold);
+  min-width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.scc-init-name { font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; color: var(--dm-text); flex: 1; }
+.scc-init-hp-wrap { display: flex; align-items: center; gap: 0.4rem; }
+.scc-init-hp-cur {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 2rem;
+  text-align: right;
+  color: var(--dm-green);
+}
+.scc-init-hp-cur.warning { color: var(--dm-gold); }
+.scc-init-hp-cur.danger  { color: var(--dm-red); }
+.scc-init-hp-max { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-muted); }
+.scc-init-hp-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--scc-border-mid);
+  background: var(--scc-surface);
+  color: var(--dm-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--dm-transition);
+  flex-shrink: 0;
+}
+.scc-init-hp-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+.scc-init-conditions {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.scc-condition-tag {
+  padding: 0.1rem 0.4rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: rgba(192,132,252,0.1);
+  border: 1px solid rgba(192,132,252,0.25);
+  color: #c084fc;
+  cursor: pointer;
+}
+.scc-condition-tag:hover { background: rgba(192,132,252,0.2); }
+.scc-add-condition-btn {
+  padding: 0.1rem 0.4rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  background: transparent;
+  border: 1px dashed var(--scc-border-mid);
+  color: var(--dm-text-muted);
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-add-condition-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+/* ── Notes Panel ── */
+.scc-notes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.scc-note-block { display: flex; flex-direction: column; gap: 0.4rem; }
+.scc-note-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dm-text-muted);
+}
+/* ── Quick Lookup Slide Panel ── */
+.scc-lookup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 998;
+  display: none;
+  pointer-events: auto;
+}
+.scc-lookup-backdrop.open { display: block; }
+.scc-lookup-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 420px;
+  max-width: 90vw;
+  background: var(--dm-surface);
+  border-left: 1px solid var(--scc-border-gold);
+  z-index: 999;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.scc-lookup-panel.open { transform: translateX(0); }
+.scc-lookup-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.scc-lookup-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--dm-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.15s;
+  padding: 0.25rem;
+}
+.scc-lookup-close:hover { color: var(--dm-red); }
+.scc-lookup-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2.5rem 1.25rem 1.5rem;
+}
+.scc-lookup-loading {
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}
+/* ── Stat Block (creature lookup) ── */
+.scc-stat-block {
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.scc-stat-block-header {
+  background: var(--dm-gold-dim);
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--scc-border-gold);
+}
+.scc-stat-block-name {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-gold);
+  font-weight: 600;
+}
+.scc-stat-block-type {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+  margin-top: 0.1rem;
+}
+.scc-stat-block-body { padding: 0.75rem 1rem; }
+.scc-stat-row-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.scc-stat-cell {
+  text-align: center;
+  padding: 0.35rem;
+  background: var(--scc-surface-mid);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-stat-cell-val {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-text);
+}
+.scc-stat-cell-mod {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-gold);
+  font-weight: 700;
+}
+.scc-stat-cell-label {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  color: var(--dm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.scc-combat-stats-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+.scc-combat-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 50px;
+}
+.scc-combat-stat-val {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-text);
+}
+.scc-combat-stat-label {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  color: var(--dm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.scc-trait-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.scc-trait-item { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.5; }
+.scc-trait-name { font-weight: 700; color: var(--dm-gold); }
 </style>
 
 <script>
@@ -5856,6 +7162,918 @@ function renderPlayers() {
         + '</div>';
       }).join('')
     + '</div>';
+}
+</script>
+<script>
+/* ══════════════════════════════════════════════
+   SESSION COMMAND CENTER — SCC JavaScript
+   All Supabase reads/writes use the anon key.
+   ══════════════════════════════════════════════ */
+var SCC_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+var SCC_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+// ── State ────────────────────────────────────────────────────────
+var SCC_SESSION    = null;   // current session_notes row
+var SCC_PROGRESS   = {};     // { quest_id: { beat_order: status } }
+var SCC_PLAYERS    = [];     // player_characters rows
+var SCC_SHEETS     = {};     // { character_id: character_sheet row }
+var SCC_COMBATANTS = [];     // staging list before combat starts
+var SCC_INITIATIVE = [];     // sorted list during combat
+var SCC_ROUND      = 1;
+var SCC_TURN_IDX   = 0;
+var SCC_IN_COMBAT  = false;
+// Entity selection state per picker type
+var SCC_SELECTED = {
+  location: [], npc: [], creature: [], quest: [], item: [], combatant: []
+};
+// ── Supabase helper ──────────────────────────────────────────────
+function sccFetch(table, params) {
+  var url = SCC_URL + '/rest/v1/' + table + '?select=*' + (params || '') + '&limit=500';
+  return fetch(url, {
+    headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+  }).then(function(r) { return r.json(); });
+}
+function sccPost(table, body, method, query) {
+  return fetch(SCC_URL + '/rest/v1/' + table + (query || ''), {
+    method: method || 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SCC_ANON,
+      'Authorization': 'Bearer ' + SCC_ANON,
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify(body)
+  });
+}
+function sccPatch(table, query, body) {
+  return fetch(SCC_URL + '/rest/v1/' + table + query, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SCC_ANON,
+      'Authorization': 'Bearer ' + SCC_ANON,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(body)
+  });
+}
+function sccEsc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// ── Tab hook ─────────────────────────────────────────────────────
+// Extend switchTab to initialise SCC when the tab is first opened
+var _origSwitchTab = switchTab;
+switchTab = function(tab) {
+  _origSwitchTab(tab);
+  if (tab === 'session') sccInit();
+};
+// ── Initialise ───────────────────────────────────────────────────
+function sccInit() {
+  sccLoadPlayers();
+  sccLoadLatestSession();
+}
+// ── PHB 2024 XP table by CR ──────────────────────────────────────
+var SCC_CR_XP = {
+  0:0, 0.125:25, 0.25:50, 0.5:100,
+  1:200, 2:450, 3:700, 4:1100, 5:1800, 6:2300, 7:2900, 8:3900,
+  9:5000, 10:5900, 11:7200, 12:8400, 13:10000, 14:11500, 15:13000,
+  16:15000, 17:18000, 18:20000, 19:22000, 20:25000,
+  21:33000, 22:41000, 23:50000, 24:62000, 30:155000
+};
+// PHB 2024 encounter multipliers by number of monsters
+function sccEncounterMultiplier(count) {
+  if (count <= 1)  return 1;
+  if (count === 2) return 1.5;
+  if (count <= 6)  return 2;
+  if (count <= 10) return 2.5;
+  if (count <= 14) return 3;
+  return 4;
+}
+// PHB 2024 XP thresholds per character per level (Low/Moderate/High/Deadly)
+var SCC_XP_THRESHOLDS = {
+  1:  [25,  50,  75,  100],
+  2:  [50,  100, 150, 200],
+  3:  [75,  150, 225, 400],
+  4:  [125, 250, 375, 500],
+  5:  [250, 500, 750, 1100],
+  6:  [300, 600, 900, 1400],
+  7:  [350, 750, 1100, 1700],
+  8:  [450, 900, 1400, 2100],
+  9:  [550, 1100, 1600, 2400],
+  10: [600, 1200, 1900, 2800]
+};
+// ── Player bar ───────────────────────────────────────────────────
+function sccLoadPlayers() {
+  sccFetch('player_characters', '&pc=eq.true&order=name').then(function(rows) {
+    SCC_PLAYERS = Array.isArray(rows) ? rows : [];
+    // Load sheets in parallel
+    var ids = SCC_PLAYERS.map(function(p) { return p.id; });
+    if (!ids.length) { sccRenderPlayerBar(); return; }
+    sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')').then(function(sheets) {
+      SCC_SHEETS = {};
+      (Array.isArray(sheets) ? sheets : []).forEach(function(s) {
+        SCC_SHEETS[s.character_id] = s;
+      });
+      sccRenderPlayerBar();
+    });
+  }).catch(function() { sccRenderPlayerBar(); });
+}
+function sccRenderPlayerBar() {
+  var el = document.getElementById('scc-player-cards');
+  if (!el) return;
+  if (!SCC_PLAYERS.length) {
+    el.innerHTML = '<div class="scc-player-loading">No player characters found yet.</div>';
+    return;
+  }
+  el.innerHTML = SCC_PLAYERS.map(function(p) {
+    var sheet   = SCC_SHEETS[p.id] || {};
+    var hpCur   = sheet.hp_current != null ? sheet.hp_current : '—';
+    var hpMax   = sheet.hp_max     != null ? sheet.hp_max     : '—';
+    var level   = p.level || 1;
+    var scores  = p.ability_scores || {};
+    var dexMod  = scores.dex ? Math.floor((scores.dex - 10) / 2) : 0;
+    var modSign = dexMod >= 0 ? '+' : '';
+    // HP colour
+    var hpClass = '';
+    if (hpMax && hpCur !== '—') {
+      var pct = hpCur / hpMax;
+      if (pct <= 0.25) hpClass = 'danger';
+      else if (pct <= 0.5) hpClass = 'warning';
+    }
+    return '<div class="scc-player-card">'
+      + '<div>'
+        + '<div class="scc-player-card-name">' + sccEsc(p.name || 'Unknown') + '</div>'
+        + '<div class="scc-player-card-sub">'
+          + sccEsc((p.class_id || '').replace(/-/g,' ')) + ' · '
+          + 'DEX ' + modSign + dexMod
+        + '</div>'
+      + '</div>'
+      + '<div class="scc-player-card-hp">'
+        + '<div class="scc-player-hp-val ' + hpClass + '">' + hpCur + '/' + hpMax + '</div>'
+        + '<div class="scc-player-hp-label">HP</div>'
+      + '</div>'
+      + '<div class="scc-player-level-badge">Lv ' + level + '</div>'
+    + '</div>';
+  }).join('');
+}
+// ── Sub-panel switching ───────────────────────────────────────────
+function sccSwitchPanel(name) {
+  document.querySelectorAll('.scc-tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.scc === name);
+  });
+  document.querySelectorAll('.scc-panel').forEach(function(p) {
+    p.classList.toggle('active', p.id === 'scc-panel-' + name);
+  });
+}
+// ── Load latest (or active) session ──────────────────────────────
+function sccLoadLatestSession() {
+  sccFetch('session_notes', '&order=session_number.desc').then(function(rows) {
+    var sessions = Array.isArray(rows) ? rows : [];
+    SCC_SESSION = sessions.length ? sessions[0] : null;
+    if (SCC_SESSION) {
+      sccPopulateSetupForm(SCC_SESSION);
+      sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
+    }
+    sccRenderNpcPanel();
+    sccRenderLocationPanel();
+    sccRenderQuestPanel();
+    sccUpdateHeaderSub();
+  }).catch(function() {
+    sccRenderNpcPanel();
+    sccRenderLocationPanel();
+    sccRenderQuestPanel();
+  });
+}
+function sccUpdateHeaderSub() {
+  var el = document.getElementById('scc-header-sub');
+  if (!el) return;
+  if (!SCC_SESSION) { el.textContent = 'No active session — set up a session below'; return; }
+  el.textContent = 'Session ' + SCC_SESSION.session_number
+    + (SCC_SESSION.session_date ? ' · ' + SCC_SESSION.session_date : '')
+    + (SCC_SESSION.premise ? ' — ' + SCC_SESSION.premise : '');
+}
+function sccPopulateSetupForm(s) {
+  var setV = function(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; };
+  setV('scc-session-number', s.session_number);
+  setV('scc-session-date',   s.session_date);
+  setV('scc-session-premise', s.premise);
+  setV('scc-prep-notes',     s.prep_notes);
+  setV('scc-note-decisions', s.player_decisions);
+  setV('scc-note-unexpected', s.unexpected_moments);
+  setV('scc-note-threads',   s.loose_threads);
+  setV('scc-note-followup',  s.follow_up_needed);
+  setV('scc-note-milestone', s.milestone_notes);
+  // Restore chips from session arrays
+  var restore = function(type, ids) {
+    SCC_SELECTED[type] = [];
+    (ids || []).forEach(function(id) { sccAddChipById(type, id); });
+  };
+  restore('location', s.location_ids);
+  restore('npc',      s.npc_ids);
+  restore('creature', s.creature_ids);
+  restore('quest',    s.quest_ids_active);
+  restore('item',     s.item_ids_awarded);
+}
+// ── Entity Pickers ───────────────────────────────────────────────
+var SCC_PICKER_SOURCES = {
+  location: function() {
+    var cities = (typeof CITIES !== 'undefined' ? CITIES : []);
+    var pois   = (typeof POIS   !== 'undefined' ? POIS   : []);
+    return cities.map(function(c) { return { id: c.id, name: c.name, sub: c.type || 'City' }; })
+      .concat(pois.map(function(p) { return { id: p.id, name: p.name, sub: p.type || 'POI' }; }));
+  },
+  npc: function() {
+    return (typeof CHARACTERS !== 'undefined' ? CHARACTERS : [])
+      .map(function(c) { return { id: c.id, name: c.name, sub: c.role || c.category || '' }; });
+  },
+  creature: function() {
+    return (typeof CREATURES !== 'undefined' ? CREATURES : [])
+      .map(function(c) { return { id: c.id, name: c.name, sub: c.tier || '' }; });
+  },
+  quest: function() {
+    return (typeof QUESTS !== 'undefined' ? QUESTS : [])
+      .map(function(q) { return { id: q.id, name: q.name, sub: q.status || '' }; });
+  },
+  item: function() {
+    return (typeof ITEMS !== 'undefined' ? ITEMS : [])
+      .map(function(i) { return { id: i.id, name: i.name, sub: i.category || '' }; });
+  },
+  combatant: function() {
+    var creatures = (typeof CREATURES !== 'undefined' ? CREATURES : [])
+      .map(function(c) { return { id: c.id, name: c.name, sub: 'CR ' + (c.challenge_rating != null ? c.challenge_rating : '?'), isPC: false }; });
+    var pcs = SCC_PLAYERS.map(function(p) {
+      return { id: p.id, name: p.name, sub: 'Level ' + (p.level||1) + ' PC', isPC: true };
+    });
+    return creatures.concat(pcs);
+  }
+};
+function sccPickerSearch(type, query) {
+  var dropId = 'scc-drop-' + type;
+  var drop   = document.getElementById(dropId);
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var source = SCC_PICKER_SOURCES[type];
+  if (!source) return;
+  var results = source().filter(function(item) {
+    return item.name.toLowerCase().indexOf(query) >= 0;
+  }).slice(0, 12);
+  if (!results.length) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  drop.innerHTML = results.map(function(item) {
+    return '<div class="scc-picker-option" onclick="sccPickerSelect(\'' + type + '\',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\')">'
+      + sccEsc(item.name)
+      + (item.sub ? '<div class="scc-picker-option-sub">' + sccEsc(item.sub) + '</div>' : '')
+      + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+function sccPickerSelect(type, id, name) {
+  // Avoid duplicates
+  if (SCC_SELECTED[type] && SCC_SELECTED[type].some(function(s) { return s.id === id; })) {
+    sccPickerClose(type); return;
+  }
+  if (!SCC_SELECTED[type]) SCC_SELECTED[type] = [];
+  SCC_SELECTED[type].push({ id: id, name: name });
+  sccRenderChips(type);
+  sccPickerClose(type);
+  // If adding to combat staging, update encounter builder
+  if (type === 'combatant') {
+    sccAddToCombatStaging(id, name);
+  }
+  // Live-update the relevant panel
+  if (type === 'npc')      sccRenderNpcPanel();
+  if (type === 'location') sccRenderLocationPanel();
+  if (type === 'quest')    { sccLoadQuestProgress([id]); setTimeout(sccRenderQuestPanel, 400); }
+}
+function sccAddChipById(type, id) {
+  var source = SCC_PICKER_SOURCES[type];
+  if (!source) return;
+  var item = source().find(function(s) { return s.id === id; });
+  if (!item) return;
+  if (!SCC_SELECTED[type]) SCC_SELECTED[type] = [];
+  if (SCC_SELECTED[type].some(function(s) { return s.id === id; })) return;
+  SCC_SELECTED[type].push({ id: id, name: item.name });
+  sccRenderChips(type);
+}
+function sccPickerClose(type) {
+  var inputId = 'scc-pick-' + type;
+  var dropId  = 'scc-drop-' + type;
+  var input   = document.getElementById(inputId);
+  var drop    = document.getElementById(dropId);
+  if (input) input.value = '';
+  if (drop)  { drop.classList.remove('open'); drop.innerHTML = ''; }
+}
+function sccRemoveChip(type, id) {
+  SCC_SELECTED[type] = (SCC_SELECTED[type] || []).filter(function(s) { return s.id !== id; });
+  sccRenderChips(type);
+  if (type === 'npc')      sccRenderNpcPanel();
+  if (type === 'location') sccRenderLocationPanel();
+  if (type === 'quest')    sccRenderQuestPanel();
+  if (type === 'combatant') sccRenderStagingList();
+}
+function sccRenderChips(type) {
+  var el = document.getElementById('scc-chips-' + type);
+  if (!el) return;
+  el.innerHTML = (SCC_SELECTED[type] || []).map(function(s) {
+    return '<span class="scc-chip">'
+      + sccEsc(s.name)
+      + '<button class="scc-chip-remove" onclick="sccRemoveChip(\'' + type + '\',\'' + sccEsc(s.id) + '\')" title="Remove">✕</button>'
+    + '</span>';
+  }).join('');
+}
+// Close dropdowns on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.scc-picker-search-wrap')) {
+    document.querySelectorAll('.scc-picker-dropdown.open').forEach(function(d) {
+      d.classList.remove('open'); d.innerHTML = '';
+    });
+  }
+});
+// ── Save Session Setup ────────────────────────────────────────────
+function sccSaveSetup() {
+  var num = parseInt((document.getElementById('scc-session-number') || {}).value) || null;
+  if (!num) { showDMToast('Session number is required', 'error'); return; }
+  var body = {
+    session_number:   num,
+    session_date:     (document.getElementById('scc-session-date') || {}).value || null,
+    premise:          (document.getElementById('scc-session-premise') || {}).value.trim() || null,
+    prep_notes:       (document.getElementById('scc-prep-notes') || {}).value.trim() || null,
+    location_ids:     (SCC_SELECTED.location || []).map(function(s) { return s.id; }),
+    npc_ids:          (SCC_SELECTED.npc      || []).map(function(s) { return s.id; }),
+    creature_ids:     (SCC_SELECTED.creature  || []).map(function(s) { return s.id; }),
+    quest_ids_active: (SCC_SELECTED.quest     || []).map(function(s) { return s.id; }),
+    item_ids_awarded: (SCC_SELECTED.item      || []).map(function(s) { return s.id; })
+  };
+  sccPost('session_notes', body).then(function(r) {
+    if (r.ok) {
+      SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
+      showDMToast('Session ' + num + ' saved ✓', 'success');
+      var st = document.getElementById('scc-setup-status');
+      if (st) { st.textContent = '✓ Saved'; setTimeout(function() { st.textContent = ''; }, 3000); }
+      sccUpdateHeaderSub();
+      sccRenderNpcPanel();
+      sccRenderLocationPanel();
+      sccRenderQuestPanel();
+    } else {
+      showDMToast('Save failed — check console', 'error');
+    }
+  }).catch(function() { showDMToast('Save failed — check connection', 'error'); });
+}
+// ── NPC Panel ────────────────────────────────────────────────────
+function sccRenderNpcPanel() {
+  var el = document.getElementById('scc-npc-cards');
+  if (!el) return;
+  var selected = SCC_SELECTED.npc || [];
+  if (!selected.length) {
+    el.innerHTML = '<div class="scc-empty-state">No NPCs assigned to this session yet. Go to Setup to add them.</div>';
+    return;
+  }
+  var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  el.innerHTML = selected.map(function(sel) {
+    var c = chars.find(function(x) { return x.id === sel.id; });
+    if (!c) return '';
+    // Find quests this NPC appears in
+    var linkedQuests = quests.filter(function(q) {
+      return q.related && q.related.some(function(r) {
+        return r.collection === 'characters' && r.id === c.id;
+      });
+    });
+    // Personality — first sentence only for glance view
+    var personality = c.personality ? c.personality.split('.')[0] + '.' : '';
+    var questPills = linkedQuests.map(function(q) {
+      return '<span class="scc-npc-quest-pill" onclick="sccSwitchPanel(\'quests\')" title="' + sccEsc(q.name) + '">'
+        + sccEsc(q.name) + '</span>';
+    }).join('');
+    return '<div class="scc-npc-card">'
+      + '<div class="scc-npc-card-header">'
+        + '<div>'
+          + '<div class="scc-npc-name">' + sccEsc(c.name) + '</div>'
+          + '<div class="scc-npc-role">' + sccEsc(c.role || c.category || '') + (c.location ? ' · ' + sccEsc(c.location) : '') + '</div>'
+        + '</div>'
+        + '<button class="scc-lookup-btn" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">◈ Details</button>'
+      + '</div>'
+      + '<div class="scc-npc-body">'
+        + (personality ? '<div class="scc-npc-personality">' + sccEsc(personality) + '</div>' : '')
+        /* Player Knowledge — normal styling */
+        + (c.player_knowledge
+          ? '<div class="scc-pk-block">'
+              + '<div class="scc-pk-label">What Players Know</div>'
+              + '<div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div>'
+            + '</div>'
+          : '')
+        /* DM Only — red warning block */
+        + (c.secret || c.dm_notes
+          ? '<div class="scc-dm-block">'
+              + '<div class="scc-dm-label">⚠ DM Only — Do Not Read Aloud</div>'
+              + (c.secret   ? '<div class="scc-dm-text"><strong>Secret:</strong> ' + sccEsc(c.secret)   + '</div>' : '')
+              + (c.dm_notes ? '<div class="scc-dm-text" style="margin-top:0.4rem;"><strong>Notes:</strong> ' + sccEsc(c.dm_notes) + '</div>' : '')
+            + '</div>'
+          : '')
+        + (linkedQuests.length ? '<div class="scc-npc-quests">' + questPills + '</div>' : '')
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+// ── Location Panel ────────────────────────────────────────────────
+function sccRenderLocationPanel() {
+  var el = document.getElementById('scc-location-cards');
+  if (!el) return;
+  var selected = SCC_SELECTED.location || [];
+  if (!selected.length) {
+    el.innerHTML = '<div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>';
+    return;
+  }
+  var cities = typeof CITIES !== 'undefined' ? CITIES : [];
+  var pois   = typeof POIS   !== 'undefined' ? POIS   : [];
+  var all    = cities.concat(pois);
+  el.innerHTML = selected.map(function(sel) {
+    var loc = all.find(function(x) { return x.id === sel.id; });
+    if (!loc) return '';
+    // Color health badge class
+    var ch = (loc.color_health || '').toLowerCase();
+    var healthCls = ch.indexOf('excellent') >= 0 ? 'scc-color-health--excellent'
+                  : ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0 ? 'scc-color-health--fading'
+                  : ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 ? 'scc-color-health--dimmed'
+                  : 'scc-color-health--excellent';
+    return '<div class="scc-location-card">'
+      + '<div class="scc-location-name">' + sccEsc(loc.name) + '</div>'
+      + '<div class="scc-location-meta">'
+        + sccEsc((loc.type || '').replace(/-/g,' '))
+        + (loc.region ? ' · ' + sccEsc(loc.region) : '')
+        + (loc.nation ? ' · ' + sccEsc(loc.nation) : '')
+      + '</div>'
+      + (loc.color_health
+        ? '<span class="scc-color-health ' + healthCls + '">' + sccEsc(loc.color_health.replace(/-/g,' ')) + '</span>'
+        : '')
+      + (loc.summary ? '<div class="scc-location-desc">' + sccEsc(loc.summary) + '</div>' : '')
+      /* DM notes — red block */
+      + (loc.dm_notes
+        ? '<div class="scc-dm-block" style="margin-top:0.5rem;">'
+            + '<div class="scc-dm-label">⚠ DM Only</div>'
+            + '<div class="scc-dm-text">' + sccEsc(loc.dm_notes) + '</div>'
+          + '</div>'
+        : '')
+      + '<div class="scc-location-flags">'
+        + (loc.formery_present ? '<span class="scc-flag scc-flag--formery">📋 Formery</span>' : '')
+        + (loc.vareth_presence ? '<span class="scc-flag scc-flag--vareth">⚠ Vareth Presence</span>' : '')
+      + '</div>'
+      + '<div style="margin-top:0.6rem;">'
+        + '<button class="scc-lookup-btn" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">◈ Full Details</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+// ── Quest Progress Panel ──────────────────────────────────────────
+function sccLoadQuestProgress(questIds) {
+  if (!questIds || !questIds.length) return Promise.resolve();
+  var idList = questIds.join(',');
+  return sccFetch('quest_progress', '&quest_id=in.(' + idList + ')').then(function(rows) {
+    (Array.isArray(rows) ? rows : []).forEach(function(r) {
+      if (!SCC_PROGRESS[r.quest_id]) SCC_PROGRESS[r.quest_id] = {};
+      SCC_PROGRESS[r.quest_id][r.beat_order] = r.status;
+    });
+  });
+}
+function sccRenderQuestPanel() {
+  var el = document.getElementById('scc-quest-cards');
+  if (!el) return;
+  var selected = SCC_SELECTED.quest || [];
+  if (!selected.length) {
+    el.innerHTML = '<div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>';
+    return;
+  }
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  el.innerHTML = selected.map(function(sel) {
+    var q = quests.find(function(x) { return x.id === sel.id; });
+    if (!q) return '';
+    var beats   = q.beats || [];
+    var prog    = SCC_PROGRESS[q.id] || {};
+    // Progress rail
+    var railHtml = beats.map(function(b) {
+      var st = prog[b.order] || 'not_started';
+      var label = st === 'completed' ? '✓' : st === 'in_progress' ? '▶' : b.order;
+      return '<div class="scc-beat-seg scc-beat-seg--' + st + '" '
+        + 'onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')" '
+        + 'title="' + sccEsc(b.title || b.description || '') + '">'
+        + label
+        + (b.title ? '<br><span style="font-size:0.6rem;opacity:0.8">' + sccEsc(b.title) + '</span>' : '')
+        + '</div>';
+    }).join('');
+    // Beat detail list
+    var beatsHtml = beats.map(function(b) {
+      var st = prog[b.order] || 'not_started';
+      var stLabel = st === 'completed' ? '✓ Done' : st === 'in_progress' ? '▶ In Progress' : 'To Do';
+      return '<div class="scc-beat-item scc-beat-item--' + st + '">'
+        + '<div class="scc-beat-num">' + b.order + '</div>'
+        + '<div class="scc-beat-content">'
+          + (b.title ? '<div class="scc-beat-title">' + sccEsc(b.title) + '</div>' : '')
+          + '<div class="scc-beat-desc">' + sccEsc(b.description || '') + '</div>'
+          + '<div class="scc-beat-meta">'
+            + (b.xp ? '<span class="scc-beat-xp">+' + b.xp + ' XP</span>' : '')
+            + '<button class="scc-beat-status-btn" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')">'
+              + stLabel
+            + '</button>'
+          + '</div>'
+        + '</div>'
+      + '</div>';
+    }).join('');
+    return '<div class="scc-quest-card">'
+      + '<div class="scc-quest-card-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">'
+        + '<div class="scc-quest-name">' + sccEsc(q.name) + '</div>'
+        + '<div style="display:flex;gap:0.4rem;align-items:center;">'
+          + '<span class="q-badge q-status-' + (q.status||'available') + '">' + sccEsc(statusLabel(q.status)) + '</span>'
+          + '<span class="q-badge q-stakes-' + (q.stakes||'low') + '">' + sccEsc(q.stakes||'') + '</span>'
+        + '</div>'
+      + '</div>'
+      + '<div class="scc-quest-card-body">'
+        + (beats.length ? '<div class="scc-beat-rail">' + railHtml + '</div>' : '')
+        + (q.hook ? '<div style="font-family:var(--font-sans);font-size:0.82rem;color:var(--dm-text-muted);font-style:italic;margin-bottom:0.75rem;">' + sccEsc(q.hook) + '</div>' : '')
+        + (beats.length ? '<div class="scc-beat-list">' + beatsHtml + '</div>' : '')
+        + (q.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(q.dm_notes) + '</div></div>' : '')
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+// Cycle beat status: not_started → in_progress → completed → not_started
+function sccCycleBeatStatus(questId, beatOrder) {
+  if (!SCC_PROGRESS[questId]) SCC_PROGRESS[questId] = {};
+  var cur = SCC_PROGRESS[questId][beatOrder] || 'not_started';
+  var next = cur === 'not_started' ? 'in_progress'
+           : cur === 'in_progress' ? 'completed'
+           : 'not_started';
+  SCC_PROGRESS[questId][beatOrder] = next;
+  // Determine session number for completed beats
+  var sessionNum = SCC_SESSION ? SCC_SESSION.session_number : null;
+  sccPatch('quest_progress',
+    '?quest_id=eq.' + encodeURIComponent(questId) + '&beat_order=eq.' + beatOrder,
+    {
+      status: next,
+      completed_in_session: next === 'completed' ? sessionNum : null
+    }
+  ).then(function(r) {
+    if (r.ok) showDMToast('Beat ' + beatOrder + ' → ' + next, 'success');
+    else showDMToast('Save failed', 'error');
+  });
+  sccRenderQuestPanel();
+}
+// ── Combat Tracker ────────────────────────────────────────────────
+function sccAddToCombatStaging(id, name) {
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  var creature  = creatures.find(function(c) { return c.id === id; });
+  var pc        = SCC_PLAYERS.find(function(p) { return p.id === id; });
+  var combatant = {
+    id:    id,
+    name:  name,
+    isPC:  !!pc,
+    cr:    creature ? creature.challenge_rating : null,
+    hpMax: creature ? (creature.hp_max || 10) : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max : 20),
+    hpCur: creature ? (creature.hp_max || 10) : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
+    dexMod: (function() {
+      var scores = pc ? (pc.ability_scores || {}) : (creature ? {} : {});
+      var dex = creature ? creature.dex : (pc ? (pc.ability_scores || {}).dex : 10);
+      return dex ? Math.floor((dex - 10) / 2) : 0;
+    })(),
+    initiative: null,
+    conditions: []
+  };
+  SCC_COMBATANTS.push(combatant);
+  sccRenderStagingList();
+  sccUpdateDifficulty();
+}
+function sccRenderStagingList() {
+  var el = document.getElementById('scc-combatant-staging');
+  if (!el) return;
+  if (!SCC_COMBATANTS.length) {
+    el.innerHTML = '<div class="scc-empty-state">Add creatures and players above to build the encounter.</div>';
+    document.getElementById('scc-start-combat-btn').style.display = 'none';
+    return;
+  }
+  el.innerHTML = SCC_COMBATANTS.map(function(c, idx) {
+    var modSign = c.dexMod >= 0 ? '+' : '';
+    return '<div class="scc-staging-row">'
+      + '<span class="scc-staging-name">' + sccEsc(c.name) + '</span>'
+      + '<span class="scc-staging-type">' + (c.isPC ? 'PC' : 'Hostile Creature') + '</span>'
+      + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
+      + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
+      + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
+      + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
+    + '</div>';
+  }).join('');
+  document.getElementById('scc-start-combat-btn').style.display = '';
+}
+function sccRemoveCombatant(idx) {
+  SCC_COMBATANTS.splice(idx, 1);
+  sccRenderStagingList();
+  sccUpdateDifficulty();
+}
+// PHB 2024 encounter difficulty
+function sccUpdateDifficulty() {
+  var badge = document.getElementById('scc-diff-value');
+  if (!badge) return;
+  // Party level — average across all PCs
+  var levels = SCC_PLAYERS.map(function(p) { return p.level || 1; });
+  var avgLevel = levels.length ? Math.round(levels.reduce(function(a,b){return a+b;},0) / levels.length) : 1;
+  var thresholds = SCC_XP_THRESHOLDS[Math.min(avgLevel, 10)] || SCC_XP_THRESHOLDS[1];
+  // Sum XP from hostile creatures only
+  var enemies = SCC_COMBATANTS.filter(function(c) { return !c.isPC; });
+  if (!enemies.length) { badge.textContent = '—'; badge.className = 'scc-diff-value'; return; }
+  var rawXP = enemies.reduce(function(sum, c) {
+    var cr = parseFloat(c.cr);
+    var xp = SCC_CR_XP[cr] || 0;
+    return sum + xp;
+  }, 0);
+  var mult     = sccEncounterMultiplier(enemies.length);
+  var adjXP    = Math.round(rawXP * mult);
+  var partySize = SCC_PLAYERS.length || 3;
+  // Compare against party thresholds (multiplied by party size)
+  var diff, cls;
+  if      (adjXP < thresholds[0] * partySize) { diff = 'Trivial';  cls = 'low'; }
+  else if (adjXP < thresholds[1] * partySize) { diff = 'Low';      cls = 'low'; }
+  else if (adjXP < thresholds[2] * partySize) { diff = 'Moderate'; cls = 'moderate'; }
+  else if (adjXP < thresholds[3] * partySize) { diff = 'High';     cls = 'high'; }
+  else                                          { diff = 'Deadly';  cls = 'deadly'; }
+  badge.textContent = diff;
+  badge.className   = 'scc-diff-value ' + cls;
+}
+function sccStartCombat() {
+  // Read initiative values entered by DM, roll automatically for any blanks
+  SCC_COMBATANTS.forEach(function(c, idx) {
+    var input = document.getElementById('scc-init-input-' + idx);
+    var val   = input ? parseInt(input.value) : NaN;
+    if (isNaN(val)) {
+      // Auto-roll d20 + DEX modifier
+      c.initiative = Math.floor(Math.random() * 20) + 1 + c.dexMod;
+    } else {
+      c.initiative = val;
+    }
+  });
+  // Sort descending by initiative, ties broken by DEX modifier
+  SCC_INITIATIVE = SCC_COMBATANTS.slice().sort(function(a, b) {
+    if (b.initiative !== a.initiative) return b.initiative - a.initiative;
+    return b.dexMod - a.dexMod;
+  });
+  SCC_ROUND     = 1;
+  SCC_TURN_IDX  = 0;
+  SCC_IN_COMBAT = true;
+  document.getElementById('scc-combatant-staging').style.display = 'none';
+  document.getElementById('scc-start-combat-btn').style.display  = 'none';
+  document.getElementById('scc-initiative-tracker').style.display = '';
+  sccRenderInitiativeList();
+}
+function sccRenderInitiativeList() {
+  var counter = document.getElementById('scc-round-counter');
+  if (counter) counter.textContent = SCC_ROUND;
+  var el = document.getElementById('scc-initiative-list');
+  if (!el) return;
+  el.innerHTML = SCC_INITIATIVE.map(function(c, idx) {
+    var isActive = idx === SCC_TURN_IDX;
+    var hpPct    = c.hpMax ? c.hpCur / c.hpMax : 1;
+    var hpCls    = hpPct <= 0.25 ? 'danger' : hpPct <= 0.5 ? 'warning' : '';
+    var modSign  = c.dexMod >= 0 ? '+' : '';
+    var condTags = (c.conditions || []).map(function(cond) {
+      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove">'
+        + sccEsc(cond) + '</span>';
+    }).join('');
+    return '<div class="scc-init-row' + (isActive ? ' active-turn' : '') + (c.isPC ? ' is-pc' : ' is-enemy') + '">'
+      + '<div class="scc-init-num">' + c.initiative + '</div>'
+      + '<div class="scc-init-name">' + sccEsc(c.name) + (c.isPC ? ' <span style="font-size:0.65rem;color:var(--dm-blue);">PC</span>' : '') + '</div>'
+      + '<div class="scc-init-hp-wrap">'
+        + '<button class="scc-init-hp-btn" onclick="sccAdjustHP(' + idx + ',-1)">−</button>'
+        + '<span class="scc-init-hp-cur ' + hpCls + '">' + c.hpCur + '</span>'
+        + '<span class="scc-init-hp-max">/' + c.hpMax + '</span>'
+        + '<button class="scc-init-hp-btn" onclick="sccAdjustHP(' + idx + ',1)">+</button>'
+      + '</div>'
+      + '<div class="scc-init-conditions">'
+        + condTags
+        + '<button class="scc-add-condition-btn" onclick="sccPromptCondition(' + idx + ')">+ Condition</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+function sccNextTurn() {
+  SCC_TURN_IDX++;
+  if (SCC_TURN_IDX >= SCC_INITIATIVE.length) {
+    SCC_TURN_IDX = 0;
+    SCC_ROUND++;
+  }
+  sccRenderInitiativeList();
+}
+function sccAdjustHP(idx, delta) {
+  var c = SCC_INITIATIVE[idx];
+  if (!c) return;
+  // For larger adjustments, prompt
+  var adj = delta === 1 || delta === -1 ? delta : delta;
+  c.hpCur = Math.max(0, Math.min(c.hpMax, c.hpCur + adj));
+  sccRenderInitiativeList();
+  // If PC, write back to Supabase
+  if (c.isPC && SCC_SHEETS[c.id]) {
+    sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), { hp_current: c.hpCur });
+  }
+}
+function sccPromptCondition(idx) {
+  var CONDITIONS = ['Blinded','Charmed','Deafened','Exhaustion','Frightened','Grappled',
+    'Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
+  var pick = prompt('Add Condition:\n' + CONDITIONS.map(function(c,i){ return (i+1)+'. '+c; }).join('\n') + '\n\nType the number or name:');
+  if (!pick) return;
+  var num = parseInt(pick);
+  var cond = !isNaN(num) && num >= 1 && num <= CONDITIONS.length
+    ? CONDITIONS[num - 1]
+    : CONDITIONS.find(function(c) { return c.toLowerCase().startsWith(pick.toLowerCase()); });
+  if (cond) {
+    if (!SCC_INITIATIVE[idx].conditions) SCC_INITIATIVE[idx].conditions = [];
+    if (!SCC_INITIATIVE[idx].conditions.includes(cond)) {
+      SCC_INITIATIVE[idx].conditions.push(cond);
+      sccRenderInitiativeList();
+    }
+  }
+}
+function sccRemoveCondition(idx, cond) {
+  var c = SCC_INITIATIVE[idx];
+  if (!c || !c.conditions) return;
+  c.conditions = c.conditions.filter(function(x) { return x !== cond; });
+  sccRenderInitiativeList();
+}
+function sccEndCombat() {
+  if (!confirm('End combat and reset the encounter tracker?')) return;
+  SCC_IN_COMBAT  = false;
+  SCC_COMBATANTS = [];
+  SCC_INITIATIVE = [];
+  SCC_ROUND      = 1;
+  SCC_TURN_IDX   = 0;
+  SCC_SELECTED.combatant = [];
+  document.getElementById('scc-initiative-tracker').style.display    = 'none';
+  document.getElementById('scc-combatant-staging').style.display      = '';
+  document.getElementById('scc-start-combat-btn').style.display       = 'none';
+  sccRenderStagingList();
+  sccUpdateDifficulty();
+}
+// ── Session Notes Save ────────────────────────────────────────────
+function sccSaveNotes() {
+  var num = SCC_SESSION ? SCC_SESSION.session_number
+          : parseInt((document.getElementById('scc-session-number') || {}).value) || null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var body = {
+    session_number:     num,
+    player_decisions:   (document.getElementById('scc-note-decisions')  || {}).value || null,
+    unexpected_moments: (document.getElementById('scc-note-unexpected') || {}).value || null,
+    loose_threads:      (document.getElementById('scc-note-threads')    || {}).value || null,
+    follow_up_needed:   (document.getElementById('scc-note-followup')   || {}).value || null,
+    milestone_notes:    (document.getElementById('scc-note-milestone')  || {}).value || null
+  };
+  sccPost('session_notes', body).then(function(r) {
+    if (r.ok) {
+      SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
+      showDMToast('Session notes saved ✓', 'success');
+      var st = document.getElementById('scc-notes-status');
+      if (st) { st.textContent = '✓ Saved'; setTimeout(function() { st.textContent = ''; }, 3000); }
+    } else {
+      showDMToast('Save failed', 'error');
+    }
+  }).catch(function() { showDMToast('Save failed', 'error'); });
+}
+// ── Post-Session Summary Copy ─────────────────────────────────────
+function sccCopyPostSessionSummary() {
+  var s = SCC_SESSION || {};
+  var lines = [
+    '# Session ' + (s.session_number || '?') + ' Summary',
+    s.session_date ? 'Date: ' + s.session_date : '',
+    s.premise ? 'Premise: ' + s.premise : '',
+    '',
+    '## Player Decisions',
+    (document.getElementById('scc-note-decisions') || {}).value || '(none recorded)',
+    '',
+    '## Unexpected Moments',
+    (document.getElementById('scc-note-unexpected') || {}).value || '(none recorded)',
+    '',
+    '## Loose Threads',
+    (document.getElementById('scc-note-threads') || {}).value || '(none recorded)',
+    '',
+    '## Follow-Up Needed',
+    (document.getElementById('scc-note-followup') || {}).value || '(none recorded)',
+    '',
+    '## Milestone Notes',
+    (document.getElementById('scc-note-milestone') || {}).value || '(none recorded)',
+  ].filter(function(l) { return l !== null; }).join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(lines).then(function() {
+      showDMToast('Post-session summary copied ✓', 'success');
+    });
+  } else {
+    prompt('Copy this summary:', lines);
+  }
+}
+// ── Quick Lookup Panel ────────────────────────────────────────────
+function sccOpenLookup(type, id) {
+  var panel    = document.getElementById('scc-lookup-panel');
+  var backdrop = document.getElementById('scc-lookup-backdrop');
+  var content  = document.getElementById('scc-lookup-content');
+  if (!panel || !content) return;
+  content.innerHTML = '<div class="scc-lookup-loading">Loading…</div>';
+  panel.classList.add('open');
+  backdrop.classList.add('open');
+  var html = '';
+  if (type === 'character') {
+    var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+    var c = chars.find(function(x) { return x.id === id; });
+    if (!c) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    // Related quests
+    var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+    var relQ   = quests.filter(function(q) {
+      return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === c.id; });
+    });
+    html = '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(c.name) + '</div>'
+      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">'
+        + sccEsc(c.role || c.category || '') + (c.location ? ' · ' + sccEsc(c.location) : '') + '</div>'
+      + (c.appearance ? '<div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);line-height:1.55;margin-bottom:0.75rem;font-style:italic;">' + sccEsc(c.appearance) + '</div>' : '')
+      + (c.personality ? '<div class="scc-pk-block"><div class="scc-pk-label">Personality</div><div class="scc-pk-text">' + sccEsc(c.personality) + '</div></div>' : '')
+      + (c.motivation  ? '<div class="scc-pk-block"><div class="scc-pk-label">Motivation</div><div class="scc-pk-text">' + sccEsc(c.motivation) + '</div></div>' : '')
+      + (c.player_knowledge ? '<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div></div>' : '')
+      + (c.contradiction ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ Contradiction</div><div class="scc-dm-text">' + sccEsc(c.contradiction) + '</div></div>' : '')
+      + (c.secret   ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ Secret</div><div class="scc-dm-text">' + sccEsc(c.secret) + '</div></div>' : '')
+      + (c.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(c.dm_notes) + '</div></div>' : '')
+      + (relQ.length ? '<div class="scc-pk-block"><div class="scc-pk-label">Appears in Quests</div>'
+          + relQ.map(function(q) { return '<div class="scc-pk-text">📜 ' + sccEsc(q.name) + '</div>'; }).join('')
+        + '</div>' : '');
+  } else if (type === 'city') {
+    var cities = (typeof CITIES !== 'undefined' ? CITIES : []).concat(typeof POIS !== 'undefined' ? POIS : []);
+    var loc    = cities.find(function(x) { return x.id === id; });
+    if (!loc) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    html = '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(loc.name) + '</div>'
+      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);margin-bottom:1rem;">' + sccEsc((loc.type||'').replace(/-/g,' ')) + (loc.region ? ' · ' + sccEsc(loc.region) : '') + '</div>'
+      + (loc.description ? '<div class="scc-pk-block"><div class="scc-pk-label">Description</div><div class="scc-pk-text">' + sccEsc(loc.description) + '</div></div>' : '')
+      + (loc.strategic_importance ? '<div class="scc-pk-block"><div class="scc-pk-label">Strategic Importance</div><div class="scc-pk-text">' + sccEsc(loc.strategic_importance) + '</div></div>' : '')
+      + (loc.tone ? '<div class="scc-pk-block"><div class="scc-pk-label">Tone</div><div class="scc-pk-text">' + sccEsc(loc.tone) + '</div></div>' : '')
+      + (loc.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(loc.dm_notes) + '</div></div>' : '');
+    // Landmarks
+    if (loc.landmarks && loc.landmarks.length) {
+      html += '<div class="scc-pk-block"><div class="scc-pk-label">Landmarks</div>'
+        + loc.landmarks.map(function(lm) {
+            return '<div class="scc-pk-text" style="margin-bottom:0.4rem;"><strong style="color:var(--dm-gold);">' + sccEsc(lm.name) + '</strong> — ' + sccEsc(lm.description || '') + '</div>';
+          }).join('')
+        + '</div>';
+    }
+  } else if (type === 'creature') {
+    var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+    var cr = creatures.find(function(x) { return x.id === id; });
+    if (!cr) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    // Ability score modifiers
+    var abMod = function(score) {
+      if (!score) return '—';
+      var mod = Math.floor((score - 10) / 2);
+      return (mod >= 0 ? '+' : '') + mod;
+    };
+    var hasAbilities = cr.str || cr.dex || cr.con || cr.int || cr.wis || cr.cha;
+    html = '<div class="scc-stat-block">'
+      + '<div class="scc-stat-block-header">'
+        + '<div class="scc-stat-block-name">' + sccEsc(cr.name) + '</div>'
+        + '<div class="scc-stat-block-type">' + sccEsc((cr.size||'') + (cr.creature_type ? ' ' + cr.creature_type : '') + (cr.creature_alignment ? ', ' + cr.creature_alignment : '')) + '</div>'
+      + '</div>'
+      + '<div class="scc-stat-block-body">'
+        + '<div class="scc-combat-stats-row">'
+          + (cr.ac    != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.ac    + '</div><div class="scc-combat-stat-label">AC' + (cr.ac_notes ? '<br><span style="font-size:0.6rem">'+sccEsc(cr.ac_notes)+'</span>' : '') + '</div></div>' : '')
+          + (cr.hp_max != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.hp_max + '</div><div class="scc-combat-stat-label">HP' + (cr.hit_dice ? '<br><span style="font-size:0.6rem">'+sccEsc(cr.hit_dice)+'</span>' : '') + '</div></div>' : '')
+          + (cr.speed_ft != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.speed_ft + ' ft</div><div class="scc-combat-stat-label">Speed</div></div>' : '')
+          + (cr.challenge_rating != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.challenge_rating + '</div><div class="scc-combat-stat-label">CR</div></div>' : '')
+          + (cr.xp_value != null ? '<div class="scc-combat-stat"><div class="scc-combat-stat-val">' + cr.xp_value + '</div><div class="scc-combat-stat-label">XP</div></div>' : '')
+        + '</div>'
+        + (hasAbilities
+          ? '<div class="scc-stat-row-grid">'
+              + ['STR','DEX','CON','INT','WIS','CHA'].map(function(ab) {
+                  var key = ab.toLowerCase();
+                  var val = cr[key];
+                  return '<div class="scc-stat-cell">'
+                    + '<div class="scc-stat-cell-val">' + (val || '—') + '</div>'
+                    + '<div class="scc-stat-cell-mod">' + abMod(val) + '</div>'
+                    + '<div class="scc-stat-cell-label">' + ab + '</div>'
+                  + '</div>';
+                }).join('')
+            + '</div>'
+          : '')
+        + (cr.senses   ? '<div class="scc-pk-block"><div class="scc-pk-label">Senses</div><div class="scc-pk-text">' + sccEsc(cr.senses) + '</div></div>' : '')
+        + (cr.languages ? '<div class="scc-pk-block"><div class="scc-pk-label">Languages</div><div class="scc-pk-text">' + sccEsc(cr.languages) + '</div></div>' : '')
+        + (cr.traits && cr.traits.length
+          ? '<div class="scc-pk-block"><div class="scc-pk-label">Traits</div><div class="scc-trait-list">'
+              + cr.traits.map(function(t) { return '<div class="scc-trait-item"><span class="scc-trait-name">' + sccEsc(t.name||'') + '.</span> ' + sccEsc(t.description||'') + '</div>'; }).join('')
+            + '</div></div>'
+          : '')
+        + (cr.actions && cr.actions.length
+          ? '<div class="scc-pk-block"><div class="scc-pk-label">Actions</div><div class="scc-trait-list">'
+              + cr.actions.map(function(a) { return '<div class="scc-trait-item"><span class="scc-trait-name">' + sccEsc(a.name||'') + '.</span> ' + sccEsc(a.description||'') + '</div>'; }).join('')
+            + '</div></div>'
+          : '')
+        + (cr.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">' + sccEsc(cr.dm_notes) + '</div></div>' : '')
+      + '</div>'
+    + '</div>'
+    + (cr.description ? '<div class="scc-pk-block" style="margin-top:0.5rem;"><div class="scc-pk-label">Description</div><div class="scc-pk-text">' + sccEsc(cr.description) + '</div></div>' : '')
+    + (cr.behavior    ? '<div class="scc-pk-block"><div class="scc-pk-label">Behavior</div><div class="scc-pk-text">' + sccEsc(cr.behavior) + '</div></div>' : '');
+  }
+  content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
+}
+function sccCloseLookup() {
+  var panel    = document.getElementById('scc-lookup-panel');
+  var backdrop = document.getElementById('scc-lookup-backdrop');
+  if (panel)    panel.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
 }
 </script>
 </body>
