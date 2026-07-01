@@ -4072,6 +4072,7 @@ function showDMToast(msg, type) {
 .scc-panel-inner {
   padding: 1.5rem 2rem 3rem;
   max-width: 1100px;
+  overflow: visible;
 }
 .scc-section-title {
   font-family: var(--font-headers);
@@ -4146,6 +4147,26 @@ function showDMToast(msg, type) {
   border-color: var(--dm-gold);
   box-shadow: var(--dm-gold-glow);
 }
+.scc-input[type="date"] {
+  -webkit-appearance: auto;
+  appearance: auto;
+  color-scheme: dark;
+  cursor: pointer;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f0b429' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px;
+}
+.scc-input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 2rem;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  cursor: pointer;
+}
+.scc-setup-card { position: relative; }
 .scc-textarea {
   width: 100%;
   background: var(--dm-surface);
@@ -4172,6 +4193,7 @@ function showDMToast(msg, type) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
+  overflow: visible;
 }
 .scc-picker-group { position: relative; }
 .scc-picker-label {
@@ -5065,17 +5087,16 @@ function showDMToast(msg, type) {
 .scc-rel-badge:hover { filter: brightness(1.2); }
 /* ── Browse All panel ── */
 .scc-browse-panel {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0; right: 0;
+  position: fixed;
   background: var(--dm-surface-high);
   border: 1px solid var(--scc-border-gold);
   border-radius: var(--dm-radius);
-  z-index: 300;
-  max-height: 320px;
+  z-index: 1000;
+  max-height: 360px;
   overflow-y: auto;
   display: none;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  width: 420px;
 }
 .scc-browse-panel.open { display: block; }
 .scc-browse-group-header {
@@ -8110,13 +8131,24 @@ function sccBrowseGroups(type) {
     var cities = typeof CITIES !== 'undefined' ? CITIES : [];
     var pois   = typeof POIS   !== 'undefined' ? POIS   : [];
     var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
-    // Group by region → nation
+    // Nation slug → display name lookup (indexed by both n.id and normalized slug)
+    var nationNames = {};
+    nations.forEach(function(n) {
+      var displayName = n.name || toTitle(n.id);
+      nationNames[n.id] = displayName;
+      var slug = (n.id || '').toLowerCase().replace(/[_\s]/g, '-');
+      nationNames[slug] = displayName;
+    });
+    var toTitleSlug = function(slug) {
+      return slug.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    };
+    // Group by region → nation using real display names
     var groups = {};
     var addEntry = function(entry, cat) {
-      var region = (entry.region || 'unknown').replace(/-/g,' ');
-      var nation = (entry.nation || 'unknown').replace(/-/g,' ');
-      var rKey = region.charAt(0).toUpperCase() + region.slice(1);
-      var nKey = nation.charAt(0).toUpperCase() + nation.slice(1);
+      var rSlug = (entry.region || 'unknown').toLowerCase().trim().replace(/[_\s]/g, '-');
+      var nSlug = (entry.nation || 'unknown').toLowerCase().trim().replace(/[_\s]/g, '-');
+      var rKey = nationNames[rSlug] || toTitleSlug(rSlug);
+      var nKey = nationNames[nSlug] || toTitleSlug(nSlug);
       if (!groups[rKey]) groups[rKey] = {};
       if (!groups[rKey][nKey]) groups[rKey][nKey] = [];
       groups[rKey][nKey].push({ id: entry.id, name: entry.name, cat: cat });
@@ -8221,13 +8253,25 @@ function sccToggleBrowse(type) {
   var panel = document.getElementById('scc-browse-' + type);
   if (!panel) return;
   var isOpen = panel.classList.contains('open');
-  // Close all other browse panels
   document.querySelectorAll('.scc-browse-panel.open').forEach(function(p) {
     p.classList.remove('open');
   });
-  if (isOpen) return; // was open, now closed — done
-  // Build and open
+  if (isOpen) return;
   sccRenderBrowsePanel(type, panel);
+  var btn = document.querySelector('.scc-browse-btn[onclick="sccToggleBrowse(\'' + type + '\')"]');
+  if (!btn) btn = document.querySelector('[onclick*="sccToggleBrowse(\'' + type + '\')"]');
+  if (btn) {
+    var rect   = btn.getBoundingClientRect();
+    var panelW = 420;
+    var top    = rect.bottom + 4;
+    var left   = rect.left;
+    if (left + panelW > window.innerWidth - 12) {
+      left = window.innerWidth - panelW - 12;
+    }
+    if (left < 8) left = 8;
+    panel.style.top  = top  + 'px';
+    panel.style.left = left + 'px';
+  }
   panel.classList.add('open');
 }
 
