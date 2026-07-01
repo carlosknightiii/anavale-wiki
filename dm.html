@@ -5036,9 +5036,12 @@ function showDMToast(msg, type) {
 .scc-audit-mode .scc-session-complete-bar { display: none !important; }
 .scc-audit-mode .scc-input { display: none !important; }
 .scc-audit-mode .scc-textarea { display: none !important; }
-.scc-audit-mode .scc-picker-controls { pointer-events: none; opacity: 0.5; }
+.scc-audit-mode .scc-picker-search { display: none !important; }
+.scc-audit-mode .scc-browse-btn { display: none !important; }
+.scc-audit-mode .scc-picker-controls { gap: 0; }
 .scc-audit-mode .scc-chip-remove { display: none !important; }
 .scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }
+.scc-audit-mode .scc-picker-label { margin-bottom: 0.4rem; }
 .scc-audit-readonly-val {
   font-family: var(--font-sans);
   font-size: 0.9rem;
@@ -8037,13 +8040,15 @@ function sccLoadHistorySession(sessionNum) {
   sccPopulateSetupForm(session);
   sccSetSessionDisplay(sessionNum);
   // Show static date display, hide input
-  var dateInput = document.getElementById('scc-session-date');
+  var dateInput   = document.getElementById('scc-session-date');
   var dateDisplay = document.getElementById('scc-session-date-display');
-  if (dateInput && dateDisplay) {
+  if (dateInput)   dateInput.style.display   = 'none';
+  if (dateDisplay) {
     var dateVal = session.session_date ? String(session.session_date).slice(0,10) : null;
     dateDisplay.textContent = dateVal
       ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })
       : '—';
+    dateDisplay.style.display = '';
     dateDisplay.className = 'scc-audit-readonly-val' + (dateVal ? '' : ' empty');
   }
   sccLoadQuestProgress(session.quest_ids_active || []).then(function() {
