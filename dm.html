@@ -2550,10 +2550,46 @@
         </div><!-- /scc-panel-setup -->
         <!-- ══ PANEL: NPCs ════════════════════ -->
         <div class="scc-panel" id="scc-panel-npcs">
-          <div class="scc-panel-inner">
-            <div class="scc-section-title">NPCs This Session</div>
-            <div class="scc-hint">Add NPCs in Setup first. Click any card to open the full quick-lookup panel.</div>
-            <div id="scc-npc-cards" class="scc-npc-grid">
+          <div class="scc-panel-inner scc-npc-panel-inner">
+            <div class="scc-npc-page-header">
+              <div class="scc-npc-page-label">SESSION</div>
+              <div class="scc-npc-page-title">NPCs</div>
+              <div class="scc-npc-page-hint">Add NPCs in Setup first. Click any card to open the full quick-lookup panel.</div>
+            </div>
+            <div class="scc-npc-controls">
+              <div class="scc-npc-search-wrap">
+                <label class="scc-npc-control-label">Search</label>
+                <input type="text" id="scc-npc-search" class="scc-npc-search-input" placeholder="Search..." oninput="sccFilterNpcs()">
+              </div>
+              <div class="scc-npc-filters">
+                <div class="scc-npc-filter-group">
+                  <label class="scc-npc-control-label">Relationship</label>
+                  <select id="scc-npc-filter-rel" class="scc-npc-select" onchange="sccFilterNpcs()">
+                    <option value="">All</option>
+                    <option value="ally">Ally</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="caution">Caution</option>
+                    <option value="hostile">Hostile</option>
+                    <option value="deity">Deity</option>
+                  </select>
+                </div>
+                <div class="scc-npc-filter-group">
+                  <label class="scc-npc-control-label">Location</label>
+                  <select id="scc-npc-filter-loc" class="scc-npc-select" onchange="sccFilterNpcs()">
+                    <option value="">All</option>
+                  </select>
+                </div>
+                <div class="scc-npc-filter-group">
+                  <label class="scc-npc-control-label">Sort</label>
+                  <select id="scc-npc-sort" class="scc-npc-select" onchange="sccFilterNpcs()">
+                    <option value="az">A-Z</option>
+                    <option value="za">Z-A</option>
+                    <option value="rel">Relationship</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div id="scc-npc-cards" class="scc-npc-list">
               <div class="scc-empty-state">No NPCs assigned to this session yet. Go to Setup to add them.</div>
             </div>
           </div>
@@ -4384,6 +4420,235 @@ function showDMToast(msg, type) {
   color: var(--dm-green);
   font-style: italic;
 }
+/* ── NPC Panel v2 — Figma redesign ── */
+.scc-npc-panel-inner { padding: 2rem 2.5rem; }
+.scc-npc-page-header { margin-bottom: 2rem; }
+.scc-npc-page-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.2rem;
+}
+.scc-npc-page-title {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--dm-text);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+.scc-npc-page-hint {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--dm-text-muted);
+}
+.scc-npc-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.scc-npc-search-wrap { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 260px; }
+.scc-npc-filters { display: flex; gap: 1.5rem; align-items: flex-end; }
+.scc-npc-filter-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.scc-npc-control-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--dm-text);
+}
+.scc-npc-search-input, .scc-npc-select {
+  background: #1e1e2a;
+  border: 1px solid #393944;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--dm-transition);
+}
+.scc-npc-search-input { width: 100%; }
+.scc-npc-select { min-width: 90px; cursor: pointer; }
+.scc-npc-search-input:focus, .scc-npc-select:focus { border-color: var(--dm-gold); }
+.scc-npc-search-input::placeholder { color: #757575; }
+.scc-npc-list { display: flex; flex-direction: column; gap: 1rem; }
+/* NPC v2 card */
+.scc-npc2-card {
+  background: #202739;
+  border-radius: 24px;
+  box-shadow: 2px 5px 11px 0 black;
+  overflow: hidden;
+}
+.scc-npc2-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-npc2-header:hover { background: rgba(255,255,255,0.02); }
+.scc-npc2-portrait-wrap { flex-shrink: 0; }
+.scc-npc2-portrait, .scc-npc2-portrait-fallback {
+  width: 100px;
+  height: 100px;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+.scc-npc2-portrait-fallback {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--dm-border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-headers);
+  font-size: 2rem;
+  color: var(--dm-gold);
+}
+.scc-npc2-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.scc-npc2-rel-badge {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+  cursor: pointer;
+  width: fit-content;
+  margin-bottom: 0.15rem;
+  user-select: none;
+}
+.scc-npc2-name {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dm-text);
+  line-height: 1.15;
+}
+.scc-npc2-meta {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--dm-text);
+  font-weight: 300;
+  line-height: 1.4;
+}
+.scc-npc2-meta-bold { font-weight: 700; }
+.scc-npc2-actions { display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0; }
+.scc-npc2-quicklook {
+  padding: 0.45rem 1.1rem;
+  background: transparent;
+  border: 1px solid var(--dm-gold);
+  border-radius: 100px;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-npc2-quicklook:hover { background: var(--dm-gold-dim); }
+.scc-npc2-chevron {
+  background: none;
+  border: none;
+  color: var(--dm-text);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.25s ease;
+  line-height: 1;
+}
+/* Expanded body */
+.scc-npc2-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.5rem 1.5rem;
+}
+.scc-npc2-section {
+  background: #0b0e16;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.scc-npc2-quote {
+  justify-content: space-between;
+}
+.scc-npc2-quote-mark {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--dm-text);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.scc-npc2-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  width: 44px;
+  text-align: center;
+  line-height: 44px;
+}
+.scc-npc2-icon-red { filter: none; }
+.scc-npc2-section-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.scc-npc2-section-title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--dm-text);
+}
+.scc-npc2-section-body {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--dm-text);
+  line-height: 1.6;
+  font-weight: 400;
+}
+/* DM Only block */
+.scc-npc2-dm-block {
+  background: #0b0e16;
+  border: 3px solid #d62b2b;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+.scc-npc2-dm-title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #d62b2b;
+  margin-bottom: 1rem;
+}
+.scc-npc2-dm-rows { display: flex; flex-direction: column; gap: 1rem; }
+.scc-npc2-dm-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #2c3757;
+}
+.scc-npc2-dm-rows > .scc-npc2-dm-row:last-child { border-bottom: none; padding-bottom: 0; }
+.scc-npc2-red { color: #d62b2b !important; }
+.scc-npc2-quest-link {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--dm-gold);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+}
+.scc-npc2-quest-link:hover { color: var(--dm-text); }
 /* ── NPC Cards ── */
 .scc-npc-grid {
   display: grid;
@@ -8806,6 +9071,23 @@ function sccSaveSetup() {
 
 // ── NPC Panel ────────────────────────────────────────────────────
 function sccRenderNpcPanel() {
+  // Populate location filter from current NPCs
+  var locSel = document.getElementById('scc-npc-filter-loc');
+  if (locSel) {
+    var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+    var locs = [];
+    (SCC_SELECTED.npc || []).forEach(function(sel) {
+      var c = chars.find(function(x) { return x.id === sel.id; });
+      if (c && c.location && locs.indexOf(c.location) < 0) locs.push(c.location);
+    });
+    var curLoc = locSel.value;
+    locSel.innerHTML = '<option value="">All</option>'
+      + locs.map(function(l) { return '<option value="' + sccEsc(l) + '"' + (l === curLoc ? ' selected' : '') + '>' + sccEsc(l) + '</option>'; }).join('');
+  }
+  sccFilterNpcs();
+}
+
+function sccFilterNpcs() {
   var el = document.getElementById('scc-npc-cards');
   if (!el) return;
   var selected = SCC_SELECTED.npc || [];
@@ -8814,45 +9096,154 @@ function sccRenderNpcPanel() {
     return;
   }
   var chars  = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
-  var quests = typeof QUESTS     !== 'undefined' ? QUESTS     : [];
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var query  = ((document.getElementById('scc-npc-search') || {}).value || '').toLowerCase().trim();
+  var relF   = ((document.getElementById('scc-npc-filter-rel') || {}).value || '');
+  var locF   = ((document.getElementById('scc-npc-filter-loc') || {}).value || '');
+  var sortV  = ((document.getElementById('scc-npc-sort') || {}).value || 'az');
 
-  el.innerHTML = selected.map(function(sel) {
-    var c = chars.find(function(x) { return x.id === sel.id; });
-    if (!c) return '';
-    var rel = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
+  var npcs = selected.map(function(sel) {
+    return chars.find(function(x) { return x.id === sel.id; });
+  }).filter(function(c) {
+    if (!c) return false;
+    if (query && c.name.toLowerCase().indexOf(query) < 0) return false;
+    if (relF && (SCC_NPC_RELATIONSHIPS[c.id] || 'neutral') !== relF) return false;
+    if (locF && (c.location || '') !== locF) return false;
+    return true;
+  });
+
+  if (sortV === 'az') npcs.sort(function(a, b) { return a.name.localeCompare(b.name); });
+  else if (sortV === 'za') npcs.sort(function(a, b) { return b.name.localeCompare(a.name); });
+  else if (sortV === 'rel') {
+    var order = ['ally','neutral','caution','hostile','deity'];
+    npcs.sort(function(a, b) {
+      return order.indexOf(SCC_NPC_RELATIONSHIPS[a.id]||'neutral') - order.indexOf(SCC_NPC_RELATIONSHIPS[b.id]||'neutral');
+    });
+  }
+
+  if (!npcs.length) {
+    el.innerHTML = '<div class="scc-empty-state">No NPCs match the current filters.</div>';
+    return;
+  }
+
+  // Relationship badge bg colors (solid fill, dark text)
+  var REL_BG = { ally:'#4ade80', neutral:'#60a5fa', caution:'#f0b429', hostile:'#f87171', deity:'#c084fc' };
+  var REL_TEXT_COLOR = '#0b0e16';
+
+  el.innerHTML = npcs.map(function(c) {
+    var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
     var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
-    var relIcon  = SCC_REL_ICONS[rel]  || '🔵';
-    var personality = c.personality ? c.personality.split('.')[0] + '.' : '';
+    var relBg    = REL_BG[rel] || REL_BG.neutral;
     var linkedQuests = quests.filter(function(q) {
       return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === c.id; });
     });
-    return '<div class="scc-npc-card rel-' + rel + '">'
-      + '<div class="scc-npc-card-header">'
-        + '<div>'
-          + '<div class="scc-npc-name">' + sccEsc(c.name) + '</div>'
-          + '<div class="scc-npc-role">' + sccEsc(c.role || c.category || '') + (c.location ? ' · ' + sccEsc(c.location) : '') + '</div>'
+
+    // Expanded body sections
+    var bodyHtml = '';
+    if (c.read_aloud) {
+      bodyHtml += '<div class="scc-npc2-section scc-npc2-quote">'
+        + '<span class="scc-npc2-quote-mark">“</span>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Visualization</div>'
+          + '<div class="scc-npc2-section-body">' + sccEsc(c.read_aloud) + '</div>'
         + '</div>'
-        + '<div style="display:flex;gap:0.4rem;align-items:center;">'
-          + '<span class="scc-rel-badge rel-' + rel + '" onclick="sccCycleRelationship(\'' + sccEsc(c.id) + '\')" title="Click to change relationship">' + relIcon + ' ' + relLabel + '</span>'
-          + '<button class="scc-lookup-btn" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">◈ Details</button>'
+        + '<span class="scc-npc2-quote-mark">”</span>'
+      + '</div>';
+    }
+    if (c.personality) {
+      bodyHtml += '<div class="scc-npc2-section">'
+        + '<div class="scc-npc2-icon">🎭</div>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Personality</div>'
+          + '<div class="scc-npc2-section-body">' + sccEsc(c.personality) + '</div>'
         + '</div>'
-      + '</div>'
-      + '<div class="scc-npc-body">'
-        + (personality ? '<div class="scc-npc-personality">' + sccEsc(personality) + '</div>' : '')
-        + (c.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">' + sccEsc(c.read_aloud) + '</div></div>' : '')
-        + (c.player_knowledge ? '<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div></div>' : '')
-        + (c.secret || c.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Only — Do Not Read Aloud</div>'
-            + (c.secret   ? '<div class="scc-dm-text"><strong>Secret:</strong> '   + sccEsc(c.secret)   + '</div>' : '')
-            + (c.dm_notes ? '<div class="scc-dm-text" style="margin-top:0.35rem;"><strong>Notes:</strong> ' + sccEsc(c.dm_notes) + '</div>' : '')
-          + '</div>' : '')
-        + (linkedQuests.length ? '<div class="scc-npc-quests">'
+      + '</div>';
+    }
+    if (c.summary || c.description) {
+      bodyHtml += '<div class="scc-npc2-section">'
+        + '<div class="scc-npc2-icon">📖</div>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Summary</div>'
+          + '<div class="scc-npc2-section-body">' + sccEsc(c.summary || c.description) + '</div>'
+        + '</div>'
+      + '</div>';
+    }
+    var hasDm = c.secret || c.dm_notes || linkedQuests.length;
+    if (hasDm) {
+      bodyHtml += '<div class="scc-npc2-dm-block">'
+        + '<div class="scc-npc2-dm-title">⚠ DM Only — Do Not Read Aloud</div>'
+        + '<div class="scc-npc2-dm-rows">';
+      if (c.secret) {
+        bodyHtml += '<div class="scc-npc2-dm-row">'
+          + '<div class="scc-npc2-icon scc-npc2-icon-red">🔒</div>'
+          + '<div class="scc-npc2-section-txt">'
+            + '<div class="scc-npc2-section-title scc-npc2-red">Secret</div>'
+            + '<div class="scc-npc2-section-body">' + sccEsc(c.secret) + '</div>'
+          + '</div>'
+        + '</div>';
+      }
+      if (c.dm_notes) {
+        bodyHtml += '<div class="scc-npc2-dm-row">'
+          + '<div class="scc-npc2-icon scc-npc2-icon-red">📋</div>'
+          + '<div class="scc-npc2-section-txt">'
+            + '<div class="scc-npc2-section-title scc-npc2-red">Notes</div>'
+            + '<div class="scc-npc2-section-body">' + sccEsc(c.dm_notes) + '</div>'
+          + '</div>'
+        + '</div>';
+      }
+      if (linkedQuests.length) {
+        bodyHtml += '<div class="scc-npc2-dm-row">'
+          + '<div class="scc-npc2-icon scc-npc2-icon-red">📜</div>'
+          + '<div class="scc-npc2-section-txt">'
+            + '<div class="scc-npc2-section-title scc-npc2-red">Linked Quests</div>'
             + linkedQuests.map(function(q) {
-                return '<span class="scc-npc-quest-pill" onclick="sccSwitchPanel(\'quests\')">' + sccEsc(q.name) + '</span>';
+                return '<div class="scc-npc2-quest-link" onclick="sccSwitchPanel(\'quests\')">' + sccEsc(q.name) + '</div>';
               }).join('')
-          + '</div>' : '')
+          + '</div>'
+        + '</div>';
+      }
+      bodyHtml += '</div></div>';
+    }
+
+    return '<div class="scc-npc2-card" id="scc-npc2-' + sccEsc(c.id) + '">'
+      + '<div class="scc-npc2-header" onclick="sccToggleNpc2(\'' + sccEsc(c.id) + '\')">'
+        + '<div class="scc-npc2-portrait-wrap">'
+          + (c.image
+            ? '<img class="scc-npc2-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/' + sccEsc(c.id) + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+            + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(c.name.charAt(0)) + '</div>'
+            : '<div class="scc-npc2-portrait-fallback">' + sccEsc(c.name.charAt(0)) + '</div>')
+        + '</div>'
+        + '<div class="scc-npc2-info">'
+          + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + REL_TEXT_COLOR + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
+          + '<div class="scc-npc2-name">' + sccEsc(c.name) + '</div>'
+          + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Role:</span> ' + sccEsc(c.role || c.category || '—') + '</div>'
+          + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Location:</span> ' + sccEsc(c.location || '—') + '</div>'
+        + '</div>'
+        + '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
+          + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">QUICK LOOK</button>'
+          + '<button class="scc-npc2-chevron" id="scc-npc2-chev-' + sccEsc(c.id) + '" onclick="event.stopPropagation();sccToggleNpc2(\'' + sccEsc(c.id) + '\')">▼</button>'
+        + '</div>'
       + '</div>'
+      + (bodyHtml ? '<div class="scc-npc2-body" id="scc-npc2-body-' + sccEsc(c.id) + '" style="display:none">'
+          + bodyHtml
+        + '</div>' : '')
     + '</div>';
   }).join('');
+}
+
+function sccToggleNpc2(id) {
+  var body = document.getElementById('scc-npc2-body-' + id);
+  var chev = document.getElementById('scc-npc2-chev-' + id);
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'flex';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function sccCycleRelationship2(npcId) {
+  sccCycleRelationship(npcId);
+  // Re-render to update badge color without collapsing open cards
+  sccRenderNpcPanel();
 }
 
 // ── Location Panel ────────────────────────────────────────────────
