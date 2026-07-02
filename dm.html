@@ -7904,8 +7904,22 @@ switchTab = function(tab) {
 
 // ── Init ─────────────────────────────────────────────────────────
 function sccInit() {
-  sccLoadPlayers();
-  sccLoadLatestSession();
+  // Fetch all world data fresh from Supabase so newly-added entries appear immediately
+  Promise.all([
+    sccFetch('world_characters').then(function(rows) { if (Array.isArray(rows) && rows.length) window.CHARACTERS = rows; }),
+    sccFetch('cities').then(function(rows) { if (Array.isArray(rows) && rows.length) window.CITIES = rows; }),
+    sccFetch('pois').then(function(rows) { if (Array.isArray(rows) && rows.length) window.POIS = rows; }),
+    sccFetch('nations').then(function(rows) { if (Array.isArray(rows) && rows.length) window.NATIONS = rows; }),
+    sccFetch('creatures').then(function(rows) { if (Array.isArray(rows) && rows.length) window.CREATURES = rows; }),
+    sccFetch('quests').then(function(rows) { if (Array.isArray(rows) && rows.length) window.QUESTS = rows; }),
+    sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; })
+  ]).then(function() {
+    sccLoadPlayers();
+    sccLoadLatestSession();
+  }).catch(function() {
+    sccLoadPlayers();
+    sccLoadLatestSession();
+  });
 }
 
 // ── PHB 2024 XP / CR tables ──────────────────────────────────────
