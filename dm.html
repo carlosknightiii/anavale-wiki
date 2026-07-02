@@ -8300,8 +8300,7 @@ function sccBrowseGroups(type) {
       var cat   = c.category || 'other';
       var label = rankLabels[cat] || 'Other';
       if (!groups[label]) groups[label] = [];
-      var rel = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
-      groups[label].push({ id: c.id, name: c.name, cat: c.role || cat, rel: rel });
+      groups[label].push({ id: c.id, name: c.name, cat: c.role || '' });
     });
     // Sort within each group
     Object.keys(groups).forEach(function(g) {
@@ -8431,10 +8430,9 @@ function sccRenderBrowsePanel(type, panel) {
       html += '<div class="scc-browse-group-header">' + sccEsc(groupKey) + '</div>';
       (groups[groupKey] || []).forEach(function(item) {
         var sel = selectedIds.indexOf(item.id) >= 0 ? ' selected' : '';
-        var extra = item.rel ? ' <span style="font-size:0.6rem;opacity:0.7">(' + sccEsc(item.rel) + ')</span>' : '';
         html += '<div class="scc-browse-option' + sel + '" onclick="sccBrowseSelect(\'' + type + '\',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\',this)">'
-          + sccEsc(item.name) + extra
-          + '<span class="scc-browse-option-cat">(' + sccEsc(item.cat) + ')</span>'
+          + sccEsc(item.name)
+          + (item.cat ? '<span class="scc-browse-option-cat">' + sccEsc(item.cat) + '</span>' : '')
         + '</div>';
       });
     });
