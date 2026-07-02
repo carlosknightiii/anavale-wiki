@@ -5043,7 +5043,7 @@ function showDMToast(msg, type) {
 .scc-lookup-panel {
   position: fixed;
   top: 0; right: 0; bottom: 0;
-  width: 420px;
+  width: 500px;
   max-width: 90vw;
   background: var(--dm-surface);
   border-left: 1px solid var(--scc-border-gold);
@@ -5080,6 +5080,149 @@ function showDMToast(msg, type) {
   overflow-y: auto;
   padding: 2.5rem 1.25rem 1.5rem;
 }
+/* ── Quick Lookup Panel — NPC redesign ── */
+.scc-ql-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.scc-ql-portrait {
+  width: 90px;
+  height: 90px;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.scc-ql-portrait-fallback {
+  width: 90px;
+  height: 90px;
+  border-radius: 9999px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.scc-ql-header-info { flex: 1; min-width: 0; }
+.scc-ql-rel-badge {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+.scc-ql-pf-badge {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+  border: 1px solid;
+  background: transparent;
+}
+.scc-ql-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 0.3rem;
+}
+.scc-ql-role {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.scc-ql-bold { font-weight: 700; color: var(--text); }
+.scc-ql-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.scc-ql-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+.scc-ql-row:last-child { border-bottom: none; }
+.scc-ql-label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 110px;
+}
+.scc-ql-value {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text);
+  flex: 1;
+}
+.scc-ql-section {
+  margin-bottom: 1rem;
+}
+.scc-ql-section-label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+}
+.scc-ql-section-body {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.65;
+}
+.scc-ql-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.scc-ql-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border-mid);
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text);
+}
+.scc-ql-tag-cat {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
 .scc-lookup-loading {
   color: var(--dm-text-muted);
   font-family: var(--font-sans);
@@ -9676,19 +9819,82 @@ function sccOpenLookup(type, id) {
     var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
     var c = chars.find(function(x){ return x.id === id; });
     if (!c) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
-    var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
-    var relQ = quests.filter(function(q){ return q.related && q.related.some(function(r){ return r.collection==='characters'&&r.id===c.id; }); });
-    html = (c.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(c.read_aloud)+'</div></div>':'')
-      + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(c.name) + '</div>'
-      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">' + sccEsc(c.role||c.category||'') + (c.location?' · '+sccEsc(c.location):'') + '</div>'
-      + (c.appearance?'<div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);line-height:1.55;margin-bottom:0.75rem;font-style:italic;">'+sccEsc(c.appearance)+'</div>':'')
-      + (c.personality?'<div class="scc-pk-block"><div class="scc-pk-label">Personality</div><div class="scc-pk-text">'+sccEsc(c.personality)+'</div></div>':'')
-      + (c.motivation?'<div class="scc-pk-block"><div class="scc-pk-label">Motivation</div><div class="scc-pk-text">'+sccEsc(c.motivation)+'</div></div>':'')
-      + (c.player_knowledge?'<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">'+sccEsc(c.player_knowledge)+'</div></div>':'')
-      + (c.contradiction?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ Contradiction</div><div class="scc-dm-text">'+sccEsc(c.contradiction)+'</div></div>':'')
-      + (c.secret?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ Secret</div><div class="scc-dm-text">'+sccEsc(c.secret)+'</div></div>':'')
-      + (c.dm_notes?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">'+sccEsc(c.dm_notes)+'</div></div>':'')
-      + (relQ.length?'<div class="scc-pk-block"><div class="scc-pk-label">Appears in Quests</div>'+relQ.map(function(q){return '<div class="scc-pk-text">📜 '+sccEsc(q.name)+'</div>';}).join('')+'</div>':'');
+
+    var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
+    var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
+    var REL_BG   = { ally:'#4ade80', neutral:'#60a5fa', caution:'#f0b429', hostile:'#f87171', deity:'#c084fc' };
+    var relBg    = REL_BG[rel] || REL_BG.neutral;
+
+    // Player facing badge
+    var pfVal   = c.player_facing;
+    var pfLabel = pfVal === true || pfVal === 'true' ? 'Visible to Players'
+                : pfVal === 'teaser' ? 'Teaser'
+                : 'DM Only';
+    var pfColor = pfVal === true || pfVal === 'true' ? 'var(--green)'
+                : pfVal === 'teaser' ? 'var(--gold)'
+                : 'var(--red)';
+
+    // World associations
+    var assocHtml = '';
+    if (c.associated && c.associated.length) {
+      var allWorld = []
+        .concat(typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [])
+        .concat(typeof CITIES        !== 'undefined' ? CITIES        : [])
+        .concat(typeof POIS          !== 'undefined' ? POIS          : [])
+        .concat(typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [])
+        .concat(typeof CREATURES     !== 'undefined' ? CREATURES     : [])
+        .concat(typeof REGIONS       !== 'undefined' ? REGIONS       : []);
+      assocHtml = c.associated.map(function(a) {
+        var entry = allWorld.find(function(x){ return x.id === a.id; });
+        var label = entry ? entry.name : a.id;
+        var cat   = a.collection.replace(/_/g,' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+        return '<span class="scc-ql-tag">' + sccEsc(label) + ' <span class="scc-ql-tag-cat">(' + sccEsc(cat) + ')</span></span>';
+      }).join('');
+    }
+
+    // Tags
+    var tagsHtml = '';
+    if (c.tags && c.tags.length) {
+      tagsHtml = c.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    }
+
+    // Portrait
+    var portraitHtml = c.image
+      ? '<img class="scc-ql-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/' + sccEsc(c.id) + '.webp" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-ql-portrait-fallback">' + sccEsc((c.name||'?').charAt(0)) + '</div>';
+
+    html = ''
+      // ── HEADER ──
+      + '<div class="scc-ql-header">'
+        + portraitHtml
+        + '<div class="scc-ql-header-info">'
+          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
+            + '<span class="scc-ql-rel-badge" style="background:' + relBg + ';color:#0a0a0f" onclick="sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</span>'
+            + '<span class="scc-ql-pf-badge" style="color:' + pfColor + ';border-color:' + pfColor + '">' + sccEsc(pfLabel) + '</span>'
+          + '</div>'
+          + '<div class="scc-ql-name">' + sccEsc(c.name) + '</div>'
+          + '<div class="scc-ql-role">'
+            + (c.role ? '<span class="scc-ql-bold">Role:</span> ' + sccEsc(c.role) : '')
+            + (c.role && c.location ? ' &nbsp;·&nbsp; ' : '')
+            + (c.location ? '<span class="scc-ql-bold">Location:</span> ' + sccEsc(c.location) : '')
+          + '</div>'
+        + '</div>'
+      + '</div>'
+      // ── FIELDS ──
+      + '<div class="scc-ql-fields">'
+        + (c.category   ? '<div class="scc-ql-row"><span class="scc-ql-label">Category</span><span class="scc-ql-value">' + sccEsc(c.category) + '</span></div>' : '')
+        + (c.pronouns   ? '<div class="scc-ql-row"><span class="scc-ql-label">Pronouns</span><span class="scc-ql-value">' + sccEsc(c.pronouns) + '</span></div>' : '')
+        + (c.status     ? '<div class="scc-ql-row"><span class="scc-ql-label">Status</span><span class="scc-ql-value">' + sccEsc(c.status) + '</span></div>' : '')
+        + (c.affiliation ? '<div class="scc-ql-row"><span class="scc-ql-label">Affiliation</span><span class="scc-ql-value">' + sccEsc(c.affiliation) + '</span></div>' : '')
+      + '</div>'
+      // ── PROSE SECTIONS ──
+      + (c.motivation ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Motivation</div><div class="scc-ql-section-body">' + sccEsc(c.motivation) + '</div></div>' : '')
+      + (c.contradiction ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Contradiction</div><div class="scc-ql-section-body">' + sccEsc(c.contradiction) + '</div></div>' : '')
+      + (c.appearance ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Appearance</div><div class="scc-ql-section-body">' + sccEsc(c.appearance) + '</div></div>' : '')
+      + (c.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(c.gigglegloom_relationship) + '</div></div>' : '')
+      // ── TAGS & ASSOCIATIONS ──
+      + (assocHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">World Associations</div><div class="scc-ql-tags">' + assocHtml + '</div></div>' : '')
+      + (tagsHtml  ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + tagsHtml + '</div></div>' : '');
   } else if (type === 'city') {
     var allLocs = (typeof CITIES!=='undefined'?CITIES:[]).concat(typeof POIS!=='undefined'?POIS:[]).concat(typeof NATIONS!=='undefined'?NATIONS:[]);
     var loc = allLocs.find(function(x){ return x.id===id; });
