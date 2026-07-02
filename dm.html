@@ -5629,6 +5629,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateFileTarget();
     switchTab('manage'); // always boot to Manage
     sortAllDropdowns();
+    cmResetFilters(); // clear any browser-restored filter values on boot
   } else {
     document.getElementById('gate-input').focus();
   }
