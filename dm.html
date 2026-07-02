@@ -1142,6 +1142,11 @@
               <span class="field-help">Comma-separated keywords for search (region, nation, type, features)</span>
               <input class="field-input" type="text" id="city-tags" placeholder="e.g. caparia, solenmere, capital, confederation, colorful">
             </div>
+            <div class="field-group">
+              <label class="field-label" for="city-read-aloud">Read Aloud</label>
+              <span class="field-help">Prose read aloud to players when they arrive at this location — spoken at the table</span>
+              <textarea class="field-textarea tall" id="city-read-aloud" placeholder="The road opens into a settlement…"></textarea>
+            </div>
           </div>
 
           <!-- PUBLISH -->
@@ -1279,6 +1284,11 @@
             <label class="field-label" for="creature-tags">Tags</label>
             <span class="field-help">Comma-separated keywords (tier, region, habitat, notable traits)</span>
             <input class="field-input" type="text" id="creature-tags" placeholder="e.g. merry, caparia, forest, bubbleseed-aligned, friendly">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="creature-read-aloud">Read Aloud</label>
+            <span class="field-help">Prose read aloud to players when they first encounter this creature — spoken at the table</span>
+            <textarea class="field-textarea tall" id="creature-read-aloud" placeholder="Something moves at the edge of the light…"></textarea>
           </div>
           <div class="field-group">
             <label class="field-label" for="creature-dm-notes">DM Notes</label>
@@ -1439,6 +1449,11 @@
                 <label for="poi-vareth-yes">Yes</label>
               </div>
             </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="poi-read-aloud">Read Aloud</label>
+            <span class="field-help">Prose read aloud to players when they arrive at this point of interest — spoken at the table</span>
+            <textarea class="field-textarea tall" id="poi-read-aloud" placeholder="Something catches your eye in the distance…"></textarea>
           </div>
           <div class="field-group">
             <label class="field-label" for="poi-dm-notes">DM Notes</label>
@@ -1633,6 +1648,11 @@
         <!-- DM ONLY -->
         <div class="form-section">
           <div class="form-section-header">DM Only</div>
+          <div class="field-group">
+            <label class="field-label" for="char-read-aloud">Read Aloud</label>
+            <span class="field-help">Prose read aloud to players when they first encounter this character — spoken at the table</span>
+            <textarea class="field-textarea tall" id="char-read-aloud" placeholder="A figure stands at the crossroads…"></textarea>
+          </div>
           <div class="field-group">
             <label class="field-label" for="char-secret">Secret</label>
             <span class="field-help">What this character is hiding — never shown in the player wiki</span>
@@ -4400,6 +4420,30 @@ function showDMToast(msg, type) {
   font-style: italic;
 }
 /* Player Knowledge block */
+/* ── Read Aloud Block (SCC) ── */
+.scc-ra-block {
+  background: rgba(240,180,41,0.06);
+  border-left: 3px solid var(--dm-gold);
+  border-radius: 0 var(--dm-radius-sm) var(--dm-radius-sm) 0;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.scc-ra-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-gold);
+  margin-bottom: 0.45rem;
+}
+.scc-ra-text {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--dm-text);
+  line-height: 1.8;
+}
 .scc-pk-block {
   background: var(--scc-pk-bg);
   border: 1px solid var(--scc-pk-border);
@@ -6146,7 +6190,8 @@ function generateCity() {
     formery_present:      boolRadio('city-formery'),
     vareth_presence:      boolRadio('city-vareth'),
     tone:                 orNull(val('city-tone')),
-    tags:                 tagsArr('city-tags')
+    tags:                 tagsArr('city-tags'),
+    read_aloud:           orNull(val('city-read-aloud')),
   };
   var imgPath = readImagePath('city-img-input', 'assets/images/regions/', entryId, PENDING_EDIT_IMAGE);
   if (imgPath) entry.image = imgPath;
@@ -6176,6 +6221,7 @@ function generateCreature() {
     gigglegloom_relationship: orNull(val('creature-gigglegloom')),
     dimmed_version:           orNull(val('creature-dimmed')),
     dm_notes:                 orNull(val('creature-dm-notes')),
+    read_aloud:               orNull(val('creature-read-aloud')),
     tags:                     tagsArr('creature-tags')
   };
   var imgPath = readImagePath('creature-img-input', 'assets/images/creatures/', entryId, PENDING_EDIT_IMAGE);
@@ -6208,6 +6254,7 @@ function generatePoi() {
     color_health:         orNull(val('poi-color-health')),
     vareth_presence:      boolRadio('poi-vareth'),
     dm_notes:             orNull(val('poi-dm-notes')),
+    read_aloud:           orNull(val('poi-read-aloud')),
     tags:                 tagsArr('poi-tags')
   };
   var imgPath = readImagePath('poi-img-input', 'assets/images/regions/', entryId, PENDING_EDIT_IMAGE);
@@ -6242,6 +6289,7 @@ function generateCharacter() {
     secret:                   orNull(val('char-secret')),
     player_knowledge:         orNull(val('char-player-knowledge')),
     dm_notes:                 orNull(val('char-dm-notes')),
+    read_aloud:               orNull(val('char-read-aloud')),
     gigglegloom_relationship: orNull(val('char-gigglegloom')),
     color:                    orNull(val('char-color')),
     tags:                     tagsArr('char-tags')
@@ -7221,6 +7269,7 @@ function cmPopulateForm(entry, type) {
     sv('city-strategic',  entry.strategic_importance);
     sv('city-tone',       entry.tone);
     sv('city-tags',       (entry.tags || []).join(', '));
+    sv('city-read-aloud', entry.read_aloud);
     sv('city-type',       entry.type);
     sv('city-color-health', entry.color_health);
     // Region → nation cascade
@@ -7256,6 +7305,7 @@ function cmPopulateForm(entry, type) {
     sv('creature-gigglegloom', entry.gigglegloom_relationship);
     sv('creature-dimmed',      entry.dimmed_version);
     sv('creature-dm-notes',    entry.dm_notes);
+    sv('creature-read-aloud',  entry.read_aloud);
     sv('creature-tags',        (entry.tags || []).join(', '));
     sv('creature-tier',        entry.tier);
     // Region checkboxes (no name attr — select by container + value)
@@ -7273,6 +7323,7 @@ function cmPopulateForm(entry, type) {
     sv('poi-description', entry.description);
     sv('poi-gigglegloom', entry.gigglegloom_notes);
     sv('poi-dm-notes',    entry.dm_notes);
+    sv('poi-read-aloud',  entry.read_aloud);
     sv('poi-tags',        (entry.tags || []).join(', '));
     sv('poi-type',        entry.type);
     sv('poi-color-health', entry.color_health);
@@ -7297,6 +7348,7 @@ function cmPopulateForm(entry, type) {
     sv('char-secret',         entry.secret);
     sv('char-player-knowledge', entry.player_knowledge);
     sv('char-dm-notes',       entry.dm_notes);
+    sv('char-read-aloud',     entry.read_aloud);
     sv('char-gigglegloom',    entry.gigglegloom_relationship);
     sv('char-color',          entry.color);
     sv('char-location',       entry.location);
@@ -8680,6 +8732,7 @@ function sccRenderNpcPanel() {
       + '</div>'
       + '<div class="scc-npc-body">'
         + (personality ? '<div class="scc-npc-personality">' + sccEsc(personality) + '</div>' : '')
+        + (c.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">' + sccEsc(c.read_aloud) + '</div></div>' : '')
         + (c.player_knowledge ? '<div class="scc-pk-block"><div class="scc-pk-label">What Players Know</div><div class="scc-pk-text">' + sccEsc(c.player_knowledge) + '</div></div>' : '')
         + (c.secret || c.dm_notes ? '<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Only — Do Not Read Aloud</div>'
             + (c.secret   ? '<div class="scc-dm-text"><strong>Secret:</strong> '   + sccEsc(c.secret)   + '</div>' : '')
@@ -8718,6 +8771,7 @@ function sccRenderLocationPanel() {
                   : (ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0) ? 'scc-color-health--dimmed'
                   : 'scc-color-health--excellent';
     return '<div class="scc-location-card">'
+      + (loc.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">' + sccEsc(loc.read_aloud) + '</div></div>' : '')
       + '<div class="scc-location-name">' + sccEsc(loc.name) + '</div>'
       + '<div class="scc-location-meta">' + sccEsc((loc.city_type || loc.type || 'nation').replace(/-/g,' ')) + (loc.region ? ' · ' + sccEsc(loc.region) : '') + (loc.nation ? ' · ' + sccEsc(loc.nation) : '') + '</div>'
       + (loc.color_health ? '<span class="scc-color-health ' + healthCls + '">' + sccEsc(loc.color_health.replace(/-/g,' ')) + '</span>' : '')
@@ -9279,7 +9333,8 @@ function sccOpenLookup(type, id) {
     if (!c) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
     var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
     var relQ = quests.filter(function(q){ return q.related && q.related.some(function(r){ return r.collection==='characters'&&r.id===c.id; }); });
-    html = '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(c.name) + '</div>'
+    html = (c.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(c.read_aloud)+'</div></div>':'')
+      + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(c.name) + '</div>'
       + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">' + sccEsc(c.role||c.category||'') + (c.location?' · '+sccEsc(c.location):'') + '</div>'
       + (c.appearance?'<div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);line-height:1.55;margin-bottom:0.75rem;font-style:italic;">'+sccEsc(c.appearance)+'</div>':'')
       + (c.personality?'<div class="scc-pk-block"><div class="scc-pk-label">Personality</div><div class="scc-pk-text">'+sccEsc(c.personality)+'</div></div>':'')
@@ -9293,7 +9348,8 @@ function sccOpenLookup(type, id) {
     var allLocs = (typeof CITIES!=='undefined'?CITIES:[]).concat(typeof POIS!=='undefined'?POIS:[]).concat(typeof NATIONS!=='undefined'?NATIONS:[]);
     var loc = allLocs.find(function(x){ return x.id===id; });
     if (!loc) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
-    html = '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(loc.name) + '</div>'
+    html = (loc.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(loc.read_aloud)+'</div></div>':'')
+      + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(loc.name) + '</div>'
       + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);margin-bottom:1rem;">' + sccEsc((loc.city_type||loc.type||'nation').replace(/-/g,' ')) + (loc.region?' · '+sccEsc(loc.region):'') + '</div>'
       + (loc.description?'<div class="scc-pk-block"><div class="scc-pk-label">Description</div><div class="scc-pk-text">'+sccEsc(loc.description)+'</div></div>':'')
       + (loc.strategic_importance?'<div class="scc-pk-block"><div class="scc-pk-label">Strategic Importance</div><div class="scc-pk-text">'+sccEsc(loc.strategic_importance)+'</div></div>':'')
@@ -9310,7 +9366,8 @@ function sccOpenLookup(type, id) {
     if (!cr) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
     var abMod = function(score){ if(!score) return '—'; var m=Math.floor((score-10)/2); return (m>=0?'+':'')+m; };
     var hasAbilities = cr.str||cr.dex||cr.con||cr.int||cr.wis||cr.cha;
-    html = '<div class="scc-stat-block">'
+    html = (cr.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(cr.read_aloud)+'</div></div>':'')
+      + '<div class="scc-stat-block">'
       + '<div class="scc-stat-block-header"><div class="scc-stat-block-name">'+sccEsc(cr.name)+'</div><div class="scc-stat-block-type">'+sccEsc((cr.size||'')+' '+(cr.creature_type||'')+(cr.creature_alignment?', '+cr.creature_alignment:''))+'</div></div>'
       + '<div class="scc-stat-block-body">'
         + '<div class="scc-combat-stats-row">'
