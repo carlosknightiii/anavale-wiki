@@ -6041,8 +6041,10 @@ function addAssociation() {
 }
 
 function refreshAssocEntries(colSelId, entSelId) {
-  var collection = document.getElementById(colSelId).value;
+  var colSel     = document.getElementById(colSelId);
   var entSel     = document.getElementById(entSelId);
+  if (!colSel || !entSel) return;
+  var collection = colSel.value;
   entSel.innerHTML = collection
     ? assocEntryOptions(collection)
     : '<option value="">— Select type first —</option>';
@@ -7147,6 +7149,10 @@ function cmEditEntry(idx) {
   if (!item) return;
   var entry = item._entry;
 
+  // Hide type selector FIRST — before anything else runs
+  var typeSelector = document.querySelector('.add-type-selector');
+  if (typeSelector) typeSelector.style.display = 'none';
+
   // Signal to showOutput() / saveToFile() that the next Generate+Save is a replace, not an append
   PENDING_EDIT_ID    = entry.id;
   PENDING_EDIT_IMAGE = entry.image || null;
@@ -7159,9 +7165,6 @@ function cmEditEntry(idx) {
   // ── Edit mode UI ──
   var formAdd = document.getElementById('form-add');
   if (formAdd) formAdd.classList.add('dm-edit-mode');
-  // Also hide directly via JS in case CSS specificity is overridden
-  var typeSelector = document.querySelector('.add-type-selector');
-  if (typeSelector) typeSelector.style.display = 'none';
 
   // Update title and subtitle to reflect editing, not creating
   var typeLabels = {
