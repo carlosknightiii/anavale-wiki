@@ -5830,11 +5830,17 @@ async function uploadImageToSupabase(prefix, folder) {
   try {
     var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
     var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
-    var uploadHeaders = { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'Content-Type': 'image/webp', 'x-upsert': 'true' };
     var uploadUrl = SB_URL + '/storage/v1/object/world-images/' + filename;
-    var res = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: blob });
+    // Supabase Storage requires FormData — raw blob body is rejected
+    var fd = new FormData();
+    fd.append('', blob, entryId + '.webp');
+    var uploadHeaders = { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'x-upsert': 'true' };
+    var res = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: fd });
     if (!res.ok) {
-      res = await fetch(uploadUrl, { method: 'PUT', headers: uploadHeaders, body: blob });
+      // File exists — try PUT to overwrite
+      var fd2 = new FormData();
+      fd2.append('', blob, entryId + '.webp');
+      res = await fetch(uploadUrl, { method: 'PUT', headers: uploadHeaders, body: fd2 });
     }
     if (res.ok) {
       var url = SB_URL + '/storage/v1/object/public/world-images/' + filename;
