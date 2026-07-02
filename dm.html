@@ -1351,12 +1351,15 @@
                 <option value="">— Select type —</option>
                 <option value="dark-zone">Dark Zone (Vareth)</option>
                 <option value="drakhold-outpost">Drakhold Outpost</option>
+                <option value="landmark">Landmark</option>
                 <option value="mosskin-site">Mosskin Site</option>
                 <option value="natural">Natural Landmark</option>
                 <option value="other">Other</option>
                 <option value="ruin">Ruin</option>
                 <option value="sacred-site">Sacred Site</option>
                 <option value="site">Notable Site</option>
+                <option value="tavern">Tavern</option>
+                <option value="waystation">Waystation</option>
                 <option value="world-wonder">World Wonder</option>
               </select>
             </div>
@@ -1521,10 +1524,14 @@
                 <option value="">— Select —</option>
                 <option value="ally">Ally / Hero</option>
                 <option value="criminal">Criminal</option>
+                <option value="creature-notable">Notable Creature</option>
                 <option value="faction-leader">Faction Leader</option>
                 <option value="god">God</option>
                 <option value="monarch">Monarch / Ruler</option>
                 <option value="npc">NPC</option>
+                <option value="npc-ally">NPC — Ally</option>
+                <option value="npc-neutral">NPC — Neutral</option>
+                <option value="npc-villain">NPC — Villain</option>
                 <option value="other">Other</option>
                 <option value="villain">Villain / Vareth Lieutenant</option>
                 <option value="wanderer">Wanderer</option>
@@ -6251,6 +6258,7 @@ function generatePoi() {
     nation:               orNull(val('poi-nation')),
     region:               region,
     continent:            'pogglewog',
+    poi_type:             type,
     type:                 type,
     summary:              summary,
     description:          orNull(val('poi-description')),
@@ -6957,19 +6965,25 @@ function cmApplyFilters() {
 
   // Sort by search relevance when a query is active
   if (q) {
+    // Strip leading articles for comparison purposes
+    var stripArticle = function(s) {
+      return s.replace(/^(the|a|an)\s+/i, '').trim();
+    };
     filtered.sort(function(a, b) {
-      var an = (a._entry.name || '').toLowerCase();
-      var bn = (b._entry.name || '').toLowerCase();
-      // Exact match first
-      var aExact = an === q ? 0 : 1;
-      var bExact = bn === q ? 0 : 1;
+      var an     = (a._entry.name || '').toLowerCase();
+      var bn     = (b._entry.name || '').toLowerCase();
+      var anStrip = stripArticle(an);
+      var bnStrip = stripArticle(bn);
+      // Exact match (with or without article) first
+      var aExact = (an === q || anStrip === q) ? 0 : 1;
+      var bExact = (bn === q || bnStrip === q) ? 0 : 1;
       if (aExact !== bExact) return aExact - bExact;
-      // Starts with query second
-      var aStarts = an.startsWith(q) ? 0 : 1;
-      var bStarts = bn.startsWith(q) ? 0 : 1;
+      // Starts with query (with or without article) second
+      var aStarts = (an.startsWith(q) || anStrip.startsWith(q)) ? 0 : 1;
+      var bStarts = (bn.startsWith(q) || bnStrip.startsWith(q)) ? 0 : 1;
       if (aStarts !== bStarts) return aStarts - bStarts;
-      // Alphabetical among remaining
-      return an.localeCompare(bn);
+      // Alphabetical by stripped name among remaining
+      return anStrip.localeCompare(bnStrip);
     });
   }
 
@@ -7371,7 +7385,7 @@ function cmPopulateForm(entry, type) {
     sv('poi-dm-notes',    entry.dm_notes);
     sv('poi-read-aloud',  entry.read_aloud);
     sv('poi-tags',        (entry.tags || []).join(', '));
-    sv('poi-type',        entry.type);
+    sv('poi-type',        entry.poi_type || entry.type);
     sv('poi-color-health', entry.color_health);
     var prSel = document.getElementById('poi-region');
     if (prSel) { prSel.value = entry.region || ''; filterNations('poi-nation', 'poi-region'); }
