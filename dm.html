@@ -6795,21 +6795,23 @@ function cmTypeFilterChanged() {
 }
 
 function cmResetFilters() {
-  var ids = ['cm-search','cm-type-filter','cm-vis-filter','cm-continent-filter',
-             'cm-region-filter','cm-nation-filter','cm-settlement-filter',
-             'cm-vareth-filter','cm-colorhealth-filter',
-             'cm-item-category-filter','cm-item-rarity-filter','cm-item-addable-filter'];
-  ids.forEach(function(id) {
+  var filterIds = [
+    'cm-type-filter', 'cm-vis-filter', 'cm-continent-filter',
+    'cm-region-filter', 'cm-nation-filter', 'cm-settlement-filter',
+    'cm-vareth-filter', 'cm-colorhealth-filter',
+    'cm-item-category-filter', 'cm-item-rarity-filter', 'cm-item-addable-filter'
+  ];
+  filterIds.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
-  var ic = document.getElementById('cm-item-category-filter');
-  var ir = document.getElementById('cm-item-rarity-filter');
-  var ia = document.getElementById('cm-item-addable-filter');
-  if (ic) ic.style.display = 'none';
-  if (ir) ir.style.display = 'none';
-  if (ia) ia.style.display = 'none';
-  CM_PAGE = 1;
+  var searchEl = document.getElementById('cm-search');
+  if (searchEl) searchEl.value = '';
+  // Hide item-specific filters (same as before)
+  ['cm-item-category-filter','cm-item-rarity-filter','cm-item-addable-filter'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
   cmApplyFilters();
 }
 
@@ -7157,6 +7159,9 @@ function cmEditEntry(idx) {
   // ── Edit mode UI ──
   var formAdd = document.getElementById('form-add');
   if (formAdd) formAdd.classList.add('dm-edit-mode');
+  // Also hide directly via JS in case CSS specificity is overridden
+  var typeSelector = document.querySelector('.add-type-selector');
+  if (typeSelector) typeSelector.style.display = 'none';
 
   // Update title and subtitle to reflect editing, not creating
   var typeLabels = {
@@ -7219,6 +7224,9 @@ function cmCancelEdit() {
   // Remove edit mode class and reset pending state
   var formAdd = document.getElementById('form-add');
   if (formAdd) formAdd.classList.remove('dm-edit-mode');
+  // Restore type selector visibility
+  var typeSelector = document.querySelector('.add-type-selector');
+  if (typeSelector) typeSelector.style.display = '';
   PENDING_EDIT_ID    = null;
   PENDING_EDIT_IMAGE = null;
   CM_PENDING         = null;
