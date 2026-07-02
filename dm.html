@@ -5831,7 +5831,7 @@ async function uploadImageToSupabase(prefix, folder) {
     var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
     var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
     var formData = new FormData();
-    formData.append('', blob, filename.split('/').pop());
+    formData.append('file', blob, filename.split('/').pop());
     var res = await fetch(SB_URL + '/storage/v1/object/world-images/' + filename, {
       method: 'POST',
       headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'x-upsert': 'true' },
