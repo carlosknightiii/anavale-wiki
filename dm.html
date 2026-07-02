@@ -6955,6 +6955,24 @@ function cmApplyFilters() {
     return CM_SORT_DIR === 'desc' ? -res : res;
   });
 
+  // Sort by search relevance when a query is active
+  if (q) {
+    filtered.sort(function(a, b) {
+      var an = (a._entry.name || '').toLowerCase();
+      var bn = (b._entry.name || '').toLowerCase();
+      // Exact match first
+      var aExact = an === q ? 0 : 1;
+      var bExact = bn === q ? 0 : 1;
+      if (aExact !== bExact) return aExact - bExact;
+      // Starts with query second
+      var aStarts = an.startsWith(q) ? 0 : 1;
+      var bStarts = bn.startsWith(q) ? 0 : 1;
+      if (aStarts !== bStarts) return aStarts - bStarts;
+      // Alphabetical among remaining
+      return an.localeCompare(bn);
+    });
+  }
+
   CM_FILTERED = filtered;
   cmRenderFilterChips();
   cmUpdateSortArrows();
