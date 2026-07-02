@@ -7240,6 +7240,19 @@ function cmPopulateForm(entry, type) {
     });
   }
   // Show existing image path and thumbnail for edit flow
+  // Reset all image previews before populating — prevents previous entry's image bleeding through
+  function resetImagePreview(prefix) {
+    var prev        = document.getElementById(prefix + '-img-preview');
+    var placeholder = document.getElementById(prefix + '-img-placeholder');
+    var removeBtn   = document.getElementById(prefix + '-img-remove-btn');
+    var pathField   = document.getElementById(prefix + '-img-field');
+    var pathHint    = document.getElementById(prefix + '-img-path');
+    if (prev)        { prev.src = ''; prev.classList.add('hidden'); prev._blob = null; }
+    if (placeholder) { placeholder.style.display = ''; }
+    if (removeBtn)   { removeBtn.style.display = 'none'; }
+    if (pathField)   { pathField.value = ''; }
+    if (pathHint)    { pathHint.innerHTML = ''; }
+  }
   function showExistingImage(previewId, pathId) {
     if (!entry.image) return;
     // Show path hint in the error/path element
@@ -7296,6 +7309,7 @@ function cmPopulateForm(entry, type) {
       var descEl = document.getElementById('lm-' + _landmarkN + '-desc');
       if (descEl) descEl.value = lm.description || '';
     });
+    resetImagePreview('city');
     showExistingImage('city-img-preview', 'city-img-path');
 
   } else if (type === 'creature') {
@@ -7316,6 +7330,7 @@ function cmPopulateForm(entry, type) {
       cb.checked = regions.indexOf(cb.value) >= 0;
     });
     setRadioVal('creature-pf', entry.player_facing);
+    resetImagePreview('creature');
     showExistingImage('creature-img-preview', 'creature-img-path');
 
   } else if (type === 'poi') {
@@ -7336,6 +7351,7 @@ function cmPopulateForm(entry, type) {
     if (pnSel) pnSel.value = entry.nation || '';
     setRadioVal('poi-vareth', entry.vareth_presence ? 'true' : 'false');
     setRadioVal('poi-pf',     entry.player_facing);
+    resetImagePreview('poi');
     showExistingImage('poi-img-preview', 'poi-img-path');
 
   } else if (type === 'character') {
@@ -7360,6 +7376,7 @@ function cmPopulateForm(entry, type) {
     sv('char-category',       entry.category);
     sv('char-status',         entry.status);
     setRadioVal('char-pf',    entry.player_facing);
+    resetImagePreview('char');
     showExistingImage('char-img-preview', 'char-img-path');
       // Populate world associations
       var assocList = document.getElementById('char-assoc-list');
@@ -7411,6 +7428,7 @@ function cmPopulateForm(entry, type) {
       if (fEl) fEl.value = f;
     });
     setRadioVal('org-pf', entry.player_facing);
+    resetImagePreview('org');
     showExistingImage('org-img-preview', 'org-img-path');
 
   } else if (type === 'item') {
@@ -7501,6 +7519,7 @@ function cmPopulateForm(entry, type) {
     }
     setRadioVal('item-pf', entry.player_facing);
     setRadioVal('item-addable', entry.player_addable === false ? 'false' : 'true');
+    resetImagePreview('item');
     showExistingImage('item-img-preview', 'item-img-path');
   }
 }
