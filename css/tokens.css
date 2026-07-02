@@ -1,0 +1,309 @@
+/* ══════════════════════════════════════════════════════════════════
+   ANAVALE — tokens.css
+   Single source of truth for all design tokens site-wide.
+   Loaded first by every HTML file before any other stylesheet.
+   No other file defines :root values.
+
+   RULES:
+   1. All raw hex/rgba values live here and nowhere else.
+   2. Every other CSS file references these variables only.
+   3. To change anything site-wide, change it here.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── TYPOGRAPHY ──────────────────────────────────────────────
+     Two fonts only.
+     --font-display : Cinzel Decorative Bold — all headings
+     --font-body    : Roboto — all body text, labels, UI
+     --font-mono    : Courier New — Formery stamps, code        */
+  --font-display:  'Cinzel Decorative', Georgia, serif;
+  --font-body:     'Roboto', system-ui, sans-serif;
+  --font-mono:     'Courier New', Courier, monospace;
+
+  /* Aliases — keep all existing references working */
+  --font-headers:  var(--font-display);
+  --font-serif:    var(--font-display);
+  --font-sans:     var(--font-body);
+
+  /* Type scale */
+  --text-xs:    0.75rem;
+  --text-sm:    0.875rem;
+  --text-base:  1rem;
+  --text-lg:    1.125rem;
+  --text-xl:    1.375rem;
+  --text-2xl:   1.75rem;
+  --text-3xl:   2.25rem;
+  --text-4xl:   3rem;
+
+  --line-height: 1.7;
+  --line-tight:  1.2;
+
+  /* ── GOLD — one value, all tints derived from it ─────────── */
+  --gold:            #f0b429;
+  --gold-bright:     #ffc93d;
+  --gold-dim:        rgba(240,180,41,0.18);
+  --gold-dim-hover:  rgba(240,180,41,0.28);
+  --gold-subtle:     rgba(240,180,41,0.08);
+  --gold-text-on:    #0a0a0f;
+  --gold-border:     rgba(240,180,41,0.35);
+  --gold-border-mid: rgba(240,180,41,0.55);
+  --gold-glow:       0 0 0 3px rgba(240,180,41,0.2);
+  --gold-shadow:     0 6px 20px rgba(240,180,41,0.3);
+  --gold-btn-shadow: 0 4px 16px rgba(240,180,41,0.35);
+
+  /* Aliases — keep all existing references working */
+  --gold-light:        var(--gold-bright);
+  --dm-gold:           var(--gold);
+  --dm-gold-bright:    var(--gold-bright);
+  --dm-gold-dim:       var(--gold-dim);
+  --dm-gold-dim-hover: var(--gold-dim-hover);
+  --dm-gold-text-on:   var(--gold-text-on);
+  --dm-border-gold:    var(--gold-border);
+  --dm-gold-glow:      var(--gold-glow);
+  --dm-gold-shadow:    var(--gold-shadow);
+  --dm-gold-btn-shadow:var(--gold-btn-shadow);
+  --border-gold:       var(--gold-border);
+  --border-gold-mid:   var(--gold-border-mid);
+  --char-border-gold:  var(--gold-border);
+  --char-highlight-tint:   rgba(240,180,41,0.1);
+  --char-highlight-border: rgba(240,180,41,0.3);
+
+  /* ── SURFACES — dark stack, 0=deepest 5=highest ──────────── */
+  --surface-0:  #0a0a0f;
+  --surface-1:  #111118;
+  --surface-2:  #16161f;
+  --surface-3:  #1e1e2a;
+  --surface-4:  #202739;
+  --surface-5:  #242433;
+
+  /* Aliases — keep all existing references working */
+  --dm-bg:              var(--surface-0);
+  --dm-surface:         var(--surface-1);
+  --dm-surface-mid:     var(--surface-2);
+  --dm-surface-high:    var(--surface-3);
+  --dm-surface-hover:   var(--surface-5);
+  --dm-code-bg:         #060609;
+  --char-bg:            var(--surface-0);
+  --char-panel:         rgba(10,14,24,0.85);
+  --char-section-bg:    rgba(10,14,24,0.75);
+  --char-card-bg:       rgba(18,24,42,0.95);
+  --char-card-bg-hover: rgba(22,30,54,0.98);
+  --char-card-bg-selected: rgba(40,30,10,0.95);
+  --char-card-bg-subtle:   rgba(255,255,255,0.03);
+  --scc-bg:             var(--surface-0);
+  --scc-surface:        var(--surface-1);
+  --scc-surface-mid:    var(--surface-2);
+  --scc-surface-high:   var(--surface-3);
+
+  /* ── TEXT ────────────────────────────────────────────────── */
+  --text:        #e8e8f0;
+  --text-muted:  rgba(232,232,240,0.55);
+  --text-faint:  rgba(232,232,240,0.35);
+
+  /* Aliases */
+  --dm-text:          var(--text);
+  --dm-text-muted:    var(--text-muted);
+  --dm-text-faint:    var(--text-faint);
+  --char-text-muted:  rgba(255,255,255,0.8);
+  --char-text-faint:  rgba(245,234,212,0.65);
+
+  /* ── BORDERS ─────────────────────────────────────────────── */
+  --border:        rgba(255,255,255,0.07);
+  --border-mid:    rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.22);
+
+  /* Aliases */
+  --dm-border:            var(--border);
+  --dm-border-mid:        var(--border-mid);
+  --dm-border-separator:  rgba(255,255,255,0.04);
+  --scc-border:           var(--border);
+  --scc-border-mid:       var(--border-mid);
+  --scc-border-gold:      var(--gold-border);
+  --char-border:          rgba(255,255,255,0.12);
+  --char-accent-tint:     rgba(255,255,255,0.08);
+  --char-accent-border:   rgba(255,255,255,0.3);
+  --char-accent-border-mid: rgba(255,255,255,0.4);
+  --border-color:         rgba(255,255,255,0.12);
+
+  /* ── STATUS — GREEN ──────────────────────────────────────── */
+  --green:           #22c55e;
+  --green-dim:       rgba(34,197,94,0.15);
+  --green-dim-hover: rgba(34,197,94,0.25);
+  --green-border:    rgba(34,197,94,0.35);
+  --green-glow:      0 0 0 2px rgba(34,197,94,0.2);
+
+  /* Aliases */
+  --dm-green:           var(--green);
+  --dm-green-dim:       var(--green-dim);
+  --dm-green-dim-hover: var(--green-dim-hover);
+  --dm-border-green:    var(--green-border);
+  --dm-green-glow:      var(--green-glow);
+
+  /* ── STATUS — RED ────────────────────────────────────────── */
+  --red:          #f87171;
+  --red-strong:   #d62b2b;
+  --red-dim:      rgba(248,113,113,0.15);
+  --red-border:   rgba(248,113,113,0.35);
+  --red-border-strong: rgba(214,43,43,0.6);
+
+  /* Aliases */
+  --dm-red:         var(--red);
+  --dm-red-dim:     var(--red-dim);
+  --dm-border-red:  var(--red-border);
+
+  /* ── STATUS — BLUE ───────────────────────────────────────── */
+  --blue:        #60a5fa;
+  --blue-dim:    rgba(96,165,250,0.12);
+  --blue-border: rgba(96,165,250,0.25);
+
+  /* Aliases */
+  --dm-blue:        var(--blue);
+  --dm-blue-dim:    var(--blue-dim);
+  --dm-border-blue: var(--blue-border);
+
+  /* ── STATUS — PURPLE ─────────────────────────────────────── */
+  --purple:        #c084fc;
+  --purple-dim:    rgba(192,132,252,0.12);
+  --purple-border: rgba(192,132,252,0.35);
+
+  /* ── GIGGLEGLOOM TYPE COLORS ─────────────────────────────── */
+  --bubbleseed:  #2a7a3a;
+  --featherflow: #2266b8;
+  --steelfist:   #6a3aaa;
+  --flamerage:   #aa3a1a;
+  --gradient-colorful: linear-gradient(
+    135deg,
+    #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%
+  );
+
+  /* ── RADIUS ──────────────────────────────────────────────── */
+  --radius-sm:  6px;
+  --radius:     10px;
+  --radius-md:  14px;
+  --radius-lg:  24px;
+
+  /* Aliases */
+  --dm-radius-sm: var(--radius-sm);
+  --dm-radius:    var(--radius);
+  --dm-radius-lg: var(--radius-md);
+  --char-radius:  var(--radius);
+  --card-radius:  var(--radius-sm);
+  --border-radius: 4px;
+
+  /* ── SHADOWS ─────────────────────────────────────────────── */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:   0 3px 8px rgba(0,0,0,0.4);
+  --shadow-lg:   0 6px 20px rgba(0,0,0,0.5);
+  --shadow-card: 2px 5px 11px 0 black;
+
+  /* Aliases */
+  --dm-shadow-gate: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(240,180,41,0.08);
+
+  /* ── TRANSITION ──────────────────────────────────────────── */
+  --transition: all 0.18s ease;
+
+  /* Aliases */
+  --dm-transition: var(--transition);
+
+  /* ── LAYOUT ──────────────────────────────────────────────── */
+  --sidebar-w:      260px;
+  --char-sidebar-w: 240px;
+  --char-progress-h: 26px;
+  --content-pad:    2rem;
+  --section-gap:    2.5rem;
+
+  /* ── LEGACY PARCHMENT ALIASES ──────────────────────────────
+     Kept so wiki.css rules don't break during migration.
+     These will be removed in Session 2.                       */
+  --parchment:       #f5ead4;
+  --parchment-light: #f8f1e2;
+  --parchment-dark:  #e8d4a8;
+  --ink:             #2a1f0e;
+  --ink-light:       #4a3520;
+  --ink-faint:       #7a6548;
+  --amber:           #7a5200;
+  --white:           #ffffff;
+  --teal:            #1a6a5a;
+  --violet:          #4a2878;
+
+  /* ── SCC-SPECIFIC TOKENS ─────────────────────────────────── */
+  --scc-pk-bg:          rgba(255,255,255,0.03);
+  --scc-pk-border:      var(--border-mid);
+  --scc-pk-label:       var(--text-muted);
+  --scc-dm-only-bg:     rgba(248,113,113,0.06);
+  --scc-dm-only-border: rgba(248,113,113,0.45);
+  --scc-dm-only-text:   var(--red);
+  --scc-dm-only-label:  rgba(248,113,113,0.9);
+  --scc-beat-done-bg:   rgba(34,197,94,0.12);
+  --scc-beat-done-text: var(--green);
+  --scc-beat-prog-bg:   rgba(240,180,41,0.12);
+  --scc-beat-prog-text: var(--gold);
+  --scc-beat-todo-bg:   rgba(255,255,255,0.04);
+  --scc-beat-todo-text: var(--text-muted);
+  --scc-diff-low:       var(--green);
+  --scc-diff-moderate:  var(--gold);
+  --scc-diff-high:      var(--purple);
+  --scc-diff-deadly:    var(--red);
+  --scc-init-active-bg:     rgba(240,180,41,0.12);
+  --scc-init-active-border: var(--gold-border);
+  --scc-init-pc-border:     rgba(96,165,250,0.4);
+  --scc-init-enemy-border:  rgba(248,113,113,0.4);
+  --scc-rel-ally-border:    rgba(74,222,128,0.5);
+  --scc-rel-ally-bg:        rgba(74,222,128,0.05);
+  --scc-rel-ally-badge:     rgba(74,222,128,0.15);
+  --scc-rel-ally-text:      #4ade80;
+  --scc-rel-neutral-border: rgba(96,165,250,0.45);
+  --scc-rel-neutral-bg:     rgba(96,165,250,0.05);
+  --scc-rel-neutral-badge:  rgba(96,165,250,0.12);
+  --scc-rel-neutral-text:   var(--blue);
+  --scc-rel-caution-border: rgba(240,180,41,0.45);
+  --scc-rel-caution-bg:     rgba(240,180,41,0.05);
+  --scc-rel-caution-badge:  rgba(240,180,41,0.15);
+  --scc-rel-caution-text:   var(--gold);
+  --scc-rel-hostile-border: rgba(248,113,113,0.5);
+  --scc-rel-hostile-bg:     rgba(248,113,113,0.05);
+  --scc-rel-hostile-badge:  rgba(248,113,113,0.14);
+  --scc-rel-hostile-text:   var(--red);
+  --scc-rel-deity-border:   rgba(192,132,252,0.5);
+  --scc-rel-deity-bg:       rgba(192,132,252,0.05);
+  --scc-rel-deity-badge:    rgba(192,132,252,0.14);
+  --scc-rel-deity-text:     var(--purple);
+
+  /* ── CM / QUEST / VISIBILITY TOKENS ─────────────────────── */
+  --dm-vis-hidden-bg:    rgba(200,60,30,0.12);
+  --dm-vis-hidden-text:  #ff8066;
+  --dm-vis-teaser-bg:    rgba(240,180,41,0.15);
+  --dm-vis-teaser-text:  var(--gold);
+  --dm-vis-shown-bg:     rgba(34,197,94,0.12);
+  --dm-vis-shown-text:   var(--green);
+  --dm-type-badge-bg:    rgba(255,255,255,0.06);
+  --dm-type-badge-text:  var(--text-muted);
+  --dm-bulk-bg:          rgba(240,180,41,0.08);
+  --dm-bulk-border:      rgba(240,180,41,0.18);
+  --dm-row-hover:        rgba(255,255,255,0.04);
+  --dm-row-selected:     rgba(240,180,41,0.08);
+  --dm-th-bg:            #0e0e16;
+  --dm-quest-active-bg:  rgba(200,60,30,0.15);
+  --dm-quest-active-text:#ff8066;
+  --dm-quest-avail-bg:   rgba(240,180,41,0.15);
+  --dm-quest-avail-text: var(--gold);
+  --dm-quest-dormant-bg: rgba(120,120,140,0.15);
+  --dm-quest-dormant-text: rgba(232,232,240,0.45);
+  --dm-quest-done-bg:    rgba(34,197,94,0.12);
+  --dm-quest-done-text:  var(--green);
+  --dm-stakes-low-bg:    rgba(240,180,41,0.08);
+  --dm-stakes-low-text:  var(--gold);
+  --dm-stakes-mid-bg:    rgba(96,165,250,0.12);
+  --dm-stakes-mid-text:  var(--blue);
+  --dm-stakes-high-bg:   rgba(192,132,252,0.12);
+  --dm-stakes-high-text: var(--purple);
+  --dm-stakes-camp-bg:   rgba(248,113,113,0.15);
+  --dm-stakes-camp-text: var(--red);
+  --dm-reveal-border:    rgba(248,113,113,0.25);
+  --dm-reveal-bg:        rgba(248,113,113,0.06);
+  --dm-related-bg:       rgba(96,165,250,0.08);
+  --dm-related-border:   rgba(96,165,250,0.18);
+  --dm-related-text:     var(--blue);
+  --dm-code-green:       #7ee787;
+}

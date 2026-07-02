@@ -5,7 +5,8 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anavale DM Tools</title>
-<link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Roboto:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/wiki.css">
 <style>
 /* ══════════════════════════════════════════════
@@ -17,67 +18,6 @@
    ══════════════════════════════════════════════ */
 
 /* ── DM-LOCAL DESIGN TOKENS ────────────────── */
-:root {
-  /* Surfaces — dark backgrounds */
-  --dm-bg:                  #0a0a0f;
-  --dm-surface:             #111118;
-  --dm-surface-mid:         #16161f;
-  --dm-surface-high:        #1e1e2a;
-  --dm-surface-hover:       #242433;
-  --dm-code-bg:             #060609;
-
-  /* Borders */
-  --dm-border:              rgba(255,255,255,0.07);
-  --dm-border-mid:          rgba(255,255,255,0.12);
-  --dm-border-gold:         rgba(240,180,41,0.35);
-  --dm-border-green:        rgba(34,197,94,0.35);
-  --dm-border-red:          rgba(248,113,113,0.35);
-  --dm-border-blue:         rgba(96,165,250,0.2);
-
-  /* Text */
-  --dm-text:                #e8e8f0;
-  --dm-text-muted:          rgba(232,232,240,0.55);
-  --dm-text-faint:          rgba(232,232,240,0.7);
-
-  /* Gold accent */
-  --dm-gold:                #f0b429;
-  --dm-gold-bright:         #ffc93d;
-  --dm-gold-dim:            rgba(240,180,41,0.18);
-  --dm-gold-dim-hover:      rgba(240,180,41,0.28);
-  --dm-gold-glow:           0 0 0 3px rgba(240,180,41,0.2);
-  --dm-gold-shadow:         0 6px 20px rgba(240,180,41,0.3);
-  --dm-gold-btn-shadow:     0 4px 16px rgba(240,180,41,0.35);
-  --dm-gold-text-on:        #0a0a0f;
-
-  /* Status — green */
-  --dm-green:               #22c55e;
-  --dm-green-dim:           rgba(34,197,94,0.15);
-  --dm-green-dim-hover:     rgba(34,197,94,0.25);
-  --dm-green-glow:          0 0 0 2px rgba(34,197,94,0.2);
-
-  /* Status — red */
-  --dm-red:                 #f87171;
-  --dm-red-dim:             rgba(248,113,113,0.15);
-
-  /* Status — blue */
-  --dm-blue:                #60a5fa;
-  --dm-blue-dim:            rgba(96,165,250,0.12);
-
-  /* Code output green */
-  --dm-code-green:          #7ee787;
-
-  /* Radius */
-  --dm-radius-sm:           6px;
-  --dm-radius:              10px;
-  --dm-radius-lg:           14px;
-
-  /* Transition */
-  --dm-transition:          all 0.18s ease;
-
-  /* Shadows */
-  --dm-shadow-gate:         0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(240,180,41,0.08);
-  --dm-border-separator:    rgba(255,255,255,0.04);
-}
 
 /* ── FONT LEGIBILITY OVERRIDE ──────────────── */
 .dm-app,
@@ -3154,29 +3094,6 @@ function showDMToast(msg, type) {
    ══════════════════════════════════════════════ */
 
 /* ── Additional status tokens for quest badges ── */
-:root {
-  --dm-quest-active-bg:     rgba(200,60,30,0.15);
-  --dm-quest-active-text:   #ff8066;
-  --dm-quest-avail-bg:      rgba(240,180,41,0.15);
-  --dm-quest-avail-text:    var(--dm-gold);
-  --dm-quest-dormant-bg:    rgba(120,120,140,0.15);
-  --dm-quest-dormant-text:  rgba(232,232,240,0.45);
-  --dm-quest-done-bg:       rgba(34,197,94,0.12);
-  --dm-quest-done-text:     var(--dm-green);
-  --dm-stakes-low-bg:       rgba(240,180,41,0.08);
-  --dm-stakes-low-text:     var(--dm-gold);
-  --dm-stakes-mid-bg:       rgba(96,165,250,0.12);
-  --dm-stakes-mid-text:     var(--dm-blue);
-  --dm-stakes-high-bg:      rgba(192,132,252,0.12);
-  --dm-stakes-high-text:    #c084fc;
-  --dm-stakes-camp-bg:      rgba(248,113,113,0.15);
-  --dm-stakes-camp-text:    var(--dm-red);
-  --dm-reveal-border:       rgba(248,113,113,0.25);
-  --dm-reveal-bg:           rgba(248,113,113,0.06);
-  --dm-related-bg:          rgba(96,165,250,0.08);
-  --dm-related-border:      rgba(96,165,250,0.18);
-  --dm-related-text:        var(--dm-blue);
-}
 
 /* Hide side panel when quests tab is active */
 .dm-main:has(#form-quests.active) .dm-side-panel { display: none; }
@@ -3411,21 +3328,6 @@ function showDMToast(msg, type) {
    ══════════════════════════════════════════════ */
 
 /* ── Additional CM tokens ── */
-:root {
-  --dm-vis-hidden-bg:   rgba(200,60,30,0.12);
-  --dm-vis-hidden-text: #ff8066;
-  --dm-vis-teaser-bg:   rgba(240,180,41,0.15);
-  --dm-vis-teaser-text: var(--dm-gold);
-  --dm-vis-shown-bg:    rgba(34,197,94,0.12);
-  --dm-vis-shown-text:  var(--dm-green);
-  --dm-type-badge-bg:   rgba(255,255,255,0.06);
-  --dm-type-badge-text: var(--dm-text-muted);
-  --dm-bulk-bg:         rgba(240,180,41,0.08);
-  --dm-bulk-border:     rgba(240,180,41,0.18);
-  --dm-row-hover:       rgba(255,255,255,0.04);
-  --dm-row-selected:    rgba(240,180,41,0.08);
-  --dm-th-bg:           #0e0e16;
-}
 
 /* Hide side panel when manage tab is active */
 .dm-main:has(#form-manage.active) .dm-side-panel { display: none; }
@@ -3939,42 +3841,6 @@ function showDMToast(msg, type) {
    All raw values defined as --scc-* or --dm-* tokens.
    No hardcoded hex anywhere below.
    ══════════════════════════════════════════════ */
-:root {
-  /* SCC surfaces */
-  --scc-bg:              var(--dm-bg);
-  --scc-surface:         var(--dm-surface);
-  --scc-surface-mid:     var(--dm-surface-mid);
-  --scc-surface-high:    var(--dm-surface-high);
-  --scc-border:          var(--dm-border);
-  --scc-border-mid:      var(--dm-border-mid);
-  --scc-border-gold:     var(--dm-border-gold);
-  /* SCC DM-Only warning — red theme */
-  --scc-dm-only-bg:      rgba(248,113,113,0.06);
-  --scc-dm-only-border:  rgba(248,113,113,0.45);
-  --scc-dm-only-text:    var(--dm-red);
-  --scc-dm-only-label:   rgba(248,113,113,0.9);
-  /* SCC player knowledge — neutral */
-  --scc-pk-bg:           rgba(255,255,255,0.03);
-  --scc-pk-border:       var(--dm-border-mid);
-  --scc-pk-label:        var(--dm-text-muted);
-  /* SCC beat status */
-  --scc-beat-done-bg:    rgba(34,197,94,0.12);
-  --scc-beat-done-text:  var(--dm-green);
-  --scc-beat-prog-bg:    rgba(240,180,41,0.12);
-  --scc-beat-prog-text:  var(--dm-gold);
-  --scc-beat-todo-bg:    rgba(255,255,255,0.04);
-  --scc-beat-todo-text:  var(--dm-text-muted);
-  /* SCC difficulty */
-  --scc-diff-low:        var(--dm-green);
-  --scc-diff-moderate:   var(--dm-gold);
-  --scc-diff-high:       #c084fc;
-  --scc-diff-deadly:     var(--dm-red);
-  /* SCC initiative */
-  --scc-init-active-bg:  rgba(240,180,41,0.12);
-  --scc-init-active-border: var(--dm-border-gold);
-  --scc-init-pc-border:  rgba(96,165,250,0.4);
-  --scc-init-enemy-border: rgba(248,113,113,0.4);
-}
 /* ── Full-bleed layout (same pattern as Manage/Quests) ── */
 .dm-main:has(#form-session.active) .dm-side-panel { display: none; }
 .dm-main:has(#form-session.active) .dm-forms-panel {
@@ -5379,28 +5245,6 @@ function showDMToast(msg, type) {
   font-style: italic;
 }
 /* ── NPC Relationship Colors ── */
-:root {
-  --scc-rel-ally-border:   rgba(34,197,94,0.5);
-  --scc-rel-ally-bg:       rgba(34,197,94,0.06);
-  --scc-rel-ally-badge:    rgba(34,197,94,0.15);
-  --scc-rel-ally-text:     var(--dm-green);
-  --scc-rel-neutral-border: rgba(96,165,250,0.4);
-  --scc-rel-neutral-bg:     rgba(96,165,250,0.05);
-  --scc-rel-neutral-badge:  rgba(96,165,250,0.12);
-  --scc-rel-neutral-text:   var(--dm-blue);
-  --scc-rel-caution-border: rgba(240,180,41,0.45);
-  --scc-rel-caution-bg:     rgba(240,180,41,0.05);
-  --scc-rel-caution-badge:  rgba(240,180,41,0.15);
-  --scc-rel-caution-text:   var(--dm-gold);
-  --scc-rel-hostile-border: rgba(248,113,113,0.5);
-  --scc-rel-hostile-bg:     rgba(248,113,113,0.05);
-  --scc-rel-hostile-badge:  rgba(248,113,113,0.14);
-  --scc-rel-hostile-text:   var(--dm-red);
-  --scc-rel-deity-border:   rgba(192,132,252,0.5);
-  --scc-rel-deity-bg:       rgba(192,132,252,0.05);
-  --scc-rel-deity-badge:    rgba(192,132,252,0.14);
-  --scc-rel-deity-text:     #c084fc;
-}
 /* NPC card relationship variants */
 .scc-npc-card.rel-ally    { border-color: var(--scc-rel-ally-border);    background: var(--scc-rel-ally-bg); }
 .scc-npc-card.rel-neutral { border-color: var(--scc-rel-neutral-border); background: var(--scc-rel-neutral-bg); }

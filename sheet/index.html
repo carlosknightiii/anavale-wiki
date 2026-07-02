@@ -6,56 +6,14 @@
   <title>Character Sheet — Anavale</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Roboto:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <link rel="stylesheet" href="../css/tokens.css">
 
   <style>
     /* ── CSS Variables (mirrors character.css :root exactly) ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --font-headers:  'Charm', serif;
-      --font-serif:    'Cinzel Decorative', Georgia, serif;
-      --font-sans:     'Roboto', system-ui, sans-serif;
-      --font-mono:     'Courier New', Courier, monospace;
-
-      --parchment:        #f5ead4;
-      --parchment-light:  #f8f1e2;
-      --parchment-dark:   #e8d4a8;
-      --ink:              #2a1f0e;
-      --ink-light:        #4a3520;
-      --ink-faint:        #7a6548;
-      --gold:             #c8940a;
-      --gold-light:       #e8b830;
-      --amber:            #7a5200;
-      --white:            #ffffff;
-      --teal:             #1a6a5a;
-      --violet:           #4a2878;
-      --green:            #2a5818;
-      --bubbleseed:       #2a7a3a;
-      --featherflow:      #2266b8;
-      --steelfist:        #6a3aaa;
-      --flamerage:        #aa3a1a;
-      --gradient-colorful: linear-gradient(135deg, #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%);
-
-      --char-bg:               #0a0e18;
-      --char-panel:            rgba(10, 14, 24, 0.85);
-      --char-border:           var(--ink-faint);
-      --char-border-gold:      var(--gold);
-      --char-radius:           12px;
-      --char-card-bg:          rgba(18, 24, 42, 0.95);
-      --char-card-bg-hover:    rgba(22, 30, 54, 0.98);
-      --char-card-bg-selected: rgba(40, 30, 10, 0.95);
-      --char-accent-tint:      rgba(255, 255, 255, 0.08);
-      --char-accent-border:    rgba(255, 255, 255, 0.3);
-      --char-accent-border-mid:rgba(255, 255, 255, 0.4);
-      --char-section-bg:       rgba(10, 14, 24, 0.75);
-      --char-text-muted:       rgba(255, 255, 255, 0.8);
-      --char-text-faint:       rgba(245, 234, 212, 0.65);
-      --char-highlight-tint:   rgba(200, 148, 10, 0.1);
-      --char-highlight-border: rgba(200, 148, 10, 0.3);
-      --char-card-bg-subtle:   rgba(255, 255, 255, 0.03);
-    }
 
     /* ── Page Shell ── */
     body {
