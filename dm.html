@@ -2323,6 +2323,13 @@
               <option value="session-2">Session 2</option>
               <option value="session-3">Session 3</option>
             </select>
+            <select id="q-sort-filter" class="cm-select" onchange="questsFilter()">
+              <option value="name-asc">A → Z</option>
+              <option value="name-desc">Z → A</option>
+              <option value="session">Session</option>
+              <option value="stakes">Stakes</option>
+              <option value="status">Status</option>
+            </select>
             <button class="cm-btn" onclick="questsResetFilters()">Reset</button>
             <span class="cm-count" id="q-count"></span>
           </div>
@@ -7587,6 +7594,9 @@ function questsFilter() {
 
   var all = typeof QUESTS !== 'undefined' ? QUESTS : [];
 
+  var sort = (document.getElementById('q-sort-filter') || {}).value || 'name-asc';
+  var stakesOrder = { low: 1, mid: 2, high: 3, campaign: 4 };
+  var statusOrder = { active: 1, available: 2, dormant: 3, completed: 4 };
   QUESTS_FILTERED = all.filter(function(quest) {
     if (status && quest.status !== status) return false;
     if (stakes && quest.stakes !== stakes) return false;
@@ -7596,6 +7606,13 @@ function questsFilter() {
       if (hay.indexOf(q) === -1) return false;
     }
     return true;
+  }).sort(function(a, b) {
+    if (sort === 'name-asc')  return (a.name || '').localeCompare(b.name || '');
+    if (sort === 'name-desc') return (b.name || '').localeCompare(a.name || '');
+    if (sort === 'session')   return (a.first_available || '').localeCompare(b.first_available || '');
+    if (sort === 'stakes')    return (stakesOrder[a.stakes] || 0) - (stakesOrder[b.stakes] || 0);
+    if (sort === 'status')    return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
+    return 0;
   });
 
   var countEl = document.getElementById('q-count');
@@ -7610,6 +7627,8 @@ function questsResetFilters() {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
+  var sortEl = document.getElementById('q-sort-filter');
+  if (sortEl) sortEl.value = 'name-asc';
   questsFilter();
 }
 
@@ -7663,7 +7682,9 @@ function renderQuestDetail(id) {
   if (quest.reveals && quest.reveals.length) {
     revealsHtml = '<div class="quest-section-label">Reveals <span style="font-size:var(--text-xs);color:var(--ink-faint);text-transform:none;letter-spacing:0;font-weight:normal;">(DM eyes only)</span></div>'
       + quest.reveals.map(function(r) {
-          return '<div class="quest-reveal-item">' + escQ(r) + '</div>';
+          var trigger = r.trigger ? '<span style="font-family:var(--font-sans);font-size:0.7rem;color:var(--dm-text-muted);display:block;margin-bottom:0.2rem;text-transform:uppercase;letter-spacing:0.08em;">' + escQ(r.trigger.replace(/_/g,' ')) + '</span>' : '';
+          var text    = escQ(typeof r === 'string' ? r : (r.text || ''));
+          return '<div class="quest-reveal-item">' + trigger + text + '</div>';
         }).join('');
   }
 
@@ -7700,17 +7721,36 @@ function renderQuestDetail(id) {
     + '<select id="q-status-' + escQ(id) + '" class="cm-select" onchange="setQuestStatus(\'' + escQ(id) + '\', this.value)">'
     + statusOptions
     + '</select>'
-    + '<span style="color:var(--ink-faint);font-size:var(--text-xs);font-style:italic;">Changes are in-memory. Save quests.js via Manage tab.</span>'
+    + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-status-msg-' + escQ(id) + '"></span>'
     + '</div>';
 }
 
 function setQuestStatus(id, newStatus) {
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
   var quest = quests.find(function(q) { return q.id === id; });
-  if (quest) {
-    quest.status = newStatus;
-    renderQuestsList();
-  }
+  if (!quest) return;
+  quest.status = newStatus;
+  renderQuestsList();
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  var msgEl = document.getElementById('quest-status-msg-' + id);
+  if (msgEl) msgEl.textContent = 'Saving…';
+  fetch(SB_URL + '/rest/v1/quests?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_ANON,
+      'Authorization': 'Bearer ' + SB_ANON,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ status: newStatus })
+  }).then(function(r) {
+    if (msgEl) msgEl.textContent = r.ok ? '✓ Saved' : '⚠ Save failed';
+    if (msgEl) setTimeout(function(){ msgEl.textContent = ''; }, 3000);
+    if (r.ok) showDMToast(quest.name + ' → ' + statusLabel(newStatus) + ' ✓', 'success');
+  }).catch(function() {
+    if (msgEl) msgEl.textContent = '⚠ Save failed';
+  });
 }
 
 function statusLabel(status) {
