@@ -7558,7 +7558,25 @@ function setupClearToken() {
 }
 
 function questsRefresh() {
-  questsFilter();
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  var listEl = document.getElementById('quests-list');
+  if (listEl) listEl.innerHTML = '<div style="text-align:center;color:var(--ink-faint);padding:2rem;font-style:italic;">Loading…</div>';
+  fetch(SB_URL + '/rest/v1/quests?select=*&limit=500', {
+    headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(rows) {
+    if (Array.isArray(rows) && rows.length > 0) {
+      window.QUESTS = rows;
+    }
+    questsFilter();
+    showDMToast('Quests refreshed from Supabase ✓', 'success');
+  })
+  .catch(function() {
+    questsFilter();
+    showDMToast('Refresh failed — using cached data', 'error');
+  });
 }
 
 function questsFilter() {
