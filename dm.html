@@ -5830,13 +5830,12 @@ async function uploadImageToSupabase(prefix, folder) {
   try {
     var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
     var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
-    var formData = new FormData();
-    formData.append('file', blob, filename.split('/').pop());
-    var res = await fetch(SB_URL + '/storage/v1/object/world-images/' + filename, {
-      method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'x-upsert': 'true' },
-      body: formData
-    });
+    var uploadHeaders = { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'Content-Type': 'image/webp', 'x-upsert': 'true' };
+    var uploadUrl = SB_URL + '/storage/v1/object/world-images/' + filename;
+    var res = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: blob });
+    if (!res.ok) {
+      res = await fetch(uploadUrl, { method: 'PUT', headers: uploadHeaders, body: blob });
+    }
     if (res.ok) {
       var url = SB_URL + '/storage/v1/object/public/world-images/' + filename;
       if (pathInput) pathInput.value = url;
@@ -5844,6 +5843,17 @@ async function uploadImageToSupabase(prefix, folder) {
       if (uploadBtn) { uploadBtn.textContent = '✓ Uploaded'; uploadBtn.disabled = false; }
       var removeBtn = document.getElementById(prefix + '-img-remove-btn');
       if (removeBtn) removeBtn.style.display = '';
+      var typeMap2 = { city:'cities', creature:'creatures', poi:'pois', char:'world_characters', org:'organizations', item:'items' };
+      var table2   = typeMap2[prefix];
+      var idEl2    = document.getElementById(prefix + '-id');
+      var entryId2 = idEl2 && idEl2.value.trim();
+      if (table2 && entryId2) {
+        fetch(SB_URL + '/rest/v1/' + table2 + '?id=eq.' + encodeURIComponent(entryId2), {
+          method: 'PATCH',
+          headers: { 'Content-Type':'application/json', 'apikey':SB_ANON, 'Authorization':'Bearer '+SB_ANON, 'Prefer':'return=minimal' },
+          body: JSON.stringify({ image: url })
+        });
+      }
     } else {
       if (sizeEl) sizeEl.innerHTML = '<span style="color:var(--dm-red)">⚠ Upload failed — check console</span>';
       if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '⬆ Upload Image'; }
@@ -5874,6 +5884,20 @@ async function removeEntryImage(prefix) {
   if (preview)     { preview.src = ''; preview.classList.add('hidden'); preview._blob = null; }
   if (placeholder) placeholder.style.display = '';
   if (removeBtn)   removeBtn.style.display = 'none';
+  // Clear image URL in Supabase so it doesn't reappear on reload
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  var typeMap = { city:'cities', creature:'creatures', poi:'pois', char:'world_characters', org:'organizations', item:'items' };
+  var table   = typeMap[prefix];
+  var idEl    = document.getElementById(prefix + '-id');
+  var entryId = idEl && idEl.value.trim();
+  if (table && entryId) {
+    fetch(SB_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(entryId), {
+      method: 'PATCH',
+      headers: { 'Content-Type':'application/json', 'apikey':SB_ANON, 'Authorization':'Bearer '+SB_ANON, 'Prefer':'return=minimal' },
+      body: JSON.stringify({ image: null })
+    });
+  }
   showDMToast('Image removed', 'success');
 }
 
