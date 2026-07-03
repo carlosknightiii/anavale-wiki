@@ -10075,18 +10075,55 @@ function sccOpenLookup(type, id) {
     var allLocs = (typeof CITIES!=='undefined'?CITIES:[]).concat(typeof POIS!=='undefined'?POIS:[]).concat(typeof NATIONS!=='undefined'?NATIONS:[]);
     var loc = allLocs.find(function(x){ return x.id===id; });
     if (!loc) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
-    html = (loc.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(loc.read_aloud)+'</div></div>':'')
-      + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;">' + sccEsc(loc.name) + '</div>'
-      + '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);margin-bottom:1rem;">' + sccEsc((loc.city_type||loc.type||'nation').replace(/-/g,' ')) + (loc.region?' · '+sccEsc(loc.region):'') + '</div>'
-      + (loc.description?'<div class="scc-pk-block"><div class="scc-pk-label">Description</div><div class="scc-pk-text">'+sccEsc(loc.description)+'</div></div>':'')
-      + (loc.strategic_importance?'<div class="scc-pk-block"><div class="scc-pk-label">Strategic Importance</div><div class="scc-pk-text">'+sccEsc(loc.strategic_importance)+'</div></div>':'')
-      + (loc.tone?'<div class="scc-pk-block"><div class="scc-pk-label">Tone</div><div class="scc-pk-text">'+sccEsc(loc.tone)+'</div></div>':'')
-      + (loc.dm_notes?'<div class="scc-dm-block"><div class="scc-dm-label">⚠ DM Notes</div><div class="scc-dm-text">'+sccEsc(loc.dm_notes)+'</div></div>':'');
-    if (loc.landmarks && loc.landmarks.length) {
-      html += '<div class="scc-pk-block"><div class="scc-pk-label">Landmarks</div>'
-        + loc.landmarks.map(function(lm){ return '<div class="scc-pk-text" style="margin-bottom:0.4rem;"><strong style="color:var(--dm-gold);">'+sccEsc(lm.name)+'</strong> — '+sccEsc(lm.description||'')+'</div>'; }).join('')
-      + '</div>';
+    // Health badge
+    var ch = (loc.color_health || '').toLowerCase();
+    var isVivid  = ch.indexOf('vivid')  >= 0 || ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0;
+    var isMuted  = ch.indexOf('muted')  >= 0;
+    var isFaded  = ch.indexOf('faded')  >= 0 || ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0;
+    var isDimmed = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
+    var hBg = isVivid ? '#6ee6d2' : isMuted ? '#f0b429' : isFaded ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#666666';
+    var hTxt = isMuted ? '#1a1008' : '#0b0e16';
+    var hLabel = loc.color_health ? loc.color_health.replace(/-/g,' ').toUpperCase() : '';
+    var healthBadgeHtml = loc.color_health
+      ? '<span class="scc-loc2-health-badge" style="background:' + hBg + ';color:' + hTxt + '">' + sccEsc(hLabel) + '</span>'
+      : '';
+    var varethBadgeHtml = loc.vareth_presence
+      ? '<span class="scc-loc2-vareth-badge"><svg width="10" height="10" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0"><path d="M12.7097 1.96538L6.75122 11.4472L0.792603 1.96538L6.75122 0.514587L12.7097 1.96538ZM0.792603 1.96538L6.75122 3.05345M6.75122 11.4472V3.05345M12.7097 1.96538L6.75122 3.05345" stroke="#0B0E16" stroke-width="1.2"/></svg>VARETH</span>'
+      : '';
+    // Portrait
+    var locPortraitHtml = loc.image
+      ? '<img class="scc-ql-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/cities/' + sccEsc(loc.id) + '.webp" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-ql-portrait-fallback">' + sccEsc((loc.name||'?').charAt(0)) + '</div>';
+    var typeLine = (loc._srcType === 'poi' || loc.type === 'poi') ? 'POI' : (loc.city_type || loc.type || 'Location').replace(/-/g,' ');
+    // Tags
+    var locTagsHtml = '';
+    if (loc.tags && loc.tags.length) {
+      locTagsHtml = loc.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
     }
+    html = ''
+      // ── HEADER ──
+      + '<div class="scc-ql-header">'
+        + locPortraitHtml
+        + '<div class="scc-ql-header-info">'
+          + '<div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
+            + healthBadgeHtml
+            + varethBadgeHtml
+          + '</div>'
+          + '<div class="scc-ql-name">' + sccEsc(loc.name) + '</div>'
+          + '<div class="scc-ql-role">'
+            + '<span class="scc-ql-bold">Type:</span> ' + sccEsc(typeLine)
+            + (loc.region ? ' &nbsp;&#183;&nbsp; <span class="scc-ql-bold">Region:</span> ' + sccEsc(loc.region.charAt(0).toUpperCase() + loc.region.slice(1)) : '')
+            + (loc.nation ? ' &nbsp;&#183;&nbsp; <span class="scc-ql-bold">Nation:</span> ' + sccEsc(loc.nation) : '')
+          + '</div>'
+        + '</div>'
+      + '</div>'
+      // ── FIELDS ──
+      + (loc.formery_present ? '<div class="scc-ql-fields"><div class="scc-ql-row"><span class="scc-ql-label">Formery</span><span class="scc-ql-value">Office present</span></div></div>' : '')
+      // ── PROSE — only fields NOT shown in the accordion ──
+      + (loc.strategic_importance ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Strategic Importance</div><div class="scc-ql-section-body">' + sccEsc(loc.strategic_importance) + '</div></div>' : '')
+      + (loc.tone ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tone</div><div class="scc-ql-section-body">' + sccEsc(loc.tone) + '</div></div>' : '')
+      // ── TAGS ──
+      + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '');
   } else if (type === 'creature') {
     var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
     var cr = creatures.find(function(x){ return x.id===id; });
