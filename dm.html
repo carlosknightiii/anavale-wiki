@@ -10122,6 +10122,8 @@ function sccOpenLookup(type, id) {
       // ── PROSE — only fields NOT shown in the accordion ──
       + (loc.strategic_importance ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Strategic Importance</div><div class="scc-ql-section-body">' + sccEsc(loc.strategic_importance) + '</div></div>' : '')
       + (loc.tone ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tone</div><div class="scc-ql-section-body">' + sccEsc(loc.tone) + '</div></div>' : '')
+      + (loc.culture ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Culture</div><div class="scc-ql-section-body">' + sccEsc(loc.culture) + '</div></div>' : '')
+      + (loc.gigglegloom_notes ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom</div><div class="scc-ql-section-body">' + sccEsc(loc.gigglegloom_notes) + '</div></div>' : '')
       // ── TAGS ──
       + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '');
   } else if (type === 'creature') {
