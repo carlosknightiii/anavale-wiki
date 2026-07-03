@@ -9301,12 +9301,14 @@ function sccRenderLocationPanel() {
   }
   function healthBadge(loc) {
     var ch = (loc.color_health || '').toLowerCase();
-    var isExcellent = ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0 || ch.indexOf('vivid') >= 0;
-    var isFading    = ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0 || ch.indexOf('moderate') >= 0 || ch.indexOf('fadded') >= 0;
-    var isDimmed    = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
-    var bg = isExcellent ? '#6ee6d2' : isFading ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#6ee6d2';
-    var label = loc.color_health ? loc.color_health.replace(/-/g,' ').toUpperCase() : '';
-    return '<span class="scc-loc2-health-badge" style="background:' + bg + ';color:#0b0e16">' + sccEsc(label) + '</span>';
+    var isVivid  = ch.indexOf('vivid')  >= 0 || ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0;
+    var isMuted  = ch.indexOf('muted')  >= 0;
+    var isFaded  = ch.indexOf('faded')  >= 0 || ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0;
+    var isDimmed = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
+    var bg = isVivid ? '#6ee6d2' : isMuted ? '#f0b429' : isFaded ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#666666';
+    var textColor = isMuted ? '#1a1008' : '#0b0e16';
+    var label = loc.color_health ? loc.color_health.replace(/-/g,' ').toUpperCase() : 'UNKNOWN';
+    return '<span class="scc-loc2-health-badge" style="background:' + bg + ';color:' + textColor + '">' + sccEsc(label) + '</span>';
   }
   el.innerHTML = locs.map(function(loc) {
     var typeLine = loc._srcType === 'poi' ? 'POI' : (loc.city_type || loc.type || loc._srcType || '').replace(/-/g,' ');
@@ -9392,7 +9394,7 @@ function sccRenderLocationPanel() {
         + '<div class="scc-npc2-info">'
           + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.2rem;">'
             + (loc.color_health ? healthBadge(loc) : '')
-            + (loc.vareth_presence ? '<span class="scc-loc2-vareth-badge">&#9888; VARETH</span>' : '')
+            + (loc.vareth_presence ? '<span class="scc-loc2-vareth-badge"><svg width="10" height="10" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0"><path d="M12.7097 1.96538L6.75122 11.4472L0.792603 1.96538L6.75122 0.514587L12.7097 1.96538ZM0.792603 1.96538L6.75122 3.05345M6.75122 11.4472V3.05345M12.7097 1.96538L6.75122 3.05345" stroke="#0B0E16" stroke-width="1.2"/></svg>VARETH</span>' : '')
           + '</div>'
           + '<div class="scc-npc2-name">' + sccEsc(loc.name) + '</div>'
           + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Type:</span> ' + sccEsc(typeLine) + '</div>'
