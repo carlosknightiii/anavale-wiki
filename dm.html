@@ -6314,25 +6314,95 @@ function readImagePath(inputId, folder, entryId, fallback) {
 
 /* ── REPEATING GROUP — LANDMARKS ─────────────── */
 var _landmarkN = 0;
-function addLandmark() {
+function addLandmark(opts) {
+  opts = opts || {};
   _landmarkN++;
   var id  = 'lm-' + _landmarkN;
   var div = document.createElement('div');
   div.className = 'repeating-item';
   div.id = id;
   div.innerHTML =
-    '<button class="btn-remove" onclick="removeRepeat(\'' + id + '\')" title="Remove">✕</button>' +
+    '<button class="btn-remove" onclick="removeRepeat(\'' + id + '\')" title="Remove">&#x2715;</button>' +
+    '<input type="hidden" id="' + id + '-entry-id" value="">' +
+    '<input type="hidden" id="' + id + '-entry-type" value="">' +
+    '<div class="field-group" style="margin-bottom:0.5rem">' +
+      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Link to existing entry <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>' +
+      '<div style="position:relative">' +
+        '<input class="field-input" type="text" id="' + id + '-link-search" placeholder="Search cities, POIs…" autocomplete="off" oninput="lmLinkSearch(\'' + id + '\', this.value)">' +
+        '<div id="' + id + '-link-results" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--surface-2);border:1px solid var(--border-mid);border-radius:6px;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.4)"></div>' +
+      '</div>' +
+      '<div id="' + id + '-link-tag" style="display:none;margin-top:0.35rem;font-family:var(--font-body);font-size:0.78rem;color:var(--gold)">&#128279; Linked: <span id="' + id + '-link-label"></span> <button onclick="lmLinkClear(\'' + id + '\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">&#x2715; Clear</button></div>' +
+    '</div>' +
     '<div class="field-group" style="margin-bottom:0.5rem">' +
       '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Landmark Name</label>' +
       '<input class="field-input" type="text" id="' + id + '-name" placeholder="e.g. The Mirrenflow Bridge">' +
     '</div>' +
     '<div class="field-group" style="margin-bottom:0">' +
-      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Description</label>' +
+      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Description <span id="' + id + '-desc-note" style="font-weight:400;color:var(--text-muted);display:none">(pulled from linked entry)</span></label>' +
       '<textarea class="field-textarea" id="' + id + '-desc" placeholder="Brief description…" style="min-height:60px"></textarea>' +
     '</div>';
   var list = document.getElementById('city-landmarks-list');
   list.appendChild(div);
   document.getElementById('city-landmarks-empty').style.display = 'none';
+  if (opts.entry_id) lmLinkSet(id, opts.entry_id, opts.entry_type || 'poi', opts.link_label || opts.entry_id, opts.name, opts.description);
+}
+function lmLinkSearch(lmId, query) {
+  var results = document.getElementById(lmId + '-link-results');
+  if (!results) return;
+  query = query.toLowerCase().trim();
+  if (!query) { results.style.display = 'none'; return; }
+  var pool = []
+    .concat((typeof CITIES !== 'undefined' ? CITIES : []).map(function(x){ return { id: x.id, type: 'city', label: x.name + ' (City)' }; }))
+    .concat((typeof POIS   !== 'undefined' ? POIS   : []).map(function(x){ return { id: x.id, type: 'poi',  label: x.name + ' (POI)'  }; }));
+  var matches = pool.filter(function(x){ return x.label.toLowerCase().indexOf(query) >= 0; }).slice(0, 8);
+  if (!matches.length) { results.style.display = 'none'; return; }
+  results.innerHTML = matches.map(function(m) {
+    return '<div style="padding:0.4rem 0.75rem;cursor:pointer;font-family:var(--font-body);font-size:0.82rem;color:var(--text);border-bottom:1px solid var(--border)" onmousedown="lmLinkSelect(\'' + lmId + '\',\'' + m.id + '\',\'' + m.type + '\',\'' + m.label.replace(/'/g,'\\\'') + '\')">' + m.label + '</div>';
+  }).join('');
+  results.style.display = 'block';
+}
+function lmLinkSelect(lmId, entryId, entryType, label) {
+  var pool = []
+    .concat((typeof CITIES !== 'undefined' ? CITIES : []))
+    .concat((typeof POIS   !== 'undefined' ? POIS   : []));
+  var entry = pool.find(function(x){ return x.id === entryId; });
+  lmLinkSet(lmId, entryId, entryType, label, entry ? entry.name : '', entry ? (entry.summary || entry.description || '') : '');
+}
+function lmLinkSet(lmId, entryId, entryType, label, name, description) {
+  var eid  = document.getElementById(lmId + '-entry-id');
+  var etype = document.getElementById(lmId + '-entry-type');
+  var tag  = document.getElementById(lmId + '-link-tag');
+  var lbl  = document.getElementById(lmId + '-link-label');
+  var search = document.getElementById(lmId + '-link-search');
+  var results = document.getElementById(lmId + '-link-results');
+  var nameEl = document.getElementById(lmId + '-name');
+  var descEl = document.getElementById(lmId + '-desc');
+  var descNote = document.getElementById(lmId + '-desc-note');
+  if (eid)   eid.value   = entryId;
+  if (etype) etype.value = entryType;
+  if (tag)   tag.style.display  = '';
+  if (lbl)   lbl.textContent    = label;
+  if (search) { search.value = ''; search.style.display = 'none'; }
+  if (results) results.style.display = 'none';
+  if (nameEl && name) { nameEl.value = name; nameEl.readOnly = true; nameEl.style.opacity = '0.6'; }
+  if (descEl && description) { descEl.value = description; descEl.readOnly = true; descEl.style.opacity = '0.6'; }
+  if (descNote) descNote.style.display = '';
+}
+function lmLinkClear(lmId) {
+  var eid   = document.getElementById(lmId + '-entry-id');
+  var etype = document.getElementById(lmId + '-entry-type');
+  var tag   = document.getElementById(lmId + '-link-tag');
+  var search = document.getElementById(lmId + '-link-search');
+  var nameEl = document.getElementById(lmId + '-name');
+  var descEl = document.getElementById(lmId + '-desc');
+  var descNote = document.getElementById(lmId + '-desc-note');
+  if (eid)   eid.value   = '';
+  if (etype) etype.value = '';
+  if (tag)   tag.style.display = 'none';
+  if (search) { search.value = ''; search.style.display = ''; }
+  if (nameEl) { nameEl.value = ''; nameEl.readOnly = false; nameEl.style.opacity = ''; }
+  if (descEl) { descEl.value = ''; descEl.readOnly = false; descEl.style.opacity = ''; }
+  if (descNote) descNote.style.display = 'none';
 }
 
 /* ── REPEATING GROUP — WORLD ASSOCIATIONS ────── */
@@ -6539,9 +6609,17 @@ function generateCity() {
   // Collect landmarks
   var landmarks = [];
   document.querySelectorAll('#city-landmarks-list .repeating-item').forEach(function(item) {
-    var lname = (item.querySelector('input') || {}).value || '';
-    var ldesc = (item.querySelector('textarea') || {}).value || '';
-    if (lname.trim()) landmarks.push({ name: lname.trim(), description: ldesc.trim() });
+    var itemId   = item.id;
+    var eidEl    = document.getElementById(itemId + '-entry-id');
+    var etypeEl  = document.getElementById(itemId + '-entry-type');
+    var lname    = (document.getElementById(itemId + '-name') || {}).value || '';
+    var ldesc    = (document.getElementById(itemId + '-desc') || {}).value || '';
+    if (lname.trim()) {
+      var lm = { name: lname.trim(), description: ldesc.trim() };
+      if (eidEl && eidEl.value)   lm.entry_id   = eidEl.value;
+      if (etypeEl && etypeEl.value) lm.entry_type = etypeEl.value;
+      landmarks.push(lm);
+    }
   });
 
   var entryId = val('city-id') || slugify(name);
@@ -7706,10 +7784,14 @@ function cmPopulateForm(entry, type) {
     var lms = entry.landmarks || [];
     if (lmEmpty) lmEmpty.style.display = lms.length ? 'none' : '';
     lms.forEach(function(lm) {
-      addLandmark();
-      sv('lm-' + _landmarkN + '-name', lm.name);
-      var descEl = document.getElementById('lm-' + _landmarkN + '-desc');
-      if (descEl) descEl.value = lm.description || '';
+      if (lm.entry_id) {
+        addLandmark({ entry_id: lm.entry_id, entry_type: lm.entry_type || 'poi', link_label: lm.name, name: lm.name, description: lm.description });
+      } else {
+        addLandmark();
+        sv('lm-' + _landmarkN + '-name', lm.name);
+        var descEl = document.getElementById('lm-' + _landmarkN + '-desc');
+        if (descEl) descEl.value = lm.description || '';
+      }
     });
     resetImagePreview('city');
     showExistingImage('city-img-preview', 'city-img-path');
@@ -9372,17 +9454,26 @@ function sccRenderLocationPanel() {
       + '</div>';
     }
     if (loc.landmarks && loc.landmarks.length) {
+      var allWorld = []
+        .concat(typeof CITIES  !== 'undefined' ? CITIES  : [])
+        .concat(typeof POIS    !== 'undefined' ? POIS    : []);
       bodyHtml += '<div class="scc-npc2-section">'
         + '<div class="scc-npc2-icon">&#127968;</div>'
         + '<div class="scc-npc2-section-txt">'
           + '<div class="scc-npc2-section-title">Landmarks</div>'
           + '<div style="display:flex;flex-direction:column;gap:0;">'
             + loc.landmarks.map(function(lm) {
+                var linked = lm.entry_id ? allWorld.find(function(x){ return x.id === lm.entry_id; }) : null;
+                var lmName = linked ? linked.name : lm.name;
+                var lmDesc = linked ? (linked.summary || linked.description || lm.description || '') : (lm.description || '');
                 return '<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem 0;border-bottom:2px solid #2c3757;">'
-                  + '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lm.name || '?').charAt(0)) + '</div>'
+                  + '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lmName || '?').charAt(0)) + '</div>'
                   + '<div style="flex:1;min-width:0;">'
-                    + '<div style="font-family:var(--font-display);font-size:0.95rem;font-weight:700;color:var(--dm-text);margin-bottom:0.2rem;">' + sccEsc(lm.name) + '</div>'
-                    + (lm.description ? '<div style="font-family:var(--font-sans);font-size:0.85rem;color:var(--dm-text);font-weight:300;line-height:1.6;">' + sccEsc(lm.description) + '</div>' : '')
+                    + '<div style="font-family:var(--font-display);font-size:0.95rem;font-weight:700;color:var(--dm-text);margin-bottom:0.2rem;">'
+                      + sccEsc(lmName)
+                      + (linked ? ' <span style="font-family:var(--font-sans);font-size:0.68rem;font-weight:400;color:var(--dm-gold);opacity:0.7;margin-left:0.35rem;">&#128279;</span>' : '')
+                    + '</div>'
+                    + (lmDesc ? '<div style="font-family:var(--font-sans);font-size:0.85rem;color:var(--dm-text);font-weight:300;line-height:1.6;">' + sccEsc(lmDesc) + '</div>' : '')
                   + '</div>'
                 + '</div>';
               }).join('')
