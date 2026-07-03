@@ -1587,6 +1587,20 @@ function renderCity(id, el) {
     + '</div>'
     + '<div class="nation-facts"><div class="nation-facts-title">⚑ Quick Facts</div>' + factsHtml + '</div>'
     + '</div>'
+    + (id === 'gobblewump-crossing'
+        ? '<div style="margin-top:1.5rem;">'
+          + '<a href="maps/gobblewump-crossing.html" target="_blank"'
+          + ' style="display:inline-flex;align-items:center;gap:0.45rem;'
+          + 'padding:0.55rem 1.1rem;background:var(--ink);color:var(--gold);'
+          + 'font-family:var(--font-display);font-size:0.78rem;font-weight:700;'
+          + 'border:1.5px solid var(--gold-border);border-radius:3px;'
+          + 'text-decoration:none;letter-spacing:0.04em;transition:opacity 0.15s;"'
+          + ' onmouseover="this.style.opacity=\'0.8\'"'
+          + ' onmouseout="this.style.opacity=\'1\'">'
+          + '&#128506; View Town Map'
+          + '</a>'
+          + '</div>'
+        : '')
     + renderAssociatedCharacters(getAssociatedCharacters('cities', id));
 }
 
