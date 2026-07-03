@@ -2410,6 +2410,7 @@
             <button class="scc-tab-btn"        data-scc="quests"    onclick="sccSwitchPanel('quests')">Quests</button>
             <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
             <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
+            <button class="scc-tab-btn scc-tab-btn--live" data-scc="live" onclick="sccSwitchPanel('live')">&#9654; Live Session</button>
           </div>
         </div>
         <!-- ── PLAYER BAR (always visible) ─── -->
@@ -2703,6 +2704,108 @@
             </div>
           </div>
         </div><!-- /scc-panel-notes -->
+        <!-- ══ PANEL: LIVE SESSION ══════════════ -->
+        <div class="scc-panel" id="scc-panel-live">
+          <div class="scc-live-layout">
+            <!-- ── LEFT COLUMN ─────────────────── -->
+            <div class="scc-live-col scc-live-col--left">
+              <!-- QUEST BEATS -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Quest Progress</div>
+                <div id="scc-live-beats"></div>
+              </div>
+              <!-- PARTY HP -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Party HP</div>
+                <div id="scc-live-party"></div>
+              </div>
+              <!-- CONDITIONS -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Conditions</div>
+                <div id="scc-live-conditions"></div>
+              </div>
+              <!-- INSPIRATION -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Inspiration</div>
+                <div id="scc-live-inspiration" class="scc-live-inspiration-row"></div>
+              </div>
+              <!-- QUICK ACTIONS -->
+              <div class="scc-live-section scc-live-quick-actions">
+                <button class="scc-btn-primary" style="width:100%;margin-bottom:0.5rem;" onclick="sccSwitchPanel('combat')">&#9876; Go to Combat</button>
+                <button class="scc-btn-secondary" style="width:100%;" onclick="sccLiveAddNote()">&#128203; Quick Note</button>
+              </div>
+            </div><!-- /left -->
+            <!-- ── CENTER COLUMN ────────────────── -->
+            <div class="scc-live-col scc-live-col--center">
+              <!-- GLOBAL SEARCH (reuses existing SCC search) -->
+              <div class="scc-live-search-wrap">
+                <input type="text" class="scc-live-search" id="scc-live-search" placeholder="Search NPCs, locations, items, creatures&#8230;" oninput="sccLiveSearch(this.value)" autocomplete="off">
+                <div class="scc-picker-dropdown" id="scc-live-search-results"></div>
+              </div>
+              <!-- SCENARIOS -->
+              <div class="scc-live-section-label" style="margin-top:0.75rem;">Scenarios</div>
+              <div id="scc-live-scenarios"></div>
+              <!-- QUICK NOTE FIELD -->
+              <div class="scc-live-note-wrap" id="scc-live-note-wrap" style="display:none;">
+                <textarea id="scc-live-note-input" class="scc-textarea" rows="2" placeholder="One sentence — what just happened&#8230;"></textarea>
+                <button class="scc-btn-sm" style="margin-top:0.35rem;" onclick="sccLiveSaveNote()">Save to Session Notes</button>
+              </div>
+            </div><!-- /center -->
+            <!-- ── RIGHT COLUMN ──────────────────── -->
+            <div class="scc-live-col scc-live-col--right">
+              <!-- NPC QUICK CAST -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">NPCs This Session</div>
+                <div id="scc-live-npcs" class="scc-live-npc-chips"></div>
+              </div>
+              <!-- DIE ROLLER -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Die Roller</div>
+                <div class="scc-live-dice-row">
+                  <button class="scc-live-die-btn" onclick="sccRollDie(4)">d4</button>
+                  <button class="scc-live-die-btn" onclick="sccRollDie(6)">d6</button>
+                  <button class="scc-live-die-btn" onclick="sccRollDie(8)">d8</button>
+                  <button class="scc-live-die-btn" onclick="sccRollDie(10)">d10</button>
+                  <button class="scc-live-die-btn" onclick="sccRollDie(12)">d12</button>
+                  <button class="scc-live-die-btn scc-live-die-btn--d20" onclick="sccRollDie(20)">d20</button>
+                </div>
+                <div class="scc-live-dice-modifier-row">
+                  <span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">Modifier</span>
+                  <input type="number" id="scc-live-die-mod" class="scc-input" style="width:60px;text-align:center;padding:0.2rem 0.4rem;" value="0" min="-20" max="20">
+                </div>
+                <div id="scc-live-die-result" class="scc-live-die-result"></div>
+              </div>
+              <!-- DM SAFETY NET -->
+              <div class="scc-live-section scc-live-safety-net">
+                <div class="scc-live-section-label">DM Safety Net</div>
+                <div class="scc-live-safety-item">
+                  <span class="scc-live-safety-trigger">Players go sideways?</span>
+                  <span class="scc-live-safety-response">&#8220;Interesting. Give me a [Perception / Investigation] roll.&#8221;</span>
+                </div>
+                <div class="scc-live-safety-item">
+                  <span class="scc-live-safety-trigger">0 HP?</span>
+                  <span class="scc-live-safety-response">Unconscious. Death saves: DC 10, 3 successes before 3 failures.</span>
+                </div>
+                <div class="scc-live-safety-item">
+                  <span class="scc-live-safety-trigger">Rules dispute?</span>
+                  <span class="scc-live-safety-response">&#8220;We&#8217;ll rule it [X] now and look it up after. Keep moving.&#8221;</span>
+                </div>
+                <div class="scc-live-safety-item">
+                  <span class="scc-live-safety-trigger">Emotional moment?</span>
+                  <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
+                </div>
+              </div>
+              <!-- SESSION TIMER -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Session Timer</div>
+                <div class="scc-live-timer-row">
+                  <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
+                  <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
+                </div>
+              </div>
+            </div><!-- /right -->
+          </div><!-- /scc-live-layout -->
+        </div><!-- /scc-panel-live -->
       </div><!-- /form-session -->
 
 
@@ -5122,6 +5225,163 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
 }
 .scc-add-condition-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+/* ── Live Session Panel ── */
+#scc-panel-live { overflow-y: auto; }
+.scc-tab-btn--live { background: rgba(96,165,250,0.08); border-color: rgba(96,165,250,0.3); color: var(--dm-blue); }
+.scc-tab-btn--live.active { background: rgba(96,165,250,0.18); border-color: rgba(96,165,250,0.6); color: #93c5fd; }
+.scc-live-layout {
+  display: grid;
+  grid-template-columns: 28% 1fr 26%;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.scc-live-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+.scc-live-section {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  padding: 0.75rem;
+}
+.scc-live-section-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-gold);
+  margin-bottom: 0.5rem;
+}
+/* Beat rail */
+.scc-live-beat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--scc-border);
+  cursor: pointer;
+}
+.scc-live-beat-item:last-child { border-bottom: none; }
+.scc-live-beat-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--scc-border-mid);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 700;
+  transition: var(--dm-transition);
+}
+.scc-live-beat-item--completed .scc-live-beat-dot { background: var(--dm-green); border-color: var(--dm-green); color: #0b0e16; }
+.scc-live-beat-item--in_progress .scc-live-beat-dot { background: var(--dm-gold); border-color: var(--dm-gold); color: #0b0e16; }
+.scc-live-beat-text { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.4; }
+.scc-live-beat-xp { font-size: 0.68rem; color: var(--dm-gold); margin-top: 0.1rem; }
+/* Party HP */
+.scc-live-player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-live-player-row:last-child { border-bottom: none; }
+.scc-live-player-name { font-family: var(--font-headers); font-size: 0.82rem; color: var(--dm-text); flex: 1; }
+.scc-live-hp-btn { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--scc-border-mid); background: var(--dm-surface); color: var(--dm-text); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.scc-live-hp-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+.scc-live-hp-val { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text); min-width: 55px; text-align: center; }
+.scc-live-hp-val.danger { color: var(--dm-red); }
+.scc-live-hp-val.warning { color: #f59e0b; }
+/* Conditions */
+.scc-live-condition-player { margin-bottom: 0.4rem; }
+.scc-live-condition-name { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-muted); margin-bottom: 0.2rem; }
+.scc-live-condition-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.scc-live-condition-add { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-text-muted); cursor: pointer; padding: 0.1rem 0.4rem; border: 1px dashed var(--scc-border-mid); border-radius: 4px; background: none; }
+.scc-live-condition-add:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+.scc-live-cond-tag { padding: 0.1rem 0.4rem; border-radius: 8px; font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; background: rgba(192,132,252,0.1); border: 1px solid rgba(192,132,252,0.25); color: #c084fc; cursor: pointer; }
+.scc-live-cond-tag:hover { background: rgba(192,132,252,0.2); }
+/* Inspiration */
+.scc-live-inspiration-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.scc-live-inspiration-token {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--scc-border-mid);
+  background: var(--dm-surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; color: var(--dm-text-muted);
+  transition: var(--dm-transition); flex-direction: column; gap: 0; line-height: 1.1;
+  text-align: center;
+}
+.scc-live-inspiration-token:hover { border-color: var(--dm-gold); }
+.scc-live-inspiration-token.active { background: var(--dm-gold); border-color: var(--dm-gold); color: #0b0e16; }
+/* Scenarios center col */
+.scc-live-search-wrap { position: relative; }
+.scc-live-search { width: 100%; box-sizing: border-box; padding: 0.45rem 0.75rem; background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm); font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text); }
+.scc-live-search:focus { outline: none; border-color: var(--scc-border-gold); }
+.scc-live-scenario-group { margin-bottom: 0.4rem; border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; }
+.scc-live-scenario-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.75rem; cursor: pointer;
+  background: var(--dm-surface-high); border: none; width: 100%; text-align: left;
+  font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text);
+  transition: var(--dm-transition);
+}
+.scc-live-scenario-header:hover { background: var(--dm-gold-dim); color: var(--dm-gold); }
+.scc-live-scenario-chevron { font-size: 0.65rem; color: var(--dm-text-muted); transition: transform 0.2s; }
+.scc-live-scenario-body { display: none; padding: 0; }
+.scc-live-scenario-body.open { display: block; }
+.scc-live-scenario-row { display: grid; grid-template-columns: 38% 1fr; gap: 0; border-top: 1px solid var(--scc-border); }
+.scc-live-scenario-row:first-child { border-top: none; }
+.scc-live-scenario-action { padding: 0.45rem 0.75rem; font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--dm-text); background: var(--dm-surface); border-right: 1px solid var(--scc-border); line-height: 1.4; }
+.scc-live-scenario-response { padding: 0.45rem 0.75rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text); background: var(--dm-bg); line-height: 1.4; }
+/* Quick note */
+.scc-live-note-wrap { margin-top: 0.5rem; }
+/* NPC chips right col */
+.scc-live-npc-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.scc-live-npc-chip {
+  padding: 0.3rem 0.7rem; border-radius: 20px;
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-sans); font-size: 0.75rem; color: var(--dm-text);
+  cursor: pointer; transition: var(--dm-transition);
+}
+.scc-live-npc-chip:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+/* Die roller */
+.scc-live-dice-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.scc-live-die-btn {
+  flex: 1; min-width: 36px; padding: 0.4rem 0.2rem;
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm); color: var(--dm-text);
+  font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; transition: var(--dm-transition); text-align: center;
+}
+.scc-live-die-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); background: var(--dm-gold-dim); }
+.scc-live-die-btn--d20 { border-color: var(--scc-border-gold); color: var(--dm-gold); background: var(--dm-gold-dim); }
+.scc-live-die-btn--d20:hover { background: rgba(248,179,41,0.2); }
+.scc-live-dice-modifier-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.scc-live-die-result {
+  min-height: 48px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headers); font-size: 2rem; font-weight: 700;
+  color: var(--dm-gold); border-radius: var(--dm-radius-sm);
+  border: 1px solid var(--scc-border); background: var(--dm-surface);
+  transition: all 0.15s ease;
+}
+/* Safety net */
+.scc-live-safety-net { flex-shrink: 0; }
+.scc-live-safety-item { padding: 0.35rem 0; border-bottom: 1px solid var(--scc-border); }
+.scc-live-safety-item:last-child { border-bottom: none; }
+.scc-live-safety-trigger { display: block; font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; color: var(--dm-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.15rem; }
+.scc-live-safety-response { display: block; font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text); line-height: 1.4; }
+/* Timer */
+.scc-live-timer-row { display: flex; align-items: center; gap: 0.75rem; }
+.scc-live-timer-display { font-family: var(--font-mono); font-size: 1.4rem; color: var(--dm-gold); letter-spacing: 0.05em; flex: 1; }
+/* Quick actions */
+.scc-live-quick-actions { display: flex; flex-direction: column; }
 /* ── Notes Panel ── */
 .scc-notes-grid {
   display: grid;
@@ -8750,6 +9010,277 @@ function sccRenderPlayerBar() {
   }).join('');
 }
 
+// ── Live Session Tab ──────────────────────────────────────────────
+var SCC_LIVE_CONDITIONS = {};
+var SCC_LIVE_INSPIRATION = {};
+var SCC_LIVE_TIMER_START = null;
+var SCC_LIVE_TIMER_INTERVAL = null;
+var SCC_LIVE_TIMER_ELAPSED = 0;
+function sccRenderLivePanel() {
+  sccLiveRenderBeats();
+  sccLiveRenderParty();
+  sccLiveRenderConditions();
+  sccLiveRenderInspiration();
+  sccLiveRenderNpcs();
+  sccLiveRenderScenarios();
+}
+// ── Beats ──
+function sccLiveRenderBeats() {
+  var el = document.getElementById('scc-live-beats');
+  if (!el) return;
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var selected = SCC_SELECTED.quest || [];
+  if (!selected.length) { el.innerHTML = '<div class="scc-empty-state" style="font-size:0.78rem;">No quest assigned. Go to Setup.</div>'; return; }
+  var html = '';
+  selected.forEach(function(sel) {
+    var q = quests.find(function(x) { return x.id === sel.id; });
+    if (!q || !q.beats) return;
+    q.beats.forEach(function(b) {
+      var prog = SCC_PROGRESS[q.id] ? (SCC_PROGRESS[q.id][b.order] || 'not_started') : 'not_started';
+      var dotLabel = prog === 'completed' ? '&#10003;' : prog === 'in_progress' ? '&#9654;' : b.order;
+      html += '<div class="scc-live-beat-item scc-live-beat-item--' + prog + '" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ');sccLiveRenderBeats();">'
+        + '<div class="scc-live-beat-dot">' + dotLabel + '</div>'
+        + '<div>'
+          + '<div class="scc-live-beat-text">' + sccEsc(b.title || b.description || 'Beat ' + b.order) + '</div>'
+          + (b.xp ? '<div class="scc-live-beat-xp">+' + b.xp + ' XP</div>' : '')
+        + '</div>'
+      + '</div>';
+    });
+  });
+  el.innerHTML = html || '<div class="scc-empty-state" style="font-size:0.78rem;">No beats found.</div>';
+}
+// ── Party HP ──
+function sccLiveRenderParty() {
+  var el = document.getElementById('scc-live-party');
+  if (!el) return;
+  if (!SCC_PLAYERS.length) { el.innerHTML = '<div class="scc-empty-state" style="font-size:0.78rem;">No players loaded.</div>'; return; }
+  el.innerHTML = SCC_PLAYERS.map(function(p) {
+    var sheet  = SCC_SHEETS[p.id] || {};
+    var hpCur  = sheet.hp_current != null ? sheet.hp_current : 0;
+    var hpMax  = sheet.hp_max     != null ? sheet.hp_max     : 0;
+    var hpPct  = hpMax ? hpCur / hpMax : 1;
+    var hpCls  = hpPct <= 0.25 ? 'danger' : hpPct <= 0.5 ? 'warning' : '';
+    return '<div class="scc-live-player-row">'
+      + '<div class="scc-live-player-name">' + sccEsc(p.name || 'Player') + '</div>'
+      + '<button class="scc-live-hp-btn" onclick="sccLiveAdjustHp(\'' + sccEsc(p.id) + '\',-1)">&#8722;</button>'
+      + '<div class="scc-live-hp-val ' + hpCls + '">' + hpCur + '&#8202;/&#8202;' + hpMax + '</div>'
+      + '<button class="scc-live-hp-btn" onclick="sccLiveAdjustHp(\'' + sccEsc(p.id) + '\',1)">+</button>'
+    + '</div>';
+  }).join('');
+}
+function sccLiveAdjustHp(playerId, delta) {
+  var sheet = SCC_SHEETS[playerId];
+  if (!sheet) return;
+  var hpMax = sheet.hp_max || 0;
+  var cur   = sheet.hp_current != null ? sheet.hp_current : hpMax;
+  var next  = Math.max(0, Math.min(hpMax, cur + delta));
+  if (next === cur) return;
+  sheet.hp_current = next;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(playerId), { hp_current: next })
+    .then(function(r) {
+      if (!r.ok) showDMToast('HP save failed', 'error');
+    });
+  sccLiveRenderParty();
+  sccRenderPlayerBar();
+}
+// ── Conditions ──
+var SCC_CONDITIONS_LIST = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious','Fading Stage 1','Color-Drained'];
+function sccLiveRenderConditions() {
+  var el = document.getElementById('scc-live-conditions');
+  if (!el) return;
+  if (!SCC_PLAYERS.length) { el.innerHTML = ''; return; }
+  el.innerHTML = SCC_PLAYERS.map(function(p) {
+    var conds = SCC_LIVE_CONDITIONS[p.id] || [];
+    var chips = conds.map(function(c) {
+      return '<span class="scc-live-cond-tag" onclick="sccLiveRemoveCondition(\'' + sccEsc(p.id) + '\',\'' + sccEsc(c) + '\')" title="Click to remove">' + sccEsc(c) + '</span>';
+    }).join('');
+    return '<div class="scc-live-condition-player">'
+      + '<div class="scc-live-condition-name">' + sccEsc(p.name || '') + '</div>'
+      + '<div class="scc-live-condition-chips">'
+        + chips
+        + '<button class="scc-live-condition-add" onclick="sccLiveAddCondition(\'' + sccEsc(p.id) + '\')">+ Add</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+function sccLiveAddCondition(playerId) {
+  var opts = SCC_CONDITIONS_LIST.map(function(c) { return '<option value="' + sccEsc(c) + '">' + sccEsc(c) + '</option>'; }).join('');
+  var panel = document.createElement('div');
+  panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.25rem;z-index:9999;min-width:240px;box-shadow:0 16px 48px rgba(0,0,0,0.7);';
+  panel.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.82rem;font-weight:700;color:var(--dm-gold);margin-bottom:0.75rem;">Add Condition</div>'
+    + '<select id="scc-cond-pick" class="scc-input" style="width:100%;margin-bottom:0.75rem;">' + opts + '</select>'
+    + '<div style="display:flex;gap:0.5rem;">'
+      + '<button class="scc-btn-primary" style="flex:1;" onclick="(function(){var v=document.getElementById(\'scc-cond-pick\').value;if(!SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\'])SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\']=[];if(v&&SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\'].indexOf(v)<0)SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\'].push(v);sccLiveRenderConditions();this.closest(\'div[style]\').remove();})()">Add</button>'
+      + '<button class="scc-btn-secondary" onclick="this.closest(\'div[style]\').remove()">Cancel</button>'
+    + '</div>';
+  document.body.appendChild(panel);
+}
+function sccLiveRemoveCondition(playerId, cond) {
+  if (!SCC_LIVE_CONDITIONS[playerId]) return;
+  SCC_LIVE_CONDITIONS[playerId] = SCC_LIVE_CONDITIONS[playerId].filter(function(c) { return c !== cond; });
+  sccLiveRenderConditions();
+}
+// ── Inspiration ──
+function sccLiveRenderInspiration() {
+  var el = document.getElementById('scc-live-inspiration');
+  if (!el) return;
+  el.innerHTML = SCC_PLAYERS.map(function(p) {
+    var active = !!SCC_LIVE_INSPIRATION[p.id];
+    var initials = (p.name || '?').split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0,2);
+    return '<div class="scc-live-inspiration-token' + (active ? ' active' : '') + '" onclick="sccLiveToggleInspiration(\'' + sccEsc(p.id) + '\')" title="' + sccEsc(p.name || '') + '">'
+      + '<span>' + sccEsc(initials) + '</span>'
+      + '<span style="font-size:0.52rem;opacity:0.7;">insp</span>'
+    + '</div>';
+  }).join('');
+}
+function sccLiveToggleInspiration(playerId) {
+  SCC_LIVE_INSPIRATION[playerId] = !SCC_LIVE_INSPIRATION[playerId];
+  sccLiveRenderInspiration();
+}
+// ── NPC Chips ──
+function sccLiveRenderNpcs() {
+  var el = document.getElementById('scc-live-npcs');
+  if (!el) return;
+  var chars    = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  var selected = SCC_SELECTED.npc || [];
+  if (!selected.length) { el.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);font-style:italic;">No NPCs assigned. Go to Setup.</div>'; return; }
+  el.innerHTML = selected.map(function(sel) {
+    var c = chars.find(function(x) { return x.id === sel.id; });
+    var label = c ? c.name : sel.id;
+    return '<button class="scc-live-npc-chip" onclick="sccOpenLookup(\'character\',\'' + sccEsc(sel.id) + '\')">' + sccEsc(label) + '</button>';
+  }).join('');
+}
+// ── Scenarios ──
+function sccLiveRenderScenarios() {
+  var el = document.getElementById('scc-live-scenarios');
+  if (!el) return;
+  var session = SCC_SESSION;
+  var scenarios = session && session.session_scenarios ? session.session_scenarios : null;
+  if (!scenarios || !scenarios.length) {
+    el.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;padding:0.5rem 0;">No scenarios loaded for this session. Add them in Supabase session_notes.session_scenarios.</div>';
+    return;
+  }
+  el.innerHTML = scenarios.map(function(group, gi) {
+    var rows = (group.scenarios || []).map(function(s) {
+      return '<div class="scc-live-scenario-row">'
+        + '<div class="scc-live-scenario-action">' + sccEsc(s.action || '') + '</div>'
+        + '<div class="scc-live-scenario-response">' + sccEsc(s.response || '') + '</div>'
+      + '</div>';
+    }).join('');
+    return '<div class="scc-live-scenario-group">'
+      + '<button class="scc-live-scenario-header" onclick="sccLiveToggleScenario(' + gi + ')">'
+        + sccEsc(group.group || 'Scenarios')
+        + '<span class="scc-live-scenario-chevron" id="scc-live-chev-' + gi + '">&#9660;</span>'
+      + '</button>'
+      + '<div class="scc-live-scenario-body" id="scc-live-scen-body-' + gi + '">' + rows + '</div>'
+    + '</div>';
+  }).join('');
+}
+function sccLiveToggleScenario(gi) {
+  var body = document.getElementById('scc-live-scen-body-' + gi);
+  var chev = document.getElementById('scc-live-chev-' + gi);
+  if (!body) return;
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+// ── Live Search ──
+function sccLiveSearch(query) {
+  var resultsEl = document.getElementById('scc-live-search-results');
+  if (!resultsEl) return;
+  if (!query || query.length < 2) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
+  var q = query.toLowerCase();
+  var allEntries = [];
+  var addCol = function(arr, typeKey, typeLabel) {
+    (arr || []).forEach(function(e) { if (e.name && e.name.toLowerCase().indexOf(q) >= 0) allEntries.push({ id: e.id, name: e.name, type: typeLabel, typeKey: typeKey }); });
+  };
+  addCol(typeof CHARACTERS !== 'undefined' ? CHARACTERS : [], 'character', 'NPC');
+  addCol(typeof CITIES     !== 'undefined' ? CITIES     : [], 'city',      'Location');
+  addCol(typeof POIS       !== 'undefined' ? POIS       : [], 'city',      'POI');
+  addCol(typeof CREATURES  !== 'undefined' ? CREATURES  : [], 'creature',  'Creature');
+  addCol(typeof ITEMS      !== 'undefined' ? ITEMS      : [], 'item',      'Item');
+  allEntries = allEntries.slice(0, 12);
+  if (!allEntries.length) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
+  resultsEl.innerHTML = allEntries.map(function(e) {
+    return '<div class="scc-global-result-item" onclick="sccOpenLookup(\'' + sccEsc(e.typeKey) + '\',\'' + sccEsc(e.id) + '\');document.getElementById(\'scc-live-search\').value=\'\';document.getElementById(\'scc-live-search-results\').classList.remove(\'open\');">'
+      + '<span class="scc-global-result-type">' + sccEsc(e.type) + '</span>'
+      + '<div class="scc-global-result-name">' + sccEsc(e.name) + '</div>'
+    + '</div>';
+  }).join('');
+  resultsEl.classList.add('open');
+}
+// ── Quick Note ──
+function sccLiveAddNote() {
+  var wrap = document.getElementById('scc-live-note-wrap');
+  if (wrap) { wrap.style.display = wrap.style.display === 'none' ? '' : 'none'; }
+}
+function sccLiveSaveNote() {
+  var input = document.getElementById('scc-live-note-input');
+  if (!input || !input.value.trim()) return;
+  var existing = document.getElementById('scc-note-decisions');
+  if (existing) {
+    var ts = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    existing.value = (existing.value ? existing.value + '\n' : '') + '[' + ts + '] ' + input.value.trim();
+  }
+  input.value = '';
+  var wrap = document.getElementById('scc-live-note-wrap');
+  if (wrap) wrap.style.display = 'none';
+  showDMToast('Note saved to Player Decisions &#10003;', 'success');
+}
+// ── Die Roller ──
+function sccRollDie(sides) {
+  var modEl = document.getElementById('scc-live-die-mod');
+  var mod   = modEl ? (parseInt(modEl.value) || 0) : 0;
+  var resultEl = document.getElementById('scc-live-die-result');
+  if (!resultEl) return;
+  // Flicker animation then land
+  var roll     = Math.floor(Math.random() * sides) + 1;
+  var total    = roll + mod;
+  var iters    = 0;
+  var maxIters = 8;
+  resultEl.style.color = 'var(--dm-text-muted)';
+  var flicker = setInterval(function() {
+    iters++;
+    var fake = Math.floor(Math.random() * sides) + 1 + mod;
+    resultEl.textContent = fake;
+    if (iters >= maxIters) {
+      clearInterval(flicker);
+      resultEl.textContent = total;
+      resultEl.style.color = total === sides + mod ? '#4ade80' : total <= 1 + mod ? 'var(--dm-red)' : 'var(--dm-gold)';
+      // Critical / fumble glow flash
+      if (roll === sides || roll === 1) {
+        resultEl.style.boxShadow = roll === sides ? '0 0 16px rgba(74,222,128,0.5)' : '0 0 16px rgba(248,113,113,0.5)';
+        setTimeout(function() { resultEl.style.boxShadow = ''; }, 1200);
+      }
+    }
+  }, 40);
+  var modStr = mod > 0 ? ' (+' + mod + ')' : mod < 0 ? ' (' + mod + ')' : '';
+  resultEl.title = 'd' + sides + modStr + ' = ' + total;
+}
+// ── Timer ──
+function sccLiveToggleTimer() {
+  var btn = document.getElementById('scc-live-timer-btn');
+  if (SCC_LIVE_TIMER_INTERVAL) {
+    clearInterval(SCC_LIVE_TIMER_INTERVAL);
+    SCC_LIVE_TIMER_ELAPSED += (Date.now() - SCC_LIVE_TIMER_START);
+    SCC_LIVE_TIMER_INTERVAL = null;
+    SCC_LIVE_TIMER_START    = null;
+    if (btn) btn.textContent = 'Resume';
+  } else {
+    SCC_LIVE_TIMER_START = Date.now();
+    SCC_LIVE_TIMER_INTERVAL = setInterval(function() {
+      var total = SCC_LIVE_TIMER_ELAPSED + (Date.now() - SCC_LIVE_TIMER_START);
+      var s = Math.floor(total / 1000) % 60;
+      var m = Math.floor(total / 60000) % 60;
+      var h = Math.floor(total / 3600000);
+      var disp = document.getElementById('scc-live-timer-display');
+      if (disp) disp.textContent = h + ':' + (m<10?'0':'') + m + ':' + (s<10?'0':'') + s;
+    }, 1000);
+    if (btn) btn.textContent = 'Pause';
+  }
+}
+// Hook sccRenderLivePanel into sccSwitchPanel
+var _sccSwitchPanelOrig = null;
 // ── Sub-panel switching ───────────────────────────────────────────
 function sccSwitchPanel(name) {
   document.querySelectorAll('.scc-tab-btn').forEach(function(b) {
@@ -8758,6 +9289,7 @@ function sccSwitchPanel(name) {
   document.querySelectorAll('.scc-panel').forEach(function(p) {
     p.classList.toggle('active', p.id === 'scc-panel-' + name);
   });
+  if (name === 'live') { sccRenderLivePanel(); }
 }
 
 // ── Collapsible prep notes ────────────────────────────────────────
