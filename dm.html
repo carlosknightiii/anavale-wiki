@@ -9466,8 +9466,11 @@ function sccRenderLocationPanel() {
                 var linked = lm.entry_id ? allWorld.find(function(x){ return x.id === lm.entry_id; }) : null;
                 var lmName = linked ? linked.name : lm.name;
                 var lmDesc = linked ? (linked.summary || linked.description || lm.description || '') : (lm.description || '');
+                var lmImg = linked && linked.image ? linked.image : null;
                 return '<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem 0;border-bottom:2px solid #2c3757;">'
-                  + '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lmName || '?').charAt(0)) + '</div>'
+                  + (lmImg
+                    ? '<img src="' + sccEsc(lmImg) + '" style="width:40px;height:40px;border-radius:9999px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
+                    : '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lmName || '?').charAt(0)) + '</div>')
                   + '<div style="flex:1;min-width:0;">'
                     + '<div style="font-family:var(--font-display);font-size:0.95rem;font-weight:700;color:var(--dm-text);margin-bottom:0.2rem;">'
                       + sccEsc(lmName)
