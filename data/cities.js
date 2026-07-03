@@ -730,6 +730,6 @@ The Veilborn are rumored to use Reveltown as a front. The chaos of constant cele
       "gobblewump-gerald"
     ],
     "image": "assets/images/regions/gobblewump-crossing.webp",
-    "player_facing": "teaser"
+    "player_facing": true
   }
 ];

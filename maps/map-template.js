@@ -51,7 +51,8 @@
     popupOverlay = document.getElementById('map-popup-overlay');
     popup        = document.getElementById('map-popup');
     if (!canvas || !viewport) { return; }
-    IS_DM = !!sessionStorage.getItem('anavale_dm');
+    var urlParams2 = new URLSearchParams(window.location.search);
+    IS_DM = urlParams2.get('dm') === '1' || !!sessionStorage.getItem('anavale_dm');
     if (IS_DM) { document.body.classList.add('map-dm'); }
     var urlParams = new URLSearchParams(window.location.search);
     SESSION_NUM   = urlParams.get('session') ? parseInt(urlParams.get('session'), 10) : null;
