@@ -1052,6 +1052,55 @@
               <div id="city-landmarks-list"></div>
               <div id="city-landmarks-empty" class="repeating-empty">No landmarks added yet.</div>
             </div>
+            <!-- POPULATION -->
+            <div class="form-section">
+              <div class="form-section-header">Population</div>
+              <div class="field-row">
+                <div class="field-group">
+                  <label class="field-label" for="city-population-display">Display String</label>
+                  <span class="field-help">Human-readable summary shown in UI (e.g. ~1,400 permanent &middot; 300&ndash;600 transient)</span>
+                  <input class="field-input" type="text" id="city-population-display" placeholder="e.g. ~1,400 permanent &middot; 300&ndash;600 transient">
+                </div>
+              </div>
+              <div class="field-row">
+                <div class="field-group">
+                  <label class="field-label" for="city-pop-permanent">Permanent Count</label>
+                  <span class="field-help">Integer — used for rollup math</span>
+                  <input class="field-input" type="number" id="city-pop-permanent" min="0" placeholder="e.g. 1400">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="city-pop-transient">Transient Average</label>
+                  <span class="field-help">Integer — daily average of non-permanent visitors</span>
+                  <input class="field-input" type="number" id="city-pop-transient" min="0" placeholder="e.g. 450">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="city-pop-buffer">Rural Buffer %</label>
+                  <span class="field-help">Nation-level only — 20 for 20% rural buffer. Leave 0 for towns.</span>
+                  <input class="field-input" type="number" id="city-pop-buffer" min="0" max="100" placeholder="0">
+                </div>
+              </div>
+              <div class="repeating-group">
+                <div class="repeating-group-title">
+                  <span>Species Breakdown</span>
+                  <button class="btn-add" onclick="addPopBreakdownRow()">+ Add Species</button>
+                </div>
+                <div id="city-pop-breakdown-list"></div>
+                <div id="city-pop-breakdown-empty" class="repeating-empty">No species breakdown added yet.</div>
+              </div>
+            </div>
+            <!-- STRUCTURES -->
+            <div class="form-section">
+              <div class="form-section-header">Structures</div>
+              <span class="field-help" style="display:block;margin-bottom:0.75rem;">Categorized list of all structure types in this location. Each category can have multiple entries. Link to existing POI/NPC entries where applicable.</span>
+              <div class="repeating-group">
+                <div class="repeating-group-title">
+                  <span>Structure Categories</span>
+                  <button class="btn-add" onclick="addStructureCategory()">+ Add Category</button>
+                </div>
+                <div id="city-structures-list"></div>
+                <div id="city-structures-empty" class="repeating-empty">No structure categories added yet.</div>
+              </div>
+            </div>
           </div>
 
           <!-- WORLD SETTINGS -->
@@ -6312,6 +6361,82 @@ function readImagePath(inputId, folder, entryId, fallback) {
   return (typeof fallback === 'string' && fallback.length > 0) ? fallback : null;
 }
 
+/* ── REPEATING GROUP — POPULATION BREAKDOWN ─── */
+var _popBreakdownN = 0;
+function addPopBreakdownRow(opts) {
+  opts = opts || {};
+  _popBreakdownN++;
+  var id  = 'pb-' + _popBreakdownN;
+  var div = document.createElement('div');
+  div.className = 'repeating-item city-pop-row';
+  div.id = id;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 70px 1fr auto;gap:0.5rem;align-items:start;';
+  div.innerHTML =
+    '<div class="field-group" style="margin:0">'
+      + '<label class="field-label" style="font-size:var(--text-sm)">Species ID</label>'
+      + '<input class="field-input city-pop-species" type="text" placeholder="e.g. solmeri" value="' + (opts.species_id || '') + '">'
+    + '</div>'
+    + '<div class="field-group" style="margin:0">'
+      + '<label class="field-label" style="font-size:var(--text-sm)">%</label>'
+      + '<input class="field-input city-pop-pct" type="number" min="0" max="100" placeholder="42" value="' + (opts.percent || '') + '">'
+    + '</div>'
+    + '<div class="field-group" style="margin:0">'
+      + '<label class="field-label" style="font-size:var(--text-sm)">Notes</label>'
+      + '<input class="field-input city-pop-note" type="text" placeholder="Optional note" value="' + (opts.notes || '') + '">'
+    + '</div>'
+    + '<button class="btn-remove" style="margin-top:1.4rem" onclick="removeRepeat(\'' + id + '\')" title="Remove">&#x2715;</button>';
+  var list  = document.getElementById('city-pop-breakdown-list');
+  var empty = document.getElementById('city-pop-breakdown-empty');
+  if (list)  list.appendChild(div);
+  if (empty) empty.style.display = 'none';
+}
+/* ── REPEATING GROUP — STRUCTURES ────────────── */
+var _structCatN = 0;
+function addStructureCategory(opts) {
+  opts = opts || {};
+  _structCatN++;
+  var catId = 'sc-' + _structCatN;
+  var div   = document.createElement('div');
+  div.className = 'repeating-item city-struct-category';
+  div.id = catId;
+  div.style.cssText = 'padding:0.75rem;border:1px solid var(--border-mid);border-radius:6px;margin-bottom:0.75rem;background:var(--surface-2);';
+  div.innerHTML =
+    '<div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">'
+      + '<input class="field-input city-struct-cat-name" type="text" placeholder="Category name (e.g. Lodging)" value="' + (opts.category || '') + '" style="flex:1;font-weight:700;">'
+      + '<button class="btn-add" onclick="addStructureEntry(\'' + catId + '\')">+ Entry</button>'
+      + '<button class="btn-remove" onclick="removeRepeat(\'' + catId + '\')" title="Remove category">&#x2715;</button>'
+    + '</div>'
+    + '<div class="city-struct-entries-' + catId + '"></div>';
+  var list  = document.getElementById('city-structures-list');
+  var empty = document.getElementById('city-structures-empty');
+  if (list)  list.appendChild(div);
+  if (empty) empty.style.display = 'none';
+  // Restore entries if editing existing data
+  (opts.entries || []).forEach(function(e) { addStructureEntry(catId, e); });
+}
+var _structEntN = 0;
+function addStructureEntry(catId, opts) {
+  opts = opts || {};
+  _structEntN++;
+  var entId = 'se-' + _structEntN;
+  var div   = document.createElement('div');
+  div.className = 'repeating-item city-struct-entry';
+  div.id = entId;
+  div.style.cssText = 'margin-left:0.75rem;margin-bottom:0.5rem;padding:0.5rem;background:var(--surface-3);border-radius:4px;border:1px solid var(--border);';
+  div.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.4rem;margin-bottom:0.35rem;">'
+      + '<input class="field-input city-struct-entry-name" type="text" placeholder="Structure name" value="' + (opts.name || '') + '">'
+      + '<input class="field-input city-struct-entry-eid"  type="text" placeholder="entry_id (optional)" value="' + (opts.entry_id || '') + '">'
+      + '<button class="btn-remove" onclick="removeRepeat(\'' + entId + '\')" title="Remove">&#x2715;</button>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:3fr 1fr;gap:0.4rem;">'
+      + '<input class="field-input city-struct-entry-desc"  type="text" placeholder="Description" value="' + (opts.description || '') + '">'
+      + '<input class="field-input city-struct-entry-etype" type="text" placeholder="entry_type (poi/character)" value="' + (opts.entry_type || '') + '">'
+    + '</div>';
+  var container = div.closest ? null : null;
+  var entryContainer = document.querySelector('.city-struct-entries-' + catId);
+  if (entryContainer) entryContainer.appendChild(div);
+}
 /* ── REPEATING GROUP — LANDMARKS ─────────────── */
 var _landmarkN = 0;
 function addLandmark(opts) {
@@ -6640,6 +6765,53 @@ function generateCity() {
     tone:                 orNull(val('city-tone')),
     tags:                 tagsArr('city-tags'),
     read_aloud:           orNull(val('city-read-aloud')),
+    population:           orNull(val('city-population-display')),
+    population_data:      (function() {
+      var perm    = parseInt(document.getElementById('city-pop-permanent')  && document.getElementById('city-pop-permanent').value)  || null;
+      var trans   = parseInt(document.getElementById('city-pop-transient')  && document.getElementById('city-pop-transient').value)  || null;
+      var buffer  = parseFloat(document.getElementById('city-pop-buffer')   && document.getElementById('city-pop-buffer').value)    || 0;
+      var breakdown = [];
+      document.querySelectorAll('#city-pop-breakdown-list .city-pop-row').forEach(function(row) {
+        var sid  = (row.querySelector('.city-pop-species')  || {}).value || '';
+        var pct  = parseInt((row.querySelector('.city-pop-pct')  || {}).value) || 0;
+        var note = (row.querySelector('.city-pop-note')  || {}).value || '';
+        if (sid && pct) {
+          var est = perm ? Math.round(perm * pct / 100) : null;
+          var obj = { species_id: sid, percent: pct };
+          if (est !== null) obj.count_est = est;
+          if (note) obj.notes = note;
+          breakdown.push(obj);
+        }
+      });
+      if (!perm && !trans && !breakdown.length) return null;
+      var pd = {};
+      if (perm   !== null) pd.permanent    = perm;
+      if (trans  !== null) pd.transient_avg = trans;
+      if (buffer)          pd.rural_buffer_pct = buffer;
+      if (breakdown.length) pd.breakdown   = breakdown;
+      return Object.keys(pd).length ? pd : null;
+    })(),
+    structures: (function() {
+      var cats = [];
+      document.querySelectorAll('#city-structures-list .city-struct-category').forEach(function(catEl) {
+        var catName  = (catEl.querySelector('.city-struct-cat-name')  || {}).value || '';
+        var entries  = [];
+        catEl.querySelectorAll('.city-struct-entry').forEach(function(entEl) {
+          var ename  = (entEl.querySelector('.city-struct-entry-name') || {}).value || '';
+          var edesc  = (entEl.querySelector('.city-struct-entry-desc') || {}).value || '';
+          var eid    = (entEl.querySelector('.city-struct-entry-eid')  || {}).value || '';
+          var etype  = (entEl.querySelector('.city-struct-entry-etype')|| {}).value || '';
+          if (ename.trim()) {
+            var e = { name: ename.trim(), description: edesc.trim() };
+            e.entry_id   = eid   || null;
+            e.entry_type = etype || null;
+            entries.push(e);
+          }
+        });
+        if (catName.trim()) cats.push({ category: catName.trim(), entries: entries });
+      });
+      return cats.length ? cats : null;
+    })(),
   };
   var imgPath = readImagePath('city-img-input', 'assets/images/regions/', entryId, PENDING_EDIT_IMAGE);
   if (imgPath) entry.image = imgPath;
@@ -7767,6 +7939,7 @@ function cmPopulateForm(entry, type) {
     sv('city-read-aloud', entry.read_aloud);
     sv('city-type',       entry.type);
     sv('city-color-health', entry.color_health);
+    sv('city-population-display', entry.population);
     // Region → nation cascade
     var rSel = document.getElementById('city-region');
     if (rSel) { rSel.value = entry.region || ''; filterNations('city-nation', 'city-region'); }
@@ -7793,9 +7966,33 @@ function cmPopulateForm(entry, type) {
         if (descEl) descEl.value = lm.description || '';
       }
     });
+    // Population data
+    var pd = entry.population_data || {};
+    var popPermEl  = document.getElementById('city-pop-permanent');
+    var popTransEl = document.getElementById('city-pop-transient');
+    var popBufEl   = document.getElementById('city-pop-buffer');
+    if (popPermEl)  popPermEl.value  = pd.permanent     || '';
+    if (popTransEl) popTransEl.value = pd.transient_avg || '';
+    if (popBufEl)   popBufEl.value   = pd.rural_buffer_pct || '';
+    var bdList = document.getElementById('city-pop-breakdown-list');
+    if (bdList) {
+      bdList.innerHTML = '';
+      (pd.breakdown || []).forEach(function(b) { addPopBreakdownRow(b); });
+      if (!(pd.breakdown || []).length) {
+        var bdEmpty = document.getElementById('city-pop-breakdown-empty');
+        if (bdEmpty) bdEmpty.style.display = '';
+      }
+    }
+    // Structures
+    var stList = document.getElementById('city-structures-list');
+    if (stList) {
+      stList.innerHTML = '';
+      (entry.structures || []).forEach(function(cat) { addStructureCategory(cat); });
+      var stEmpty = document.getElementById('city-structures-empty');
+      if (stEmpty) stEmpty.style.display = (entry.structures || []).length ? 'none' : '';
+    }
     resetImagePreview('city');
     showExistingImage('city-img-preview', 'city-img-path');
-
   } else if (type === 'creature') {
     sv('creature-name',        entry.name);
     sv('creature-id',          entry.id);
@@ -10219,6 +10416,46 @@ function sccOpenLookup(type, id) {
       + (loc.tone ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tone</div><div class="scc-ql-section-body">' + sccEsc(loc.tone) + '</div></div>' : '')
       + (loc.culture ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Culture</div><div class="scc-ql-section-body">' + sccEsc(loc.culture) + '</div></div>' : '')
       + (loc.gigglegloom_notes ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom</div><div class="scc-ql-section-body">' + sccEsc(loc.gigglegloom_notes) + '</div></div>' : '')
+      // ── POPULATION ──
+      + (function() {
+          var pd = loc.population_data;
+          if (!pd) return '';
+          var html2 = '<div class="scc-ql-section"><div class="scc-ql-section-label">Population</div>';
+          if (loc.population) html2 += '<div class="scc-ql-section-body" style="margin-bottom:0.4rem;">' + sccEsc(loc.population) + '</div>';
+          if (pd.breakdown && pd.breakdown.length) {
+            html2 += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.25rem;">';
+            pd.breakdown.forEach(function(b) {
+              html2 += '<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.15rem 0.55rem;background:var(--dm-surface-high);border:1px solid var(--scc-border-mid);border-radius:4px;font-family:var(--font-body);font-size:0.72rem;">'
+                + '<span style="font-weight:700;color:var(--dm-text);">' + sccEsc(b.species_id || '') + '</span>'
+                + '<span style="color:var(--dm-gold);">' + (b.percent || 0) + '%</span>'
+                + (b.count_est ? '<span style="color:var(--dm-text-muted);">~' + b.count_est + '</span>' : '')
+              + '</span>';
+            });
+            html2 += '</div>';
+          }
+          html2 += '</div>';
+          return html2;
+        })()
+      // ── STRUCTURES ──
+      + (function() {
+          var structs = loc.structures;
+          if (!structs || !structs.length) return '';
+          var html2 = '<div class="scc-ql-section"><div class="scc-ql-section-label">Structures (' + structs.length + ' categories)</div>';
+          structs.forEach(function(cat) {
+            html2 += '<div style="margin-bottom:0.5rem;">'
+              + '<div style="font-family:var(--font-body);font-size:0.72rem;font-weight:700;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">' + sccEsc(cat.category) + '</div>';
+            (cat.entries || []).forEach(function(e) {
+              html2 += '<div style="padding:0.2rem 0;border-bottom:1px solid var(--scc-border);font-family:var(--font-body);font-size:0.8rem;">'
+                + '<span style="font-weight:700;color:var(--dm-text);">' + sccEsc(e.name) + '</span>'
+                + (e.entry_id ? ' <span style="font-size:0.68rem;color:var(--dm-gold);">&#128279;</span>' : '')
+                + (e.description ? '<div style="color:var(--dm-text-muted);font-size:0.76rem;line-height:1.4;margin-top:0.1rem;">' + sccEsc(e.description) + '</div>' : '')
+              + '</div>';
+            });
+            html2 += '</div>';
+          });
+          html2 += '</div>';
+          return html2;
+        })()
       // ── TAGS ──
       + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '');
   } else if (type === 'creature') {
