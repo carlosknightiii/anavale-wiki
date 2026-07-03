@@ -9415,7 +9415,7 @@ function sccRenderLocationPanel() {
       bodyHtml += '</div></div>';
     }
     var portraitHtml = loc.image
-      ? '<img class="scc-npc2-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/cities/' + sccEsc(loc.id) + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+      ? '<img class="scc-npc2-portrait" src="' + sccEsc(loc.image) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
         + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(loc.name.charAt(0)) + '</div>'
       : '<div class="scc-npc2-portrait-fallback">' + sccEsc(loc.name.charAt(0)) + '</div>';
     return '<div class="scc-npc2-card" id="scc-loc2-' + sccEsc(loc.id) + '">'
