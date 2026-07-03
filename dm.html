@@ -9526,6 +9526,7 @@ function sccRenderLocationPanel() {
         + '</div>'
         + '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
           + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">QUICK LOOK</button>'
+          + (loc.id === 'gobblewump-crossing' ? '<a class="scc-npc2-quicklook" href="maps/gobblewump-crossing.html?dm=1" target="_blank" style="text-decoration:none;margin-left:0.5rem;">&#128506; MAP</a>' : '')
           + '<button class="scc-npc2-chevron" id="scc-loc2-chev-' + sccEsc(loc.id) + '" onclick="event.stopPropagation();sccToggleLoc(\'' + sccEsc(loc.id) + '\')">&#9660;</button>'
         + '</div>'
       + '</div>'
