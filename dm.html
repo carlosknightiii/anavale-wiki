@@ -2536,13 +2536,40 @@
         </div>
         <!-- ══ PANEL: LOCATIONS ═══════════════ -->
         <div class="scc-panel" id="scc-panel-locations">
-          <div class="scc-panel-inner">
-            <div class="scc-section-title">Locations This Session</div>
-            <div class="scc-hint">Click any card to expand full details and DM reference.</div>
-            <div id="scc-location-cards" class="scc-location-grid">
-              <div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>
+          <div class="scc-panel-inner scc-loc-panel-inner">
+              <div class="scc-npc-page-header">
+                <div class="scc-npc-page-label">SESSION</div>
+                <div class="scc-npc-page-title">Locations</div>
+                <div class="scc-npc-page-hint">Add locations in Setup first. Click any card to expand full details.</div>
+              </div>
+              <div class="scc-npc-controls">
+                <div class="scc-npc-search-wrap">
+                  <label class="scc-npc-control-label">Search</label>
+                  <input type="text" id="scc-loc-search" class="scc-npc-search-input" placeholder="Search..." oninput="sccRenderLocationPanel()">
+                </div>
+                <div class="scc-npc-filters">
+                  <div class="scc-npc-filter-group">
+                    <label class="scc-npc-control-label">Type</label>
+                    <select id="scc-loc-filter-type" class="scc-npc-select" onchange="sccRenderLocationPanel()">
+                      <option value="">All</option>
+                      <option value="city">City</option>
+                      <option value="poi">POI</option>
+                      <option value="nation">Nation</option>
+                    </select>
+                  </div>
+                  <div class="scc-npc-filter-group">
+                    <label class="scc-npc-control-label">Sort</label>
+                    <select id="scc-loc-sort" class="scc-npc-select" onchange="sccRenderLocationPanel()">
+                      <option value="az">A-Z</option>
+                      <option value="za">Z-A</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div id="scc-location-cards" class="scc-npc-list">
+                <div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>
+              </div>
             </div>
-          </div>
         </div>
         <!-- ══ PANEL: QUESTS ══════════════════ -->
         <div class="scc-panel" id="scc-panel-quests">
@@ -9251,30 +9278,143 @@ function sccRenderLocationPanel() {
   var cities  = typeof CITIES   !== 'undefined' ? CITIES   : [];
   var pois    = typeof POIS     !== 'undefined' ? POIS     : [];
   var nations = typeof NATIONS  !== 'undefined' ? NATIONS  : [];
-  var all = cities.concat(pois).concat(nations);
-
-  el.innerHTML = selected.map(function(sel) {
-    var loc = all.find(function(x) { return x.id === sel.id; });
-    if (!loc) return '';
+  var all = cities.map(function(c){ return Object.assign({}, c, {_srcType:'city'}); })
+    .concat(pois.map(function(p){ return Object.assign({}, p, {_srcType:'poi'}); }))
+    .concat(nations.map(function(n){ return Object.assign({}, n, {_srcType:'nation'}); }));
+  var query  = ((document.getElementById('scc-loc-search')      || {}).value || '').toLowerCase().trim();
+  var typeF  = ((document.getElementById('scc-loc-filter-type') || {}).value || '');
+  var sortV  = ((document.getElementById('scc-loc-sort')        || {}).value || 'az');
+  var locs = selected.map(function(sel) {
+    return all.find(function(x) { return x.id === sel.id; });
+  }).filter(function(loc) {
+    if (!loc) return false;
+    if (query && loc.name.toLowerCase().indexOf(query) < 0) return false;
+    if (typeF && loc._srcType !== typeF) return false;
+    return true;
+  });
+  if (sortV === 'az') locs.sort(function(a,b){ return a.name.localeCompare(b.name); });
+  else locs.sort(function(a,b){ return b.name.localeCompare(a.name); });
+  if (!locs.length) {
+    el.innerHTML = '<div class="scc-empty-state">No locations match the current filters.</div>';
+    return;
+  }
+  function healthBadge(loc) {
     var ch = (loc.color_health || '').toLowerCase();
-    var healthCls = ch.indexOf('excellent') >= 0 ? 'scc-color-health--excellent'
-                  : (ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0) ? 'scc-color-health--fading'
-                  : (ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0) ? 'scc-color-health--dimmed'
-                  : 'scc-color-health--excellent';
-    return '<div class="scc-location-card">'
-      + (loc.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">' + sccEsc(loc.read_aloud) + '</div></div>' : '')
-      + '<div class="scc-location-name">' + sccEsc(loc.name) + '</div>'
-      + '<div class="scc-location-meta">' + sccEsc((loc.city_type || loc.type || 'nation').replace(/-/g,' ')) + (loc.region ? ' · ' + sccEsc(loc.region) : '') + (loc.nation ? ' · ' + sccEsc(loc.nation) : '') + '</div>'
-      + (loc.color_health ? '<span class="scc-color-health ' + healthCls + '">' + sccEsc(loc.color_health.replace(/-/g,' ')) + '</span>' : '')
-      + (loc.summary ? '<div class="scc-location-desc">' + sccEsc(loc.summary) + '</div>' : '')
-      + (loc.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.5rem;"><div class="scc-dm-label">⚠ DM Only</div><div class="scc-dm-text">' + sccEsc(loc.dm_notes) + '</div></div>' : '')
-      + '<div class="scc-location-flags">'
-        + (loc.formery_present ? '<span class="scc-flag scc-flag--formery">📋 Formery</span>' : '')
-        + (loc.vareth_presence ? '<span class="scc-flag scc-flag--vareth">⚠ Vareth</span>' : '')
+    var isExcellent = ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0 || ch.indexOf('vivid') >= 0;
+    var isFading    = ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0 || ch.indexOf('moderate') >= 0 || ch.indexOf('fadded') >= 0;
+    var isDimmed    = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
+    var bg = isExcellent ? '#6ee6d2' : isFading ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#6ee6d2';
+    var label = loc.color_health ? loc.color_health.replace(/-/g,' ').toUpperCase() : '';
+    return '<span class="scc-loc2-health-badge" style="background:' + bg + ';color:#0b0e16">' + sccEsc(label) + '</span>';
+  }
+  el.innerHTML = locs.map(function(loc) {
+    var typeLine = loc._srcType === 'poi' ? 'POI' : (loc.city_type || loc.type || loc._srcType || '').replace(/-/g,' ');
+    var bodyHtml = '';
+    if (loc.read_aloud) {
+      bodyHtml += '<div class="scc-npc2-section scc-npc2-quote">'
+        + '<span class="scc-npc2-quote-mark">“</span>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Visualization</div>'
+          + '<div class="scc-npc2-section-body">' + sccEsc(loc.read_aloud) + '</div>'
+        + '</div>'
+        + '<span class="scc-npc2-quote-mark">”</span>'
+      + '</div>';
+    }
+    if (loc.summary) {
+      bodyHtml += '<div class="scc-npc2-section">'
+        + '<div class="scc-npc2-icon">&#128214;</div>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Summary</div>'
+          + '<div class="scc-npc2-section-body">' + sccEsc(loc.summary) + '</div>'
+        + '</div>'
+      + '</div>';
+    }
+    if (loc.description) {
+      bodyHtml += '<div class="scc-npc2-section">'
+        + '<div class="scc-npc2-icon">&#128203;</div>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Description</div>'
+          + '<div class="scc-npc2-section-body">' + sccEsc(loc.description) + '</div>'
+        + '</div>'
+      + '</div>';
+    }
+    if (loc.landmarks && loc.landmarks.length) {
+      bodyHtml += '<div class="scc-npc2-section">'
+        + '<div class="scc-npc2-icon">&#127968;</div>'
+        + '<div class="scc-npc2-section-txt">'
+          + '<div class="scc-npc2-section-title">Landmarks</div>'
+          + '<div style="display:flex;flex-direction:column;gap:0;">'
+            + loc.landmarks.map(function(lm) {
+                return '<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem 0;border-bottom:2px solid #2c3757;">'
+                  + '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lm.name || '?').charAt(0)) + '</div>'
+                  + '<div style="flex:1;min-width:0;">'
+                    + '<div style="font-family:var(--font-display);font-size:0.95rem;font-weight:700;color:var(--dm-text);margin-bottom:0.2rem;">' + sccEsc(lm.name) + '</div>'
+                    + (lm.description ? '<div style="font-family:var(--font-sans);font-size:0.85rem;color:var(--dm-text);font-weight:300;line-height:1.6;">' + sccEsc(lm.description) + '</div>' : '')
+                  + '</div>'
+                + '</div>';
+              }).join('')
+          + '</div>'
+        + '</div>'
+      + '</div>';
+    }
+    if (loc.dm_notes || loc.vareth_presence) {
+      bodyHtml += '<div class="scc-npc2-dm-block">'
+        + '<div class="scc-npc2-dm-title">&#9888; DM Only — Do Not Read Aloud</div>'
+        + '<div class="scc-npc2-dm-rows">';
+      if (loc.vareth_presence) {
+        bodyHtml += '<div class="scc-npc2-dm-row">'
+          + '<div class="scc-npc2-icon scc-npc2-icon-red">&#9888;</div>'
+          + '<div class="scc-npc2-section-txt">'
+            + '<div class="scc-npc2-section-title scc-npc2-red">Vareth Presence</div>'
+            + '<div class="scc-npc2-section-body">The Vareth is active in this location.</div>'
+          + '</div>'
+        + '</div>';
+      }
+      if (loc.dm_notes) {
+        bodyHtml += '<div class="scc-npc2-dm-row">'
+          + '<div class="scc-npc2-icon scc-npc2-icon-red">&#128203;</div>'
+          + '<div class="scc-npc2-section-txt">'
+            + '<div class="scc-npc2-section-title scc-npc2-red">Notes</div>'
+            + '<div class="scc-npc2-section-body">' + sccEsc(loc.dm_notes) + '</div>'
+          + '</div>'
+        + '</div>';
+      }
+      bodyHtml += '</div></div>';
+    }
+    var portraitHtml = loc.image
+      ? '<img class="scc-npc2-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/cities/' + sccEsc(loc.id) + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+        + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(loc.name.charAt(0)) + '</div>'
+      : '<div class="scc-npc2-portrait-fallback">' + sccEsc(loc.name.charAt(0)) + '</div>';
+    return '<div class="scc-npc2-card" id="scc-loc2-' + sccEsc(loc.id) + '">'
+      + '<div class="scc-npc2-header" onclick="sccToggleLoc(\'' + sccEsc(loc.id) + '\')">'
+        + '<div class="scc-npc2-portrait-wrap">' + portraitHtml + '</div>'
+        + '<div class="scc-npc2-info">'
+          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.2rem;">'
+            + (loc.color_health ? healthBadge(loc) : '')
+            + (loc.vareth_presence ? '<span class="scc-loc2-vareth-badge">&#9888; VARETH</span>' : '')
+          + '</div>'
+          + '<div class="scc-npc2-name">' + sccEsc(loc.name) + '</div>'
+          + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Type:</span> ' + sccEsc(typeLine) + '</div>'
+          + (loc.region ? '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Region:</span> ' + sccEsc(loc.region.charAt(0).toUpperCase() + loc.region.slice(1)) + (loc.nation ? '&nbsp;&nbsp;<span class="scc-npc2-meta-bold">Nation:</span> ' + sccEsc(loc.nation) : '') + '</div>' : '')
+        + '</div>'
+        + '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
+          + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">QUICK LOOK</button>'
+          + '<button class="scc-npc2-chevron" id="scc-loc2-chev-' + sccEsc(loc.id) + '" onclick="event.stopPropagation();sccToggleLoc(\'' + sccEsc(loc.id) + '\')">&#9660;</button>'
+        + '</div>'
       + '</div>'
-      + '<div style="margin-top:0.6rem;"><button class="scc-lookup-btn" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">◈ Full Details</button></div>'
+      + (bodyHtml ? '<div class="scc-npc2-body" id="scc-loc2-body-' + sccEsc(loc.id) + '" style="display:none">'
+          + bodyHtml
+        + '</div>' : '')
     + '</div>';
   }).join('');
+}
+function sccToggleLoc(id) {
+  var body = document.getElementById('scc-loc2-body-' + id);
+  var chev = document.getElementById('scc-loc2-chev-' + id);
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'flex';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
 // ── Quest Progress Panel ──────────────────────────────────────────
