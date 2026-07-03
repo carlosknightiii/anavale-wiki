@@ -1558,13 +1558,62 @@ function renderCity(id, el) {
       }).join('');
   }
 
+  // Population breakdown HTML
+  var populationHtml = '';
+  if (city.population_data) {
+    var pd = city.population_data;
+    populationHtml = '<div class="nation-section-heading">Population</div>';
+    if (city.population) {
+      populationHtml += '<p>' + esc(city.population) + '</p>';
+    }
+    if (pd.breakdown && pd.breakdown.length) {
+      populationHtml += '<div class="city-pop-breakdown">';
+      pd.breakdown.forEach(function(b) {
+        var barW = Math.min(b.percent || 0, 100);
+        populationHtml += '<div class="city-pop-row">'
+          + '<div class="city-pop-species">' + esc(b.species_id || '') + '</div>'
+          + '<div class="city-pop-bar-wrap">'
+            + '<div class="city-pop-bar" style="width:' + barW + '%"></div>'
+          + '</div>'
+          + '<div class="city-pop-pct">' + (b.percent || 0) + '%'
+            + (b.count_est ? ' <span class="city-pop-est">(~' + b.count_est + ')</span>' : '')
+          + '</div>'
+          + (b.notes ? '<div class="city-pop-note">' + esc(b.notes) + '</div>' : '')
+        + '</div>';
+      });
+      populationHtml += '</div>';
+    }
+  }
+
+  // Structures HTML
+  var structuresHtml = '';
+  if (city.structures && city.structures.length) {
+    structuresHtml = '<div class="nation-section-heading">Structures</div>';
+    city.structures.forEach(function(cat) {
+      structuresHtml += '<div class="city-struct-cat">'
+        + '<div class="city-struct-cat-title">' + esc(cat.category) + '</div>'
+        + '<div class="city-struct-entries">';
+      (cat.entries || []).forEach(function(e) {
+        structuresHtml += '<div class="city-struct-entry">'
+          + '<div class="city-struct-entry-name">'
+            + esc(e.name)
+            + (e.entry_id ? ' <span class="city-struct-linked">&#128279;</span>' : '')
+          + '</div>'
+          + (e.description ? '<div class="city-struct-entry-desc">' + esc(e.description) + '</div>' : '')
+        + '</div>';
+      });
+      structuresHtml += '</div></div>';
+    });
+  }
+
   var factsHtml = [
-    ['Type',     city.type],
-    ['Nation',   nation ? nation.name : titleCase(city.nation)],
-    ['Region',   titleCase(city.region)],
-    ['Color',    city.color_health],
-    ['Vareth',   city.vareth_presence || 'None noted'],
-    ['Formery',  city.formery_present ? 'Yes — office present' : null]
+    ['Type',       city.type],
+    ['Nation',     nation ? nation.name : titleCase(city.nation)],
+    ['Region',     titleCase(city.region)],
+    ['Population', city.population || null],
+    ['Color',      city.color_health],
+    ['Vareth',     city.vareth_presence || 'None noted'],
+    ['Formery',    city.formery_present ? 'Yes — office present' : null]
   ].filter(function(r){ return r[1]; }).map(function(r) {
     return '<div class="nation-fact-row">'
       + '<div class="nation-fact-label">' + esc(r[0]) + '</div>'
@@ -1583,6 +1632,8 @@ function renderCity(id, el) {
     + '<div class="nation-body">'
     + '<p>' + esc(city.description || city.summary || '') + '</p>'
     + (city.strategic_importance ? '<div class="nation-section-heading">Strategic Importance</div><p>' + esc(city.strategic_importance) + '</p>' : '')
+    + populationHtml
+    + structuresHtml
     + landmarksHtml
     + '</div>'
     + '<div class="nation-facts"><div class="nation-facts-title">⚑ Quick Facts</div>' + factsHtml + '</div>'
