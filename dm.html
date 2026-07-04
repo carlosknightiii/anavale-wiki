@@ -578,14 +578,32 @@
 }
 .city-pop-row-inner {
   display: grid;
-  grid-template-columns: 200px 1fr auto;
-  gap: 0.6rem;
-  align-items: start;
-  padding: 0.6rem 0.75rem;
+  grid-template-columns: 160px 1fr 56px 28px;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
   background: var(--dm-surface-high);
   border: 1px solid var(--scc-border);
-  border-radius: var(--dm-radius-sm);
-  margin-bottom: 0.4rem;
+  border-radius: var(--dm-radius-sm) var(--dm-radius-sm) 0 0;
+  margin-bottom: 0;
+}
+.city-pop-note-wrap {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border);
+  border-top: none;
+  border-radius: 0 0 var(--dm-radius-sm) var(--dm-radius-sm);
+  margin-bottom: 0.5rem;
+}
+.city-pop-note-wrap textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0 0 var(--dm-radius-sm) var(--dm-radius-sm);
+  background: transparent;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  resize: vertical;
+  min-height: 40px;
 }
 .city-pop-slider-wrap {
   display: flex;
@@ -644,12 +662,12 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
-  background: var(--dm-gold-dim);
-  border-bottom: 2px solid var(--dm-gold);
+  background: var(--dm-surface-high);
+  border-bottom: 2px solid var(--scc-border-gold);
   cursor: pointer;
   user-select: none;
 }
-.city-struct-cat-header:hover { background: rgba(240,180,41,0.15); }
+.city-struct-cat-header:hover { background: var(--dm-surface); }
 .city-struct-cat-chevron {
   font-size: 0.7rem;
   color: var(--dm-gold);
@@ -660,7 +678,7 @@
   font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--dm-gold);
+  color: var(--dm-text);
   letter-spacing: 0.06em;
   flex: 1;
 }
@@ -671,8 +689,18 @@
   flex-shrink: 0;
 }
 .city-struct-cat-controls .field-input {
-  width: 200px;
+  width: 280px;
   font-weight: 700;
+}
+.city-struct-cat-controls .btn-add {
+  background: var(--dm-gold);
+  color: #0a0e18;
+  border-color: var(--dm-gold);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.city-struct-cat-controls .btn-add:hover {
+  background: #f5c842;
 }
 .city-struct-entries {
   padding: 0.5rem 0.75rem;
@@ -720,6 +748,10 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+.city-struct-entry-eid {
+  appearance: auto;
+  -webkit-appearance: auto;
 }
 .city-struct-entry-etype {
   font-family: var(--font-sans);
@@ -1311,7 +1343,7 @@
                   <select id="struct-filter-cat" class="field-input" onchange="sccFilterStructures()" style="width:180px;">
                     <option value="">All Categories</option>
                   </select>
-                  <button class="cm-refresh-btn" onclick="sccBuildStructureCatFilter()" title="Refresh categories">&#8635; Refresh</button>
+                  <!-- Refresh button removed — category filter auto-populates -->
                 </div>
                 <div id="city-structures-list"></div>
                 <div id="city-structures-empty" class="repeating-empty">No structure categories added yet.</div>
@@ -6911,18 +6943,20 @@ function addPopBreakdownRow(opts) {
   var pct = opts.percent || 0;
   div.innerHTML =
     '<div class="city-pop-row-inner">'
-      + '<select class="field-input city-pop-species" onchange="popUpdatePieChart()">'
-          + '<option value="">&#8212; Select species &#8212;</option>'
+      + '<select class="field-input city-pop-species" onchange="popRefreshAllDropdowns();popUpdatePieChart()" style="min-width:0;font-size:0.8rem;">'
+          + '<option value="">&#8212; Select &#8212;</option>'
           + speciesOpts
         + '</select>'
       + '<div class="city-pop-slider-wrap">'
           + '<input type="range" class="city-pop-slider" min="0" max="100" value="' + pct + '" oninput="popSliderMove(this,\'' + id + '\')">'
-          + '<input type="number" class="city-pop-pct-input" min="0" max="100" value="' + pct + '" oninput="popInputMove(this,\'' + id + '\')">'
           + '<input type="hidden" class="city-pop-pct" value="' + pct + '">'
         + '</div>'
-      + '<button class="btn-remove" onclick="popRemoveRow(\'' + id + '\')" title="Remove">&#x2715;</button>'
+      + '<input type="number" class="city-pop-pct-input" min="0" max="100" value="' + pct + '" oninput="popInputMove(this,\'' + id + '\')">'
+      + '<button class="btn-remove" onclick="popRemoveRow(\'' + id + '\')" title="Remove" style="padding:0;width:22px;height:22px;font-size:0.7rem;">&#x2715;</button>'
     + '</div>'
-    + '<textarea class="field-input city-pop-note" rows="2" placeholder="Why this species is here at this location&#8230;">' + (opts.notes || '') + '</textarea>';
+    + '<div class="city-pop-note-wrap">'
+      + '<textarea placeholder="Why this species is here at this location&#8230;" style="width:100%;box-sizing:border-box;border:none;background:transparent;padding:0.3rem 0.6rem;font-size:0.78rem;resize:vertical;min-height:38px;">' + (opts.notes || '') + '</textarea>'
+    + '</div>';
   var list  = document.getElementById('city-pop-breakdown-list');
   var empty = document.getElementById('city-pop-breakdown-empty');
   if (list)  list.insertBefore(div, list.firstChild);
@@ -6998,6 +7032,26 @@ function popInputMove(input, rowId) {
   popEnforceTotal();
   popUpdatePieChart();
 }
+function popRefreshAllDropdowns() {
+  var species = window.SPECIES || [];
+  var rows = Array.from(document.querySelectorAll('#city-pop-breakdown-list .city-pop-row'));
+  rows.forEach(function(row) {
+    var sel = row.querySelector('.city-pop-species');
+    if (!sel) return;
+    var currentVal = sel.value;
+    var usedIds = rows
+      .filter(function(r) { return r !== row; })
+      .map(function(r) { return (r.querySelector('.city-pop-species') || {}).value || ''; })
+      .filter(function(v) { return v; });
+    var opts = '<option value="">&#8212; Select species &#8212;</option>';
+    species.forEach(function(sp) {
+      if (usedIds.indexOf(sp.id) >= 0 && sp.id !== currentVal) return;
+      var sel2 = sp.id === currentVal ? ' selected' : '';
+      opts += '<option value="' + sp.id + '"' + sel2 + '>' + sp.name + '</option>';
+    });
+    sel.innerHTML = opts;
+  });
+}
 function popUpdatePieChart() {
   var canvas = document.getElementById('city-pop-pie');
   if (!canvas) return;
@@ -7008,7 +7062,7 @@ function popUpdatePieChart() {
     var sel  = row.querySelector('.city-pop-species');
     var pct  = parseInt((row.querySelector('.city-pop-pct') || {}).value) || 0;
     var name = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
-    if (pct > 0 && name && name !== '&#8212; Select species &#8212;') {
+    if (pct > 0 && name && name.indexOf('Select species') < 0 && name.indexOf('—') < 0) {
       slices.push({ name: name, pct: pct });
     }
   });
@@ -7042,6 +7096,16 @@ function popUpdatePieChart() {
     ctx.stroke();
     startAngle += sweep;
   });
+  // Draw legend
+  var legend = document.getElementById('city-pop-pie-legend');
+  if (legend) {
+    legend.innerHTML = slices.map(function(sl, i) {
+      return '<div style="display:flex;align-items:center;gap:0.3rem;margin-bottom:0.15rem;">'
+        + '<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + COLORS[i % COLORS.length] + ';flex-shrink:0;"></span>'
+        + '<span>' + sl.name + ' ' + sl.pct + '%</span>'
+        + '</div>';
+    }).join('');
+  }
 }
 function popRemoveRow(rowId) {
   var row = document.getElementById(rowId);
@@ -7108,10 +7172,14 @@ function sccBuildStructureCatFilter() {
   var sel = document.getElementById('struct-filter-cat');
   if (!sel) return;
   var existing = sel.value;
-  sel.innerHTML = '<option value="">All Categories</option>';
+  var cats = [];
   document.querySelectorAll('.city-struct-cat-name').forEach(function(input) {
     var v = input.value.trim();
-    if (!v) return;
+    if (v) cats.push(v);
+  });
+  cats.sort();
+  sel.innerHTML = '<option value="">All Categories</option>';
+  cats.forEach(function(v) {
     var opt = document.createElement('option');
     opt.value = v;
     opt.textContent = v;
@@ -7160,21 +7228,30 @@ function structUpdateCatLabel(catId, val) {
 var _structEntN = 0;
 function addStructureEntry(catId, opts) {
   opts = opts || {};
+  // Expand accordion if collapsed
+  var entries = document.querySelector('.city-struct-entries-' + catId);
+  var chev    = document.getElementById(catId + '-chev');
+  if (entries && entries.style.display === 'none') {
+    entries.style.display = '';
+    if (chev) chev.innerHTML = '&#9660;';
+  }
   _structEntN++;
-  var entId = 'se-' + _structEntN;
-  var div   = document.createElement('div');
+  var entId  = 'se-' + _structEntN;
+  var isNew  = !opts.name;
+  var div    = document.createElement('div');
   div.className = 'city-struct-entry-block';
   div.id = entId;
-  // Build entry_id dropdown from world entries
+  // Build entry_id dropdown from world entries — POIs only, sorted alphabetically
   var allEntries = []
     .concat((typeof POIS !== 'undefined' ? POIS : []).map(function(e){ return {id:e.id, label:e.name+' (POI)', type:'poi'}; }));
+  allEntries.sort(function(a,b){ return a.label.localeCompare(b.label); });
   var entryOpts = allEntries.map(function(e) {
     var sel = e.id === (opts.entry_id || '') ? ' selected' : '';
     return '<option value="' + e.id + '" data-type="' + e.type + '"' + sel + '>' + e.label + '</option>';
   }).join('');
-  var isLinked = !!(opts.entry_id);
+  var isLinked    = !!(opts.entry_id);
   var descReadonly = isLinked ? ' readonly' : '';
-  var lmChecked = opts.landmark ? ' checked' : '';
+  var lmChecked   = opts.landmark ? ' checked' : '';
   div.innerHTML =
     '<div class="city-struct-entry-row">'
       + '<input class="field-input city-struct-entry-name" type="text" placeholder="Structure name" value="' + (opts.name || '') + '" onblur="structSortEntries(\'' + catId + '\')">'
@@ -7186,12 +7263,12 @@ function addStructureEntry(catId, opts) {
           + '<span class="city-struct-entry-etype" id="' + entId + '-etype">' + (opts.entry_type ? opts.entry_type.toUpperCase() : '') + '</span>'
         + '</div>'
       + '<label class="city-struct-landmark-label"><input type="checkbox" class="city-struct-entry-lm"' + lmChecked + '> &#9733; Landmark</label>'
+      + (isNew ? '<button class="btn-secondary" onclick="structRemoveEntry(\'' + entId + '\',\'' + catId + '\')" style="white-space:nowrap;font-size:0.72rem;">Cancel</button>' : '')
       + '<button class="btn-remove" onclick="structRemoveEntry(\'' + entId + '\',\'' + catId + '\')" title="Remove">&#x2715;</button>'
     + '</div>'
     + '<textarea class="field-input city-struct-entry-desc" rows="2" placeholder="Description"' + descReadonly + '>' + (opts.description || '') + '</textarea>';
   var entryContainer = document.querySelector('.city-struct-entries-' + catId);
   if (entryContainer) entryContainer.insertBefore(div, entryContainer.firstChild);
-  // Sort alphabetically after insert
   structSortEntries(catId);
 }
 function structEntryLinkChanged(entId) {
