@@ -541,14 +541,134 @@
 .form-section {
   margin-bottom: 2rem;
 }
-.form-section-header {
+/* ── Population species rows ── */
+.city-pop-row-inner {
+  display: grid;
+  grid-template-columns: 180px 1fr auto auto;
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.6rem 0.75rem;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius-sm);
+  margin-bottom: 0.4rem;
+}
+.city-pop-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.city-pop-slider {
+  flex: 1;
+  width: 100%;
+  accent-color: var(--dm-gold);
+  cursor: pointer;
+}
+.city-pop-pct-display {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--dm-text);
+  color: var(--dm-gold);
+  min-width: 36px;
+  text-align: right;
+}
+.city-pop-row-inner textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  resize: vertical;
+}
+/* ── Structure category blocks ── */
+.city-struct-category-block {
+  border: 2px solid var(--dm-gold);
+  border-radius: var(--dm-radius);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  background: var(--dm-surface);
+}
+.city-struct-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--dm-gold-dim);
+  border-bottom: 2px solid var(--dm-gold);
+}
+.city-struct-cat-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.city-struct-cat-header .field-input {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.city-struct-entries {
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+/* ── Structure entry blocks ── */
+.city-struct-entry-block {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.city-struct-entry-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+.city-struct-entry-link-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.city-struct-entry-etype {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--dm-gold);
+  white-space: nowrap;
+  min-width: 28px;
+}
+.city-struct-landmark-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.city-struct-entry-block textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 52px;
+  resize: vertical;
+}
+.form-section-header {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dm-gold);
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--dm-border);
+  border-bottom: 1px solid var(--scc-border-gold);
   margin-bottom: 1.25rem;
 }
 /* Edit mode — hide the Add type selector, show a back link */
@@ -6699,11 +6819,38 @@ function addPopBreakdownRow(opts) {
 function popSliderMove(slider, rowId) {
   var row = document.getElementById(rowId);
   if (!row) return;
-  var val = parseInt(slider.value) || 0;
-  var hidden = row.querySelector('.city-pop-pct');
+  var newVal = Math.min(100, Math.max(0, parseInt(slider.value) || 0));
+  // Update this row's hidden input and display
+  var hidden  = row.querySelector('.city-pop-pct');
   var display = row.querySelector('.city-pop-pct-display');
-  if (hidden)  hidden.value = val;
-  if (display) display.textContent = val + '%';
+  if (hidden)  hidden.value = newVal;
+  if (display) display.textContent = newVal + '%';
+  // Rebalance all other rows proportionally so total stays <= 100
+  var allRows   = Array.from(document.querySelectorAll('#city-pop-breakdown-list .city-pop-row'));
+  var otherRows = allRows.filter(function(r) { return r.id !== rowId; });
+  var remaining = 100 - newVal;
+  // Get current sum of other rows
+  var otherSum = otherRows.reduce(function(sum, r) {
+    return sum + (parseInt((r.querySelector('.city-pop-pct') || {}).value) || 0);
+  }, 0);
+  otherRows.forEach(function(r) {
+    var otherHidden  = r.querySelector('.city-pop-pct');
+    var otherDisplay = r.querySelector('.city-pop-pct-display');
+    var otherSlider  = r.querySelector('.city-pop-slider');
+    var currentVal   = parseInt((otherHidden || {}).value) || 0;
+    var newOtherVal;
+    if (otherSum === 0) {
+      // Distribute remaining equally if all others are 0
+      newOtherVal = Math.floor(remaining / otherRows.length);
+    } else {
+      // Scale proportionally
+      newOtherVal = Math.round((currentVal / otherSum) * remaining);
+    }
+    newOtherVal = Math.max(0, newOtherVal);
+    if (otherHidden)  otherHidden.value  = newOtherVal;
+    if (otherDisplay) otherDisplay.textContent = newOtherVal + '%';
+    if (otherSlider)  otherSlider.value  = newOtherVal;
+  });
   popEnforceTotal();
 }
 function popRemoveRow(rowId) {
@@ -6814,7 +6961,6 @@ function addStructureEntry(catId, opts) {
   div.id = entId;
   // Build entry_id dropdown from world entries
   var allEntries = []
-    .concat((typeof CHARACTERS !== 'undefined' ? CHARACTERS : []).map(function(e){ return {id:e.id, label:e.name+' (NPC)', type:'character'}; }))
     .concat((typeof POIS !== 'undefined' ? POIS : []).map(function(e){ return {id:e.id, label:e.name+' (POI)', type:'poi'}; }));
   var entryOpts = allEntries.map(function(e) {
     var sel = e.id === (opts.entry_id || '') ? ' selected' : '';
@@ -6825,7 +6971,7 @@ function addStructureEntry(catId, opts) {
   var lmChecked = opts.landmark ? ' checked' : '';
   div.innerHTML =
     '<div class="city-struct-entry-row">'
-      + '<input class="field-input city-struct-entry-name" type="text" placeholder="Structure name" value="' + (opts.name || '') + '">'
+      + '<input class="field-input city-struct-entry-name" type="text" placeholder="Structure name" value="' + (opts.name || '') + '" onblur="structSortEntries(\'' + catId + '\')">'
       + '<div class="city-struct-entry-link-wrap">'
           + '<select class="field-input city-struct-entry-eid" onchange="structEntryLinkChanged(\'' + entId + '\')">'
             + '<option value="">&#8212; Link to entry (optional) &#8212;</option>'
