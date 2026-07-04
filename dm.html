@@ -544,7 +544,7 @@
 /* ── Population species rows ── */
 .city-pop-row-inner {
   display: grid;
-  grid-template-columns: 180px 1fr auto auto;
+  grid-template-columns: 200px 1fr auto;
   gap: 0.6rem;
   align-items: start;
   padding: 0.6rem 0.75rem;
@@ -558,6 +558,7 @@
   align-items: center;
   gap: 0.5rem;
   width: 100%;
+  min-width: 0;
 }
 .city-pop-slider {
   flex: 1;
@@ -1212,6 +1213,13 @@
                 <div class="repeating-group-title">
                   <span>Structure Categories</span>
                   <button class="btn-add" onclick="addStructureCategory()">+ Add Category</button>
+                </div>
+                <div class="struct-filter-bar">
+                  <input type="text" id="struct-filter-search" class="field-input" placeholder="Search structures&#8230;" oninput="sccFilterStructures()" style="flex:1;min-width:120px;">
+                  <select id="struct-filter-cat" class="field-input" onchange="sccFilterStructures()" style="width:180px;">
+                    <option value="">All Categories</option>
+                  </select>
+                  <button class="btn-secondary" onclick="sccBuildStructureCatFilter()" title="Refresh categories">&#8635;</button>
                 </div>
                 <div id="city-structures-list"></div>
                 <div id="city-structures-empty" class="repeating-empty">No structure categories added yet.</div>
@@ -6789,6 +6797,14 @@ function addPopBreakdownRow(opts) {
   var div = document.createElement('div');
   div.className = 'repeating-item city-pop-row';
   div.id = id;
+  // If SPECIES not yet loaded, fetch then re-call
+  if (!window.SPECIES || !window.SPECIES.length) {
+    sccFetch('species', '&order=sort_order.asc').then(function(rows) {
+      window.SPECIES = Array.isArray(rows) ? rows : [];
+      addPopBreakdownRow(opts);
+    });
+    return;
+  }
   // Build species dropdown from window.SPECIES
   var species = window.SPECIES || [];
   var speciesOpts = species.map(function(sp) {
@@ -6804,12 +6820,12 @@ function addPopBreakdownRow(opts) {
         + '</select>'
       + '<div class="city-pop-slider-wrap">'
           + '<input type="range" class="city-pop-slider" min="0" max="100" value="' + pct + '" oninput="popSliderMove(this,\'' + id + '\')">'
+          + '<input type="hidden" class="city-pop-pct" value="' + pct + '">'
           + '<span class="city-pop-pct-display">' + pct + '%</span>'
         + '</div>'
-      + '<input class="field-input city-pop-pct" type="hidden" value="' + pct + '">'
-      + '<textarea class="field-input city-pop-note" rows="2" placeholder="Why this species is here at this location&#8230;">' + (opts.notes || '') + '</textarea>'
       + '<button class="btn-remove" onclick="popRemoveRow(\'' + id + '\')" title="Remove">&#x2715;</button>'
-    + '</div>';
+    + '</div>'
+    + '<textarea class="field-input city-pop-note" rows="2" placeholder="Why this species is here at this location&#8230;" style="width:100%;box-sizing:border-box;margin-top:0.3rem;">' + (opts.notes || '') + '</textarea>';
   var list  = document.getElementById('city-pop-breakdown-list');
   var empty = document.getElementById('city-pop-breakdown-empty');
   if (list)  list.insertBefore(div, list.firstChild);
@@ -6931,25 +6947,40 @@ function sccBuildStructureCatFilter() {
 function addStructureCategory(opts) {
   opts = opts || {};
   _structCatN++;
-  var catId = 'sc-' + _structCatN;
-  var div   = document.createElement('div');
+  var catId  = 'sc-' + _structCatN;
+  var isNew  = !opts.category;
+  var div    = document.createElement('div');
   div.className = 'city-struct-category-block';
   div.id = catId;
   div.innerHTML =
-    '<div class="city-struct-cat-header">'
-      + '<div class="city-struct-cat-label">Category</div>'
-      + '<div style="display:flex;gap:0.5rem;align-items:center;flex:1;">'
-        + '<input class="field-input city-struct-cat-name" type="text" placeholder="e.g. Lodging, Trade, Worship&#8230;" value="' + (opts.category || '') + '">'
+    '<div class="city-struct-cat-header" onclick="structToggleCat(\'' + catId + '\')">'
+      + '<span class="city-struct-cat-chevron" id="' + catId + '-chev">&#9660;</span>'
+      + '<span class="city-struct-cat-label" id="' + catId + '-label">' + (opts.category ? opts.category.toUpperCase() : 'NEW CATEGORY') + '</span>'
+      + '<div class="city-struct-cat-controls" onclick="event.stopPropagation()">'
+        + '<input class="field-input city-struct-cat-name" type="text" placeholder="Category name&#8230;" value="' + (opts.category || '') + '" oninput="structUpdateCatLabel(\'' + catId + '\',this.value)">'
         + '<button class="btn-add" onclick="addStructureEntry(\'' + catId + '\')">+ Entry</button>'
-        + '<button class="btn-remove" onclick="removeRepeat(\'' + catId + '\')" title="Remove category">&#x2715;</button>'
+        + (isNew ? '<button class="btn-secondary" onclick="removeRepeat(\'' + catId + '\')">Cancel</button>' : '')
+        + '<button class="btn-remove" onclick="removeRepeat(\'' + catId + '\')" title="Remove">&#x2715;</button>'
       + '</div>'
     + '</div>'
     + '<div class="city-struct-entries city-struct-entries-' + catId + '"></div>';
   var list  = document.getElementById('city-structures-list');
   var empty = document.getElementById('city-structures-empty');
-  if (list)  list.appendChild(div);
+  if (list)  list.insertBefore(div, list.firstChild);
   if (empty) empty.style.display = 'none';
   (opts.entries || []).forEach(function(e) { addStructureEntry(catId, e); });
+}
+function structToggleCat(catId) {
+  var entries = document.querySelector('.city-struct-entries-' + catId);
+  var chev    = document.getElementById(catId + '-chev');
+  if (!entries) return;
+  var isOpen = entries.style.display !== 'none';
+  entries.style.display = isOpen ? 'none' : '';
+  if (chev) chev.innerHTML = isOpen ? '&#9654;' : '&#9660;';
+}
+function structUpdateCatLabel(catId, val) {
+  var label = document.getElementById(catId + '-label');
+  if (label) label.textContent = val.toUpperCase() || 'NEW CATEGORY';
 }
 var _structEntN = 0;
 function addStructureEntry(catId, opts) {
@@ -7008,7 +7039,6 @@ function structEntryLinkChanged(entId) {
   }
   // Find the linked entry and auto-fill name + description
   var allEntries = []
-    .concat(typeof CHARACTERS !== 'undefined' ? CHARACTERS : [])
     .concat(typeof POIS !== 'undefined' ? POIS : []);
   var entry = allEntries.find(function(e){ return e.id === linkedId; });
   if (entry) {
