@@ -2775,6 +2775,14 @@
                 </div>
                 <div id="scc-live-die-result" class="scc-live-die-result"></div>
               </div>
+              <!-- TIMER -->
+              <div class="scc-live-section">
+                <div class="scc-live-section-label">Timer</div>
+                <div class="scc-live-timer-row">
+                  <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
+                  <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
+                </div>
+              </div>
               <!-- DM SAFETY NET -->
               <div class="scc-live-section scc-live-safety-net">
                 <div class="scc-live-section-label">DM Safety Net</div>
@@ -2793,14 +2801,6 @@
                 <div class="scc-live-safety-item">
                   <span class="scc-live-safety-trigger">Emotional moment?</span>
                   <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
-                </div>
-              </div>
-              <!-- SESSION TIMER -->
-              <div class="scc-live-section">
-                <div class="scc-live-section-label">Session Timer</div>
-                <div class="scc-live-timer-row">
-                  <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
-                  <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
                 </div>
               </div>
             </div><!-- /right -->
@@ -9035,12 +9035,16 @@ function sccLiveRenderBeats() {
   selected.forEach(function(sel) {
     var q = quests.find(function(x) { return x.id === sel.id; });
     if (!q || !q.beats) return;
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;gap:0.4rem;">'
+      + '<div style="font-family:var(--font-headers);font-size:0.82rem;color:var(--dm-gold);font-weight:700;line-height:1.3;">' + sccEsc(q.name) + '</div>'
+      + '<button class="scc-btn-sm" style="flex-shrink:0;font-size:0.65rem;padding:0.15rem 0.5rem;" onclick="sccOpenLookup(\'quest\',\'' + sccEsc(q.id) + '\')">Details</button>'
+    + '</div>';
     q.beats.forEach(function(b) {
       var prog = SCC_PROGRESS[q.id] ? (SCC_PROGRESS[q.id][b.order] || 'not_started') : 'not_started';
       var dotLabel = prog === 'completed' ? '&#10003;' : prog === 'in_progress' ? '&#9654;' : b.order;
       html += '<div class="scc-live-beat-item scc-live-beat-item--' + prog + '" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ');sccLiveRenderBeats();">'
         + '<div class="scc-live-beat-dot">' + dotLabel + '</div>'
-        + '<div>'
+        + '<div style="flex:1;min-width:0;">'
           + '<div class="scc-live-beat-text">' + sccEsc(b.title || b.description || 'Beat ' + b.order) + '</div>'
           + (b.xp ? '<div class="scc-live-beat-xp">+' + b.xp + ' XP</div>' : '')
         + '</div>'
@@ -9063,7 +9067,8 @@ function sccLiveRenderParty() {
     return '<div class="scc-live-player-row">'
       + '<div class="scc-live-player-name">' + sccEsc(p.name || 'Player') + '</div>'
       + '<button class="scc-live-hp-btn" onclick="sccLiveAdjustHp(\'' + sccEsc(p.id) + '\',-1)">&#8722;</button>'
-      + '<div class="scc-live-hp-val ' + hpCls + '">' + hpCur + '&#8202;/&#8202;' + hpMax + '</div>'
+      + '<input type="number" class="scc-live-hp-input ' + hpCls + '" value="' + hpCur + '" min="0" max="' + hpMax + '" onchange="sccLiveSetHp(\'' + sccEsc(p.id) + '\',this.value)" style="width:36px;text-align:center;padding:0.1rem;font-family:var(--font-sans);font-size:0.82rem;font-weight:700;background:var(--dm-surface);border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text);">'
+      + '<span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">/ ' + hpMax + '</span>'
       + '<button class="scc-live-hp-btn" onclick="sccLiveAdjustHp(\'' + sccEsc(p.id) + '\',1)">+</button>'
     + '</div>';
   }).join('');
@@ -9083,6 +9088,19 @@ function sccLiveAdjustHp(playerId, delta) {
   sccLiveRenderParty();
   sccRenderPlayerBar();
 }
+function sccLiveSetHp(playerId, rawVal) {
+  var sheet = SCC_SHEETS[playerId];
+  if (!sheet) return;
+  var hpMax = sheet.hp_max || 0;
+  var next  = Math.max(0, Math.min(hpMax, parseInt(rawVal) || 0));
+  sheet.hp_current = next;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(playerId), { hp_current: next })
+    .then(function(r) {
+      if (!r.ok) showDMToast('HP save failed', 'error');
+    });
+  sccLiveRenderParty();
+  sccRenderPlayerBar();
+}
 // ── Conditions ──
 var SCC_CONDITIONS_LIST = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious','Fading Stage 1','Color-Drained'];
 function sccLiveRenderConditions() {
@@ -9092,7 +9110,7 @@ function sccLiveRenderConditions() {
   el.innerHTML = SCC_PLAYERS.map(function(p) {
     var conds = SCC_LIVE_CONDITIONS[p.id] || [];
     var chips = conds.map(function(c) {
-      return '<span class="scc-live-cond-tag" onclick="sccLiveRemoveCondition(\'' + sccEsc(p.id) + '\',\'' + sccEsc(c) + '\')" title="Click to remove">' + sccEsc(c) + '</span>';
+      return '<span class="scc-live-cond-tag" data-player="' + sccEsc(p.id) + '" data-cond="' + sccEsc(c) + '" onclick="sccLiveRemoveCondition(this.dataset.player,this.dataset.cond)" title="Click to remove">' + sccEsc(c) + '</span>';
     }).join('');
     return '<div class="scc-live-condition-player">'
       + '<div class="scc-live-condition-name">' + sccEsc(p.name || '') + '</div>'
@@ -9104,16 +9122,28 @@ function sccLiveRenderConditions() {
   }).join('');
 }
 function sccLiveAddCondition(playerId) {
+  var existingPanel = document.getElementById('scc-cond-panel');
+  if (existingPanel) existingPanel.remove();
   var opts = SCC_CONDITIONS_LIST.map(function(c) { return '<option value="' + sccEsc(c) + '">' + sccEsc(c) + '</option>'; }).join('');
   var panel = document.createElement('div');
+  panel.id = 'scc-cond-panel';
   panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.25rem;z-index:9999;min-width:240px;box-shadow:0 16px 48px rgba(0,0,0,0.7);';
   panel.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.82rem;font-weight:700;color:var(--dm-gold);margin-bottom:0.75rem;">Add Condition</div>'
     + '<select id="scc-cond-pick" class="scc-input" style="width:100%;margin-bottom:0.75rem;">' + opts + '</select>'
     + '<div style="display:flex;gap:0.5rem;">'
-      + '<button class="scc-btn-primary" style="flex:1;" onclick="(function(){var v=document.getElementById(\'scc-cond-pick\').value;if(!SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\'])SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\']=[];if(v&&SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\'].indexOf(v)<0)SCC_LIVE_CONDITIONS[\'' + sccEsc(playerId) + '\'].push(v);sccLiveRenderConditions();this.closest(\'div[style]\').remove();})()">Add</button>'
-      + '<button class="scc-btn-secondary" onclick="this.closest(\'div[style]\').remove()">Cancel</button>'
+      + '<button class="scc-btn-primary" style="flex:1;" onclick="sccLiveConfirmCondition(\'' + sccEsc(playerId) + '\')">Add</button>'
+      + '<button class="scc-btn-secondary" onclick="document.getElementById(\'scc-cond-panel\').remove()">Cancel</button>'
     + '</div>';
   document.body.appendChild(panel);
+}
+function sccLiveConfirmCondition(playerId) {
+  var pick = document.getElementById('scc-cond-pick');
+  var v = pick ? pick.value : '';
+  if (!SCC_LIVE_CONDITIONS[playerId]) SCC_LIVE_CONDITIONS[playerId] = [];
+  if (v && SCC_LIVE_CONDITIONS[playerId].indexOf(v) < 0) SCC_LIVE_CONDITIONS[playerId].push(v);
+  sccLiveRenderConditions();
+  var panel = document.getElementById('scc-cond-panel');
+  if (panel) panel.remove();
 }
 function sccLiveRemoveCondition(playerId, cond) {
   if (!SCC_LIVE_CONDITIONS[playerId]) return;
