@@ -8758,12 +8758,28 @@ function cmPopulateForm(entry, type) {
     var bdList = document.getElementById('city-pop-breakdown-list');
     if (bdList) {
       bdList.innerHTML = '';
-      (pd.breakdown || []).forEach(function(b) { addPopBreakdownRow(b); });
-      if (!(pd.breakdown || []).length) {
+      var bdBreakdown = pd.breakdown || [];
+      if (!bdBreakdown.length) {
         var bdEmpty = document.getElementById('city-pop-breakdown-empty');
         if (bdEmpty) bdEmpty.style.display = '';
+      } else {
+        // Pre-fetch species once, then add all rows sequentially to avoid race condition
+        // where parallel async re-calls cause usedIds to filter out later species.
+        var doAddRows = function() {
+          bdBreakdown.forEach(function(b) { addPopBreakdownRow(b); });
+          setTimeout(function() {
+            if (typeof popUpdatePieChart === 'function') popUpdatePieChart();
+          }, 50);
+        };
+        if (window.SPECIES && window.SPECIES.length) {
+          doAddRows();
+        } else {
+          sccFetch('species', '&order=sort_order.asc').then(function(rows) {
+            window.SPECIES = Array.isArray(rows) ? rows : [];
+            doAddRows();
+          });
+        }
       }
-      // popUpdatePieChart called after species fetch resolves in addPopBreakdownRow
     }
     // Structures
     var stList = document.getElementById('city-structures-list');
