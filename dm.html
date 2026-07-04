@@ -541,6 +541,35 @@
 .form-section {
   margin-bottom: 2rem;
 }
+/* ── Population two-column layout ── */
+.city-pop-breakdown-layout {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 1rem;
+  align-items: start;
+}
+.city-pop-breakdown-rows {
+  min-width: 0;
+}
+.city-pop-pie-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0.5rem;
+}
+#city-pop-pie {
+  border-radius: 50%;
+  background: var(--dm-surface-high);
+}
+#city-pop-pie-legend {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
 /* ── Population species rows ── */
 .city-pop-row {
   display: flex;
@@ -565,6 +594,22 @@
   width: 100%;
   min-width: 0;
 }
+.city-pop-pct-input {
+  width: 48px;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--dm-gold);
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: 4px;
+  padding: 0.15rem 0.2rem;
+  -moz-appearance: textfield;
+  flex-shrink: 0;
+}
+.city-pop-pct-input::-webkit-outer-spin-button,
+.city-pop-pct-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .city-pop-slider {
   flex: 1;
   width: 100%;
@@ -1240,8 +1285,16 @@
                   <span>Species Breakdown</span>
                   <button class="btn-add" onclick="addPopBreakdownRow()">+ Add Species</button>
                 </div>
-                <div id="city-pop-breakdown-list"></div>
-                <div id="city-pop-breakdown-empty" class="repeating-empty">No species breakdown added yet.</div>
+                <div class="city-pop-breakdown-layout">
+                  <div class="city-pop-breakdown-rows">
+                    <div id="city-pop-breakdown-list"></div>
+                    <div id="city-pop-breakdown-empty" class="repeating-empty">No species breakdown added yet.</div>
+                  </div>
+                  <div class="city-pop-pie-wrap">
+                    <canvas id="city-pop-pie" width="180" height="180"></canvas>
+                    <div id="city-pop-pie-legend"></div>
+                  </div>
+                </div>
               </div>
             </div>
             <!-- STRUCTURES -->
@@ -6844,27 +6897,32 @@ function addPopBreakdownRow(opts) {
     });
     return;
   }
-  // Build species dropdown from window.SPECIES
+  // Build species dropdown — exclude already-selected species (except this row's own value)
   var species = window.SPECIES || [];
-  var speciesOpts = species.map(function(sp) {
+  var usedIds = Array.from(document.querySelectorAll('#city-pop-breakdown-list .city-pop-species'))
+    .map(function(s) { return s.value; })
+    .filter(function(v) { return v && v !== (opts.species_id || ''); });
+  var speciesOpts = species.filter(function(sp) {
+    return usedIds.indexOf(sp.id) < 0;
+  }).map(function(sp) {
     var sel = sp.id === (opts.species_id || '') ? ' selected' : '';
     return '<option value="' + sp.id + '"' + sel + '>' + sp.name + '</option>';
   }).join('');
   var pct = opts.percent || 0;
   div.innerHTML =
     '<div class="city-pop-row-inner">'
-      + '<select class="field-input city-pop-species" onchange="popRebalance(\'' + id + '\')">'
+      + '<select class="field-input city-pop-species" onchange="popUpdatePieChart()">'
           + '<option value="">&#8212; Select species &#8212;</option>'
           + speciesOpts
         + '</select>'
       + '<div class="city-pop-slider-wrap">'
           + '<input type="range" class="city-pop-slider" min="0" max="100" value="' + pct + '" oninput="popSliderMove(this,\'' + id + '\')">'
+          + '<input type="number" class="city-pop-pct-input" min="0" max="100" value="' + pct + '" oninput="popInputMove(this,\'' + id + '\')">'
           + '<input type="hidden" class="city-pop-pct" value="' + pct + '">'
-          + '<span class="city-pop-pct-display">' + pct + '%</span>'
         + '</div>'
       + '<button class="btn-remove" onclick="popRemoveRow(\'' + id + '\')" title="Remove">&#x2715;</button>'
     + '</div>'
-    + '<textarea class="field-input city-pop-note" rows="2" placeholder="Why this species is here at this location&#8230;" style="width:100%;box-sizing:border-box;margin-top:0.3rem;">' + (opts.notes || '') + '</textarea>';
+    + '<textarea class="field-input city-pop-note" rows="2" placeholder="Why this species is here at this location&#8230;">' + (opts.notes || '') + '</textarea>';
   var list  = document.getElementById('city-pop-breakdown-list');
   var empty = document.getElementById('city-pop-breakdown-empty');
   if (list)  list.insertBefore(div, list.firstChild);
@@ -6875,11 +6933,11 @@ function popSliderMove(slider, rowId) {
   var row = document.getElementById(rowId);
   if (!row) return;
   var newVal = Math.min(100, Math.max(0, parseInt(slider.value) || 0));
-  // Update this row's hidden input and display
-  var hidden  = row.querySelector('.city-pop-pct');
-  var display = row.querySelector('.city-pop-pct-display');
-  if (hidden)  hidden.value = newVal;
-  if (display) display.textContent = newVal + '%';
+  // Update this row's hidden input and number input
+  var hidden   = row.querySelector('.city-pop-pct');
+  var numInput = row.querySelector('.city-pop-pct-input');
+  if (hidden)   hidden.value   = newVal;
+  if (numInput) numInput.value = newVal;
   // Rebalance all other rows proportionally so total stays <= 100
   var allRows   = Array.from(document.querySelectorAll('#city-pop-breakdown-list .city-pop-row'));
   var otherRows = allRows.filter(function(r) { return r.id !== rowId; });
@@ -6889,10 +6947,10 @@ function popSliderMove(slider, rowId) {
     return sum + (parseInt((r.querySelector('.city-pop-pct') || {}).value) || 0);
   }, 0);
   otherRows.forEach(function(r) {
-    var otherHidden  = r.querySelector('.city-pop-pct');
-    var otherDisplay = r.querySelector('.city-pop-pct-display');
-    var otherSlider  = r.querySelector('.city-pop-slider');
-    var currentVal   = parseInt((otherHidden || {}).value) || 0;
+    var otherHidden   = r.querySelector('.city-pop-pct');
+    var otherNumInput = r.querySelector('.city-pop-pct-input');
+    var otherSlider   = r.querySelector('.city-pop-slider');
+    var currentVal    = parseInt((otherHidden || {}).value) || 0;
     var newOtherVal;
     if (otherSum === 0) {
       // Distribute remaining equally if all others are 0
@@ -6902,11 +6960,88 @@ function popSliderMove(slider, rowId) {
       newOtherVal = Math.round((currentVal / otherSum) * remaining);
     }
     newOtherVal = Math.max(0, newOtherVal);
-    if (otherHidden)  otherHidden.value  = newOtherVal;
-    if (otherDisplay) otherDisplay.textContent = newOtherVal + '%';
-    if (otherSlider)  otherSlider.value  = newOtherVal;
+    if (otherHidden)   otherHidden.value   = newOtherVal;
+    if (otherNumInput) otherNumInput.value = newOtherVal;
+    if (otherSlider)   otherSlider.value   = newOtherVal;
   });
   popEnforceTotal();
+  popUpdatePieChart();
+}
+function popInputMove(input, rowId) {
+  var row = document.getElementById(rowId);
+  if (!row) return;
+  var newVal = Math.min(100, Math.max(0, parseInt(input.value) || 0));
+  var hidden  = row.querySelector('.city-pop-pct');
+  var slider  = row.querySelector('.city-pop-slider');
+  if (hidden) hidden.value = newVal;
+  if (slider) slider.value = newVal;
+  // Rebalance other rows proportionally
+  var allRows   = Array.from(document.querySelectorAll('#city-pop-breakdown-list .city-pop-row'));
+  var otherRows = allRows.filter(function(r) { return r.id !== rowId; });
+  var remaining = 100 - newVal;
+  var otherSum  = otherRows.reduce(function(sum, r) {
+    return sum + (parseInt((r.querySelector('.city-pop-pct') || {}).value) || 0);
+  }, 0);
+  otherRows.forEach(function(r) {
+    var otherHidden   = r.querySelector('.city-pop-pct');
+    var otherNumInput = r.querySelector('.city-pop-pct-input');
+    var otherSlider   = r.querySelector('.city-pop-slider');
+    var currentVal    = parseInt((otherHidden || {}).value) || 0;
+    var newOtherVal   = otherSum === 0
+      ? Math.floor(remaining / otherRows.length)
+      : Math.round((currentVal / otherSum) * remaining);
+    newOtherVal = Math.max(0, newOtherVal);
+    if (otherHidden)   otherHidden.value   = newOtherVal;
+    if (otherNumInput) otherNumInput.value = newOtherVal;
+    if (otherSlider)   otherSlider.value   = newOtherVal;
+  });
+  popEnforceTotal();
+  popUpdatePieChart();
+}
+function popUpdatePieChart() {
+  var canvas = document.getElementById('city-pop-pie');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var rows = Array.from(document.querySelectorAll('#city-pop-breakdown-list .city-pop-row'));
+  var slices = [];
+  rows.forEach(function(row) {
+    var sel  = row.querySelector('.city-pop-species');
+    var pct  = parseInt((row.querySelector('.city-pop-pct') || {}).value) || 0;
+    var name = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+    if (pct > 0 && name && name !== '&#8212; Select species &#8212;') {
+      slices.push({ name: name, pct: pct });
+    }
+  });
+  var COLORS = ['#f0b429','#4ade80','#60a5fa','#f87171','#c084fc','#fb923c','#34d399','#a78bfa','#f472b6','#38bdf8','#facc15','#86efac'];
+  var W = canvas.width;
+  var H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!slices.length) {
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, Math.min(W,H)/2 - 4, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  var total = slices.reduce(function(s, sl) { return s + sl.pct; }, 0);
+  if (total <= 0) return;
+  var startAngle = -Math.PI / 2;
+  var cx = W / 2;
+  var cy = H / 2;
+  var r  = Math.min(W, H) / 2 - 4;
+  slices.forEach(function(sl, i) {
+    var sweep = (sl.pct / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, startAngle + sweep);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    startAngle += sweep;
+  });
 }
 function popRemoveRow(rowId) {
   var row = document.getElementById(rowId);
@@ -6915,6 +7050,7 @@ function popRemoveRow(rowId) {
   var empty = document.getElementById('city-pop-breakdown-empty');
   if (empty) empty.style.display = (list && list.children.length === 0) ? '' : 'none';
   popEnforceTotal();
+  popUpdatePieChart();
 }
 function popEnforceTotal() {
   var rows = document.querySelectorAll('#city-pop-breakdown-list .city-pop-row');
