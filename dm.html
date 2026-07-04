@@ -1057,9 +1057,9 @@
               <div class="form-section-header">Population</div>
               <div class="field-row">
                 <div class="field-group">
-                  <label class="field-label" for="city-population-display">Display String</label>
-                  <span class="field-help">Human-readable summary shown in UI (e.g. ~1,400 permanent &middot; 300&ndash;600 transient)</span>
-                  <input class="field-input" type="text" id="city-population-display" placeholder="e.g. ~1,400 permanent &middot; 300&ndash;600 transient">
+                  <label class="field-label" for="city-pop-summary">Population Summary</label>
+                  <span class="field-help">Human-readable summary shown in the UI (e.g. "~1,400 permanent &middot; 300&ndash;600 transient").</span>
+                  <input class="field-input" type="text" id="city-pop-summary" placeholder="~1,400 permanent · 300–600 transient">
                 </div>
               </div>
               <div class="field-row">
@@ -1073,11 +1073,7 @@
                   <span class="field-help">Integer — daily average of non-permanent visitors</span>
                   <input class="field-input" type="number" id="city-pop-transient" min="0" placeholder="e.g. 450">
                 </div>
-                <div class="field-group">
-                  <label class="field-label" for="city-pop-buffer">Rural Buffer %</label>
-                  <span class="field-help">Nation-level only — 20 for 20% rural buffer. Leave 0 for towns.</span>
-                  <input class="field-input" type="number" id="city-pop-buffer" min="0" max="100" placeholder="0">
-                </div>
+                <!-- Rural Buffer % removed — nation-level only, not editable on city form -->
               </div>
               <div class="repeating-group">
                 <div class="repeating-group-title">
@@ -6673,48 +6669,139 @@ function addPopBreakdownRow(opts) {
   var div = document.createElement('div');
   div.className = 'repeating-item city-pop-row';
   div.id = id;
-  div.style.cssText = 'display:grid;grid-template-columns:1fr 70px 1fr auto;gap:0.5rem;align-items:start;';
+  // Build species dropdown from window.SPECIES
+  var species = window.SPECIES || [];
+  var speciesOpts = species.map(function(sp) {
+    var sel = sp.id === (opts.species_id || '') ? ' selected' : '';
+    return '<option value="' + sp.id + '"' + sel + '>' + sp.name + '</option>';
+  }).join('');
+  var pct = opts.percent || 0;
   div.innerHTML =
-    '<div class="field-group" style="margin:0">'
-      + '<label class="field-label" style="font-size:var(--text-sm)">Species ID</label>'
-      + '<input class="field-input city-pop-species" type="text" placeholder="e.g. solmeri" value="' + (opts.species_id || '') + '">'
-    + '</div>'
-    + '<div class="field-group" style="margin:0">'
-      + '<label class="field-label" style="font-size:var(--text-sm)">%</label>'
-      + '<input class="field-input city-pop-pct" type="number" min="0" max="100" placeholder="42" value="' + (opts.percent || '') + '">'
-    + '</div>'
-    + '<div class="field-group" style="margin:0">'
-      + '<label class="field-label" style="font-size:var(--text-sm)">Notes</label>'
-      + '<input class="field-input city-pop-note" type="text" placeholder="Optional note" value="' + (opts.notes || '') + '">'
-    + '</div>'
-    + '<button class="btn-remove" style="margin-top:1.4rem" onclick="removeRepeat(\'' + id + '\')" title="Remove">&#x2715;</button>';
+    '<div class="city-pop-row-inner">'
+      + '<select class="field-input city-pop-species" onchange="popRebalance(\'' + id + '\')">'
+          + '<option value="">&#8212; Select species &#8212;</option>'
+          + speciesOpts
+        + '</select>'
+      + '<div class="city-pop-slider-wrap">'
+          + '<input type="range" class="city-pop-slider" min="0" max="100" value="' + pct + '" oninput="popSliderMove(this,\'' + id + '\')">'
+          + '<span class="city-pop-pct-display">' + pct + '%</span>'
+        + '</div>'
+      + '<input class="field-input city-pop-pct" type="hidden" value="' + pct + '">'
+      + '<textarea class="field-input city-pop-note" rows="2" placeholder="Why this species is here at this location&#8230;">' + (opts.notes || '') + '</textarea>'
+      + '<button class="btn-remove" onclick="popRemoveRow(\'' + id + '\')" title="Remove">&#x2715;</button>'
+    + '</div>';
   var list  = document.getElementById('city-pop-breakdown-list');
   var empty = document.getElementById('city-pop-breakdown-empty');
-  if (list)  list.appendChild(div);
+  if (list)  list.insertBefore(div, list.firstChild);
   if (empty) empty.style.display = 'none';
+  popEnforceTotal();
+}
+function popSliderMove(slider, rowId) {
+  var row = document.getElementById(rowId);
+  if (!row) return;
+  var val = parseInt(slider.value) || 0;
+  var hidden = row.querySelector('.city-pop-pct');
+  var display = row.querySelector('.city-pop-pct-display');
+  if (hidden)  hidden.value = val;
+  if (display) display.textContent = val + '%';
+  popEnforceTotal();
+}
+function popRemoveRow(rowId) {
+  var row = document.getElementById(rowId);
+  if (row) row.remove();
+  var list = document.getElementById('city-pop-breakdown-list');
+  var empty = document.getElementById('city-pop-breakdown-empty');
+  if (empty) empty.style.display = (list && list.children.length === 0) ? '' : 'none';
+  popEnforceTotal();
+}
+function popEnforceTotal() {
+  var rows = document.querySelectorAll('#city-pop-breakdown-list .city-pop-row');
+  var total = 0;
+  rows.forEach(function(row) {
+    var h = row.querySelector('.city-pop-pct');
+    total += parseInt((h && h.value) || 0);
+  });
+  var warn = document.getElementById('city-pop-total-warn');
+  if (!warn) {
+    warn = document.createElement('div');
+    warn.id = 'city-pop-total-warn';
+    warn.style.cssText = 'font-family:var(--font-sans);font-size:0.78rem;margin-top:0.4rem;font-weight:700;';
+    var list = document.getElementById('city-pop-breakdown-list');
+    if (list && list.parentNode) list.parentNode.insertBefore(warn, list.nextSibling);
+  }
+  if (total > 100) {
+    warn.textContent = 'Total: ' + total + '% &#8212; exceeds 100%';
+    warn.style.color = 'var(--dm-red)';
+  } else if (total === 100) {
+    warn.textContent = 'Total: 100% &#10003;';
+    warn.style.color = 'var(--dm-green)';
+  } else {
+    warn.textContent = 'Total: ' + total + '% (remaining: ' + (100 - total) + '%)';
+    warn.style.color = 'var(--dm-text-muted)';
+  }
+}
+function popRebalance(changedRowId) {
+  // No auto-rebalance on dropdown change &#8212; just enforce total display
+  popEnforceTotal();
 }
 /* ── REPEATING GROUP — STRUCTURES ────────────── */
 var _structCatN = 0;
+function sccFilterStructures() {
+  var search = (document.getElementById('struct-filter-search') || {}).value || '';
+  var cat    = (document.getElementById('struct-filter-cat') || {}).value || '';
+  search = search.toLowerCase();
+  var catBlocks = document.querySelectorAll('.city-struct-category-block');
+  catBlocks.forEach(function(block) {
+    var catName = (block.querySelector('.city-struct-cat-name') || {}).value || '';
+    var catMatch = !cat || catName.toLowerCase() === cat.toLowerCase();
+    var entries = block.querySelectorAll('.city-struct-entry-block');
+    var anyEntryMatch = false;
+    entries.forEach(function(entry) {
+      var name = (entry.querySelector('.city-struct-entry-name') || {}).value || '';
+      var desc = (entry.querySelector('.city-struct-entry-desc') || {}).value || '';
+      var entryMatch = !search || name.toLowerCase().indexOf(search) >= 0 || desc.toLowerCase().indexOf(search) >= 0;
+      entry.style.display = (catMatch && entryMatch) ? '' : 'none';
+      if (entryMatch) anyEntryMatch = true;
+    });
+    block.style.display = (catMatch && (!search || anyEntryMatch)) ? '' : 'none';
+  });
+}
+function sccBuildStructureCatFilter() {
+  var sel = document.getElementById('struct-filter-cat');
+  if (!sel) return;
+  var existing = sel.value;
+  sel.innerHTML = '<option value="">All Categories</option>';
+  document.querySelectorAll('.city-struct-cat-name').forEach(function(input) {
+    var v = input.value.trim();
+    if (!v) return;
+    var opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    if (v === existing) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 function addStructureCategory(opts) {
   opts = opts || {};
   _structCatN++;
   var catId = 'sc-' + _structCatN;
   var div   = document.createElement('div');
-  div.className = 'repeating-item city-struct-category';
+  div.className = 'city-struct-category-block';
   div.id = catId;
-  div.style.cssText = 'padding:0.75rem;border:1px solid var(--border-mid);border-radius:6px;margin-bottom:0.75rem;background:var(--surface-2);';
   div.innerHTML =
-    '<div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">'
-      + '<input class="field-input city-struct-cat-name" type="text" placeholder="Category name (e.g. Lodging)" value="' + (opts.category || '') + '" style="flex:1;font-weight:700;">'
-      + '<button class="btn-add" onclick="addStructureEntry(\'' + catId + '\')">+ Entry</button>'
-      + '<button class="btn-remove" onclick="removeRepeat(\'' + catId + '\')" title="Remove category">&#x2715;</button>'
+    '<div class="city-struct-cat-header">'
+      + '<div class="city-struct-cat-label">Category</div>'
+      + '<div style="display:flex;gap:0.5rem;align-items:center;flex:1;">'
+        + '<input class="field-input city-struct-cat-name" type="text" placeholder="e.g. Lodging, Trade, Worship&#8230;" value="' + (opts.category || '') + '">'
+        + '<button class="btn-add" onclick="addStructureEntry(\'' + catId + '\')">+ Entry</button>'
+        + '<button class="btn-remove" onclick="removeRepeat(\'' + catId + '\')" title="Remove category">&#x2715;</button>'
+      + '</div>'
     + '</div>'
-    + '<div class="city-struct-entries-' + catId + '"></div>';
+    + '<div class="city-struct-entries city-struct-entries-' + catId + '"></div>';
   var list  = document.getElementById('city-structures-list');
   var empty = document.getElementById('city-structures-empty');
   if (list)  list.appendChild(div);
   if (empty) empty.style.display = 'none';
-  // Restore entries if editing existing data
   (opts.entries || []).forEach(function(e) { addStructureEntry(catId, e); });
 }
 var _structEntN = 0;
@@ -6723,22 +6810,84 @@ function addStructureEntry(catId, opts) {
   _structEntN++;
   var entId = 'se-' + _structEntN;
   var div   = document.createElement('div');
-  div.className = 'repeating-item city-struct-entry';
+  div.className = 'city-struct-entry-block';
   div.id = entId;
-  div.style.cssText = 'margin-left:0.75rem;margin-bottom:0.5rem;padding:0.5rem;background:var(--surface-3);border-radius:4px;border:1px solid var(--border);';
+  // Build entry_id dropdown from world entries
+  var allEntries = []
+    .concat((typeof CHARACTERS !== 'undefined' ? CHARACTERS : []).map(function(e){ return {id:e.id, label:e.name+' (NPC)', type:'character'}; }))
+    .concat((typeof POIS !== 'undefined' ? POIS : []).map(function(e){ return {id:e.id, label:e.name+' (POI)', type:'poi'}; }));
+  var entryOpts = allEntries.map(function(e) {
+    var sel = e.id === (opts.entry_id || '') ? ' selected' : '';
+    return '<option value="' + e.id + '" data-type="' + e.type + '"' + sel + '>' + e.label + '</option>';
+  }).join('');
+  var isLinked = !!(opts.entry_id);
+  var descReadonly = isLinked ? ' readonly' : '';
+  var lmChecked = opts.landmark ? ' checked' : '';
   div.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.4rem;margin-bottom:0.35rem;">'
+    '<div class="city-struct-entry-row">'
       + '<input class="field-input city-struct-entry-name" type="text" placeholder="Structure name" value="' + (opts.name || '') + '">'
-      + '<input class="field-input city-struct-entry-eid"  type="text" placeholder="entry_id (optional)" value="' + (opts.entry_id || '') + '">'
-      + '<button class="btn-remove" onclick="removeRepeat(\'' + entId + '\')" title="Remove">&#x2715;</button>'
+      + '<div class="city-struct-entry-link-wrap">'
+          + '<select class="field-input city-struct-entry-eid" onchange="structEntryLinkChanged(\'' + entId + '\')">'
+            + '<option value="">&#8212; Link to entry (optional) &#8212;</option>'
+            + entryOpts
+          + '</select>'
+          + '<span class="city-struct-entry-etype" id="' + entId + '-etype">' + (opts.entry_type ? opts.entry_type.toUpperCase() : '') + '</span>'
+        + '</div>'
+      + '<label class="city-struct-landmark-label"><input type="checkbox" class="city-struct-entry-lm"' + lmChecked + '> &#9733; Landmark</label>'
+      + '<button class="btn-remove" onclick="structRemoveEntry(\'' + entId + '\',\'' + catId + '\')" title="Remove">&#x2715;</button>'
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:3fr 1fr;gap:0.4rem;">'
-      + '<input class="field-input city-struct-entry-desc"  type="text" placeholder="Description" value="' + (opts.description || '') + '">'
-      + '<input class="field-input city-struct-entry-etype" type="text" placeholder="entry_type (poi/character)" value="' + (opts.entry_type || '') + '">'
-    + '</div>';
-  var container = div.closest ? null : null;
+    + '<textarea class="field-input city-struct-entry-desc" rows="2" placeholder="Description"' + descReadonly + '>' + (opts.description || '') + '</textarea>';
   var entryContainer = document.querySelector('.city-struct-entries-' + catId);
-  if (entryContainer) entryContainer.appendChild(div);
+  if (entryContainer) entryContainer.insertBefore(div, entryContainer.firstChild);
+  // Sort alphabetically after insert
+  structSortEntries(catId);
+}
+function structEntryLinkChanged(entId) {
+  var div = document.getElementById(entId);
+  if (!div) return;
+  var select = div.querySelector('.city-struct-entry-eid');
+  var typeEl = document.getElementById(entId + '-etype');
+  var descEl = div.querySelector('.city-struct-entry-desc');
+  var nameEl = div.querySelector('.city-struct-entry-name');
+  if (!select) return;
+  var opt = select.options[select.selectedIndex];
+  var linkedId = select.value;
+  var linkedType = opt ? opt.dataset.type : '';
+  // Update type display
+  if (typeEl) typeEl.textContent = linkedType ? linkedType.toUpperCase() : '';
+  if (!linkedId) {
+    // Unlinked &#8212; make description editable again
+    if (descEl) { descEl.removeAttribute('readonly'); descEl.value = ''; }
+    return;
+  }
+  // Find the linked entry and auto-fill name + description
+  var allEntries = []
+    .concat(typeof CHARACTERS !== 'undefined' ? CHARACTERS : [])
+    .concat(typeof POIS !== 'undefined' ? POIS : []);
+  var entry = allEntries.find(function(e){ return e.id === linkedId; });
+  if (entry) {
+    if (nameEl && !nameEl.value) nameEl.value = entry.name || '';
+    if (descEl) {
+      descEl.value = entry.summary || entry.description || '';
+      descEl.setAttribute('readonly', true);
+    }
+  }
+}
+function structRemoveEntry(entId, catId) {
+  var div = document.getElementById(entId);
+  if (div) div.remove();
+  structSortEntries(catId);
+}
+function structSortEntries(catId) {
+  var container = document.querySelector('.city-struct-entries-' + catId);
+  if (!container) return;
+  var entries = Array.from(container.querySelectorAll('.city-struct-entry-block'));
+  entries.sort(function(a, b) {
+    var aName = (a.querySelector('.city-struct-entry-name') || {}).value || '';
+    var bName = (b.querySelector('.city-struct-entry-name') || {}).value || '';
+    return aName.localeCompare(bName);
+  });
+  entries.forEach(function(e) { container.appendChild(e); });
 }
 /* ── REPEATING GROUP — LANDMARKS ─────────────── */
 var _landmarkN = 0;
@@ -7068,7 +7217,7 @@ function generateCity() {
     tone:                 orNull(val('city-tone')),
     tags:                 tagsArr('city-tags'),
     read_aloud:           orNull(val('city-read-aloud')),
-    population:           orNull(val('city-population-display')),
+    population:           orNull(val('city-pop-summary')),
     population_data:      (function() {
       var perm    = parseInt(document.getElementById('city-pop-permanent')  && document.getElementById('city-pop-permanent').value)  || null;
       var trans   = parseInt(document.getElementById('city-pop-transient')  && document.getElementById('city-pop-transient').value)  || null;
@@ -8242,7 +8391,7 @@ function cmPopulateForm(entry, type) {
     sv('city-read-aloud', entry.read_aloud);
     sv('city-type',       entry.type);
     sv('city-color-health', entry.color_health);
-    sv('city-population-display', entry.population);
+    sv('city-pop-summary', entry.population);
     // Region → nation cascade
     var rSel = document.getElementById('city-region');
     if (rSel) { rSel.value = entry.region || ''; filterNations('city-nation', 'city-region'); }
@@ -8969,6 +9118,7 @@ function sccInit() {
     sccFetch('nations').then(function(rows) { if (Array.isArray(rows) && rows.length) window.NATIONS = rows; }),
     sccFetch('creatures').then(function(rows) { if (Array.isArray(rows) && rows.length) window.CREATURES = rows; }),
     sccFetch('quests').then(function(rows) { if (Array.isArray(rows) && rows.length) window.QUESTS = rows; }),
+    sccFetch('species', '&order=sort_order.asc').then(function(rows) { window.SPECIES = Array.isArray(rows) ? rows : []; }),
     sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; })
   ]).then(function() {
     sccLoadPlayers();
@@ -9333,7 +9483,9 @@ function sccRollDie(sides) {
   var resultEl = document.getElementById('scc-live-die-result');
   if (!resultEl) return;
   // Flicker animation then land
-  var roll     = Math.floor(Math.random() * sides) + 1;
+  var arr  = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  var roll = (arr[0] % sides) + 1;
   var total    = roll + mod;
   var iters    = 0;
   var maxIters = 8;
