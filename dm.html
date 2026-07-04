@@ -5286,15 +5286,21 @@ function showDMToast(msg, type) {
 .scc-live-beat-xp { font-size: 0.68rem; color: var(--dm-gold); margin-top: 0.1rem; }
 /* Party HP */
 .scc-live-player-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 22px 38px auto 22px;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   padding: 0.3rem 0;
   border-bottom: 1px solid var(--scc-border);
 }
 .scc-live-player-row:last-child { border-bottom: none; }
 .scc-live-player-name { font-family: var(--font-headers); font-size: 0.82rem; color: var(--dm-text); flex: 1; }
 .scc-live-hp-btn { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--scc-border-mid); background: var(--dm-surface); color: var(--dm-text); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.scc-live-hp-input { width: 38px; text-align: center; padding: 0.1rem 0.2rem; font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; background: var(--dm-surface); border: 1px solid var(--scc-border-mid); border-radius: 4px; color: var(--dm-text); -moz-appearance: textfield; }
+.scc-live-hp-input::-webkit-outer-spin-button,
+.scc-live-hp-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.scc-live-hp-input.danger { color: var(--dm-red); border-color: var(--dm-red); }
+.scc-live-hp-input.warning { color: #f59e0b; border-color: #f59e0b; }
 .scc-live-hp-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
 .scc-live-hp-val { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text); min-width: 55px; text-align: center; }
 .scc-live-hp-val.danger { color: var(--dm-red); }
@@ -9067,8 +9073,8 @@ function sccLiveRenderParty() {
     return '<div class="scc-live-player-row">'
       + '<div class="scc-live-player-name">' + sccEsc(p.name || 'Player') + '</div>'
       + '<button class="scc-live-hp-btn" onclick="sccLiveAdjustHp(\'' + sccEsc(p.id) + '\',-1)">&#8722;</button>'
-      + '<input type="number" class="scc-live-hp-input ' + hpCls + '" value="' + hpCur + '" min="0" max="' + hpMax + '" onchange="sccLiveSetHp(\'' + sccEsc(p.id) + '\',this.value)" style="width:36px;text-align:center;padding:0.1rem;font-family:var(--font-sans);font-size:0.82rem;font-weight:700;background:var(--dm-surface);border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text);">'
-      + '<span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">/ ' + hpMax + '</span>'
+      + '<input type="text" inputmode="numeric" pattern="[0-9]*" class="scc-live-hp-input ' + hpCls + '" value="' + hpCur + '" onchange="sccLiveSetHp(\'' + sccEsc(p.id) + '\',this.value)">'
+      + '<span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);white-space:nowrap;">/ ' + hpMax + '</span>'
       + '<button class="scc-live-hp-btn" onclick="sccLiveAdjustHp(\'' + sccEsc(p.id) + '\',1)">+</button>'
     + '</div>';
   }).join('');
@@ -11046,6 +11052,36 @@ function sccOpenLookup(type, id) {
       + '</div></div>'
       + (cr.description?'<div class="scc-pk-block" style="margin-top:0.5rem;"><div class="scc-pk-label">Description</div><div class="scc-pk-text">'+sccEsc(cr.description)+'</div></div>':'')
       + (cr.behavior?'<div class="scc-pk-block"><div class="scc-pk-label">Behavior</div><div class="scc-pk-text">'+sccEsc(cr.behavior)+'</div></div>':'');
+  } else if (type === 'quest') {
+    var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+    var q = quests.find(function(x){ return x.id === id; });
+    if (!q) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    var beatsHtml = '';
+    if (q.beats && q.beats.length) {
+      q.beats.forEach(function(b) {
+        var prog = SCC_PROGRESS[q.id] ? (SCC_PROGRESS[q.id][b.order] || 'not_started') : 'not_started';
+        var dotLabel = prog === 'completed' ? '&#10003;' : prog === 'in_progress' ? '&#9654;' : String(b.order);
+        beatsHtml += '<div class="scc-live-beat-item scc-live-beat-item--' + prog + '" style="pointer-events:none;">'
+          + '<div class="scc-live-beat-dot">' + dotLabel + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+            + '<div class="scc-live-beat-text">' + sccEsc(b.title || b.description || 'Beat ' + b.order) + '</div>'
+            + (b.description && b.title ? '<div style="font-family:var(--font-body);font-size:0.76rem;color:var(--dm-text-muted);line-height:1.4;margin-top:0.15rem;">' + sccEsc(b.description) + '</div>' : '')
+            + (b.xp ? '<div class="scc-live-beat-xp">+' + b.xp + ' XP</div>' : '')
+          + '</div>'
+        + '</div>';
+      });
+    }
+    html = ''
+      + '<div class="scc-ql-header" style="align-items:center;">'
+        + '<div class="scc-ql-portrait-fallback" style="font-size:2rem;background:var(--dm-gold-dim);border-color:var(--scc-border-gold);">&#128220;</div>'
+        + '<div class="scc-ql-header-info">'
+          + '<div class="scc-ql-name">' + sccEsc(q.name) + '</div>'
+          + (q.status ? '<div style="font-family:var(--font-body);font-size:0.78rem;color:var(--dm-text-muted);margin-top:0.2rem;"><span style="font-weight:700;color:var(--dm-text);">Status:</span> ' + sccEsc(q.status) + '</div>' : '')
+        + '</div>'
+      + '</div>'
+      + (q.hook ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Hook</div><div class="scc-ql-section-body">' + sccEsc(q.hook) + '</div></div>' : '')
+      + (beatsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Beats</div>' + beatsHtml + '</div>' : '')
+      + (q.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(q.dm_notes) + '</div></div>' : '');
   }
   content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
 }
