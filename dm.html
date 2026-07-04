@@ -5311,8 +5311,45 @@ function showDMToast(msg, type) {
 .scc-live-condition-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .scc-live-condition-add { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-text-muted); cursor: pointer; padding: 0.1rem 0.4rem; border: 1px dashed var(--scc-border-mid); border-radius: 4px; background: none; }
 .scc-live-condition-add:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
-.scc-live-cond-tag { padding: 0.1rem 0.4rem; border-radius: 8px; font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; background: rgba(192,132,252,0.1); border: 1px solid rgba(192,132,252,0.25); color: #c084fc; cursor: pointer; }
-.scc-live-cond-tag:hover { background: rgba(192,132,252,0.2); }
+.scc-live-cond-tag {
+  position: relative;
+  padding: 0.1rem 0.5rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: var(--cond-bg, rgba(192,132,252,0.1));
+  border: 1px solid var(--cond-border, rgba(192,132,252,0.25));
+  color: var(--cond-text, #c084fc);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.scc-live-cond-tag:hover { filter: brightness(1.2); }
+/* Condition tooltip */
+.scc-live-cond-tag::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: #0b0e16;
+  border: 1px solid var(--dm-gold);
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--dm-text);
+  line-height: 1.45;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1000;
+  white-space: normal;
+  text-align: left;
+}
+.scc-live-cond-tag:hover::before { opacity: 1; }
 /* Inspiration */
 .scc-live-inspiration-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .scc-live-inspiration-token {
@@ -9113,10 +9150,36 @@ function sccLiveRenderConditions() {
   var el = document.getElementById('scc-live-conditions');
   if (!el) return;
   if (!SCC_PLAYERS.length) { el.innerHTML = ''; return; }
+  var COND_DATA = {
+    'Blinded':       { bg:'rgba(100,100,100,0.2)',  border:'rgba(150,150,150,0.4)',  text:'#a0a0a0', tip:'Can\'t see. Auto-fail sight checks. Attack rolls against: advantage. Own attacks: disadvantage.' },
+    'Charmed':       { bg:'rgba(236,72,153,0.15)',  border:'rgba(236,72,153,0.35)',  text:'#f472b6', tip:'Can\'t attack charmer. Charmer has advantage on social checks against this creature.' },
+    'Deafened':      { bg:'rgba(120,113,108,0.2)',  border:'rgba(120,113,108,0.4)',  text:'#a8a29e', tip:'Can\'t hear. Auto-fail hearing checks.' },
+    'Exhaustion':    { bg:'rgba(251,146,60,0.15)',  border:'rgba(251,146,60,0.35)',  text:'#fb923c', tip:'Level 1-5 debuffs stack. Level 6: death. Check level for current penalties.' },
+    'Frightened':    { bg:'rgba(239,68,68,0.15)',   border:'rgba(239,68,68,0.35)',   text:'#f87171', tip:'Disadvantage on checks/attacks while source is in sight. Can\'t move closer to source.' },
+    'Grappled':      { bg:'rgba(180,83,9,0.2)',     border:'rgba(180,83,9,0.4)',     text:'#d97706', tip:'Speed 0. Ends if grappler is incapacitated or creature is moved out of reach.' },
+    'Incapacitated': { bg:'rgba(239,68,68,0.2)',    border:'rgba(239,68,68,0.45)',   text:'#ef4444', tip:'Can\'t take actions or reactions.' },
+    'Invisible':     { bg:'rgba(99,102,241,0.15)',  border:'rgba(99,102,241,0.35)',  text:'#818cf8', tip:'Can\'t be seen without magic. Attacks against: disadvantage. Own attacks: advantage.' },
+    'Paralyzed':     { bg:'rgba(239,68,68,0.25)',   border:'rgba(239,68,68,0.5)',    text:'#dc2626', tip:'Incapacitated. Auto-fail STR/DEX saves. Attacks against: advantage + auto-crit if within 5 ft.' },
+    'Petrified':     { bg:'rgba(120,113,108,0.25)', border:'rgba(120,113,108,0.5)', text:'#78716c', tip:'Transformed to stone. Incapacitated, can\'t move/speak. Resistance to all damage. Immune to poison/disease.' },
+    'Poisoned':      { bg:'rgba(132,204,22,0.15)',  border:'rgba(132,204,22,0.35)',  text:'#a3e635', tip:'Disadvantage on attack rolls and ability checks.' },
+    'Prone':         { bg:'rgba(180,83,9,0.15)',    border:'rgba(180,83,9,0.35)',    text:'#b45309', tip:'Disadvantage on attacks. Attacks against: advantage if within 5 ft, otherwise disadvantage. Half speed to stand.' },
+    'Restrained':    { bg:'rgba(202,138,4,0.15)',   border:'rgba(202,138,4,0.35)',   text:'#ca8a04', tip:'Speed 0. Attacks against: advantage. Own attacks: disadvantage. Disadvantage on DEX saves.' },
+    'Stunned':       { bg:'rgba(239,68,68,0.2)',    border:'rgba(239,68,68,0.4)',    text:'#f87171', tip:'Incapacitated. Can\'t move. Auto-fail STR/DEX saves. Attacks against: advantage.' },
+    'Unconscious':   { bg:'rgba(30,27,75,0.4)',     border:'rgba(99,102,241,0.3)',   text:'#6366f1', tip:'Incapacitated, can\'t move/speak. Drops items, falls prone. Auto-fail STR/DEX saves. Attacks against: advantage + auto-crit if within 5 ft.' }
+  };
   el.innerHTML = SCC_PLAYERS.map(function(p) {
     var conds = SCC_LIVE_CONDITIONS[p.id] || [];
     var chips = conds.map(function(c) {
-      return '<span class="scc-live-cond-tag" data-player="' + sccEsc(p.id) + '" data-cond="' + sccEsc(c) + '" onclick="sccLiveRemoveCondition(this.dataset.player,this.dataset.cond)" title="Click to remove">' + sccEsc(c) + '</span>';
+      var d = COND_DATA[c] || { bg:'rgba(192,132,252,0.1)', border:'rgba(192,132,252,0.25)', text:'#c084fc', tip:c };
+      var tipText = d.tip + ' \u2022 Click to remove';
+      return '<span class="scc-live-cond-tag"'
+        + ' style="--cond-bg:' + d.bg + ';--cond-border:' + d.border + ';--cond-text:' + d.text + '"'
+        + ' data-player="' + sccEsc(p.id) + '"'
+        + ' data-cond="' + sccEsc(c) + '"'
+        + ' data-tip="' + sccEsc(tipText) + '"'
+        + ' onclick="sccLiveRemoveCondition(this.dataset.player,this.dataset.cond)">'
+        + sccEsc(c)
+        + '</span>';
     }).join('');
     return '<div class="scc-live-condition-player">'
       + '<div class="scc-live-condition-name">' + sccEsc(p.name || '') + '</div>'
