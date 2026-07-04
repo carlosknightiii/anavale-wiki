@@ -576,6 +576,7 @@
   margin-bottom: 0;
 }
 .city-pop-note-wrap {
+  width: 100%;
   background: var(--dm-surface-high);
   border: 1px solid var(--scc-border);
   border-top: none;
@@ -1313,11 +1314,13 @@
               <div class="repeating-group">
                 <div class="repeating-group-title">
                   <span>Species Breakdown</span>
-                  <div class="city-pop-pie-wrap">
-                    <canvas id="city-pop-pie" width="80" height="80"></canvas>
-                    <div id="city-pop-pie-legend"></div>
+                  <div style="display:flex;align-items:center;gap:0.75rem;margin-left:auto;">
+                    <div class="city-pop-pie-wrap">
+                      <canvas id="city-pop-pie" width="80" height="80"></canvas>
+                      <div id="city-pop-pie-legend"></div>
+                    </div>
+                    <button class="btn-add" onclick="addPopBreakdownRow()">+ Add Species</button>
                   </div>
-                  <button class="btn-add" onclick="addPopBreakdownRow()">+ Add Species</button>
                 </div>
                 <div id="city-pop-breakdown-list"></div>
                 <div id="city-pop-breakdown-empty" class="repeating-empty">No species breakdown added yet.</div>
