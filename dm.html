@@ -612,6 +612,14 @@
   width: 100%;
   min-width: 0;
 }
+.city-pop-species {
+  color: var(--dm-text) !important;
+  background: var(--dm-surface-high) !important;
+}
+.city-pop-species option {
+  color: var(--dm-text);
+  background: var(--dm-surface);
+}
 .city-pop-pct-input {
   width: 48px;
   text-align: center;
@@ -7200,7 +7208,7 @@ function addStructureCategory(opts) {
       + '<span class="city-struct-cat-label" id="' + catId + '-label">' + (opts.category ? opts.category.toUpperCase() : 'NEW CATEGORY') + '</span>'
       + '<div class="city-struct-cat-controls" onclick="event.stopPropagation()">'
         + '<input class="field-input city-struct-cat-name" type="text" placeholder="Category name&#8230;" value="' + (opts.category || '') + '" oninput="structUpdateCatLabel(\'' + catId + '\',this.value)">'
-        + '<button class="btn-add" onclick="addStructureEntry(\'' + catId + '\')">+ Entry</button>'
+        + '<button class="btn-add" onclick="addStructureEntry(\'' + catId + '\',{},true)">+ Entry</button>'
         + (isNew ? '<button class="btn-secondary" onclick="removeRepeat(\'' + catId + '\')">Cancel</button>' : '')
         + '<button class="btn-remove" onclick="removeRepeat(\'' + catId + '\')" title="Remove">&#x2715;</button>'
       + '</div>'
@@ -7226,14 +7234,16 @@ function structUpdateCatLabel(catId, val) {
   if (label) label.textContent = val.toUpperCase() || 'NEW CATEGORY';
 }
 var _structEntN = 0;
-function addStructureEntry(catId, opts) {
+function addStructureEntry(catId, opts, fromUser) {
   opts = opts || {};
-  // Expand accordion if collapsed
-  var entries = document.querySelector('.city-struct-entries-' + catId);
-  var chev    = document.getElementById(catId + '-chev');
-  if (entries && entries.style.display === 'none') {
-    entries.style.display = '';
-    if (chev) chev.innerHTML = '&#9660;';
+  // Only expand accordion if triggered by user click, not restore
+  if (fromUser) {
+    var entries = document.querySelector('.city-struct-entries-' + catId);
+    var chev    = document.getElementById(catId + '-chev');
+    if (entries && entries.style.display === 'none') {
+      entries.style.display = '';
+      if (chev) chev.innerHTML = '&#9660;';
+    }
   }
   _structEntN++;
   var entId  = 'se-' + _structEntN;
@@ -8862,6 +8872,7 @@ function cmPopulateForm(entry, type) {
         var bdEmpty = document.getElementById('city-pop-breakdown-empty');
         if (bdEmpty) bdEmpty.style.display = '';
       }
+      if (typeof popUpdatePieChart === 'function') popUpdatePieChart();
     }
     // Structures
     var stList = document.getElementById('city-structures-list');
@@ -8870,6 +8881,7 @@ function cmPopulateForm(entry, type) {
       (entry.structures || []).forEach(function(cat) { addStructureCategory(cat); });
       var stEmpty = document.getElementById('city-structures-empty');
       if (stEmpty) stEmpty.style.display = (entry.structures || []).length ? 'none' : '';
+      if (typeof sccBuildStructureCatFilter === 'function') sccBuildStructureCatFilter();
     }
     resetImagePreview('city');
     showExistingImage('city-img-preview', 'city-img-path');
