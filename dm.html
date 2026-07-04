@@ -1312,14 +1312,6 @@
               <span class="field-help">The feeling of this place in a few words — used for DM atmosphere notes</span>
               <input class="field-input" type="text" id="city-tone" placeholder="e.g. Cheerful and chaotic. Market energy. Bumble Frogs everywhere.">
             </div>
-            <div class="repeating-group">
-              <div class="repeating-group-title">
-                <span>Landmarks</span>
-                <button class="btn-add" onclick="addLandmark()">+ Add Landmark</button>
-              </div>
-              <div id="city-landmarks-list"></div>
-              <div id="city-landmarks-empty" class="repeating-empty">No landmarks added yet.</div>
-            </div>
             <!-- POPULATION -->
             <div class="form-section">
               <div class="form-section-header">Population</div>
@@ -7359,99 +7351,6 @@ function structSortEntries(catId) {
   });
   entries.forEach(function(e) { container.appendChild(e); });
 }
-/* ── REPEATING GROUP — LANDMARKS ─────────────── */
-var _landmarkN = 0;
-function addLandmark(opts) {
-  opts = opts || {};
-  _landmarkN++;
-  var id  = 'lm-' + _landmarkN;
-  var div = document.createElement('div');
-  div.className = 'repeating-item';
-  div.id = id;
-  div.innerHTML =
-    '<button class="btn-remove" onclick="removeRepeat(\'' + id + '\')" title="Remove">&#x2715;</button>' +
-    '<input type="hidden" id="' + id + '-entry-id" value="">' +
-    '<input type="hidden" id="' + id + '-entry-type" value="">' +
-    '<div class="field-group" style="margin-bottom:0.5rem">' +
-      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Link to existing entry <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>' +
-      '<div style="position:relative">' +
-        '<input class="field-input" type="text" id="' + id + '-link-search" placeholder="Search cities, POIs…" autocomplete="off" oninput="lmLinkSearch(\'' + id + '\', this.value)">' +
-        '<div id="' + id + '-link-results" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--surface-2);border:1px solid var(--border-mid);border-radius:6px;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.4)"></div>' +
-      '</div>' +
-      '<div id="' + id + '-link-tag" style="display:none;margin-top:0.35rem;font-family:var(--font-body);font-size:0.78rem;color:var(--gold)">&#128279; Linked: <span id="' + id + '-link-label"></span> <button onclick="lmLinkClear(\'' + id + '\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">&#x2715; Clear</button></div>' +
-    '</div>' +
-    '<div class="field-group" style="margin-bottom:0.5rem">' +
-      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Landmark Name</label>' +
-      '<input class="field-input" type="text" id="' + id + '-name" placeholder="e.g. The Mirrenflow Bridge">' +
-    '</div>' +
-    '<div class="field-group" style="margin-bottom:0">' +
-      '<label class="field-label" style="font-size:var(--text-sm);font-weight:bold">Description <span id="' + id + '-desc-note" style="font-weight:400;color:var(--text-muted);display:none">(pulled from linked entry)</span></label>' +
-      '<textarea class="field-textarea" id="' + id + '-desc" placeholder="Brief description…" style="min-height:60px"></textarea>' +
-    '</div>';
-  var list = document.getElementById('city-landmarks-list');
-  list.appendChild(div);
-  document.getElementById('city-landmarks-empty').style.display = 'none';
-  if (opts.entry_id) lmLinkSet(id, opts.entry_id, opts.entry_type || 'poi', opts.link_label || opts.entry_id, opts.name, opts.description);
-}
-function lmLinkSearch(lmId, query) {
-  var results = document.getElementById(lmId + '-link-results');
-  if (!results) return;
-  query = query.toLowerCase().trim();
-  if (!query) { results.style.display = 'none'; return; }
-  var pool = []
-    .concat((typeof CITIES !== 'undefined' ? CITIES : []).map(function(x){ return { id: x.id, type: 'city', label: x.name + ' (City)' }; }))
-    .concat((typeof POIS   !== 'undefined' ? POIS   : []).map(function(x){ return { id: x.id, type: 'poi',  label: x.name + ' (POI)'  }; }));
-  var matches = pool.filter(function(x){ return x.label.toLowerCase().indexOf(query) >= 0; }).slice(0, 8);
-  if (!matches.length) { results.style.display = 'none'; return; }
-  results.innerHTML = matches.map(function(m) {
-    return '<div style="padding:0.4rem 0.75rem;cursor:pointer;font-family:var(--font-body);font-size:0.82rem;color:var(--text);border-bottom:1px solid var(--border)" onmousedown="lmLinkSelect(\'' + lmId + '\',\'' + m.id + '\',\'' + m.type + '\',\'' + m.label.replace(/'/g,'\\\'') + '\')">' + m.label + '</div>';
-  }).join('');
-  results.style.display = 'block';
-}
-function lmLinkSelect(lmId, entryId, entryType, label) {
-  var pool = []
-    .concat((typeof CITIES !== 'undefined' ? CITIES : []))
-    .concat((typeof POIS   !== 'undefined' ? POIS   : []));
-  var entry = pool.find(function(x){ return x.id === entryId; });
-  lmLinkSet(lmId, entryId, entryType, label, entry ? entry.name : '', entry ? (entry.summary || entry.description || '') : '');
-}
-function lmLinkSet(lmId, entryId, entryType, label, name, description) {
-  var eid  = document.getElementById(lmId + '-entry-id');
-  var etype = document.getElementById(lmId + '-entry-type');
-  var tag  = document.getElementById(lmId + '-link-tag');
-  var lbl  = document.getElementById(lmId + '-link-label');
-  var search = document.getElementById(lmId + '-link-search');
-  var results = document.getElementById(lmId + '-link-results');
-  var nameEl = document.getElementById(lmId + '-name');
-  var descEl = document.getElementById(lmId + '-desc');
-  var descNote = document.getElementById(lmId + '-desc-note');
-  if (eid)   eid.value   = entryId;
-  if (etype) etype.value = entryType;
-  if (tag)   tag.style.display  = '';
-  if (lbl)   lbl.textContent    = label;
-  if (search) { search.value = ''; search.style.display = 'none'; }
-  if (results) results.style.display = 'none';
-  if (nameEl && name) { nameEl.value = name; nameEl.readOnly = true; nameEl.style.opacity = '0.6'; }
-  if (descEl && description) { descEl.value = description; descEl.readOnly = true; descEl.style.opacity = '0.6'; }
-  if (descNote) descNote.style.display = '';
-}
-function lmLinkClear(lmId) {
-  var eid   = document.getElementById(lmId + '-entry-id');
-  var etype = document.getElementById(lmId + '-entry-type');
-  var tag   = document.getElementById(lmId + '-link-tag');
-  var search = document.getElementById(lmId + '-link-search');
-  var nameEl = document.getElementById(lmId + '-name');
-  var descEl = document.getElementById(lmId + '-desc');
-  var descNote = document.getElementById(lmId + '-desc-note');
-  if (eid)   eid.value   = '';
-  if (etype) etype.value = '';
-  if (tag)   tag.style.display = 'none';
-  if (search) { search.value = ''; search.style.display = ''; }
-  if (nameEl) { nameEl.value = ''; nameEl.readOnly = false; nameEl.style.opacity = ''; }
-  if (descEl) { descEl.value = ''; descEl.readOnly = false; descEl.style.opacity = ''; }
-  if (descNote) descNote.style.display = 'none';
-}
-
 /* ── REPEATING GROUP — WORLD ASSOCIATIONS ────── */
 var _assocN = 0;
 var ASSOC_COLLECTIONS = [
@@ -7653,22 +7552,6 @@ function generateCity() {
   var summary = val('city-summary');
   if (!summary)          { alert('Summary is required (✦).'); return; }
 
-  // Collect landmarks
-  var landmarks = [];
-  document.querySelectorAll('#city-landmarks-list .repeating-item').forEach(function(item) {
-    var itemId   = item.id;
-    var eidEl    = document.getElementById(itemId + '-entry-id');
-    var etypeEl  = document.getElementById(itemId + '-entry-type');
-    var lname    = (document.getElementById(itemId + '-name') || {}).value || '';
-    var ldesc    = (document.getElementById(itemId + '-desc') || {}).value || '';
-    if (lname.trim()) {
-      var lm = { name: lname.trim(), description: ldesc.trim() };
-      if (eidEl && eidEl.value)   lm.entry_id   = eidEl.value;
-      if (etypeEl && etypeEl.value) lm.entry_type = etypeEl.value;
-      landmarks.push(lm);
-    }
-  });
-
   var entryId = val('city-id') || slugify(name);
   var entry = {
     id:                   entryId,
@@ -7679,7 +7562,6 @@ function generateCity() {
     type:                 type,
     summary:              summary,
     description:          orNull(val('city-description')),
-    landmarks:            landmarks,
     strategic_importance: orNull(val('city-strategic')),
     color_health:         orNull(val('city-color-health')),
     formery_present:      boolRadio('city-formery'),
@@ -8127,12 +8009,6 @@ function clearForm(formType) {
   form.querySelectorAll('input[type=radio]').forEach(function(el) { el.checked = false; });
   form.querySelectorAll('input[type=radio][checked]').forEach(function(el) { el.checked = true; });
   // Clear repeating items
-  var lmList = document.getElementById('city-landmarks-list');
-  if (lmList) {
-    lmList.innerHTML = '';
-    var lmEmpty = document.getElementById('city-landmarks-empty');
-    if (lmEmpty) lmEmpty.style.display = '';
-  }
   var fList = document.getElementById('org-facts-list');
   if (fList) {
     fList.innerHTML = '';
@@ -8871,23 +8747,6 @@ function cmPopulateForm(entry, type) {
     setRadioVal('city-formery', entry.formery_present ? 'true' : 'false');
     setRadioVal('city-vareth',  entry.vareth_presence  ? 'true' : 'false');
     setRadioVal('city-pf',      entry.player_facing);
-    // Landmarks
-    var lmList  = document.getElementById('city-landmarks-list');
-    var lmEmpty = document.getElementById('city-landmarks-empty');
-    if (lmList) lmList.innerHTML = '';
-    _landmarkN = 0;
-    var lms = entry.landmarks || [];
-    if (lmEmpty) lmEmpty.style.display = lms.length ? 'none' : '';
-    lms.forEach(function(lm) {
-      if (lm.entry_id) {
-        addLandmark({ entry_id: lm.entry_id, entry_type: lm.entry_type || 'poi', link_label: lm.name, name: lm.name, description: lm.description });
-      } else {
-        addLandmark();
-        sv('lm-' + _landmarkN + '-name', lm.name);
-        var descEl = document.getElementById('lm-' + _landmarkN + '-desc');
-        if (descEl) descEl.value = lm.description || '';
-      }
-    });
     // Population data
     var pd = entry.population_data || {};
     var popPermEl  = document.getElementById('city-pop-permanent');
