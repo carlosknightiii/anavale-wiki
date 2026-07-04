@@ -600,7 +600,9 @@
   border: none;
   border-radius: 0 0 var(--dm-radius-sm) var(--dm-radius-sm);
   background: transparent;
+  color: var(--dm-text);
   font-size: 0.78rem;
+  font-family: var(--font-body);
   padding: 0.3rem 0.6rem;
   resize: vertical;
   min-height: 40px;
@@ -6934,6 +6936,9 @@ function addPopBreakdownRow(opts) {
     sccFetch('species', '&order=sort_order.asc').then(function(rows) {
       window.SPECIES = Array.isArray(rows) ? rows : [];
       addPopBreakdownRow(opts);
+      setTimeout(function() {
+        if (typeof popUpdatePieChart === 'function') popUpdatePieChart();
+      }, 100);
     });
     return;
   }
@@ -8872,7 +8877,7 @@ function cmPopulateForm(entry, type) {
         var bdEmpty = document.getElementById('city-pop-breakdown-empty');
         if (bdEmpty) bdEmpty.style.display = '';
       }
-      if (typeof popUpdatePieChart === 'function') popUpdatePieChart();
+      // popUpdatePieChart called after species fetch resolves in addPopBreakdownRow
     }
     // Structures
     var stList = document.getElementById('city-structures-list');
