@@ -2894,10 +2894,28 @@
         </div>
         <!-- ══ PANEL: QUESTS ══════════════════ -->
         <div class="scc-panel" id="scc-panel-quests">
-          <div class="scc-panel-inner">
-            <div class="scc-section-title">Active Quests This Session</div>
-            <div id="scc-quest-cards" class="scc-quest-list">
-              <div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>
+          <div class="scc-panel-inner scc-quest-panel-inner">
+            <div class="scc-quest-two-col">
+              <!-- LEFT: quest cards -->
+              <div class="scc-quest-col-main">
+                <div class="scc-section-title">Active Quests This Session</div>
+                <div id="scc-quest-cards" class="scc-quest-list">
+                  <div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>
+                </div>
+              </div>
+              <!-- RIGHT: DM reference sidebar -->
+              <div class="scc-quest-col-sidebar">
+                <div class="scc-quest-sidebar-section">
+                  <div class="scc-section-title" style="font-size:0.78rem;">Current Beat</div>
+                  <div id="scc-quest-beat-ref" class="scc-quest-beat-ref">
+                    <div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">Mark a beat In Progress to see its details here.</div>
+                  </div>
+                </div>
+                <div class="scc-quest-sidebar-section" style="margin-top:1.25rem;">
+                  <div class="scc-section-title" style="font-size:0.78rem;">Session NPCs</div>
+                  <div id="scc-quest-npc-ref" class="scc-live-npc-chips"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -5278,6 +5296,83 @@ function showDMToast(msg, type) {
 }
 .scc-beat-item--completed { border-color: rgba(34,197,94,0.2); background: var(--scc-beat-done-bg); }
 .scc-beat-item--in_progress { border-color: rgba(240,180,41,0.3); background: var(--scc-beat-prog-bg); }
+/* Active beat gold highlight */
+.scc-beat-item--active {
+  border-left: 3px solid var(--dm-gold) !important;
+  background: linear-gradient(90deg, rgba(240,180,41,0.08) 0%, var(--scc-beat-prog-bg) 40%) !important;
+  animation: scc-beat-pulse 3s ease-in-out infinite;
+}
+@keyframes scc-beat-pulse {
+  0%, 100% { border-left-color: var(--dm-gold); }
+  50% { border-left-color: rgba(240,180,41,0.4); }
+}
+/* Beat action row */
+.scc-beat-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+/* Jump to Live Session button */
+.scc-beat-live-btn {
+  padding: 0.2rem 0.6rem;
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-beat-live-btn:hover { background: rgba(240,180,41,0.2); }
+/* Two-column quest layout */
+.scc-quest-panel-inner { max-width: none !important; padding: 1.5rem 2rem 3rem; }
+.scc-quest-two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+.scc-quest-col-main { min-width: 0; }
+.scc-quest-col-sidebar {
+  position: sticky;
+  top: 1rem;
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius);
+  padding: 1rem;
+  min-width: 0;
+}
+.scc-quest-sidebar-section + .scc-quest-sidebar-section { border-top: 1px solid var(--scc-border); padding-top: 1rem; }
+/* Sidebar beat reference */
+.scc-quest-beat-ref { margin-top: 0.5rem; }
+.scc-quest-beat-ref-title {
+  font-family: var(--font-headers);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--dm-gold);
+  margin-bottom: 0.4rem;
+}
+.scc-quest-beat-ref-desc {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--dm-text);
+  line-height: 1.55;
+  margin-bottom: 0.5rem;
+}
+.scc-quest-beat-ref-xp {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--dm-green);
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 8px;
+  padding: 0.15rem 0.5rem;
+  display: inline-block;
+}
+@media (max-width: 900px) {
+  .scc-quest-two-col { grid-template-columns: 1fr; }
+  .scc-quest-col-sidebar { position: static; }
+}
 .scc-beat-num {
   font-family: var(--font-headers);
   color: var(--dm-gold);
@@ -10974,6 +11069,7 @@ function sccRenderQuestPanel() {
   var selected = SCC_SELECTED.quest || [];
   if (!selected.length) {
     el.innerHTML = '<div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>';
+    sccUpdateQuestSidebar(null, null);
     return;
   }
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
@@ -10993,15 +11089,19 @@ function sccRenderQuestPanel() {
     }).join('');
     var beatsHtml = beats.map(function(b) {
       var st = prog[b.order] || 'not_started';
-      var stLabel = st === 'completed' ? '✓ Done' : st === 'in_progress' ? '▶ In Progress' : 'To Do';
-      return '<div class="scc-beat-item scc-beat-item--' + st + '">'
+      var stLabel = st === 'completed' ? '&#10003; Done' : st === 'in_progress' ? '&#9654; In Progress' : 'To Do';
+      var isActive = st === 'in_progress';
+      return '<div class="scc-beat-item scc-beat-item--' + st + (isActive ? ' scc-beat-item--active' : '') + '">'
         + '<div class="scc-beat-num">' + b.order + '</div>'
         + '<div class="scc-beat-content">'
           + (b.title ? '<div class="scc-beat-title">' + sccEsc(b.title) + '</div>' : '')
           + '<div class="scc-beat-desc">' + sccEsc(b.description || '') + '</div>'
           + '<div class="scc-beat-meta">'
             + (b.xp ? '<span class="scc-beat-xp">+' + b.xp + ' XP</span>' : '')
-            + '<button class="scc-beat-status-btn" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')">' + stLabel + '</button>'
+            + '<div class="scc-beat-actions">'
+              + '<button class="scc-beat-status-btn" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')">' + stLabel + '</button>'
+              + (isActive ? '<button class="scc-beat-live-btn" onclick="sccSwitchPanel(\'live\')" title="Go to Live Session">&#9654; Live Session</button>' : '')
+            + '</div>'
           + '</div>'
         + '</div>'
       + '</div>';
@@ -11023,6 +11123,41 @@ function sccRenderQuestPanel() {
       + '</div>'
     + '</div>';
   }).join('');
+  // Update sidebar with current in-progress beat
+  var allQuests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var activeBeat = null, activeQuest = null;
+  selected.forEach(function(sel) {
+    var q = allQuests.find(function(x) { return x.id === sel.id; });
+    if (!q) return;
+    var prog = SCC_PROGRESS[q.id] || {};
+    (q.beats || []).forEach(function(b) {
+      if ((prog[b.order] || 'not_started') === 'in_progress') { activeBeat = b; activeQuest = q; }
+    });
+  });
+  sccUpdateQuestSidebar(activeQuest, activeBeat);
+}
+function sccUpdateQuestSidebar(quest, beat) {
+  var refEl = document.getElementById('scc-quest-beat-ref');
+  var npcEl = document.getElementById('scc-quest-npc-ref');
+  if (refEl) {
+    if (!beat) {
+      refEl.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">Mark a beat In Progress to see its details here.</div>';
+    } else {
+      refEl.innerHTML = '<div class="scc-quest-beat-ref-title">' + sccEsc(beat.title || 'Beat ' + beat.order) + '</div>'
+        + (beat.description ? '<div class="scc-quest-beat-ref-desc">' + sccEsc(beat.description) + '</div>' : '')
+        + (beat.xp ? '<div class="scc-quest-beat-ref-xp">+' + beat.xp + ' XP on completion</div>' : '');
+    }
+  }
+  if (npcEl) {
+    var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+    var selected = SCC_SELECTED.npc || [];
+    if (!selected.length) { npcEl.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);font-style:italic;">No NPCs assigned. Go to Setup.</div>'; return; }
+    npcEl.innerHTML = selected.map(function(sel) {
+      var c = chars.find(function(x) { return x.id === sel.id; });
+      var label = c ? c.name : sel.id;
+      return '<button class="scc-live-npc-chip" onclick="sccOpenLookup(\'character\',\'' + sccEsc(sel.id) + '\')">' + sccEsc(label) + '</button>';
+    }).join('');
+  }
 }
 
 function sccCycleBeatStatus(questId, beatOrder) {
