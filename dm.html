@@ -2941,7 +2941,10 @@
               <div id="scc-combatant-staging" class="scc-combatant-staging">
                 <div class="scc-empty-state">Add creatures and players above to build the encounter.</div>
               </div>
-              <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none">⚔️ Start Combat — Roll Initiative</button>
+              <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button class="scc-btn-secondary" id="scc-add-all-players-btn" onclick="sccAddAllPlayers()" style="display:none;">+ Add All Players</button>
+                <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none">&#9876; Start Combat &#8212; Roll Initiative</button>
+              </div>
             </div>
             <!-- Initiative tracker (hidden until combat starts) -->
             <div class="scc-initiative-tracker" id="scc-initiative-tracker" style="display:none">
@@ -5586,12 +5589,13 @@ function showDMToast(msg, type) {
   font-family: var(--font-sans);
   font-size: 0.62rem;
   font-weight: 700;
-  background: rgba(192,132,252,0.1);
-  border: 1px solid rgba(192,132,252,0.25);
-  color: #c084fc;
+  background: var(--scc-cond-bg, rgba(192,132,252,0.1));
+  border: 1px solid var(--scc-cond-border, rgba(192,132,252,0.25));
+  color: var(--scc-cond-text, #c084fc);
   cursor: pointer;
+  position: relative;
 }
-.scc-condition-tag:hover { background: rgba(192,132,252,0.2); }
+.scc-condition-tag:hover { filter: brightness(1.2); }
 .scc-add-condition-btn {
   padding: 0.1rem 0.4rem;
   border-radius: 8px;
@@ -11208,12 +11212,21 @@ function sccAddToCombatStaging(id, name) {
   sccUpdateDifficulty();
 }
 
+function sccAddAllPlayers() {
+  SCC_PLAYERS.forEach(function(p) {
+    var already = SCC_COMBATANTS.some(function(c) { return c.id === p.id; });
+    if (!already) sccAddToCombatStaging(p.id, p.name);
+  });
+}
+
 function sccRenderStagingList() {
   var el = document.getElementById('scc-combatant-staging');
   if (!el) return;
   if (!SCC_COMBATANTS.length) {
     el.innerHTML = '<div class="scc-empty-state">Add creatures and players above to build the encounter.</div>';
     document.getElementById('scc-start-combat-btn').style.display = 'none';
+    var addAllBtn = document.getElementById('scc-add-all-players-btn');
+    if (addAllBtn) addAllBtn.style.display = 'none';
     return;
   }
   el.innerHTML = SCC_COMBATANTS.map(function(c, idx) {
@@ -11229,7 +11242,7 @@ function sccRenderStagingList() {
       + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
       + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
       + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
-      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">🎒 Loot</button>' : '')
+      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">&#127890; Loot</button>' : '')
       + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
       + '</div>'
       + (!c.isPC
@@ -11252,6 +11265,8 @@ function sccRenderStagingList() {
         : '');
   }).join('');
   document.getElementById('scc-start-combat-btn').style.display = '';
+  var addAllBtn = document.getElementById('scc-add-all-players-btn');
+  if (addAllBtn) addAllBtn.style.display = '';
 }
 
 function sccToggleLoot(idx) {
@@ -11376,11 +11391,29 @@ function sccRenderInitiativeList() {
       + (isActive  ? ' active-turn' : '')
       + (c.isPC    ? ' is-pc'       : ' is-enemy')
       + (isDowned  ? ' is-downed'   : '');
+    var COND_COLORS = {
+      'Blinded':       { bg:'rgba(148,163,184,0.15)', border:'rgba(148,163,184,0.3)',  text:'#94a3b8' },
+      'Charmed':       { bg:'rgba(244,114,182,0.15)', border:'rgba(244,114,182,0.3)',  text:'#f472b6' },
+      'Deafened':      { bg:'rgba(148,163,184,0.15)', border:'rgba(148,163,184,0.3)',  text:'#94a3b8' },
+      'Exhaustion':    { bg:'rgba(251,146,60,0.15)',  border:'rgba(251,146,60,0.3)',   text:'#fb923c' },
+      'Frightened':    { bg:'rgba(250,204,21,0.15)',  border:'rgba(250,204,21,0.3)',   text:'#facc15' },
+      'Grappled':      { bg:'rgba(167,139,250,0.15)', border:'rgba(167,139,250,0.3)',  text:'#a78bfa' },
+      'Incapacitated': { bg:'rgba(248,113,113,0.15)', border:'rgba(248,113,113,0.3)',  text:'#f87171' },
+      'Invisible':     { bg:'rgba(226,232,240,0.1)',  border:'rgba(226,232,240,0.25)', text:'#e2e8f0' },
+      'Paralyzed':     { bg:'rgba(248,113,113,0.2)',  border:'rgba(248,113,113,0.4)',  text:'#f87171' },
+      'Petrified':     { bg:'rgba(148,163,184,0.15)', border:'rgba(148,163,184,0.3)',  text:'#94a3b8' },
+      'Poisoned':      { bg:'rgba(74,222,128,0.12)',  border:'rgba(74,222,128,0.3)',   text:'#4ade80' },
+      'Prone':         { bg:'rgba(251,146,60,0.12)',  border:'rgba(251,146,60,0.25)',  text:'#fb923c' },
+      'Restrained':    { bg:'rgba(202,138,4,0.15)',   border:'rgba(202,138,4,0.3)',    text:'#ca8a04' },
+      'Stunned':       { bg:'rgba(248,113,113,0.15)', border:'rgba(248,113,113,0.3)',  text:'#f87171' },
+      'Unconscious':   { bg:'rgba(99,102,241,0.15)',  border:'rgba(99,102,241,0.3)',   text:'#6366f1' }
+    };
     var condTags = (c.conditions || []).map(function(cond) {
-      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove">' + sccEsc(cond) + '</span>';
+      var d = COND_COLORS[cond] || { bg:'rgba(192,132,252,0.1)', border:'rgba(192,132,252,0.25)', text:'#c084fc' };
+      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove" style="--scc-cond-bg:' + d.bg + ';--scc-cond-border:' + d.border + ';--scc-cond-text:' + d.text + ';">' + sccEsc(cond) + '</span>';
     }).join('');
     var lootBtn = (!c.isPC && isDowned && c.loot && (c.loot.items.length || c.loot.gp || c.loot.sp || c.loot.cp))
-      ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">&#127820; Award Loot</button>' : '';
+      ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">&#127890; Award Loot</button>' : '';
     var downedBadge = isDowned ? '<span class="scc-downed-badge">&#9760; Downed</span>' : '';
 
     return '<div class="' + rowCls + '">'
@@ -11509,10 +11542,15 @@ function sccOpenLootAward(idx) {
   }).join('');
 
   var itemRows = c.loot.items.map(function(item, iIdx) {
-    return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">'
-      + '<span style="flex:1;font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text);">' + sccEsc(item.name) + '</span>'
-      + '<select class="scc-input" id="scc-award-player-' + idx + '-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;">' + players + '</select>'
-      + '<button class="scc-award-btn" onclick="sccAwardItem(' + idx + ',' + iIdx + ')">Award</button>'
+    var awarded = !!item.awarded;
+    var itemDesc = item.summary ? '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);line-height:1.3;margin-top:0.1rem;">' + sccEsc(item.summary) + '</div>' : '';
+    return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;" id="scc-award-row-' + idx + '-' + iIdx + '">'
+      + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + '">' + sccEsc(item.name) + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>' : '') + '</div>'
+        + itemDesc
+      + '</div>'
+      + '<select class="scc-input" id="scc-award-player-' + idx + '-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;"' + (awarded ? ' disabled' : '') + '>' + players + '</select>'
+      + '<button class="scc-award-btn" onclick="sccAwardItem(' + idx + ',' + iIdx + ')" id="scc-award-btn-' + idx + '-' + iIdx + '"' + (awarded ? ' disabled style="opacity:0.4;cursor:default;"' : '') + '>Award</button>'
     + '</div>';
   }).join('');
 
@@ -11535,7 +11573,7 @@ function sccOpenLootAward(idx) {
   var panel = document.createElement('div');
   panel.id = 'scc-loot-award-panel';
   panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.5rem;z-index:9999;min-width:360px;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,0.7);';
-  panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:1rem;color:var(--dm-gold);margin-bottom:1rem;">&#127820; Loot from ' + sccEsc(c.name) + '</div>'
+  panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:1rem;color:var(--dm-gold);margin-bottom:1rem;">&#127890; Loot from ' + sccEsc(c.name) + '</div>'
     + coinLine
     + (itemRows || '<div style="font-family:var(--font-sans);font-size:0.82rem;color:var(--dm-text-muted);font-style:italic;">No items assigned.</div>')
     + '<div style="margin-top:1rem;text-align:right;"><button class="scc-btn-secondary" onclick="document.getElementById(\'scc-loot-award-panel\').remove()">Close</button></div>';
@@ -11556,8 +11594,15 @@ function sccAwardItem(combatantIdx, itemIdx) {
     headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
     body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true })
   }).then(function(r) {
-    if (r.ok) showDMToast(item.name + ' → ' + player.name + ' ✓', 'success');
-    else      showDMToast('Award failed', 'error');
+    if (r.ok) {
+      item.awarded = true;
+      showDMToast(item.name + ' &#8594; ' + player.name + ' &#10003;', 'success');
+      // Refresh the loot panel to show awarded state
+      var panel = document.getElementById('scc-loot-award-panel');
+      if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
+    } else {
+      showDMToast('Award failed', 'error');
+    }
   });
 }
 
