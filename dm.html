@@ -9532,6 +9532,7 @@ var SCC_INITIATIVE = [];
 var SCC_ROUND      = 1;
 var SCC_TURN_IDX   = 0;
 var SCC_IN_COMBAT  = false;
+var SCC_END_COMBAT_ITEMS = [];
 
 // NPC relationship labels stored per session (npc_id → relationship string)
 var SCC_NPC_RELATIONSHIPS = {};
@@ -11683,13 +11684,133 @@ function sccAwardCoinsAll(combatantIdx) {
 }
 
 function sccEndCombat() {
-  if (!confirm('End combat and reset the encounter tracker?')) return;
+  if (!confirm('End combat? Coins will be split automatically among all players.')) return;
+  // ── Collect all loot from defeated enemies ──
+  var totalGP = 0, totalSP = 0, totalCP = 0;
+  var allItems = [];
+  SCC_INITIATIVE.forEach(function(c) {
+    if (c.isPC || !c.loot) return;
+    totalGP += c.loot.gp || 0;
+    totalSP += c.loot.sp || 0;
+    totalCP += c.loot.cp || 0;
+    (c.loot.items || []).forEach(function(item) {
+      allItems.push({ item: item, source: c.name });
+    });
+  });
+  // ── Auto-split coins equally ──
+  var totalAllCP = (totalGP * 100) + (totalSP * 10) + totalCP;
+  var splitCP    = SCC_PLAYERS.length ? Math.floor(totalAllCP / SCC_PLAYERS.length) : 0;
+  var splitGP    = Math.floor(splitCP / 100);
+  var splitSPR   = Math.floor((splitCP % 100) / 10);
+  var splitCPR   = splitCP % 10;
+  var coinPromises = [];
+  if (splitCP > 0) {
+    SCC_PLAYERS.forEach(function(player) {
+      var sheet = SCC_SHEETS[player.id];
+      if (!sheet) return;
+      var newTotal = (sheet.gold_cp || 0) + splitCP;
+      sheet.gold_cp = newTotal;
+      coinPromises.push(
+        sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(player.id), { gold_cp: newTotal })
+      );
+    });
+  }
+  Promise.all(coinPromises).then(function() {
+    // ── Show loot summary popup ──
+    var existing = document.getElementById('scc-end-combat-summary');
+    if (existing) existing.remove();
+    var players = SCC_PLAYERS.map(function(p, i) {
+      return '<option value="' + i + '">' + sccEsc(p.name) + '</option>';
+    }).join('');
+    var coinSummary = '';
+    if (totalGP || totalSP || totalCP) {
+      coinSummary = '<div style="margin-bottom:1rem;padding:0.75rem;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:8px;">'
+        + '<div style="font-family:var(--font-sans);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--dm-text-muted);margin-bottom:0.35rem;">Coins Collected</div>'
+        + '<div style="font-family:var(--font-sans);font-size:0.88rem;color:var(--dm-gold);font-weight:700;">'
+          + (totalGP ? totalGP + ' GP ' : '') + (totalSP ? totalSP + ' SP ' : '') + (totalCP ? totalCP + ' CP' : '')
+        + '</div>'
+        + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);margin-top:0.2rem;">'
+          + 'Split equally: '
+          + (splitGP ? splitGP + ' GP ' : '') + (splitSPR ? splitSPR + ' SP ' : '') + (splitCPR ? splitCPR + ' CP ' : '')
+          + 'each &#10003; Awarded'
+        + '</div>'
+      + '</div>';
+    } else {
+      coinSummary = '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;margin-bottom:0.75rem;">No coins collected.</div>';
+    }
+    var itemRows = allItems.length
+      ? allItems.map(function(entry, iIdx) {
+          var awarded = !!entry.item.awarded;
+          return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;" id="scc-summary-row-' + iIdx + '">'
+            + '<div style="flex:1;min-width:0;">'
+              + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + ';">'
+                + sccEsc(entry.item.name)
+                + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>' : '')
+                + ' <span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);">from ' + sccEsc(entry.source) + '</span>'
+              + '</div>'
+              + (entry.item.summary ? '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);line-height:1.3;">' + sccEsc(entry.item.summary) + '</div>' : '')
+            + '</div>'
+            + '<select class="scc-input" id="scc-summary-player-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;"' + (awarded ? ' disabled' : '') + '>' + players + '</select>'
+            + '<button class="scc-award-btn" onclick="sccSummaryAwardItem(' + iIdx + ')" id="scc-summary-btn-' + iIdx + '"' + (awarded ? ' disabled style="opacity:0.4;cursor:default;"' : '') + '>Award</button>'
+          + '</div>';
+        }).join('')
+      : '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">No items to award.</div>';
+    var panel = document.createElement('div');
+    panel.id = 'scc-end-combat-summary';
+    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.5rem;z-index:9999;min-width:400px;max-width:540px;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.8);';
+    panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:1.1rem;color:var(--dm-gold);margin-bottom:1rem;border-bottom:1px solid var(--scc-border);padding-bottom:0.6rem;">Combat Summary</div>'
+      + coinSummary
+      + (allItems.length ? '<div style="font-family:var(--font-sans);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--dm-text-muted);margin-bottom:0.5rem;">Items to Award</div>' : '')
+      + itemRows
+      + '<div style="margin-top:1rem;text-align:right;border-top:1px solid var(--scc-border);padding-top:0.75rem;">'
+        + '<button class="scc-btn-secondary" onclick="sccCloseCombatSummary()">Close &#10005;</button>'
+      + '</div>';
+    document.body.appendChild(panel);
+  });
+  // ── Reset combat state ──
+  SCC_END_COMBAT_ITEMS = allItems;
   SCC_IN_COMBAT = false; SCC_COMBATANTS = []; SCC_INITIATIVE = [];
   SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_SELECTED.combatant = [];
   document.getElementById('scc-initiative-tracker').style.display = 'none';
   document.getElementById('scc-combatant-staging').style.display  = '';
   document.getElementById('scc-start-combat-btn').style.display   = 'none';
   sccRenderStagingList(); sccUpdateDifficulty();
+}
+function sccSummaryAwardItem(iIdx) {
+  if (!SCC_END_COMBAT_ITEMS || !SCC_END_COMBAT_ITEMS[iIdx]) return;
+  var entry  = SCC_END_COMBAT_ITEMS[iIdx];
+  var item   = entry.item;
+  var selEl  = document.getElementById('scc-summary-player-' + iIdx);
+  var playerIdx = selEl ? parseInt(selEl.value) : 0;
+  var player = SCC_PLAYERS[playerIdx];
+  if (!player) return;
+  fetch(SCC_URL + '/rest/v1/inventory', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
+    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true })
+  }).then(function(r) {
+    if (r.ok) {
+      item.awarded = true;
+      showDMToast(item.name + ' &#8594; ' + player.name + ' &#10003;', 'success');
+      // Refresh row in summary panel
+      var row = document.getElementById('scc-summary-row-' + iIdx);
+      if (row) {
+        var players = SCC_PLAYERS.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
+        row.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text-muted);text-decoration:line-through;">'
+          + sccEsc(item.name) + ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>'
+          + ' <span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);">from ' + sccEsc(entry.source) + '</span>'
+          + '</div></div>'
+          + '<select class="scc-input" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;" disabled>' + players + '</select>'
+          + '<button class="scc-award-btn" disabled style="opacity:0.4;cursor:default;">Award</button>';
+      }
+    } else {
+      showDMToast('Award failed', 'error');
+    }
+  });
+}
+function sccCloseCombatSummary() {
+  var panel = document.getElementById('scc-end-combat-summary');
+  if (panel) panel.remove();
 }
 
 // ── Session Notes ─────────────────────────────────────────────────
