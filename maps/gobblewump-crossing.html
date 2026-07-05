@@ -12,8 +12,8 @@
 <style>
 /* ── Location-specific SVG colours only — no layout rules here ── */
 /* Road fill */
-.road-fill   { fill: #a07820; }
-.road-shadow { fill: #8B6914; }
+.road-fill   { stroke: #a07820; }
+.road-shadow { stroke: #8B6914; }
 /* River colours */
 .tumblerun-bg   { stroke: #1a4a8a; }
 .tumblerun-mid  { stroke: #4a8acf; }
@@ -214,25 +214,25 @@ window.MAP_CONFIG = {
       </pattern>
       <!-- Pin image clip paths — one per pin, 22px radius circle -->
       <clipPath id="clip-gerald">
-        <circle cx="455" cy="395" r="22"/>
+        <circle cx="455" cy="395" r="15"/>
       </clipPath>
       <clipPath id="clip-bridge">
-        <circle cx="450" cy="373" r="20"/>
+        <circle cx="450" cy="373" r="14"/>
       </clipPath>
       <clipPath id="clip-pressa">
-        <circle cx="560" cy="252" r="18"/>
+        <circle cx="560" cy="252" r="13"/>
       </clipPath>
       <clipPath id="clip-forres">
-        <circle cx="358" cy="450" r="20"/>
+        <circle cx="358" cy="450" r="14"/>
       </clipPath>
       <clipPath id="clip-formery">
-        <circle cx="328" cy="260" r="20"/>
+        <circle cx="328" cy="260" r="14"/>
       </clipPath>
       <clipPath id="clip-wanderkeep">
-        <circle cx="538" cy="235" r="20"/>
+        <circle cx="538" cy="235" r="14"/>
       </clipPath>
       <clipPath id="clip-extractor">
-        <circle cx="610" cy="460" r="18"/>
+        <circle cx="610" cy="460" r="13"/>
       </clipPath>
     </defs>
     <!-- ══ BASE LAND ══ -->
@@ -436,7 +436,7 @@ window.MAP_CONFIG = {
       <circle cx="450" cy="373" r="24" fill="#f5ead4" opacity="0.25"/>
       <circle cx="450" cy="373" r="20" fill="#f5ead4"/>
       <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/pois/gobblewump-bridge.webp"
-             x="430" y="353" width="40" height="40" clip-path="url(#clip-bridge)" preserveAspectRatio="xMidYMid slice"/>
+             x="436" y="359" width="28" height="28" clip-path="url(#clip-bridge)" preserveAspectRatio="xMidYMid slice"/>
       <circle cx="450" cy="373" r="14" fill="none" stroke="#2a1f0e" stroke-width="1.8" class="map-pin-ring"/>
       <text class="map-pin-label-text" x="450" y="393">The Bridge</text>
     </g>
@@ -454,7 +454,7 @@ window.MAP_CONFIG = {
       <circle cx="538" cy="235" r="24" fill="#8aaa6a" opacity="0.25"/>
       <circle cx="538" cy="235" r="20" fill="#f5ead4"/>
       <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/pois/wanderkeep-rest-station-gobblewump.webp"
-             x="518" y="215" width="40" height="40" clip-path="url(#clip-wanderkeep)" preserveAspectRatio="xMidYMid slice"/>
+             x="524" y="221" width="28" height="28" clip-path="url(#clip-wanderkeep)" preserveAspectRatio="xMidYMid slice"/>
       <circle cx="538" cy="235" r="14" fill="none" stroke="#2a1f0e" stroke-width="1.8" class="map-pin-ring"/>
       <text class="map-pin-label-text" x="538" y="255">Wanderkeep</text>
     </g>
@@ -463,7 +463,7 @@ window.MAP_CONFIG = {
       <circle cx="560" cy="252" r="22" fill="#f5ead4" opacity="0.22"/>
       <circle cx="560" cy="252" r="18" fill="#f5ead4"/>
       <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/pressa-vorn.webp"
-             x="542" y="234" width="36" height="36" clip-path="url(#clip-pressa)" preserveAspectRatio="xMidYMid slice"/>
+             x="547" y="239" width="26" height="26" clip-path="url(#clip-pressa)" preserveAspectRatio="xMidYMid slice"/>
       <circle cx="560" cy="252" r="13" fill="none" stroke="#f0b429" stroke-width="1.8" class="map-pin-ring"/>
       <text class="map-pin-label-text" x="560" y="271">Pressa Vorn</text>
     </g>
@@ -472,7 +472,7 @@ window.MAP_CONFIG = {
       <circle cx="358" cy="450" r="24" fill="#f5ead4" opacity="0.22"/>
       <circle cx="358" cy="450" r="20" fill="#f5ead4"/>
       <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/forres-brothers.webp"
-             x="338" y="430" width="40" height="40" clip-path="url(#clip-forres)" preserveAspectRatio="xMidYMid slice"/>
+             x="344" y="436" width="28" height="28" clip-path="url(#clip-forres)" preserveAspectRatio="xMidYMid slice"/>
       <circle cx="358" cy="450" r="14" fill="none" stroke="#f0b429" stroke-width="1.8" class="map-pin-ring"/>
       <text class="map-pin-label-text" x="358" y="470">Forres Brothers</text>
     </g>
@@ -490,7 +490,7 @@ window.MAP_CONFIG = {
       </circle>
       <circle cx="455" cy="395" r="22" fill="#f5ead4"/>
       <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/gobblewump-gerald.webp"
-             x="433" y="373" width="44" height="44" clip-path="url(#clip-gerald)" preserveAspectRatio="xMidYMid slice"/>
+             x="440" y="380" width="30" height="30" clip-path="url(#clip-gerald)" preserveAspectRatio="xMidYMid slice"/>
       <!-- Gold ring on active, grey on session 1 -->
       <circle class="gerald-glow-active  map-pin-ring" cx="455" cy="395" r="15" fill="none" stroke="#f0b429" stroke-width="2.2"/>
       <circle class="gerald-glow-dimmed map-pin-ring"  cx="455" cy="395" r="15" fill="none" stroke="#888888" stroke-width="2"/>
@@ -501,7 +501,7 @@ window.MAP_CONFIG = {
       <circle cx="610" cy="460" r="22" fill="#2a1f0e" opacity="0.4"/>
       <circle cx="610" cy="460" r="18" fill="#1a0a0a"/>
       <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/grusk-field-agent-gobblewump.webp"
-             x="592" y="442" width="36" height="36" clip-path="url(#clip-extractor)" preserveAspectRatio="xMidYMid slice"/>
+             x="597" y="447" width="26" height="26" clip-path="url(#clip-extractor)" preserveAspectRatio="xMidYMid slice"/>
       <circle cx="610" cy="460" r="13" fill="none" stroke="#aa3a1a" stroke-width="2" class="map-pin-ring"/>
       <text class="map-pin-label-text" x="610" y="479">&#9888; Color Extractor</text>
     </g>
