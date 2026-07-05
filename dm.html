@@ -6500,6 +6500,10 @@ function showDMToast(msg, type) {
   font-size: 0.68rem;
   font-weight: 700;
 }
+.scc-coin-set { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; margin-right: 0.4rem; }
+.scc-coin-set.gp { color: var(--dm-gold); }
+.scc-coin-set.sp { color: #94a3b8; }
+.scc-coin-set.cp { color: #b45309; }
 .scc-coin-label.gp { color: #f0c040; }
 .scc-coin-label.sp { color: #c8d4e0; }
 .scc-coin-label.cp { color: #d4845a; }
@@ -11248,11 +11252,8 @@ function sccRenderStagingList() {
       + (!c.isPC
         ? '<div class="scc-loot-panel" id="scc-loot-' + idx + '">'
             + '<div class="scc-section-subtitle" style="margin-bottom:0.5rem;">Assign Loot for ' + sccEsc(c.name) + '</div>'
-            + '<div class="scc-loot-coin-row">'
-              + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-gp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.gp||0) + '"><span class="scc-coin-label gp">GP</span></div>'
-              + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-sp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.sp||0) + '"><span class="scc-coin-label sp">SP</span></div>'
-              + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-cp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.cp||0) + '"><span class="scc-coin-label cp">CP</span></div>'
-              + '<button class="scc-btn-sm" onclick="sccSaveLootCoins(' + idx + ')">Set</button>'
+            + '<div class="scc-loot-coin-row" id="scc-loot-coin-row-' + idx + '">'
+              + sccRenderCoinRow(idx, c, false)
             + '</div>'
             + '<div class="scc-loot-row">'
               + '<div style="position:relative;flex:1;">'
@@ -11274,13 +11275,37 @@ function sccToggleLoot(idx) {
   if (panel) panel.classList.toggle('open');
 }
 
+function sccRenderCoinRow(idx, c, editing) {
+  if (editing) {
+    return '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-gp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.gp||0) + '"><span class="scc-coin-label gp">GP</span></div>'
+      + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-sp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.sp||0) + '"><span class="scc-coin-label sp">SP</span></div>'
+      + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-cp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.cp||0) + '"><span class="scc-coin-label cp">CP</span></div>'
+      + '<button class="scc-btn-sm" onclick="sccSaveLootCoins(' + idx + ')">Set</button>';
+  } else {
+    var hasCoins = c.loot.gp || c.loot.sp || c.loot.cp;
+    var display = hasCoins
+      ? (c.loot.gp ? '<span class="scc-coin-set gp">' + c.loot.gp + ' GP</span>' : '')
+        + (c.loot.sp ? '<span class="scc-coin-set sp">' + c.loot.sp + ' SP</span>' : '')
+        + (c.loot.cp ? '<span class="scc-coin-set cp">' + c.loot.cp + ' CP</span>' : '')
+      : '<span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">No coins set</span>';
+    return display + '<button class="scc-btn-sm" style="margin-left:0.5rem;" onclick="sccEditLootCoins(' + idx + ')">Edit</button>';
+  }
+}
 function sccSaveLootCoins(idx) {
   var c = SCC_COMBATANTS[idx];
   if (!c) return;
   c.loot.gp = parseInt((document.getElementById('scc-loot-gp-' + idx)||{}).value) || 0;
   c.loot.sp = parseInt((document.getElementById('scc-loot-sp-' + idx)||{}).value) || 0;
   c.loot.cp = parseInt((document.getElementById('scc-loot-cp-' + idx)||{}).value) || 0;
-  showDMToast('Loot coins saved for ' + c.name, 'success');
+  var row = document.getElementById('scc-loot-coin-row-' + idx);
+  if (row) row.innerHTML = sccRenderCoinRow(idx, c, false);
+  showDMToast('Coins set: ' + (c.loot.gp ? c.loot.gp + ' GP ' : '') + (c.loot.sp ? c.loot.sp + ' SP ' : '') + (c.loot.cp ? c.loot.cp + ' CP' : ''), 'success');
+}
+function sccEditLootCoins(idx) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c) return;
+  var row = document.getElementById('scc-loot-coin-row-' + idx);
+  if (row) row.innerHTML = sccRenderCoinRow(idx, c, true);
 }
 
 function sccLootItemSearch(idx, query) {
@@ -11548,7 +11573,7 @@ function sccOpenLootAward(idx) {
     var itemDesc = item.summary ? '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);line-height:1.3;margin-top:0.1rem;">' + sccEsc(item.summary) + '</div>' : '';
     return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;" id="scc-award-row-' + idx + '-' + iIdx + '">'
       + '<div style="flex:1;min-width:0;">'
-        + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + '">' + sccEsc(item.name) + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>' : '') + '</div>'
+        + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + '">' + sccEsc(item.name) + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span> <button onclick="sccUndoAwardItem(' + idx + ',' + iIdx + ')" style="font-family:var(--font-sans);font-size:0.68rem;padding:0.1rem 0.4rem;background:transparent;border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text-muted);cursor:pointer;margin-left:0.25rem;" title="Undo award">Undo</button>' : '') + '</div>'
         + itemDesc
       + '</div>'
       + '<select class="scc-input" id="scc-award-player-' + idx + '-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;"' + (awarded ? ' disabled' : '') + '>' + players + '</select>'
@@ -11627,6 +11652,14 @@ function sccAwardCoins(combatantIdx) {
       } else { showDMToast('Coin award failed', 'error'); }
     });
 }
+function sccUndoAwardItem(combatantIdx, itemIdx) {
+  var c = SCC_INITIATIVE[combatantIdx];
+  if (!c || !c.loot || !c.loot.items[itemIdx]) return;
+  c.loot.items[itemIdx].awarded = false;
+  showDMToast('Award undone for ' + c.loot.items[itemIdx].name, 'success');
+  var panel = document.getElementById('scc-loot-award-panel');
+  if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
+}
 function sccAwardCoinsAll(combatantIdx) {
   var c = SCC_INITIATIVE[combatantIdx];
   if (!c || !c.loot || !SCC_PLAYERS.length) return;
@@ -11644,8 +11677,6 @@ function sccAwardCoinsAll(combatantIdx) {
         done++;
         if (done === SCC_PLAYERS.length) {
           showDMToast('Coins split equally to all ' + SCC_PLAYERS.length + ' players &#10003;', 'success');
-          var panel = document.getElementById('scc-loot-award-panel');
-          if (panel) panel.remove();
         }
       });
   });
