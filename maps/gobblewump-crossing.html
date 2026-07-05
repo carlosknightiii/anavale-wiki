@@ -38,6 +38,19 @@
 .tree-dark   { fill: #6a8a48; }
 .tree-mid    { fill: #7a9a54; }
 .tree-trunk  { fill: #7a5a28; }
+/* ── Brightcreed Shrine — candle flicker at night ── */
+@keyframes candle-flicker {
+  0%,100% { opacity: 0.85; }
+  30%     { opacity: 0.55; }
+  60%     { opacity: 0.95; }
+  80%     { opacity: 0.65; }
+}
+body.map-night .shrine-candle {
+  animation: candle-flicker 1.8s ease-in-out infinite;
+}
+body.map-night .shrine-candle:nth-of-type(2) { animation-delay: 0.4s; }
+body.map-night .shrine-candle:nth-of-type(3) { animation-delay: 0.9s; }
+body.map-session-1 .shrine-candle { opacity: 0.5; }
 </style>
 </head>
 <body class="map-page map-day">
@@ -50,7 +63,7 @@ window.MAP_CONFIG = {
   anonKey:     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg',
   wikiBase:    '../',
   // SCALE: 1 grid square = 5 feet. Grid unit = 20 SVG px.
-  // SVG 900×700 = 45×35 squares = 225 ft × 175 ft
+  // SVG 2400×1800 = 120×90 squares = 600 ft × 450 ft
   entities: [
     {
       id: 'gobblewump-crossing', type: 'city',
@@ -170,7 +183,7 @@ window.MAP_CONFIG = {
   </div>
   <!-- Canvas -->
   <div class="map-canvas" id="map-canvas">
-  <svg id="map-svg" width="900" height="700" viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+  <svg id="map-svg" width="2400" height="1800" viewBox="0 0 2400 1800" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <!-- Parchment noise texture -->
       <filter id="f-parchment" x="0%" y="0%" width="100%" height="100%">
@@ -235,313 +248,472 @@ window.MAP_CONFIG = {
         <circle cx="610" cy="460" r="6"/>
       </clipPath>
     </defs>
-    <!-- ══ BASE LAND ══ -->
-    <rect width="900" height="700" fill="url(#p-grass)"/>
-    <!-- Town boundary — organic blob offset toward river junction -->
-    <path d="M 210 170 C 280 130 420 145 530 158 C 640 172 740 200 770 280 C 800 360 775 460 730 530 C 680 600 580 640 470 635 C 360 630 260 595 210 520 C 155 440 148 370 160 290 C 170 225 180 195 210 170 Z"
-          fill="rgba(180,210,140,0.07)" stroke="#7a9a4a" stroke-width="1.2" stroke-dasharray="6,5" opacity="0.55"/>
-    <rect width="900" height="700" fill="url(#f-parchment)" opacity="0.6"/>
-    <!-- ══ FORESTS — 9 irregular asymmetric clusters ══ -->
-    <!-- NW primary — large, rotated, densest mass near river head -->
-    <ellipse cx="72"  cy="88"  rx="88"  ry="62"  fill="url(#p-forest)" opacity="0.74" transform="rotate(-18,72,88)"/>
-    <!-- NW secondary — offset overlap -->
-    <ellipse cx="148" cy="52"  rx="58"  ry="38"  fill="url(#p-forest)" opacity="0.60" transform="rotate(8,148,52)"/>
-    <!-- NW tertiary — tongue extending south along west edge -->
-    <ellipse cx="44"  cy="188" rx="42"  ry="68"  fill="url(#p-forest)" opacity="0.52" transform="rotate(6,44,188)"/>
-    <!-- North-center — thin strip behind formery -->
-    <ellipse cx="218" cy="68"  rx="52"  ry="30"  fill="url(#p-forest)" opacity="0.44" transform="rotate(-5,218,68)"/>
-    <!-- SW corner — ragged cluster, smaller -->
-    <ellipse cx="58"  cy="598" rx="72"  ry="54"  fill="url(#p-forest)" opacity="0.62" transform="rotate(12,58,598)"/>
-    <!-- SW secondary — bleeds toward south edge -->
-    <ellipse cx="132" cy="648" rx="48"  ry="30"  fill="url(#p-forest)" opacity="0.45" transform="rotate(-9,132,648)"/>
-    <!-- NE corner — smaller, lighter, sparse feel -->
-    <ellipse cx="794" cy="58"  rx="60"  ry="38"  fill="url(#p-forest)" opacity="0.46" transform="rotate(14,794,58)"/>
-    <!-- SE corner — narrowest cluster -->
-    <ellipse cx="832" cy="634" rx="52"  ry="36"  fill="url(#p-forest)" opacity="0.40" transform="rotate(-11,832,634)"/>
-    <!-- East edge mid — isolated copse along road -->
-    <ellipse cx="868" cy="300" rx="34"  ry="52"  fill="url(#p-forest)" opacity="0.38" transform="rotate(4,868,300)"/>
-    <!-- NW tree canopy detail — 8 trees across the primary cluster -->
-    <g opacity="0.88">
-      <circle cx="48"  cy="72"  r="15" class="tree-dark"/><rect x="44"  y="84"  width="8" height="12" class="tree-trunk"/>
-      <circle cx="82"  cy="52"  r="12" fill="#5a7a38"/><rect x="79"  y="61"  width="6" height="10" class="tree-trunk"/>
-      <circle cx="116" cy="76"  r="14" class="tree-mid"/><rect x="113" y="87"  width="7" height="10" class="tree-trunk"/>
-      <circle cx="36"  cy="118" r="11" class="tree-dark"/><rect x="33"  y="127" width="6" height="9" class="tree-trunk"/>
-      <circle cx="152" cy="44"  r="10" fill="#5a7a38"/><rect x="149" y="52"  width="6" height="8" class="tree-trunk"/>
-      <circle cx="62"  cy="148" r="13" class="tree-mid"/><rect x="59"  y="158" width="7" height="9" class="tree-trunk"/>
-      <circle cx="96"  cy="108" r="11" class="tree-dark"/><rect x="93"  y="117" width="6" height="8" class="tree-trunk"/>
-      <circle cx="28"  cy="62"  r="9"  fill="#6a8a44"/><rect x="26"  y="70"  width="5" height="7" class="tree-trunk"/>
-    </g>
-    <!-- NE tree canopy detail — sparse copse east edge -->
-    <g opacity="0.80">
-      <circle cx="852" cy="52"  r="11" class="tree-dark"/><rect x="849" y="60"  width="6" height="9" class="tree-trunk"/>
-      <circle cx="832" cy="38"  r="9"  fill="#5a7a38"/><rect x="829" y="45"  width="5" height="7" class="tree-trunk"/>
-      <circle cx="868" cy="44"  r="10" class="tree-mid"/><rect x="865" y="52"  width="5" height="8" class="tree-trunk"/>
-      <circle cx="844" cy="68"  r="8"  class="tree-dark"/><rect x="841" y="75"  width="5" height="7" class="tree-trunk"/>
-    </g>
-    <!-- SW tree canopy detail — ragged southwest cluster -->
-    <g opacity="0.82">
-      <circle cx="46"  cy="596" r="13" class="tree-dark"/><rect x="43"  y="606" width="7" height="10" class="tree-trunk"/>
-      <circle cx="72"  cy="612" r="11" fill="#5a7a38"/><rect x="69"  y="620" width="6" height="9" class="tree-trunk"/>
-      <circle cx="38"  cy="628" r="10" class="tree-mid"/><rect x="35"  y="636" width="5" height="8" class="tree-trunk"/>
-      <circle cx="96"  cy="604" r="9"  class="tree-dark"/><rect x="93"  y="612" width="5" height="7" class="tree-trunk"/>
-      <circle cx="58"  cy="648" r="8"  fill="#6a8a44"/><rect x="55"  y="655" width="5" height="7" class="tree-trunk"/>
-    </g>
-    <!-- SE tree canopy detail — small isolated copse -->
-    <g opacity="0.72">
-      <circle cx="840" cy="638" r="10" class="tree-mid"/><rect x="837" y="646" width="5" height="8" class="tree-trunk"/>
-      <circle cx="822" cy="650" r="8"  class="tree-dark"/><rect x="819" y="657" width="5" height="7" class="tree-trunk"/>
-      <circle cx="856" cy="648" r="9"  fill="#5a7a38"/><rect x="853" y="655" width="5" height="7" class="tree-trunk"/>
-    </g>
-    <!-- ══ ROADS ══ -->
-    <!-- North Road — gentle S-curve from top to junction -->
-    <path d="M 448 0 C 452 80 446 160 450 250 C 453 280 452 300 451 312" class="road-shadow" stroke-width="20" fill="none" stroke-linecap="butt"/>
-    <path d="M 448 0 C 452 80 446 160 450 250 C 453 280 452 300 451 312" class="road-fill"   stroke-width="14" fill="none" stroke-linecap="butt"/>
-    <!-- South Road — slight drift east then back -->
-    <path d="M 451 428 C 453 490 449 550 452 620 C 454 650 451 670 450 700" class="road-shadow" stroke-width="20" fill="none" stroke-linecap="butt"/>
-    <path d="M 451 428 C 453 490 449 550 452 620 C 454 650 451 670 450 700" class="road-fill"   stroke-width="14" fill="none" stroke-linecap="butt"/>
-    <!-- West Road — slight bow toward south before straightening -->
-    <path d="M 0 372 C 60 374 130 370 200 373 C 280 376 340 372 378 372" class="road-shadow" stroke-width="20" fill="none" stroke-linecap="butt"/>
-    <path d="M 0 372 C 60 374 130 370 200 373 C 280 376 340 372 378 372" class="road-fill"   stroke-width="14" fill="none" stroke-linecap="butt"/>
-    <!-- East Road — gentle northward drift mid-span -->
-    <path d="M 522 372 C 580 370 650 368 720 371 C 790 374 850 370 900 372" class="road-shadow" stroke-width="20" fill="none" stroke-linecap="butt"/>
-    <path d="M 522 372 C 580 370 650 368 720 371 C 790 374 850 370 900 372" class="road-fill"   stroke-width="14" fill="none" stroke-linecap="butt"/>
-    <!-- Road labels -->
-    <text x="450" y="28"  font-family="'Courier New',monospace" font-size="9" fill="#7a6548" text-anchor="middle" letter-spacing="2.5" opacity="0.85">NORTH ROAD</text>
-    <text x="450" y="688" font-family="'Courier New',monospace" font-size="9" fill="#7a6548" text-anchor="middle" letter-spacing="2.5" opacity="0.85">SOUTH ROAD</text>
-    <text x="52"  y="358" font-family="'Courier New',monospace" font-size="9" fill="#7a6548" text-anchor="middle" letter-spacing="2.5" opacity="0.85">WEST ROAD</text>
-    <text x="848" y="358" font-family="'Courier New',monospace" font-size="9" fill="#7a6548" text-anchor="middle" letter-spacing="2.5" opacity="0.85">EAST ROAD</text>
-    <!-- ══ RIVERS ══ -->
-    <!-- Mirrenflow — wide warm amber, east-west -->
-    <path d="M 0 415 Q 155 398 305 408 Q 385 414 450 405 Q 562 390 702 400 Q 822 408 900 398"
-          class="mirrenflow-bg" stroke-width="30" fill="none" opacity="0.32"/>
-    <path class="river-mirrenflow mirrenflow-mid"
-          d="M 0 415 Q 155 398 305 408 Q 385 414 450 405 Q 562 390 702 400 Q 822 408 900 398"
-          stroke-width="19" fill="none" opacity="0.58" filter="url(#f-glow)"/>
-    <path d="M 0 415 Q 155 398 305 408 Q 385 414 450 405 Q 562 390 702 400 Q 822 408 900 398"
-          class="mirrenflow-high" stroke-width="6" fill="none" opacity="0.5" stroke-linecap="round"/>
-    <!-- Tumblerun — narrow cold luminescent blue, north-south -->
-    <path d="M 456 0 Q 460 85 458 165 Q 455 245 453 315 Q 451 362 453 392"
-          class="tumblerun-bg" stroke-width="22" fill="none" opacity="0.33"/>
-    <path class="river-tumblerun tumblerun-mid"
-          d="M 456 0 Q 460 85 458 165 Q 455 245 453 315 Q 451 362 453 392"
-          stroke-width="14" fill="none" opacity="0.65" filter="url(#f-glow)"/>
-    <path d="M 456 0 Q 460 85 458 165 Q 455 245 453 315 Q 451 362 453 392"
-          class="tumblerun-high" stroke-width="4.5" fill="none" opacity="0.6" stroke-linecap="round"/>
-    <!-- River junction pulse removed — obscured the bridge -->
-    <!-- River name labels -->
-    <text x="712" y="388" font-family="'Courier New',monospace" font-size="8.5" fill="#c4703a" letter-spacing="1.8" opacity="0.82">MIRRENFLOW</text>
-    <text x="465" y="155" font-family="'Courier New',monospace" font-size="8.5" fill="#3a6aaa" letter-spacing="1.8" opacity="0.82" transform="rotate(90,465,155)">TUMBLERUN</text>
-    <!-- ══ GRID OVERLAY ══ -->
-    <!-- Minor grid (5 ft per square) -->
-    <rect width="900" height="700" fill="url(#p-grid)" opacity="1"/>
-    <!-- Major grid (25 ft / every 5 squares) -->
-    <rect width="900" height="700" fill="url(#p-grid-major)" opacity="1"/>
-    <!-- ══ BUILDINGS ══ -->
-    <!-- THE BRIDGE — stone arch, spans junction -->
-    <rect x="436" y="346" width="28" height="68" rx="2" class="bld-stone" stroke="#2a1f0e" stroke-width="1.5"/>
-    <rect x="440" y="350" width="20" height="60" rx="1" fill="#a09070"/>
-    <line x1="436" y1="362" x2="464" y2="362" stroke="#2a1f0e" stroke-width="0.9" opacity="0.45"/>
-    <line x1="436" y1="376" x2="464" y2="376" stroke="#2a1f0e" stroke-width="0.9" opacity="0.45"/>
-    <line x1="436" y1="390" x2="464" y2="390" stroke="#2a1f0e" stroke-width="0.9" opacity="0.45"/>
-    <!-- FORMERY OFFICE -->
-    <rect x="292" y="222" width="72" height="58" rx="3" class="bld-formery" stroke="#2a1f0e" stroke-width="1.5"/>
-    <polygon points="288,225 368,225 328,207" class="bld-roof" stroke="#2a1f0e" stroke-width="1.2"/>
-    <rect x="320" y="248" width="16" height="26" rx="1" class="bld-door" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="297" y="230" width="13" height="11" rx="1" class="bld-window" stroke="#2a1f0e" stroke-width="0.8"/>
-    <rect x="346" y="230" width="13" height="11" rx="1" class="bld-window" stroke="#2a1f0e" stroke-width="0.8"/>
-    <!-- Formery stamp -->
-    <circle cx="328" cy="215" r="5.5" fill="#2a1f0e" opacity="0.3"/>
-    <text x="328" y="219" font-family="'Courier New',monospace" font-size="5" fill="#f5ead4" text-anchor="middle" font-weight="700">F</text>
-    <!-- WANDERKEEP REST STATION -->
-    <rect x="496" y="200" width="82" height="64" rx="3" class="bld-wanderkeep" stroke="#2a1f0e" stroke-width="1.5"/>
-    <polygon points="491,204 583,204 537,182" class="bld-roof-green" stroke="#2a1f0e" stroke-width="1.2"/>
-    <rect x="527" y="228" width="18" height="30" rx="1" class="bld-door" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="500" y="210" width="14" height="12" rx="1" class="bld-window" stroke="#2a1f0e" stroke-width="0.8"/>
-    <rect x="558" y="210" width="14" height="12" rx="1" class="bld-window" stroke="#2a1f0e" stroke-width="0.8"/>
-    <path d="M 537 185 L 541 191 L 537 196 L 533 191 Z" fill="#f0b429" stroke="#2a1f0e" stroke-width="0.8"/>
-    <!-- FORRES BROTHERS INN -->
-    <rect x="314" y="420" width="92" height="68" rx="3" class="bld-inn-forres" stroke="#2a1f0e" stroke-width="1.5"/>
-    <polygon points="309,424 412,424 360,394" class="bld-roof" stroke="#2a1f0e" stroke-width="1.2"/>
-    <rect x="348" y="452" width="22" height="32" rx="1" class="bld-door" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="319" y="432" width="15" height="13" rx="1" class="bld-window" stroke="#2a1f0e" stroke-width="0.8"/>
-    <rect x="392" y="432" width="15" height="13" rx="1" class="bld-window" stroke="#2a1f0e" stroke-width="0.8"/>
-    <!-- Inn sign -->
-    <line x1="308" y1="424" x2="308" y2="458" stroke="#2a1f0e" stroke-width="2"/>
-    <rect x="293" y="435" width="28" height="15" rx="1" fill="#f5ead4" stroke="#2a1f0e" stroke-width="1"/>
-    <text x="307" y="446" font-family="'Courier New',monospace" font-size="4.5" fill="#2a1f0e" text-anchor="middle">INN</text>
-    <!-- STABLE -->
-    <rect x="428" y="452" width="66" height="52" rx="2" class="bld-stable" stroke="#2a1f0e" stroke-width="1.2"/>
-    <!-- Hay loft band -->
-    <rect x="428" y="452" width="66" height="12" rx="2" fill="#d4a84a" opacity="0.55"/>
-    <!-- Stall dividers -->
-    <line x1="428" y1="464" x2="494" y2="464" stroke="#2a1f0e" stroke-width="0.9" opacity="0.5"/>
-    <line x1="450" y1="464" x2="450" y2="504" stroke="#2a1f0e" stroke-width="0.7" opacity="0.35"/>
-    <line x1="472" y1="464" x2="472" y2="504" stroke="#2a1f0e" stroke-width="0.7" opacity="0.35"/>
-    <!-- Double stable doors -->
-    <rect x="440" y="467" width="14" height="30" rx="0" class="bld-door" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="455" y="467" width="14" height="30" rx="0" class="bld-door" stroke="#2a1f0e" stroke-width="1"/>
-    <!-- Door handle marks -->
-    <line x1="453" y1="482" x2="453" y2="486" stroke="#8a5a2a" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="457" y1="482" x2="457" y2="486" stroke="#8a5a2a" stroke-width="1.5" stroke-linecap="round"/>
-    <!-- Hay texture dots -->
-    <circle cx="436" cy="458" r="1.5" fill="#c4942a" opacity="0.5"/>
-    <circle cx="442" cy="456" r="1.2" fill="#c4942a" opacity="0.4"/>
-    <circle cx="480" cy="457" r="1.5" fill="#c4942a" opacity="0.5"/>
-    <circle cx="486" cy="459" r="1.2" fill="#c4942a" opacity="0.4"/>
-    <!-- MARKET STALLS — tent awning style -->
-    <!-- Yellow stall -->
-    <rect x="258" y="314" width="36" height="22" rx="1" fill="#e8c060" stroke="#2a1f0e" stroke-width="1"/>
-    <polygon points="255,314 276,302 297,314" fill="#d4a830" stroke="#2a1f0e" stroke-width="1"/>
-    <line x1="276" y1="302" x2="276" y2="298" stroke="#2a1f0e" stroke-width="1.5" stroke-linecap="round"/>
-    <rect x="265" y="322" width="8" height="12" rx="0" fill="#c4802a" opacity="0.6"/>
-    <line x1="260" y1="319" x2="294" y2="319" stroke="#c4802a" stroke-width="1.2" opacity="0.5"/>
-    <!-- Red stall -->
-    <rect x="302" y="314" width="36" height="22" rx="1" fill="#d06060" stroke="#2a1f0e" stroke-width="1"/>
-    <polygon points="299,314 320,302 341,314" fill="#b84040" stroke="#2a1f0e" stroke-width="1"/>
-    <line x1="320" y1="302" x2="320" y2="298" stroke="#2a1f0e" stroke-width="1.5" stroke-linecap="round"/>
-    <rect x="309" y="322" width="8" height="12" rx="0" fill="#903020" opacity="0.6"/>
-    <line x1="304" y1="319" x2="338" y2="319" stroke="#903020" stroke-width="1.2" opacity="0.5"/>
-    <text x="298" y="350" font-family="'Courier New',Courier,monospace" font-size="8" fill="#5a4530" text-anchor="middle" font-weight="700" opacity="0.92">Market</text>
-    <!-- OLD INN (east, has message board) -->
-    <rect x="598" y="326" width="78" height="58" rx="3" class="bld-inn-old" stroke="#2a1f0e" stroke-width="1.3"/>
-    <polygon points="593,330 682,330 637,304" fill="#7a4a2a" stroke="#2a1f0e" stroke-width="1.1"/>
-    <rect x="626" y="350" width="18" height="28" rx="1" class="bld-door" stroke="#2a1f0e" stroke-width="1"/>
-    <!-- Message board on east wall -->
-    <rect x="678" y="336" width="22" height="26" rx="1" fill="#e8d0a0" stroke="#2a1f0e" stroke-width="1"/>
-    <line x1="681" y1="342" x2="698" y2="342" stroke="#2a1f0e" stroke-width="0.75" opacity="0.5"/>
-    <line x1="681" y1="347" x2="698" y2="347" stroke="#2a1f0e" stroke-width="0.75" opacity="0.5"/>
-    <line x1="681" y1="352" x2="698" y2="352" stroke="#2a1f0e" stroke-width="0.75" opacity="0.5"/>
-    <line x1="681" y1="357" x2="698" y2="357" stroke="#2a1f0e" stroke-width="0.75" opacity="0.5"/>
-    <text x="689" y="375" font-family="'Courier New',Courier,monospace" font-size="7" fill="#5a4530" text-anchor="middle" font-weight="700" opacity="0.85">Message Board</text>
-    <!-- HOUSES — south settlement cluster -->
-    <rect x="308" y="528" width="40" height="33" rx="2" class="bld-house" stroke="#2a1f0e" stroke-width="1"/>
-    <polygon points="306,530 350,530 328,514" class="bld-roof" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="318" y="541" width="10" height="16" rx="0" class="bld-door" stroke="#2a1f0e" stroke-width="0.8"/>
-    <rect x="368" y="532" width="38" height="31" rx="2" class="bld-house" stroke="#2a1f0e" stroke-width="1"/>
-    <polygon points="366,534 408,534 387,518" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="378" y="545" width="10" height="14" rx="0" class="bld-door" stroke="#2a1f0e" stroke-width="0.8"/>
-    <rect x="508" y="522" width="42" height="34" rx="2" class="bld-house" stroke="#2a1f0e" stroke-width="1"/>
-    <polygon points="506,524 552,524 529,508" class="bld-roof" stroke="#2a1f0e" stroke-width="1"/>
-    <rect x="519" y="535" width="10" height="17" rx="0" class="bld-door" stroke="#2a1f0e" stroke-width="0.8"/>
-    <!-- DOCKS / RIVERBANK STAIRS -->
-    <rect x="418" y="420" width="64" height="8"  rx="1" class="bld-stone" stroke="#2a1f0e" stroke-width="1" opacity="0.75"/>
-    <rect x="426" y="428" width="48" height="7"  rx="1" class="bld-stone" stroke="#2a1f0e" stroke-width="0.9" opacity="0.65"/>
-    <rect x="434" y="435" width="32" height="6"  rx="1" class="bld-stone" stroke="#2a1f0e" stroke-width="0.8" opacity="0.55"/>
-    <!-- WELL -->
-    <circle cx="440" cy="492" r="10" class="bld-stone" stroke="#2a1f0e" stroke-width="1.5"/>
-    <circle cx="440" cy="492" r="6"  fill="#1a3060" stroke="#2a1f0e" stroke-width="1"/>
-    <line x1="432" y1="480" x2="448" y2="480" stroke="#2a1f0e" stroke-width="2"   stroke-linecap="round"/>
-    <line x1="440" y1="477" x2="440" y2="482" stroke="#2a1f0e" stroke-width="1.5"/>
-    <!-- ══ BUILDING LABELS ══ -->
-    <text x="328" y="200" font-family="'Cinzel Decorative',serif" font-size="7.5" fill="#2a1f0e" text-anchor="middle" font-weight="700" opacity="0.88">The Formery</text>
-    <text x="537" y="177" font-family="'Cinzel Decorative',serif" font-size="7"   fill="#2a1f0e" text-anchor="middle" font-weight="700" opacity="0.88">Wanderkeep Station</text>
-    <text x="360" y="392" font-family="'Cinzel Decorative',serif" font-size="7.5" fill="#2a1f0e" text-anchor="middle" font-weight="700" opacity="0.85">Forres Inn</text>
-    <text x="461" y="447" font-family="'Cinzel Decorative',serif" font-size="7"   fill="#2a1f0e" text-anchor="middle" font-weight="700" opacity="0.75">Stable</text>
-    <text x="637" y="300" font-family="'Cinzel Decorative',serif" font-size="7.5" fill="#2a1f0e" text-anchor="middle" font-weight="700" opacity="0.78">The Old Inn</text>
-    <text x="452" y="340" font-family="'Cinzel Decorative',serif" font-size="8"   fill="#2a1f0e" text-anchor="middle" font-weight="700" opacity="0.92">The Bridge</text>
-    <text x="440" y="514" font-family="'Courier New',Courier,monospace" font-size="7.5" fill="#5a4530" text-anchor="middle" font-weight="700" opacity="0.88">Well</text>
-    <text x="450" y="418" font-family="'Courier New',Courier,monospace" font-size="7.5" fill="#5a4530" text-anchor="middle" font-weight="700" opacity="0.88">River Docks</text>
-    <!-- ══ COMPASS ROSE ══ -->
-    <g transform="translate(832,58)">
-      <circle cx="0" cy="0" r="33" fill="#f5ead4" stroke="#2a1f0e" stroke-width="1.5" opacity="0.92"/>
-      <circle cx="0" cy="0" r="29" fill="none"    stroke="#f0b429" stroke-width="0.8" opacity="0.65"/>
-      <polygon points="0,-23 4,-9 0,-14 -4,-9" fill="#2a1f0e"/>
-      <polygon points="0,23 4,9 0,14 -4,9"    fill="#7a6548" opacity="0.6"/>
-      <polygon points="23,0 9,4 14,0 9,-4"    fill="#7a6548" opacity="0.5"/>
-      <polygon points="-23,0 -9,4 -14,0 -9,-4" fill="#7a6548" opacity="0.5"/>
-      <text x="0"   y="-25" font-family="'Cinzel Decorative',serif" font-size="9" fill="#2a1f0e" text-anchor="middle" font-weight="700">N</text>
-      <text x="0"   y="33"  font-family="'Cinzel Decorative',serif" font-size="8" fill="#7a6548" text-anchor="middle" opacity="0.75">S</text>
-      <text x="27"  y="4"   font-family="'Cinzel Decorative',serif" font-size="8" fill="#7a6548" text-anchor="middle" opacity="0.75">E</text>
-      <text x="-27" y="4"   font-family="'Cinzel Decorative',serif" font-size="8" fill="#7a6548" text-anchor="middle" opacity="0.75">W</text>
-      <circle cx="0" cy="0" r="3.5" fill="#f0b429" stroke="#2a1f0e" stroke-width="1"/>
-    </g>
-    <!-- ══ ENTITY PINS — image thumbnails with name labels ══ -->
-    <!--
-      Each pin structure:
-        <g> wrapper with data-entity-id + tabindex/role (wired by JS)
-          <circle> outer ring (shadow/glow)
-          <circle> white clip background
-          <image> portrait photo clipped to circle
-          <circle> fallback (shown if image fails — initial letter drawn via JS)
-          <circle> border ring
-          <text> entity name label below pin
-        </g>
-    -->
-    <!-- PIN: The Bridge — poi, player facing -->
-    <g data-entity-id="gobblewump-bridge" class="map-pin-group" filter="url(#f-pin)">
-      <circle cx="450" cy="373" r="9" fill="#f5ead4" opacity="0.25"/>
-      <circle cx="450" cy="373" r="7" fill="#f5ead4"/>
-      <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/pois/gobblewump-bridge.webp"
-             x="443" y="366" width="14" height="14" clip-path="url(#clip-bridge)" preserveAspectRatio="xMidYMid slice"/>
-      <circle cx="450" cy="373" r="7" fill="none" stroke="#2a1f0e" stroke-width="1.5" class="map-pin-ring"/>
-      <text class="map-pin-label-text" x="450" y="384">The Bridge</text>
-    </g>
-    <!-- PIN: The Formery — org, player facing -->
-    <g data-entity-id="the-formery" class="map-pin-group" filter="url(#f-pin)">
-      <circle cx="328" cy="260" r="9" fill="#c8a86a" opacity="0.25"/>
-      <circle cx="328" cy="260" r="7" fill="#c8a86a"/>
-      <!-- No image — initial fallback -->
-      <text x="328" y="263" font-family="'Cinzel Decorative',serif" font-size="7" fill="#f5ead4" text-anchor="middle" font-weight="700" pointer-events="none">F</text>
-      <circle cx="328" cy="260" r="7" fill="none" stroke="#2a1f0e" stroke-width="1.5" class="map-pin-ring"/>
-      <text class="map-pin-label-text" x="328" y="271">The Formery</text>
-    </g>
-    <!-- PIN: Wanderkeep Station — poi, player facing -->
-    <g data-entity-id="wanderkeep-rest-station-gobblewump" class="map-pin-group" filter="url(#f-pin)">
-      <circle cx="538" cy="235" r="9" fill="#8aaa6a" opacity="0.25"/>
-      <circle cx="538" cy="235" r="7" fill="#f5ead4"/>
-      <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/pois/wanderkeep-rest-station-gobblewump.webp"
-             x="531" y="228" width="14" height="14" clip-path="url(#clip-wanderkeep)" preserveAspectRatio="xMidYMid slice"/>
-      <circle cx="538" cy="235" r="7" fill="none" stroke="#2a1f0e" stroke-width="1.5" class="map-pin-ring"/>
-      <text class="map-pin-label-text" x="538" y="246">Wanderkeep</text>
-    </g>
-    <!-- PIN: Pressa Vorn — character, player_facing false, NOT dmOnly -->
-    <g data-entity-id="pressa-vorn" class="map-pin-group map-pin-dm-only" filter="url(#f-pin)">
-      <circle cx="560" cy="252" r="8" fill="#f5ead4" opacity="0.22"/>
-      <circle cx="560" cy="252" r="6" fill="#f5ead4"/>
-      <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/pressa-vorn.webp"
-             x="554" y="246" width="12" height="12" clip-path="url(#clip-pressa)" preserveAspectRatio="xMidYMid slice"/>
-      <circle cx="560" cy="252" r="6" fill="none" stroke="#f0b429" stroke-width="1.5" class="map-pin-ring"/>
-      <text class="map-pin-label-text" x="560" y="262">Pressa Vorn</text>
-    </g>
-    <!-- PIN: Edvin & Aldvin Forres — character, player_facing false, NOT dmOnly -->
-    <g data-entity-id="forres-brothers" class="map-pin-group map-pin-dm-only" filter="url(#f-pin)">
-      <circle cx="358" cy="450" r="9" fill="#f5ead4" opacity="0.22"/>
-      <circle cx="358" cy="450" r="7" fill="#f5ead4"/>
-      <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/forres-brothers.webp"
-             x="351" y="443" width="14" height="14" clip-path="url(#clip-forres)" preserveAspectRatio="xMidYMid slice"/>
-      <circle cx="358" cy="450" r="7" fill="none" stroke="#f0b429" stroke-width="1.5" class="map-pin-ring"/>
-      <text class="map-pin-label-text" x="358" y="461">Forres Brothers</text>
-    </g>
-    <!-- PIN: Gobblewump Gerald — character, player facing, SPECIAL gold pulse -->
-    <g data-entity-id="gobblewump-gerald" class="map-pin-group" filter="url(#f-pin)">
-      <!-- Session 1: dimmed grey glow -->
-      <circle class="gerald-glow-dimmed" cx="455" cy="395" r="7" fill="none" stroke="#888888" stroke-width="1.2" opacity="0.35">
-        <animate attributeName="r" values="7;12;7" dur="3.5s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3.5s" repeatCount="indefinite"/>
-      </circle>
-      <!-- Default: gold glow -->
-      <circle class="gerald-glow-active" cx="455" cy="395" r="7" fill="none" stroke="#f0b429" stroke-width="1.8" opacity="0.5">
-        <animate attributeName="r" values="7;14;7" dur="2.8s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.45;0.85;0.45" dur="2.8s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="455" cy="395" r="7" fill="#f5ead4"/>
-      <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/gobblewump-gerald.webp"
-             x="448" y="388" width="14" height="14" clip-path="url(#clip-gerald)" preserveAspectRatio="xMidYMid slice"/>
-      <!-- Gold ring on active, grey on session 1 -->
-      <circle class="gerald-glow-active  map-pin-ring" cx="455" cy="395" r="7" fill="none" stroke="#f0b429" stroke-width="2"/>
-      <circle class="gerald-glow-dimmed map-pin-ring"  cx="455" cy="395" r="7" fill="none" stroke="#888888" stroke-width="1.8"/>
-      <text class="map-pin-label-text" x="455" y="406">Gerald</text>
-    </g>
-    <!-- PIN: Color Extractor — DM only (hidden from players by JS) -->
-    <g data-entity-id="grusk-field-agent-gobblewump" class="map-pin-group" filter="url(#f-pin)">
-      <circle cx="610" cy="460" r="9" fill="#2a1f0e" opacity="0.4"/>
-      <circle cx="610" cy="460" r="7" fill="#1a0a0a"/>
-      <image href="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/grusk-field-agent-gobblewump.webp"
-             x="604" y="454" width="12" height="12" clip-path="url(#clip-extractor)" preserveAspectRatio="xMidYMid slice"/>
-      <circle cx="610" cy="460" r="6" fill="none" stroke="#aa3a1a" stroke-width="1.5" class="map-pin-ring"/>
-      <text class="map-pin-label-text" x="610" y="470">&#9888; Color Extractor</text>
-    </g>
-  </svg>
+  <!-- ── SCALE: 1 grid square = 5 feet. Grid unit = 20 SVG px. ── -->
+  <!-- ── Canvas 2400×1800 = 120×90 squares = 600 ft × 450 ft   ── -->
+  <!-- BASE LAND -->
+  <rect width="2400" height="1800" fill="#e8dfc8"/>
+  <!-- PARCHMENT TEXTURE OVERLAY -->
+  <rect width="2400" height="1800" fill="url(#p-grass)" opacity="0.18"/>
+  <!-- GRID OVERLAY (minor 20px = 5ft squares) -->
+  <rect width="2400" height="1800" fill="url(#p-grid)" opacity="0.13" class="map-grid-minor"/>
+  <!-- GRID OVERLAY (major 100px = 25ft) -->
+  <rect width="2400" height="1800" fill="url(#p-grid-major)" opacity="0.22" class="map-grid-major"/>
+  <!-- ══ MIRRENFLOW (east-west, centered y=1050, width ~120px) ══ -->
+  <!-- Amber-warm, wide, slow river -->
+  <rect x="0" y="990" width="2400" height="120" fill="#c8a84b" opacity="0.35" rx="0"/>
+  <!-- Main channel -->
+  <rect x="0" y="1000" width="2400" height="100" fill="#b8973a" opacity="0.55"/>
+  <!-- Highlight gloss -->
+  <rect x="0" y="1008" width="2400" height="18" fill="#d4aa50" opacity="0.45"/>
+  <!-- Deep center -->
+  <rect x="0" y="1018" width="2400" height="30" fill="#9a7a28" opacity="0.30"/>
+  <!-- River banks (shadow edge) -->
+  <rect x="0" y="990" width="2400" height="12" fill="#8a6a1a" opacity="0.25"/>
+  <rect x="0" y="1098" width="2400" height="12" fill="#8a6a1a" opacity="0.25"/>
+  <!-- ══ TUMBLERUN (north-south, centered x=900, width ~80px) ══ -->
+  <!-- Cold blue, fast, aurora-touched -->
+  <rect x="860" y="0" width="80" height="1800" fill="#5588cc" opacity="0.35" rx="0"/>
+  <!-- Main channel -->
+  <rect x="868" y="0" width="64" height="1800" fill="#4477bb" opacity="0.60"/>
+  <!-- Aurora shimmer highlight -->
+  <rect x="880" y="0" width="20" height="1800" fill="#88ccee" opacity="0.28"/>
+  <!-- Deep center -->
+  <rect x="888" y="0" width="24" height="1800" fill="#2255aa" opacity="0.22"/>
+  <!-- River banks -->
+  <rect x="860" y="0" width="10" height="1800" fill="#2244aa" opacity="0.20"/>
+  <rect x="930" y="0" width="10" height="1800" fill="#2244aa" opacity="0.20"/>
+  <!-- ══ RIVER JUNCTION — where Tumblerun meets Mirrenflow ══ -->
+  <!-- Junction swirl zone, centered at (900, 1050) -->
+  <ellipse cx="900" cy="1050" rx="110" ry="85" fill="#6699cc" opacity="0.30"/>
+  <ellipse cx="900" cy="1050" rx="80" ry="60" fill="#5588bb" opacity="0.25"/>
+  <!-- Tumblerun luminescence threads spreading into Mirrenflow -->
+  <ellipse cx="940" cy="1048" rx="60" ry="22" fill="#99ddee" opacity="0.18" transform="rotate(-12 940 1048)"/>
+  <ellipse cx="960" cy="1055" rx="45" ry="14" fill="#88ccdd" opacity="0.14" transform="rotate(-8 960 1055)"/>
+  <!-- ══ ROADS ══ -->
+  <!-- North Road: x=900, y=0 to y=860 (stops at river bank) -->
+  <rect x="886" y="0" width="28" height="860" fill="#c4a060" opacity="0.85"/>
+  <rect x="892" y="0" width="16" height="860" fill="#d4b070" opacity="0.60"/>
+  <!-- South Road: x=900, y=1140 to y=1800 -->
+  <rect x="886" y="1140" width="28" height="660" fill="#c4a060" opacity="0.85"/>
+  <rect x="892" y="1140" width="16" height="660" fill="#d4b070" opacity="0.60"/>
+  <!-- West Road: y=1050, x=0 to x=860 (stops at Tumblerun bank) -->
+  <rect x="0" y="1036" width="860" height="28" fill="#c4a060" opacity="0.85"/>
+  <rect x="0" y="1042" width="860" height="16" fill="#d4b070" opacity="0.60"/>
+  <!-- East Road: y=1050, x=940 to x=2400 (starts east of Tumblerun) -->
+  <rect x="940" y="1036" width="1460" height="28" fill="#c4a060" opacity="0.85"/>
+  <rect x="940" y="1042" width="1460" height="16" fill="#d4b070" opacity="0.60"/>
+  <!-- ══ CROSSING INFRASTRUCTURE ══ -->
+  <!-- THE BRIDGE — stone arch, 100px wide (24ft), spans Tumblerun at x=900 -->
+  <!-- Bridge deck -->
+  <rect x="850" y="980" width="100" height="140" rx="4" fill="#9a8a6a" stroke="#2a1f0e" stroke-width="2"/>
+  <!-- Stone course lines -->
+  <line x1="850" y1="1000" x2="950" y2="1000" stroke="#2a1f0e" stroke-width="1" opacity="0.4"/>
+  <line x1="850" y1="1020" x2="950" y2="1020" stroke="#2a1f0e" stroke-width="1" opacity="0.4"/>
+  <line x1="850" y1="1040" x2="950" y2="1040" stroke="#2a1f0e" stroke-width="1" opacity="0.4"/>
+  <line x1="850" y1="1060" x2="950" y2="1060" stroke="#2a1f0e" stroke-width="1" opacity="0.4"/>
+  <line x1="850" y1="1080" x2="950" y2="1080" stroke="#2a1f0e" stroke-width="1" opacity="0.4"/>
+  <line x1="850" y1="1100" x2="950" y2="1100" stroke="#2a1f0e" stroke-width="1" opacity="0.4"/>
+  <!-- Bridge parapets -->
+  <rect x="848" y="978" width="12" height="144" rx="2" fill="#8a7a5a" stroke="#2a1f0e" stroke-width="1.5"/>
+  <rect x="940" y="978" width="12" height="144" rx="2" fill="#8a7a5a" stroke="#2a1f0e" stroke-width="1.5"/>
+  <!-- Arch cutouts (visual) -->
+  <ellipse cx="900" cy="990" rx="28" ry="12" fill="#5588cc" opacity="0.5"/>
+  <ellipse cx="900" cy="1110" rx="28" ry="12" fill="#5588cc" opacity="0.5"/>
+  <!-- Bridge label -->
+  <text x="900" y="972" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="14" fill="#2a1f0e" font-weight="700" opacity="0.85">THE BRIDGE</text>
+  <!-- Repaired 17× worn stone texture dots -->
+  <circle cx="862" cy="1030" r="2" fill="#6a5a3a" opacity="0.35"/>
+  <circle cx="875" cy="1050" r="1.5" fill="#6a5a3a" opacity="0.3"/>
+  <circle cx="920" cy="1015" r="2" fill="#6a5a3a" opacity="0.3"/>
+  <circle cx="938" cy="1065" r="1.5" fill="#6a5a3a" opacity="0.25"/>
+  <!-- BRIDGE MAINTENANCE DEPOT — west bank, south of bridge -->
+  <rect x="790" y="1160" width="60" height="44" rx="2" fill="#b8a878" stroke="#2a1f0e" stroke-width="1.2"/>
+  <polygon points="788,1162 852,1162 820,1144" fill="#7a5a2a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="808" y="1178" width="12" height="22" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="820" y="1218" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.75">Depot</text>
+  <!-- TOLL COLLECTION POINT — north end of bridge, east side -->
+  <rect x="958" y="988" width="36" height="28" rx="2" fill="#c8b878" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="956,990 996,990 976,976" fill="#8a6a2a" stroke="#2a1f0e" stroke-width="1"/>
+  <text x="976" y="1032" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.72">Toll</text>
+  <!-- RIVERSIDE MOORING POSTS / SMALL DOCK — east bank, Mirrenflow -->
+  <!-- Dock platform -->
+  <rect x="1050" y="1060" width="80" height="28" rx="2" fill="#8a7050" stroke="#2a1f0e" stroke-width="1.2"/>
+  <rect x="1060" y="1088" width="8" height="18" rx="1" fill="#6a5030" stroke="#2a1f0e" stroke-width="0.8"/>
+  <rect x="1084" y="1088" width="8" height="18" rx="1" fill="#6a5030" stroke="#2a1f0e" stroke-width="0.8"/>
+  <rect x="1108" y="1088" width="8" height="18" rx="1" fill="#6a5030" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="1090" y="1122" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.68">Dock</text>
+  <!-- ══ OFFICIAL AND INSTITUTIONAL ══ -->
+  <!-- THE FORMERY OFFICE — west bank, north of road, predates everything -->
+  <!-- Main building -->
+  <rect x="560" y="740" width="100" height="78" rx="3" fill="#c8a86a" stroke="#2a1f0e" stroke-width="1.8"/>
+  <polygon points="556,744 664,744 610,714" fill="#8a5a2a" stroke="#2a1f0e" stroke-width="1.3"/>
+  <!-- Door -->
+  <rect x="601" y="782" width="18" height="32" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="1"/>
+  <!-- Windows -->
+  <rect x="566" y="752" width="18" height="14" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.9"/>
+  <rect x="636" y="752" width="18" height="14" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Formery seal -->
+  <circle cx="610" cy="728" r="8" fill="#2a1f0e" opacity="0.28"/>
+  <text x="610" y="732" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="7" fill="#f5ead4" font-weight="700">F</text>
+  <!-- Worker cottages near Formery (3) -->
+  <rect x="468" y="748" width="52" height="38" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="466,750 522,750 494,734" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="487" y="764" width="10" height="20" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <rect x="468" y="804" width="44" height="34" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="466,806 514,806 490,792" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="480" y="820" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <rect x="520" y="804" width="44" height="34" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="518,806 566,806 542,792" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="532" y="820" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="610" y="836" text-anchor="middle" font-family="'Cinzel Decorative',Georgia,serif" font-size="13" fill="#2a1f0e" font-weight="700" opacity="0.88">The Formery</text>
+  <!-- THE WANDERKEEP REST STATION — north bank, east of bridge -->
+  <rect x="1000" y="740" width="110" height="84" rx="3" fill="#8aaa6a" stroke="#2a1f0e" stroke-width="1.8"/>
+  <polygon points="996,744 1114,744 1055,712" fill="#4a7a2a" stroke="#2a1f0e" stroke-width="1.3"/>
+  <rect x="1047" y="782" width="18" height="34" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1006" y="752" width="18" height="14" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.9"/>
+  <rect x="1082" y="752" width="18" height="14" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Wanderkeep monitoring garden — attached north -->
+  <rect x="1010" y="690" width="90" height="48" rx="4" fill="#6a9a4a" stroke="#2a1f0e" stroke-width="1" opacity="0.7"/>
+  <circle cx="1028" cy="714" r="6" fill="#4a7a2a" opacity="0.8"/>
+  <circle cx="1048" cy="710" r="5" fill="#4a7a2a" opacity="0.75"/>
+  <circle cx="1068" cy="716" r="6" fill="#4a7a2a" opacity="0.8"/>
+  <circle cx="1088" cy="712" r="5" fill="#4a7a2a" opacity="0.75"/>
+  <!-- Worker cottages near Wanderkeep (2) -->
+  <rect x="1124" y="748" width="44" height="34" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1122,750 1170,750 1146,736" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1138" y="764" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <rect x="1124" y="794" width="44" height="34" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1122,796 1170,796 1146,782" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1138" y="810" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="1055" y="840" text-anchor="middle" font-family="'Cinzel Decorative',Georgia,serif" font-size="13" fill="#2a1f0e" font-weight="700" opacity="0.88">Wanderkeep</text>
+  <!-- COLOR READER — NORRA THATCH — east bank, above tallow shop -->
+  <!-- Tallow shop (ground floor) -->
+  <rect x="1280" y="1140" width="72" height="54" rx="2" fill="#c8b878" stroke="#2a1f0e" stroke-width="1.3"/>
+  <polygon points="1278,1142 1354,1142 1316,1122" fill="#7a5a2a" stroke="#2a1f0e" stroke-width="1.1"/>
+  <rect x="1306" y="1164" width="14" height="26" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Norra's room above (indicated by upper floor line) -->
+  <rect x="1286" y="1128" width="60" height="16" rx="1" fill="#d4c890" stroke="#2a1f0e" stroke-width="0.8" opacity="0.7"/>
+  <text x="1316" y="1212" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.72">Tallow &amp; Norra</text>
+  <!-- ══ LODGING ══ -->
+  <!-- FORRES BROTHERS INN — west bank, south of road — best breakfast in Caparia -->
+  <rect x="440" y="1160" width="140" height="100" rx="3" fill="#d4a06a" stroke="#2a1f0e" stroke-width="2"/>
+  <polygon points="436,1164 584,1164 510,1128" fill="#8a4a1a" stroke="#2a1f0e" stroke-width="1.5"/>
+  <rect x="500" y="1212" width="20" height="44" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="1.2"/>
+  <rect x="448" y="1174" width="22" height="16" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="480" y="1174" width="22" height="16" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="548" y="1174" width="22" height="16" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="1"/>
+  <!-- Inn sign -->
+  <rect x="488" y="1148" width="44" height="16" rx="2" fill="#2a1f0e" opacity="0.8"/>
+  <text x="510" y="1160" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="8" fill="#f0b429" font-weight="700">FORRES INN</text>
+  <!-- Common room attached east -->
+  <rect x="582" y="1174" width="72" height="62" rx="2" fill="#c49058" stroke="#2a1f0e" stroke-width="1.3"/>
+  <polygon points="580,1176 656,1176 618,1158" fill="#7a4020" stroke="#2a1f0e" stroke-width="1"/>
+  <text x="510" y="1278" text-anchor="middle" font-family="'Cinzel Decorative',Georgia,serif" font-size="13" fill="#2a1f0e" font-weight="700" opacity="0.9">Forres Brothers</text>
+  <!-- SECOND-OLDEST INN — east bank, has message board on east wall -->
+  <rect x="1060" y="1160" width="110" height="80" rx="3" fill="#c4946a" stroke="#2a1f0e" stroke-width="1.8"/>
+  <polygon points="1056,1164 1174,1164 1115,1136" fill="#7a4a2a" stroke="#2a1f0e" stroke-width="1.3"/>
+  <rect x="1106" y="1196" width="18" height="38" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1066" y="1174" width="18" height="14" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.9"/>
+  <rect x="1146" y="1174" width="18" height="14" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Message board on east wall -->
+  <rect x="1172" y="1172" width="32" height="38" rx="1" fill="#e8d0a0" stroke="#2a1f0e" stroke-width="1.2"/>
+  <line x1="1176" y1="1180" x2="1200" y2="1180" stroke="#2a1f0e" stroke-width="0.8" opacity="0.5"/>
+  <line x1="1176" y1="1188" x2="1200" y2="1188" stroke="#2a1f0e" stroke-width="0.8" opacity="0.5"/>
+  <line x1="1176" y1="1196" x2="1200" y2="1196" stroke="#2a1f0e" stroke-width="0.8" opacity="0.5"/>
+  <line x1="1176" y1="1204" x2="1200" y2="1204" stroke="#2a1f0e" stroke-width="0.8" opacity="0.5"/>
+  <text x="1192" y="1222" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.8">Board</text>
+  <text x="1115" y="1258" text-anchor="middle" font-family="'Cinzel Decorative',Georgia,serif" font-size="12" fill="#2a1f0e" font-weight="700" opacity="0.82">The Old Inn</text>
+  <!-- OLD WAYHOUSE — east bank, further east — cheaper, quieter -->
+  <rect x="1380" y="1160" width="88" height="64" rx="2" fill="#b88858" stroke="#2a1f0e" stroke-width="1.5"/>
+  <polygon points="1378,1162 1470,1162 1424,1138" fill="#6a3a18" stroke="#2a1f0e" stroke-width="1.1"/>
+  <rect x="1415" y="1188" width="14" height="32" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.9"/>
+  <rect x="1386" y="1170" width="16" height="12" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.8"/>
+  <rect x="1444" y="1170" width="16" height="12" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="1424" y="1242" text-anchor="middle" font-family="'Cinzel Decorative',Georgia,serif" font-size="12" fill="#2a1f0e" font-weight="700" opacity="0.75">Old Wayhouse</text>
+  <!-- ══ FOOD AND DRINK ══ -->
+  <!-- ZIPPAN BAKERY — east bank, morning rolls, deep craft pride -->
+  <rect x="1240" y="1160" width="64" height="50" rx="2" fill="#d4bc7a" stroke="#2a1f0e" stroke-width="1.3"/>
+  <polygon points="1238,1162 1306,1162 1272,1142" fill="#8a6a2a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1262" y="1182" width="12" height="24" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="1272" y="1228" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.82">Bakery</text>
+  <!-- RIVER-CATCH STALL — east bank, dawn only -->
+  <rect x="1060" y="1260" width="48" height="32" rx="1" fill="#c0d8c0" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1057,1262 1111,1262 1084,1248" fill="#5a8a5a" stroke="#2a1f0e" stroke-width="1"/>
+  <text x="1084" y="1306" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.72">Fish Stall</text>
+  <!-- TWO FOOD STALLS — bridge approach, both sides (Hearthbound + Solmeri feuding) -->
+  <!-- West side stall — yellow awning (Hearthbound) -->
+  <rect x="810" y="960" width="44" height="28" rx="1" fill="#e8c060" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="807,960 856,960 831,946" fill="#c4a020" stroke="#2a1f0e" stroke-width="1"/>
+  <line x1="831" y1="946" x2="831" y2="940" stroke="#2a1f0e" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- East side stall — red awning (Solmeri) -->
+  <rect x="958" y="960" width="44" height="28" rx="1" fill="#d06060" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="955,960 1004,960 979,946" fill="#b04040" stroke="#2a1f0e" stroke-width="1"/>
+  <line x1="979" y1="946" x2="979" y2="940" stroke="#2a1f0e" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="900" y="936" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.82">Market Stalls</text>
+  <!-- LOCAL BREWERY — west bank residential cluster -->
+  <rect x="440" y="1300" width="80" height="58" rx="2" fill="#a87840" stroke="#2a1f0e" stroke-width="1.5"/>
+  <polygon points="438,1302 522,1302 480,1280" fill="#6a4820" stroke="#2a1f0e" stroke-width="1.1"/>
+  <rect x="471" y="1326" width="14" height="28" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Chimney -->
+  <rect x="494" y="1270" width="10" height="28" rx="1" fill="#8a6a3a" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="480" y="1374" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.75">Brewery</text>
+  <!-- SPICE AND DRY GOODS STALL — east bank, semi-permanent Solmeri -->
+  <rect x="1380" y="1260" width="64" height="44" rx="2" fill="#c8a070" stroke="#2a1f0e" stroke-width="1.2"/>
+  <polygon points="1378,1262 1446,1262 1412,1244" fill="#8a5a28" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1404" y="1280" width="12" height="22" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="1412" y="1320" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.72">Spice &amp; Goods</text>
+  <!-- ══ TRADE AND COMMERCE ══ -->
+  <!-- GENERAL SUPPLY STORE — east bank, trail provisions -->
+  <rect x="1180" y="1260" width="72" height="52" rx="2" fill="#c4a870" stroke="#2a1f0e" stroke-width="1.3"/>
+  <polygon points="1178,1262 1254,1262 1216,1242" fill="#7a5a28" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1206" y="1282" width="14" height="26" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.9"/>
+  <rect x="1184" y="1270" width="14" height="10" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1232" y="1270" width="14" height="10" rx="1" fill="#f0e8c0" stroke="#2a1f0e" stroke-width="0.7"/>
+  <text x="1216" y="1328" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.72">Supply</text>
+  <!-- STABLE AND FARRIER — south of road, west bank — large, well-run -->
+  <rect x="560" y="1340" width="160" height="100" rx="3" fill="#c4a06a" stroke="#2a1f0e" stroke-width="1.8"/>
+  <polygon points="558,1342 722,1342 640,1308" fill="#7a5a28" stroke="#2a1f0e" stroke-width="1.3"/>
+  <!-- Stall divisions -->
+  <line x1="600" y1="1342" x2="600" y2="1440" stroke="#2a1f0e" stroke-width="1" opacity="0.35"/>
+  <line x1="640" y1="1342" x2="640" y2="1440" stroke="#2a1f0e" stroke-width="1" opacity="0.35"/>
+  <line x1="680" y1="1342" x2="680" y2="1440" stroke="#2a1f0e" stroke-width="1" opacity="0.35"/>
+  <!-- Paddock fence -->
+  <rect x="560" y="1442" width="160" height="60" rx="0" fill="none" stroke="#7a5a28" stroke-width="2" stroke-dasharray="10,6"/>
+  <text x="640" y="1374" text-anchor="middle" font-family="'Cinzel Decorative',Georgia,serif" font-size="13" fill="#2a1f0e" font-weight="700" opacity="0.85">Stable &amp; Farrier</text>
+  <!-- PIGMENT AND DYE STALL — small, seasonal, east bank -->
+  <rect x="1180" y="1340" width="52" height="38" rx="1" fill="#c8a0c8" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1178,1342 1234,1342 1206,1326" fill="#8a608a" stroke="#2a1f0e" stroke-width="1"/>
+  <text x="1206" y="1394" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.70">Pigment</text>
+  <!-- CARTOGRAPHER TABLE — Verdathi resident, outside Second-Oldest Inn most mornings -->
+  <rect x="1060" y="1110" width="44" height="30" rx="1" fill="#e0d4a0" stroke="#2a1f0e" stroke-width="1"/>
+  <!-- Map scroll on table -->
+  <rect x="1064" y="1114" width="36" height="22" rx="1" fill="#f0e8c0" stroke="#8a6a2a" stroke-width="0.7"/>
+  <line x1="1068" y1="1120" x2="1096" y2="1120" stroke="#8a6a2a" stroke-width="0.6" opacity="0.5"/>
+  <line x1="1068" y1="1126" x2="1096" y2="1126" stroke="#8a6a2a" stroke-width="0.6" opacity="0.5"/>
+  <text x="1082" y="1156" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.65">Map Table</text>
+  <!-- ══ CRAFTS AND SERVICES ══ -->
+  <!-- BLACKSMITH AND REPAIR FORGE — near stable, service cluster -->
+  <rect x="730" y="1340" width="80" height="62" rx="2" fill="#8a8078" stroke="#2a1f0e" stroke-width="1.5"/>
+  <polygon points="728,1342 812,1342 770,1320" fill="#5a4830" stroke="#2a1f0e" stroke-width="1.1"/>
+  <rect x="760" y="1368" width="14" height="30" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Chimney + forge glow -->
+  <rect x="778" y="1308" width="10" height="30" rx="1" fill="#6a5838" stroke="#2a1f0e" stroke-width="0.8"/>
+  <circle cx="783" cy="1306" r="5" fill="#d04820" opacity="0.55"/>
+  <text x="770" y="1420" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.75">Forge</text>
+  <!-- ROPE AND NET MAKER — west bank, river adjacent -->
+  <rect x="660" y="1150" width="68" height="50" rx="2" fill="#c4b07a" stroke="#2a1f0e" stroke-width="1.2"/>
+  <polygon points="658,1152 730,1152 694,1134" fill="#7a5a28" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="685" y="1172" width="12" height="24" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="694" y="1216" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.72">Rope &amp; Net</text>
+  <!-- TAILOR AND MENDER — east bank, fast repairs -->
+  <rect x="1380" y="1340" width="60" height="44" rx="2" fill="#c8b0a0" stroke="#2a1f0e" stroke-width="1.2"/>
+  <polygon points="1378,1342 1442,1342 1410,1326" fill="#8a6a58" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1402" y="1360" width="12" height="22" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.8"/>
+  <text x="1410" y="1400" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.70">Tailor</text>
+  <!-- HEALER HOUSE — near Wanderkeep, north bank, Glimmerkin practitioner -->
+  <rect x="1180" y="740" width="72" height="56" rx="2" fill="#a8c898" stroke="#2a1f0e" stroke-width="1.3"/>
+  <polygon points="1178,742 1254,742 1216,720" fill="#5a8a4a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1207" y="768" width="14" height="28" rx="1" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.9"/>
+  <!-- Healer cross symbol -->
+  <line x1="1216" y1="730" x2="1216" y2="742" stroke="#4a8a3a" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="1210" y1="736" x2="1222" y2="736" stroke="#4a8a3a" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="1216" y="814" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="11" fill="#2a1f0e" font-weight="700" opacity="0.75">Healer</text>
+  <!-- ══ SPIRITUAL AND CULTURAL ══ -->
+  <!-- BRIGHTCREED ROADSIDE SHRINE — south bank, river-facing, more candles than usual -->
+  <rect x="840" y="1140" width="52" height="38" rx="2" fill="#f0e8c0" stroke="#c89040" stroke-width="1.8"/>
+  <polygon points="838,1142 894,1142 866,1124" fill="#c89040" stroke="#c89040" stroke-width="1.2"/>
+  <!-- Candles -->
+  <line x1="852" y1="1148" x2="852" y2="1158" stroke="#c8c050" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="852" cy="1146" r="2.5" fill="#f0a020" opacity="0.85" class="shrine-candle"/>
+  <line x1="866" y1="1146" x2="866" y2="1158" stroke="#c8c050" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="866" cy="1144" r="2.5" fill="#f0a020" opacity="0.85" class="shrine-candle"/>
+  <line x1="880" y1="1148" x2="880" y2="1158" stroke="#c8c050" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="880" cy="1146" r="2.5" fill="#f0a020" opacity="0.85" class="shrine-candle"/>
+  <text x="866" y="1192" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.75">Brightcreed Shrine</text>
+  <!-- RIVER JUNCTION OVERLOOK — worn stone terrace, currently too quiet -->
+  <!-- Worn stone terrace near junction -->
+  <rect x="948" y="1112" width="60" height="20" rx="3" fill="#9a8a6a" stroke="#2a1f0e" stroke-width="1" opacity="0.7"/>
+  <rect x="958" y="1132" width="40" height="14" rx="2" fill="#8a7a5a" stroke="#2a1f0e" stroke-width="0.8" opacity="0.6"/>
+  <text x="978" y="1162" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="10" fill="#2a1f0e" font-weight="700" opacity="0.65">Overlook</text>
+  <!-- SEASONAL FESTIVAL CLEARING — east bank flat stretch, currently dark -->
+  <rect x="1480" y="1060" width="160" height="120" rx="6" fill="#c8d4a0" stroke="#8a9a5a" stroke-width="1.5" stroke-dasharray="12,6" opacity="0.55"/>
+  <!-- "Currently dark" indicator — desaturated -->
+  <rect x="1480" y="1060" width="160" height="120" rx="6" fill="#8a8878" opacity="0.18"/>
+  <text x="1560" y="1128" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="12" fill="#5a5848" font-weight="700" opacity="0.65">Festival Ground</text>
+  <text x="1560" y="1144" text-anchor="middle" font-family="'Courier New',Courier,monospace" font-size="9" fill="#5a5848" font-weight="700" opacity="0.50">(dark this season)</text>
+  <!-- ══ NATURAL AND ENVIRONMENTAL ══ -->
+  <!-- GERALD'S TERRITORY — gravel bank beneath bridge (informally sacred) -->
+  <ellipse cx="900" cy="1062" rx="48" ry="22" fill="#4a6a3a" opacity="0.28"/>
+  <!-- Gravel texture dots -->
+  <circle cx="882" cy="1060" r="2" fill="#6a5a3a" opacity="0.45"/>
+  <circle cx="895" cy="1066" r="1.5" fill="#6a5a3a" opacity="0.40"/>
+  <circle cx="912" cy="1058" r="2" fill="#6a5a3a" opacity="0.38"/>
+  <circle cx="906" cy="1070" r="1.5" fill="#6a5a3a" opacity="0.35"/>
+  <!-- Gerald's faded glow — dim, not gone -->
+  <circle cx="900" cy="1062" r="18" fill="#4ade80" opacity="0.06"/>
+  <circle cx="900" cy="1062" r="10" fill="#4ade80" opacity="0.08"/>
+  <!-- WILLOW STANDS — Mirrenflow bank where Bumble Frogs nest, currently silent -->
+  <!-- West bank willows -->
+  <ellipse cx="720" cy="1002" rx="44" ry="28" fill="#7aaa4a" opacity="0.55" transform="rotate(-8,720,1002)"/>
+  <ellipse cx="700" cy="1018" rx="32" ry="20" fill="#6a9a3a" opacity="0.48" transform="rotate(-12,700,1018)"/>
+  <!-- East bank willows -->
+  <ellipse cx="1120" cy="1002" rx="44" ry="28" fill="#7aaa4a" opacity="0.55" transform="rotate(8,1120,1002)"/>
+  <ellipse cx="1140" cy="1018" rx="32" ry="20" fill="#6a9a3a" opacity="0.48" transform="rotate(12,1140,1018)"/>
+  <!-- "Silent" indicator — grey tint over willows -->
+  <ellipse cx="720" cy="1008" rx="48" ry="30" fill="#8a8878" opacity="0.22"/>
+  <ellipse cx="1120" cy="1008" rx="48" ry="30" fill="#8a8878" opacity="0.22"/>
+  <!-- ══ RESIDENTIAL — north bank cluster ══ -->
+  <rect x="980"  y="620" width="52" height="38" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="978,622 1034,622 1006,606" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="998"  y="638" width="10" height="18" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1044" y="628" width="48" height="36" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1042,630 1094,630 1068,614" fill="#8a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1059" y="644" width="10" height="18" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1104" y="618" width="52" height="38" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1102,620 1158,620 1130,604" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1122" y="636" width="10" height="18" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1168" y="626" width="44" height="34" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1166,628 1214,628 1190,612" fill="#8a5a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1181" y="642" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="980"  y="670" width="44" height="32" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="978,672 1026,672 1002,656" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="993"  y="686" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1044" y="674" width="44" height="32" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1042,676 1090,676 1066,660" fill="#8a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1057" y="690" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1104" y="666" width="44" height="32" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1102,668 1148,668 1125,652" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1117" y="682" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1224" y="622" width="44" height="34" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1222,624 1270,624 1246,608" fill="#8a5a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1237" y="638" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <!-- ══ RESIDENTIAL — east bank cluster ══ -->
+  <rect x="1060" y="1310" width="48" height="36" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1058,1312 1110,1312 1084,1296" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1076" y="1328" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1118" y="1318" width="44" height="34" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1116,1320 1164,1320 1140,1304" fill="#8a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1131" y="1334" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1480" y="1200" width="48" height="36" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1478,1202 1530,1202 1504,1186" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1496" y="1218" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1540" y="1208" width="44" height="34" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1538,1210 1584,1210 1561,1194" fill="#8a5a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1553" y="1224" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1480" y="1252" width="44" height="32" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1478,1254 1524,1254 1501,1238" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1493" y="1268" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1540" y="1254" width="44" height="32" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1538,1256 1584,1256 1561,1240" fill="#8a5a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1553" y="1270" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1600" y="1206" width="48" height="36" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1598,1208 1650,1208 1624,1192" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1616" y="1224" width="10" height="16" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="1600" y="1254" width="44" height="32" rx="2" fill="#c8a468" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="1598,1256 1646,1256 1622,1240" fill="#8a5a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="1613" y="1270" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <!-- Bridge depot worker cottages -->
+  <rect x="780"  y="1060" width="44" height="32" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="778,1062 826,1062 802,1046" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="793"  y="1076" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <rect x="984"  y="1060" width="44" height="32" rx="2" fill="#d4b07a" stroke="#2a1f0e" stroke-width="1"/>
+  <polygon points="982,1062 1030,1062 1006,1046" fill="#7a4a1a" stroke="#2a1f0e" stroke-width="1"/>
+  <rect x="997"  y="1076" width="10" height="14" rx="0" fill="#3a2810" stroke="#2a1f0e" stroke-width="0.7"/>
+  <!-- ══ FORESTS ══ -->
+  <ellipse cx="120"  cy="240"  rx="140" ry="100" fill="url(#p-forest)" opacity="0.70" transform="rotate(-15,120,240)"/>
+  <ellipse cx="220"  cy="160"  rx="100" ry="70"  fill="url(#p-forest)" opacity="0.58" transform="rotate(8,220,160)"/>
+  <ellipse cx="80"   cy="380"  rx="80"  ry="130" fill="url(#p-forest)" opacity="0.52" transform="rotate(6,80,380)"/>
+  <ellipse cx="2280" cy="240"  rx="130" ry="90"  fill="url(#p-forest)" opacity="0.60" transform="rotate(12,2280,240)"/>
+  <ellipse cx="2200" cy="160"  rx="90"  ry="60"  fill="url(#p-forest)" opacity="0.46" transform="rotate(-8,2200,160)"/>
+  <ellipse cx="120"  cy="1560" rx="130" ry="90"  fill="url(#p-forest)" opacity="0.62" transform="rotate(-12,120,1560)"/>
+  <ellipse cx="220"  cy="1680" rx="90"  ry="60"  fill="url(#p-forest)" opacity="0.46" transform="rotate(9,220,1680)"/>
+  <ellipse cx="2280" cy="1560" rx="120" ry="85"  fill="url(#p-forest)" opacity="0.55" transform="rotate(14,2280,1560)"/>
+  <ellipse cx="600"  cy="80"   rx="120" ry="55"  fill="url(#p-forest)" opacity="0.42" transform="rotate(-5,600,80)"/>
+  <ellipse cx="1400" cy="80"   rx="110" ry="50"  fill="url(#p-forest)" opacity="0.38" transform="rotate(5,1400,80)"/>
+  <ellipse cx="600"  cy="1720" rx="120" ry="55"  fill="url(#p-forest)" opacity="0.42" transform="rotate(5,600,1720)"/>
+  <ellipse cx="1600" cy="1720" rx="110" ry="50"  fill="url(#p-forest)" opacity="0.38" transform="rotate(-5,1600,1720)"/>
+  <ellipse cx="2360" cy="800"  rx="50"  ry="110" fill="url(#p-forest)" opacity="0.40" transform="rotate(4,2360,800)"/>
+  <ellipse cx="2360" cy="1200" rx="50"  ry="110" fill="url(#p-forest)" opacity="0.38" transform="rotate(-4,2360,1200)"/>
+  <!-- ══ RIVER NAME LABELS ══ -->
+  <text x="1600" y="1044" font-family="'Courier New',Courier,monospace" font-size="22" fill="#c4a040" letter-spacing="3" opacity="0.72" text-anchor="middle">MIRRENFLOW</text>
+  <text x="900"  y="400"  font-family="'Courier New',Courier,monospace" font-size="22" fill="#3a6aaa" letter-spacing="3" opacity="0.72" text-anchor="middle" transform="rotate(90,900,400)">TUMBLERUN</text>
+  <!-- ══ COMPASS ROSE — final ══ -->
+  <g transform="translate(2260, 140)">
+    <circle cx="0" cy="0" r="64" fill="#e8dfc8" stroke="#0b0e16" stroke-width="2.5" opacity="0.95"/>
+    <circle cx="0" cy="0" r="56" fill="none" stroke="#c4a040" stroke-width="1" opacity="0.5"/>
+    <polygon points="0,-52 8,0 0,12 -8,0" fill="#0b0e16"/>
+    <polygon points="0,52 8,0 0,-12 -8,0" fill="#9a8a6a"/>
+    <polygon points="52,0 0,8 -12,0 0,-8" fill="#9a8a6a"/>
+    <polygon points="-52,0 0,8 12,0 0,-8" fill="#9a8a6a"/>
+    <line x1="38"  y1="-38"  x2="43"  y2="-43"  stroke="#0b0e16" stroke-width="1.5"/>
+    <line x1="38"  y1="38"   x2="43"  y2="43"   stroke="#0b0e16" stroke-width="1.5"/>
+    <line x1="-38" y1="38"   x2="-43" y2="43"   stroke="#0b0e16" stroke-width="1.5"/>
+    <line x1="-38" y1="-38"  x2="-43" y2="-43"  stroke="#0b0e16" stroke-width="1.5"/>
+    <text x="0"   y="-60" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16">N</text>
+    <text x="0"   y="74"  text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="14" font-weight="700" fill="#6a5a3a">S</text>
+    <text x="68"  y="5"   text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="14" font-weight="700" fill="#6a5a3a">E</text>
+    <text x="-68" y="5"   text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="14" font-weight="700" fill="#6a5a3a">W</text>
+    <circle cx="0" cy="0" r="4" fill="#f0b429"/>
+  </g>
+  <!-- ══ TOWN BOUNDARY — final organic shape ══ -->
+  <path d="M 380 340 C 480 260 680 240 880 248 C 980 252 1060 256 1160 248 C 1360 240 1520 280 1640 340 C 1760 400 1820 500 1820 620 C 1820 740 1780 860 1760 980 C 1740 1100 1740 1140 1760 1240 C 1780 1340 1800 1440 1760 1520 C 1720 1600 1620 1620 1480 1620 C 1340 1620 1200 1600 1060 1590 C 920 1580 780 1580 640 1570 C 500 1560 380 1530 320 1460 C 260 1390 260 1280 280 1160 C 300 1040 320 960 300 860 C 280 760 280 640 320 520 C 348 434 360 376 380 340 Z"
+        fill="none" stroke="#8a6a1a" stroke-width="3.5" stroke-dasharray="22 10" opacity="0.38"/>
+  <!-- ══ INTERACTIVE PIN GROUPS (repositioned from old 900×700 map) ══ -->
+  <!-- Preserved exactly — only cx/cy values updated to new scale        -->
+  <!-- PROMPT 6 will reposition all 7 pins to final coordinates          -->
+  <!-- For now pins are placed at scaled equivalents of old positions     -->
+  <!-- PIN: The Bridge — old cx=450,cy=373 → new cx=900,cy=1000 -->
+  <g data-entity-id="gobblewump-bridge" class="map-pin" style="cursor:pointer;">
+    <circle cx="900" cy="1000" r="28" fill="#0b0e16" stroke="#f0b429" stroke-width="3" opacity="0.92"/>
+    <image href="../assets/images/gobblewump-bridge.webp" x="872" y="972" width="56" height="56" clip-path="url(#clip-bridge)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="900" cy="1000" r="28" fill="none" stroke="#f0b429" stroke-width="3"/>
+    <text x="900" y="1042" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">The Bridge</text>
+  </g>
+  <!-- PIN: The Formery — old cx=328,cy=260 → new cx=640,cy=820 -->
+  <g data-entity-id="the-formery" class="map-pin" style="cursor:pointer;">
+    <circle cx="640" cy="820" r="28" fill="#0b0e16" stroke="#f0b429" stroke-width="3" opacity="0.92"/>
+    <image href="../assets/images/formery-office-gobblewump.webp" x="612" y="792" width="56" height="56" clip-path="url(#clip-formery)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="640" cy="820" r="28" fill="none" stroke="#f0b429" stroke-width="3"/>
+    <text x="640" y="862" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">The Formery</text>
+  </g>
+  <!-- PIN: Wanderkeep — old cx=538,cy=235 → new cx=1060,cy=820 -->
+  <g data-entity-id="wanderkeep-rest-station-gobblewump" class="map-pin" style="cursor:pointer;">
+    <circle cx="1060" cy="820" r="28" fill="#0b0e16" stroke="#f0b429" stroke-width="3" opacity="0.92"/>
+    <image href="../assets/images/wanderkeep-rest-station-gobblewump.webp" x="1032" y="792" width="56" height="56" clip-path="url(#clip-wanderkeep)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="1060" cy="820" r="28" fill="none" stroke="#f0b429" stroke-width="3"/>
+    <text x="1060" y="862" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">Wanderkeep</text>
+  </g>
+  <!-- PIN: Pressa Vorn — old cx=560,cy=252 → new cx=1100,cy=840 -->
+  <g data-entity-id="pressa-vorn" class="map-pin" style="cursor:pointer;">
+    <circle cx="1100" cy="840" r="28" fill="#0b0e16" stroke="#f0b429" stroke-width="3" opacity="0.92"/>
+    <image href="../assets/images/pressa-vorn.webp" x="1072" y="812" width="56" height="56" clip-path="url(#clip-pressa)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="1100" cy="840" r="28" fill="none" stroke="#f0b429" stroke-width="3"/>
+    <text x="1100" y="882" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">Pressa Vorn</text>
+  </g>
+  <!-- PIN: Forres Brothers — old cx=358,cy=450 → new cx=540,cy=1180 -->
+  <g data-entity-id="forres-brothers" class="map-pin" style="cursor:pointer;">
+    <circle cx="540" cy="1180" r="28" fill="#0b0e16" stroke="#f0b429" stroke-width="3" opacity="0.92"/>
+    <image href="../assets/images/forres-brothers.webp" x="512" y="1152" width="56" height="56" clip-path="url(#clip-forres)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="540" cy="1180" r="28" fill="none" stroke="#f0b429" stroke-width="3"/>
+    <text x="540" y="1222" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">Forres Brothers</text>
+  </g>
+  <!-- PIN: Gerald — old cx=455,cy=395 → new cx=900,cy=1060 -->
+  <g data-entity-id="gobblewump-gerald" class="map-pin" style="cursor:pointer;">
+    <circle cx="900" cy="1060" r="22" fill="#1a3a2a" opacity="0.55"/>
+    <circle cx="900" cy="1060" r="18" fill="#0b1a12" opacity="0.70"/>
+    <circle cx="900" cy="1060" r="28" fill="#0b0e16" stroke="#4ade80" stroke-width="3" opacity="0.88"/>
+    <image href="../assets/images/gobblewump-gerald.webp" x="872" y="1032" width="56" height="56" clip-path="url(#clip-gerald)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="900" cy="1060" r="28" fill="none" stroke="#4ade80" stroke-width="3"/>
+    <text x="900" y="1102" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">Gerald</text>
+  </g>
+  <!-- PIN: Color Extractor — old cx=610,cy=460 → new cx=1300,cy=1200 -->
+  <g data-entity-id="grusk-field-agent-gobblewump" class="map-pin" style="cursor:pointer;">
+    <circle cx="1300" cy="1200" r="28" fill="#0b0e16" stroke="#cc3333" stroke-width="3" opacity="0.92"/>
+    <image href="../assets/images/grusk-field-agent-gobblewump.webp" x="1272" y="1172" width="56" height="56" clip-path="url(#clip-extractor)" preserveAspectRatio="xMidYMid slice"/>
+    <circle cx="1300" cy="1200" r="28" fill="none" stroke="#cc3333" stroke-width="3"/>
+    <text x="1300" y="1242" text-anchor="middle" font-family="Cinzel Decorative,Georgia,serif" font-size="18" font-weight="700" fill="#0b0e16" stroke="#e8dfc8" stroke-width="3" paint-order="stroke">&#9888; Color Extractor</text>
+  </g>
+</svg>
   </div><!-- /map-canvas -->
   <!-- Border frame with corner ornaments -->
   <div class="map-border-frame" aria-hidden="true">
@@ -564,7 +736,7 @@ window.MAP_CONFIG = {
         <div class="map-scale-tick"></div>
       </div>
       <div class="map-scale-labels">
-        <span>0ft</span><span>20ft</span>
+        <span>0ft</span><span>100ft</span>
       </div>
       <div class="map-scale-note">1 Square = 5ft</div>
     </div>
