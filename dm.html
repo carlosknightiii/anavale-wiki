@@ -2682,6 +2682,7 @@
             <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
             <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
             <button class="scc-tab-btn scc-tab-btn--live" data-scc="live" onclick="sccSwitchPanel('live')">&#9654; Live Session</button>
+            <button class="scc-tab-btn scc-tab-btn--guide" data-scc="fieldguide" onclick="sccSwitchPanel('fieldguide')">&#128214; Field Guide</button>
           </div>
         </div>
         <!-- ── PLAYER BAR (always visible) ─── -->
@@ -3102,6 +3103,26 @@
             </div><!-- /right -->
           </div><!-- /scc-live-layout -->
         </div><!-- /scc-panel-live -->
+        <!-- &#9553;&#9553; PANEL: FIELD GUIDE &#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553; -->
+        <div class="scc-panel" id="scc-panel-fieldguide">
+          <div class="scc-fg-layout">
+            <!-- search + filter bar -->
+            <div class="scc-fg-bar">
+              <input type="text" class="scc-input scc-fg-search" id="scc-fg-search" placeholder="Search Field Guide&#x2026;" oninput="sccFgFilter(this.value)" autocomplete="off">
+              <div class="scc-fg-filters" id="scc-fg-filters">
+                <button class="scc-fg-filter-btn active" data-fg="all"       onclick="sccFgSetFilter('all',this)">All</button>
+                <button class="scc-fg-filter-btn" data-fg="npcs"      onclick="sccFgSetFilter('npcs',this)">NPCs</button>
+                <button class="scc-fg-filter-btn" data-fg="creatures" onclick="sccFgSetFilter('creatures',this)">Creatures</button>
+                <button class="scc-fg-filter-btn" data-fg="locations" onclick="sccFgSetFilter('locations',this)">Locations</button>
+                <button class="scc-fg-filter-btn" data-fg="items"     onclick="sccFgSetFilter('items',this)">Items</button>
+                <button class="scc-fg-filter-btn" data-fg="dm"        onclick="sccFgSetFilter('dm',this)">DM Notes</button>
+              </div>
+            </div>
+            <div class="scc-fg-body" id="scc-fg-body">
+              <div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>
+            </div>
+          </div>
+        </div><!-- /scc-panel-fieldguide -->
       </div><!-- /form-session -->
 
 
@@ -5825,6 +5846,79 @@ function showDMToast(msg, type) {
 .scc-live-timer-display { font-family: var(--font-mono); font-size: 1.4rem; color: var(--dm-gold); letter-spacing: 0.05em; flex: 1; }
 /* Quick actions */
 .scc-live-quick-actions { display: flex; flex-direction: column; }
+/* ── Field Guide Panel ── */
+#scc-panel-fieldguide { display: flex; flex-direction: column; overflow: hidden; }
+.scc-tab-btn--guide { background: rgba(167,243,208,0.08); border-color: rgba(167,243,208,0.3); color: #6ee7b7; }
+.scc-tab-btn--guide.active { background: rgba(167,243,208,0.16); border-color: rgba(167,243,208,0.6); color: #a7f3d0; }
+.scc-fg-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.scc-fg-bar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--scc-border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.scc-fg-search { flex: 1; min-width: 200px; max-width: 340px; }
+.scc-fg-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.scc-fg-filter-btn {
+  padding: 0.25rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; transition: var(--dm-transition); white-space: nowrap;
+}
+.scc-fg-filter-btn:hover { color: var(--dm-text); border-color: var(--dm-border-mid); }
+.scc-fg-filter-btn.active { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
+.scc-fg-body { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.scc-fg-section { border: 1px solid var(--scc-border); border-radius: var(--dm-radius); overflow: hidden; }
+.scc-fg-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 1rem; background: var(--scc-surface-mid);
+  cursor: pointer; user-select: none; gap: 0.5rem;
+}
+.scc-fg-section-header:hover { background: var(--scc-surface-high); }
+.scc-fg-section-title { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-gold); letter-spacing: 0.04em; }
+.scc-fg-section-count { font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text-muted); }
+.scc-fg-section-chevron { font-size: 0.7rem; color: var(--dm-text-muted); transition: transform 0.2s; }
+.scc-fg-section.open .scc-fg-section-chevron { transform: rotate(90deg); }
+.scc-fg-section-body { display: none; padding: 0.5rem 0; }
+.scc-fg-section.open .scc-fg-section-body { display: block; }
+.scc-fg-card {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.6rem 1rem; border-bottom: 1px solid var(--scc-border);
+  cursor: pointer; transition: background 0.15s;
+}
+.scc-fg-card:last-child { border-bottom: none; }
+.scc-fg-card:hover { background: var(--scc-surface-mid); }
+.scc-fg-card-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; width: 1.6rem; text-align: center; }
+.scc-fg-card-body { flex: 1; min-width: 0; }
+.scc-fg-card-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); line-height: 1.3; }
+.scc-fg-card-sub { font-family: var(--font-sans); font-size: 0.74rem; color: var(--dm-text-muted); margin-top: 0.15rem; line-height: 1.4; }
+.scc-fg-card-tag {
+  display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px;
+  font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; margin-left: 0.4rem;
+  background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold);
+}
+.scc-fg-detail {
+  padding: 0.75rem 1rem; background: var(--scc-surface);
+  border-top: 1px solid var(--scc-border); display: none;
+}
+.scc-fg-detail.open { display: block; }
+.scc-fg-detail-section { margin-bottom: 0.75rem; }
+.scc-fg-detail-label { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dm-text-muted); margin-bottom: 0.2rem; }
+.scc-fg-detail-text { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.55; white-space: pre-wrap; }
+.scc-fg-dm-block { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); border-radius: var(--dm-radius-sm); padding: 0.6rem 0.75rem; margin-top: 0.5rem; }
+.scc-fg-dm-label { font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dm-gold); margin-bottom: 0.3rem; }
+.scc-fg-dm-text { font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text); line-height: 1.55; white-space: pre-wrap; }
+.scc-fg-read-aloud { background: rgba(134,239,172,0.06); border-left: 3px solid rgba(134,239,172,0.4); padding: 0.6rem 0.75rem; margin-top: 0.5rem; border-radius: 0 var(--dm-radius-sm) var(--dm-radius-sm) 0; }
+.scc-fg-read-aloud-label { font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #4ade80; margin-bottom: 0.3rem; }
+.scc-fg-read-aloud-text { font-family: var(--font-sans); font-size: 0.8rem; font-style: italic; color: var(--dm-text); line-height: 1.6; white-space: pre-wrap; }
+.scc-fg-empty { font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text-muted); text-align: center; padding: 2rem; font-style: italic; }
+.scc-fg-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.4rem; margin: 0.5rem 0; }
+.scc-fg-stat-cell { text-align: center; padding: 0.3rem; background: var(--scc-surface-mid); border-radius: var(--dm-radius-sm); }
+.scc-fg-stat-val { font-family: var(--font-headers); font-size: 0.95rem; color: var(--dm-text); }
+.scc-fg-stat-label { font-family: var(--font-sans); font-size: 0.55rem; color: var(--dm-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 /* ── Notes Panel ── */
 .scc-notes-grid {
   display: grid;
@@ -10086,6 +10180,204 @@ function sccSwitchPanel(name) {
     p.classList.toggle('active', p.id === 'scc-panel-' + name);
   });
   if (name === 'live') { sccRenderLivePanel(); }
+  if (name === 'fieldguide') { sccRenderFieldGuide(); }
+}
+// &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+var SCC_FG_DATA    = null;   // cached on first load
+var SCC_FG_FILTER  = 'all';
+var SCC_FG_OPEN    = {};     // section open state keyed by section id
+var SCC_FG_CARD_OPEN = {};   // card detail open state keyed by card key
+function sccEscFg(s) { return sccEsc ? sccEsc(s) : String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function sccRenderFieldGuide() {
+  var body = document.getElementById('scc-fg-body');
+  if (!body) return;
+  if (SCC_FG_DATA) { sccFgDraw(); return; }
+  body.innerHTML = '<div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>';
+  // Fetch all needed tables in parallel
+  var sessionId = SCC_SESSION ? SCC_SESSION.session_number : 1;
+  Promise.all([
+    sccFetch('world_characters', '&player_facing=not.is.null&order=name.asc'),
+    sccFetch('creatures', '&challenge_rating=not.is.null&order=name.asc'),
+    sccFetch('pois', '&order=name.asc'),
+    sccFetch('items', '&player_facing=not.is.null&order=name.asc'),
+    sccFetch('session_notes', '?session_number=eq.' + sessionId)
+  ]).then(function(results) {
+    var chars    = Array.isArray(results[0]) ? results[0] : [];
+    var creatures = Array.isArray(results[1]) ? results[1] : [];
+    var pois     = Array.isArray(results[2]) ? results[2] : [];
+    var items    = Array.isArray(results[3]) ? results[3] : [];
+    var sessions = Array.isArray(results[4]) ? results[4] : [];
+    var sess     = sessions[0] || null;
+    // Filter to session IDs if session data loaded
+    var npcIds      = sess && sess.npc_ids      ? sess.npc_ids      : null;
+    var creatureIds = sess && sess.creature_ids ? sess.creature_ids : null;
+    var locationIds = sess && sess.location_ids ? sess.location_ids : null;
+    var itemIds     = sess && sess.item_ids_awarded ? sess.item_ids_awarded : null;
+    var filteredChars    = npcIds      ? chars.filter(function(c){ return npcIds.indexOf(c.id) >= 0; })      : chars;
+    var filteredCreatures= creatureIds ? creatures.filter(function(c){ return creatureIds.indexOf(c.id) >= 0; }) : creatures;
+    var filteredPois     = locationIds ? pois.filter(function(p){ return locationIds.indexOf(p.id) >= 0; })   : pois;
+    var filteredItems    = itemIds     ? items.filter(function(i){ return itemIds.indexOf(i.id) >= 0; })     : items;
+    // DM reference items (misc category, player_facing=false, named starts with "DM Reference")
+    var dmItems = items.filter(function(i){ return i.category === 'misc' && i.player_facing === false && i.name && i.name.indexOf('DM Reference') === 0; });
+    SCC_FG_DATA = {
+      npcs: filteredChars,
+      creatures: filteredCreatures,
+      locations: filteredPois,
+      items: filteredItems.filter(function(i){ return !(i.category === 'misc' && i.player_facing === false); }),
+      dm: dmItems
+    };
+    sccFgDraw();
+  }).catch(function(e) {
+    if (body) body.innerHTML = '<div class="scc-fg-empty">Could not load Field Guide data.</div>';
+  });
+}
+function sccFgSetFilter(f, btn) {
+  SCC_FG_FILTER = f;
+  document.querySelectorAll('.scc-fg-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  sccFgDraw();
+}
+function sccFgFilter(q) {
+  SCC_FG_DRAW_QUERY = q.toLowerCase().trim();
+  sccFgDraw();
+}
+var SCC_FG_DRAW_QUERY = '';
+function sccFgDraw() {
+  var body = document.getElementById('scc-fg-body');
+  if (!body || !SCC_FG_DATA) return;
+  var q = SCC_FG_DRAW_QUERY;
+  var sections = [
+    { id:'npcs',      label:'NPCs',          icon:'&#127922;', data: SCC_FG_DATA.npcs,      type:'npc'      },
+    { id:'creatures', label:'Creatures',      icon:'&#128062;', data: SCC_FG_DATA.creatures, type:'creature' },
+    { id:'locations', label:'Locations',      icon:'&#128205;', data: SCC_FG_DATA.locations, type:'location' },
+    { id:'items',     label:'Items &amp; Loot',   icon:'&#9876;',   data: SCC_FG_DATA.items,     type:'item'     },
+    { id:'dm',        label:'DM Notes',       icon:'&#9889;',   data: SCC_FG_DATA.dm,        type:'dm'       }
+  ];
+  var html = '';
+  var anyVisible = false;
+  sections.forEach(function(sec) {
+    if (SCC_FG_FILTER !== 'all' && SCC_FG_FILTER !== sec.id) return;
+    var entries = sec.data;
+    if (q) {
+      entries = entries.filter(function(e){
+        var blob = (e.name||'') + ' ' + (e.summary||'') + ' ' + (e.role||'') + ' ' + (e.category||'') + ' ' + (e.dm_notes||'') + ' ' + (e.description||'') + ' ' + (e.behavior||'') + ' ' + (e.personality||'');
+        return blob.toLowerCase().indexOf(q) >= 0;
+      });
+    }
+    if (!entries.length) return;
+    anyVisible = true;
+    var isOpen = SCC_FG_OPEN[sec.id] !== false; // open by default
+    html += '<div class="scc-fg-section' + (isOpen ? ' open' : '') + '" id="scc-fg-sec-' + sec.id + '">'
+      + '<div class="scc-fg-section-header" onclick="sccFgToggleSection(\'' + sec.id + '\')">'
+        + '<span class="scc-fg-section-title">' + sec.icon + ' ' + sccEscFg(sec.label) + '</span>'
+        + '<span style="display:flex;align-items:center;gap:0.5rem;">'
+          + '<span class="scc-fg-section-count">' + entries.length + '</span>'
+          + '<span class="scc-fg-section-chevron">&#9654;</span>'
+        + '</span>'
+      + '</div>'
+      + '<div class="scc-fg-section-body">';
+    entries.forEach(function(e) {
+      var key = sec.type + ':' + e.id;
+      var isCardOpen = SCC_FG_CARD_OPEN[key];
+      html += '<div class="scc-fg-card" id="scc-fg-card-' + key.replace(':','-') + '" onclick="sccFgToggleCard(\'' + sccEscFg(key) + '\')">'
+        + '<div class="scc-fg-card-icon">' + sec.icon + '</div>'
+        + '<div class="scc-fg-card-body">'
+          + '<div class="scc-fg-card-name">' + sccEscFg(e.name||'Unnamed');
+      // type tag
+      if (e.category) html += '<span class="scc-fg-card-tag">' + sccEscFg(e.category) + '</span>';
+      else if (e.challenge_rating != null) html += '<span class="scc-fg-card-tag">CR ' + sccEscFg(String(parseFloat(e.challenge_rating)||0)) + '</span>';
+      else if (e.poi_type) html += '<span class="scc-fg-card-tag">' + sccEscFg(e.poi_type) + '</span>';
+      html += '</div>';
+      // sub line
+      var sub = e.role || e.summary || e.habitat || e.description || '';
+      if (sub) html += '<div class="scc-fg-card-sub">' + sccEscFg(sub.length > 110 ? sub.slice(0,110) + '&#x2026;' : sub) + '</div>';
+      html += '</div></div>';
+      // expandable detail
+      html += '<div class="scc-fg-detail' + (isCardOpen ? ' open' : '') + '" id="scc-fg-detail-' + key.replace(':','-') + '">';
+      html += sccFgCardDetail(e, sec.type);
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  body.innerHTML = anyVisible ? html : '<div class="scc-fg-empty">No entries match your search.</div>';
+}
+function sccFgToggleSection(id) {
+  SCC_FG_OPEN[id] = SCC_FG_OPEN[id] === false ? true : false;
+  var el = document.getElementById('scc-fg-sec-' + id);
+  if (el) el.classList.toggle('open', SCC_FG_OPEN[id] !== false);
+}
+function sccFgToggleCard(key) {
+  SCC_FG_CARD_OPEN[key] = !SCC_FG_CARD_OPEN[key];
+  var safeKey = key.replace(':','-');
+  var detail = document.getElementById('scc-fg-detail-' + safeKey);
+  if (detail) detail.classList.toggle('open', !!SCC_FG_CARD_OPEN[key]);
+}
+function sccFgCardDetail(e, type) {
+  var h = '';
+  if (type === 'npc') {
+    if (e.read_aloud) {
+      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
+    }
+    var fields = [
+      ['Appearance', e.appearance], ['Personality', e.personality],
+      ['Motivation', e.motivation], ['What They Know', e.player_knowledge],
+      ['Secret', e.secret], ['Location', e.location]
+    ];
+    fields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
+    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+  }
+  else if (type === 'creature') {
+    if (e.read_aloud) {
+      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
+    }
+    // Stat block
+    if (e.ac || e.hp_max) {
+      h += '<div class="scc-fg-stat-grid">';
+      var stats = [['AC',e.ac],['HP',e.hp_max],['CR',e.challenge_rating],['STR',e.str],['DEX',e.dex],['CON',e.con]];
+      stats.forEach(function(s){ if(s[1]!=null) h += '<div class="scc-fg-stat-cell"><div class="scc-fg-stat-val">' + sccEscFg(String(s[1])) + '</div><div class="scc-fg-stat-label">' + sccEscFg(s[0]) + '</div></div>'; });
+      h += '</div>';
+    }
+    // Attacks
+    if (e.attacks && e.attacks.length) {
+      h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">Attacks</div>';
+      e.attacks.forEach(function(a){
+        h += '<div class="scc-fg-detail-text" style="margin-bottom:0.3rem;"><strong>' + sccEscFg(a.name||'') + '</strong> +' + sccEscFg(String(a.attack_bonus||0)) + ' to hit, ' + sccEscFg(a.damage_dice||'') + ' ' + sccEscFg(a.damage_type||'') + (a.notes ? ' &#x2014; ' + sccEscFg(a.notes) : '') + '</div>';
+      });
+      h += '</div>';
+    }
+    // Traits
+    if (e.traits && e.traits.length) {
+      h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">Traits</div>';
+      e.traits.forEach(function(t){ h += '<div class="scc-fg-detail-text" style="margin-bottom:0.3rem;"><strong>' + sccEscFg(t.name||'') + '.</strong> ' + sccEscFg(t.description||'') + '</div>'; });
+      h += '</div>';
+    }
+    var fields2 = [['Description', e.description], ['Behavior', e.behavior], ['Gigglegloom', e.gigglegloom_relationship]];
+    fields2.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
+    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+  }
+  else if (type === 'location') {
+    if (e.read_aloud) {
+      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
+    }
+    var locFields = [['Summary', e.summary], ['Description', e.description], ['Gigglegloom', e.gigglegloom_notes]];
+    locFields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
+    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+  }
+  else if (type === 'item') {
+    if (e.read_aloud) {
+      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
+    }
+    var itemFields = [['Summary', e.summary], ['Description', e.description], ['Effect', e.effect_type ? e.effect_type + (e.effect_dice ? ' ' + e.effect_dice : '') + (e.effect_flat ? ' +' + e.effect_flat : '') : null], ['Story Note', e.story_note]];
+    itemFields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
+    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+  }
+  else if (type === 'dm') {
+    // DM reference entries - show the full dm_notes which contain all the good stuff
+    var dmFields = [['Summary', e.summary], ['Description', e.description]];
+    dmFields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
+    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+  }
+  return h || '<div class="scc-fg-detail-text" style="color:var(--dm-text-muted);font-style:italic;">No additional details.</div>';
 }
 
 // ── Collapsible prep notes ────────────────────────────────────────
