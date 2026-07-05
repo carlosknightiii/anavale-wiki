@@ -11589,10 +11589,14 @@ function sccOpenLootAward(idx) {
     var splitGP = Math.floor(splitCP / 100);
     var splitSP = Math.floor((splitCP % 100) / 10);
     var splitCPR = splitCP % 10;
-    coinLine = '<div style="margin-bottom:0.75rem;font-family:var(--font-sans);font-size:0.82rem;color:var(--dm-gold);">'
-      + '&#128176; Coins: ' + (c.loot.gp ? c.loot.gp + ' GP ' : '') + (c.loot.sp ? c.loot.sp + ' SP ' : '') + (c.loot.cp ? c.loot.cp + ' CP' : '')
-      + ' <span style="color:var(--dm-text-muted);font-size:0.75rem;">(split: ' + (splitGP ? splitGP + ' GP ' : '') + (splitSP ? splitSP + ' SP ' : '') + (splitCPR ? splitCPR + ' CP ' : '') + 'each)</span>'
-      + '<button class="scc-award-btn" onclick="sccAwardCoinsAll(' + idx + ')" style="margin-left:0.75rem;">Split to All Players</button>'
+    coinLine = '<div style="margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:6px;">'
+      + '<div style="font-family:var(--font-sans);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--dm-text-muted);margin-bottom:0.25rem;">Coins — will split at End Combat</div>'
+      + '<div style="font-family:var(--font-sans);font-size:0.88rem;color:var(--dm-gold);font-weight:700;">'
+        + (c.loot.gp ? c.loot.gp + ' GP ' : '') + (c.loot.sp ? c.loot.sp + ' SP ' : '') + (c.loot.cp ? c.loot.cp + ' CP' : '')
+      + '</div>'
+      + '<div style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);margin-top:0.15rem;">'
+        + (splitGP ? splitGP + ' GP ' : '') + (splitSP ? splitSP + ' SP ' : '') + (splitCPR ? splitCPR + ' CP ' : '') + 'per player'
+      + '</div>'
     + '</div>';
   }
 
@@ -11715,8 +11719,11 @@ function sccEndCombat() {
       );
     });
   }
+  // ── Show loot summary popup immediately (coins award async in background) ──
   Promise.all(coinPromises).then(function() {
-    // ── Show loot summary popup ──
+    if (splitCP > 0) showDMToast('Coins split to all players &#10003;', 'success');
+  });
+  (function() {
     var existing = document.getElementById('scc-end-combat-summary');
     if (existing) existing.remove();
     var players = SCC_PLAYERS.map(function(p, i) {
@@ -11766,7 +11773,7 @@ function sccEndCombat() {
         + '<button class="scc-btn-secondary" onclick="sccCloseCombatSummary()">Close &#10005;</button>'
       + '</div>';
     document.body.appendChild(panel);
-  });
+  })();
   // ── Reset combat state ──
   SCC_END_COMBAT_ITEMS = allItems;
   SCC_IN_COMBAT = false; SCC_COMBATANTS = []; SCC_INITIATIVE = [];
