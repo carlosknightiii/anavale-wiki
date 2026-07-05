@@ -11242,7 +11242,7 @@ function sccRenderStagingList() {
       + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
       + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
       + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
-      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">&#127890; Loot</button>' : '')
+      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">Loot</button>' : '')
       + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
       + '</div>'
       + (!c.isPC
@@ -11295,19 +11295,19 @@ function sccLootItemSearch(idx, query) {
   }).slice(0, 10);
   if (!results.length) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
   drop.innerHTML = results.map(function(item) {
-    return '<div class="scc-picker-option" onclick="sccAddLootItem(' + idx + ',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\')">'
+    return '<div class="scc-picker-option" onclick="sccAddLootItem(' + idx + ',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\',\'' + sccEsc(item.summary||'') + '\')">'
       + sccEsc(item.name)
-      + '<div class="scc-picker-option-sub">' + sccEsc(item.category||'') + (item.rarity ? ' · ' + sccEsc(item.rarity) : '') + '</div>'
+      + '<div class="scc-picker-option-sub">' + sccEsc(item.category||'') + (item.rarity ? ' · ' + sccEsc(item.rarity) : '') + (item.summary ? ' — ' + sccEsc(item.summary) : '') + '</div>'
     + '</div>';
   }).join('');
   drop.classList.add('open');
 }
 
-function sccAddLootItem(idx, itemId, itemName) {
+function sccAddLootItem(idx, itemId, itemName, itemSummary) {
   var c = SCC_COMBATANTS[idx];
   if (!c) return;
   if (!c.loot.items.some(function(i){ return i.id === itemId; })) {
-    c.loot.items.push({ id: itemId, name: itemName });
+    c.loot.items.push({ id: itemId, name: itemName, summary: itemSummary || '' });
   }
   var input = document.getElementById('scc-loot-item-search-' + idx);
   var drop  = document.getElementById('scc-loot-item-drop-' + idx);
@@ -11373,6 +11373,8 @@ function sccStartCombat() {
   SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_IN_COMBAT = true;
   document.getElementById('scc-combatant-staging').style.display = 'none';
   document.getElementById('scc-start-combat-btn').style.display  = 'none';
+  var addAllBtn = document.getElementById('scc-add-all-players-btn');
+  if (addAllBtn) addAllBtn.style.display = 'none';
   document.getElementById('scc-initiative-tracker').style.display = '';
   sccRenderInitiativeList();
 }
@@ -11410,10 +11412,10 @@ function sccRenderInitiativeList() {
     };
     var condTags = (c.conditions || []).map(function(cond) {
       var d = COND_COLORS[cond] || { bg:'rgba(192,132,252,0.1)', border:'rgba(192,132,252,0.25)', text:'#c084fc' };
-      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove" style="--scc-cond-bg:' + d.bg + ';--scc-cond-border:' + d.border + ';--scc-cond-text:' + d.text + ';">' + sccEsc(cond) + '</span>';
+      return '<span class="scc-condition-tag" onclick="sccRemoveCondition(' + idx + ',\'' + sccEsc(cond) + '\')" title="Click to remove" style="background:' + d.bg + ';border-color:' + d.border + ';color:' + d.text + ';">' + sccEsc(cond) + '</span>';
     }).join('');
     var lootBtn = (!c.isPC && isDowned && c.loot && (c.loot.items.length || c.loot.gp || c.loot.sp || c.loot.cp))
-      ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">&#127890; Award Loot</button>' : '';
+      ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">Award Loot</button>' : '';
     var downedBadge = isDowned ? '<span class="scc-downed-badge">&#9760; Downed</span>' : '';
 
     return '<div class="' + rowCls + '">'
@@ -11573,7 +11575,7 @@ function sccOpenLootAward(idx) {
   var panel = document.createElement('div');
   panel.id = 'scc-loot-award-panel';
   panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.5rem;z-index:9999;min-width:360px;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,0.7);';
-  panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:1rem;color:var(--dm-gold);margin-bottom:1rem;">&#127890; Loot from ' + sccEsc(c.name) + '</div>'
+  panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:1rem;color:var(--dm-gold);margin-bottom:1rem;">Loot from ' + sccEsc(c.name) + '</div>'
     + coinLine
     + (itemRows || '<div style="font-family:var(--font-sans);font-size:0.82rem;color:var(--dm-text-muted);font-style:italic;">No items assigned.</div>')
     + '<div style="margin-top:1rem;text-align:right;"><button class="scc-btn-secondary" onclick="document.getElementById(\'scc-loot-award-panel\').remove()">Close</button></div>';
