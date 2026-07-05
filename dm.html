@@ -3015,6 +3015,10 @@
               </div>
               <!-- SCENARIOS -->
               <div class="scc-live-section-label" style="margin-top:0.75rem;">Scenarios</div>
+              <div class="scc-live-scenario-filter-wrap">
+                <input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">
+                <span class="scc-scenario-filter-clear" id="scc-scenario-filter-clear" onclick="sccScenarioClearFilter()" title="Clear">&#10005;</span>
+              </div>
               <div id="scc-live-scenarios"></div>
               <!-- QUICK NOTE FIELD -->
               <div class="scc-live-note-wrap" id="scc-live-note-wrap" style="display:none;">
@@ -5654,6 +5658,23 @@ function showDMToast(msg, type) {
 .scc-live-scenario-row:first-child { border-top: none; }
 .scc-live-scenario-action { padding: 0.45rem 0.75rem; font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--dm-text); background: var(--dm-surface); border-right: 1px solid var(--scc-border); line-height: 1.4; }
 .scc-live-scenario-response { padding: 0.45rem 0.75rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text); background: var(--dm-bg); line-height: 1.4; }
+/* Scenario filter */
+.scc-live-scenario-filter-wrap { position: relative; display: flex; align-items: center; margin-bottom: 0.5rem; }
+.scc-live-scenario-filter { flex: 1; padding: 0.4rem 2rem 0.4rem 0.65rem; background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm); font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); outline: none; box-sizing: border-box; width: 100%; }
+.scc-live-scenario-filter:focus { border-color: var(--scc-border-gold); }
+.scc-live-scenario-filter::placeholder { color: var(--dm-text-muted); }
+.scc-scenario-filter-clear { position: absolute; right: 0.5rem; display: none; align-items: center; justify-content: center; width: 16px; height: 16px; font-size: 0.65rem; color: var(--dm-text-muted); cursor: pointer; border-radius: 50%; background: var(--dm-surface); }
+.scc-scenario-filter-clear:hover { color: var(--dm-text); background: var(--scc-border); }
+/* Scenario used state */
+.scc-live-scenario-row { cursor: pointer; transition: background 0.1s; }
+.scc-live-scenario-row:hover .scc-live-scenario-action { background: var(--dm-gold-dim); }
+.scc-scenario-used .scc-live-scenario-action { background: rgba(74,222,128,0.08); color: var(--dm-text-muted); text-decoration: line-through; text-decoration-color: rgba(74,222,128,0.5); }
+.scc-scenario-used .scc-live-scenario-response { background: rgba(74,222,128,0.04); color: var(--dm-text-muted); }
+.scc-scenario-check { color: #4ade80; font-size: 0.72rem; margin-right: 0.3rem; text-decoration: none; display: inline-block; }
+/* Group header badges */
+.scc-scenario-group-name { flex: 1; text-align: left; }
+.scc-scenario-used-badge { font-size: 0.65rem; font-weight: 700; color: #4ade80; background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.25); border-radius: 10px; padding: 0.1rem 0.45rem; margin-right: 0.4rem; flex-shrink: 0; }
+.scc-scenario-total-badge { font-size: 0.65rem; color: var(--dm-text-muted); background: var(--dm-surface); border: 1px solid var(--scc-border); border-radius: 10px; padding: 0.1rem 0.45rem; margin-right: 0.4rem; flex-shrink: 0; }
 /* Quick note */
 .scc-live-note-wrap { margin-top: 0.5rem; }
 /* NPC chips right col */
@@ -9749,6 +9770,7 @@ function sccLiveRenderNpcs() {
   }).join('');
 }
 // ── Scenarios ──
+var SCC_USED_SCENARIOS = {};
 function sccLiveRenderScenarios() {
   var el = document.getElementById('scc-live-scenarios');
   if (!el) return;
@@ -9759,15 +9781,27 @@ function sccLiveRenderScenarios() {
     return;
   }
   el.innerHTML = scenarios.map(function(group, gi) {
-    var rows = (group.scenarios || []).map(function(s) {
-      return '<div class="scc-live-scenario-row">'
-        + '<div class="scc-live-scenario-action">' + sccEsc(s.action || '') + '</div>'
+    var total = (group.scenarios || []).length;
+    var usedCount = 0;
+    var rows = (group.scenarios || []).map(function(s, si) {
+      var key = gi + '-' + si;
+      var used = !!SCC_USED_SCENARIOS[key];
+      if (used) usedCount++;
+      return '<div class="scc-live-scenario-row' + (used ? ' scc-scenario-used' : '') + '" onclick="sccToggleScenarioUsed(' + gi + ',' + si + ')" title="Click to mark as used">'
+        + '<div class="scc-live-scenario-action">'
+          + (used ? '<span class="scc-scenario-check">&#10003;</span>' : '')
+          + sccEsc(s.action || '')
+        + '</div>'
         + '<div class="scc-live-scenario-response">' + sccEsc(s.response || '') + '</div>'
       + '</div>';
     }).join('');
-    return '<div class="scc-live-scenario-group">'
+    var usedBadge = usedCount > 0
+      ? '<span class="scc-scenario-used-badge">' + usedCount + '/' + total + '</span>'
+      : '<span class="scc-scenario-total-badge">' + total + '</span>';
+    return '<div class="scc-live-scenario-group" id="scc-scen-group-' + gi + '">'
       + '<button class="scc-live-scenario-header" onclick="sccLiveToggleScenario(' + gi + ')">'
-        + sccEsc(group.group || 'Scenarios')
+        + '<span class="scc-scenario-group-name">' + sccEsc(group.group || 'Scenarios') + '</span>'
+        + usedBadge
         + '<span class="scc-live-scenario-chevron" id="scc-live-chev-' + gi + '">&#9660;</span>'
       + '</button>'
       + '<div class="scc-live-scenario-body" id="scc-live-scen-body-' + gi + '">' + rows + '</div>'
@@ -9781,6 +9815,55 @@ function sccLiveToggleScenario(gi) {
   var isOpen = body.classList.contains('open');
   body.classList.toggle('open', !isOpen);
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+function sccToggleScenarioUsed(gi, si) {
+  var key = gi + '-' + si;
+  SCC_USED_SCENARIOS[key] = !SCC_USED_SCENARIOS[key];
+  sccLiveRenderScenarios();
+  // Re-apply current filter if active
+  var filterEl = document.getElementById('scc-scenario-filter');
+  if (filterEl && filterEl.value.trim()) { sccFilterScenarios(filterEl.value); }
+}
+function sccFilterScenarios(query) {
+  var clearBtn = document.getElementById('scc-scenario-filter-clear');
+  if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+  var q = (query || '').toLowerCase().trim();
+  var session = SCC_SESSION;
+  var scenarios = session && session.session_scenarios ? session.session_scenarios : [];
+  scenarios.forEach(function(group, gi) {
+    var groupEl = document.getElementById('scc-scen-group-' + gi);
+    var bodyEl  = document.getElementById('scc-live-scen-body-' + gi);
+    var chevEl  = document.getElementById('scc-live-chev-' + gi);
+    if (!groupEl || !bodyEl) return;
+    if (!q) {
+      // Reset all groups and rows to default state
+      groupEl.style.display = '';
+      bodyEl.classList.remove('open');
+      if (chevEl) chevEl.style.transform = '';
+      bodyEl.querySelectorAll('.scc-live-scenario-row').forEach(function(row) { row.style.display = ''; });
+      return;
+    }
+    var rows = bodyEl.querySelectorAll('.scc-live-scenario-row');
+    var groupMatch = group.group.toLowerCase().indexOf(q) >= 0;
+    var anyRowMatch = false;
+    rows.forEach(function(row, si) {
+      var action   = (group.scenarios[si] && group.scenarios[si].action   || '').toLowerCase();
+      var response = (group.scenarios[si] && group.scenarios[si].response || '').toLowerCase();
+      var match = groupMatch || action.indexOf(q) >= 0 || response.indexOf(q) >= 0;
+      row.style.display = match ? '' : 'none';
+      if (match) anyRowMatch = true;
+    });
+    groupEl.style.display = anyRowMatch ? '' : 'none';
+    if (anyRowMatch) {
+      bodyEl.classList.add('open');
+      if (chevEl) chevEl.style.transform = 'rotate(180deg)';
+    }
+  });
+}
+function sccScenarioClearFilter() {
+  var filterEl = document.getElementById('scc-scenario-filter');
+  if (filterEl) { filterEl.value = ''; filterEl.focus(); }
+  sccFilterScenarios('');
 }
 // ── Live Search ──
 function sccLiveSearch(query) {
