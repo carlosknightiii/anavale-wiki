@@ -11577,8 +11577,10 @@ function sccOpenLootAward(idx) {
         + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + '">' + sccEsc(item.name) + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span> <button onclick="sccUndoAwardItem(' + idx + ',' + iIdx + ')" style="font-family:var(--font-sans);font-size:0.68rem;padding:0.1rem 0.4rem;background:transparent;border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text-muted);cursor:pointer;margin-left:0.25rem;" title="Undo award">Undo</button>' : '') + '</div>'
         + itemDesc
       + '</div>'
-      + '<select class="scc-input" id="scc-award-player-' + idx + '-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;"' + (awarded ? ' disabled' : '') + '>' + players + '</select>'
-      + '<button class="scc-award-btn" onclick="sccAwardItem(' + idx + ',' + iIdx + ')" id="scc-award-btn-' + idx + '-' + iIdx + '"' + (awarded ? ' disabled style="opacity:0.4;cursor:default;"' : '') + '>Award</button>'
+      + (awarded
+          ? '<span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-green);font-weight:700;padding:0.2rem 0.5rem;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:6px;">&#10003; ' + sccEsc(item.awardedTo || 'Player') + '</span>'
+          : '<select class="scc-input" id="scc-award-player-' + idx + '-' + iIdx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;">' + players + '</select>'
+            + '<button class="scc-award-btn" onclick="sccAwardItem(' + idx + ',' + iIdx + ')" id="scc-award-btn-' + idx + '-' + iIdx + '">Award</button>')
     + '</div>';
   }).join('');
 
@@ -11628,6 +11630,7 @@ function sccAwardItem(combatantIdx, itemIdx) {
   }).then(function(r) {
     if (r.ok) {
       item.awarded = true;
+      item.awardedTo = player.name;
       showDMToast(item.name + ' &#8594; ' + player.name + ' &#10003;', 'success');
       // Refresh the loot panel to show awarded state
       var panel = document.getElementById('scc-loot-award-panel');
