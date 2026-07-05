@@ -58,8 +58,7 @@
     SESSION_NUM   = urlParams.get('session') ? parseInt(urlParams.get('session'), 10) : null;
     if (SESSION_NUM) {
       document.body.classList.add('map-session-' + SESSION_NUM);
-      var sb = document.getElementById('map-session-badge');
-      if (sb) { sb.textContent = 'Session ' + SESSION_NUM; sb.style.display = ''; }
+      // Session badge removed from new nav — session state tracked via body class only
       if (IS_DM) { loadSessionRelationships(SESSION_NUM); }
     }
     centerMap();
@@ -91,15 +90,76 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPopup(eid, pin); }
       });
     });
-    document.querySelectorAll('.map-tod-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var tod = btn.getAttribute('data-tod');
-        document.querySelectorAll('.map-tod-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+    // Time of day radios
+    document.querySelectorAll('.map-tod-radio').forEach(function (radio) {
+      radio.addEventListener('click', function () {
+        var tod = radio.getAttribute('data-tod');
+        document.querySelectorAll('.map-tod-radio').forEach(function (r) { r.classList.remove('active'); });
+        radio.classList.add('active');
         document.body.classList.remove('map-day', 'map-dusk', 'map-night');
         document.body.classList.add('map-' + tod);
       });
     });
+    // DM View toggle
+    var dmToggleBtn = document.getElementById('map-dm-toggle');
+    if (dmToggleBtn) {
+      // Reflect initial DM state on the toggle
+      if (IS_DM) { dmToggleBtn.classList.remove('off'); } else { dmToggleBtn.classList.add('off'); }
+      var dmTrackText = dmToggleBtn.querySelector('.map-dm-toggle-text');
+      if (dmTrackText) { dmTrackText.textContent = IS_DM ? 'On' : 'Off'; }
+      dmToggleBtn.addEventListener('click', function () {
+        IS_DM = !IS_DM;
+        if (IS_DM) {
+          document.body.classList.add('map-dm');
+          sessionStorage.setItem('anavale_dm', '1');
+          dmToggleBtn.classList.remove('off');
+          if (dmTrackText) { dmTrackText.textContent = 'On'; }
+        } else {
+          document.body.classList.remove('map-dm');
+          sessionStorage.removeItem('anavale_dm');
+          dmToggleBtn.classList.add('off');
+          if (dmTrackText) { dmTrackText.textContent = 'Off'; }
+        }
+        // Re-evaluate pin visibility
+        document.querySelectorAll('[data-entity-id]').forEach(function (pin) {
+          var eid    = pin.getAttribute('data-entity-id');
+          var entity = findEntity(eid);
+          if (entity && entity.dmOnly) {
+            pin.style.display = IS_DM ? '' : 'none';
+          }
+        });
+      });
+    }
+    // Search input — filter pins by label
+    var searchInput = document.getElementById('map-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        var q = searchInput.value.trim().toLowerCase();
+        document.querySelectorAll('[data-entity-id]').forEach(function (pin) {
+          var eid    = pin.getAttribute('data-entity-id');
+          var entity = findEntity(eid);
+          if (!entity) return;
+          if (entity.dmOnly && !IS_DM) return;
+          var match = !q || entity.label.toLowerCase().indexOf(q) >= 0;
+          pin.style.display = match ? '' : 'none';
+        });
+      });
+    }
+    // Filter dropdown — filter pins by entity type
+    var filterSelect = document.getElementById('map-filter');
+    if (filterSelect) {
+      filterSelect.addEventListener('change', function () {
+        var val = filterSelect.value;
+        document.querySelectorAll('[data-entity-id]').forEach(function (pin) {
+          var eid    = pin.getAttribute('data-entity-id');
+          var entity = findEntity(eid);
+          if (!entity) return;
+          if (entity.dmOnly && !IS_DM) return;
+          var match = val === 'all' || entity.type === val;
+          pin.style.display = match ? '' : 'none';
+        });
+      });
+    }
     var loading = document.getElementById('map-loading');
     if (loading) loading.style.display = 'none';
   });
@@ -217,6 +277,7 @@
     setTimeout(function () { popupOverlay.classList.remove('active'); currentEntityId = null; }, 170);
   }
   window.mapClosePopup = closePopup;
+  Object.defineProperty(window, 'MAP_IS_DM', { get: function () { return IS_DM; } });
   function fetchEntity(entity, cfg) {
     var table = TABLE[entity.type] || entity.type;
     var cols  = IS_DM ? '*' : (PLAYER_COLS[entity.type] || '*');

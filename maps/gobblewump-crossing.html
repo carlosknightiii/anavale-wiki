@@ -103,26 +103,62 @@ window.MAP_CONFIG = {
   ]
 };
 </script>
-<!-- ── HEADER ── -->
-<header class="map-header">
-  <a class="map-header-back" href="../#city/gobblewump-crossing">← Wiki</a>
-  <div class="map-header-titles">
-    <div class="map-header-title">Gobblewump Crossing</div>
-    <div class="map-header-sub">Caparia · The Solenmere · Waypoint Town · 1 sq = 5 ft</div>
+<!-- ── NAV BAR ── -->
+<nav class="map-nav">
+  <div class="map-nav-brand">
+    <span class="map-nav-brand-anavale">Anavale</span>
+    <span class="map-nav-brand-maps">Maps</span>
   </div>
-  <div class="map-header-badges">
-    <!-- Session badge — shown when ?session=N is in URL -->
-    <span class="map-header-session-badge" id="map-session-badge" style="display:none;"></span>
-    <!-- DM badge — shown in map-dm mode -->
-    <span class="map-header-badge map-dm-show">DM View</span>
-    <!-- Time of day toggle — DM only -->
-    <div class="map-tod-toggle" aria-label="Time of day">
-      <button class="map-tod-btn active" data-tod="day"   title="Day">&#9728;&#65039;</button>
-      <button class="map-tod-btn"        data-tod="dusk"  title="Dusk">&#127749;</button>
-      <button class="map-tod-btn"        data-tod="night" title="Night">&#127769;</button>
+  <div class="map-nav-controls">
+    <!-- DM View toggle -->
+    <div class="map-dm-toggle-group map-dm-show">
+      <span class="map-dm-toggle-label">DM View</span>
+      <button class="map-dm-toggle" id="map-dm-toggle" aria-label="Toggle DM view">
+        <span class="map-dm-toggle-track">
+          <span class="map-dm-toggle-thumb"></span>
+          <span class="map-dm-toggle-text">On</span>
+        </span>
+      </button>
+    </div>
+    <!-- Time of day radios -->
+    <div class="map-tod-group" aria-label="Time of day">
+      <span class="map-tod-group-label">Time of Day</span>
+      <div class="map-tod-radios">
+        <label class="map-tod-radio active" data-tod="day">
+          <span class="map-tod-radio-dot"></span>Day
+        </label>
+        <label class="map-tod-radio" data-tod="dusk">
+          <span class="map-tod-radio-dot"></span>Dusk
+        </label>
+        <label class="map-tod-radio" data-tod="night">
+          <span class="map-tod-radio-dot"></span>Night
+        </label>
+      </div>
     </div>
   </div>
-</header>
+</nav>
+<!-- ── SUBHEADER ── -->
+<div class="map-subheader">
+  <div class="map-subheader-left">
+    <div class="map-subheader-breadcrumb">Caparia / The Solenmere / Waypoint Town</div>
+    <div class="map-subheader-title">Gobblewump Crossing</div>
+  </div>
+  <div class="map-subheader-right">
+    <div class="map-subheader-field">
+      <label class="map-subheader-field-label">Search</label>
+      <input class="map-subheader-search" id="map-search" type="text" placeholder="Search..." autocomplete="off"/>
+    </div>
+    <div class="map-subheader-field">
+      <label class="map-subheader-field-label">Showing</label>
+      <select class="map-subheader-filter" id="map-filter">
+        <option value="all">All</option>
+        <option value="poi">Landmarks</option>
+        <option value="character">NPCs</option>
+        <option value="org">Organisations</option>
+      </select>
+    </div>
+  </div>
+</div>
 <!-- ── VIEWPORT ── -->
 <div class="map-viewport" id="map-viewport">
   <!-- Loading -->
@@ -478,49 +514,48 @@ window.MAP_CONFIG = {
     <span class="map-border-corner bl">&#10022;</span>
     <span class="map-border-corner br">&#10022;</span>
   </div>
-  <!-- Zoom controls -->
+  <!-- Zoom controls + scale -->
   <div class="map-zoom-controls">
-    <button class="map-zoom-btn" onclick="mapZoomIn()"  aria-label="Zoom in">+</button>
-    <button class="map-zoom-btn" onclick="mapZoomOut()" aria-label="Zoom out">&#8722;</button>
-    <button class="map-zoom-btn map-zoom-reset" onclick="mapReset()" aria-label="Reset view">FIT</button>
+    <div class="map-zoom-btns">
+      <button class="map-zoom-btn" onclick="mapZoomIn()"  aria-label="Zoom in">+</button>
+      <button class="map-zoom-btn" onclick="mapZoomOut()" aria-label="Zoom out">&#8722;</button>
+      <button class="map-zoom-btn map-zoom-reset" onclick="mapReset()" aria-label="Reset view">FIT</button>
+    </div>
+    <div class="map-scale-block">
+      <div class="map-scale-bar-row">
+        <div class="map-scale-tick"></div>
+        <div class="map-scale-line"></div>
+        <div class="map-scale-tick"></div>
+      </div>
+      <div class="map-scale-labels">
+        <span>0ft</span><span>20ft</span>
+      </div>
+      <div class="map-scale-note">1 Square = 5ft</div>
+    </div>
   </div>
   <!-- Legend -->
   <div class="map-legend">
     <div class="map-legend-title">Legend</div>
-    <div class="map-legend-item">
-      <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5" fill="#4a8acf" stroke="#1a4a8a" stroke-width="1.2"/></svg>
-      Tumblerun River
-    </div>
-    <div class="map-legend-item">
-      <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5" fill="#d47a3a" stroke="#a04a18" stroke-width="1.2"/></svg>
-      Mirrenflow River
-    </div>
-    <div class="map-legend-item">
-      <div class="map-legend-road"></div>
-      Trade Road
-    </div>
-    <div class="map-legend-item">
-      <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5" fill="#8a7a5a" stroke="#2a1f0e" stroke-width="1.2"/></svg>
-      Landmark / POI
-    </div>
-    <div class="map-legend-item">
-      <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5" fill="#f0b429" stroke="#2a1f0e" stroke-width="1.2"/></svg>
-      Named NPC
-    </div>
-    <div class="map-legend-item">
-      <svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4.5" fill="#6a8a48" stroke="#2a1f0e" stroke-width="1.2"/></svg>
-      Woodland
-    </div>
-    <!-- Scale bar: 4 squares × 20px = 80px = 20 ft -->
-    <div class="map-legend-scale">
-      <div class="map-legend-scale-bar-wrap">
-        <div class="map-legend-scale-bar">
-          <div class="map-legend-scale-line" style="width:80px;"></div>
-        </div>
-        <div class="map-legend-scale-labels">
-          <span>0</span><span>20 ft</span>
-        </div>
-        <div class="map-legend-scale-note">1 square = 5 ft</div>
+    <div class="map-legend-items">
+      <div class="map-legend-item">
+        <div class="map-legend-swatch map-legend-swatch-bar" style="background:#4a8acf;"></div>
+        <span>Rivers</span>
+      </div>
+      <div class="map-legend-item">
+        <div class="map-legend-swatch map-legend-swatch-bar" style="background:#a07820;"></div>
+        <span>Roads</span>
+      </div>
+      <div class="map-legend-item">
+        <div class="map-legend-swatch map-legend-swatch-ring" style="border-color:#0b0e16;"></div>
+        <span>Landmark / Structure</span>
+      </div>
+      <div class="map-legend-item">
+        <div class="map-legend-swatch map-legend-swatch-ring" style="border-color:#f0b429;"></div>
+        <span>NPCs</span>
+      </div>
+      <div class="map-legend-item">
+        <div class="map-legend-swatch map-legend-swatch-woods"></div>
+        <span>Woods</span>
       </div>
     </div>
     <div class="map-legend-hint">Click any pin for details</div>
