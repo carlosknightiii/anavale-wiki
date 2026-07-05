@@ -5298,13 +5298,15 @@ function showDMToast(msg, type) {
 .scc-beat-item--in_progress { border-color: rgba(240,180,41,0.3); background: var(--scc-beat-prog-bg); }
 /* Active beat gold highlight */
 .scc-beat-item--active {
-  border-left: 3px solid var(--dm-gold) !important;
-  background: linear-gradient(90deg, rgba(240,180,41,0.08) 0%, var(--scc-beat-prog-bg) 40%) !important;
-  animation: scc-beat-pulse 3s ease-in-out infinite;
+  border-left: 4px solid var(--dm-gold) !important;
+  border-color: var(--dm-gold) !important;
+  background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%) !important;
+  animation: scc-beat-pulse 2s ease-in-out infinite;
+  box-shadow: inset 3px 0 0 var(--dm-gold);
 }
 @keyframes scc-beat-pulse {
-  0%, 100% { border-left-color: var(--dm-gold); }
-  50% { border-left-color: rgba(240,180,41,0.4); }
+  0%, 100% { background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%); }
+  50% { background: linear-gradient(90deg, rgba(240,180,41,0.32) 0%, rgba(240,180,41,0.10) 60%); }
 }
 /* Beat action row */
 .scc-beat-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
