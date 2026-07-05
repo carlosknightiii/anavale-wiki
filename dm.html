@@ -11801,16 +11801,16 @@ function sccSummaryAwardItem(iIdx) {
   }).then(function(r) {
     if (r.ok) {
       item.awarded = true;
+      item.awardedTo = player.name;
       showDMToast(item.name + ' &#8594; ' + player.name + ' &#10003;', 'success');
       // Refresh row in summary panel
       var row = document.getElementById('scc-summary-row-' + iIdx);
       if (row) {
-        var players = SCC_PLAYERS.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
         row.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text-muted);text-decoration:line-through;">'
           + sccEsc(item.name) + ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>'
           + ' <span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);">from ' + sccEsc(entry.source) + '</span>'
           + '</div></div>'
-          + '<select class="scc-input" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;" disabled>' + players + '</select>'
+          + '<span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-green);font-weight:700;padding:0.2rem 0.5rem;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:6px;">&#10003; ' + sccEsc(player.name) + '</span>'
           + '<button class="scc-award-btn" disabled style="opacity:0.4;cursor:default;">Award</button>';
       }
     } else {
