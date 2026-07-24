@@ -2118,7 +2118,6 @@
 
   // ── Equip search modal ────────────────────────────────────────────
   var EQUIP_TARGET_SLOT = null;
-  var EQUIP_SEARCH_DEBOUNCE = null;
   var EQUIP_SLOT_TITLES = { armor:'Equip Armor', shield:'Equip Shield', hand_right:'Equip Main Hand', hand_left:'Equip Off Hand' };
   function equipSlotByKey(key) {
     for (var i = 0; i < EQUIP_SLOTS.length; i++) { if (EQUIP_SLOTS[i].key === key) return EQUIP_SLOTS[i]; }
@@ -2128,7 +2127,7 @@
     EQUIP_TARGET_SLOT = slotKey;
     document.getElementById('cs-equip-modal-title').textContent = EQUIP_SLOT_TITLES[slotKey] || 'Equip Item';
     document.getElementById('cs-equip-search-input').value = '';
-    document.getElementById('cs-equip-search-results').innerHTML = '';
+    renderEquipResults('');
     document.getElementById('cs-equip-modal-overlay').style.display = 'flex';
   }
   function closeEquipModal() {
@@ -2136,44 +2135,76 @@
     EQUIP_TARGET_SLOT = null;
   }
   function onEquipSearchInput() {
-    clearTimeout(EQUIP_SEARCH_DEBOUNCE);
     var q = (document.getElementById('cs-equip-search-input').value || '').trim();
+    renderEquipResults(q);
+  }
+  // Inventory rows relevant to a slot — custom rows match by item_type,
+  // catalog-linked rows match by the linked catalog item's category.
+  function getEquipCandidates(slotKey) {
+    var slot = equipSlotByKey(slotKey);
+    if (!slot) return [];
+    return INVENTORY.filter(function(item) {
+      var catalogItem  = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+      var matchesCustom  = item.item_type === slot.category;
+      var matchesCatalog = !!(item.item_id && catalogItem && catalogItem.category === slot.category);
+      return matchesCustom || matchesCatalog;
+    });
+  }
+  function renderEquipResults(q) {
     var resultsEl = document.getElementById('cs-equip-search-results');
-    if (q.length < 2) { resultsEl.innerHTML = ''; return; }
-    EQUIP_SEARCH_DEBOUNCE = setTimeout(function() { runEquipSearch(q); }, 250);
+    if (!resultsEl || !EQUIP_TARGET_SLOT) return;
+    var candidates = getEquipCandidates(EQUIP_TARGET_SLOT);
+    if (!candidates.length) {
+      resultsEl.innerHTML = '<div class="cs-inv-empty">No items in inventory for this slot</div>';
+      return;
+    }
+    var query = (q || '').toLowerCase().trim();
+    var rows = candidates.map(function(item) {
+      var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+      var name = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
+      return { item: item, catalogItem: catalogItem, name: name };
+    });
+    if (query) {
+      rows = rows.filter(function(r) { return r.name.toLowerCase().indexOf(query) !== -1; });
+    }
+    if (!rows.length) {
+      resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>';
+      return;
+    }
+    resultsEl.innerHTML = rows.map(function(r) {
+      var weight = r.catalogItem ? (r.catalogItem.weight_lb || 0) : (r.item.weight_lb || 0);
+      var meta = '';
+      if (r.catalogItem && r.catalogItem.damage_dice) {
+        meta = r.catalogItem.damage_dice + (r.catalogItem.damage_type ? ' ' + r.catalogItem.damage_type : '');
+      } else if (r.catalogItem && r.catalogItem.base_ac != null) {
+        meta = 'AC ' + r.catalogItem.base_ac;
+      }
+      return '<div class="cs-inv-result-row" onclick="selectEquipItem(\'' + r.item.id + '\')">'
+        + '<div class="cs-inv-result-info">'
+          + '<span class="cs-inv-result-name">' + r.name + '</span>'
+          + '<span class="cs-inv-result-meta">' + (meta ? meta + ' &middot; ' : '') + weight + 'lb</span>'
+        + '</div>'
+      + '</div>';
+    }).join('');
   }
-  function runEquipSearch(q) {
-    var slot = equipSlotByKey(EQUIP_TARGET_SLOT);
-    if (!slot) return;
-    sb.from('items').select('*').eq('player_facing', true).eq('category', slot.category)
-      .ilike('name', '%' + q + '%').order('name').limit(8)
-      .then(function(res) {
-        var resultsEl = document.getElementById('cs-equip-search-results');
-        if (!resultsEl) return;
-        if (res.error || !res.data || !res.data.length) {
-          resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>';
-          return;
-        }
-        res.data.forEach(function(it) { EQUIPPED_ITEMS[it.id] = it; });
-        resultsEl.innerHTML = res.data.map(function(it) {
-          var meta = it.damage_dice ? it.damage_dice : (it.base_ac != null ? ('AC ' + it.base_ac) : (it.ac_bonus != null ? ('+' + it.ac_bonus + ' AC') : ''));
-          return '<div class="cs-inv-result-row" onclick="selectEquipItem(\'' + it.id + '\')">'
-            + '<div class="cs-inv-result-info">'
-              + '<span class="cs-inv-result-name">' + it.name + '</span>'
-              + '<span class="cs-inv-result-meta">' + (meta ? meta + ' &middot; ' : '') + (it.weight_lb||0) + 'lb</span>'
-            + '</div>'
-          + '</div>';
-        }).join('');
-      });
-  }
-  function selectEquipItem(itemId) {
+  function selectEquipItem(invItemId) {
     var slotKey = EQUIP_TARGET_SLOT;
     if (!slotKey || !SHEET) return;
+    var invItem = INVENTORY.find(function(i) { return i.id === invItemId; });
+    if (!invItem) return;
+    var catalogId   = invItem.item_id || null;
+    var catalogItem = catalogId ? CATALOG_CACHE[catalogId] : null;
+    var equipKey    = catalogId || invItem.id;
+    EQUIPPED_ITEMS[equipKey] = catalogItem || { name: invItem.custom_name || 'Unknown item', weight_lb: invItem.weight_lb || 0 };
     var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
-    equipped[slotKey] = itemId;
+    equipped[slotKey] = equipKey;
     SHEET.equipped = equipped;
-    EQUIPPED[slotKey] = itemId;
+    EQUIPPED[slotKey] = equipKey;
     saveSheet({ equipped: equipped });
+    invItem.equipped_slot = slotKey;
+    sb.from('inventory').update({ equipped_slot: slotKey }).eq('id', invItem.id).then(function(res) {
+      if (res.error) showToast('Equip saved, but inventory record not updated — ' + res.error.message, true);
+    });
     closeEquipModal();
     renderEquipped();
     showToast('Equipped');
