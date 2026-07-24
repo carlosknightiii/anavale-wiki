@@ -15,7 +15,7 @@
 
 ## Repo & Deployment
 
-**Local path:** `Documents/DND/Anavale/Players/anavale-wiki/`
+**Local path:** `Documents/DND/Anavale/anavale-wiki/`
 **GitHub repo:** `github.com/carlosknightiii/anavale-wiki`
 **Last known good HEAD:** `ced8db3` (July 5 2026 — "Combat: remove Split to All Players button from mid-combat loot panel")
 
@@ -28,7 +28,7 @@
 
 **Git push sequence:**
 ```bash
-cd Documents/DND/Anavale/Players/anavale-wiki
+cd Documents/DND/Anavale/anavale-wiki
 git add -A
 git commit -m "..."
 git push
@@ -87,7 +87,7 @@ World data, character data, session data. The `data/*.js` files are legacy seeds
 
 **URL:** `https://ebppsgaftzyvftemfeom.supabase.co`
 **Anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg`
-**Region:** us-east-1 · **Free tier** — kept alive by GitHub Actions ping every 5 days
+**Region:** us-east-1 · **Free tier** — kept alive by GitHub Actions ping every 3 days (targets species table, exits 1 on non-200)
 **Supabase MCP** is connected to Claude in chat sessions — query the DB directly without the DM pasting anything.
 
 **Tables (world):** `regions` · `nations` · `cities` · `creatures` · `organizations` · `world_characters` · `pois` · `religions` · `items` · `spells` · `species` · `quests`
@@ -215,7 +215,7 @@ Wiki `renderCity()` now renders population breakdown and structures. DM Tools ci
 `css/tokens.css` created as single source of truth. All `:root` blocks removed from all HTML/CSS files. Cinzel Decorative + Roboto only. One gold (#f0b429). SCC NPCs tab: full-width accordion cards, circular portrait, relationship badge. Quick Look panel: widened to 500px, NPC-style redesign.
 
 **2026-06-30 — Character sheet built (HP, Inventory, Notes). GitHub Actions keep-alive.**
-`sheet/index.html`: HP with max modifier, Inventory with catalog search + fuzzy-match gate + drag-reorder + weight total, Notes with contenteditable + wiki-entry autocomplete linking. Keep-alive workflow pings Supabase every 5 days to prevent free-tier auto-pause. DM Tools Players tab added.
+`sheet/index.html`: HP with max modifier, Inventory with catalog search + fuzzy-match gate + drag-reorder + weight total, Notes with contenteditable + wiki-entry autocomplete linking. Keep-alive workflow pings Supabase every 3 days (targets species table, exits 1 on non-200) to prevent free-tier auto-pause. DM Tools Players tab added.
 
 **2026-06-28 — Supabase migration complete.**
 All world data migrated from `data/*.js` to Supabase. Character creator writes directly to `player_characters`. Wiki reads live from Supabase. DM Tools fully Supabase-integrated (reads, writes, image uploads to Storage). File-based save UI removed. `data/*.js` files are legacy seeds only.
