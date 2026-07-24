@@ -2302,7 +2302,18 @@
     // calculation or the equipped-slot stat display, so fetch the full row.
     if (catalogId) {
       sb.from('items').select('*').eq('id', catalogId).single().then(function(res) {
-        if (!res.error && res.data) EQUIPPED_ITEMS[equipKey] = res.data;
+        if (res.error) {
+          console.warn('equip item fetch failed:', res.error);
+          showToast('Could not load item data', true);
+          renderEquipped();
+          return;
+        }
+        if (!res.data) {
+          console.warn('equip item fetch returned no data for id:', catalogId);
+          renderEquipped();
+          return;
+        }
+        EQUIPPED_ITEMS[equipKey] = res.data;
         renderEquipped();
       });
     } else {
@@ -3245,7 +3256,7 @@
         var ids = INVENTORY.filter(function(i){ return i.item_id; }).map(function(i){ return i.item_id; });
         var uniqueIds = ids.filter(function(id, idx){ return ids.indexOf(id) === idx; });
         if (!uniqueIds.length) return;
-        return sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,image')
+        return sb.from('items').select('*')
           .in('id', uniqueIds)
           .then(function(catRes) {
             if (catRes.error || !catRes.data) { console.warn('Catalog hydrate error:', catRes.error); return; }
