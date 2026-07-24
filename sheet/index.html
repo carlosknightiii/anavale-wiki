@@ -812,6 +812,61 @@
       max-height: 320px;
       overflow-y: auto;
     }
+    .cs-equip-result {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-equip-result:last-child { border-bottom: none; }
+    .cs-equip-result:hover { background: rgba(255,255,255,0.04); }
+    .cs-equip-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex: none;
+      background: rgba(255,255,255,0.05);
+    }
+    .cs-equip-thumb-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      font-size: 1rem;
+    }
+    .cs-equip-icon-armor::before  { content: '🛡'; }
+    .cs-equip-icon-shield::before { content: '🛡'; }
+    .cs-equip-icon-weapon::before { content: '⚔'; }
+    .cs-equip-result-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .cs-equip-result-name {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .cs-equip-result-stats {
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      color: var(--char-text-faint);
+    }
+    .cs-equip-result-weight {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--char-text-faint);
+      flex: none;
+      text-align: right;
+    }
     @media (max-width: 600px) {
       .cs-equipped-grid { grid-template-columns: 1fr; }
     }
@@ -2150,9 +2205,47 @@
       return matchesCustom || matchesCatalog;
     });
   }
+  // Stats line for an equip search result — reads catalog fields when the
+  // row is catalog-linked, falls back to whatever the inventory row itself
+  // carries (custom items don't have combat stats, so this is often empty).
+  function buildEquipResultStats(category, src) {
+    src = src || {};
+    if (category === 'armor') {
+      if (src.base_ac == null) return '';
+      return 'AC ' + src.base_ac
+        + (src.armor_weight_class ? ' &middot; ' + src.armor_weight_class : '')
+        + (src.stealth_disadvantage ? ' &middot; Stealth disadv.' : '')
+        + (src.str_requirement ? ' &middot; Str ' + src.str_requirement + ' req.' : '')
+        + (src.magic_bonus > 0 ? ' &middot; +' + src.magic_bonus : '');
+    }
+    if (category === 'shield') {
+      if (src.ac_bonus == null) return '';
+      return '+' + src.ac_bonus + ' AC'
+        + (src.magic_bonus > 0 ? ' &middot; +' + src.magic_bonus : '');
+    }
+    if (category === 'weapon') {
+      if (!src.damage_dice) return '';
+      return src.damage_dice + (src.damage_type ? ' ' + src.damage_type : '')
+        + (src.magic_bonus > 0 ? ' &middot; +' + src.magic_bonus : '')
+        + (src.properties && src.properties.length ? ' &middot; ' + src.properties.join(', ') : '')
+        + (src.range_normal ? ' &middot; Range ' + src.range_normal + '/' + src.range_long : '');
+    }
+    return '';
+  }
+  // Thumbnail markup — catalog image with an onerror fallback to a
+  // category-appropriate CSS icon; no image at all skips straight to the icon.
+  function buildEquipResultThumb(category, catalogItem) {
+    var iconClass = 'cs-equip-icon-' + category;
+    if (catalogItem && catalogItem.image) {
+      return '<img class="cs-equip-thumb" src="' + catalogItem.image + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">'
+        + '<div class="cs-equip-thumb cs-equip-thumb-icon ' + iconClass + '" style="display:none;"></div>';
+    }
+    return '<div class="cs-equip-thumb cs-equip-thumb-icon ' + iconClass + '"></div>';
+  }
   function renderEquipResults(q) {
     var resultsEl = document.getElementById('cs-equip-search-results');
-    if (!resultsEl || !EQUIP_TARGET_SLOT) return;
+    var slot = equipSlotByKey(EQUIP_TARGET_SLOT);
+    if (!resultsEl || !slot) return;
     var candidates = getEquipCandidates(EQUIP_TARGET_SLOT);
     if (!candidates.length) {
       resultsEl.innerHTML = '<div class="cs-inv-empty">No items in inventory for this slot</div>';
@@ -2173,17 +2266,15 @@
     }
     resultsEl.innerHTML = rows.map(function(r) {
       var weight = r.catalogItem ? (r.catalogItem.weight_lb || 0) : (r.item.weight_lb || 0);
-      var meta = '';
-      if (r.catalogItem && r.catalogItem.damage_dice) {
-        meta = r.catalogItem.damage_dice + (r.catalogItem.damage_type ? ' ' + r.catalogItem.damage_type : '');
-      } else if (r.catalogItem && r.catalogItem.base_ac != null) {
-        meta = 'AC ' + r.catalogItem.base_ac;
-      }
-      return '<div class="cs-inv-result-row" onclick="selectEquipItem(\'' + r.item.id + '\')">'
-        + '<div class="cs-inv-result-info">'
-          + '<span class="cs-inv-result-name">' + r.name + '</span>'
-          + '<span class="cs-inv-result-meta">' + (meta ? meta + ' &middot; ' : '') + weight + 'lb</span>'
+      var stats  = buildEquipResultStats(slot.category, r.catalogItem || r.item);
+      var thumb  = buildEquipResultThumb(slot.category, r.catalogItem);
+      return '<div class="cs-equip-result" onclick="selectEquipItem(\'' + r.item.id + '\')">'
+        + thumb
+        + '<div class="cs-equip-result-info">'
+          + '<span class="cs-equip-result-name">' + r.name + '</span>'
+          + (stats ? '<span class="cs-equip-result-stats">' + stats + '</span>' : '')
         + '</div>'
+        + '<span class="cs-equip-result-weight">' + weight + 'lb</span>'
       + '</div>';
     }).join('');
   }
