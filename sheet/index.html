@@ -807,6 +807,38 @@
       transition: color 0.15s;
     }
     .cs-equipped-unequip:hover { color: #f87171; }
+    .cs-equipped-locked {
+      width: 100%;
+      padding: 0.6rem;
+      color: var(--char-text-faint);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-style: italic;
+      text-align: center;
+    }
+    .cs-equipped-ac-damage {
+      display: inline-block;
+      vertical-align: middle;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(200,148,10,0.7);
+    }
+    .cs-tooltip {
+      position: fixed;
+      transform: translate(-50%, calc(-100% - 8px));
+      background: rgba(14,18,32,0.98);
+      border: 1px solid rgba(200,148,10,0.4);
+      border-radius: 6px;
+      padding: 0.4rem 0.65rem;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      color: var(--char-text-muted);
+      white-space: nowrap;
+      z-index: 99999;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
     .cs-equip-results {
       margin-top: 0.6rem;
       max-height: 320px;
@@ -2089,11 +2121,53 @@
     { key:'hand_right', label:'Main Hand', type:'weapon', category:'weapon' },
     { key:'hand_left',  label:'Off Hand',  type:'weapon', category:'weapon' }
   ];
+  // Minimal tooltip: reads data-tip off an element and shows a floating
+  // bubble on hover. sheet/index.html has no shared tooltip system (unlike
+  // character.js's data-tip convention) — this is scoped to the Equipped
+  // section's AC badge only.
+  function wireTooltip(el) {
+    if (!el || !el.dataset || !el.dataset.tip || el._tipWired) return;
+    el._tipWired = true;
+    var tipEl = null;
+    el.addEventListener('mouseenter', function() {
+      tipEl = document.createElement('div');
+      tipEl.className = 'cs-tooltip';
+      tipEl.textContent = el.dataset.tip;
+      document.body.appendChild(tipEl);
+      var rect = el.getBoundingClientRect();
+      tipEl.style.left = (rect.left + rect.width / 2) + 'px';
+      tipEl.style.top  = rect.top + 'px';
+    });
+    el.addEventListener('mouseleave', function() {
+      if (tipEl) { tipEl.remove(); tipEl = null; }
+    });
+  }
   function renderEquipped() {
     var block = document.getElementById('cs-equipped-block');
     if (!block) return;
+    var mainHandItem = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
+    var isTwoHanded = !!(mainHandItem && Array.isArray(mainHandItem.properties) && mainHandItem.properties.indexOf('two-handed') !== -1);
+    if (isTwoHanded && EQUIPPED.hand_left) {
+      autoUnequipOffHandForTwoHanded();
+    }
     block.innerHTML = renderEquippedAC()
-      + '<div class="cs-equipped-grid">' + EQUIP_SLOTS.map(renderEquippedSlot).join('') + '</div>';
+      + '<div class="cs-equipped-grid">' + EQUIP_SLOTS.map(function(slot) { return renderEquippedSlot(slot, isTwoHanded); }).join('') + '</div>';
+    var badge = block.querySelector('.cs-equipped-ac-badge');
+    if (badge) wireTooltip(badge);
+  }
+  // Clears Off Hand when Main Hand holds/gains a two-handed weapon — covers
+  // both directions (equipping two-handed while Off Hand is occupied, and
+  // Off Hand simply staying locked afterward via renderEquippedSlot).
+  function autoUnequipOffHandForTwoHanded() {
+    if (!SHEET) return;
+    var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
+    var removedId = equipped.hand_left;
+    delete equipped.hand_left;
+    SHEET.equipped = equipped;
+    EQUIPPED.hand_left = null;
+    var stillUsed = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === removedId; });
+    if (removedId && !stillUsed) delete EQUIPPED_ITEMS[removedId];
+    saveSheet({ equipped: equipped });
   }
   function renderEquippedAC() {
     var dexRaw = parseInt(ABILITY_SCORES.dex) || 10;
@@ -2101,31 +2175,60 @@
     var armor  = EQUIPPED.armor  ? EQUIPPED_ITEMS[EQUIPPED.armor]  : null;
     var shield = EQUIPPED.shield ? EQUIPPED_ITEMS[EQUIPPED.shield] : null;
     var ac = 10;
+    var breakdown = [];
     if (armor) {
       ac = parseInt(armor.base_ac) || 10;
+      breakdown.push(ac + ' (' + armor.name + ')');
       var weightClass = (armor.armor_weight_class || '').toLowerCase();
       if (weightClass === 'heavy') {
-        // no dex applied
+        breakdown.push('Dex (not added)');
       } else if (weightClass === 'medium') {
         var maxDex = (armor.max_dex_bonus != null && armor.max_dex_bonus !== '') ? parseInt(armor.max_dex_bonus) : 2;
-        ac += Math.min(dexMod, maxDex);
+        var dexApplied = Math.min(dexMod, maxDex);
+        ac += dexApplied;
+        breakdown.push(dexApplied + ' Dex (capped)');
       } else {
         ac += dexMod;
+        breakdown.push(dexMod + ' Dex (' + dexRaw + ')');
       }
-      ac += parseInt(armor.magic_bonus) || 0;
+      if (parseInt(armor.magic_bonus) > 0) {
+        ac += parseInt(armor.magic_bonus);
+        breakdown.push(armor.magic_bonus + ' armor enchantment');
+      }
     } else {
       ac += dexMod;
+      breakdown.push('10 base');
+      breakdown.push(dexMod + ' Dex (' + dexRaw + ')');
     }
     if (shield) {
-      ac += (shield.ac_bonus != null && shield.ac_bonus !== '' ? parseInt(shield.ac_bonus) : 2) + (parseInt(shield.magic_bonus) || 0);
+      var shieldBonus = (shield.ac_bonus != null && shield.ac_bonus !== '') ? parseInt(shield.ac_bonus) : 2;
+      ac += shieldBonus;
+      breakdown.push(shieldBonus + ' Shield');
+      if (parseInt(shield.magic_bonus) > 0) {
+        ac += parseInt(shield.magic_bonus);
+        breakdown.push(shield.magic_bonus + ' shield enchantment');
+      }
     }
-    return '<div class="cs-equipped-ac-badge">AC ' + ac + '</div>';
+    var tip = breakdown.join(' + ') + ' = ' + ac;
+
+    var mainHand = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
+    var offHand  = EQUIPPED.hand_left  ? EQUIPPED_ITEMS[EQUIPPED.hand_left]  : null;
+    var dmgParts = [];
+    if (mainHand && mainHand.damage_dice) dmgParts.push(mainHand.damage_dice + (mainHand.damage_type ? ' ' + mainHand.damage_type : ''));
+    if (offHand && offHand.damage_dice) dmgParts.push(offHand.damage_dice + (offHand.damage_type ? ' ' + offHand.damage_type : ''));
+    var dmgHtml = dmgParts.length ? '<span class="cs-equipped-ac-damage"> &middot; ' + dmgParts.join(' / ') + '</span>' : '';
+
+    return '<div class="cs-equipped-ac-badge" data-tip="' + tip.replace(/"/g,'&quot;') + '">AC ' + ac + '</div>' + dmgHtml;
   }
   function renderEquippedStat(labelText, value, fullRow) {
     return '<div class="cs-equipped-stat"' + (fullRow ? ' style="grid-column:1/-1;"' : '') + '>'
       + '<span>' + labelText + '</span><span>' + value + '</span></div>';
   }
-  function renderEquippedSlot(slot) {
+  function renderEquippedSlot(slot, mainHandTwoHanded) {
+    if (slot.key === 'hand_left' && mainHandTwoHanded) {
+      return '<div class="cs-equipped-slot"><div class="cs-equipped-slot-label">' + slot.label.toUpperCase() + '</div>'
+        + '<div class="cs-equipped-locked">Two-handed weapon equipped</div></div>';
+    }
     var itemId = EQUIPPED[slot.key];
     var item   = itemId ? EQUIPPED_ITEMS[itemId] : null;
     var body;
