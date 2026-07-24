@@ -209,6 +209,11 @@ Always use a bash heredoc when writing file contents that include backtick code 
 | Sticky HUD (Stage 4) | 90 |
 | Sticky Stage 3 panel | 50 |
 
+**Modals (`sheet/index.html`):**
+- All modals must be injected into `#cs-modal-root` — a direct sibling of `<main id="cs-main">` inside `<body>`
+- Never build modals as part of `renderCharacter()`'s HTML string
+- Reason: `.cs-wrap` has a `cs-fadein` animation with `forwards` fill-mode — any `animation`, `transform`, `filter`, or `perspective` on an ancestor creates a new containing block for `position:fixed` descendants, breaking them silently. Symptom: modal appears at the top of the page regardless of scroll position.
+
 **Canvas (`welcome.html`):**
 - Partition animation text is drawn via `drawText(p)` — never via HTML/CSS
 - Never add HTML elements inside `#partition-sticky`
