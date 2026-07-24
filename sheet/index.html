@@ -735,6 +735,87 @@
     }
     .cs-gold-save:hover { background: rgba(200,148,10,0.35); }
 
+    /* ── Equipped ── */
+    .cs-equipped-ac-badge {
+      display: inline-block;
+      font-family: var(--font-serif);
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      background: var(--char-highlight-tint);
+      border: 1px solid var(--char-highlight-border);
+      border-radius: 10px;
+      padding: 0.5rem 1.25rem;
+      margin-bottom: 0.85rem;
+    }
+    .cs-equipped-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    .cs-equipped-slot {
+      background: var(--char-card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--char-radius);
+      padding: 0.85rem 1rem;
+    }
+    .cs-equipped-slot-label {
+      font-family: var(--font-sans);
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .cs-equipped-item {
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      color: var(--char-text-muted);
+    }
+    .cs-equipped-stat {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.76rem;
+      color: var(--char-text-faint);
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .cs-equipped-stat:last-child { border-bottom: none; }
+    .cs-equipped-empty-btn {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: var(--char-text-faint);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .cs-equipped-empty-btn:hover { background: rgba(200,148,10,0.1); border-color: rgba(200,148,10,0.35); }
+    .cs-equipped-unequip {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.25);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0 0.2rem;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .cs-equipped-unequip:hover { color: #f87171; }
+    .cs-equip-results {
+      margin-top: 0.6rem;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    @media (max-width: 600px) {
+      .cs-equipped-grid { grid-template-columns: 1fr; }
+    }
+
     /* ── Inventory ── */
     .cs-inv-add-row {
       display: flex;
@@ -1473,6 +1554,9 @@
   var CHAR_ID    = null;   // player_characters.id
   var TOKEN      = null;   // from URL query string
   var ACTIVE_NOTE_TAB = 'general';
+  var EQUIPPED   = { armor: null, shield: null, hand_right: null, hand_left: null };
+  var EQUIPPED_ITEMS = {}; // item_id → full item row from items table
+  var ABILITY_SCORES = {}; // set from player_characters.ability_scores in renderCharacter()
 
   // ── Lookup tables ─────────────────────────────────────────────────
   var TYPE_META = {
@@ -1607,6 +1691,7 @@
     var regionImg   = REGION_IMG[regionKey] || 'img-caparia-landscape';
     var regionLabel = REGION_LABELS[regionKey] || cap(ch.home_region || '');
     var scores      = (typeof ch.ability_scores === 'object' && ch.ability_scores) ? ch.ability_scores : {};
+    ABILITY_SCORES  = scores;
     var app         = (typeof ch.appearance_data === 'object' && ch.appearance_data) ? ch.appearance_data : {};
     var gender      = ch.gender || 'm';
     var portraitSuffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
@@ -1765,6 +1850,12 @@
         + '<div id="cs-gold-block"></div>'
       + '</div>'
 
+      // Equipped
+      + '<div class="cs-section cs-equipped-section" id="cs-equipped-section">'
+        + '<div class="cs-section-label">Equipped</div>'
+        + '<div id="cs-equipped-block"></div>'
+      + '</div>'
+
       // Inventory
       + '<div class="cs-section">'
         + '<div class="cs-section-label">Inventory</div>'
@@ -1814,6 +1905,7 @@
   // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
   function renderLivePlay() {
     renderHP();
+    renderEquipped();
     renderGold();
     renderInventory();
     renderNotes();
@@ -1933,6 +2025,170 @@
     input.value = '';
     renderGold();
     showToast('Gold updated');
+  }
+
+  // ── Equipped ──────────────────────────────────────────────────────
+  var EQUIP_SLOTS = [
+    { key:'armor',      label:'Armor',     type:'armor',  category:'armor'  },
+    { key:'shield',     label:'Shield',    type:'shield', category:'shield' },
+    { key:'hand_right', label:'Main Hand', type:'weapon', category:'weapon' },
+    { key:'hand_left',  label:'Off Hand',  type:'weapon', category:'weapon' }
+  ];
+  function renderEquipped() {
+    var block = document.getElementById('cs-equipped-block');
+    if (!block) return;
+    block.innerHTML = renderEquippedAC()
+      + '<div class="cs-equipped-grid">' + EQUIP_SLOTS.map(renderEquippedSlot).join('') + '</div>';
+  }
+  function renderEquippedAC() {
+    var dexRaw = parseInt(ABILITY_SCORES.dex) || 10;
+    var dexMod = Math.floor((dexRaw - 10) / 2);
+    var armor  = EQUIPPED.armor  ? EQUIPPED_ITEMS[EQUIPPED.armor]  : null;
+    var shield = EQUIPPED.shield ? EQUIPPED_ITEMS[EQUIPPED.shield] : null;
+    var ac = 10;
+    if (armor) {
+      ac = parseInt(armor.base_ac) || 10;
+      var weightClass = (armor.armor_weight_class || '').toLowerCase();
+      if (weightClass === 'heavy') {
+        // no dex applied
+      } else if (weightClass === 'medium') {
+        var maxDex = (armor.max_dex_bonus != null && armor.max_dex_bonus !== '') ? parseInt(armor.max_dex_bonus) : 2;
+        ac += Math.min(dexMod, maxDex);
+      } else {
+        ac += dexMod;
+      }
+      ac += parseInt(armor.magic_bonus) || 0;
+    } else {
+      ac += dexMod;
+    }
+    if (shield) {
+      ac += (shield.ac_bonus != null && shield.ac_bonus !== '' ? parseInt(shield.ac_bonus) : 2) + (parseInt(shield.magic_bonus) || 0);
+    }
+    return '<div class="cs-equipped-ac-badge">AC ' + ac + '</div>';
+  }
+  function renderEquippedStat(labelText, value, fullRow) {
+    return '<div class="cs-equipped-stat"' + (fullRow ? ' style="grid-column:1/-1;"' : '') + '>'
+      + '<span>' + labelText + '</span><span>' + value + '</span></div>';
+  }
+  function renderEquippedSlot(slot) {
+    var itemId = EQUIPPED[slot.key];
+    var item   = itemId ? EQUIPPED_ITEMS[itemId] : null;
+    var body;
+    if (!item) {
+      body = '<button class="cs-equipped-empty-btn" onclick="openEquipModal(\'' + slot.key + '\')">Search to equip&#8230;</button>';
+    } else {
+      var stats = [];
+      if (slot.type === 'armor') {
+        stats.push(renderEquippedStat('Base AC', item.base_ac != null ? item.base_ac : '&mdash;'));
+        if (item.armor_weight_class) stats.push(renderEquippedStat('Weight Class', cap(item.armor_weight_class)));
+        if (item.stealth_disadvantage) stats.push(renderEquippedStat('Stealth', 'Disadvantage'));
+        if (item.str_requirement) stats.push(renderEquippedStat('Str Req', item.str_requirement));
+        if (item.magic_bonus) stats.push(renderEquippedStat('Magic Bonus', '+' + item.magic_bonus));
+        if (item.weight_lb != null) stats.push(renderEquippedStat('Weight', item.weight_lb + ' lb'));
+      } else if (slot.type === 'shield') {
+        stats.push(renderEquippedStat('AC Bonus', '+' + (item.ac_bonus != null ? item.ac_bonus : 2)));
+        if (item.magic_bonus) stats.push(renderEquippedStat('Magic Bonus', '+' + item.magic_bonus));
+        if (item.weight_lb != null) stats.push(renderEquippedStat('Weight', item.weight_lb + ' lb'));
+      } else if (slot.type === 'weapon') {
+        var isRanged = !!item.range_normal;
+        stats.push(renderEquippedStat('Attack', isRanged ? 'Ranged' : 'Melee'));
+        if (item.damage_dice) stats.push(renderEquippedStat('Damage', item.damage_dice + (item.damage_type ? ' ' + item.damage_type : '')));
+        if (item.versatile_dice) stats.push(renderEquippedStat('Versatile', item.versatile_dice));
+        if (Array.isArray(item.properties) && item.properties.length) stats.push(renderEquippedStat('Properties', item.properties.join(', ')));
+        if (isRanged) stats.push(renderEquippedStat('Range', item.range_normal + (item.range_long ? ' / ' + item.range_long : '')));
+        if (item.magic_bonus) stats.push(renderEquippedStat('Magic Bonus', '+' + item.magic_bonus));
+        if (item.weight_lb != null) stats.push(renderEquippedStat('Weight', item.weight_lb + ' lb'));
+      }
+      if (Array.isArray(item.grants_advantage) && item.grants_advantage.length) {
+        stats.push(renderEquippedStat('Advantage', item.grants_advantage.join(', '), true));
+      }
+      if (item.story_note) {
+        stats.push('<div class="cs-equipped-stat" style="grid-column:1/-1;font-style:italic;">' + item.story_note + '</div>');
+      }
+      body = '<div class="cs-equipped-item">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">'
+          + '<strong>' + item.name + '</strong>'
+          + '<button class="cs-equipped-unequip" onclick="unequipSlot(\'' + slot.key + '\')" title="Unequip">&#10005;</button>'
+        + '</div>'
+        + stats.join('')
+      + '</div>';
+    }
+    return '<div class="cs-equipped-slot"><div class="cs-equipped-slot-label">' + slot.label.toUpperCase() + '</div>' + body + '</div>';
+  }
+
+  // ── Equip search modal ────────────────────────────────────────────
+  var EQUIP_TARGET_SLOT = null;
+  var EQUIP_SEARCH_DEBOUNCE = null;
+  var EQUIP_SLOT_TITLES = { armor:'Equip Armor', shield:'Equip Shield', hand_right:'Equip Main Hand', hand_left:'Equip Off Hand' };
+  function equipSlotByKey(key) {
+    for (var i = 0; i < EQUIP_SLOTS.length; i++) { if (EQUIP_SLOTS[i].key === key) return EQUIP_SLOTS[i]; }
+    return null;
+  }
+  function openEquipModal(slotKey) {
+    EQUIP_TARGET_SLOT = slotKey;
+    document.getElementById('cs-equip-modal-title').textContent = EQUIP_SLOT_TITLES[slotKey] || 'Equip Item';
+    document.getElementById('cs-equip-search-input').value = '';
+    document.getElementById('cs-equip-search-results').innerHTML = '';
+    document.getElementById('cs-equip-modal-overlay').style.display = 'flex';
+  }
+  function closeEquipModal() {
+    document.getElementById('cs-equip-modal-overlay').style.display = 'none';
+    EQUIP_TARGET_SLOT = null;
+  }
+  function onEquipSearchInput() {
+    clearTimeout(EQUIP_SEARCH_DEBOUNCE);
+    var q = (document.getElementById('cs-equip-search-input').value || '').trim();
+    var resultsEl = document.getElementById('cs-equip-search-results');
+    if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+    EQUIP_SEARCH_DEBOUNCE = setTimeout(function() { runEquipSearch(q); }, 250);
+  }
+  function runEquipSearch(q) {
+    var slot = equipSlotByKey(EQUIP_TARGET_SLOT);
+    if (!slot) return;
+    sb.from('items').select('*').eq('player_facing', true).eq('category', slot.category)
+      .ilike('name', '%' + q + '%').order('name').limit(8)
+      .then(function(res) {
+        var resultsEl = document.getElementById('cs-equip-search-results');
+        if (!resultsEl) return;
+        if (res.error || !res.data || !res.data.length) {
+          resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>';
+          return;
+        }
+        res.data.forEach(function(it) { EQUIPPED_ITEMS[it.id] = it; });
+        resultsEl.innerHTML = res.data.map(function(it) {
+          var meta = it.damage_dice ? it.damage_dice : (it.base_ac != null ? ('AC ' + it.base_ac) : (it.ac_bonus != null ? ('+' + it.ac_bonus + ' AC') : ''));
+          return '<div class="cs-inv-result-row" onclick="selectEquipItem(\'' + it.id + '\')">'
+            + '<div class="cs-inv-result-info">'
+              + '<span class="cs-inv-result-name">' + it.name + '</span>'
+              + '<span class="cs-inv-result-meta">' + (meta ? meta + ' &middot; ' : '') + (it.weight_lb||0) + 'lb</span>'
+            + '</div>'
+          + '</div>';
+        }).join('');
+      });
+  }
+  function selectEquipItem(itemId) {
+    var slotKey = EQUIP_TARGET_SLOT;
+    if (!slotKey || !SHEET) return;
+    var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
+    equipped[slotKey] = itemId;
+    SHEET.equipped = equipped;
+    EQUIPPED[slotKey] = itemId;
+    saveSheet({ equipped: equipped });
+    closeEquipModal();
+    renderEquipped();
+    showToast('Equipped');
+  }
+  function unequipSlot(slotKey) {
+    if (!SHEET) return;
+    var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
+    var removedId = equipped[slotKey];
+    delete equipped[slotKey];
+    SHEET.equipped = equipped;
+    EQUIPPED[slotKey] = null;
+    var stillUsed = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === removedId; });
+    if (removedId && !stillUsed) delete EQUIPPED_ITEMS[removedId];
+    saveSheet({ equipped: equipped });
+    renderEquipped();
   }
 
   // ── Inventory ─────────────────────────────────────────────────────
@@ -2830,6 +3086,24 @@
       });
   }
 
+  // ── Fetch equipped ────────────────────────────────────────────────
+  function fetchEquipped(ch) {
+    var equipped = (SHEET && typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
+    EQUIPPED = {
+      armor:      equipped.armor      || null,
+      shield:     equipped.shield     || null,
+      hand_right: equipped.hand_right || null,
+      hand_left:  equipped.hand_left  || null
+    };
+    var ids = Object.keys(EQUIPPED).map(function(k) { return EQUIPPED[k]; }).filter(Boolean);
+    var uniqueIds = ids.filter(function(id, idx) { return ids.indexOf(id) === idx; });
+    if (!uniqueIds.length) return Promise.resolve();
+    return sb.from('items').select('*').in('id', uniqueIds).then(function(res) {
+      if (res.error || !res.data) { console.warn('Equipped items fetch error:', res.error); return; }
+      res.data.forEach(function(it) { EQUIPPED_ITEMS[it.id] = it; });
+    });
+  }
+
   // ── Fetch inventory ───────────────────────────────────────────────
   function fetchInventory() {
     return sb.from('inventory').select('*').eq('character_id', CHAR_ID).order('created_at')
@@ -2894,6 +3168,15 @@
               + '</div>'
             + '</div>'
           + '</div>'
+        + '</div>'
+        + '<div class="cs-modal-overlay" id="cs-equip-modal-overlay" style="display:none" onclick="if(event.target===this)closeEquipModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title" id="cs-equip-modal-title">Equip Item</div>'
+            + '<div class="cs-modal-body">'
+              + '<input class="cs-inv-input" id="cs-equip-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onEquipSearchInput()">'
+              + '<div class="cs-equip-results" id="cs-equip-search-results"></div>'
+            + '</div>'
+          + '</div>'
         + '</div>';
     }
     TOKEN = getToken();
@@ -2930,7 +3213,7 @@
 
         // 3. Fetch live-play data in parallel, then render all at once
         Promise.all([
-          fetchOrCreateSheet(ch),
+          fetchOrCreateSheet(ch).then(function() { return fetchEquipped(ch); }),
           fetchInventory(),
           fetchNotes(),
           fetchPhoto()
