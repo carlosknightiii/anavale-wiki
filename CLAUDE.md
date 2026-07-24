@@ -249,7 +249,7 @@ Supabase restored from inactive state. Keep-alive updated from 5-day to 3-day sc
 **2026-07-18 — Migrated from Cowork to Claude Code. CLAUDE.md created.**
 Claude Code is now standard for all file edits and git operations. Cowork retired. `CLAUDE.md` created and pushed. Project plan moved into `docs/`. `anavale-dm-docs` private repo created.
 
-**2026-07-05 — Session 1 complete. All 7 SCC tabs QA'd.** HEAD at session end: `ced8db3`. session_scenarios populated (8 groups, 44+ rows). Player handout created.
+**2026-07-05 — Session Zero complete. All 7 SCC tabs QA'd.** Character creation session run. HEAD at session end: `ced8db3`. session_scenarios populated (8 groups, 44+ rows). Player handout created. Session 1 not yet run.
 
 **2026-07-04 — Landmarks retired. species table seeded.** `structures` replaces landmarks. 141 lines removed from dm.html. Supabase `species` table seeded with 12 canonical IDs.
 
