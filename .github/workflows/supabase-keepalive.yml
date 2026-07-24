@@ -1,16 +1,23 @@
 name: Supabase Keep-Alive
+
 on:
   schedule:
-    # Runs every 5 days at 08:00 UTC
-    - cron: '0 8 */5 * *'
-  workflow_dispatch: # allows manual trigger from Actions tab
+    - cron: '0 12 */3 * *'
+  workflow_dispatch:
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase
+      - name: Query Supabase to prevent auto-pause
         run: |
-          curl -s -o /dev/null -w "%{http_code}" \
-            "https://ebppsgaftzyvftemfeom.supabase.co/rest/v1/regions?select=id&limit=1" \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://ebppsgaftzyvftemfeom.supabase.co/rest/v1/species?select=id&limit=1" \
             -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg" \
-            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg"
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg")
+          echo "Supabase responded with HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "WARNING: Unexpected status $STATUS"
+            exit 1
+          fi
+          echo "Keep-alive successful."
