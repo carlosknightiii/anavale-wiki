@@ -16,6 +16,15 @@
 ## Repo & Deployment
 
 **Local path:** `Documents/DND/Anavale/anavale-wiki/`
+
+Local folder structure:
+```
+Documents/DND/Anavale/
+├── anavale-wiki/          ← this repo (public git)
+├── anavale-dm-docs/       ← private git repo (DM spoiler files)
+└── anavale-assets/        ← non-git large files (mockups, world art, etc.)
+```
+
 **GitHub repo:** `github.com/carlosknightiii/anavale-wiki`
 **Last known good HEAD:** `ced8db3` (July 5 2026 — "Combat: remove Split to All Players button from mid-combat loot panel")
 
