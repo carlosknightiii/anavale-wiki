@@ -31,14 +31,14 @@
 
 ## 2. Current Focus
 
-*Session July 23 2026 — Infrastructure & cleanup.*
-- Supabase keep-alive updated to 3-day schedule, confirmed working.
-- Local folder restructured: `anavale-wiki/` moved to `Anavale/` root, `anavale-assets/` created.
-- `anavale-dm-docs` connected to Claude Chat project context.
-- `CLAUDE.md` rewritten and updated.
+*Session July 23 2026 (cont'd) — sheet/index.html Equipped section.*
+- Added Equipped section to `sheet/index.html`, rendered between Gold and Inventory.
+- Reads/writes `character_sheet.equipped` jsonb (`{armor, shield, hand_right, hand_left}` → item_id).
+- Live AC calculation (armor base_ac + dex by weight class + shield ac_bonus + magic bonuses).
+- Equip search modal added to `#cs-modal-root` (category-filtered by slot: armor/shield/weapon).
 
 **Next priorities (post-Session 1):**
-- `sheet/index.html` improvements: combat tab, ability panel, condition tooltips, XP display
+- `sheet/index.html`: combat tab, condition tooltips, XP display (ability panel/Equipped now done)
 - Character creator migration to Supabase `species` table
 - Interactive Caparia map
 - Session recap page (player-facing, post-Session 2)
@@ -242,6 +242,9 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
 
 ---
+
+**2026-07-23 — Equipped section added to sheet/index.html.**
+New Equipped section (armor/shield/main hand/off hand) rendered between Gold and Inventory in `renderCharacter()`, populated live via `renderEquipped()` (called from `renderLivePlay()` alongside `renderHP()`). Reads/writes `character_sheet.equipped` jsonb; item stats fetched live from `items` by id into `EQUIPPED_ITEMS`. AC computed dynamically in `renderEquippedAC()`: base 10, armor `base_ac` + dex-by-weight-class (heavy = none, medium = capped at `max_dex_bonus` ?? 2, light/none = full dex), shield `ac_bonus` (default 2), plus `magic_bonus` from armor/shield. New equip-search modal injected into `#cs-modal-root` (never inside `.cs-wrap`, per the modal rule), filtered by category per slot. All new symbols use HTML entities (`&#8230;`, `&#10005;`), not literal emoji — existing literal emoji elsewhere in the file (📝, 🗺, etc.) predate this and were left alone. HEAD after push: `be4ecec`.
 
 **2026-07-23 — Infrastructure session. CLAUDE.md rewritten.**
 Supabase restored from inactive state. Keep-alive updated from 5-day to 3-day schedule, confirmed working (HTTP 200). Local folder restructured: `anavale-wiki/` moved to `Anavale/` root, `anavale-assets/` created for non-git files, `DM/` deleted (files already in `anavale-dm-docs`). `anavale-dm-docs` connected to Claude Chat project context — DM reference files now auto-sync, no manual uploads needed. CLAUDE.md rewritten: removed stale HEAD hash, added Current Focus section, consolidated always-stale files, trimmed Decision Log, reorganised Code Authoring rules by area. Heredoc rule added to Code Authoring.
