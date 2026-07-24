@@ -2265,7 +2265,8 @@
       return;
     }
     resultsEl.innerHTML = rows.map(function(r) {
-      var weight = r.catalogItem ? (r.catalogItem.weight_lb || 0) : (r.item.weight_lb || 0);
+      var weightSrc = r.catalogItem ? r.catalogItem.weight_lb : r.item.weight_lb;
+      var weight = parseFloat(weightSrc) || 0;
       var stats  = buildEquipResultStats(slot.category, r.catalogItem || r.item);
       var thumb  = buildEquipResultThumb(slot.category, r.catalogItem);
       return '<div class="cs-equip-result" onclick="selectEquipItem(\'' + r.item.id + '\')">'
@@ -2283,10 +2284,8 @@
     if (!slotKey || !SHEET) return;
     var invItem = INVENTORY.find(function(i) { return i.id === invItemId; });
     if (!invItem) return;
-    var catalogId   = invItem.item_id || null;
-    var catalogItem = catalogId ? CATALOG_CACHE[catalogId] : null;
-    var equipKey    = catalogId || invItem.id;
-    EQUIPPED_ITEMS[equipKey] = catalogItem || { name: invItem.custom_name || 'Unknown item', weight_lb: invItem.weight_lb || 0 };
+    var catalogId = invItem.item_id || null;
+    var equipKey  = catalogId || invItem.id;
     var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
     equipped[slotKey] = equipKey;
     SHEET.equipped = equipped;
@@ -2297,8 +2296,19 @@
       if (res.error) showToast('Equip saved, but inventory record not updated — ' + res.error.message, true);
     });
     closeEquipModal();
-    renderEquipped();
     showToast('Equipped');
+    // CATALOG_CACHE only carries the partial fields used by the inventory list
+    // (name, category, cost_gp, weight_lb, summary, image) — not enough for AC
+    // calculation or the equipped-slot stat display, so fetch the full row.
+    if (catalogId) {
+      sb.from('items').select('*').eq('id', catalogId).single().then(function(res) {
+        if (!res.error && res.data) EQUIPPED_ITEMS[equipKey] = res.data;
+        renderEquipped();
+      });
+    } else {
+      EQUIPPED_ITEMS[equipKey] = { name: invItem.custom_name || 'Unknown item', weight_lb: invItem.weight_lb || 0 };
+      renderEquipped();
+    }
   }
   function unequipSlot(slotKey) {
     if (!SHEET) return;
