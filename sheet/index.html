@@ -1940,6 +1940,13 @@
     brightward:'Lawful Good', colorful:'Chaotic Good', greywarden:'True Neutral',
     steelbound:'Lawful Neutral', ashwalker:'Chaotic Neutral'
   };
+  // In-world display name for each alignment — matches .char-alignment-name
+  // in character.html, the actual cards players click during creation. The
+  // internal id (e.g. "ashwalker") is never player-facing on its own.
+  var ALIGNMENT_TRAIT_NAME = {
+    brightward:'Protective', colorful:'Freespirited', greywarden:'Measured',
+    steelbound:'Disciplined', ashwalker:'Pragmatic'
+  };
   var ALIGNMENT_TRAIT_SENTENCE = {
     brightward:  'They are Protective — they believe the world is worth protecting, and they intend to be someone others can count on.',
     colorful:    'They are Freespirited — they want to do right by people, they\'ve just never been good at following someone else\'s idea of how.',
@@ -2301,7 +2308,7 @@
     // flavor text: PHB-equivalent subtitles come from real lookups; a
     // background/alignment "archetype" subtitle (e.g. Figma's "(Gladiator)"
     // for the alignment card) doesn't exist in canon data and isn't built here.
-    var alignName = label(ALIGNMENT_LABELS, ch.alignment);
+    var alignName = ALIGNMENT_TRAIT_NAME[alignKey] || label(ALIGNMENT_LABELS, ch.alignment);
     var alignPhb  = ALIGNMENT_PHB[alignKey];
     var alignCard = '<div class="cs-ov-card">'
       + '<img class="cs-ov-card-img" src="../assets/images/img-alignment.webp" alt="">'
