@@ -3699,7 +3699,6 @@
       });
   }
 
-  // ── Fetch or create character_sheet row ───────────────────────────
   // ── Fetch class mechanical data (Overview Class card) ──────────────
   // Table may not exist yet (see docs/character-sheet-redesign-handoff.md
   // §6/§7) — errors are swallowed so the card just keeps its "—" placeholders.
@@ -3713,6 +3712,7 @@
       .catch(function() { renderClassCard(); });
   }
 
+  // ── Fetch or create character_sheet row ───────────────────────────
   function fetchOrCreateSheet(ch) {
     return sb.from('character_sheet').select('*').eq('character_id', CHAR_ID).maybeSingle()
       .then(function(res) {
