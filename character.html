@@ -591,6 +591,14 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="char-past-q-img" id="img-friend"></div>
             <div class="char-past-effect-preview" id="effect-friend"></div>
+            <div id="friend-mentor-skill-picker" style="display:none">
+              <div style="margin-top:0.75rem;margin-bottom:0.25rem;font-family:var(--font-sans);font-size:0.78rem;color:rgba(245,234,212,0.75);">Choose the skill your mentor taught you:</div>
+              <select id="friend-mentor-skill-select" class="char-field-select" onchange="selectMentorSkill(this.value)">
+                <option value="">— choose a skill —</option>
+                <option value="History">History</option>
+                <option value="Medicine">Medicine</option>
+              </select>
+            </div>
           </div>
           <div class="char-past-question" id="past-q-pet" data-num="3" data-icon="🐾">
             <div class="char-past-q-badge"><span class="char-past-q-num">3</span><span class="char-past-q-icon">🐾</span></div>
@@ -1410,6 +1418,17 @@ function selectPastCard(card) {
       var sel = document.getElementById('org-solo-skill-select');
       if (sel) sel.value = '';
       CHAR_STATE.draft['past_org_solo_skill'] = null;
+      saveDraftToStorage();
+    }
+  }
+  // Show/hide History-or-Medicine picker for the mentor friend answer
+  var mentorPicker = document.getElementById('friend-mentor-skill-picker');
+  if (mentorPicker) {
+    mentorPicker.style.display = (pastKey === 'friend' && value === 'mentor') ? 'block' : 'none';
+    if (pastKey === 'friend' && value !== 'mentor') {
+      var mentorSel = document.getElementById('friend-mentor-skill-select');
+      if (mentorSel) mentorSel.value = '';
+      CHAR_STATE.draft['past_friend_mentor_skill'] = null;
       saveDraftToStorage();
     }
   }

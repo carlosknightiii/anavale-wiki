@@ -4951,6 +4951,7 @@ function showDMToast(msg, type) {
 }
 .scc-player-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
   padding: 0.4rem 0.85rem 0.4rem 0.6rem;
@@ -4959,6 +4960,25 @@ function showDMToast(msg, type) {
   border-radius: var(--dm-radius);
   white-space: nowrap;
   min-width: 180px;
+}
+.scc-player-pending-items {
+  flex-basis: 100%;
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--scc-border-mid);
+}
+.scc-player-pending-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-text-muted);
 }
 .scc-player-card-name {
   font-family: var(--font-headers);
@@ -10321,6 +10341,7 @@ function sccRenderPlayerBar() {
       if (pct <= 0.25) hpClass = 'danger';
       else if (pct <= 0.5) hpClass = 'warning';
     }
+    var pending = Array.isArray(p.dm_pending_items) ? p.dm_pending_items : [];
     return '<div class="scc-player-card">'
       + '<div>'
         + '<div class="scc-player-card-name">' + sccEsc(p.name || 'Unknown') + '</div>'
@@ -10331,8 +10352,34 @@ function sccRenderPlayerBar() {
         + '<div class="scc-player-hp-label">HP</div>'
       + '</div>'
       + '<div class="scc-player-level-badge">Lv ' + level + '</div>'
+      + (pending.length
+          ? '<div class="scc-player-pending-items">'
+            + pending.map(function(item, i) {
+                return '<div class="scc-player-pending-item">'
+                  + '<span>&#128230; ' + sccEsc(item.label || 'Item') + '</span>'
+                  + '<button class="scc-btn-sm" onclick="sccMarkPendingItemAdded(\'' + sccEsc(p.id) + '\',' + i + ')">Mark Added</button>'
+                + '</div>';
+              }).join('')
+            + '</div>'
+          : '')
     + '</div>';
   }).join('');
+}
+
+// A DM-add item promised by a past-question answer (e.g. "Wanderkeep Field
+// Kit (DM adds)") — never auto-granted, cleared here once the DM has
+// actually handed it to the player.
+function sccMarkPendingItemAdded(playerId, index) {
+  var player = SCC_PLAYERS.find(function(p) { return p.id === playerId; });
+  if (!player || !Array.isArray(player.dm_pending_items)) return;
+  var remaining = player.dm_pending_items.filter(function(_, i) { return i !== index; });
+  player.dm_pending_items = remaining;
+  sccPatch('player_characters', '?id=eq.' + encodeURIComponent(playerId), { dm_pending_items: remaining })
+    .then(function(r) {
+      if (!r.ok) { showDMToast('Failed to update pending items', 'error'); return; }
+      showDMToast('Marked as added', 'success');
+    });
+  sccRenderPlayerBar();
 }
 
 // ── Live Session Tab ──────────────────────────────────────────────

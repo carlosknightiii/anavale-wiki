@@ -444,6 +444,138 @@ var ANAVALE_BACKGROUNDS = [
   }
 ];
 
+// ── BACKGROUND EFFECTS — single source of truth for ability bonuses + feat ──
+// bg.bonuses entries are either an ability delta ("+1 Wis") or a feat name
+// ("Tough"). Used both for live preview (creator) and final persisted values
+// (buildCharacterEntry), so preview and stored data can never drift apart.
+var ABILITY_WORD_MAP = { 'Str':'str','Dex':'dex','Con':'con','Int':'int','Wis':'wis','Cha':'cha' };
+
+function parseBackgroundAbilityBonuses(bgObj) {
+  var result = {};
+  if (!bgObj || !bgObj.bonuses) return result;
+  bgObj.bonuses.forEach(function(b) {
+    var m = b.match(/^([+-]\d+)\s+(\w+)$/);
+    if (m && ABILITY_WORD_MAP[m[2]]) {
+      var key = ABILITY_WORD_MAP[m[2]];
+      result[key] = (result[key] || 0) + parseInt(m[1]);
+    }
+  });
+  return result;
+}
+
+function getBackgroundFeat(bgObj) {
+  if (!bgObj || !bgObj.bonuses) return null;
+  var feat = bgObj.bonuses.find(function(b) { return !/^[+-]\d+\s+\w+$/.test(b); });
+  return feat || null;
+}
+
+// ── IMAGINED PAST — MECHANICAL EFFECTS (single source of truth) ────────────
+// Replaces the old PAST_SKILL_LOOKUP / PAST_SKILL_GRANTS dicts, which had
+// disagreed with each other and with the card copy in character.html (see
+// 2026-08-08 decision log). Only the raised/friend/org questions carry
+// mechanical effects — pet/love/left-behind/why-left are flavor only.
+// - abilities: ability score deltas (raised question only)
+// - skill: a flat +1 modifier, NOT full proficiency (matches the existing
+//   "not full proficiency, but still useful" tooltip copy)
+// - skillChoice: player must pick from these options (see the mentor picker
+//   in character.html, modeled on the existing kept-to-myself picker)
+// - gold_cp: starting gold bonus, in copper
+// - dmItem: surfaced to the DM via dm_pending_items — never auto-granted
+var PAST_EFFECTS = {
+  raised: {
+    'grandparent':      { abilities: [{ key:'wis', amount:1 }], skill: 'History' },
+    'kind-parents':      { abilities: [{ key:'wis', amount:1 }], skill: 'Insight' },
+    'single-parent':     { abilities: [{ key:'con', amount:1 }], skill: 'Athletics' },
+    'strict-religious':  { abilities: [{ key:'int', amount:1 }, { key:'cha', amount:-1 }], skill: 'Religion' },
+    'the-streets':       { abilities: [{ key:'dex', amount:1 }, { key:'wis', amount:-1 }], skill: 'Sleight of Hand' }
+  },
+  friend: {
+    'animal':    { skill: 'Animal Handling' },
+    'imaginary': { skill: 'Perception' },
+    'mentor':    { skillChoice: ['History', 'Medicine'] },
+    'neighbor':  { skill: 'Insight' },
+    'no-one':    { skill: 'Survival' }
+  },
+  org: {
+    'brightcreed':       { skill: 'Religion', dmItem: 'Brightcreed Token' },
+    'fighting-company':  { skill: 'Athletics', dmItem: 'Common weapon of choice' },
+    'kept-to-myself':    { skill: 'Stealth' }, // + a free-choice skill via the existing org-solo-skill-picker
+    'merchant-guild':    { skill: 'Persuasion', gold_cp: 5000 },
+    'wanderkeep':        { skill: 'Survival', dmItem: 'Wanderkeep Field Kit' }
+  }
+};
+
+// Final ability scores = raw Stage-3 assignment + background bonus + raised-question bonus.
+// Always derives fresh from the immutable draft inputs — never mutates a
+// previously-final value — so calling this twice on the same draft is safe.
+function computeFinalAbilityScores(draft) {
+  var base = draft.ability_scores || { str:10, dex:10, con:10, int:10, wis:10, cha:10 };
+  var bgObj = draft.background_id && typeof ANAVALE_BACKGROUNDS !== 'undefined'
+    ? ANAVALE_BACKGROUNDS.find(function(b) { return b.id === draft.background_id; }) : null;
+  var bgBonus = parseBackgroundAbilityBonuses(bgObj);
+  var final = {};
+  ['str','dex','con','int','wis','cha'].forEach(function(k) { final[k] = (base[k] || 0) + (bgBonus[k] || 0); });
+  var raised = PAST_EFFECTS.raised[draft['past_raised']];
+  if (raised && raised.abilities) {
+    raised.abilities.forEach(function(a) { final[a.key] = (final[a.key] || 0) + a.amount; });
+  }
+  return final;
+}
+
+// Flat +1 skill modifiers granted by the imagined-past answers (not full proficiency).
+function computeSkillBonuses(draft) {
+  var bonuses = [];
+  function add(skill, source) { if (skill) bonuses.push({ skill: skill, amount: 1, source: source }); }
+
+  var raisedVal = draft['past_raised'];
+  var raised = PAST_EFFECTS.raised[raisedVal];
+  if (raised && raised.skill) add(raised.skill, 'past_raised:' + raisedVal);
+
+  var friendVal = draft['past_friend'];
+  var friend = PAST_EFFECTS.friend[friendVal];
+  if (friend) {
+    if (friend.skill) add(friend.skill, 'past_friend:' + friendVal);
+    if (friend.skillChoice && draft['past_friend_mentor_skill']) {
+      add(draft['past_friend_mentor_skill'], 'past_friend:' + friendVal + ':choice');
+    }
+  }
+
+  var orgVal = draft['past_org'];
+  var org = PAST_EFFECTS.org[orgVal];
+  if (org) {
+    if (org.skill) add(org.skill, 'past_org:' + orgVal);
+    if (orgVal === 'kept-to-myself' && draft['past_org_solo_skill']) {
+      add(draft['past_org_solo_skill'], 'past_org:kept-to-myself:choice');
+    }
+  }
+
+  return bonuses;
+}
+
+// Starting gold bonus from the organization answer, in copper.
+function computeStartingGoldBonus(draft) {
+  var org = PAST_EFFECTS.org[draft['past_org']];
+  return (org && org.gold_cp) || 0;
+}
+
+// Items the organization answer promises but that need a DM's hand to add
+// (e.g. "Wanderkeep Field Kit (DM adds)") — surfaced, never auto-granted.
+function computeDmPendingItems(draft) {
+  var items = [];
+  var orgVal = draft['past_org'];
+  var org = PAST_EFFECTS.org[orgVal];
+  if (org && org.dmItem) items.push({ label: org.dmItem, source: 'past_org:' + orgVal });
+  return items;
+}
+
+// Feats granted by the chosen background (e.g. "Tough", "Alert").
+function computeFeats(draft) {
+  var bgObj = draft.background_id && typeof ANAVALE_BACKGROUNDS !== 'undefined'
+    ? ANAVALE_BACKGROUNDS.find(function(b) { return b.id === draft.background_id; }) : null;
+  var feat = getBackgroundFeat(bgObj);
+  return feat ? [feat] : [];
+}
+
 // ── STAGE 1: GIGGLEGLOOM TYPE + CLASS ──────────────────────────────
 var GIGGLEGLOOM_TYPES = {
   bubbleseed: {
@@ -1674,6 +1806,13 @@ function restoreStage2Selections() {
     if (picker) picker.style.display = 'block';
     if (sel)    sel.value = CHAR_STATE.draft['past_org_solo_skill'];
   }
+  // Restore mentor History/Medicine skill pick
+  if (CHAR_STATE.draft['past_friend_mentor_skill'] && CHAR_STATE.draft['past_friend'] === 'mentor') {
+    var mentorPicker = document.getElementById('friend-mentor-skill-picker');
+    var mentorSel     = document.getElementById('friend-mentor-skill-select');
+    if (mentorPicker) mentorPicker.style.display = 'block';
+    if (mentorSel)    mentorSel.value = CHAR_STATE.draft['past_friend_mentor_skill'];
+  }
 }
 
 // ── STAGE VALIDATION ───────────────────────────────────────────────
@@ -2747,13 +2886,7 @@ function renderSummaryCard() {
   var regionLabel = REGION_LABELS[regionKey] || d.home_region || '';
   // ── Ability scores ────────────────────────────────────────────
   var scores   = d.ability_scores || {};
-  var bgBonus  = bgObj ? (function() {
-    var m = {}; var AB_MAP = { 'Str':'str','Dex':'dex','Con':'con','Int':'int','Wis':'wis','Cha':'cha' };
-    (bgObj.bonuses || []).forEach(function(b) {
-      var p = b.match(/([+-]\d+)\s+(\w+)/);
-      if (p && AB_MAP[p[2]]) m[AB_MAP[p[2]]] = parseInt(p[1]);
-    }); return m;
-  })() : {};
+  var finalScores = computeFinalAbilityScores(d);
   var AB_KEYS  = ['str','dex','con','int','wis','cha'];
   var AB_NAMES = { str:'STR',dex:'DEX',con:'CON',int:'INT',wis:'WIS',cha:'CHA' };
   var AB_TIPS  = {
@@ -2769,8 +2902,8 @@ function renderSummaryCard() {
   AB_KEYS.forEach(function(ab) { if ((scores[ab]||0) > (scores[highestAb]||0)) highestAb = ab; });
   var abChips = AB_KEYS.map(function(ab) {
     var raw   = scores[ab] || 0;
-    var bonus = bgBonus[ab] || 0;
-    var total = raw + bonus;
+    var total = finalScores[ab] || 0;
+    var bonus = total - raw;
     if (!raw) return '';
     var mod   = Math.floor((total - 10) / 2);
     var modStr = (mod >= 0 ? '+' : '') + mod;
@@ -2794,12 +2927,7 @@ function renderSummaryCard() {
   if (d.class_id) { (d['skills_' + d.class_id] || []).forEach(function(s) { if (profSkills.indexOf(s) < 0) profSkills.push(s); }); }
   if (bgObj && bgObj.skills) { bgObj.skills.forEach(function(s) { if (profSkills.indexOf(s) < 0) profSkills.push(s); }); }
   profSkills.sort();
-  var PAST_SKILL_LOOKUP = { 'kind-parents':'History','the-streets':'Sleight of Hand','strict-religious':'Religion','single-parent':'Athletics','grandparent':'History','neighbor':'Insight','animal':'Animal Handling','imaginary':'Perception','no-one':'Survival','mentor':'History','wanderkeep':'Survival','merchant-guild':'Persuasion','brightcreed':'Religion','fighting-company':'Athletics' };
-  var modSkills = [];
-  ['who_raised_you','dearest_friend','organization'].forEach(function(k) {
-    var sk = PAST_SKILL_LOOKUP[d[k]];
-    if (sk) modSkills.push('+1 ' + sk);
-  });
+  var modSkills = computeSkillBonuses(d).map(function(b) { return '+1 ' + b.skill; });
   var skillTagsHtml = profSkills.map(function(s) {
     return '<span style="padding:0.18rem 0.55rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:5px;font-size:0.7rem;color:rgba(255,255,255,0.78);">' + s + '</span>';
   }).join('') + modSkills.map(function(s) {
@@ -2823,9 +2951,9 @@ function renderSummaryCard() {
   var hp = '—';
   if (clsObj && clsObj.hit_die) {
     var hpDie = parseInt((clsObj.hit_die || 'd8').replace('d', '')) || 8;
-    var conTotal = (scores.con || 10) + (bgBonus.con || 0);
-    var conMod   = Math.floor((conTotal - 10) / 2);
-    hp = hpDie + conMod;
+    var conMod   = Math.floor(((finalScores.con || 10) - 10) / 2);
+    var toughHp  = computeFeats(d).indexOf('Tough') >= 0 ? 2 : 0;
+    hp = hpDie + conMod + toughHp;
   }
   var goldTotal   = typeof getStartingGold === 'function' ? getStartingGold() : (bgObj ? (bgObj.starting_gold || 0) : 0);
   var goldSpent   = typeof calcGoldSpent === 'function' ? calcGoldSpent() : 0;
@@ -3082,7 +3210,13 @@ function generateSummary() {
       'neighbor':  p.possCap + ' dearest childhood friend was a neighbor kid — the kind of friendship that just happens when someone lives close enough.',
       'no-one':    p.subjCap + ' didn\'t really have a childhood friend — ' + p.subj + ' got used to ' + p.poss + ' own company early.'
     };
-    if (FRIEND[d.past_friend]) parts.push(FRIEND[d.past_friend]);
+    if (FRIEND[d.past_friend]) {
+      var friendLine = FRIEND[d.past_friend];
+      if (d.past_friend === 'mentor' && d.past_friend_mentor_skill) {
+        friendLine = friendLine.slice(0, -1) + ' — ' + d.past_friend_mentor_skill + ', specifically.';
+      }
+      parts.push(friendLine);
+    }
 
     var PET = {
       'loyal-animal': p.subjCap + ' grew up with a loyal animal always at ' + p.poss + ' side.',
@@ -3217,6 +3351,11 @@ function generateSummary() {
 
 function selectSoloSkill(skill) {
   CHAR_STATE.draft['past_org_solo_skill'] = skill || null;
+  saveDraftToStorage();
+}
+
+function selectMentorSkill(skill) {
+  CHAR_STATE.draft['past_friend_mentor_skill'] = skill || null;
   saveDraftToStorage();
 }
 
@@ -3380,7 +3519,11 @@ function buildCharacterEntry(d, token) {
     alignment: d.alignment,
     alignment_trait: d.alignment_trait,
     home_region: d.home_region || 'Caparia',
-    ability_scores: d.ability_scores || { str:10, dex:10, con:10, int:10, wis:10, cha:10 },
+    ability_scores: computeFinalAbilityScores(d),
+    skill_bonuses: computeSkillBonuses(d),
+    starting_gold_bonus_cp: computeStartingGoldBonus(d),
+    dm_pending_items: computeDmPendingItems(d),
+    feats: computeFeats(d),
     language_extra: d.language,
     summary: d.summary || '',
     appearance_prompt: d.appearance_prompt || '',
@@ -3388,13 +3531,13 @@ function buildCharacterEntry(d, token) {
     personality_immediate: d.personality_immediate,
     personality_wrong: d.personality_wrong,
     personality_laugh: d.personality_laugh,
-    who_raised_you: d.who_raised_you,
-    dearest_friend: d.dearest_friend,
-    had_pet: d.had_pet,
-    fallen_in_love: d.fallen_in_love,
+    who_raised_you: d['past_raised'] || null,
+    dearest_friend: d['past_friend'] || null,
+    had_pet: d['past_pet'] || null,
+    fallen_in_love: d['past_love'] || null,
     organization_joined: d['past_org'] || null,
-    left_behind: d.left_behind,
-    why_you_left: d.why_you_left,
+    left_behind: d['past_left-behind'] || null,
+    why_you_left: d['past_why-left'] || null,
     cares_about: d.cares_about,
     deepest_fear: d.deepest_fear,
     seeking: d.seeking,
@@ -4176,40 +4319,6 @@ function toggleStage3Panel(btn) {
   btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
 
-// Lookup: past question answer value → bonus skill granted
-var PAST_SKILL_GRANTS = {
-  // who_raised_you (data-value uses hyphens)
-  'kind-parents':    { skill: 'Insight' },
-  'the-streets':     { skill: 'Sleight of Hand' },
-  'strict-religious':{ skill: 'Religion' },
-  'single-parent':   { skill: 'Athletics' },
-  'grandparent':     { skill: 'History' },
-  // dearest_friend
-  'neighbor':        { skill: 'Insight' },
-  'animal':          { skill: 'Animal Handling' },
-  'imaginary':       { skill: 'Perception' },
-  'no-one':          { skill: 'Survival' },
-  'mentor':          { skill: 'History' },
-  // organization
-  'wanderkeep':      { skill: 'Survival' },
-  'merchant-guild':  { skill: 'Persuasion' },
-  'brightcreed':     { skill: 'Religion' },
-  'fighting-company':{ skill: 'Athletics' },
-  'kept-to-myself': { skill: null } // free pick — handled by org-solo-skill-picker
-};
-
-// Lookup: background bonus string → ability key + amount
-function parseBgBonuses(bonuses) {
-  var result = {};
-  if (!bonuses) return result;
-  var AB_MAP = { 'Str':'str','Dex':'dex','Con':'con','Int':'int','Wis':'wis','Cha':'cha' };
-  bonuses.forEach(function(b) {
-    var m = b.match(/([+-]\d+)\s+(\w+)/);
-    if (m && AB_MAP[m[2]]) result[AB_MAP[m[2]]] = parseInt(m[1]);
-  });
-  return result;
-}
-
 function renderStage3Panel() {
   var body = document.getElementById('char-stage3-panel-body');
   if (!body) return;
@@ -4231,8 +4340,11 @@ function renderStage3Panel() {
     if (bgObj) { bgName = bgObj.name; bgPhb = bgObj.phb || ''; }
   }
 
-  // ── Background ability bonuses (for score display) ──
-  var bgBonusMap = bgObj ? parseBgBonuses(bgObj.bonuses) : {};
+  // ── Ability scores (live DOM values + background + imagined-past bonuses) ──
+  var AB_KEYS_ALL = ['str','dex','con','int','wis','cha'];
+  var liveScores = {};
+  AB_KEYS_ALL.forEach(function(ab) { liveScores[ab] = parseInt((document.getElementById('char-ability-' + ab) || {}).value) || 0; });
+  var finalScores = computeFinalAbilityScores({ background_id: bgId, ability_scores: liveScores, past_raised: CHAR_STATE.draft['past_raised'] });
 
   // ── Per-class ability advice blurbs ──
   var CLASS_ABILITY_ADVICE = {
@@ -4264,12 +4376,10 @@ function renderStage3Panel() {
   // ── Hit points ──
   var hp = 0;
   if (clsObj && clsObj.hit_die) {
-    var die    = parseInt((clsObj.hit_die || 'd8').replace('d', '')) || 8;
-    var conRaw = parseInt((document.getElementById('char-ability-con') || {}).value) || 10;
-    var conBonus = bgBonusMap['con'] || 0;
-    var conFinal = conRaw + conBonus;
-    var conMod   = Math.floor((conFinal - 10) / 2);
-    hp = die + conMod;
+    var die      = parseInt((clsObj.hit_die || 'd8').replace('d', '')) || 8;
+    var conMod   = Math.floor(((finalScores.con || 10) - 10) / 2);
+    var toughHp  = computeFeats({ background_id: bgId }).indexOf('Tough') >= 0 ? 2 : 0;
+    hp = die + conMod + toughHp;
   }
 
   // ── Gold ──
@@ -4303,25 +4413,24 @@ function renderStage3Panel() {
     });
   }
   // Imagined past skills → flat +1 modifiers (not full proficiency)
-  var modifierSkills = [];
-  var pastKeys = ['who_raised_you','dearest_friend','organization'];
-  pastKeys.forEach(function(k) {
-    var val = CHAR_STATE.draft[k];
-    if (val && PAST_SKILL_GRANTS[val]) {
-      var sk = PAST_SKILL_GRANTS[val].skill;
-      modifierSkills.push('+1 ' + sk);
-    }
-  });
+  var modifierSkills = computeSkillBonuses(CHAR_STATE.draft).map(function(b) { return '+1 ' + b.skill; });
   profSkills.sort();
-  // Ability modifier bonuses from background — shown in Ability Scores section, not Skills
+  // Ability modifier bonuses from background + imagined past — shown in Ability Scores section, not Skills
   var AB_EXPAND = { 'Str':'Strength','Dex':'Dexterity','Con':'Constitution',
                     'Int':'Intelligence','Wis':'Wisdom','Cha':'Charisma' };
+  var AB_EXPAND_KEY = { str:'Strength',dex:'Dexterity',con:'Constitution',int:'Intelligence',wis:'Wisdom',cha:'Charisma' };
   if (bgObj && bgObj.bonuses) {
     bgObj.bonuses.forEach(function(b) {
       var m = b.trim().match(/^([+-]\d+)\s+(\w+)$/);
       if (m && AB_EXPAND[m[2]]) {
         bonusLines.push(m[1] + ' ' + AB_EXPAND[m[2]]);
       }
+    });
+  }
+  var raisedEffect = PAST_EFFECTS.raised[CHAR_STATE.draft['past_raised']];
+  if (raisedEffect && raisedEffect.abilities) {
+    raisedEffect.abilities.forEach(function(a) {
+      bonusLines.push((a.amount >= 0 ? '+' : '') + a.amount + ' ' + AB_EXPAND_KEY[a.key]);
     });
   }
 
@@ -4334,8 +4443,7 @@ function renderStage3Panel() {
     var raw = parseInt((document.getElementById('char-ability-' + ab) || {}).value) || 0;
     if (!raw) return;
     anyScore = true;
-    var bonus = bgBonusMap[ab] || 0;
-    var final = raw + bonus;
+    var final = finalScores[ab] || raw;
     var lowCls = final <= 9 ? ' is-low' : '';
     abilityHtml +=
       '<div class="char-stage3-score-pill' + lowCls + '">'

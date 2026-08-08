@@ -672,6 +672,35 @@
     .cs-ab-mod-num { font-weight: 700; }
     .cs-ab-mod-num.positive { color: var(--green); }
     .cs-ab-mod-num.negative { color: var(--red); }
+    .cs-feat-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: var(--char-ov-gap-m);
+    }
+    .cs-feat-chip {
+      background: var(--char-card-bg-subtle);
+      border: 1px solid var(--char-highlight-border);
+      border-radius: var(--char-radius);
+      padding: 0.5rem 0.85rem;
+      max-width: 320px;
+    }
+    .cs-feat-chip-name {
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .cs-feat-chip-desc {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      color: var(--char-text-muted);
+      line-height: 1.5;
+      margin-top: 0.2rem;
+    }
 
     @media (max-width: 900px) {
       .cs-ov-portrait { width: 100%; min-height: 340px; }
@@ -1930,6 +1959,20 @@
     threadpuller:'Investigator', tidemarked:'Sailor', wellborn:'Noble',
     wildborn:'Outlander'
   };
+  // Feat rules text — mirrors FEAT_TIPS in js/character.js (sheet doesn't
+  // load character.js). Feats come from the chosen background's bonuses
+  // array and are stored on player_characters.feats at submission.
+  var FEAT_TIPS = {
+    'Skilled':          'Gain proficiency in 3 additional skills of your choice.',
+    'Lucky':            'Reroll any attack roll, ability check, or saving throw 3 times per long rest — use the new result.',
+    'Alert':            '+5 to initiative. You can\'t be surprised. Hidden creatures gain no advantage on attacks against you.',
+    'Tough':            'Your maximum hit points increase by 2 for every level, including this one.',
+    'Magic Initiate':   'Learn 2 cantrips and 1 first-level spell from any class. Cast the spell once per long rest without a spell slot.',
+    'Inspiring Leader': 'After a 10-minute speech, nearby allies gain temporary HP equal to your level + your Charisma modifier.',
+    'Tavern Brawler':   'Proficiency with improvised weapons. Unarmed strikes deal 1d4 + Strength modifier.',
+    'Savage Attacker':  'Once per turn when you hit with a weapon, reroll the damage dice and use the higher result.',
+    'Keen Mind':        'Always know which direction is north, how long until sunrise/sunset, and can recall anything you\'ve heard or read in the past month.'
+  };
   var SPECIES_PHB = {
     brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
     gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
@@ -2069,7 +2112,14 @@
     var gearList       = buildGearList(app);
 
     var overviewHtml = buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc);
-    var abilityScoresHtml = buildAbilityScoresHtml(scores);
+    var abilityScoresHtml = buildAbilityScoresHtml(scores, ch.feats);
+
+    // Skill bonuses — flat +1 modifiers from the imagined-past answers (not
+    // full proficiency), computed once at submission by buildCharacterEntry().
+    var skillBonusesArr = Array.isArray(ch.skill_bonuses) ? ch.skill_bonuses : [];
+    var skillBonusesVal = skillBonusesArr.length
+      ? skillBonusesArr.map(function(b) { return '+' + b.amount + ' ' + b.skill; }).join(', ')
+      : '—';
 
     // Story rows
     var storyRows = [
@@ -2082,7 +2132,8 @@
       { k:'Why you left',    v: label(WHY_LEFT_LABELS, ch.why_you_left) },
       { k:'Cares about',     v: ch.cares_about || '—' },
       { k:'Deepest fear',    v: ch.deepest_fear || '—' },
-      { k:'What you seek',   v: ch.seeking || '—' }
+      { k:'What you seek',   v: ch.seeking || '—' },
+      { k:'Bonus skills',    v: skillBonusesVal }
     ];
     var storyHtml = storyRows.filter(function(r) { return r.v && r.v !== '—'; })
       .map(function(r) {
@@ -2098,6 +2149,15 @@
             + g.slot + '</span>  ' + g.val + '</span></div>';
         }).join('')
       : '<div class="cs-gear-item"><div class="cs-gear-dot"></div><em style="color:var(--char-text-faint);">Starting gear to be determined</em></div>';
+
+    // DM-add items promised by an organization answer (e.g. "Wanderkeep
+    // Field Kit") — never auto-granted. The DM clears each entry once
+    // handed over (sccMarkPendingItemAdded() in dm.html's SCC player bar).
+    var pendingItemsArr = Array.isArray(ch.dm_pending_items) ? ch.dm_pending_items : [];
+    var pendingItemsHtml = pendingItemsArr.map(function(item) {
+      return '<div class="cs-gear-item"><div class="cs-gear-dot"></div>'
+        + '<span>' + (item.label || 'Item') + ' <em style="color:var(--char-text-faint);">— ask your DM</em></span></div>';
+    }).join('');
 
     // Appearance chips
     var chipSlots = ['height','build','age','skin_tone','face_shape','eye_color','eye_shape','hair_color','hair_style'];
@@ -2125,6 +2185,12 @@
       // Starting gear
       + '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
         + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
+
+      // Pending from your DM — only shown once there's something to show
+      + (pendingItemsArr.length ? (
+          '<div class="cs-section"><div class="cs-section-label">Pending From Your DM</div>'
+          + '<div class="cs-gear-grid">' + pendingItemsHtml + '</div></div>'
+        ) : '')
 
       // Story
       + (storyHtml ? (
@@ -2201,7 +2267,7 @@
   }
 
   // ── Overview + Ability Scores (redesign) ───────────────────────────
-  function buildAbilityScoresHtml(scores) {
+  function buildAbilityScoresHtml(scores, feats) {
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
     var cards = AB_KEYS.map(function(ab) {
@@ -2218,13 +2284,23 @@
         + '</div>'
       + '</div>';
     }).join('');
+    // Feats — granted by the chosen background (player_characters.feats),
+    // e.g. "Tough", "Alert". FEAT_TIPS mirrors character.js's rules text.
+    var featsArr = Array.isArray(feats) ? feats : [];
+    var featsHtml = featsArr.length
+      ? '<div class="cs-feat-list">' + featsArr.map(function(f) {
+          return '<div class="cs-feat-chip"><span class="cs-feat-chip-name">' + f + '</span>'
+            + (FEAT_TIPS[f] ? '<span class="cs-feat-chip-desc">' + FEAT_TIPS[f] + '</span>' : '')
+          + '</div>';
+        }).join('') + '</div>'
+      : '';
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-ov-acc" id="cs-ov-acc-abilities">'
         + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-abilities\')">'
           + '<span class="cs-ov-acc-title">Ability Scores</span>'
           + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
         + '</button>'
-        + '<div class="cs-ov-acc-body"><div class="cs-ab-cards">' + cards + '</div></div>'
+        + '<div class="cs-ov-acc-body"><div class="cs-ab-cards">' + cards + '</div>' + featsHtml + '</div>'
       + '</div>'
     + '</div></div>';
   }
@@ -3797,11 +3873,13 @@
           // Derive hit die from class_id — basic mapping
           var hitDie = { barbarian:12, fighter:10, paladin:10, ranger:10, monk:8, druid:8,
                          cleric:8, rogue:8, bard:8, warlock:8, wizard:6, sorcerer:6 };
-          var hpMax  = (hitDie[ch.class_id] || 8) + conMod;
+          // Tough (a background feat) adds +2 HP per level, including level 1
+          var toughHp = (Array.isArray(ch.feats) && ch.feats.indexOf('Tough') >= 0) ? 2 * (ch.level || 1) : 0;
+          var hpMax  = (hitDie[ch.class_id] || 8) + conMod + toughHp;
           var newRow = {
             character_id: CHAR_ID, token: TOKEN,
             hp_max: hpMax, hp_current: hpMax, hp_temp: 0,
-            gold_cp: (BG_GOLD[ch.background_id] || 50) * 100,
+            gold_cp: (BG_GOLD[ch.background_id] || 50) * 100 + (parseInt(ch.starting_gold_bonus_cp) || 0),
             proficiency_bonus: 2
           };
           return sb.from('character_sheet').insert(newRow).select().single()
