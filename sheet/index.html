@@ -1990,7 +1990,9 @@
     if (app.age) parts.push(cap(app.age) + '.');
     var face = [];
     if (app.face_shape) face.push(app.face_shape + ' face');
-    if (app.skin_tone)  face.push(app.skin_tone + ' skin');
+    // app-skin-tone is an <input type="color"> (character.html) — always a
+    // hex value, never a word. Omit rather than print "#ffba66 skin".
+    if (app.skin_tone && app.skin_tone.charAt(0) !== '#') face.push(app.skin_tone + ' skin');
     if (face.length) parts.push(cap(face.join(', ')) + '.');
     var eyes = [];
     if (app.eye_color) eyes.push(app.eye_color);
