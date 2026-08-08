@@ -585,6 +585,32 @@
       min-width: 0;
     }
 
+    /* ── Narrative summary card (generateSummary() output, read-only) ── */
+    .cs-ov-summary-card {
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-s);
+      width: 100%;
+    }
+    .cs-ov-summary-heading {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 1.4em 0 0.4em;
+    }
+    .cs-ov-summary-heading:first-child { margin-top: 0; }
+    .cs-ov-summary-text {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.94rem;
+      line-height: var(--line-height);
+      color: var(--text);
+      margin: 0;
+    }
+
     /* ── Ability score cards ── */
     .cs-ab-cards {
       display: flex;
@@ -1934,6 +1960,12 @@
   function cap(str) { if (!str) return '—'; return str.charAt(0).toUpperCase() + str.slice(1); }
   function label(map, key) { if (!key) return '—'; return map[key] || cap((key+'').replace(/-/g,' ')); }
   function abMod(v) { var m = Math.floor((v-10)/2); return (m>=0?'+':'')+m; }
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
   function getToken() {
     return new URLSearchParams(window.location.search).get('token') || '';
@@ -2208,6 +2240,24 @@
     el.innerHTML = renderClassDetailsHtml(CLASS_ROW);
   }
 
+  // Parses generateSummary()'s plain-text output ("LABEL\n\nparagraph" blocks
+  // joined by "\n\n\n") back into headed paragraphs. Read-only — no editing
+  // affordance, matches the rest of the Overview card visually.
+  function buildSummaryCardHtml(summaryText) {
+    if (!summaryText) return '';
+    var sections = summaryText.split('\n\n\n').map(function(block) {
+      var idx = block.indexOf('\n\n');
+      if (idx === -1) return null;
+      return { label: block.slice(0, idx).trim(), text: block.slice(idx + 2).trim() };
+    }).filter(function(sec) { return sec && sec.label && sec.text; });
+    if (!sections.length) return '';
+    var body = sections.map(function(sec) {
+      return '<div class="cs-ov-summary-heading">' + escHtml(sec.label) + '</div>'
+        + '<p class="cs-ov-summary-text">' + escHtml(sec.text) + '</p>';
+    }).join('');
+    return '<div class="cs-ov-summary-card">' + body + '</div>';
+  }
+
   function buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc) {
     var alignKey = (ch.alignment || '').toLowerCase();
     var bgKey    = (ch.background_id || '').toLowerCase();
@@ -2290,6 +2340,12 @@
       + '<div class="cs-ov-class-details" id="cs-ov-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
     + '</div>';
 
+    // Narrative summary — generateSummary() (character.js) writes
+    // player_characters.summary as plain text, "LABEL\n\nparagraph" blocks
+    // joined by "\n\n\n". Read-only display; free-text player answers are
+    // baked into this string, so it's HTML-escaped like any other field.
+    var summaryCardHtml = buildSummaryCardHtml(ch.summary);
+
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-ov-maininfo">'
         + '<div class="cs-ov-portrait">'
@@ -2319,6 +2375,7 @@
             + '<div class="cs-ov-acc-body">'
               + '<div class="cs-ov-cards">' + alignCard + bgCard + ggCard + '</div>'
               + classCard
+              + summaryCardHtml
             + '</div>'
           + '</div>'
         + '</div>'

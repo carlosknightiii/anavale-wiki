@@ -3167,7 +3167,10 @@ function generateSummary() {
     var rest = [];
     var faceBits = [];
     if (app.face_shape) faceBits.push(app.face_shape + ' face');
-    if (app.skin_tone)  faceBits.push(app.skin_tone + ' skin');
+    // app-skin-tone is an <input type="color"> (character.html) — always a
+    // hex value, never a word. Naming it accurately would need a real
+    // nearest-color-name lookup; a wrong guess reads worse than omitting it.
+    if (app.skin_tone && app.skin_tone.charAt(0) !== '#') faceBits.push(app.skin_tone + ' skin');
     if (faceBits.length) rest.push(capFirst(joinNatural(faceBits)) + '.');
     if (app.facial_hair && app.facial_hair !== 'none') rest.push(capFirst(app.facial_hair) + '.');
 
