@@ -2852,8 +2852,11 @@ function renderSummaryCard() {
     ? d.language.replace(/-/g,' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); })
     : '—';
   // ── Story sentence ────────────────────────────────────────────
+  // Prefer d.summary (plain text, paragraphs already separated by blank
+  // lines) over the DOM's textContent, which would run the six section
+  // paragraphs together with no spacing between them.
   var storyEl  = document.getElementById('char-auto-summary');
-  var storyText = storyEl ? storyEl.textContent.trim() : (d.summary || '');
+  var storyText = (d.summary || (storyEl ? storyEl.textContent.trim() : '')).replace(/\n+/g, ' ').trim();
   // ── Build HTML ────────────────────────────────────────────────
   card.style.cssText = 'background:rgba(10,12,22,0.99);border:1px solid rgba(255,255,255,0.1);border-radius:16px;overflow:hidden;position:relative;padding:0;';
   // Animated background orbs (type-colored)
@@ -2974,104 +2977,239 @@ function renderSummaryCard() {
   if (oldPanel) oldPanel.style.display = 'none';
 }
 
+function capFirst(s) {
+  if (!s) return s;
+  s = ('' + s).trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function lowerFirst(s) {
+  if (!s) return s;
+  s = ('' + s).trim();
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+function joinNatural(arr) {
+  if (arr.length <= 1) return arr.join('');
+  if (arr.length === 2) return arr[0] + ' and ' + arr[1];
+  return arr.slice(0, -1).join(', ') + ', and ' + arr[arr.length - 1];
+}
+
+// Six paragraphs, one per Stage 1 accordion section (same subheader labels
+// as the accordion itself), built only from what the player actually filled
+// in — see docs/character-sheet-redesign-handoff.md §8 for the full spec
+// and the approved Corra Snow tone example.
 function generateSummary() {
   var d = CHAR_STATE.draft;
 
-  // ── Label lookups — convert raw keys to human-readable text ──
-  var WHY_LEFT_LABELS = {
-    'someone-disappeared': 'left home searching for someone who disappeared',
-    'saw-the-grey':        'left after watching the grey arrive somewhere they thought was safe',
-    'received-message':    'left after receiving a message that couldn\'t be ignored',
-    'ran-from-something':  'left running from something they haven\'t named yet',
-    'restlessness':        'left because the world was out there and staying felt impossible'
-  };
-  var LEFT_BEHIND_LABELS = {
-    'person':   'a person they loved',
-    'promise':  'a promise they didn\'t keep',
-    'self':     'a version of themselves they can\'t return to',
-    'place':    'a place that no longer exists',
-    'nothing':  null
-  };
-  var RAISED_LABELS = {
-    'kind-parents':     'raised by people who loved them well',
-    'the-streets':      'raised by no one in particular — the streets taught them everything',
-    'strict-religious': 'raised inside a strict faith that left its mark',
-    'single-parent':    'raised by a single parent who worked too hard to complain about it',
-    'grandparent':      'raised by a grandparent or elder who remembered things worth remembering'
-  };
-  var ALIGNMENT_LABELS = {
-    'brightward':  'They are Protective — they believe the world is worth protecting, and they intend to be someone others can count on.',
-    'colorful':    'They are Freespirited — they want to do right by people, they\'ve just never been good at following someone else\'s idea of how.',
-    'greywarden':  'They are Measured — they see all sides, weigh things carefully, and don\'t think the world divides neatly into light and dark.',
-    'steelbound':  'They are Disciplined — they do what they said they would do. They consider this uncomplicated.',
-    'ashwalker':   'They are Pragmatic — they do what works for them, and they try to be honest about that.'
-  };
-  var SPECIES_LABELS = {
-    'solmeri':     'Solmeri',
-    'verdathi':    'Verdathi',
-    'stonemarked': 'Stonemarked',
-    'glimmerkin':  'Glimmerkin',
-    'hearthbound': 'Hearthbound',
-    'duskborn':    'Duskborn',
-    'brightblood': 'Brightblood',
-    'scalegrace':  'Scalegrace',
-    'tallwalker':  'Tallwalker',
-    'rootwalker':  'Rootwalker',
-    'veilstepped': 'Veilstepped',
-    'gloomtouched':'Gloomtouched'
-  };
-
-  // ── Resolve values ──
-  var type = d.gigglegloom_type || 'bubbleseed';
-  var typeData = GIGGLEGLOOM_TYPES[type];
-  var typeName = typeData ? typeData.name : type;
-  var classId = d.class_id || '';
-  var cls = null;
-  if (typeData) {
-    typeData.classes.forEach(function(c) { if (c.id === classId) cls = c; });
-  }
-  var className  = cls ? cls.name : classId;
-  var region     = d.home_region || 'Caparia';
-  var speciesLabel  = SPECIES_LABELS[d.species_id] || d.species_id || '';
-  var whyLeft       = WHY_LEFT_LABELS[d.why_you_left] || '';
-  var leftBehind    = LEFT_BEHIND_LABELS[d.left_behind] || null;
-  var raisedLabel   = RAISED_LABELS[d.who_raised_you] || '';
-  var alignmentLine = ALIGNMENT_LABELS[d.alignment] || '';
-
-  // ── Build narrative ──
-  // Sentence 1: who they are
-  var s1 = '';
-  if (speciesLabel && className && typeName) {
-    s1 = 'A ' + speciesLabel + ' ' + className + ' who carries the ' + typeName + ' — ';
-  } else if (className && typeName) {
-    s1 = 'A ' + className + ' who carries the ' + typeName + ' — ';
+  // Pronoun set — the approved example uses gendered pronouns throughout
+  // (she/her for a female character), not a generic "they".
+  var p;
+  if (d.gender === 'female') {
+    p = { subj:'she', subjCap:'She', obj:'her', poss:'her', possCap:'Her', reflex:'herself', haveNot:'hasn\'t', doesNot:'doesn\'t', s:'s', re:'\'s' };
+  } else if (d.gender === 'male') {
+    p = { subj:'he', subjCap:'He', obj:'him', poss:'his', possCap:'His', reflex:'himself', haveNot:'hasn\'t', doesNot:'doesn\'t', s:'s', re:'\'s' };
   } else {
-    s1 = 'A practitioner of ' + typeName + ' magic — ';
-  }
-  if (raisedLabel) {
-    s1 += raisedLabel + ', from ' + region + '.';
-  } else {
-    s1 += 'from ' + region + '.';
+    p = { subj:'they', subjCap:'They', obj:'them', poss:'their', possCap:'Their', reflex:'themself', haveNot:'haven\'t', doesNot:'don\'t', s:'', re:'\'re' };
   }
 
-  // Sentence 2: why they left and what they carry
-  var s2 = '';
-  if (whyLeft && leftBehind) {
-    s2 = 'They ' + whyLeft + ', and they carry with them ' + leftBehind + '.';
-  } else if (whyLeft) {
-    s2 = 'They ' + whyLeft + '.';
-  } else if (leftBehind) {
-    s2 = 'They carry with them ' + leftBehind + '.';
+  // ── Who Are You — personality trio + cares about + deepest fear + seeking ──
+  function buildWhoAreYou() {
+    var parts = [];
+    if (d.personality_immediate) {
+      var firstName = (d.character_name || '').trim().split(/\s+/)[0];
+      parts.push('People notice ' + (firstName ? firstName + '\'s' : p.poss) + ' ' + lowerFirst(d.personality_immediate) + ' before anything else.');
+    }
+    if (d.personality_wrong) parts.push('What people get wrong is ' + lowerFirst(d.personality_wrong) + '.');
+    if (d.cares_about) parts.push(p.subjCap + ' cares most about ' + d.cares_about + '.');
+    if (d.personality_laugh) parts.push('Little breaks through, but ' + lowerFirst(d.personality_laugh) + ' always does.');
+    if (d.deepest_fear) parts.push(p.possCap + ' deepest fear is ' + d.deepest_fear + '.');
+    if (d.seeking) parts.push('Out there in the world, what ' + p.subj + p.re + ' really seeking is ' + d.seeking + '.');
+    return parts.join(' ');
   }
 
-  // Sentence 3: alignment
-  var s3 = alignmentLine || '';
+  // ── Your Magic — Gigglegloom affinity/type ──
+  function buildYourMagic() {
+    var typeData = d.gigglegloom_type ? GIGGLEGLOOM_TYPES[d.gigglegloom_type] : null;
+    if (!typeData) return '';
+    var s = p.possCap + ' power answers to ' + typeData.name + '.';
+    if (typeData.desc) s += ' ' + typeData.desc;
+    return s;
+  }
 
-  var summary = [s1, s2, s3].filter(Boolean).join(' ');
+  // ── Your Background — background, species, home region, language ──
+  function buildYourBackground() {
+    var LANGUAGE_LABELS = {
+      'caparian-deep':'Caparian Deep', 'conclave-script':'Conclave Script',
+      'jugabi-canopy':'Jugabi Canopy', 'nombi-frost':'Nombi Frost',
+      'pre-partition':'Pre-Partition Script', 'sohot-old':'Sohot Old Tongue'
+    };
+    var species = d.species_id ? ANAVALE_SPECIES.find(function(s) { return s.id === d.species_id; }) : null;
+    var bg      = d.background_id ? ANAVALE_BACKGROUNDS.find(function(b) { return b.id === d.background_id; }) : null;
+    var parts = [];
+    var idClause = [];
+    if (species) idClause.push('A ' + species.name);
+    if (d.home_region) idClause.push('from ' + d.home_region);
+    var sentence1 = idClause.join(' ');
+    if (d.language && LANGUAGE_LABELS[d.language]) {
+      sentence1 += (sentence1 ? ', fluent in ' : 'Fluent in ') + LANGUAGE_LABELS[d.language] + ' beyond ' + p.poss + ' native tongue';
+    }
+    if (sentence1) parts.push(sentence1 + '.');
+    if (bg) {
+      var s2 = p.subjCap + ' carries the mark of ' + bg.name;
+      if (bg.phb) s2 += ', once known elsewhere as a ' + bg.phb;
+      parts.push(s2 + '.');
+    }
+    return parts.join(' ');
+  }
+
+  // ── Your Past — who raised them, dearest friend, pet, love, org joined,
+  // what they left behind, why they left ──
+  function buildYourPast() {
+    var parts = [];
+
+    var RAISED = {
+      'kind-parents':     p.subjCap + ' was raised by people who loved ' + p.obj + ' well.',
+      'the-streets':      p.subjCap + ' was raised by no one in particular — the streets taught ' + p.obj + ' everything.',
+      'strict-religious': p.subjCap + ' was raised inside a strict faith that left its mark.',
+      'single-parent':    p.subjCap + ' was raised by a single parent who worked too hard to complain about it.',
+      'grandparent':      p.subjCap + ' was raised by a grandparent or elder who remembered things worth remembering.'
+    };
+    if (RAISED[d.past_raised]) parts.push(RAISED[d.past_raised]);
+
+    var FRIEND = {
+      'animal':    p.possCap + ' dearest childhood friend was an animal, wild or tamed — steadier company than most people manage.',
+      'imaginary': p.possCap + ' dearest childhood friend existed only in ' + p.poss + ' own head, and stayed loyal longer than most real ones do.',
+      'mentor':    p.possCap + ' dearest childhood friend was an older mentor who taught ' + p.obj + ' more than ' + p.subj + ' realized at the time.',
+      'neighbor':  p.possCap + ' dearest childhood friend was a neighbor kid — the kind of friendship that just happens when someone lives close enough.',
+      'no-one':    p.subjCap + ' didn\'t really have a childhood friend — ' + p.subj + ' got used to ' + p.poss + ' own company early.'
+    };
+    if (FRIEND[d.past_friend]) parts.push(FRIEND[d.past_friend]);
+
+    var PET = {
+      'loyal-animal': p.subjCap + ' grew up with a loyal animal always at ' + p.poss + ' side.',
+      'never-wanted': p.subjCap + ' never wanted a pet growing up, and still ' + p.doesNot + ' see the appeal.',
+      'unusual':      p.subjCap + ' grew up with something unusual as a pet — not everyone understood it, but ' + p.subj + ' did.',
+      'wanted-one':   p.subjCap + ' never had a pet, though ' + p.subj + ' always wanted one.'
+    };
+    if (PET[d.past_pet]) parts.push(PET[d.past_pet]);
+
+    var LOVE = {
+      'complicated': p.subjCap + ' has been in love before, and it\'s complicated — some threads are still attached.',
+      'ended-badly': p.subjCap + ' has loved before, and it ended badly enough that ' + p.subj + p.re + ' careful now, not closed.',
+      'ended-well':  p.subjCap + ' has loved before, and it ended well — ' + p.subj + ' know' + p.s + ' what it\'s like when it works, and ' + p.subj + p.re + ' still looking for it again.',
+      'not-for-me':  'Love has never really been ' + p.poss + ' thing — ' + p.subj + p.re + ' built something else instead, and it\'s solid.',
+      'not-yet':     p.subjCap + ' hasn\'t fallen in love yet, though ' + p.subj + ' think' + p.s + ' about it sometimes.'
+    };
+    if (LOVE[d.past_love]) parts.push(LOVE[d.past_love]);
+
+    var ORG = {
+      'brightcreed':      p.subjCap + ' spent time with the Brightcreed, the faith that venerates Oro and Nara — color, joy, and living things.',
+      'fighting-company': p.subjCap + ' served with a fighting company, learning to fight alongside others rather than alone.',
+      'kept-to-myself':   p.subjCap + ' never joined anything — ' + p.subj + ' kept to ' + p.reflex + '.',
+      'merchant-guild':   p.subjCap + ' worked the trade networks of a merchant guild, moving goods — and information — across Anavale.',
+      'wanderkeep':       p.subjCap + ' spent time with the Wanderkeep, the wandering protectors who travel Anavale keeping color alive.'
+    };
+    if (ORG[d.past_org]) {
+      var orgLine = ORG[d.past_org];
+      if (d.past_org === 'kept-to-myself' && d.past_org_solo_skill) {
+        orgLine = orgLine.slice(0, -1) + ', sharpening ' + d.past_org_solo_skill + ' on ' + p.poss + ' own.';
+      }
+      parts.push(orgLine);
+    }
+
+    var LEFT_BEHIND = {
+      'person':  'a person ' + p.subj + ' loved',
+      'promise': 'a promise ' + p.subj + ' didn\'t keep',
+      'self':    'a version of ' + p.reflex + ' ' + p.subj + ' can\'t return to',
+      'place':   'a place that no longer exists',
+      'nothing': null
+    };
+    var leftKey = d['past_left-behind'];
+    if (leftKey && LEFT_BEHIND[leftKey]) parts.push(p.subjCap + ' left behind ' + LEFT_BEHIND[leftKey] + '.');
+
+    var WHY_LEFT = {
+      'someone-disappeared': p.subjCap + ' left home searching for someone who disappeared.',
+      'saw-the-grey':        p.subjCap + ' left after watching the grey arrive somewhere ' + p.subj + ' thought was safe.',
+      'received-message':    p.subjCap + ' left after receiving a message that couldn\'t be ignored.',
+      'ran-from-something':  p.subjCap + ' left running from something ' + p.subj + ' ' + p.haveNot + ' named yet.',
+      'restlessness':        p.subjCap + ' left because the world was out there and staying felt impossible.'
+    };
+    var whyKey = d['past_why-left'];
+    if (whyKey && WHY_LEFT[whyKey]) parts.push(WHY_LEFT[whyKey]);
+
+    return parts.join(' ');
+  }
+
+  // ── Your Appearance — physical description fields ──
+  function buildYourAppearance() {
+    var app = d.appearance_data || {};
+
+    // Lead clause: age/height/build, e.g. "Adult, tall, lean build"
+    var lead = [];
+    if (app.age)    lead.push(capFirst(app.age));
+    if (app.height) lead.push(app.height);
+    if (app.build)  lead.push(app.build + ' build');
+    var leadStr = lead.join(', ');
+
+    // "with" clause: hair, eyes, markings
+    var withParts = [];
+    if (app.hair_color && app.hair_style) withParts.push(app.hair_style + ' ' + app.hair_color + ' hair');
+    else if (app.hair_color) withParts.push(app.hair_color + ' hair');
+    if (app.eye_color && app.eye_shape) withParts.push(app.eye_shape + ' ' + app.eye_color + ' eyes');
+    else if (app.eye_color) withParts.push(app.eye_color + ' eyes');
+    if (app.facial_markings && app.facial_markings.length) withParts = withParts.concat(app.facial_markings);
+
+    var sentence1;
+    if (leadStr && withParts.length) sentence1 = leadStr + ', with ' + joinNatural(withParts) + '.';
+    else if (leadStr) sentence1 = leadStr + '.';
+    else if (withParts.length) sentence1 = capFirst(joinNatural(withParts)) + '.';
+    else sentence1 = '';
+
+    var rest = [];
+    var faceBits = [];
+    if (app.face_shape) faceBits.push(app.face_shape + ' face');
+    if (app.skin_tone)  faceBits.push(app.skin_tone + ' skin');
+    if (faceBits.length) rest.push(capFirst(joinNatural(faceBits)) + '.');
+    if (app.facial_hair && app.facial_hair !== 'none') rest.push(capFirst(app.facial_hair) + '.');
+
+    return [sentence1].concat(rest).filter(Boolean).join(' ');
+  }
+
+  // ── Your Compass — alignment + alignment trait ──
+  function buildYourCompass() {
+    if (!d.alignment) return '';
+    var ALIGNMENT = {
+      'brightward': p.subjCap + ' walks the Brightward path — protective, believing the world is worth defending and that being someone others can count on is the whole point.',
+      'colorful':   p.subjCap + ' walks the Colorful path — freespirited, wanting to do right by people without ever quite following someone else\'s idea of how.',
+      'greywarden': p.subjCap + ' walks the Greywarden path — measured, watchful, unwilling to believe the world splits cleanly into light and dark.',
+      'steelbound': p.subjCap + ' walks the Steelbound path — disciplined, doing what ' + p.subj + ' said ' + p.subj + '\'d do, and considering that uncomplicated.',
+      'ashwalker':  p.subjCap + ' walks the Ashwalker path — pragmatic, doing what works and trying to be honest about it.'
+    };
+    var line = ALIGNMENT[d.alignment] || '';
+    if (line && d.alignment_trait) line += ' ' + d.alignment_trait;
+    return line;
+  }
+
+  // ── Assemble — organic length, empty sections simply don't appear ──
+  var SECTIONS = [
+    { label: 'Who Are You',     text: buildWhoAreYou() },
+    { label: 'Your Magic',      text: buildYourMagic() },
+    { label: 'Your Background', text: buildYourBackground() },
+    { label: 'Your Past',       text: buildYourPast() },
+    { label: 'Your Appearance', text: buildYourAppearance() },
+    { label: 'Your Compass',    text: buildYourCompass() }
+  ].filter(function(sec) { return sec.text && sec.text.trim(); });
+
+  var plainText = SECTIONS.map(function(sec) {
+    return sec.label.toUpperCase() + '\n\n' + sec.text;
+  }).join('\n\n\n');
+
+  var html = SECTIONS.map(function(sec) {
+    return '<p class="char-summary-heading">' + sec.label.toUpperCase() + '</p><p>' + sec.text + '</p>';
+  }).join('');
 
   var el = document.getElementById('char-auto-summary');
-  if (el) el.textContent = summary;
-  CHAR_STATE.draft.summary = summary;
+  if (el) el.innerHTML = html || '<p>Your summary will appear here based on your choices.</p>';
+  CHAR_STATE.draft.summary = plainText;
 }
 
 function selectSoloSkill(skill) {

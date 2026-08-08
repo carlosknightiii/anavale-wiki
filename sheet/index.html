@@ -66,179 +66,6 @@
       padding: 2rem 1.25rem 4rem;
     }
 
-    /* ── Hero Section ── */
-    .cs-hero {
-      position: relative;
-      border-radius: var(--char-radius);
-      overflow: hidden;
-      margin-bottom: 2rem;
-      min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-    .cs-hero-bg {
-      position: absolute;
-      inset: 0;
-      background-size: cover;
-      background-position: center 30%;
-      filter: brightness(0.4) saturate(1.2);
-    }
-    .cs-hero-orb-a {
-      position: absolute;
-      width: 420px; height: 420px;
-      border-radius: 50%;
-      filter: blur(60px);
-      top: -140px; left: -100px;
-      pointer-events: none;
-      opacity: 0.55;
-      animation: cs-orb1 20s ease-in-out infinite;
-    }
-    .cs-hero-orb-b {
-      position: absolute;
-      width: 300px; height: 300px;
-      border-radius: 50%;
-      filter: blur(60px);
-      bottom: -60px; right: -80px;
-      pointer-events: none;
-      opacity: 0.35;
-      animation: cs-orb2 26s ease-in-out infinite;
-    }
-    .cs-hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to right, rgba(3,4,12,0.97) 0%, rgba(3,4,12,0.80) 50%, rgba(3,4,12,0.15) 100%);
-    }
-    .cs-hero-bottom-fade {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 64px;
-      background: linear-gradient(to bottom, transparent, rgba(3,4,12,0.97));
-      pointer-events: none;
-    }
-    .cs-hero-portrait-wrap {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 180px;
-      height: 100%;
-      display: flex;
-      align-items: flex-end;
-    }
-    .cs-portrait-upload-btn {
-      position: absolute;
-      bottom: 0.75rem;
-      right: 0.5rem;
-      padding: 0.3rem 0.75rem;
-      border-radius: 6px;
-      border: 1px solid rgba(255,255,255,0.35);
-      background: rgba(10,14,24,0.88);
-      color: white;
-      font-family: var(--font-sans);
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      cursor: pointer;
-      opacity: 1;
-      z-index: 10;
-    }
-    .cs-portrait-upload-btn:hover { background: rgba(200,148,10,0.35); border-color: rgba(200,148,10,0.6); }
-    .cs-hero-portrait {
-      position: absolute;
-      right: 1.5rem; bottom: 1rem;
-      width: 110px; height: 110px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid rgba(200,148,10,0.4);
-      box-shadow: 0 0 24px rgba(0,0,0,0.7);
-      opacity: 0.85;
-    }
-    .cs-hero-content {
-      position: relative;
-      z-index: 2;
-      padding: 1.75rem 1.5rem 1.5rem;
-    }
-    .cs-hero-eyebrow {
-      font-family: var(--font-sans);
-      font-size: 0.68rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 0.4rem;
-      font-weight: 700;
-    }
-    .cs-hero-name {
-      font-family: var(--font-headers);
-      font-size: clamp(2.2rem, 8vw, 3.5rem);
-      color: var(--white);
-      line-height: 1.05;
-      margin-bottom: 0.5rem;
-      text-shadow: 0 2px 16px rgba(0,0,0,0.9);
-    }
-    .cs-hero-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      align-items: center;
-    }
-    .cs-hero-tag {
-      font-family: var(--font-sans);
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.2rem 0.65rem;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.75);
-      background: rgba(255,255,255,0.05);
-    }
-    .cs-hero-tag--type {
-      color: #fff;
-      border-color: transparent;
-    }
-
-    /* ── Stat row (ability scores) ── */
-    .cs-stat-row {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-    }
-    .cs-stat-block {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-      padding: 0.75rem 0.4rem;
-      text-align: center;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .cs-stat-block:hover {
-      border-color: var(--char-highlight-border);
-      background: var(--char-card-bg-hover);
-    }
-    .cs-stat-val {
-      font-family: var(--font-serif);
-      font-size: 1.5rem;
-      color: var(--white);
-      line-height: 1;
-      margin-bottom: 0.2rem;
-    }
-    .cs-stat-mod {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--gold-light);
-      margin-bottom: 0.3rem;
-    }
-    .cs-stat-label {
-      font-family: var(--font-sans);
-      font-size: 0.5rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--char-text-faint);
-      font-weight: 700;
-    }
-
     /* ── Section headers ── */
     .cs-section {
       margin-bottom: 1.75rem;
@@ -261,36 +88,6 @@
       content: '✦';
       font-size: 0.55rem;
       opacity: 0.6;
-    }
-
-    /* ── Identity grid ── */
-    .cs-identity-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.6rem;
-    }
-    .cs-identity-row {
-      background: var(--char-card-bg-subtle);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 8px;
-      padding: 0.6rem 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-    .cs-identity-key {
-      font-family: var(--font-sans);
-      font-size: 0.6rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--char-text-faint);
-      font-weight: 700;
-    }
-    .cs-identity-val {
-      font-family: var(--font-sans);
-      font-size: 0.88rem;
-      color: var(--parchment);
-      font-weight: 400;
     }
 
     /* ── Appearance block ── */
@@ -420,54 +217,446 @@
       margin-top: 0.15rem;
     }
 
-    /* ── Gigglegloom type banner ── */
-    .cs-type-banner {
-      border-radius: var(--char-radius);
-      padding: 1.25rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      border: 1px solid transparent;
+    /* ══════════════════════════════════════════════════════════════
+       OVERVIEW + ABILITY SCORES (redesign)
+       Figma P0tcVgf02XeI13Tz0TtRaX — desktop 36:310 / mobile 36:435
+       Breaks out of .cs-wrap's 820px cap — this is the one part of
+       the sheet wide enough to need it (portrait card + 3 overview
+       cards side by side). Rest of the page stays at 820px.
+       ══════════════════════════════════════════════════════════════ */
+    .cs-ov-breakout {
+      width: 100vw;
       position: relative;
-      overflow: hidden;
+      left: 50%;
+      margin-left: -50vw;
+      margin-bottom: 2rem;
     }
-    .cs-type-banner-bg {
+    .cs-ov-inner {
+      max-width: 1560px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* ── Portrait / money / weight card ── */
+    .cs-ov-maininfo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-m);
+      align-items: flex-start;
+    }
+    .cs-ov-portrait {
+      position: relative;
+      width: 358px;
+      min-height: 420px;
+      flex-shrink: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 10px;
+      background: var(--surface-2);
+    }
+    .cs-ov-portrait-img {
       position: absolute;
       inset: 0;
-      opacity: 0.12;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 20%;
     }
-    .cs-type-icon {
-      width: 40px; height: 40px;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
-      filter: drop-shadow(0 0 10px currentColor);
-    }
-    .cs-type-name {
-      font-family: var(--font-headers);
-      font-size: 1.5rem;
-      color: var(--white);
-      line-height: 1.1;
-      position: relative;
-      z-index: 1;
-    }
-    .cs-type-element {
+    .cs-ov-portrait-upload-btn {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 3;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(10,14,24,0.88);
+      color: white;
       font-family: var(--font-sans);
       font-size: 0.7rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      margin-top: 0.15rem;
-      position: relative;
-      z-index: 1;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      cursor: pointer;
     }
-    .cs-type-desc {
-      font-family: var(--font-sans);
-      font-size: 0.82rem;
-      color: var(--char-text-muted);
-      line-height: 1.65;
-      margin-top: 0.65rem;
+    .cs-ov-portrait-upload-btn:hover { background: rgba(200,148,10,0.35); border-color: rgba(200,148,10,0.6); }
+    .cs-ov-money-row {
       position: relative;
-      z-index: 1;
+      z-index: 2;
+      display: flex;
+      gap: 10px;
+      padding: 0 8px;
+    }
+    .cs-ov-money-cell {
+      flex: 1 0 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+    }
+    .cs-ov-money-cell--copper { background: var(--currency-copper); }
+    .cs-ov-money-cell--silver { background: var(--currency-silver); }
+    .cs-ov-money-cell--gold   { background: var(--currency-gold-coin); }
+    .cs-ov-money-label {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: var(--blue-800, var(--surface-0));
+      text-align: center;
+    }
+    .cs-ov-money-cell--copper .cs-ov-money-label { color: var(--text); }
+    .cs-ov-money-input {
+      width: 100%;
+      height: 19px;
+      border: 1px solid #000;
+      border-radius: 3px;
+      background: #fff;
+      color: var(--surface-0);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 0;
+    }
+    .cs-ov-money-input::-webkit-outer-spin-button,
+    .cs-ov-money-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .cs-ov-weight {
+      position: relative;
+      z-index: 2;
+      height: 32px;
+      background: var(--blue-200);
+    }
+    .cs-ov-weight-fill {
+      height: 100%;
+      background: var(--surface-4);
+      transition: width 0.25s ease;
+    }
+    .cs-ov-weight-fill.encumbered { background: var(--red-strong); }
+    .cs-ov-weight-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cs-ov-weight-icon { font-size: 0.85rem; }
+
+    /* ── Name / pills / blurb / accordions ── */
+    .cs-ov-info {
+      flex: 1 1 358px;
+      min-width: 358px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-m);
+    }
+    .cs-ov-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .cs-ov-name {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 4.5vw, 4rem);
+      line-height: 1.05;
+      color: var(--text);
+    }
+    .cs-ov-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cs-ov-pill {
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 50px;
+      padding: 8px 14px;
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .cs-ov-pill strong { font-weight: 900; }
+    .cs-ov-blurb {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 1rem;
+      line-height: var(--line-height);
+      color: var(--text);
+    }
+
+    /* ── Accordion shell (Overview / Ability Scores) ── */
+    .cs-ov-acc { width: 100%; }
+    .cs-ov-acc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 0 var(--char-ov-gap-2xs);
+      gap: var(--char-ov-gap-2xs);
+    }
+    .cs-ov-acc-title {
+      font-family: var(--font-display);
+      font-size: var(--text-4xl);
+      color: var(--text);
+      text-align: left;
+    }
+    .cs-ov-acc-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--char-ov-gap-2xs);
+    }
+    .cs-ov-acc-toggle-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+    }
+    .cs-ov-acc-chevron {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #fff;
+      color: var(--surface-0);
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    .cs-ov-acc-body {
+      padding-bottom: var(--char-ov-gap-2xs);
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-m);
+    }
+    .cs-ov-acc.collapsed .cs-ov-acc-body { display: none; }
+    .cs-ov-acc.collapsed .cs-ov-acc-chevron { transform: rotate(180deg); }
+
+    /* ── Overview cards (alignment / background / gigglegloom) ── */
+    .cs-ov-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-s);
+      width: 100%;
+    }
+    .cs-ov-card {
+      flex: 1 0 0;
+      min-width: 300px;
+      display: flex;
+      align-items: center;
+      gap: var(--char-ov-gap-xs);
+      background: var(--blue-700);
+      border-radius: 0 24px 24px 0;
+      padding-right: 16px;
+      overflow: hidden;
+    }
+    .cs-ov-card-img {
+      width: 75px; height: 75px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .cs-ov-card-icon-wrap {
+      width: 75px; height: 75px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+    .cs-ov-card-icon {
+      width: 40px; height: 40px;
+      filter: drop-shadow(0 0 14px currentColor);
+    }
+    .cs-ov-card-txt {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+    .cs-ov-card-label {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .cs-ov-card-title {
+      font-family: var(--font-display);
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+    }
+    .cs-ov-card-sub {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.72rem;
+      color: var(--text);
+    }
+
+    /* ── Class card ── */
+    .cs-ov-class-card {
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-s);
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-s);
+      width: 100%;
+    }
+    .cs-ov-class-basic {
+      display: flex;
+      align-items: center;
+      gap: var(--char-ov-gap-s);
+    }
+    .cs-ov-class-img {
+      width: 56px; height: 56px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+    .cs-ov-class-txt { flex: 1 0 0; min-width: 0; }
+    .cs-ov-class-label {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .cs-ov-class-name {
+      font-family: var(--font-display);
+      font-size: var(--char-ov-h3);
+      color: var(--text);
+    }
+    .cs-ov-class-level {
+      flex-shrink: 0;
+      background: var(--surface-0);
+      border-radius: 8px;
+      padding: var(--char-ov-gap-2xs);
+      text-align: center;
+    }
+    .cs-ov-class-level-label {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.72rem;
+      color: var(--gold);
+    }
+    .cs-ov-class-level-val {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: var(--char-ov-h3);
+      color: var(--text);
+    }
+    .cs-ov-class-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-m);
+    }
+    .cs-ov-class-detail {
+      flex: 1 0 0;
+      min-width: 240px;
+      display: flex;
+      gap: 10px;
+    }
+    .cs-ov-class-detail-keys {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .cs-ov-class-detail-keys p, .cs-ov-class-detail-vals p { line-height: 24px; margin: 0; }
+    .cs-ov-class-detail-vals {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 1rem;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    /* ── Ability score cards ── */
+    .cs-ab-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      width: 100%;
+    }
+    .cs-ab-card {
+      flex: 1 0 0;
+      min-width: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--char-ov-gap-xs) 0;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(to bottom, var(--blue-700), var(--ab-gradient));
+      box-shadow: 2px 5px 11px 0 var(--ab-glow), 0 0 120px 0 var(--ab-glow);
+    }
+    .cs-ab-card--str { --ab-glow: var(--ability-str-glow); --ab-gradient: var(--ability-str-gradient); }
+    .cs-ab-card--dex { --ab-glow: var(--ability-dex-glow); --ab-gradient: var(--ability-dex-gradient); }
+    .cs-ab-card--con { --ab-glow: var(--ability-con-glow); --ab-gradient: var(--ability-con-gradient); }
+    .cs-ab-card--int { --ab-glow: var(--ability-int-glow); --ab-gradient: var(--ability-int-gradient); }
+    .cs-ab-card--wis { --ab-glow: var(--ability-wis-glow); --ab-gradient: var(--ability-wis-gradient); }
+    .cs-ab-card--cha { --ab-glow: var(--ability-cha-glow); --ab-gradient: var(--ability-cha-gradient); }
+    .cs-ab-img {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .cs-ab-txt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--char-ov-gap-2xs) 0;
+      text-align: center;
+    }
+    .cs-ab-label {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .cs-ab-val {
+      font-family: var(--font-display);
+      font-size: var(--char-ov-h3);
+      color: var(--text);
+    }
+    .cs-ab-mod {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .cs-ab-mod-num { font-weight: 700; }
+    .cs-ab-mod-num.positive { color: var(--green); }
+    .cs-ab-mod-num.negative { color: var(--red); }
+
+    @media (max-width: 900px) {
+      .cs-ov-portrait { width: 100%; min-height: 340px; }
+      .cs-ov-info { min-width: 100%; }
+    }
+    @media (max-width: 600px) {
+      .cs-ov-card { min-width: 100%; }
+      .cs-ab-cards { gap: 12px; }
+      .cs-ab-card { min-width: 84px; }
+      .cs-ab-img { width: 72px; height: 72px; }
+      .cs-ov-class-details { gap: 1rem; }
+      /* Single unbreakable words ("Overview") can't shrink to share a row
+         with the toggle at 48px — wrap the toggle onto its own line rather
+         than letting it overflow past the viewport edge. */
+      .cs-ov-acc-header { flex-wrap: wrap; row-gap: 0.4rem; }
+      .cs-ov-acc-title { font-size: 2.25rem; }
     }
 
     /* ── Not-found state ── */
@@ -544,14 +733,6 @@
     }
 
     /* ── Animations ── */
-    @keyframes cs-orb1 {
-      0%, 100% { transform: translate(0, 0); }
-      50%       { transform: translate(30px, 20px); }
-    }
-    @keyframes cs-orb2 {
-      0%, 100% { transform: translate(0, 0); }
-      50%       { transform: translate(-20px, -30px); }
-    }
     @keyframes cs-fadein {
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -560,22 +741,14 @@
 
     /* ── Responsive ── */
     @media (max-width: 600px) {
-      .cs-stat-row { grid-template-columns: repeat(3, 1fr); }
-      .cs-identity-grid { grid-template-columns: 1fr; }
       .cs-story-row { grid-template-columns: 1fr; gap: 0.2rem; }
       .cs-gear-grid { grid-template-columns: 1fr; }
-      .cs-hero-portrait { display: none; }
       .cs-nav { padding: 0.6rem 1rem; }
-    }
-    @media (max-width: 380px) {
-      .cs-stat-row { grid-template-columns: repeat(3, 1fr); gap: 0.35rem; }
-      .cs-stat-val { font-size: 1.25rem; }
     }
 
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
       .cs-wrap { animation: none; }
-      .cs-hero-orb-a, .cs-hero-orb-b { animation: none; }
     }
   </style>
 </head>
@@ -1664,6 +1837,7 @@
   var EQUIPPED   = { armor: null, shield: null, hand_right: null, hand_left: null };
   var EQUIPPED_ITEMS = {}; // item_id → full item row from items table
   var ABILITY_SCORES = {}; // set from player_characters.ability_scores in renderCharacter()
+  var CLASS_ROW  = null;   // classes table row for ch.class_id, once fetchClassData() resolves
 
   // ── Lookup tables ─────────────────────────────────────────────────
   var TYPE_META = {
@@ -1673,10 +1847,6 @@
     flamerage:   { name:'Flamerage',   color:'#aa3a1a', glow:'170,58,26',   element:'Fire · Destruction · Fury',desc:'Responds to emotion before intent. The only type that can temporarily overpower Stage 1 Fading.' }
   };
 
-  var REGION_IMG = {
-    caparia:'img-caparia-landscape', nombi:'img-nombi-landscape',
-    sohot:'img-sohot-landscape',     jugabi:'img-jugabi-landscape'
-  };
   var REGION_LABELS = { caparia:'Caparia', nombi:'Nombi', sohot:'Sohot', jugabi:'Jugabi' };
   var ALIGNMENT_LABELS = {
     brightward:'Brightward', colorful:'Colorful', greywarden:'Greywarden',
@@ -1716,6 +1886,48 @@
     'called-to-wander':'Always planned to leave',
     'forced-out':'Was forced out',
     'opportunity':'Left for an opportunity'
+  };
+
+  // ── Overview card lookups (mirrors ANAVALE_BACKGROUNDS / ANAVALE_SPECIES /
+  // ALIGNMENT_PHB / GIGGLEGLOOM_TYPES in character.js — sheet doesn't load
+  // that file, so the small subsets these cards need are copied here) ──
+  var BG_PHB = {
+    cobblewise:'Urchin', craftborn:'Guild Artisan', faithful:'Acolyte',
+    greywitnessed:'Haunted One', learned:'Sage', masquerader:'Charlatan',
+    reveler:'Entertainer', ringscarred:'Gladiator', rootborn:'Folk Hero',
+    stillsought:'Hermit', streetwise:'Criminal', tested:'Soldier',
+    threadpuller:'Investigator', tidemarked:'Sailor', wellborn:'Noble',
+    wildborn:'Outlander'
+  };
+  var SPECIES_PHB = {
+    brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
+    gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
+    scalegrace:'Dragonborn', solmeri:'Human', stonemarked:'Dwarf',
+    tallwalker:'Goliath', veilstepped:'Changeling', verdathi:'Elf'
+  };
+  var ALIGNMENT_PHB = {
+    brightward:'Lawful Good', colorful:'Chaotic Good', greywarden:'True Neutral',
+    steelbound:'Lawful Neutral', ashwalker:'Chaotic Neutral'
+  };
+  var ALIGNMENT_TRAIT_SENTENCE = {
+    brightward:  'They are Protective — they believe the world is worth protecting, and they intend to be someone others can count on.',
+    colorful:    'They are Freespirited — they want to do right by people, they\'ve just never been good at following someone else\'s idea of how.',
+    greywarden:  'They are Measured — they see all sides, weigh things carefully, and don\'t think the world divides neatly into light and dark.',
+    steelbound:  'They are Disciplined — they do what they said they would do. They consider this uncomplicated.',
+    ashwalker:   'They are Pragmatic — they do what works for them, and they try to be honest about that.'
+  };
+  // Gigglegloom-flavor class name (e.g. wizard → "The Learned") used in the
+  // Overview blurb — matches GIGGLEGLOOM_TYPES[*].classes[*].name in character.js.
+  var CLASS_FLAVOR_NAME = {
+    druid:'The Verdant', cleric:'The Faithful', paladin:'The Warden',
+    ranger:'The Wanderer', rogue:'The Nimble', bard:'The Reveler',
+    fighter:'The Tested', monk:'The Still', wizard:'The Learned',
+    sorcerer:'The Sparked', warlock:'The Bound', barbarian:'The Furious'
+  };
+  var LANGUAGE_LABELS = {
+    'caparian-deep':'Caparian Deep', 'conclave-script':'Conclave Script',
+    'jugabi-canopy':'Jugabi Canopy', 'nombi-frost':'Nombi Frost',
+    'pre-partition':'Pre-Partition Script', 'sohot-old':'Sohot Old Tongue'
   };
 
   // ── Helpers ───────────────────────────────────────────────────────
@@ -1795,14 +2007,13 @@
     var typeKey     = (ch.class_gigglegloom || '').toLowerCase();
     var typeMeta    = TYPE_META[typeKey] || { name: cap(typeKey), color:'#c8940a', glow:'200,148,10', element:'', desc:'' };
     var regionKey   = (ch.home_region || '').toLowerCase();
-    var regionImg   = REGION_IMG[regionKey] || 'img-caparia-landscape';
     var regionLabel = REGION_LABELS[regionKey] || cap(ch.home_region || '');
     var scores      = (typeof ch.ability_scores === 'object' && ch.ability_scores) ? ch.ability_scores : {};
     ABILITY_SCORES  = scores;
     var app         = (typeof ch.appearance_data === 'object' && ch.appearance_data) ? ch.appearance_data : {};
     var gender      = ch.gender || 'm';
     var portraitSuffix = gender === 'female' ? 'f' : gender === 'non-binary' ? 'nb' : 'm';
-    var portraitSrc = ch.species ? '../assets/images/species/' + ch.species + '-' + portraitSuffix + '.webp' : '';
+    var portraitSrc = ch.species ? '../assets/images/species/sp-' + ch.species + '-' + portraitSuffix + '.png' : '';
 
     var classDisplay   = cap((ch.class_id      || '').replace(/-/g,' '));
     var speciesDisplay = cap((ch.species        || '').replace(/-/g,' '));
@@ -1811,32 +2022,8 @@
     var appearanceDesc = ch.appearance_prompt || buildAppearanceDesc(app) || null;
     var gearList       = buildGearList(app);
 
-    // Ability score cells
-    var AB_KEYS  = ['str','dex','con','int','wis','cha'];
-    var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
-    var statCells = AB_KEYS.map(function(ab) {
-      var raw = parseInt(scores[ab]) || 0;
-      var mod = raw ? abMod(raw) : '—';
-      return '<div class="cs-stat-block"><div class="cs-stat-val">' + (raw||'—') + '</div>'
-        + '<div class="cs-stat-mod">' + mod + '</div>'
-        + '<div class="cs-stat-label">' + AB_NAMES[ab] + '</div></div>';
-    }).join('');
-
-    // Identity grid
-    var identity = [
-      { k:'Class',       v: classDisplay },
-      { k:'Species',     v: speciesDisplay },
-      { k:'Background',  v: bgDisplay },
-      { k:'Alignment',   v: label(ALIGNMENT_LABELS, ch.alignment) },
-      { k:'Home Region', v: regionLabel },
-      { k:'Level',       v: ch.level || 1 },
-      { k:'Pronouns',    v: ch.pronouns || '—' },
-      { k:'Language',    v: ch.language_extra ? cap((ch.language_extra+'').replace(/-/g,' ')) : '—' }
-    ];
-    var identityHtml = identity.map(function(r) {
-      return '<div class="cs-identity-row"><div class="cs-identity-key">' + r.k + '</div>'
-        + '<div class="cs-identity-val">' + r.v + '</div></div>';
-    }).join('');
+    var overviewHtml = buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc);
+    var abilityScoresHtml = buildAbilityScoresHtml(scores);
 
     // Story rows
     var storyRows = [
@@ -1873,55 +2060,13 @@
         + cap((app[k]||'').replace(/-/g,' ')) + '</span>';
     }).join('');
 
-    // Type banner
-    var typeIconSrc = typeKey ? '../assets/icons/icon-' + typeKey + '.svg' : '';
-    var typeBannerHtml = '<div class="cs-type-banner" style="border-color:' + typeMeta.color + '33;">'
-      + '<div class="cs-type-banner-bg" style="background:radial-gradient(circle at left,' + typeMeta.color + ' 0%,transparent 70%);"></div>'
-      + (typeIconSrc ? '<img class="cs-type-icon" src="' + typeIconSrc + '" alt="" aria-hidden="true">' : '')
-      + '<div><div class="cs-type-name">' + typeMeta.name + '</div>'
-      + '<div class="cs-type-element" style="color:' + typeMeta.color + ';">' + typeMeta.element + '</div>'
-      + (typeMeta.desc ? '<div class="cs-type-desc">' + typeMeta.desc + '</div>' : '')
-      + '</div></div>';
-
-    // Portrait
-    var portraitHtml = '<div class="cs-hero-portrait-wrap">'
-      + '<img class="cs-hero-portrait" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name||'') + ' portrait" onerror="this.style.display=\'none\'">'
-      + '<button class="cs-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
-      + '</div>';
-
     // Assemble
     main.innerHTML =
-      // Hero
-      '<div class="cs-hero">'
-        + '<div class="cs-hero-bg" style="background-image:url(\'../assets/images/regions/' + regionImg + '.webp\');"></div>'
-        + '<div class="cs-hero-orb-a" style="background:radial-gradient(circle,rgba(' + typeMeta.glow + ',0.6) 0%,transparent 65%);"></div>'
-        + '<div class="cs-hero-orb-b" style="background:radial-gradient(circle,rgba(' + typeMeta.glow + ',0.4) 0%,transparent 65%);"></div>'
-        + '<div class="cs-hero-overlay"></div>'
-        + '<div class="cs-hero-bottom-fade"></div>'
-        + portraitHtml
-        + '<div class="cs-hero-content">'
-          + '<div class="cs-hero-eyebrow">Anavale · Character Sheet</div>'
-          + '<div class="cs-hero-name">' + (ch.name||'Unknown') + '</div>'
-          + '<div class="cs-hero-tags">'
-            + '<span class="cs-hero-tag cs-hero-tag--type" style="background:' + typeMeta.color + '22;border-color:' + typeMeta.color + '55;color:#fff;">' + typeMeta.name + '</span>'
-            + '<span class="cs-hero-tag">' + classDisplay + '</span>'
-            + '<span class="cs-hero-tag">' + speciesDisplay + '</span>'
-            + '<span class="cs-hero-tag">' + regionLabel + '</span>'
-          + '</div>'
-        + '</div>'
-      + '</div>'
-
-      // Gigglegloom type
-      + '<div class="cs-section"><div class="cs-section-label">Gigglegloom Affinity</div>'
-        + typeBannerHtml + '</div>'
-
-      // Ability scores
-      + '<div class="cs-section"><div class="cs-section-label">Ability Scores</div>'
-        + '<div class="cs-stat-row">' + statCells + '</div></div>'
-
-      // Identity
-      + '<div class="cs-section"><div class="cs-section-label">Identity</div>'
-        + '<div class="cs-identity-grid">' + identityHtml + '</div></div>'
+      // Overview (portrait/money/weight + name/pills/blurb + alignment/
+      // background/gigglegloom/class cards) + Ability Scores — redesign,
+      // see buildOverviewHtml()/buildAbilityScoresHtml() below.
+      overviewHtml
+      + abilityScoresHtml
 
       // Appearance
       + (appearanceDesc || chipsHtml ? (
@@ -1999,7 +2144,7 @@
         + '<button class="cs-notes-add-btn" onclick="addNote()">＋ New note</button>'
       + '</div>'
 
-      // Photo input — hidden, triggered from hero overlay
+      // Photo input — hidden, triggered from the portrait card's Replace button
       + '<input class="cs-photo-input" type="file" id="cs-photo-input" accept="image/*" onchange="uploadPhoto(this)">'
 
       + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
@@ -2009,11 +2154,237 @@
     document.title = (ch.name||'Character') + ' — Anavale';
   }
 
+  // ── Overview + Ability Scores (redesign) ───────────────────────────
+  function buildAbilityScoresHtml(scores) {
+    var AB_KEYS  = ['str','dex','con','int','wis','cha'];
+    var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
+    var cards = AB_KEYS.map(function(ab) {
+      var raw    = parseInt(scores[ab]) || 0;
+      var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
+      var modStr = raw ? (modNum >= 0 ? '+' : '') + modNum : '—';
+      var modCls = modNum > 0 ? 'positive' : modNum < 0 ? 'negative' : '';
+      return '<div class="cs-ab-card cs-ab-card--' + ab + '">'
+        + '<img class="cs-ab-img" src="../assets/images/character-sheet/ability-scores/ability-' + ab + '.png" alt="">'
+        + '<div class="cs-ab-txt">'
+          + '<div class="cs-ab-label">' + AB_NAMES[ab] + '</div>'
+          + '<div class="cs-ab-val">' + (raw || '—') + '</div>'
+          + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
+        + '</div>'
+      + '</div>';
+    }).join('');
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-ov-acc" id="cs-ov-acc-abilities">'
+        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-abilities\')">'
+          + '<span class="cs-ov-acc-title">Ability Scores</span>'
+          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+        + '</button>'
+        + '<div class="cs-ov-acc-body"><div class="cs-ab-cards">' + cards + '</div></div>'
+      + '</div>'
+    + '</div></div>';
+  }
+
+  function renderClassDetailsHtml(row) {
+    var primary = row ? row.primary_ability   : null;
+    var saves   = row ? row.saving_throws     : null;
+    var casting = row ? row.casting_summary   : null;
+    var armor   = row ? row.armor             : null;
+    var tools   = row ? row.tools             : null;
+    var weapons = row ? row.weapons           : null;
+    return '<div class="cs-ov-class-detail">'
+        + '<div class="cs-ov-class-detail-keys"><p>Primary ability:</p><p>Saving throws:</p><p>Casting Spells:</p></div>'
+        + '<div class="cs-ov-class-detail-vals"><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
+      + '</div>'
+      + '<div class="cs-ov-class-detail">'
+        + '<div class="cs-ov-class-detail-keys"><p>Armor:</p><p>Tools:</p><p>Weapons:</p></div>'
+        + '<div class="cs-ov-class-detail-vals"><p>' + (armor || '—') + '</p><p>' + (tools || '—') + '</p><p>' + (weapons || '—') + '</p></div>'
+      + '</div>';
+  }
+
+  // Populated once fetchClassData() resolves — the `classes` table is the
+  // source for these mechanical fields (see docs/character-sheet-redesign-handoff.md §6).
+  function renderClassCard() {
+    var el = document.getElementById('cs-ov-class-details');
+    if (!el) return;
+    el.innerHTML = renderClassDetailsHtml(CLASS_ROW);
+  }
+
+  function buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc) {
+    var alignKey = (ch.alignment || '').toLowerCase();
+    var bgKey    = (ch.background_id || '').toLowerCase();
+    var classKey = (ch.class_id || '').toLowerCase();
+    var speciesKey = (ch.species || '').toLowerCase();
+
+    // Pills — age category (§4: category, not a number), gender, species (+PHB
+    // equivalent), home region, language. Only fields that exist are shown.
+    var idBits = [];
+    if (app.age) idBits.push(cap(app.age));
+    if (ch.gender) idBits.push(cap(ch.gender));
+    idBits.push(speciesDisplay + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : ''));
+    var pills = ['<span class="cs-ov-pill">' + idBits.join(', ') + '</span>'];
+    if (regionLabel && regionLabel !== '—') pills.push('<span class="cs-ov-pill">from ' + regionLabel + '</span>');
+    if (ch.language_extra) {
+      var langLabel = LANGUAGE_LABELS[ch.language_extra] || cap((ch.language_extra + '').replace(/-/g, ' '));
+      pills.push('<span class="cs-ov-pill">Speaks ' + langLabel + '</span>');
+    }
+    var pillsHtml = pills.join('');
+
+    // Blurb — species + class's Gigglegloom-flavor name + type + region,
+    // plus the alignment trait sentence. Sourced from the same lookups
+    // character.js's (pre-rewrite) generateSummary() draws from, not invented.
+    var blurbParts = [];
+    var flavorName = CLASS_FLAVOR_NAME[classKey];
+    if (speciesDisplay && flavorName && typeMeta.name) {
+      blurbParts.push('A ' + speciesDisplay + ' ' + flavorName + ' who carries the ' + typeMeta.name
+        + (regionLabel && regionLabel !== '—' ? ' — from ' + regionLabel + '.' : '.'));
+    }
+    if (ALIGNMENT_TRAIT_SENTENCE[alignKey]) blurbParts.push(ALIGNMENT_TRAIT_SENTENCE[alignKey]);
+    var blurbHtml = blurbParts.length ? '<p class="cs-ov-blurb">' + blurbParts.join(' ') + '</p>' : '';
+
+    // Overview cards — alignment / background / gigglegloom. No invented
+    // flavor text: PHB-equivalent subtitles come from real lookups; a
+    // background/alignment "archetype" subtitle (e.g. Figma's "(Gladiator)"
+    // for the alignment card) doesn't exist in canon data and isn't built here.
+    var alignName = label(ALIGNMENT_LABELS, ch.alignment);
+    var alignPhb  = ALIGNMENT_PHB[alignKey];
+    var alignCard = '<div class="cs-ov-card">'
+      + '<img class="cs-ov-card-img" src="../assets/images/img-alignment.webp" alt="">'
+      + '<div class="cs-ov-card-txt">'
+        + '<div class="cs-ov-card-label">Alignment</div>'
+        + '<div class="cs-ov-card-title">' + alignName + '</div>'
+        + (alignPhb ? '<div class="cs-ov-card-sub">(' + alignPhb + ')</div>' : '')
+      + '</div></div>';
+
+    var bgPhb = BG_PHB[bgKey];
+    var bgCard = '<div class="cs-ov-card">'
+      + '<img class="cs-ov-card-img" src="../assets/images/backgrounds/bg-' + (bgKey || 'default') + '.png" alt="" onerror="this.style.display=\'none\'">'
+      + '<div class="cs-ov-card-txt">'
+        + '<div class="cs-ov-card-label">Background</div>'
+        + '<div class="cs-ov-card-title">' + bgDisplay + '</div>'
+        + (bgPhb ? '<div class="cs-ov-card-sub">(' + bgPhb + ')</div>' : '')
+      + '</div></div>';
+
+    var ggColorVar = typeKey ? '--' + typeKey : null;
+    var ggCard = '<div class="cs-ov-card">'
+      + '<div class="cs-ov-card-icon-wrap" style="box-shadow:inset 0 0 40px 0 ' + (ggColorVar ? 'var(' + ggColorVar + ')' : typeMeta.color) + ';">'
+        + (typeKey ? '<img class="cs-ov-card-icon" style="color:' + (ggColorVar ? 'var(' + ggColorVar + ')' : typeMeta.color) + ';" src="../assets/icons/icon-' + typeKey + '.svg" alt="">' : '')
+      + '</div>'
+      + '<div class="cs-ov-card-txt">'
+        + '<div class="cs-ov-card-label">Gigglegloom</div>'
+        + '<div class="cs-ov-card-title">' + typeMeta.name + '</div>'
+      + '</div></div>';
+
+    // Class card — basic info (image/name/level) is available immediately;
+    // mechanical fields (primary ability, saves, casting, armor, tools,
+    // weapons) come from the `classes` table via renderClassCard() once
+    // fetchClassData() resolves (that table doesn't exist until §6/§7 lands).
+    var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
+    var classCard = '<div class="cs-ov-class-card">'
+      + '<div class="cs-ov-class-basic">'
+        + (classImgSrc ? '<img class="cs-ov-class-img" src="' + classImgSrc + '" alt="" onerror="this.style.display=\'none\'">' : '')
+        + '<div class="cs-ov-class-txt">'
+          + '<div class="cs-ov-class-label">Class</div>'
+          + '<div class="cs-ov-class-name">' + classDisplay + '</div>'
+        + '</div>'
+        + '<div class="cs-ov-class-level"><div class="cs-ov-class-level-label">Level</div><div class="cs-ov-class-level-val">' + (ch.level || 1) + '</div></div>'
+      + '</div>'
+      + '<div class="cs-ov-class-details" id="cs-ov-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
+    + '</div>';
+
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-ov-maininfo">'
+        + '<div class="cs-ov-portrait">'
+          + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
+          + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
+          + '<div class="cs-ov-money-row">'
+            + '<div class="cs-ov-money-cell cs-ov-money-cell--copper"><div class="cs-ov-money-label">Copper</div><input class="cs-ov-money-input" id="cs-ov-cp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
+            + '<div class="cs-ov-money-cell cs-ov-money-cell--silver"><div class="cs-ov-money-label">Silver</div><input class="cs-ov-money-input" id="cs-ov-sp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
+            + '<div class="cs-ov-money-cell cs-ov-money-cell--gold"><div class="cs-ov-money-label">Gold</div><input class="cs-ov-money-input" id="cs-ov-gp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
+          + '</div>'
+          + '<div class="cs-ov-weight" id="cs-ov-weight">'
+            + '<div class="cs-ov-weight-fill" id="cs-ov-weight-fill" style="width:0%;"></div>'
+            + '<div class="cs-ov-weight-label"><span class="cs-ov-weight-icon">&#9878;</span><span id="cs-ov-weight-nums">0 / 0 LBS</span></div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="cs-ov-info">'
+          + '<div class="cs-ov-main">'
+            + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
+            + '<div class="cs-ov-pills">' + pillsHtml + '</div>'
+            + blurbHtml
+          + '</div>'
+          + '<div class="cs-ov-acc" id="cs-ov-acc-overview">'
+            + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-overview\')">'
+              + '<span class="cs-ov-acc-title">Overview</span>'
+              + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+            + '</button>'
+            + '<div class="cs-ov-acc-body">'
+              + '<div class="cs-ov-cards">' + alignCard + bgCard + ggCard + '</div>'
+              + classCard
+            + '</div>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+    + '</div></div>';
+  }
+
+  function toggleSheetAccordion(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var collapsed = el.classList.toggle('collapsed');
+    var labelEl = el.querySelector('.cs-ov-acc-toggle-label');
+    if (labelEl) labelEl.textContent = collapsed ? 'Expand' : 'Collapse';
+  }
+
+  // ── Overview money (cp/sp/gp) — combines into / splits from the same
+  // character_sheet.gold_cp field as the Gold section's setGold(), so both
+  // editors and the character-creation HUD/Stage 3 panel stay in sync. ──
+  function renderOverviewMoney() {
+    var cp = SHEET ? (SHEET.gold_cp || 0) : 0;
+    var gpEl = document.getElementById('cs-ov-gp');
+    var spEl = document.getElementById('cs-ov-sp');
+    var cpEl = document.getElementById('cs-ov-cp');
+    if (gpEl) gpEl.value = Math.floor(cp / 100);
+    if (spEl) spEl.value = Math.floor((cp % 100) / 10);
+    if (cpEl) cpEl.value = cp % 10;
+  }
+  function onOverviewMoneyChange() {
+    if (!SHEET) return;
+    var gp = parseInt(document.getElementById('cs-ov-gp').value) || 0;
+    var sp = parseInt(document.getElementById('cs-ov-sp').value) || 0;
+    var cp = parseInt(document.getElementById('cs-ov-cp').value) || 0;
+    SHEET.gold_cp = Math.max(0, (gp * 100) + (sp * 10) + cp);
+    saveSheet({ gold_cp: SHEET.gold_cp });
+    renderOverviewMoney();
+    renderGold();
+    showToast('Gold updated');
+  }
+
+  // ── Overview weight bar — capacity = STR × 15, current = full inventory
+  // (equipped + carried), same sum cs-inv-weight-total already uses. ──
+  function computeCarriedWeight() {
+    return INVENTORY.reduce(function(sum, item) {
+      var w = item.item_id ? (catalogWeightFor(item.item_id) || 0) : (parseFloat(item.weight_lb) || 0);
+      return sum + (w * (parseInt(item.quantity) || 0));
+    }, 0);
+  }
+  function renderOverviewWeight() {
+    var fillEl = document.getElementById('cs-ov-weight-fill');
+    var numsEl = document.getElementById('cs-ov-weight-nums');
+    if (!fillEl || !numsEl) return;
+    var strRaw   = parseInt(ABILITY_SCORES.str) || 10;
+    var capacity = strRaw * 15;
+    var carried  = Math.round(computeCarriedWeight() * 10) / 10;
+    var pct = capacity > 0 ? Math.min((carried / capacity) * 100, 100) : 0;
+    fillEl.style.width = pct + '%';
+    fillEl.classList.toggle('encumbered', capacity > 0 && carried > capacity);
+    numsEl.textContent = carried + ' / ' + capacity + ' LBS';
+  }
+
   // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
   function renderLivePlay() {
     renderHP();
     renderEquipped();
     renderGold();
+    renderOverviewMoney();
     renderInventory();
     renderNotes();
     renderPhoto();
@@ -2131,6 +2502,7 @@
     saveSheet({ gold_cp: SHEET.gold_cp });
     input.value = '';
     renderGold();
+    renderOverviewMoney();
     showToast('Gold updated');
   }
 
@@ -2468,12 +2840,10 @@
   function renderInventory() {
     var list = document.getElementById('cs-inv-list');
     if (!list) return;
-    var totalWeight = INVENTORY.reduce(function(sum, item) {
-      var w = item.item_id ? (catalogWeightFor(item.item_id) || 0) : (parseFloat(item.weight_lb) || 0);
-      return sum + (w * (parseInt(item.quantity) || 0));
-    }, 0);
+    var totalWeight = computeCarriedWeight();
     var weightEl = document.getElementById('cs-inv-weight-total');
     if (weightEl) weightEl.textContent = 'Carrying: ' + (Math.round(totalWeight * 10) / 10) + ' lb';
+    renderOverviewWeight();
     if (!INVENTORY.length) {
       list.innerHTML = '<div class="cs-inv-empty">No items yet — search above or add a custom item.</div>';
       return;
@@ -3330,6 +3700,19 @@
   }
 
   // ── Fetch or create character_sheet row ───────────────────────────
+  // ── Fetch class mechanical data (Overview Class card) ──────────────
+  // Table may not exist yet (see docs/character-sheet-redesign-handoff.md
+  // §6/§7) — errors are swallowed so the card just keeps its "—" placeholders.
+  function fetchClassData(ch) {
+    if (!ch.class_id) return Promise.resolve();
+    return sb.from('classes').select('*').eq('id', ch.class_id).maybeSingle()
+      .then(function(res) {
+        if (!res.error && res.data) CLASS_ROW = res.data;
+        renderClassCard();
+      })
+      .catch(function() { renderClassCard(); });
+  }
+
   function fetchOrCreateSheet(ch) {
     return sb.from('character_sheet').select('*').eq('character_id', CHAR_ID).maybeSingle()
       .then(function(res) {
@@ -3489,7 +3872,8 @@
           fetchOrCreateSheet(ch).then(function() { return fetchEquipped(ch); }),
           fetchInventory(),
           fetchNotes(),
-          fetchPhoto()
+          fetchPhoto(),
+          fetchClassData(ch)
         ]).then(function() {
           renderLivePlay();
         }).catch(function(err) {

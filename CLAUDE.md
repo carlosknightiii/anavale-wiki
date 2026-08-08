@@ -31,14 +31,25 @@
 
 ## 2. Current Focus
 
-*Session July 23 2026 (cont'd) — sheet/index.html Equipped section.*
-- Added Equipped section to `sheet/index.html`, rendered between Gold and Inventory.
-- Reads/writes `character_sheet.equipped` jsonb (`{armor, shield, hand_right, hand_left}` → item_id).
-- Live AC calculation (armor base_ac + dex by weight class + shield ac_bonus + magic bonuses).
-- Equip search modal added to `#cs-modal-root` (category-filtered by slot: armor/shield/weapon).
+*Session Aug 7 2026 — character sheet redesign (docs/character-sheet-redesign-handoff.md), Overview + Ability Scores pass.*
+- Redesigned `sheet/index.html` Overview + Ability Scores sections per Figma `P0tcVgf02XeI13Tz0TtRaX` (desktop 36:310 / mobile 36:435). Replaced `cs-hero` / `cs-type-banner` / the Class-Species-Background-Alignment-Region-Level-Pronouns-Language rows of `cs-identity-grid` with the new design — decision confirmed with DM (replace, not duplicate-alongside). Pronouns dropped from display (derived from gender, no independent field). New wide `.cs-ov-breakout` container (max-width 1560px) used only for these two sections, breaking out of `.cs-wrap`'s 820px cap — rest of the page unchanged. Photo upload (`cs-hero-portrait-img` / `cs-photo-input` ids preserved) kept working on the new portrait card per DM confirmation.
+- New tokens in `css/tokens.css`: `--currency-copper/silver/gold-coin`, `--blue-200/700`, `--ability-{str,dex,con,int,wis,cha}-glow/gradient`, `--char-ov-h3/h4`, `--char-ov-gap-2xs/xs/s/m` — reused existing tokens (`--radius-sm/lg`, `--text`, `--gold`, `--steelfist` etc.) everywhere they matched a Figma-bound value exactly.
+- Currency: new cp/sp/gp inputs in the portrait card (`renderOverviewMoney()` / `onOverviewMoneyChange()`) combine/split through the same `gold_cp` field and `saveSheet()` path as the existing Gold section's `setGold()`/`renderGold()` — both stay in sync, called from `renderLivePlay()`.
+- Weight bar: capacity = STR × 15, current = `computeCarriedWeight()` (factored out of `renderInventory()`, same full-inventory sum as `cs-inv-weight-total` — confirmed equipped items stay as `inventory` rows with `equipped_slot` set, so this total already included them).
+- Class card in Overview reads a new `classes` table (`fetchClassData()`, `CLASS_ROW` global) — table doesn't exist yet, so it renders "—" placeholders until the migration below runs; errors are swallowed, no crash.
+- Overview blurb + card subtitles reuse only real existing data (`ANAVALE_SPECIES`/`ANAVALE_BACKGROUNDS`/`ALIGNMENT_PHB`/`GIGGLEGLOOM_TYPES` mirrored into `sheet/index.html`'s own lookup tables, since sheet doesn't load `character.js`) — no invented lore. One gap found and left unbuilt: the Figma mockup's alignment-card "(Gladiator)"-style archetype subtitle has no canon source for backgrounds — only the background's own PHB-equivalent exists, which is what's shown.
+- **Pending DM review, not yet run:** `classes` table migration (schema in handoff §6) — all 12 rows map directly from `CLASS_DATA` in `js/character.js`; `tools`/`casting_summary` (new fields, not in `CLASS_DATA`) were drafted and are awaiting DM sign-off before the migration executes.
+- `generateSummary()` in `js/character.js` rewritten per handoff §8: six paragraphs (Who Are You / Your Magic / Your Background / Your Past / Your Appearance / Your Compass, same labels as the Stage 1 accordion), gendered pronouns (not generic "they"), organic length via per-field template functions, empty fields omitted entirely. Storage format: plain text, `LABEL\n\nparagraph`, sections joined by `\n\n\n`. Live preview element `char-auto-summary` changed from `<p>` to `<div>` (character.html) so multi-paragraph `innerHTML` can render; new `.char-summary-heading` CSS added to `character.css`.
+- **Bugs found but NOT fixed (out of scope for this pass, flagging for a follow-up session):**
+  - `sheet/index.html` portrait fallback (`assets/images/species/{species}-{suffix}.webp`) 404s for every character without an uploaded photo — real files are named `sp-{species}-{suffix}.png`. Pre-existing, untouched by this session.
+  - `css/character.css` has two separate `.char-summary-body` rule blocks (~2623 and ~3186) — pre-existing duplicate, violates the "no duplicate rules" convention in §8 of this file.
+  - `sheet/index.html`'s own (untouched) "Your Past" section still uses a different/stale set of `WHY_LEFT_LABELS`/`RAISED_LABELS` option values than the real character-creator form options — predates this session, not touched since that section is out of scope.
+- Added `.claude/launch.json` (static file server on :8791) for local UI verification going forward — not previously present.
 
-**Next priorities (post-Session 1):**
-- `sheet/index.html`: combat tab, condition tooltips, XP display (ability panel/Equipped now done)
+**Next priorities:**
+- Run the `classes` table migration once DM confirms the tools/casting_summary drafts.
+- Fix the species-portrait 404 (real fix: correct the filename pattern to `sp-{species}-{suffix}.png`).
+- `sheet/index.html`: combat tab, condition tooltips, XP display
 - Character creator migration to Supabase `species` table
 - Interactive Caparia map
 - Session recap page (player-facing, post-Session 2)
@@ -242,6 +253,9 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
 
 ---
+
+**2026-08-07 — Character sheet redesign: Overview + Ability Scores (docs/character-sheet-redesign-handoff.md).**
+Implemented per Figma `P0tcVgf02XeI13Tz0TtRaX` (36:310 desktop / 36:435 mobile). Replaced `cs-hero`/`cs-type-banner`/most of `cs-identity-grid` in `sheet/index.html` with the new Overview (portrait+money+weight card, name/pills/blurb, alignment/background/gigglegloom cards, class card) and Ability Scores accordions — DM confirmed replace-not-duplicate, wide breakout container scoped to just these two sections, photo upload kept. New tokens added to `css/tokens.css` only where no existing token matched. Currency (cp/sp/gp inputs) and the weight bar both wired to existing `gold_cp`/inventory-sum logic, verified live against real Supabase data (token test against "Kael Evander"). Class card reads a new `classes` table that doesn't exist yet — renders placeholders until the migration (drafted, schema in handoff §6, tools/casting_summary content awaiting DM sign-off) is approved and run. `generateSummary()` in `js/character.js` rewritten to the six-paragraph narrative spec in handoff §8 (gendered pronouns, organic length, empty fields omitted) — required changing `#char-auto-summary` from `<p>` to `<div>` in `character.html` to hold multiple paragraphs. Found but did not fix (pre-existing, out of scope): species-portrait 404 (`sheet/index.html` portraitSrc uses the wrong filename pattern — real files are `sp-{species}-{suffix}.png` not `{species}-{suffix}.webp`), a duplicate `.char-summary-body` CSS rule in `character.css`, and stale `WHY_LEFT_LABELS`/`RAISED_LABELS` option values in `sheet/index.html`'s untouched "Your Past" section. Added `.claude/launch.json` for local static-server preview (new, wasn't there before).
 
 **2026-07-23 — Equipped section added to sheet/index.html.**
 New Equipped section (armor/shield/main hand/off hand) rendered between Gold and Inventory in `renderCharacter()`, populated live via `renderEquipped()` (called from `renderLivePlay()` alongside `renderHP()`). Reads/writes `character_sheet.equipped` jsonb; item stats fetched live from `items` by id into `EQUIPPED_ITEMS`. AC computed dynamically in `renderEquippedAC()`: base 10, armor `base_ac` + dex-by-weight-class (heavy = none, medium = capped at `max_dex_bonus` ?? 2, light/none = full dex), shield `ac_bonus` (default 2), plus `magic_bonus` from armor/shield. New equip-search modal injected into `#cs-modal-root` (never inside `.cs-wrap`, per the modal rule), filtered by category per slot. All new symbols use HTML entities (`&#8230;`, `&#10005;`), not literal emoji — existing literal emoji elsewhere in the file (📝, 🗺, etc.) predate this and were left alone. HEAD after push: `be4ecec`.
