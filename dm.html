@@ -12430,38 +12430,24 @@ function sccRemoveFromCombat(idx) {
 function sccPromptCondition(idx) {
   var existing = document.getElementById('scc-cond-combat-panel');
   if (existing) existing.remove();
-  var COND_DATA = {
-    'Blinded':       { color:'#94a3b8', tip:'Can\'t see. Auto-fail sight checks. Attacks: disadvantage. vs Blinded: advantage.' },
-    'Charmed':       { color:'#f472b6', tip:'Can\'t attack charmer. Charmer has advantage on social checks vs target.' },
-    'Deafened':      { color:'#94a3b8', tip:'Can\'t hear. Auto-fail hearing checks.' },
-    'Exhaustion':    { color:'#fb923c', tip:'Level 1: disadvantage on ability checks. Stacks up to level 6 (death).' },
-    'Frightened':    { color:'#facc15', tip:'Disadvantage on checks/attacks while source is in sight. Can\'t move closer to source.' },
-    'Grappled':      { color:'#a78bfa', tip:'Speed 0. Ends if grappler is incapacitated or target is moved away.' },
-    'Incapacitated': { color:'#f87171', tip:'Can\'t take actions or reactions.' },
-    'Invisible':     { color:'#e2e8f0', tip:'Can\'t be seen. Attacks against: disadvantage. Own attacks: advantage.' },
-    'Paralyzed':     { color:'#f87171', tip:'Incapacitated. Can\'t move or speak. Auto-fail STR/DEX saves. Attacks: advantage + auto-crit within 5ft.' },
-    'Petrified':     { color:'#94a3b8', tip:'Transformed to stone. Incapacitated, weight x10, no aging. Resistance to all damage.' },
-    'Poisoned':      { color:'#4ade80', tip:'Disadvantage on attack rolls and ability checks.' },
-    'Prone':         { color:'#fb923c', tip:'Melee attacks vs prone: advantage. Ranged: disadvantage. Cost half speed to stand.' },
-    'Restrained':    { color:'#ca8a04', tip:'Speed 0. Attacks against: advantage. Own attacks: disadvantage. Disadvantage on DEX saves.' },
-    'Stunned':       { color:'#f87171', tip:'Incapacitated, can\'t move, auto-fail STR/DEX saves. Attacks against: advantage.' },
-    'Unconscious':   { color:'#6366f1', tip:'Incapacitated, can\'t move/speak. Auto-fail STR/DEX saves. Attacks: advantage + auto-crit within 5ft.' }
-  };
-  var CONDITIONS = Object.keys(COND_DATA);
+  // Pulled from the `conditions` Supabase table (window.SCC_CONDITIONS_DATA,
+  // fetched once in sccInit()) instead of a third local hardcoded copy — same
+  // fix as sccLiveRenderConditions() and sheet/index.html's Conditions picker.
+  var rows = window.SCC_CONDITIONS_DATA || [];
   var panel = document.createElement('div');
   panel.id = 'scc-cond-combat-panel';
   panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.25rem;z-index:9999;min-width:280px;max-width:340px;box-shadow:0 16px 48px rgba(0,0,0,0.7);';
-  var items = CONDITIONS.map(function(cond) {
-    var d = COND_DATA[cond];
+  var items = rows.map(function(row) {
+    var cond = row.name;
     var already = (SCC_INITIATIVE[idx] && SCC_INITIATIVE[idx].conditions || []).indexOf(cond) >= 0;
     return '<div onclick="' + (already ? '' : 'sccAddConditionFromModal(' + idx + ',\'' + cond + '\')') + '"'
       + ' style="display:flex;align-items:center;gap:0.6rem;padding:0.35rem 0.5rem;border-radius:6px;cursor:' + (already ? 'default' : 'pointer') + ';opacity:' + (already ? '0.4' : '1') + ';transition:background 0.12s;"'
-      + ' title="' + sccEsc(d.tip) + '"'
+      + ' title="' + sccEsc(row.tip || '') + '"'
       + ' onmouseover="if(!' + already + ')this.style.background=\'var(--dm-gold-dim)\'"'
       + ' onmouseout="this.style.background=\'\'">'
-      + '<span style="width:10px;height:10px;border-radius:50%;background:' + d.color + ';flex-shrink:0;display:inline-block;"></span>'
+      + '<span style="width:10px;height:10px;border-radius:50%;background:' + row.color_text + ';flex-shrink:0;display:inline-block;"></span>'
       + '<span style="font-family:var(--font-sans);font-size:0.82rem;font-weight:700;color:var(--dm-text);flex:1;">' + sccEsc(cond) + '</span>'
-      + '<span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);max-width:140px;line-height:1.3;">' + sccEsc(d.tip.split('.')[0]) + '</span>'
+      + '<span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);max-width:140px;line-height:1.3;">' + sccEsc((row.tip || '').split('.')[0]) + '</span>'
     + '</div>';
   }).join('');
   panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:0.85rem;color:var(--dm-gold);margin-bottom:0.75rem;font-weight:700;">Add Condition</div>'
