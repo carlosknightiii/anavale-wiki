@@ -245,6 +245,7 @@
 
     /* ── Portrait / money / weight card ── */
     .cs-ov-maininfo {
+      position: relative;
       display: flex;
       flex-wrap: wrap;
       gap: var(--char-ov-gap-m);
@@ -913,41 +914,57 @@
        logic; species paragraph, speaks block, conditions, inspiration,
        AC badge, HP bar and death saves are new UI over existing data.
        ══════════════════════════════════════════════════════════════ */
+    /* Species/Appearance/Speaks — labeled 3-column row (Figma 51:1385).
+       All three columns share the same plain-text treatment; Speaks lost
+       its boxed-pill look here so it reads as a column, not a card. */
+    .cs-mi-triple-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-s);
+    }
+    .cs-mi-triple-col { flex: 1 1 200px; min-width: 180px; }
+    .cs-mi-triple-label {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
     .cs-mi-species-desc,
     .cs-mi-appearance {
       font-family: var(--font-body);
       font-weight: 300;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       line-height: var(--line-height);
       color: var(--char-text-muted);
     }
     .cs-mi-speaks {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      background: var(--char-card-bg-subtle);
-      border: 1px solid var(--char-accent-tint);
-      border-radius: var(--radius-sm);
-      padding: 0.5rem 0.75rem;
-      width: fit-content;
+      gap: 0.5rem;
     }
-    .cs-mi-speaks-glyph { font-size: 1.3rem; line-height: 1; }
+    .cs-mi-speaks-glyph { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
     .cs-mi-speaks-txt { display: flex; flex-direction: column; gap: 0.1rem; }
-    .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--text); }
-    .cs-mi-speaks-sub { font-family: var(--font-sans); font-size: 0.7rem; color: var(--char-text-faint); }
+    .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); }
+    .cs-mi-speaks-sub { font-family: var(--font-body); font-weight: 300; font-size: 0.82rem; color: var(--char-text-muted); }
 
+    /* Conditions — inline pill row above the name (Figma 51:1385), not a
+       tinted-red danger indicator like the death-save pips use elsewhere;
+       conditions are arbitrary free text so there's no per-name color
+       source, kept to one consistent accent rather than inventing one. */
+    .cs-mi-top-row { margin-bottom: var(--char-ov-gap-2xs); }
     .cs-mi-conditions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
     .cs-mi-condition-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
-      background: var(--red-dim);
-      border: 1px solid var(--red-border);
+      background: var(--purple-dim);
+      border: 1px solid var(--purple-border);
       border-radius: 20px;
       padding: 0.2rem 0.5rem 0.2rem 0.7rem;
       font-family: var(--font-sans);
       font-size: 0.72rem;
-      color: var(--red);
+      font-weight: 700;
+      color: var(--purple);
     }
     .cs-mi-condition-remove {
       background: none;
@@ -982,23 +999,47 @@
     }
 
     .cs-mi-vitals { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-    .cs-mi-insp-toggle {
+
+    /* Inspiration — small circular badge, top-right of the header (Figma
+       51:1385), not a pill next to AC. .cs-ov-maininfo carries the
+       position:relative for this to anchor against. */
+    .cs-mi-inspiration {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+    .cs-mi-insp-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 1px dashed var(--char-accent-border);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.4rem;
-      background: var(--char-card-bg-subtle);
-      border: 1px solid var(--char-accent-tint);
-      border-radius: 20px;
-      padding: 0.5rem 1rem;
-      font-family: var(--font-sans);
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--char-text-faint);
+      justify-content: center;
+      gap: 0.1rem;
+      background: none;
       cursor: pointer;
+      text-align: center;
       transition: all 0.15s;
     }
-    .cs-mi-insp-toggle.active { color: var(--gold-text-on); background: var(--gold); border-color: var(--gold-border-mid); }
-    .cs-mi-insp-icon { font-size: 0.9rem; }
+    .cs-mi-insp-badge.active { border: 1px solid var(--gold-border-mid); background: var(--gold-dim); }
+    .cs-mi-insp-badge-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.55rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--char-text-faint);
+    }
+    .cs-mi-insp-badge.active .cs-mi-insp-badge-label { color: var(--gold-light); }
+    .cs-mi-insp-badge-state {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.55rem;
+      color: var(--char-text-faint);
+    }
+    .cs-mi-insp-badge.active .cs-mi-insp-badge-state { color: var(--gold-light); }
 
     .cs-mi-hp-row { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
     .cs-mi-hp-slot { flex: 1 1 260px; min-width: 220px; }
@@ -3031,24 +3072,28 @@
           + '</div>'
         + '</div>'
         + '<div class="cs-ov-info">'
+          + '<div class="cs-mi-top-row">'
+            + '<div class="cs-mi-conditions" id="cs-mi-conditions"></div>'
+          + '</div>'
           + '<div class="cs-ov-main">'
             + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
             + '<div class="cs-ov-pills">' + pillsHtml + '</div>'
             + blurbHtml
           + '</div>'
-          + (speciesDisplay ? '<div class="cs-mi-species-desc" id="cs-mi-species-desc"></div>' : '')
-          + (appearanceDesc ? '<div class="cs-mi-appearance">' + appearanceDesc + '</div>' : '')
-          + '<div class="cs-mi-speaks" id="cs-mi-speaks" style="display:none;"></div>'
-          + '<div class="cs-mi-conditions" id="cs-mi-conditions"></div>'
           + '<div class="cs-mi-vitals">'
             + '<div class="cs-equipped-ac-badge cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip="">AC —</div>'
-            + '<div class="cs-mi-inspiration" id="cs-mi-inspiration"></div>'
           + '</div>'
           + '<div class="cs-mi-hp-row">'
             + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
             + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
           + '</div>'
+          + '<div class="cs-mi-triple-row">'
+            + (speciesDisplay ? '<div class="cs-mi-triple-col"><div class="cs-mi-triple-label">Species</div><div class="cs-mi-species-desc" id="cs-mi-species-desc"></div></div>' : '')
+            + (appearanceDesc ? '<div class="cs-mi-triple-col"><div class="cs-mi-triple-label">Appearance</div><div class="cs-mi-appearance">' + appearanceDesc + '</div></div>' : '')
+            + '<div class="cs-mi-triple-col" id="cs-mi-speaks-col"><div class="cs-mi-triple-label">Speaks</div><div class="cs-mi-speaks" id="cs-mi-speaks" style="display:none;"></div></div>'
+          + '</div>'
         + '</div>'
+        + '<div class="cs-mi-inspiration" id="cs-mi-inspiration"></div>'
       + '</div>'
     + '</div></div>';
   }
@@ -3444,7 +3489,7 @@
       return '<span class="cs-mi-condition-pill">' + escHtml(c)
         + '<button class="cs-mi-condition-remove" onclick="removeCondition(' + i + ')" aria-label="Remove ' + escHtml(c) + '">&times;</button></span>';
     }).join('')
-    + '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add</button>'
+    + '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add Condition</button>'
     + '<span class="cs-mi-condition-input-row" id="cs-mi-condition-input-row" style="display:none;">'
       + '<input class="cs-mi-condition-input" id="cs-mi-condition-input" type="text" placeholder="Condition" onkeydown="if(event.key===\'Enter\')addCondition()">'
       + '<button class="cs-hp-apply" onclick="addCondition()">Add</button>'
@@ -3477,13 +3522,17 @@
     renderConditions();
   }
 
-  // ── Inspiration (MainInfo header, new) ──────────────────────────────
+  // ── Inspiration (MainInfo header, new) — small circular badge, top-right
+  // of the header, matching Figma 51:1385 (not the pill button this used
+  // to be next to the AC badge). ──
   function renderInspiration() {
     var el = document.getElementById('cs-mi-inspiration');
     if (!el) return;
     var on = !!(SHEET && SHEET.has_inspiration);
-    el.innerHTML = '<button class="cs-mi-insp-toggle' + (on ? ' active' : '') + '" onclick="toggleInspiration()">'
-      + '<span class="cs-mi-insp-icon">&#10022;</span> Inspiration — ' + (on ? 'On' : 'Off') + '</button>';
+    el.innerHTML = '<button class="cs-mi-insp-badge' + (on ? ' active' : '') + '" onclick="toggleInspiration()">'
+      + '<span class="cs-mi-insp-badge-label">Inspiration</span>'
+      + '<span class="cs-mi-insp-badge-state">' + (on ? 'Yes' : 'None') + '</span>'
+      + '</button>';
   }
   function toggleInspiration() {
     if (!SHEET) return;
