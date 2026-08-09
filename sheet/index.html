@@ -947,24 +947,28 @@
     .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); }
     .cs-mi-speaks-sub { font-family: var(--font-body); font-weight: 300; font-size: 0.82rem; color: var(--char-text-muted); }
 
-    /* Conditions — inline pill row above the name (Figma 51:1385), not a
-       tinted-red danger indicator like the death-save pips use elsewhere;
-       conditions are arbitrary free text so there's no per-name color
-       source, kept to one consistent accent rather than inventing one. */
+    /* Conditions — inline pill row above the name (Figma 51:1385). Per-pill
+       color/tooltip come from the `conditions` Supabase table (fetched once,
+       fetchConditionsData()) via --cond-bg/--cond-border/--cond-text custom
+       properties set inline per pill — same technique dm.html's SCC Live
+       Session panel uses. Picker-only now (no free text), so every pill is
+       guaranteed a real match; the flat purple fallback only covers a
+       CONDITIONS_DATA fetch failure, not the normal path. */
     .cs-mi-top-row { margin-bottom: var(--char-ov-gap-2xs); }
     .cs-mi-conditions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
     .cs-mi-condition-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
-      background: var(--purple-dim);
-      border: 1px solid var(--purple-border);
+      background: var(--cond-bg, var(--purple-dim));
+      border: 1px solid var(--cond-border, var(--purple-border));
       border-radius: 20px;
       padding: 0.2rem 0.5rem 0.2rem 0.7rem;
       font-family: var(--font-sans);
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--purple);
+      color: var(--cond-text, var(--purple));
+      cursor: help;
     }
     .cs-mi-condition-remove {
       background: none;
@@ -987,7 +991,7 @@
     }
     .cs-mi-condition-add:hover { border-color: var(--gold-border); color: var(--gold-light); }
     .cs-mi-condition-input-row { display: inline-flex; gap: 0.35rem; align-items: center; }
-    .cs-mi-condition-input {
+    .cs-mi-condition-select {
       background: rgba(255,255,255,0.06);
       border: 1px solid var(--char-accent-border);
       border-radius: 6px;
@@ -995,8 +999,9 @@
       font-family: var(--font-sans);
       font-size: 0.75rem;
       padding: 0.25rem 0.5rem;
-      width: 130px;
+      max-width: 160px;
     }
+    .cs-mi-condition-select option { background: #1a1208; color: var(--text); }
 
     .cs-mi-vitals { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 
@@ -2317,6 +2322,7 @@
   var SPECIES_ROW = null;  // species table row for ch.species, once fetchSpeciesData() resolves
   var BACKGROUND_ROW = null; // backgrounds table row for ch.background_id, once fetchBackgroundData() resolves
   var REGION_ROW = null;     // regions table row for ch.home_region, once fetchRegionData() resolves
+  var CONDITIONS_DATA = [];  // conditions table rows (id/name/color_bg/color_border/color_text/tip/sort_order), once fetchConditionsData() resolves
   var CH = null;              // player_characters row, set once by renderCharacter() — lets async
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
@@ -3480,37 +3486,56 @@
     input.value = '';
   }
 
-  // ── Conditions (MainInfo header, new) ───────────────────────────────
+  // ── Conditions (MainInfo header) — picker over the `conditions` Supabase
+  // table (fetchConditionsData(), fetched once at boot same as dm.html's
+  // SCC Live Session panel fetches it in sccInit()), not free text. Each
+  // pill's color/tooltip comes from its real row; the picker only offers
+  // conditions not already applied. ──
+  function conditionRow(name) {
+    for (var i = 0; i < CONDITIONS_DATA.length; i++) {
+      if (CONDITIONS_DATA[i].name === name) return CONDITIONS_DATA[i];
+    }
+    return null;
+  }
   function renderConditions() {
     var el = document.getElementById('cs-mi-conditions');
     if (!el) return;
-    var conditions = (SHEET && Array.isArray(SHEET.conditions)) ? SHEET.conditions : [];
-    el.innerHTML = conditions.map(function(c, i) {
-      return '<span class="cs-mi-condition-pill">' + escHtml(c)
+    var applied = (SHEET && Array.isArray(SHEET.conditions)) ? SHEET.conditions : [];
+    var pills = applied.map(function(c, i) {
+      var row = conditionRow(c);
+      var bg = row ? row.color_bg : 'rgba(192,132,252,0.1)';
+      var border = row ? row.color_border : 'rgba(192,132,252,0.25)';
+      var text = row ? row.color_text : '#c084fc';
+      var tip = row ? row.tip : c;
+      return '<span class="cs-mi-condition-pill" style="--cond-bg:' + bg + ';--cond-border:' + border + ';--cond-text:' + text + ';" data-tip="' + tip.replace(/"/g,'&quot;') + '">'
+        + escHtml(c)
         + '<button class="cs-mi-condition-remove" onclick="removeCondition(' + i + ')" aria-label="Remove ' + escHtml(c) + '">&times;</button></span>';
-    }).join('')
-    + '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add Condition</button>'
-    + '<span class="cs-mi-condition-input-row" id="cs-mi-condition-input-row" style="display:none;">'
-      + '<input class="cs-mi-condition-input" id="cs-mi-condition-input" type="text" placeholder="Condition" onkeydown="if(event.key===\'Enter\')addCondition()">'
-      + '<button class="cs-hp-apply" onclick="addCondition()">Add</button>'
-    + '</span>';
+    }).join('');
+    var available = CONDITIONS_DATA.filter(function(r) { return applied.indexOf(r.name) < 0; });
+    var options = available.map(function(r) { return '<option value="' + escHtml(r.name) + '">' + escHtml(r.name) + '</option>'; }).join('');
+    el.innerHTML = pills
+      + (available.length ? '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add Condition</button>' : '')
+      + '<span class="cs-mi-condition-input-row" id="cs-mi-condition-input-row" style="display:none;">'
+        + '<select class="cs-mi-condition-select" id="cs-mi-condition-select">' + options + '</select>'
+        + '<button class="cs-hp-apply" onclick="addCondition()">Add</button>'
+      + '</span>';
+    wireAllTooltips();
   }
   function showAddConditionInput() {
     var row = document.getElementById('cs-mi-condition-input-row');
     if (!row) return;
     row.style.display = 'inline-flex';
-    var input = document.getElementById('cs-mi-condition-input');
-    if (input) input.focus();
+    var select = document.getElementById('cs-mi-condition-select');
+    if (select) select.focus();
   }
   function addCondition() {
-    var input = document.getElementById('cs-mi-condition-input');
-    var val = (input.value || '').trim();
+    var select = document.getElementById('cs-mi-condition-select');
+    var val = select ? select.value : '';
     if (!val || !SHEET) return;
     var conditions = Array.isArray(SHEET.conditions) ? SHEET.conditions.slice() : [];
-    conditions.push(val);
+    if (conditions.indexOf(val) < 0) conditions.push(val);
     SHEET.conditions = conditions;
     saveSheet({ conditions: conditions });
-    input.value = '';
     renderConditions();
   }
   function removeCondition(idx) {
@@ -3590,6 +3615,15 @@
     return sb.from('regions').select('id,name,summary').eq('id', regionKey).maybeSingle()
       .then(function(res) { if (!res.error && res.data) REGION_ROW = res.data; renderBackgroundCardsDynamic(); })
       .catch(function() { renderBackgroundCardsDynamic(); });
+  }
+
+  // Fetched once at boot (init Promise.all, same pattern as fetchSpeciesData
+  // etc.) — resolves before renderLivePlay()/renderConditions() first run,
+  // so no dynamic re-render is needed here the way Background/Region needed.
+  function fetchConditionsData() {
+    return sb.from('conditions').select('*').order('sort_order')
+      .then(function(res) { if (!res.error && Array.isArray(res.data)) CONDITIONS_DATA = res.data; })
+      .catch(function() {});
   }
 
   // ── Gold ──────────────────────────────────────────────────────────
@@ -5024,6 +5058,7 @@
           fetchLanguageData(ch),
           fetchBackgroundData(ch),
           fetchRegionData(ch),
+          fetchConditionsData(),
           fetchInventory(),
           fetchNotes(),
           fetchPhoto()
