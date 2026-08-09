@@ -2358,26 +2358,56 @@
     masquerader:15, reveler:15, ringscarred:15, rootborn:10, stillsought:5,
     streetwise:25, tested:10, threadpuller:10, tidemarked:10, wellborn:25, wildborn:10
   };
+  // "Your Past" answer labels — verbatim from character.html's real
+  // .char-option-card-label text for each question's actual option cards
+  // (not sheet's own earlier abbreviated/guessed versions). Rebuilt in full
+  // 2026-08-09 after finding RAISED/LEFT_BEHIND partially stale and
+  // PET/LOVE/ORG entirely stale (0 of their real values matched any key) —
+  // see Decision Log. Only real option values are keyed; no placeholder
+  // entries for values that don't exist in the character creator.
   var RAISED_LABELS = {
-    'both-parents':'Both parents', 'single-parent':'A single parent', 'grandparent':'A grandparent',
-    'older-sibling':'An older sibling', 'extended-family':'Extended family', 'guardian':'A guardian',
-    'institution':'An institution', 'streets':'The streets', 'wilderness':'The wilderness', 'nobody':'Nobody'
+    'grandparent':'A grandparent or elder',
+    'kind-parents':'Kind, loving parents',
+    'single-parent':'A single parent working too hard',
+    'strict-religious':'A strict religious household',
+    'the-streets':'The streets — no one, really'
+  };
+  // New — dearest_friend had no label map at all before, always rendered
+  // as the raw stored slug (e.g. "animal" instead of "An animal — wild or
+  // domestic").
+  var FRIEND_LABELS = {
+    'animal':'An animal — wild or domestic',
+    'imaginary':'An imaginary one',
+    'mentor':'An older mentor figure',
+    'neighbor':'A neighbor kid',
+    'no-one':'Honestly, no one'
   };
   var PET_LABELS = {
-    'yes-still-have':'Yes — still have them', 'yes-gone-now':'Yes — gone now',
-    'wanted-never-did':'Wanted one but never did', 'no':'No'
+    'loyal-animal':'Yes — a dog or similar loyal animal',
+    'never-wanted':'No — never wanted one',
+    'unusual':'Yes — something unusual',
+    'wanted-one':'No, but I wanted one'
   };
   var LOVE_LABELS = {
-    'yes-together':'Yes — still together', 'yes-ended':'Yes — ended',
-    'unrequited':'Unrequited', 'no':'Not yet'
+    'complicated':'Yes — and it\'s complicated',
+    'ended-badly':'Yes — and it ended badly',
+    'ended-well':'Yes — and it ended well',
+    'not-for-me':'I don\'t think that\'s for me',
+    'not-yet':'Not yet'
   };
   var ORG_LABELS = {
-    'yes-still':'Yes — still a member', 'yes-left':'Yes — left',
-    'tried-to-join':'Tried but couldn\'t join', 'no':'No'
+    'brightcreed':'A religious order (Brightcreed)',
+    'fighting-company':'A fighting company',
+    'kept-to-myself':'No — I kept to myself',
+    'merchant-guild':'A merchant guild',
+    'wanderkeep':'The Wanderkeep'
   };
   var LEFT_BEHIND_LABELS = {
-    person:'A person', place:'A place', 'object':'An object',
-    'unfinished-business':'Unfinished business', 'responsibility':'A responsibility', nothing:'Nothing'
+    'nothing':'Nothing — I travel light',
+    'person':'A person I loved',
+    'place':'A place that no longer exists',
+    'promise':'A promise I didn\'t keep',
+    'self':'A version of myself I can\'t return to'
   };
   // "Personal quest" line for the Why You Left card — pulled verbatim from
   // character.html's data-effect attributes on the real why-left option
@@ -2601,7 +2631,13 @@
     var classDisplay   = cap((ch.class_id      || '').replace(/-/g,' '));
     var speciesDisplay = cap((ch.species        || '').replace(/-/g,' '));
 
-    var appearanceDesc = ch.appearance_prompt || buildAppearanceDesc(app) || null;
+    // Header's appearance paragraph — the same generateSummary()-authored
+    // "YOUR APPEARANCE" text already shown in Who You Are, not the raw
+    // appearance_prompt AI-portrait-generation prompt string (a completely
+    // different kind of text that used to leak into the UI verbatim).
+    // buildAppearanceDesc(app) stays as the fallback for characters with no
+    // stored summary yet.
+    var appearanceDesc = extractSummarySection(ch.summary, 'YOUR APPEARANCE') || buildAppearanceDesc(app) || null;
     var gearList       = buildGearList(app);
 
     var mainInfoHtml = buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc);
@@ -3013,15 +3049,32 @@
   }
 
   // Parses generateSummary()'s plain-text output ("LABEL\n\nparagraph" blocks
-  // joined by "\n\n\n") back into headed paragraphs. Read-only — no editing
-  // affordance, matches the rest of the Overview card visually.
-  function buildSummaryCardHtml(summaryText) {
-    if (!summaryText) return '';
-    var sections = summaryText.split('\n\n\n').map(function(block) {
+  // joined by "\n\n\n") into {label, text} sections. Shared by the Who You
+  // Are summary card and (new) the header's appearance paragraph, so both
+  // read the same real parsing instead of two copies drifting apart.
+  function parseSummaryBlocks(summaryText) {
+    if (!summaryText) return [];
+    return summaryText.split('\n\n\n').map(function(block) {
       var idx = block.indexOf('\n\n');
       if (idx === -1) return null;
       return { label: block.slice(0, idx).trim(), text: block.slice(idx + 2).trim() };
     }).filter(function(sec) { return sec && sec.label && sec.text; });
+  }
+  // Header's appearance paragraph (new) — pulls the "YOUR APPEARANCE" block
+  // straight out of the same generateSummary() text already shown in Who
+  // You Are, instead of the raw appearance_prompt AI-portrait prompt string
+  // that used to leak into the UI verbatim. One authored description
+  // instead of a second, unrelated-looking copy.
+  function extractSummarySection(summaryText, wantedLabel) {
+    var sections = parseSummaryBlocks(summaryText);
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].label.toUpperCase() === wantedLabel.toUpperCase()) return sections[i].text;
+    }
+    return null;
+  }
+  // Read-only — no editing affordance, matches the rest of the Overview card visually.
+  function buildSummaryCardHtml(summaryText) {
+    var sections = parseSummaryBlocks(summaryText);
     if (!sections.length) return '';
     var body = sections.map(function(sec) {
       return '<div class="cs-ov-summary-heading">' + escHtml(sec.label) + '</div>'
@@ -3229,7 +3282,7 @@
     }
     if (ch.dearest_friend) {
       var friendTags = bonusesForPrefix('past_friend:').map(skillTag);
-      cards.push(storyCard('Friend', null, ch.dearest_friend, benefitTagsHtml(friendTags)));
+      cards.push(storyCard('Friend', null, label(FRIEND_LABELS, ch.dearest_friend), benefitTagsHtml(friendTags)));
     }
     if (ch.had_pet) cards.push(storyCard('Pet', null, label(PET_LABELS, ch.had_pet), null));
     if (ch.fallen_in_love) cards.push(storyCard('Love', null, label(LOVE_LABELS, ch.fallen_in_love), null));
