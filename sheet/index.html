@@ -636,6 +636,37 @@
       opacity: 0.85;
     }
 
+    /* ── Spell slots (Class tab, stopgap — see Decision Log) ── */
+    .cs-spell-slots-card { margin-top: var(--char-ov-gap-s); }
+    .cs-spell-slot-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-2xs);
+      padding: 0.35rem 0;
+    }
+    .cs-spell-slot-level {
+      width: 70px;
+      flex-shrink: 0;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .cs-spell-slot-pips { display: flex; gap: 0.3rem; }
+    .cs-spell-slot-pip {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    .cs-spell-slot-pip.filled { background: var(--gold); border-color: var(--gold); }
+    .cs-spell-slot-none { color: var(--char-text-faint); font-size: 0.8rem; }
+    .cs-spell-slot-max-edit { display: flex; gap: 0.35rem; align-items: center; margin-left: auto; }
+    .cs-spell-slot-max-input { width: 50px; }
+
     /* ── Narrative summary card (generateSummary() output, read-only) ── */
     .cs-ov-summary-card {
       background: var(--blue-700);
@@ -2756,12 +2787,7 @@
   // ── Class tab (Figma 52:2705/52:2710) ───────────────────────────────
   // Basic info (image/name/level) renders immediately from player_characters;
   // mechanical fields + Key Features come from the `classes` table via
-  // renderClassTabDynamic() once fetchClassData() resolves. Spell slots
-  // (character_sheet.spell_slots/spell_slots_max) are NOT included here —
-  // the build spec describes them as an "existing UI" relocation, but no
-  // such UI exists anywhere in the codebase to relocate (confirmed: no
-  // matches in sheet/index.html, dm.html, character.html, or character.js).
-  // Flagged, not built — see CLAUDE.md Decision Log.
+  // renderClassTabDynamic() once fetchClassData() resolves.
   function buildClassTabHtml(ch, classDisplay) {
     var classKey = (ch.class_id || '').toLowerCase();
     var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
@@ -2778,7 +2804,73 @@
         + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
         + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
       + '</div>'
+      + '<div class="cs-ov-class-card cs-spell-slots-card">'
+        + '<div class="cs-class-features-label" style="margin-top:0;">Spell Slots</div>'
+        + '<div id="cs-class-spell-slots"></div>'
+      + '</div>'
     + '</div></div>';
+  }
+
+  // ── Spell slots (Class tab, new — stopgap only) ─────────────────────
+  // The build spec described this as relocating an "existing" tracker, but
+  // no such UI has ever existed anywhere in this codebase (confirmed via
+  // full-repo grep) despite character_sheet.spell_slots/spell_slots_max
+  // both being real, empty ({}) columns on all 3 characters. Built minimal
+  // and functional per the DM's explicit call: current/max pips per spell
+  // level (1–9), wired to those columns, no new visual design beyond
+  // existing card tokens. This is a stopgap, not the real Figma redesign —
+  // see CLAUDE.md Decision Log.
+  var SPELL_LEVELS = [1,2,3,4,5,6,7,8,9];
+  function renderSpellSlots() {
+    var el = document.getElementById('cs-class-spell-slots');
+    if (!el) return;
+    var maxObj = (SHEET && typeof SHEET.spell_slots_max === 'object' && SHEET.spell_slots_max) ? SHEET.spell_slots_max : {};
+    var curObj = (SHEET && typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? SHEET.spell_slots : {};
+    el.innerHTML = SPELL_LEVELS.map(function(lvl) {
+      var max = parseInt(maxObj[lvl]) || 0;
+      var cur = parseInt(curObj[lvl]) || 0;
+      var pips = max > 0
+        ? Array.from({ length: max }, function(_, i) {
+            var n = i + 1;
+            return '<button class="cs-spell-slot-pip' + (n <= cur ? ' filled' : '') + '" onclick="toggleSpellSlot(' + lvl + ',' + n + ')" aria-label="Level ' + lvl + ' slot ' + n + '"></button>';
+          }).join('')
+        : '<span class="cs-spell-slot-none">&mdash;</span>';
+      return '<div class="cs-spell-slot-row">'
+        + '<span class="cs-spell-slot-level">Level ' + lvl + '</span>'
+        + '<span class="cs-spell-slot-pips">' + pips + '</span>'
+        + '<span class="cs-spell-slot-max-edit">'
+          + '<input class="cs-hp-input cs-spell-slot-max-input" type="number" min="0" placeholder="' + max + '" id="cs-spell-max-' + lvl + '">'
+          + '<button class="cs-hp-apply" onclick="setSpellSlotMax(' + lvl + ')">Set Max</button>'
+        + '</span>'
+      + '</div>';
+    }).join('');
+  }
+  // Clicking a filled pip un-fills it and everything after (spend a slot);
+  // clicking an empty pip fills up to it (restore slots, e.g. after a rest)
+  // — same toggle pattern as the death-save pips.
+  function toggleSpellSlot(level, n) {
+    if (!SHEET) return;
+    var curObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
+    var cur = parseInt(curObj[level]) || 0;
+    curObj[level] = (cur === n) ? n - 1 : n;
+    SHEET.spell_slots = curObj;
+    saveSheet({ spell_slots: curObj });
+    renderSpellSlots();
+  }
+  function setSpellSlotMax(level) {
+    if (!SHEET) return;
+    var input = document.getElementById('cs-spell-max-' + level);
+    var val = parseInt(input.value);
+    if (isNaN(val) || val < 0) return;
+    var maxObj = (typeof SHEET.spell_slots_max === 'object' && SHEET.spell_slots_max) ? Object.assign({}, SHEET.spell_slots_max) : {};
+    var curObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
+    maxObj[level] = val;
+    if ((parseInt(curObj[level]) || 0) > val) curObj[level] = val;
+    SHEET.spell_slots_max = maxObj;
+    SHEET.spell_slots = curObj;
+    saveSheet({ spell_slots_max: maxObj, spell_slots: curObj });
+    input.value = '';
+    renderSpellSlots();
   }
 
   // Populated once fetchClassData() resolves — the `classes` table is the
@@ -3016,6 +3108,7 @@
     renderPhoto();
     renderConditions();
     renderInspiration();
+    renderSpellSlots();
     wireAllTooltips();
   }
 
