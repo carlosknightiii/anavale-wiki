@@ -3522,6 +3522,7 @@ function buildCharacterEntry(d, token) {
     ability_scores: computeFinalAbilityScores(d),
     skill_bonuses: computeSkillBonuses(d),
     starting_gold_bonus_cp: computeStartingGoldBonus(d),
+    starting_gold_spent_cp: Math.round((typeof calcGoldSpent === 'function' ? calcGoldSpent() : 0) * 100),
     dm_pending_items: computeDmPendingItems(d),
     feats: computeFeats(d),
     language_extra: d.language,

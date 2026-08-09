@@ -1912,10 +1912,13 @@
     brightward:'Brightward', colorful:'Colorful', greywarden:'Greywarden',
     steelbound:'Steelbound', ashwalker:'Ashwalker'
   };
-  var BG_GOLD = {
-    faithful:50, streetwise:50, learned:50, tested:50, wellborn:75, rootborn:50,
-    masquerader:50, reveler:50, craftborn:50, stillsought:50, wildborn:50,
-    tidemarked:50, cobblewise:50, greywitnessed:50, threadpuller:50, ringscarred:50
+  // Real per-background starting gold — mirrors ANAVALE_BACKGROUNDS.starting_gold
+  // in js/character.js (sheet doesn't load that file). Replaces a flat 50/75gp
+  // placeholder table that was never reconciled with the real values (2026-08-08 fix).
+  var BG_STARTING_GOLD = {
+    cobblewise:10, craftborn:15, faithful:10, greywitnessed:10, learned:10,
+    masquerader:15, reveler:15, ringscarred:15, rootborn:10, stillsought:5,
+    streetwise:25, tested:10, threadpuller:10, tidemarked:10, wellborn:25, wildborn:10
   };
   var RAISED_LABELS = {
     'both-parents':'Both parents', 'single-parent':'A single parent', 'grandparent':'A grandparent',
@@ -3876,10 +3879,16 @@
           // Tough (a background feat) adds +2 HP per level, including level 1
           var toughHp = (Array.isArray(ch.feats) && ch.feats.indexOf('Tough') >= 0) ? 2 * (ch.level || 1) : 0;
           var hpMax  = (hitDie[ch.class_id] || 8) + conMod + toughHp;
+          // Starting gold = real background gold, minus what was spent shopping
+          // during creation (Stage 4), plus any imagined-past gold bonus.
+          // Fallback of 10 matches the most common real background value.
+          var startingGoldCp = (BG_STARTING_GOLD[ch.background_id] || 10) * 100
+            - (parseInt(ch.starting_gold_spent_cp) || 0)
+            + (parseInt(ch.starting_gold_bonus_cp) || 0);
           var newRow = {
             character_id: CHAR_ID, token: TOKEN,
             hp_max: hpMax, hp_current: hpMax, hp_temp: 0,
-            gold_cp: (BG_GOLD[ch.background_id] || 50) * 100 + (parseInt(ch.starting_gold_bonus_cp) || 0),
+            gold_cp: Math.max(0, startingGoldCp),
             proficiency_bonus: 2
           };
           return sb.from('character_sheet').insert(newRow).select().single()
