@@ -660,6 +660,13 @@
       text-transform: uppercase;
       color: var(--text);
     }
+    .cs-ab-tip {
+      display: inline-block;
+      margin-left: 0.3rem;
+      font-size: 0.7rem;
+      color: var(--gold);
+      cursor: help;
+    }
     .cs-ab-val {
       font-family: var(--font-display);
       font-size: var(--char-ov-h3);
@@ -2199,6 +2206,17 @@
     'Savage Attacker':  'Once per turn when you hit with a weapon, reroll the damage dice and use the higher result.',
     'Keen Mind':        'Always know which direction is north, how long until sunrise/sunset, and can recall anything you\'ve heard or read in the past month.'
   };
+  // Ability score tooltips — verbatim from character.html's .char-ability-name
+  // data-tip text (richer than the sheet had before; this replaces the old
+  // per-tab copy rather than merging with it).
+  var ABILITY_TIPS = {
+    str: 'Measures physical power. Used for melee attacks, breaking things, jumping, climbing, and carrying heavy loads. Fighters and Barbarians rely on this.',
+    dex: 'Measures agility and reflexes. Used for ranged attacks, dodging, sneaking, picking locks, and determining how fast you act. Rogues and Rangers rely on this.',
+    con: 'Measures endurance and toughness. Determines your hit points and your ability to resist poison, disease, and exhaustion. Every class benefits from a higher Constitution.',
+    int: 'Measures reasoning and memory. Used for recalling lore, investigating clues, and understanding magical theory. Wizards rely on this.',
+    wis: 'Measures perception and intuition. Used for noticing hidden things, reading people, surviving in the wild, and healing. Clerics, Druids, and Rangers rely on this.',
+    cha: 'Measures force of personality. Used for persuading, deceiving, performing, and intimidating. Bards, Sorcerers, and Paladins rely on this.'
+  };
   var SPECIES_PHB = {
     brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
     gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
@@ -2334,7 +2352,7 @@
 
     var mainInfoHtml = buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc);
     var overviewCardsHtml = buildOverviewCardsHtml(ch, typeKey, typeMeta, classDisplay, bgDisplay);
-    var abilityScoresHtml = buildAbilityScoresHtml(scores, ch.feats);
+    var abilityScoresHtml = buildAbilityScoresHtml(scores);
 
     // Proficient skills — chosen from the class's skill list at Stage 2,
     // stored on player_characters.skills.
@@ -2405,12 +2423,12 @@
       + '</div>';
 
     // "Your Story" tab content — everything that isn't part of the shared
-    // header, unmoved from today's layout (Overview cards, Ability Scores,
+    // header or the (now real) Ability Scores tab: Overview cards,
     // Appearance chips, Gear, Pending items, Your Past, Gold, Equipped,
-    // Inventory, Notes). Gets split across its real tabs in later slices.
+    // Inventory, Notes. Gets split further across Class/Inventory in later
+    // slices.
     var storyTabHtml =
       overviewCardsHtml
-      + abilityScoresHtml
 
       // Appearance (chips only now — paragraph moved to MainInfo)
       + (chipsHtml ? (
@@ -2498,12 +2516,13 @@
       mainInfoHtml
       + tabBarHtml
       + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden><div class="cs-tab-placeholder">Ability Scores tab — coming soon.</div></div>'
+      + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + abilityScoresHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden><div class="cs-tab-placeholder">Inventory tab — coming soon.</div></div>'
       + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden><div class="cs-tab-placeholder">Class tab — coming soon.</div></div>';
 
     ACTIVE_TAB = 'story';
     updateTabUI();
+    wireAllTooltips();
 
     // Footer + title
     document.getElementById('cs-footer').textContent = '✦ · Anavale · ' + (ch.name||'') + ' · Level ' + (ch.level||1) + ' · ✦';
@@ -2525,9 +2544,13 @@
   }
 
   // ── Overview + Ability Scores (redesign) ───────────────────────────
-  function buildAbilityScoresHtml(scores, feats) {
+  // Ability Scores tab content (Figma 51:1663/51:1668) — 6 cards from
+  // ability_scores jsonb, math unchanged. Feats moved to the Background
+  // card (buildOverviewCardsHtml) per the Tab Redesign v1 spec — not
+  // rendered here anymore.
+  function buildAbilityScoresHtml(scores) {
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
-    var AB_NAMES = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
+    var AB_SHORT = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
     var cards = AB_KEYS.map(function(ab) {
       var raw    = parseInt(scores[ab]) || 0;
       var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
@@ -2536,31 +2559,15 @@
       return '<div class="cs-ab-card cs-ab-card--' + ab + '">'
         + '<img class="cs-ab-img" src="../assets/images/character-sheet/ability-scores/ability-' + ab + '.png" alt="">'
         + '<div class="cs-ab-txt">'
-          + '<div class="cs-ab-label">' + AB_NAMES[ab] + '</div>'
+          + '<div class="cs-ab-label">' + AB_SHORT[ab]
+            + '<span class="cs-ab-tip" data-tip="' + ABILITY_TIPS[ab].replace(/"/g,'&quot;') + '">?</span>'
+          + '</div>'
           + '<div class="cs-ab-val">' + (raw || '—') + '</div>'
           + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
         + '</div>'
       + '</div>';
     }).join('');
-    // Feats — granted by the chosen background (player_characters.feats),
-    // e.g. "Tough", "Alert". FEAT_TIPS mirrors character.js's rules text.
-    var featsArr = Array.isArray(feats) ? feats : [];
-    var featsHtml = featsArr.length
-      ? '<div class="cs-feat-list">' + featsArr.map(function(f) {
-          return '<div class="cs-feat-chip"><span class="cs-feat-chip-name">' + f + '</span>'
-            + (FEAT_TIPS[f] ? '<span class="cs-feat-chip-desc">' + FEAT_TIPS[f] + '</span>' : '')
-          + '</div>';
-        }).join('') + '</div>'
-      : '';
-    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
-      + '<div class="cs-ov-acc" id="cs-ov-acc-abilities">'
-        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-abilities\')">'
-          + '<span class="cs-ov-acc-title">Ability Scores</span>'
-          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
-        + '</button>'
-        + '<div class="cs-ov-acc-body"><div class="cs-ab-cards">' + cards + '</div>' + featsHtml + '</div>'
-      + '</div>'
-    + '</div></div>';
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
   }
 
   function renderClassDetailsHtml(row) {
@@ -2699,12 +2706,25 @@
       + '</div></div>';
 
     var bgPhb = BG_PHB[bgKey];
+    // Feats — granted by the chosen background (player_characters.feats),
+    // e.g. "Tough", "Alert". Moved here from the Ability Scores tab per the
+    // Tab Redesign v1 spec ("Feats have moved off this tab onto Your Story's
+    // Background card"). FEAT_TIPS mirrors character.js's rules text.
+    var featsArr = Array.isArray(ch.feats) ? ch.feats : [];
+    var featsHtml = featsArr.length
+      ? '<div class="cs-feat-list">' + featsArr.map(function(f) {
+          return '<div class="cs-feat-chip"><span class="cs-feat-chip-name">' + f + '</span>'
+            + (FEAT_TIPS[f] ? '<span class="cs-feat-chip-desc">' + FEAT_TIPS[f] + '</span>' : '')
+          + '</div>';
+        }).join('') + '</div>'
+      : '';
     var bgCard = '<div class="cs-ov-card">'
       + '<img class="cs-ov-card-img" src="../assets/images/backgrounds/bg-' + (bgKey || 'default') + '.png" alt="" onerror="this.style.display=\'none\'">'
       + '<div class="cs-ov-card-txt">'
         + '<div class="cs-ov-card-label">Background</div>'
         + '<div class="cs-ov-card-title">' + bgDisplay + '</div>'
         + (bgPhb ? '<div class="cs-ov-card-sub">(' + bgPhb + ')</div>' : '')
+        + featsHtml
       + '</div></div>';
 
     var ggColorVar = typeKey ? '--' + typeKey : null;
@@ -2819,6 +2839,7 @@
     renderPhoto();
     renderConditions();
     renderInspiration();
+    wireAllTooltips();
   }
 
   // ── HP (MainInfo header) ────────────────────────────────────────────
@@ -3119,9 +3140,13 @@
     { key:'hand_left',  label:'Off Hand',  type:'weapon', category:'weapon' }
   ];
   // Minimal tooltip: reads data-tip off an element and shows a floating
-  // bubble on hover. sheet/index.html has no shared tooltip system (unlike
-  // character.js's data-tip convention) — this is scoped to the Equipped
-  // section's AC badge only.
+  // bubble on hover — same data-tip convention character.html's
+  // .char-field-tooltip uses. wireAllTooltips() sweeps every [data-tip]
+  // element instead of call sites wiring each one by hand; wireTooltip()
+  // itself stays idempotent (el._tipWired) so both styles of call are safe.
+  function wireAllTooltips() {
+    document.querySelectorAll('[data-tip]').forEach(wireTooltip);
+  }
   function wireTooltip(el) {
     if (!el || !el.dataset || !el.dataset.tip || el._tipWired) return;
     el._tipWired = true;
