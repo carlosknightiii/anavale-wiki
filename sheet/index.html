@@ -334,23 +334,6 @@
       line-height: 1.05;
       color: var(--text);
     }
-    .cs-ov-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .cs-ov-pill {
-      border: 1px solid rgba(255,255,255,0.6);
-      border-radius: 50px;
-      padding: 8px 14px;
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text);
-    }
-    .cs-ov-pill strong { font-weight: 900; }
     .cs-ov-blurb {
       font-family: var(--font-body);
       font-weight: 300;
@@ -371,6 +354,17 @@
       cursor: pointer;
       padding: 0 0 var(--char-ov-gap-2xs);
       gap: var(--char-ov-gap-2xs);
+    }
+    /* Tab page title (Figma 51:1103 "YOUR STORY") — bigger than the
+       Who You Are/Your Background/Your Past section titles below it
+       (.cs-ov-acc-title, --text-4xl) so it reads as the page heading, not
+       another accordion. One per tab (pageTitleHtml()) — Your Story,
+       Ability Scores, Inventory, Class all carry the same heading. */
+    .cs-page-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      color: var(--text);
+      margin-bottom: var(--char-ov-gap-2xs);
     }
     .cs-ov-acc-title {
       font-family: var(--font-display);
@@ -646,6 +640,15 @@
       flex-direction: column;
       gap: 0.35rem;
     }
+    .cs-story-card-head { display: flex; align-items: center; gap: 0.6rem; }
+    .cs-story-card-img {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .cs-story-card-headtext { display: flex; flex-direction: column; gap: 0.15rem; }
     .cs-story-card-label {
       font-family: var(--font-body);
       font-weight: 700;
@@ -962,7 +965,10 @@
     }
     .cs-mi-condition-select option { background: #1a1208; color: var(--text); }
 
-    .cs-mi-vitals { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    /* Compact single row (Figma 51:1385): AC badge, HP badge+bar, Temp HP
+       badge+bar, all inline. Each cs-mi-hp-compact wraps down onto its own
+       line on narrow viewports rather than the whole row scrolling. */
+    .cs-mi-vitals { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; row-gap: 0.6rem; }
 
     /* Inspiration — small circular badge, top-right of the header (Figma
        51:1385), not a pill next to AC. .cs-ov-maininfo carries the
@@ -1005,52 +1011,62 @@
     }
     .cs-mi-insp-badge.active .cs-mi-insp-badge-state { color: var(--gold-light); }
 
-    .cs-mi-hp-row { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-    .cs-mi-hp-slot { flex: 1 1 260px; min-width: 220px; }
-    .cs-mi-hp-bar {
-      position: relative;
-      height: 30px;
-      border-radius: 8px;
-      background: rgba(180,60,60,0.15);
-      border: 1px solid rgba(180,60,60,0.35);
-      overflow: hidden;
+    .cs-mi-hp-slot { flex: 0 0 auto; }
+    .cs-mi-temp-hp { flex: 0 0 auto; display: flex; align-items: center; }
+
+    /* Compact HP/Temp HP badge+bar — shared shape/classes for both, with a
+       --temp modifier for the blue Temp HP colorway. */
+    .cs-mi-hp-compact { display: flex; align-items: center; gap: 0.5rem; }
+    .cs-mi-hp-compact-label {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
     }
-    .cs-mi-hp-bar-fill { height: 100%; background: linear-gradient(90deg, #b43c3c, #f87171); transition: width 0.25s ease; }
-    .cs-mi-hp-bar-label {
-      position: absolute;
-      inset: 0;
-      display: flex;
+    .cs-mi-hp-compact-badge {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-width: 28px;
+      height: 24px;
+      padding: 0 0.4rem;
+      background: #fff;
+      color: var(--surface-0);
+      border-radius: 6px;
       font-family: var(--font-sans);
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       font-weight: 700;
-      color: var(--white);
-      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
+    .cs-mi-hp-compact-max { font-family: var(--font-sans); font-size: 0.85rem; color: var(--char-text-muted); }
+    .cs-mi-hp-compact-bar {
+      width: 120px;
+      height: 10px;
+      border-radius: 6px;
+      background: rgba(180,60,60,0.2);
+      overflow: hidden;
+    }
+    .cs-mi-hp-compact-bar-fill { height: 100%; background: linear-gradient(90deg, #b43c3c, #f87171); transition: width 0.25s ease; }
     .cs-mi-hp-mod.positive { color: #6ecf6e; }
     .cs-mi-hp-mod.negative { color: #f87171; }
-    .cs-mi-hp-controls { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
-    .cs-mi-hp-max-row { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.35rem; }
-
-    .cs-mi-temp-hp {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--blue-dim);
-      border: 1px solid var(--blue-border);
-      border-radius: 8px;
-      padding: 0.5rem 0.85rem;
+    .cs-mi-hp-compact-edit {
+      background: none;
+      border: none;
+      color: var(--char-text-faint);
+      font-size: 0.7rem;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
     }
-    .cs-mi-temp-hp-val { font-family: var(--font-serif); font-size: 1.3rem; color: var(--blue); }
-    .cs-mi-temp-hp-label { font-family: var(--font-sans); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--char-text-faint); }
-    .cs-mi-temp-hp-edit { background: none; border: none; color: var(--char-text-faint); font-size: 0.7rem; cursor: pointer; text-decoration: underline; }
+    .cs-mi-hp-edit-panel { margin-top: 0.4rem; }
+    .cs-mi-hp-edit-panel > * + * { margin-top: 0.35rem; }
+    .cs-mi-hp-controls { display: flex; gap: 0.4rem; align-items: center; }
+    .cs-mi-hp-max-row { display: flex; gap: 0.4rem; align-items: center; }
+
     .cs-mi-temp-hp-add {
       background: none;
       border: 1px dashed var(--char-accent-border);
       border-radius: 8px;
-      padding: 0.5rem 0.85rem;
+      padding: 0.35rem 0.7rem;
       font-family: var(--font-sans);
       font-size: 0.72rem;
       color: var(--char-text-faint);
@@ -2401,6 +2417,50 @@
     'forced-out':'Was forced out',
     'opportunity':'Left for an opportunity'
   };
+  // Your Past card thumbnails — the exact per-option illustrations already
+  // used by character.html's option cards (its real data-img attributes,
+  // read directly from that file, not guessed or newly generated). Every
+  // real option value across all 7 fields has a matching file in
+  // assets/images/past/; nothing here is invented. Field keys match the
+  // player_characters columns storyCard() is called with below.
+  var PAST_CARD_IMAGES = {
+    who_raised_you: {
+      'grandparent':'raised-grandparent.webp', 'kind-parents':'raised-kind-parents.webp',
+      'single-parent':'raised-single-parent.webp', 'strict-religious':'raised-strict-religious.webp',
+      'the-streets':'raised-the-streets.webp'
+    },
+    dearest_friend: {
+      'animal':'friend-animal.webp', 'imaginary':'friend-imaginary.webp', 'mentor':'friend-mentor.webp',
+      'neighbor':'friend-neighbor.webp', 'no-one':'friend-no-one.webp'
+    },
+    had_pet: {
+      'loyal-animal':'pet-loyal-animal.webp', 'never-wanted':'pet-never-wanted.webp',
+      'unusual':'pet-unusual.webp', 'wanted-one':'pet-wanted-one.webp'
+    },
+    fallen_in_love: {
+      'complicated':'love-complicated.webp', 'ended-badly':'love-ended-badly.webp',
+      'ended-well':'love-ended-well.webp', 'not-for-me':'love-not-for-me.webp', 'not-yet':'love-not-yet.webp'
+    },
+    organization_joined: {
+      'brightcreed':'org-brightcreed.webp', 'fighting-company':'org-fighting-company.webp',
+      'kept-to-myself':'org-kept-to-myself.webp', 'merchant-guild':'org-merchant-guild.webp',
+      'wanderkeep':'org-wanderkeep.webp'
+    },
+    left_behind: {
+      'nothing':'left-behind-nothing.webp', 'person':'left-behind-person.webp', 'place':'left-behind-place.webp',
+      'promise':'left-behind-promise.webp', 'self':'left-behind-self.webp'
+    },
+    why_you_left: {
+      'ran-from-something':'why-left-ran-from-something.webp', 'received-message':'why-left-received-message.webp',
+      'restlessness':'why-left-restlessness.webp', 'saw-the-grey':'why-left-saw-the-grey.webp',
+      'someone-disappeared':'why-left-someone-disappeared.webp'
+    }
+  };
+  function pastCardImg(field, value) {
+    var map = PAST_CARD_IMAGES[field];
+    var file = map ? map[value] : null;
+    return file ? '../assets/images/past/' + file : null;
+  }
 
   // ── Overview card lookups (mirrors ANAVALE_BACKGROUNDS / ANAVALE_SPECIES /
   // ALIGNMENT_PHB / GIGGLEGLOOM_TYPES in character.js — sheet doesn't load
@@ -2427,6 +2487,29 @@
     'Savage Attacker':  'Once per turn when you hit with a weapon, reroll the damage dice and use the higher result.',
     'Keen Mind':        'Always know which direction is north, how long until sunrise/sunset, and can recall anything you\'ve heard or read in the past month.'
   };
+  // Skill proficiency tooltips — mirrors SKILL_TIPS in js/character.js
+  // (renderBackgroundGrid(), sheet doesn't load character.js). Used on
+  // every skill-proficiency benefit tag (Background card, Your Past cards).
+  var SKILL_TIPS = {
+    'Acrobatics':       'Dexterity — tumbling, balancing, graceful physical feats.',
+    'Animal Handling':  'Wisdom — calming, controlling, or reading animals.',
+    'Arcana':           'Intelligence — knowledge of magic, spells, and the Gigglegloom.',
+    'Athletics':        'Strength — climbing, jumping, swimming, feats of raw power.',
+    'Deception':        'Charisma — misleading, lying convincingly, disguising intent.',
+    'History':          'Intelligence — recalling past events, legends, and lore.',
+    'Insight':          'Wisdom — reading people, sensing lies, understanding motives.',
+    'Intimidation':     'Charisma — frightening, threatening, pressuring others.',
+    'Investigation':    'Intelligence — searching carefully, finding clues, deducing.',
+    'Medicine':         'Wisdom — stabilizing the dying, diagnosing illness or poison.',
+    'Nature':           'Intelligence — knowledge of plants, animals, weather, terrain.',
+    'Perception':       'Wisdom — noticing things around you with your senses.',
+    'Performance':      'Charisma — entertaining through music, dance, acting, storytelling.',
+    'Persuasion':       'Charisma — convincing others through reason, charm, or negotiation.',
+    'Religion':         'Intelligence — knowledge of gods, rites, and holy symbols.',
+    'Sleight of Hand':  'Dexterity — pickpocketing, planting items, fine manual trickery.',
+    'Stealth':          'Dexterity — moving silently and hiding from notice.',
+    'Survival':         'Wisdom — tracking, foraging, navigating, and surviving the wild.'
+  };
   // Ability score tooltips — verbatim from character.html's .char-ability-name
   // data-tip text (richer than the sheet had before; this replaces the old
   // per-tab copy rather than merging with it).
@@ -2437,12 +2520,6 @@
     int: 'Measures reasoning and memory. Used for recalling lore, investigating clues, and understanding magical theory. Wizards rely on this.',
     wis: 'Measures perception and intuition. Used for noticing hidden things, reading people, surviving in the wild, and healing. Clerics, Druids, and Rangers rely on this.',
     cha: 'Measures force of personality. Used for persuading, deceiving, performing, and intimidating. Bards, Sorcerers, and Paladins rely on this.'
-  };
-  var SPECIES_PHB = {
-    brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
-    gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
-    scalegrace:'Dragonborn', solmeri:'Human', stonemarked:'Dwarf',
-    tallwalker:'Goliath', veilstepped:'Changeling', verdathi:'Elf'
   };
   var ALIGNMENT_PHB = {
     brightward:'Lawful Good', colorful:'Chaotic Good', greywarden:'True Neutral',
@@ -2461,6 +2538,21 @@
     greywarden:  'They are Measured — they see all sides, weigh things carefully, and don\'t think the world divides neatly into light and dark.',
     steelbound:  'They are Disciplined — they do what they said they would do. They consider this uncomplicated.',
     ashwalker:   'They are Pragmatic — they do what works for them, and they try to be honest about that.'
+  };
+  // Second-person alignment card description — mirrors .char-alignment-desc
+  // in character.html verbatim (the real cards players click during
+  // creation). Distinct from ALIGNMENT_TRAIT_SENTENCE above: that dict is
+  // third-person prose for the header blurb ("They are Pragmatic..."), this
+  // one is the "You do what works for you..." voice the Moral Alignment
+  // card (and every other Your Story/Your Past card) actually uses. The
+  // alignment card previously reused ALIGNMENT_TRAIT_SENTENCE by mistake —
+  // wrong source, not a wording problem, so this fixes it at the source.
+  var ALIGNMENT_CARD_DESC = {
+    steelbound:  'Order is not a cage. Order is how things work. You respect hierarchies, honor agreements, follow through on commitments.',
+    colorful:    'You want to do right by people but you\'ve never been very good at following someone else\'s idea of how.',
+    greywarden:  'You see all sides. You weigh things carefully. You don\'t think the world is simple enough to be neatly divided into light and dark.',
+    ashwalker:   'You do what works for you, and you try to be honest about that. You\'re not cruel but you don\'t pretend to have obligations you don\'t feel.',
+    brightward:  'You believe the world is worth protecting and that the best way to protect it is to be someone others can count on.'
   };
   // Gigglegloom-flavor class name (e.g. wizard → "The Learned") used in the
   // Overview blurb — matches GIGGLEGLOOM_TYPES[*].classes[*].name in character.js.
@@ -2640,7 +2732,8 @@
     // From Your DM" section is gone — dm_pending_items now renders inside
     // the Organization card's Benefits box in Your Past, its real home.
     var storyTabHtml =
-      whoYouAreHtml
+      pageTitleHtml('Your Story')
+      + whoYouAreHtml
 
       // Appearance (chips only now — paragraph moved to MainInfo). Kept
       // right after Who You Are, near the rest of the who-you-are content,
@@ -2729,9 +2822,9 @@
       mainInfoHtml
       + tabBarHtml
       + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + abilityScoresHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden>' + inventoryTabHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + classTabHtml + '</div>';
+      + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + pageTitleHtml('Ability Scores') + abilityScoresHtml + '</div>'
+      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden>' + pageTitleHtml('Inventory') + inventoryTabHtml + '</div>'
+      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + pageTitleHtml('Class') + classTabHtml + '</div>';
 
     ACTIVE_TAB = 'story';
     updateTabUI();
@@ -3071,18 +3164,6 @@
     var alignKey   = (ch.alignment || '').toLowerCase();
     var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
     var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey) };
-    var speciesKey = (ch.species || '').toLowerCase();
-
-    // Pills — age category, gender, species (+PHB equivalent), home region.
-    // Language moved out to its own "Speaks" block below (new UI, joins the
-    // languages table rather than the static LANGUAGE_LABELS mirror).
-    var idBits = [];
-    if (app.age) idBits.push(cap(app.age));
-    if (ch.gender) idBits.push(cap(ch.gender));
-    idBits.push(speciesDisplay + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : ''));
-    var pills = ['<span class="cs-ov-pill">' + idBits.join(', ') + '</span>'];
-    if (regionLabel && regionLabel !== '—') pills.push('<span class="cs-ov-pill">from ' + regionLabel + '</span>');
-    var pillsHtml = pills.join('');
 
     // Blurb — species + class's Gigglegloom-flavor name + type + region,
     // plus the alignment trait sentence. Sourced from the same lookups
@@ -3112,15 +3193,17 @@
           + '</div>'
           + '<div class="cs-ov-main">'
             + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
-            + '<div class="cs-ov-pills">' + pillsHtml + '</div>'
+            + '<div class="cs-mi-vitals">'
+              + '<div class="cs-equipped-ac-badge cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip="">AC —</div>'
+              + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
+              + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
+            + '</div>'
+            // Edit controls for HP/Temp HP render here, below the compact
+            // row, instead of inline inside it — keeping them inline caused
+            // the AC badge to reflow unpredictably when a panel opened
+            // (flex-wrap fighting a growing flex item mid-row).
+            + '<div class="cs-mi-hp-edit-panel" id="cs-mi-hp-edit-panel" style="display:none;"></div>'
             + blurbHtml
-          + '</div>'
-          + '<div class="cs-mi-vitals">'
-            + '<div class="cs-equipped-ac-badge cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip="">AC —</div>'
-          + '</div>'
-          + '<div class="cs-mi-hp-row">'
-            + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
-            + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
           + '</div>'
           + '<div class="cs-mi-triple-row">'
             + (speciesDisplay ? '<div class="cs-mi-triple-col"><div class="cs-mi-triple-label">Species</div><div class="cs-mi-species-desc" id="cs-mi-species-desc"></div></div>' : '')
@@ -3143,6 +3226,11 @@
   // that landed on the old Background card in the Ability Scores slice was
   // always meant to be transitional pending this exact rebuild. ──
 
+  // Tab page title (Figma 51:1103 "YOUR STORY") — one per tab, same heading
+  // weight/placement across all four (see .cs-page-title CSS).
+  function pageTitleHtml(text) {
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><h2 class="cs-page-title">' + text + '</h2></div></div>';
+  }
   function accordionShell(id, title, bodyHtml) {
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-ov-acc" id="' + id + '">'
@@ -3154,10 +3242,13 @@
       + '</div>'
     + '</div></div>';
   }
-  function storyCard(label, title, text, benefitsHtml) {
+  function storyCard(label, title, text, benefitsHtml, imgSrc) {
+    var labelTitleHtml = '<div class="cs-story-card-label">' + label + '</div>'
+      + (title ? '<div class="cs-story-card-title">' + title + '</div>' : '');
     return '<div class="cs-story-card">'
-      + '<div class="cs-story-card-label">' + label + '</div>'
-      + (title ? '<div class="cs-story-card-title">' + title + '</div>' : '')
+      + (imgSrc
+          ? '<div class="cs-story-card-head"><img class="cs-story-card-img" src="' + imgSrc + '" alt="" loading="lazy"><div class="cs-story-card-headtext">' + labelTitleHtml + '</div></div>'
+          : labelTitleHtml)
       + (text ? '<div class="cs-story-card-text">' + escHtml(text) + '</div>' : '')
       + (benefitsHtml || '')
     + '</div>';
@@ -3194,11 +3285,24 @@
     var alignKey = (ch.alignment || '').toLowerCase();
     var alignName = ALIGNMENT_TRAIT_NAME[alignKey] || label(ALIGNMENT_LABELS, ch.alignment);
     var alignPhb  = ALIGNMENT_PHB[alignKey];
-    var ggCard = storyCard('Gigglegloom Affinity', typeMeta.name, typeMeta.desc, null);
+    // Card thumbnails — same verbatim-asset approach as Your Past, derived
+    // from the exact real filename patterns character.js/character.html use
+    // for these same option cards (confirmed by reading both, not guessed):
+    // renderGigglogloomAffinity() → assets/icons/icon-{typeId}.svg,
+    // the home-region cards' inline background-image → assets/images/regions/
+    // img-{region}-landscape.webp, renderBackgroundCards() → assets/images/
+    // backgrounds/bg-{bg.id}.png. Moral Alignment has no image anywhere in
+    // the codebase — character.html's .char-alignment-card is text-only, no
+    // data-img/background-image/icon of any kind — so it gets no thumbnail
+    // here rather than a fabricated one.
+    var regionKey = (ch.home_region || '').toLowerCase();
+    var ggCard = storyCard('Gigglegloom Affinity', typeMeta.name, typeMeta.desc, null,
+      typeKey ? '../assets/icons/icon-' + typeKey + '.svg' : null);
     var regionCard = storyCard('Home Region', REGION_ROW ? REGION_ROW.name : cap(ch.home_region || ''),
-      REGION_ROW ? REGION_ROW.summary : null, null);
+      REGION_ROW ? REGION_ROW.summary : null, null,
+      regionKey ? '../assets/images/regions/img-' + regionKey + '-landscape.webp' : null);
     var alignTitle = alignName + (alignPhb ? ' <span class="cs-story-card-sub">(' + alignPhb + ')</span>' : '');
-    var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_TRAIT_SENTENCE[alignKey] || null, null);
+    var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_CARD_DESC[alignKey] || null, null);
 
     var bgKey = (ch.background_id || '').toLowerCase();
     var bgPhb = BG_PHB[bgKey];
@@ -3216,9 +3320,12 @@
         + (featTip ? '<span class="cs-ab-tip" data-tip="' + featTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>');
     }
     (BACKGROUND_ROW && Array.isArray(BACKGROUND_ROW.skills) ? BACKGROUND_ROW.skills : []).forEach(function(sk) {
-      tags.push('<span class="cs-story-benefit-tag">' + escHtml(sk) + ' (Skill Proficiency)</span>');
+      var skillTip = SKILL_TIPS[sk];
+      tags.push('<span class="cs-story-benefit-tag">' + escHtml(sk) + ' (Skill Proficiency)'
+        + (skillTip ? '<span class="cs-ab-tip" data-tip="' + skillTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>');
     });
-    var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitTagsHtml(tags));
+    var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitTagsHtml(tags),
+      bgKey ? '../assets/images/backgrounds/bg-' + bgKey + '.png' : null);
 
     return ggCard + regionCard + alignCard + bgCard;
   }
@@ -3247,33 +3354,37 @@
     function bonusesForPrefix(prefix) {
       return skillBonusesArr.filter(function(b) { return typeof b.source === 'string' && b.source.indexOf(prefix) === 0; });
     }
-    function skillTag(b) { return '<span class="cs-story-benefit-tag">+' + b.amount + ' ' + escHtml(b.skill) + ' (Skill Proficiency)</span>'; }
+    function skillTag(b) {
+      var skillTip = SKILL_TIPS[b.skill];
+      return '<span class="cs-story-benefit-tag">+' + b.amount + ' ' + escHtml(b.skill) + ' (Skill Proficiency)'
+        + (skillTip ? '<span class="cs-ab-tip" data-tip="' + skillTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>';
+    }
 
     var cards = [];
     if (ch.who_raised_you) {
       var raisedTags = (RAISED_ABILITY_BONUS[ch.who_raised_you] || []).map(function(a) {
         return '<span class="cs-story-benefit-tag">' + (a.amount >= 0 ? '+' : '') + a.amount + ' ' + ABILITY_FULL_NAME[a.key] + '</span>';
       }).concat(bonusesForPrefix('past_raised:').map(skillTag));
-      cards.push(storyCard('Upbringing', null, label(RAISED_LABELS, ch.who_raised_you), benefitTagsHtml(raisedTags)));
+      cards.push(storyCard('Upbringing', null, label(RAISED_LABELS, ch.who_raised_you), benefitTagsHtml(raisedTags), pastCardImg('who_raised_you', ch.who_raised_you)));
     }
     if (ch.dearest_friend) {
       var friendTags = bonusesForPrefix('past_friend:').map(skillTag);
-      cards.push(storyCard('Friend', null, label(FRIEND_LABELS, ch.dearest_friend), benefitTagsHtml(friendTags)));
+      cards.push(storyCard('Friend', null, label(FRIEND_LABELS, ch.dearest_friend), benefitTagsHtml(friendTags), pastCardImg('dearest_friend', ch.dearest_friend)));
     }
-    if (ch.had_pet) cards.push(storyCard('Pet', null, label(PET_LABELS, ch.had_pet), null));
-    if (ch.fallen_in_love) cards.push(storyCard('Love', null, label(LOVE_LABELS, ch.fallen_in_love), null));
+    if (ch.had_pet) cards.push(storyCard('Pet', null, label(PET_LABELS, ch.had_pet), null, pastCardImg('had_pet', ch.had_pet)));
+    if (ch.fallen_in_love) cards.push(storyCard('Love', null, label(LOVE_LABELS, ch.fallen_in_love), null, pastCardImg('fallen_in_love', ch.fallen_in_love)));
     if (ch.organization_joined) {
       var orgTags = bonusesForPrefix('past_org:').map(skillTag);
       (Array.isArray(ch.dm_pending_items) ? ch.dm_pending_items : []).forEach(function(item) {
         orgTags.push('<span class="cs-story-benefit-tag">' + escHtml(item.label || 'Item') + ' (DM adds)</span>');
       });
-      cards.push(storyCard('Organization', null, label(ORG_LABELS, ch.organization_joined), benefitTagsHtml(orgTags)));
+      cards.push(storyCard('Organization', null, label(ORG_LABELS, ch.organization_joined), benefitTagsHtml(orgTags), pastCardImg('organization_joined', ch.organization_joined)));
     }
-    if (ch.left_behind) cards.push(storyCard('Left Behind', null, label(LEFT_BEHIND_LABELS, ch.left_behind), null));
+    if (ch.left_behind) cards.push(storyCard('Left Behind', null, label(LEFT_BEHIND_LABELS, ch.left_behind), null, pastCardImg('left_behind', ch.left_behind)));
     if (ch.why_you_left) {
       var quest = WHY_LEFT_QUEST[ch.why_you_left];
       var questHtml = quest ? '<div class="cs-story-benefits"><span class="cs-story-quest-label">Personal quest:</span>' + escHtml(quest) + '</div>' : null;
-      cards.push(storyCard('Why You Left', null, label(WHY_LEFT_LABELS, ch.why_you_left), questHtml));
+      cards.push(storyCard('Why You Left', null, label(WHY_LEFT_LABELS, ch.why_you_left), questHtml, pastCardImg('why_you_left', ch.why_you_left)));
     }
     var cardsHtml = cards.join('');
 
@@ -3326,22 +3437,54 @@
 
   // ── HP (MainInfo header) ────────────────────────────────────────────
   // Current/Max HP math is unchanged from the old cs-hp-section (see
-  // adjustHP/setMaxHPModifier below) — only the display moved into the
-  // shared header, as a bar instead of three cells, per the Tab Redesign
-  // v1 spec. Two new behaviors layered on top: Temp HP is a plain badge
-  // that hides entirely at 0/null (5e has no "max temp HP"), and at 0
-  // Current HP the bar is replaced in-place by a death-save tracker.
+  // adjustHP/setMaxHPModifier below). Display rebuilt to match the Figma
+  // compact single row (AC badge + HP badge/bar + Temp HP badge) — the
+  // −/+/Apply/Max-Mod/Set controls Figma's static mockup doesn't depict are
+  // kept exactly as before, just tucked behind an "Edit" toggle instead of
+  // always visible (or, for Temp HP, always taking layout space once shown).
+  // Both toggles write into the single shared #cs-mi-hp-edit-panel BELOW the
+  // compact row rather than inline within it — an earlier version rendered
+  // each panel inside its own flex item inside .cs-mi-vitals, which made the
+  // AC badge reflow unpredictably when a panel opened (flex-wrap fighting a
+  // flex item that had just grown taller). Rendering both below the row
+  // sidesteps that entirely. HP_EDIT_OPEN/TEMP_HP_EDIT_OPEN persist across
+  // renderHeaderHP() re-renders (every HP/Temp HP mutation calls it again
+  // after saving) so the HP panel doesn't snap shut after every adjust
+  // click — Temp HP's panel is the exception, explicitly closed by
+  // setTempHP() on save, matching its original set-and-forget behavior.
+  // Temp HP is a plain number badge — no bar — and hides entirely at
+  // 0/null (5e has no "max temp HP" to show a bar or proportion against;
+  // an earlier pass here added a decorative always-100%-filled bar to
+  // visually match AC/HP, which was reverted — it implied a real max that
+  // doesn't exist in the data model). At 0 Current HP the bar+controls are
+  // replaced in-place by a death-save tracker.
+  var HP_EDIT_OPEN = false;
+  var TEMP_HP_EDIT_OPEN = false;
+  function toggleHPEditControls() {
+    HP_EDIT_OPEN = !HP_EDIT_OPEN;
+    renderHeaderHP();
+  }
+  function toggleTempHPEditControls() {
+    TEMP_HP_EDIT_OPEN = !TEMP_HP_EDIT_OPEN;
+    renderHeaderHP();
+    if (TEMP_HP_EDIT_OPEN) {
+      var input = document.getElementById('cs-hp-temp-input');
+      if (input) input.focus();
+    }
+  }
   function renderHeaderHP() {
     var slot = document.getElementById('cs-mi-hp-slot');
     var tempEl = document.getElementById('cs-mi-temp-hp');
+    var editPanel = document.getElementById('cs-mi-hp-edit-panel');
     if (!slot) return;
     var hpCur = SHEET ? (parseInt(SHEET.hp_current) || 0) : 0;
     var hpMaxBase = SHEET ? (parseInt(SHEET.hp_max) || 0) : 0;
     var hpModifier = SHEET ? (parseInt(SHEET.hp_max_modifier) || 0) : 0;
     var hpMaxEffective = hpMaxBase + hpModifier;
     var hpTemp = SHEET ? (parseInt(SHEET.hp_temp) || 0) : 0;
+    var atZero = SHEET && hpCur <= 0;
 
-    if (SHEET && hpCur <= 0) {
+    if (atZero) {
       // Still need a way to heal back up from 0 — the bar (and its −/+/Apply
       // controls) is gone in this branch, so keep a minimal heal input here.
       // Any positive Apply crosses back above 0 and swaps the bar back in.
@@ -3353,51 +3496,57 @@
     } else {
       var pct = hpMaxEffective > 0 ? Math.max(0, Math.min(100, (hpCur / hpMaxEffective) * 100)) : 0;
       slot.innerHTML =
-        '<div class="cs-mi-hp-bar">'
-          + '<div class="cs-mi-hp-bar-fill" style="width:' + pct + '%;"></div>'
-          + '<div class="cs-mi-hp-bar-label">' + hpCur + ' / ' + hpMaxEffective + ' HP'
+        '<div class="cs-mi-hp-compact">'
+          + '<span class="cs-mi-hp-compact-label">HP</span>'
+          + '<span class="cs-mi-hp-compact-badge">' + hpCur + '</span>'
+          + '<span class="cs-mi-hp-compact-max">/ ' + hpMaxEffective
             + (hpModifier !== 0 ? ' <span class="cs-mi-hp-mod ' + (hpModifier > 0 ? 'positive' : 'negative') + '">(' + (hpModifier > 0 ? '+' : '') + hpModifier + ')</span>' : '')
-          + '</div>'
-        + '</div>'
-        + '<div class="cs-mi-hp-controls">'
-          + '<button class="cs-hp-btn" onclick="adjustHP(-1)" title="−1">−</button>'
-          + '<button class="cs-hp-btn" onclick="adjustHP(1)"  title="+1">+</button>'
-          + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="±">'
-          + '<button class="cs-hp-apply" onclick="applyHPDelta()">Apply</button>'
-        + '</div>'
-        + '<div class="cs-mi-hp-max-row">'
-          + '<input class="cs-hp-input" id="cs-hp-max-modifier" type="number" placeholder="±" title="Temporary max HP change from a status effect">'
-          + '<button class="cs-hp-apply" onclick="setMaxHPModifier()">Set Max Mod</button>'
+          + '</span>'
+          + '<div class="cs-mi-hp-compact-bar"><div class="cs-mi-hp-compact-bar-fill" style="width:' + pct + '%;"></div></div>'
+          + '<button class="cs-mi-hp-compact-edit" onclick="toggleHPEditControls()">Edit</button>'
         + '</div>';
     }
 
     if (tempEl) {
       if (hpTemp > 0) {
         tempEl.innerHTML =
-          '<span class="cs-mi-temp-hp-val">+' + hpTemp + '</span>'
-          + '<span class="cs-mi-temp-hp-label">Temp HP</span>'
-          + '<button class="cs-mi-temp-hp-edit" onclick="showTempHPInput()">Edit</button>'
-          + '<span class="cs-mi-temp-hp-input-row" id="cs-mi-temp-hp-input-row" style="display:none;">'
-            + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="0">'
-            + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
-          + '</span>';
+          '<div class="cs-mi-hp-compact cs-mi-hp-compact--temp">'
+            + '<span class="cs-mi-hp-compact-label">Temp HP</span>'
+            + '<span class="cs-mi-hp-compact-badge">' + hpTemp + '</span>'
+            + '<button class="cs-mi-hp-compact-edit" onclick="toggleTempHPEditControls()">Edit</button>'
+          + '</div>';
       } else {
-        tempEl.innerHTML =
-          '<button class="cs-mi-temp-hp-add" onclick="showTempHPInput()">+ Temp HP</button>'
-          + '<span class="cs-mi-temp-hp-input-row" id="cs-mi-temp-hp-input-row" style="display:none;">'
-            + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="0">'
-            + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
-          + '</span>';
+        tempEl.innerHTML = '<button class="cs-mi-temp-hp-add" onclick="toggleTempHPEditControls()">+ Temp HP</button>';
       }
     }
-  }
 
-  function showTempHPInput() {
-    var row = document.getElementById('cs-mi-temp-hp-input-row');
-    if (!row) return;
-    row.style.display = 'inline-flex';
-    var input = document.getElementById('cs-hp-temp-input');
-    if (input) input.focus();
+    if (editPanel) {
+      var panelParts = [];
+      if (!atZero && HP_EDIT_OPEN) {
+        panelParts.push(
+          '<div class="cs-mi-hp-controls">'
+            + '<button class="cs-hp-btn" onclick="adjustHP(-1)" title="−1">−</button>'
+            + '<button class="cs-hp-btn" onclick="adjustHP(1)"  title="+1">+</button>'
+            + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="±">'
+            + '<button class="cs-hp-apply" onclick="applyHPDelta()">Apply</button>'
+          + '</div>'
+          + '<div class="cs-mi-hp-max-row">'
+            + '<input class="cs-hp-input" id="cs-hp-max-modifier" type="number" placeholder="±" title="Temporary max HP change from a status effect">'
+            + '<button class="cs-hp-apply" onclick="setMaxHPModifier()">Set Max Mod</button>'
+          + '</div>'
+        );
+      }
+      if (TEMP_HP_EDIT_OPEN) {
+        panelParts.push(
+          '<div class="cs-mi-hp-controls">'
+            + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="Temp HP">'
+            + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
+          + '</div>'
+        );
+      }
+      editPanel.innerHTML = panelParts.join('');
+      editPanel.style.display = panelParts.length ? '' : 'none';
+    }
   }
 
   // ── Death saves (MainInfo header, new) — swaps in for the HP bar in the
@@ -3460,7 +3609,7 @@
     if (isNaN(val) || val < 0) return;
     SHEET.hp_temp = val;
     saveSheet({ hp_temp: val });
-    input.value = '';
+    TEMP_HP_EDIT_OPEN = false;
     renderHeaderHP();
   }
   function setMaxHPModifier() {
@@ -3510,8 +3659,8 @@
     }).join('');
     var available = CONDITIONS_DATA.filter(function(r) { return applied.indexOf(r.name) < 0; });
     var options = available.map(function(r) { return '<option value="' + escHtml(r.name) + '">' + escHtml(r.name) + '</option>'; }).join('');
-    el.innerHTML = pills
-      + (available.length ? '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add Condition</button>' : '')
+    el.innerHTML = (available.length ? '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add Condition</button>' : '')
+      + pills
       + '<span class="cs-mi-condition-input-row" id="cs-mi-condition-input-row" style="display:none;">'
         + '<select class="cs-mi-condition-select" id="cs-mi-condition-select">' + options + '</select>'
         + '<button class="cs-hp-apply" onclick="addCondition()">Add</button>'
