@@ -3554,10 +3554,11 @@
     var el = document.getElementById('cs-mi-inspiration');
     if (!el) return;
     var on = !!(SHEET && SHEET.has_inspiration);
-    el.innerHTML = '<button class="cs-mi-insp-badge' + (on ? ' active' : '') + '" onclick="toggleInspiration()">'
+    el.innerHTML = '<button class="cs-mi-insp-badge' + (on ? ' active' : '') + '" onclick="toggleInspiration()" data-tip="Spend before any d20 roll — roll twice, take the higher result. You can only hold one at a time.">'
       + '<span class="cs-mi-insp-badge-label">Inspiration</span>'
       + '<span class="cs-mi-insp-badge-state">' + (on ? 'Yes' : 'None') + '</span>'
       + '</button>';
+    wireAllTooltips();
   }
   function toggleInspiration() {
     if (!SHEET) return;
@@ -3689,7 +3690,14 @@
       tipEl.textContent = el.dataset.tip;
       document.body.appendChild(tipEl);
       var rect = el.getBoundingClientRect();
-      tipEl.style.left = (rect.left + rect.width / 2) + 'px';
+      // Clamp so the bubble (centered via CSS translate(-50%, ...)) never
+      // overflows past the viewport edge — the Inspiration badge sits in
+      // the header's top-right corner, close enough to the edge that an
+      // unclamped center-on-element position pushed the bubble off-screen.
+      var left = rect.left + rect.width / 2;
+      var half = tipEl.offsetWidth / 2;
+      left = Math.max(half + 8, Math.min(window.innerWidth - half - 8, left));
+      tipEl.style.left = left + 'px';
       tipEl.style.top  = rect.top + 'px';
     });
     el.addEventListener('mouseleave', function() {
