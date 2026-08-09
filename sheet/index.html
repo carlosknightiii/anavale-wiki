@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../js/hp-calc.js"></script>
   <link rel="stylesheet" href="../css/tokens.css">
 
   <style>
@@ -701,6 +702,217 @@
       line-height: 1.5;
       margin-top: 0.2rem;
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       TAB SHELL
+       Character Sheet Tab Redesign v1 — docs build spec, Aug 9 2026.
+       Pure scaffolding pass: bar + show/hide only. Only "Your Story"
+       carries real content today; Ability Scores/Inventory/Class are
+       placeholders until their own build slices land.
+       ══════════════════════════════════════════════════════════════ */
+    .cs-tabbar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      border-bottom: 1px solid var(--char-highlight-border);
+      overflow-x: auto;
+    }
+    .cs-tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.75rem 1rem;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--char-text-faint);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .cs-tab-btn:hover { color: var(--char-text-muted); }
+    .cs-tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .cs-tab-content[hidden] { display: none; }
+    .cs-tab-placeholder {
+      padding: 3rem 0;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      color: var(--char-text-faint);
+      font-style: italic;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       MAININFO — shared header (renders once, above the tab bar)
+       Figma 51:1385. Portrait/name/blurb are relocated, unchanged
+       logic; species paragraph, speaks block, conditions, inspiration,
+       AC badge, HP bar and death saves are new UI over existing data.
+       ══════════════════════════════════════════════════════════════ */
+    .cs-mi-species-desc,
+    .cs-mi-appearance {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.9rem;
+      line-height: var(--line-height);
+      color: var(--char-text-muted);
+    }
+    .cs-mi-speaks {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--char-card-bg-subtle);
+      border: 1px solid var(--char-accent-tint);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.75rem;
+      width: fit-content;
+    }
+    .cs-mi-speaks-glyph { font-size: 1.3rem; line-height: 1; }
+    .cs-mi-speaks-txt { display: flex; flex-direction: column; gap: 0.1rem; }
+    .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--text); }
+    .cs-mi-speaks-sub { font-family: var(--font-sans); font-size: 0.7rem; color: var(--char-text-faint); }
+
+    .cs-mi-conditions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+    .cs-mi-condition-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      border-radius: 20px;
+      padding: 0.2rem 0.5rem 0.2rem 0.7rem;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      color: var(--red);
+    }
+    .cs-mi-condition-remove {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0 0.15rem;
+    }
+    .cs-mi-condition-add {
+      background: none;
+      border: 1px dashed var(--char-accent-border);
+      border-radius: 20px;
+      padding: 0.2rem 0.65rem;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      color: var(--char-text-faint);
+      cursor: pointer;
+    }
+    .cs-mi-condition-add:hover { border-color: var(--gold-border); color: var(--gold-light); }
+    .cs-mi-condition-input-row { display: inline-flex; gap: 0.35rem; align-items: center; }
+    .cs-mi-condition-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--char-accent-border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      width: 130px;
+    }
+
+    .cs-mi-vitals { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .cs-mi-insp-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--char-card-bg-subtle);
+      border: 1px solid var(--char-accent-tint);
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--char-text-faint);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cs-mi-insp-toggle.active { color: var(--gold-text-on); background: var(--gold); border-color: var(--gold-border-mid); }
+    .cs-mi-insp-icon { font-size: 0.9rem; }
+
+    .cs-mi-hp-row { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    .cs-mi-hp-slot { flex: 1 1 260px; min-width: 220px; }
+    .cs-mi-hp-bar {
+      position: relative;
+      height: 30px;
+      border-radius: 8px;
+      background: rgba(180,60,60,0.15);
+      border: 1px solid rgba(180,60,60,0.35);
+      overflow: hidden;
+    }
+    .cs-mi-hp-bar-fill { height: 100%; background: linear-gradient(90deg, #b43c3c, #f87171); transition: width 0.25s ease; }
+    .cs-mi-hp-bar-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--white);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .cs-mi-hp-mod.positive { color: #6ecf6e; }
+    .cs-mi-hp-mod.negative { color: #f87171; }
+    .cs-mi-hp-controls { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
+    .cs-mi-hp-max-row { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.35rem; }
+
+    .cs-mi-temp-hp {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--blue-dim);
+      border: 1px solid var(--blue-border);
+      border-radius: 8px;
+      padding: 0.5rem 0.85rem;
+    }
+    .cs-mi-temp-hp-val { font-family: var(--font-serif); font-size: 1.3rem; color: var(--blue); }
+    .cs-mi-temp-hp-label { font-family: var(--font-sans); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--char-text-faint); }
+    .cs-mi-temp-hp-edit { background: none; border: none; color: var(--char-text-faint); font-size: 0.7rem; cursor: pointer; text-decoration: underline; }
+    .cs-mi-temp-hp-add {
+      background: none;
+      border: 1px dashed var(--char-accent-border);
+      border-radius: 8px;
+      padding: 0.5rem 0.85rem;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      color: var(--char-text-faint);
+      cursor: pointer;
+    }
+    .cs-mi-temp-hp-add:hover { border-color: var(--blue-border); color: var(--blue); }
+
+    .cs-mi-death-saves {
+      flex: 1 1 260px;
+      min-width: 220px;
+      background: var(--char-card-bg);
+      border: 1px solid var(--red-border);
+      border-radius: var(--char-radius);
+      padding: 0.85rem 1rem;
+    }
+    .cs-mi-ds-label {
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #f87171;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .cs-mi-ds-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.3rem; }
+    .cs-mi-ds-row-label { font-family: var(--font-sans); font-size: 0.72rem; color: var(--char-text-muted); width: 70px; }
+    .cs-mi-ds-pips { display: flex; gap: 0.4rem; }
+    .cs-mi-ds-pip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); background: none; cursor: pointer; padding: 0; }
+    .cs-mi-ds-pip--success.filled { background: #6ecf6e; border-color: #6ecf6e; }
+    .cs-mi-ds-pip--failure.filled { background: #f87171; border-color: #f87171; }
 
     @media (max-width: 900px) {
       .cs-ov-portrait { width: 100%; min-height: 340px; }
@@ -1898,6 +2110,17 @@
   var EQUIPPED_ITEMS = {}; // item_id → full item row from items table
   var ABILITY_SCORES = {}; // set from player_characters.ability_scores in renderCharacter()
   var CLASS_ROW  = null;   // classes table row for ch.class_id, once fetchClassData() resolves
+  var SPECIES_ROW = null;  // species table row for ch.species, once fetchSpeciesData() resolves
+  var LANGUAGE_ROW = null; // languages table row for ch.language_extra, once fetchLanguageData() resolves
+
+  // ── Tab shell ─────────────────────────────────────────────────────
+  var ACTIVE_TAB = 'story';
+  var TABS = [
+    { key:'story',     label:'Your Story' },
+    { key:'abilities', label:'Ability Scores' },
+    { key:'inventory', label:'Inventory' },
+    { key:'class',     label:'Class' }
+  ];
 
   // ── Lookup tables ─────────────────────────────────────────────────
   var TYPE_META = {
@@ -2008,11 +2231,6 @@
     fighter:'The Tested', monk:'The Still', wizard:'The Learned',
     sorcerer:'The Sparked', warlock:'The Bound', barbarian:'The Furious'
   };
-  var LANGUAGE_LABELS = {
-    'caparian-deep':'Caparian Deep', 'conclave-script':'Conclave Script',
-    'jugabi-canopy':'Jugabi Canopy', 'nombi-frost':'Nombi Frost',
-    'pre-partition':'Pre-Partition Script', 'sohot-old':'Sohot Old Tongue'
-  };
 
   // ── Helpers ───────────────────────────────────────────────────────
   function cap(str) { if (!str) return '—'; return str.charAt(0).toUpperCase() + str.slice(1); }
@@ -2114,7 +2332,8 @@
     var appearanceDesc = ch.appearance_prompt || buildAppearanceDesc(app) || null;
     var gearList       = buildGearList(app);
 
-    var overviewHtml = buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc);
+    var mainInfoHtml = buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc);
+    var overviewCardsHtml = buildOverviewCardsHtml(ch, typeKey, typeMeta, classDisplay, bgDisplay);
     var abilityScoresHtml = buildAbilityScoresHtml(scores, ch.feats);
 
     // Proficient skills — chosen from the class's skill list at Stage 2,
@@ -2168,26 +2387,35 @@
         + '<span>' + (item.label || 'Item') + ' <em style="color:var(--char-text-faint);">— ask your DM</em></span></div>';
     }).join('');
 
-    // Appearance chips
+    // Appearance chips (the appearance paragraph itself now lives in the
+    // shared MainInfo header — see buildMainInfoHtml())
     var chipSlots = ['height','build','age','skin_tone','face_shape','eye_color','eye_shape','hair_color','hair_style'];
     var chipsHtml = chipSlots.filter(function(k) { return app[k]; }).map(function(k) {
       return '<span class="cs-chip"><span class="cs-chip-label">' + k.replace(/_/g,' ') + '</span>'
         + cap((app[k]||'').replace(/-/g,' ')) + '</span>';
     }).join('');
 
-    // Assemble
-    main.innerHTML =
-      // Overview (portrait/money/weight + name/pills/blurb + alignment/
-      // background/gigglegloom/class cards) + Ability Scores — redesign,
-      // see buildOverviewHtml()/buildAbilityScoresHtml() below.
-      overviewHtml
+    // Tab bar — Tab Redesign v1. Only "Your Story" holds real content this
+    // pass; the other three are inert placeholders until their own build
+    // slices land (see docs build spec's suggested build order).
+    var tabBarHtml = '<div class="cs-tabbar" id="cs-tabbar">'
+      + TABS.map(function(t) {
+          return '<button class="cs-tab-btn" data-tab="' + t.key + '" onclick="setActiveTab(\'' + t.key + '\')">' + t.label + '</button>';
+        }).join('')
+      + '</div>';
+
+    // "Your Story" tab content — everything that isn't part of the shared
+    // header, unmoved from today's layout (Overview cards, Ability Scores,
+    // Appearance chips, Gear, Pending items, Your Past, Gold, Equipped,
+    // Inventory, Notes). Gets split across its real tabs in later slices.
+    var storyTabHtml =
+      overviewCardsHtml
       + abilityScoresHtml
 
-      // Appearance
-      + (appearanceDesc || chipsHtml ? (
+      // Appearance (chips only now — paragraph moved to MainInfo)
+      + (chipsHtml ? (
           '<div class="cs-section"><div class="cs-section-label">Appearance</div>'
-          + (appearanceDesc ? '<div class="cs-appearance-block">' + appearanceDesc + '</div>' : '')
-          + (chipsHtml ? '<div class="cs-appearance-chips">' + chipsHtml + '</div>' : '')
+          + '<div class="cs-appearance-chips">' + chipsHtml + '</div>'
           + '</div>'
         ) : '')
 
@@ -2210,12 +2438,7 @@
       + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>'
 
       // ── Live-play sections (populated by renderLivePlay) ──────────
-
-      // HP
-      + '<div class="cs-section" id="cs-hp-section">'
-        + '<div class="cs-section-label">Hit Points</div>'
-        + '<div class="cs-hp-block" id="cs-hp-block"></div>'
-      + '</div>'
+      // HP now renders in the shared MainInfo header — see cs-mi-hp-slot.
 
       // Gold
       + '<div class="cs-section" id="cs-gold-section">'
@@ -2270,9 +2493,35 @@
 
       + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
 
+    // Assemble — MainInfo (shared, once) + tab bar + one content block per tab
+    main.innerHTML =
+      mainInfoHtml
+      + tabBarHtml
+      + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
+      + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden><div class="cs-tab-placeholder">Ability Scores tab — coming soon.</div></div>'
+      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden><div class="cs-tab-placeholder">Inventory tab — coming soon.</div></div>'
+      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden><div class="cs-tab-placeholder">Class tab — coming soon.</div></div>';
+
+    ACTIVE_TAB = 'story';
+    updateTabUI();
+
     // Footer + title
     document.getElementById('cs-footer').textContent = '✦ · Anavale · ' + (ch.name||'') + ' · Level ' + (ch.level||1) + ' · ✦';
     document.title = (ch.name||'Character') + ' — Anavale';
+  }
+
+  // ── Tab shell ─────────────────────────────────────────────────────
+  function setActiveTab(tabKey) {
+    ACTIVE_TAB = tabKey;
+    updateTabUI();
+  }
+  function updateTabUI() {
+    document.querySelectorAll('.cs-tab-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.tab === ACTIVE_TAB);
+    });
+    document.querySelectorAll('.cs-tab-content').forEach(function(el) {
+      el.hidden = el.dataset.tabContent !== ACTIVE_TAB;
+    });
   }
 
   // ── Overview + Ability Scores (redesign) ───────────────────────────
@@ -2357,24 +2606,24 @@
     return '<div class="cs-ov-summary-card">' + body + '</div>';
   }
 
-  function buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc) {
-    var alignKey = (ch.alignment || '').toLowerCase();
-    var bgKey    = (ch.background_id || '').toLowerCase();
-    var classKey = (ch.class_id || '').toLowerCase();
+  // ── MainInfo — shared header (Figma 51:1385), renders once above the
+  // tab bar and is reused across all four tabs (not duplicated per tab). ──
+  function buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc) {
+    var classKey   = (ch.class_id || '').toLowerCase();
+    var alignKey   = (ch.alignment || '').toLowerCase();
+    var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
+    var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey) };
     var speciesKey = (ch.species || '').toLowerCase();
 
-    // Pills — age category (§4: category, not a number), gender, species (+PHB
-    // equivalent), home region, language. Only fields that exist are shown.
+    // Pills — age category, gender, species (+PHB equivalent), home region.
+    // Language moved out to its own "Speaks" block below (new UI, joins the
+    // languages table rather than the static LANGUAGE_LABELS mirror).
     var idBits = [];
     if (app.age) idBits.push(cap(app.age));
     if (ch.gender) idBits.push(cap(ch.gender));
     idBits.push(speciesDisplay + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : ''));
     var pills = ['<span class="cs-ov-pill">' + idBits.join(', ') + '</span>'];
     if (regionLabel && regionLabel !== '—') pills.push('<span class="cs-ov-pill">from ' + regionLabel + '</span>');
-    if (ch.language_extra) {
-      var langLabel = LANGUAGE_LABELS[ch.language_extra] || cap((ch.language_extra + '').replace(/-/g, ' '));
-      pills.push('<span class="cs-ov-pill">Speaks ' + langLabel + '</span>');
-    }
     var pillsHtml = pills.join('');
 
     // Blurb — species + class's Gigglegloom-flavor name + type + region,
@@ -2388,6 +2637,52 @@
     }
     if (ALIGNMENT_TRAIT_SENTENCE[alignKey]) blurbParts.push(ALIGNMENT_TRAIT_SENTENCE[alignKey]);
     var blurbHtml = blurbParts.length ? '<p class="cs-ov-blurb">' + blurbParts.join(' ') + '</p>' : '';
+
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-ov-maininfo">'
+        + '<div class="cs-ov-portrait">'
+          + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
+          + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
+          + '<div class="cs-ov-money-row">'
+            + '<div class="cs-ov-money-cell cs-ov-money-cell--copper"><div class="cs-ov-money-label">Copper</div><input class="cs-ov-money-input" id="cs-ov-cp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
+            + '<div class="cs-ov-money-cell cs-ov-money-cell--silver"><div class="cs-ov-money-label">Silver</div><input class="cs-ov-money-input" id="cs-ov-sp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
+            + '<div class="cs-ov-money-cell cs-ov-money-cell--gold"><div class="cs-ov-money-label">Gold</div><input class="cs-ov-money-input" id="cs-ov-gp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
+          + '</div>'
+          + '<div class="cs-ov-weight" id="cs-ov-weight">'
+            + '<div class="cs-ov-weight-fill" id="cs-ov-weight-fill" style="width:0%;"></div>'
+            + '<div class="cs-ov-weight-label"><span class="cs-ov-weight-icon">&#9878;</span><span id="cs-ov-weight-nums">0 / 0 LBS</span></div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="cs-ov-info">'
+          + '<div class="cs-ov-main">'
+            + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
+            + '<div class="cs-ov-pills">' + pillsHtml + '</div>'
+            + blurbHtml
+          + '</div>'
+          + (speciesDisplay ? '<div class="cs-mi-species-desc" id="cs-mi-species-desc"></div>' : '')
+          + (appearanceDesc ? '<div class="cs-mi-appearance">' + appearanceDesc + '</div>' : '')
+          + '<div class="cs-mi-speaks" id="cs-mi-speaks" style="display:none;"></div>'
+          + '<div class="cs-mi-conditions" id="cs-mi-conditions"></div>'
+          + '<div class="cs-mi-vitals">'
+            + '<div class="cs-equipped-ac-badge cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip="">AC —</div>'
+            + '<div class="cs-mi-inspiration" id="cs-mi-inspiration"></div>'
+          + '</div>'
+          + '<div class="cs-mi-hp-row">'
+            + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
+            + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+    + '</div></div>';
+  }
+
+  // ── Overview cards (alignment / background / gigglegloom / class /
+  // summary) — still "Your Story" tab content for this pass; will move to
+  // their real tabs (Class, Your Story > Your Background) in later slices. ──
+  function buildOverviewCardsHtml(ch, typeKey, typeMeta, classDisplay, bgDisplay) {
+    var alignKey = (ch.alignment || '').toLowerCase();
+    var bgKey    = (ch.background_id || '').toLowerCase();
+    var classKey = (ch.class_id || '').toLowerCase();
 
     // Overview cards — alignment / background / gigglegloom. No invented
     // flavor text: PHB-equivalent subtitles come from real lookups; a
@@ -2446,37 +2741,15 @@
     var summaryCardHtml = buildSummaryCardHtml(ch.summary);
 
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
-      + '<div class="cs-ov-maininfo">'
-        + '<div class="cs-ov-portrait">'
-          + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
-          + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
-          + '<div class="cs-ov-money-row">'
-            + '<div class="cs-ov-money-cell cs-ov-money-cell--copper"><div class="cs-ov-money-label">Copper</div><input class="cs-ov-money-input" id="cs-ov-cp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
-            + '<div class="cs-ov-money-cell cs-ov-money-cell--silver"><div class="cs-ov-money-label">Silver</div><input class="cs-ov-money-input" id="cs-ov-sp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
-            + '<div class="cs-ov-money-cell cs-ov-money-cell--gold"><div class="cs-ov-money-label">Gold</div><input class="cs-ov-money-input" id="cs-ov-gp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
-          + '</div>'
-          + '<div class="cs-ov-weight" id="cs-ov-weight">'
-            + '<div class="cs-ov-weight-fill" id="cs-ov-weight-fill" style="width:0%;"></div>'
-            + '<div class="cs-ov-weight-label"><span class="cs-ov-weight-icon">&#9878;</span><span id="cs-ov-weight-nums">0 / 0 LBS</span></div>'
-          + '</div>'
-        + '</div>'
-        + '<div class="cs-ov-info">'
-          + '<div class="cs-ov-main">'
-            + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
-            + '<div class="cs-ov-pills">' + pillsHtml + '</div>'
-            + blurbHtml
-          + '</div>'
-          + '<div class="cs-ov-acc" id="cs-ov-acc-overview">'
-            + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-overview\')">'
-              + '<span class="cs-ov-acc-title">Overview</span>'
-              + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
-            + '</button>'
-            + '<div class="cs-ov-acc-body">'
-              + '<div class="cs-ov-cards">' + alignCard + bgCard + ggCard + '</div>'
-              + classCard
-              + summaryCardHtml
-            + '</div>'
-          + '</div>'
+      + '<div class="cs-ov-acc" id="cs-ov-acc-overview">'
+        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-overview\')">'
+          + '<span class="cs-ov-acc-title">Overview</span>'
+          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+        + '</button>'
+        + '<div class="cs-ov-acc-body">'
+          + '<div class="cs-ov-cards">' + alignCard + bgCard + ggCard + '</div>'
+          + classCard
+          + summaryCardHtml
         + '</div>'
       + '</div>'
     + '</div></div>';
@@ -2537,62 +2810,145 @@
 
   // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
   function renderLivePlay() {
-    renderHP();
+    renderHeaderHP();
     renderEquipped();
     renderGold();
     renderOverviewMoney();
     renderInventory();
     renderNotes();
     renderPhoto();
+    renderConditions();
+    renderInspiration();
   }
 
-  // ── HP ────────────────────────────────────────────────────────────
-  function renderHP() {
-    var block  = document.getElementById('cs-hp-block');
-    if (!block) return;
-    var hpCur     = SHEET ? SHEET.hp_current : '—';
-    var hpMaxBase = SHEET ? SHEET.hp_max : 0;
-    var hpModifier = SHEET ? (SHEET.hp_max_modifier || 0) : 0;
+  // ── HP (MainInfo header) ────────────────────────────────────────────
+  // Current/Max HP math is unchanged from the old cs-hp-section (see
+  // adjustHP/setMaxHPModifier below) — only the display moved into the
+  // shared header, as a bar instead of three cells, per the Tab Redesign
+  // v1 spec. Two new behaviors layered on top: Temp HP is a plain badge
+  // that hides entirely at 0/null (5e has no "max temp HP"), and at 0
+  // Current HP the bar is replaced in-place by a death-save tracker.
+  function renderHeaderHP() {
+    var slot = document.getElementById('cs-mi-hp-slot');
+    var tempEl = document.getElementById('cs-mi-temp-hp');
+    if (!slot) return;
+    var hpCur = SHEET ? (parseInt(SHEET.hp_current) || 0) : 0;
+    var hpMaxBase = SHEET ? (parseInt(SHEET.hp_max) || 0) : 0;
+    var hpModifier = SHEET ? (parseInt(SHEET.hp_max_modifier) || 0) : 0;
     var hpMaxEffective = hpMaxBase + hpModifier;
-    var hpTemp    = SHEET ? (SHEET.hp_temp || 0) : 0;
-    block.innerHTML =
-      '<div class="cs-hp-cell cs-hp-cell--current">'
-        + '<div class="cs-hp-label">Current HP</div>'
-        + '<div class="cs-hp-val" id="cs-hp-current">' + hpCur + '</div>'
-        + '<div class="cs-hp-controls">'
+    var hpTemp = SHEET ? (parseInt(SHEET.hp_temp) || 0) : 0;
+
+    if (SHEET && hpCur <= 0) {
+      // Still need a way to heal back up from 0 — the bar (and its −/+/Apply
+      // controls) is gone in this branch, so keep a minimal heal input here.
+      // Any positive Apply crosses back above 0 and swaps the bar back in.
+      slot.innerHTML = renderDeathSavesHtml()
+        + '<div class="cs-mi-hp-controls">'
+          + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="+HP">'
+          + '<button class="cs-hp-apply" onclick="applyHPDelta()">Heal</button>'
+        + '</div>';
+    } else {
+      var pct = hpMaxEffective > 0 ? Math.max(0, Math.min(100, (hpCur / hpMaxEffective) * 100)) : 0;
+      slot.innerHTML =
+        '<div class="cs-mi-hp-bar">'
+          + '<div class="cs-mi-hp-bar-fill" style="width:' + pct + '%;"></div>'
+          + '<div class="cs-mi-hp-bar-label">' + hpCur + ' / ' + hpMaxEffective + ' HP'
+            + (hpModifier !== 0 ? ' <span class="cs-mi-hp-mod ' + (hpModifier > 0 ? 'positive' : 'negative') + '">(' + (hpModifier > 0 ? '+' : '') + hpModifier + ')</span>' : '')
+          + '</div>'
+        + '</div>'
+        + '<div class="cs-mi-hp-controls">'
           + '<button class="cs-hp-btn" onclick="adjustHP(-1)" title="−1">−</button>'
           + '<button class="cs-hp-btn" onclick="adjustHP(1)"  title="+1">+</button>'
-        + '</div>'
-        + '<div class="cs-hp-input-row">'
           + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="±">'
           + '<button class="cs-hp-apply" onclick="applyHPDelta()">Apply</button>'
         + '</div>'
-      + '</div>'
-      + '<div class="cs-hp-cell">'
-        + '<div class="cs-hp-label">Max HP</div>'
-        + '<div class="cs-hp-val">' + hpMaxEffective + (hpModifier !== 0 ? ' <span style="font-size:0.7rem;color:' + (hpModifier > 0 ? '#6ecf6e' : '#f87171') + ';">(' + (hpModifier > 0 ? '+' : '') + hpModifier + ')</span>' : '') + '</div>'
-        + '<div class="cs-hp-input-row">'
+        + '<div class="cs-mi-hp-max-row">'
           + '<input class="cs-hp-input" id="cs-hp-max-modifier" type="number" placeholder="±" title="Temporary max HP change from a status effect">'
-          + '<button class="cs-hp-apply" onclick="setMaxHPModifier()">Set</button>'
-        + '</div>'
-      + '</div>'
-      + '<div class="cs-hp-cell">'
-        + '<div class="cs-hp-label">Temp HP</div>'
-        + '<div class="cs-hp-val" id="cs-hp-temp">' + hpTemp + '</div>'
-        + '<div class="cs-hp-input-row">'
-          + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="0">'
-          + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
-        + '</div>'
-      + '</div>';
+          + '<button class="cs-hp-apply" onclick="setMaxHPModifier()">Set Max Mod</button>'
+        + '</div>';
+    }
+
+    if (tempEl) {
+      if (hpTemp > 0) {
+        tempEl.innerHTML =
+          '<span class="cs-mi-temp-hp-val">+' + hpTemp + '</span>'
+          + '<span class="cs-mi-temp-hp-label">Temp HP</span>'
+          + '<button class="cs-mi-temp-hp-edit" onclick="showTempHPInput()">Edit</button>'
+          + '<span class="cs-mi-temp-hp-input-row" id="cs-mi-temp-hp-input-row" style="display:none;">'
+            + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="0">'
+            + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
+          + '</span>';
+      } else {
+        tempEl.innerHTML =
+          '<button class="cs-mi-temp-hp-add" onclick="showTempHPInput()">+ Temp HP</button>'
+          + '<span class="cs-mi-temp-hp-input-row" id="cs-mi-temp-hp-input-row" style="display:none;">'
+            + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="0">'
+            + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
+          + '</span>';
+      }
+    }
+  }
+
+  function showTempHPInput() {
+    var row = document.getElementById('cs-mi-temp-hp-input-row');
+    if (!row) return;
+    row.style.display = 'inline-flex';
+    var input = document.getElementById('cs-hp-temp-input');
+    if (input) input.focus();
+  }
+
+  // ── Death saves (MainInfo header, new) — swaps in for the HP bar in the
+  // same slot when Current HP is 0. Clicking a filled pip un-fills it and
+  // everything after it (standard 5e tracker behavior). ──
+  function renderDeathSavesHtml() {
+    var succ = SHEET ? (parseInt(SHEET.death_save_successes) || 0) : 0;
+    var fail = SHEET ? (parseInt(SHEET.death_save_failures) || 0) : 0;
+    var succPips = [1,2,3].map(function(i) {
+      return '<button class="cs-mi-ds-pip cs-mi-ds-pip--success' + (i <= succ ? ' filled' : '') + '" onclick="toggleDeathSaveSuccess(' + i + ')" aria-label="Death save success ' + i + '"></button>';
+    }).join('');
+    var failPips = [1,2,3].map(function(i) {
+      return '<button class="cs-mi-ds-pip cs-mi-ds-pip--failure' + (i <= fail ? ' filled' : '') + '" onclick="toggleDeathSaveFailure(' + i + ')" aria-label="Death save failure ' + i + '"></button>';
+    }).join('');
+    return '<div class="cs-mi-death-saves">'
+      + '<div class="cs-mi-ds-label">Death Saves — 0 HP</div>'
+      + '<div class="cs-mi-ds-row"><span class="cs-mi-ds-row-label">Success</span><span class="cs-mi-ds-pips">' + succPips + '</span></div>'
+      + '<div class="cs-mi-ds-row"><span class="cs-mi-ds-row-label">Failure</span><span class="cs-mi-ds-pips">' + failPips + '</span></div>'
+    + '</div>';
+  }
+  function toggleDeathSaveSuccess(i) {
+    if (!SHEET) return;
+    var cur = parseInt(SHEET.death_save_successes) || 0;
+    var next = (cur === i) ? i - 1 : i;
+    SHEET.death_save_successes = next;
+    saveSheet({ death_save_successes: next });
+    renderHeaderHP();
+  }
+  function toggleDeathSaveFailure(i) {
+    if (!SHEET) return;
+    var cur = parseInt(SHEET.death_save_failures) || 0;
+    var next = (cur === i) ? i - 1 : i;
+    SHEET.death_save_failures = next;
+    saveSheet({ death_save_failures: next });
+    renderHeaderHP();
   }
 
   function adjustHP(delta) {
     if (!SHEET) return;
     var cur = parseInt(SHEET.hp_current) || 0;
     var maxEffective = (parseInt(SHEET.hp_max) || 0) + (parseInt(SHEET.hp_max_modifier) || 0);
-    SHEET.hp_current = Math.max(0, Math.min(maxEffective, cur + delta));
-    document.getElementById('cs-hp-current').textContent = SHEET.hp_current;
-    saveSheet({ hp_current: SHEET.hp_current });
+    var next = Math.max(0, Math.min(maxEffective, cur + delta));
+    SHEET.hp_current = next;
+    var patch = { hp_current: next };
+    // Healing from 0 clears death saves — 5e rule, and required for the
+    // header's bar/death-save swap to make sense next time HP hits 0.
+    if (cur <= 0 && next > 0) {
+      SHEET.death_save_successes = 0;
+      SHEET.death_save_failures = 0;
+      patch.death_save_successes = 0;
+      patch.death_save_failures = 0;
+    }
+    saveSheet(patch);
+    renderHeaderHP();
   }
   function setTempHP() {
     if (!SHEET) return;
@@ -2602,7 +2958,7 @@
     SHEET.hp_temp = val;
     saveSheet({ hp_temp: val });
     input.value = '';
-    renderHP();
+    renderHeaderHP();
   }
   function setMaxHPModifier() {
     if (!SHEET) return;
@@ -2612,7 +2968,7 @@
     SHEET.hp_max_modifier = val;
     saveSheet({ hp_max_modifier: val });
     input.value = '';
-    renderHP();
+    renderHeaderHP();
   }
 
   function applyHPDelta() {
@@ -2622,6 +2978,99 @@
     if (!delta) return;
     adjustHP(delta);
     input.value = '';
+  }
+
+  // ── Conditions (MainInfo header, new) ───────────────────────────────
+  function renderConditions() {
+    var el = document.getElementById('cs-mi-conditions');
+    if (!el) return;
+    var conditions = (SHEET && Array.isArray(SHEET.conditions)) ? SHEET.conditions : [];
+    el.innerHTML = conditions.map(function(c, i) {
+      return '<span class="cs-mi-condition-pill">' + escHtml(c)
+        + '<button class="cs-mi-condition-remove" onclick="removeCondition(' + i + ')" aria-label="Remove ' + escHtml(c) + '">&times;</button></span>';
+    }).join('')
+    + '<button class="cs-mi-condition-add" onclick="showAddConditionInput()">+ Add</button>'
+    + '<span class="cs-mi-condition-input-row" id="cs-mi-condition-input-row" style="display:none;">'
+      + '<input class="cs-mi-condition-input" id="cs-mi-condition-input" type="text" placeholder="Condition" onkeydown="if(event.key===\'Enter\')addCondition()">'
+      + '<button class="cs-hp-apply" onclick="addCondition()">Add</button>'
+    + '</span>';
+  }
+  function showAddConditionInput() {
+    var row = document.getElementById('cs-mi-condition-input-row');
+    if (!row) return;
+    row.style.display = 'inline-flex';
+    var input = document.getElementById('cs-mi-condition-input');
+    if (input) input.focus();
+  }
+  function addCondition() {
+    var input = document.getElementById('cs-mi-condition-input');
+    var val = (input.value || '').trim();
+    if (!val || !SHEET) return;
+    var conditions = Array.isArray(SHEET.conditions) ? SHEET.conditions.slice() : [];
+    conditions.push(val);
+    SHEET.conditions = conditions;
+    saveSheet({ conditions: conditions });
+    input.value = '';
+    renderConditions();
+  }
+  function removeCondition(idx) {
+    if (!SHEET || !Array.isArray(SHEET.conditions)) return;
+    var conditions = SHEET.conditions.slice();
+    conditions.splice(idx, 1);
+    SHEET.conditions = conditions;
+    saveSheet({ conditions: conditions });
+    renderConditions();
+  }
+
+  // ── Inspiration (MainInfo header, new) ──────────────────────────────
+  function renderInspiration() {
+    var el = document.getElementById('cs-mi-inspiration');
+    if (!el) return;
+    var on = !!(SHEET && SHEET.has_inspiration);
+    el.innerHTML = '<button class="cs-mi-insp-toggle' + (on ? ' active' : '') + '" onclick="toggleInspiration()">'
+      + '<span class="cs-mi-insp-icon">&#10022;</span> Inspiration — ' + (on ? 'On' : 'Off') + '</button>';
+  }
+  function toggleInspiration() {
+    if (!SHEET) return;
+    SHEET.has_inspiration = !SHEET.has_inspiration;
+    saveSheet({ has_inspiration: SHEET.has_inspiration });
+    renderInspiration();
+  }
+
+  // ── Species / Speaks (MainInfo header, new) ─────────────────────────
+  function fetchSpeciesData(ch) {
+    if (!ch.species) { renderSpeciesDesc(); return Promise.resolve(); }
+    return sb.from('species').select('*').eq('id', ch.species).maybeSingle()
+      .then(function(res) {
+        if (!res.error && res.data) SPECIES_ROW = res.data;
+        renderSpeciesDesc();
+      })
+      .catch(function() { renderSpeciesDesc(); });
+  }
+  function renderSpeciesDesc() {
+    var el = document.getElementById('cs-mi-species-desc');
+    if (!el) return;
+    var desc = SPECIES_ROW && SPECIES_ROW.description;
+    el.textContent = desc || '';
+    el.style.display = desc ? '' : 'none';
+  }
+  function fetchLanguageData(ch) {
+    if (!ch.language_extra) { renderSpeaksBlock(); return Promise.resolve(); }
+    return sb.from('languages').select('*').eq('id', ch.language_extra).maybeSingle()
+      .then(function(res) {
+        if (!res.error && res.data) LANGUAGE_ROW = res.data;
+        renderSpeaksBlock();
+      })
+      .catch(function() { renderSpeaksBlock(); });
+  }
+  function renderSpeaksBlock() {
+    var el = document.getElementById('cs-mi-speaks');
+    if (!el) return;
+    if (!LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.innerHTML = '<span class="cs-mi-speaks-glyph" style="color:' + (LANGUAGE_ROW.color || 'inherit') + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
+      + '<span class="cs-mi-speaks-txt"><span class="cs-mi-speaks-name">' + escHtml(LANGUAGE_ROW.name || '') + '</span>'
+      + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '') + '</span>';
   }
 
   // ── Gold ──────────────────────────────────────────────────────────
@@ -2698,10 +3147,9 @@
     if (isTwoHanded && EQUIPPED.hand_left) {
       autoUnequipOffHandForTwoHanded();
     }
-    block.innerHTML = renderEquippedAC()
+    block.innerHTML = computeWeaponDamageHtml()
       + '<div class="cs-equipped-grid">' + EQUIP_SLOTS.map(function(slot) { return renderEquippedSlot(slot, isTwoHanded); }).join('') + '</div>';
-    var badge = block.querySelector('.cs-equipped-ac-badge');
-    if (badge) wireTooltip(badge);
+    renderACBadge();
   }
   // Clears Off Hand when Main Hand holds/gains a two-handed weapon — covers
   // both directions (equipping two-handed while Off Hand is occupied, and
@@ -2721,7 +3169,10 @@
     return '<span class="cs-equipped-damage-dice">' + item.damage_dice + '</span>'
       + (item.damage_type ? ' <span class="cs-equipped-damage-type">' + item.damage_type + '</span>' : '');
   }
-  function renderEquippedAC() {
+  // AC math is unchanged from the old renderEquippedAC() — factored into a
+  // pure computeAC() so the badge can render in the MainInfo header
+  // (cs-mi-ac-badge) instead of the Equipped section, with no logic change.
+  function computeAC() {
     var dexRaw = parseInt(ABILITY_SCORES.dex) || 10;
     var dexMod = Math.floor((dexRaw - 10) / 2);
     var armor  = EQUIPPED.armor  ? EQUIPPED_ITEMS[EQUIPPED.armor]  : null;
@@ -2761,19 +3212,26 @@
         breakdown.push(shield.magic_bonus + ' shield enchantment');
       }
     }
-    var tip = breakdown.join(' + ') + ' = ' + ac;
-
+    return { ac: ac, tip: breakdown.join(' + ') + ' = ' + ac };
+  }
+  function computeWeaponDamageHtml() {
     var mainHand = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
     var offHand  = EQUIPPED.hand_left  ? EQUIPPED_ITEMS[EQUIPPED.hand_left]  : null;
     var dmgParts = [];
     if (mainHand && mainHand.damage_dice) dmgParts.push(buildWeaponDamageHtml(mainHand));
     if (offHand && offHand.damage_dice) dmgParts.push(buildWeaponDamageHtml(offHand));
-    var dmgHtml = dmgParts.length
+    return dmgParts.length
       ? '<span class="cs-equipped-damage-sep">&#9876;</span><span class="cs-equipped-damage">'
         + dmgParts.join('<span class="cs-equipped-damage-slash"> / </span>') + '</span>'
       : '';
-
-    return '<div class="cs-equipped-ac-badge" data-tip="' + tip.replace(/"/g,'&quot;') + '">AC ' + ac + '</div>' + dmgHtml;
+  }
+  function renderACBadge() {
+    var el = document.getElementById('cs-mi-ac-badge');
+    if (!el) return;
+    var r = computeAC();
+    el.setAttribute('data-tip', r.tip.replace(/"/g,'&quot;'));
+    el.textContent = 'AC ' + r.ac;
+    wireTooltip(el);
   }
   function renderEquippedStat(labelText, value, fullRow) {
     return '<div class="cs-equipped-stat"' + (fullRow ? ' style="grid-column:1/-1;"' : '') + '>'
@@ -3875,16 +4333,20 @@
         if (res.error) { console.warn('Sheet fetch error:', res.error); return; }
         if (res.data) {
           SHEET = res.data;
+          // HP always tracks the character's current CON/feats/level (AC already
+          // does this live, on every render — see renderEquippedAC()). A CON
+          // change moves hp_current by the same delta as hp_max, per the 5e rule.
+          var patch = reconcileHp(SHEET, ch, CLASS_ROW);
+          if (patch) {
+            SHEET.hp_max = patch.hp_max;
+            SHEET.hp_current = patch.hp_current;
+            SHEET.hp_con_mod_cached = patch.hp_con_mod_cached;
+            return sb.from('character_sheet').update(patch).eq('character_id', CHAR_ID)
+              .then(function(upd) { if (upd.error) console.warn('HP reconcile save error:', upd.error); });
+          }
         } else {
           // First load: create row with HP from player_characters
-          var scores = (typeof ch.ability_scores === 'object' && ch.ability_scores) ? ch.ability_scores : {};
-          var conMod = Math.floor(((parseInt(scores.con) || 10) - 10) / 2);
-          // Derive hit die from class_id — basic mapping
-          var hitDie = { barbarian:12, fighter:10, paladin:10, ranger:10, monk:8, druid:8,
-                         cleric:8, rogue:8, bard:8, warlock:8, wizard:6, sorcerer:6 };
-          // Tough (a background feat) adds +2 HP per level, including level 1
-          var toughHp = (Array.isArray(ch.feats) && ch.feats.indexOf('Tough') >= 0) ? 2 * (ch.level || 1) : 0;
-          var hpMax  = (hitDie[ch.class_id] || 8) + conMod + toughHp;
+          var computed = computeHpBase(ch, CLASS_ROW);
           // Starting gold = real background gold, minus what was spent shopping
           // during creation (Stage 4), plus any imagined-past gold bonus.
           // Fallback of 10 matches the most common real background value.
@@ -3893,7 +4355,8 @@
             + (parseInt(ch.starting_gold_bonus_cp) || 0);
           var newRow = {
             character_id: CHAR_ID, token: TOKEN,
-            hp_max: hpMax, hp_current: hpMax, hp_temp: 0,
+            hp_max: computed.hpBase, hp_current: computed.hpBase, hp_temp: 0,
+            hp_con_mod_cached: computed.conMod,
             gold_cp: Math.max(0, startingGoldCp),
             proficiency_bonus: 2
           };
@@ -4033,11 +4496,12 @@
 
         // 3. Fetch live-play data in parallel, then render all at once
         Promise.all([
-          fetchOrCreateSheet(ch).then(function() { return fetchEquipped(ch); }),
+          fetchClassData(ch).then(function() { return fetchOrCreateSheet(ch); }).then(function() { return fetchEquipped(ch); }),
+          fetchSpeciesData(ch),
+          fetchLanguageData(ch),
           fetchInventory(),
           fetchNotes(),
-          fetchPhoto(),
-          fetchClassData(ch)
+          fetchPhoto()
         ]).then(function() {
           renderLivePlay();
         }).catch(function(err) {

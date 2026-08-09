@@ -3827,6 +3827,7 @@
 <script src="data/organizations.js"></script>
 <script src="data/items.js"></script>
 <script src="data/quests.js"></script>
+<script src="js/hp-calc.js"></script>
 <script>
 // ── SUPABASE LIVE SYNC — DM Tools ────────────────────────────────
 // Fetches live world data from Supabase after static files load.
@@ -10312,9 +10313,29 @@ function sccLoadPlayers() {
     SCC_PLAYERS = Array.isArray(rows) ? rows : [];
     var ids = SCC_PLAYERS.map(function(p) { return p.id; });
     if (!ids.length) { sccRenderPlayerBar(); return; }
-    sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')').then(function(sheets) {
+    Promise.all([
+      sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')'),
+      sccFetch('classes', '')
+    ]).then(function(results) {
+      var sheets = results[0], classes = results[1];
       SCC_SHEETS = {};
       (Array.isArray(sheets) ? sheets : []).forEach(function(s) { SCC_SHEETS[s.character_id] = s; });
+      var classById = {};
+      (Array.isArray(classes) ? classes : []).forEach(function(c) { classById[c.id] = c; });
+      // HP always tracks the character's current CON/feats/level, same rule
+      // as sheet/index.html's fetchOrCreateSheet() — keeps this bar from
+      // drifting from the player's own sheet (AC has no such state to drift).
+      SCC_PLAYERS.forEach(function(p) {
+        var sheet = SCC_SHEETS[p.id];
+        if (!sheet) return;
+        var patch = reconcileHp(sheet, p, classById[p.class_id]);
+        if (patch) {
+          sheet.hp_max = patch.hp_max;
+          sheet.hp_current = patch.hp_current;
+          sheet.hp_con_mod_cached = patch.hp_con_mod_cached;
+          sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(p.id), patch);
+        }
+      });
       sccRenderPlayerBar();
     });
   }).catch(function() { sccRenderPlayerBar(); });
