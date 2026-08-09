@@ -10272,7 +10272,8 @@ function sccInit() {
     sccFetch('creatures').then(function(rows) { if (Array.isArray(rows) && rows.length) window.CREATURES = rows; }),
     sccFetch('quests').then(function(rows) { if (Array.isArray(rows) && rows.length) window.QUESTS = rows; }),
     sccFetch('species', '&order=sort_order.asc').then(function(rows) { window.SPECIES = Array.isArray(rows) ? rows : []; }),
-    sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; })
+    sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; }),
+    sccFetch('conditions', '&order=sort_order.asc').then(function(rows) { window.SCC_CONDITIONS_DATA = Array.isArray(rows) ? rows : []; })
   ]).then(function() {
     sccLoadPlayers();
     sccLoadLatestSession();
@@ -10495,7 +10496,7 @@ function sccLiveSetHp(playerId, rawVal) {
   sccRenderPlayerBar();
 }
 // ── Conditions ──
-var SCC_CONDITIONS_LIST = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious','Fading Stage 1','Color-Drained'];
+var SCC_CONDITIONS_LIST = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious','Fading Stage 1','Color-Drained','Muted'];
 function sccLiveRenderConditions() {
   var el = document.getElementById('scc-live-conditions');
   if (!el) return;
@@ -10517,10 +10518,21 @@ function sccLiveRenderConditions() {
     'Stunned':       { bg:'rgba(239,68,68,0.2)',    border:'rgba(239,68,68,0.4)',    text:'#f87171', tip:'Incapacitated. Can\'t move. Auto-fail STR/DEX saves. Attacks against: advantage.' },
     'Unconscious':   { bg:'rgba(30,27,75,0.4)',     border:'rgba(99,102,241,0.3)',   text:'#6366f1', tip:'Incapacitated, can\'t move/speak. Drops items, falls prone. Auto-fail STR/DEX saves. Attacks against: advantage + auto-crit if within 5 ft.' }
   };
+  // Anavale-specific conditions (Fading Stage 1, Color-Drained, Muted, ...)
+  // aren't in the hardcoded table above — pulled from Supabase's
+  // `conditions` table instead (fetched once in sccInit()) rather than
+  // hardcoding a third copy of this data here.
+  function sccConditionsTableLookup(c) {
+    var rows = window.SCC_CONDITIONS_DATA || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].name === c) return { bg: rows[i].color_bg, border: rows[i].color_border, text: rows[i].color_text, tip: rows[i].tip };
+    }
+    return null;
+  }
   el.innerHTML = SCC_PLAYERS.map(function(p) {
     var conds = SCC_LIVE_CONDITIONS[p.id] || [];
     var chips = conds.map(function(c) {
-      var d = COND_DATA[c] || { bg:'rgba(192,132,252,0.1)', border:'rgba(192,132,252,0.25)', text:'#c084fc', tip:c };
+      var d = COND_DATA[c] || sccConditionsTableLookup(c) || { bg:'rgba(192,132,252,0.1)', border:'rgba(192,132,252,0.25)', text:'#c084fc', tip:c };
       var tipText = d.tip + ' \u2022 Click to remove';
       return '<span class="scc-live-cond-tag"'
         + ' style="--cond-bg:' + d.bg + ';--cond-border:' + d.border + ';--cond-text:' + d.text + '"'
