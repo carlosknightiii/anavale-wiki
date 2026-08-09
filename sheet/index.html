@@ -591,6 +591,51 @@
       min-width: 0;
     }
 
+    /* ── Class tab — Key Features (Figma 52:2705/52:2710) ──────────────
+       Alternating row shading is pure CSS nth-child, no data dependency. */
+    .cs-class-features-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+      margin: var(--char-ov-gap-s) 0 var(--char-ov-gap-2xs);
+    }
+    .cs-class-features {
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .cs-class-feature-row {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--char-ov-gap-2xs);
+      padding: 0.65rem var(--char-ov-gap-2xs);
+    }
+    .cs-class-feature-row:nth-child(even) { background: var(--blue-500); }
+    .cs-class-feature-icon { font-size: 1.1rem; line-height: 1.4; flex-shrink: 0; }
+    .cs-class-feature-txt { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+    .cs-class-feature-name {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+    .cs-class-feature-level {
+      margin-left: 0.5rem;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .cs-class-feature-desc {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.86rem;
+      color: var(--text);
+      opacity: 0.85;
+    }
+
     /* ── Narrative summary card (generateSummary() output, read-only) ── */
     .cs-ov-summary-card {
       background: var(--blue-700);
@@ -2351,7 +2396,8 @@
     var gearList       = buildGearList(app);
 
     var mainInfoHtml = buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc);
-    var overviewCardsHtml = buildOverviewCardsHtml(ch, typeKey, typeMeta, classDisplay, bgDisplay);
+    var overviewCardsHtml = buildOverviewCardsHtml(ch, typeKey, typeMeta, bgDisplay);
+    var classTabHtml = buildClassTabHtml(ch, classDisplay);
     var abilityScoresHtml = buildAbilityScoresHtml(scores);
 
     // Proficient skills — chosen from the class's skill list at Stage 2,
@@ -2518,7 +2564,7 @@
       + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + abilityScoresHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden><div class="cs-tab-placeholder">Inventory tab — coming soon.</div></div>'
-      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden><div class="cs-tab-placeholder">Class tab — coming soon.</div></div>';
+      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + classTabHtml + '</div>';
 
     ACTIVE_TAB = 'story';
     updateTabUI();
@@ -2570,29 +2616,179 @@
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
   }
 
+  // Hit Die/Saves/Weapons get a "?" tooltip from the matching classes.*_tip
+  // column; Primary and Armor stay tooltip-free, matching character.html's
+  // .char-class-trait pattern exactly (build spec: "don't invent tips").
+  function classTraitLabel(text, tip) {
+    return tip
+      ? text + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
+      : text;
+  }
   function renderClassDetailsHtml(row) {
+    var hitDie  = row ? row.hit_die           : null;
     var primary = row ? row.primary_ability   : null;
     var saves   = row ? row.saving_throws     : null;
     var casting = row ? row.casting_summary   : null;
     var armor   = row ? row.armor             : null;
     var tools   = row ? row.tools             : null;
     var weapons = row ? row.weapons           : null;
+    var hitDieTip = row ? row.hit_die_tip : null;
+    var savesTip  = row ? row.saves_tip   : null;
+    var weaponsTip = row ? row.weapons_tip : null;
     return '<div class="cs-ov-class-detail">'
-        + '<div class="cs-ov-class-detail-keys"><p>Primary ability:</p><p>Saving throws:</p><p>Casting Spells:</p></div>'
-        + '<div class="cs-ov-class-detail-vals"><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
+        + '<div class="cs-ov-class-detail-keys"><p>' + classTraitLabel('Hit die:', hitDieTip) + '</p><p>Primary ability:</p><p>' + classTraitLabel('Saving throws:', savesTip) + '</p><p>Casting Spells:</p></div>'
+        + '<div class="cs-ov-class-detail-vals"><p>' + (hitDie || '—') + '</p><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
       + '</div>'
       + '<div class="cs-ov-class-detail">'
-        + '<div class="cs-ov-class-detail-keys"><p>Armor:</p><p>Tools:</p><p>Weapons:</p></div>'
+        + '<div class="cs-ov-class-detail-keys"><p>Armor:</p><p>Tools:</p><p>' + classTraitLabel('Weapons:', weaponsTip) + '</p></div>'
         + '<div class="cs-ov-class-detail-vals"><p>' + (armor || '—') + '</p><p>' + (tools || '—') + '</p><p>' + (weapons || '—') + '</p></div>'
       + '</div>';
   }
 
+  // ── Key Features (Class tab, new) — icon + name/description/level split.
+  // FEAT_ICONS ported verbatim from character.js's renderClassGrid() (only
+  // the icon table already existed there); the name/description/level
+  // parser below is new — character.js only assigns an icon and renders
+  // the raw string, it never actually split features apart. Verified
+  // against all 72 real feature strings (12 classes × 6) in classes.features
+  // before writing this, not assumed from the build spec's description. ──
+  var FEAT_ICONS = [
+    { pattern: /favored enemy/i,            icon: '&#127919;' },
+    { pattern: /natural explorer/i,         icon: '&#127807;' },
+    { pattern: /hide in plain sight/i,      icon: '&#128065;' },
+    { pattern: /rage/i,                     icon: '&#128121;' },
+    { pattern: /unarmored defense/i,        icon: '&#128170;' },
+    { pattern: /danger sense/i,             icon: '&#8252;' },
+    { pattern: /primal path/i,              icon: '&#128005;' },
+    { pattern: /bardic inspiration/i,       icon: '&#127917;' },
+    { pattern: /jack of all trades/i,       icon: '&#127925;' },
+    { pattern: /song of rest/i,             icon: '&#127925;' },
+    { pattern: /expertise/i,                icon: '&#127925;' },
+    { pattern: /destroy undead/i,           icon: '&#128128;' },
+    { pattern: /turn undead/i,              icon: '&#129440;' },
+    { pattern: /druidic circle/i,           icon: '&#128171;' },
+    { pattern: /druidic/i,                  icon: '&#128172;' },
+    { pattern: /timeless body/i,            icon: '&#8987;' },
+    { pattern: /beast spells/i,             icon: '&#10024;' },
+    { pattern: /wild shape/i,               icon: '&#127807;' },
+    { pattern: /second wind/i,              icon: '&#127788;' },
+    { pattern: /action surge/i,             icon: '&#9889;' },
+    { pattern: /indomitable/i,              icon: '&#128074;' },
+    { pattern: /martial arts/i,             icon: '&#129357;' },
+    { pattern: /stunning strike/i,          icon: '&#129339;' },
+    { pattern: /unarmored movement/i,       icon: '&#128168;' },
+    { pattern: /metamagic/i,                icon: '&#128302;' },
+    { pattern: /pact magic/i,               icon: '&#128138;' },
+    { pattern: /eldritch invocation/i,      icon: '&#128520;' },
+    { pattern: /mystic arcanum/i,           icon: '&#128220;' },
+    { pattern: /arcane tradition/i,         icon: '&#9905;' },
+    { pattern: /arcane recovery/i,          icon: '&#128260;' },
+    { pattern: /spell mastery/i,            icon: '&#129497;' },
+    { pattern: /spellbook/i,                icon: '&#128214;' },
+    { pattern: /reckless attack/i,          icon: '&#9889;' },
+    { pattern: /sneak attack/i,             icon: '&#128481;' },
+    { pattern: /divine smite|smite/i,       icon: '&#9876;' },
+    { pattern: /extra attack/i,             icon: '&#9876;' },
+    { pattern: /fighting style/i,           icon: '&#9876;' },
+    { pattern: /spellcasting/i,             icon: '&#10024;' },
+    { pattern: /channel divinity/i,         icon: '&#9728;' },
+    { pattern: /divine intervention/i,      icon: '&#9728;' },
+    { pattern: /aura of protection/i,       icon: '&#128737;' },
+    { pattern: /sacred oath|monastic tradition|ranger archetype|bard college|sorcerous origin|otherworldly patron/i, icon: '&#127775;' },
+    { pattern: /subclass/i,                 icon: '&#127775;' },
+    { pattern: /cunning action|uncanny dodge|evasion/i, icon: '&#128481;' },
+    { pattern: /superiority|maneuver/i,     icon: '&#128171;' },
+    { pattern: /ki point|flurry|patient defense/i, icon: '&#128074;' },
+    { pattern: /eldritch blast/i,           icon: '&#128520;' },
+    { pattern: /dark one|pact of/i,         icon: '&#128138;' },
+    { pattern: /signature spell/i,          icon: '&#129497;' },
+    // Generic fallback
+    { pattern: /./,                         icon: '&#10022;' }
+  ];
+  function classFeatureIcon(raw) {
+    for (var i = 0; i < FEAT_ICONS.length; i++) {
+      if (FEAT_ICONS[i].pattern.test(raw)) return FEAT_ICONS[i].icon;
+    }
+    return '&#10022;';
+  }
+  // Splits a raw feature string into {name, description, level}. New logic
+  // — not a port, character.js never split these, it only assigns an icon
+  // and renders the whole string. " — " separates name from description
+  // when present; " subclass at level N" / " at level N" is stripped off
+  // the name (whichever side of the dash it landed on) into a level badge.
+  function parseClassFeature(raw) {
+    var name = raw, description = null, level = null;
+    var dashIdx = raw.indexOf(' — ');
+    if (dashIdx !== -1) {
+      name = raw.slice(0, dashIdx);
+      description = raw.slice(dashIdx + 3);
+    }
+    var subclassMatch = name.match(/^(.*) subclass at level (\d+)$/);
+    if (subclassMatch) {
+      name = subclassMatch[1];
+      level = subclassMatch[2];
+    } else {
+      var levelMatch = name.match(/^(.*) at level (\d+)$/);
+      if (levelMatch) {
+        name = levelMatch[1];
+        level = levelMatch[2];
+      }
+    }
+    return { name: name, description: description, level: level };
+  }
+  function buildClassFeaturesHtml(features) {
+    if (!Array.isArray(features) || !features.length) return '';
+    var rows = features.map(function(raw) {
+      var icon = classFeatureIcon(raw);
+      var parsed = parseClassFeature(raw);
+      return '<div class="cs-class-feature-row">'
+        + '<span class="cs-class-feature-icon">' + icon + '</span>'
+        + '<div class="cs-class-feature-txt">'
+          + '<span class="cs-class-feature-name">' + escHtml(parsed.name) + '</span>'
+          + (parsed.level ? '<span class="cs-class-feature-level">Level ' + parsed.level + '</span>' : '')
+          + (parsed.description ? '<span class="cs-class-feature-desc">' + escHtml(parsed.description) + '</span>' : '')
+        + '</div>'
+      + '</div>';
+    }).join('');
+    return '<div class="cs-class-features-label">Key Features</div><div class="cs-class-features">' + rows + '</div>';
+  }
+
+  // ── Class tab (Figma 52:2705/52:2710) ───────────────────────────────
+  // Basic info (image/name/level) renders immediately from player_characters;
+  // mechanical fields + Key Features come from the `classes` table via
+  // renderClassTabDynamic() once fetchClassData() resolves. Spell slots
+  // (character_sheet.spell_slots/spell_slots_max) are NOT included here —
+  // the build spec describes them as an "existing UI" relocation, but no
+  // such UI exists anywhere in the codebase to relocate (confirmed: no
+  // matches in sheet/index.html, dm.html, character.html, or character.js).
+  // Flagged, not built — see CLAUDE.md Decision Log.
+  function buildClassTabHtml(ch, classDisplay) {
+    var classKey = (ch.class_id || '').toLowerCase();
+    var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-ov-class-card">'
+        + '<div class="cs-ov-class-basic">'
+          + (classImgSrc ? '<img class="cs-ov-class-img" src="' + classImgSrc + '" alt="" onerror="this.style.display=\'none\'">' : '')
+          + '<div class="cs-ov-class-txt">'
+            + '<div class="cs-ov-class-label">Class</div>'
+            + '<div class="cs-ov-class-name">' + classDisplay + '</div>'
+          + '</div>'
+          + '<div class="cs-ov-class-level"><div class="cs-ov-class-level-label">Level</div><div class="cs-ov-class-level-val">' + (ch.level || 1) + '</div></div>'
+        + '</div>'
+        + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
+        + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
+      + '</div>'
+    + '</div></div>';
+  }
+
   // Populated once fetchClassData() resolves — the `classes` table is the
   // source for these mechanical fields (see docs/character-sheet-redesign-handoff.md §6).
-  function renderClassCard() {
-    var el = document.getElementById('cs-ov-class-details');
-    if (!el) return;
-    el.innerHTML = renderClassDetailsHtml(CLASS_ROW);
+  function renderClassTabDynamic() {
+    var detailsEl = document.getElementById('cs-class-details');
+    var featuresEl = document.getElementById('cs-class-features');
+    if (detailsEl) detailsEl.innerHTML = renderClassDetailsHtml(CLASS_ROW);
+    if (featuresEl) featuresEl.innerHTML = buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null);
+    wireAllTooltips();
   }
 
   // Parses generateSummary()'s plain-text output ("LABEL\n\nparagraph" blocks
@@ -2686,10 +2882,9 @@
   // ── Overview cards (alignment / background / gigglegloom / class /
   // summary) — still "Your Story" tab content for this pass; will move to
   // their real tabs (Class, Your Story > Your Background) in later slices. ──
-  function buildOverviewCardsHtml(ch, typeKey, typeMeta, classDisplay, bgDisplay) {
+  function buildOverviewCardsHtml(ch, typeKey, typeMeta, bgDisplay) {
     var alignKey = (ch.alignment || '').toLowerCase();
     var bgKey    = (ch.background_id || '').toLowerCase();
-    var classKey = (ch.class_id || '').toLowerCase();
 
     // Overview cards — alignment / background / gigglegloom. No invented
     // flavor text: PHB-equivalent subtitles come from real lookups; a
@@ -2737,23 +2932,6 @@
         + '<div class="cs-ov-card-title">' + typeMeta.name + '</div>'
       + '</div></div>';
 
-    // Class card — basic info (image/name/level) is available immediately;
-    // mechanical fields (primary ability, saves, casting, armor, tools,
-    // weapons) come from the `classes` table via renderClassCard() once
-    // fetchClassData() resolves (that table doesn't exist until §6/§7 lands).
-    var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
-    var classCard = '<div class="cs-ov-class-card">'
-      + '<div class="cs-ov-class-basic">'
-        + (classImgSrc ? '<img class="cs-ov-class-img" src="' + classImgSrc + '" alt="" onerror="this.style.display=\'none\'">' : '')
-        + '<div class="cs-ov-class-txt">'
-          + '<div class="cs-ov-class-label">Class</div>'
-          + '<div class="cs-ov-class-name">' + classDisplay + '</div>'
-        + '</div>'
-        + '<div class="cs-ov-class-level"><div class="cs-ov-class-level-label">Level</div><div class="cs-ov-class-level-val">' + (ch.level || 1) + '</div></div>'
-      + '</div>'
-      + '<div class="cs-ov-class-details" id="cs-ov-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
-    + '</div>';
-
     // Narrative summary — generateSummary() (character.js) writes
     // player_characters.summary as plain text, "LABEL\n\nparagraph" blocks
     // joined by "\n\n\n". Read-only display; free-text player answers are
@@ -2768,7 +2946,6 @@
         + '</button>'
         + '<div class="cs-ov-acc-body">'
           + '<div class="cs-ov-cards">' + alignCard + bgCard + ggCard + '</div>'
-          + classCard
           + summaryCardHtml
         + '</div>'
       + '</div>'
@@ -4346,9 +4523,9 @@
     return sb.from('classes').select('*').eq('id', ch.class_id).maybeSingle()
       .then(function(res) {
         if (!res.error && res.data) CLASS_ROW = res.data;
-        renderClassCard();
+        renderClassTabDynamic();
       })
-      .catch(function() { renderClassCard(); });
+      .catch(function() { renderClassTabDynamic(); });
   }
 
   // ── Fetch or create character_sheet row ───────────────────────────
