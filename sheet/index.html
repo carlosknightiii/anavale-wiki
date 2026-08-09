@@ -667,6 +667,86 @@
     .cs-spell-slot-max-edit { display: flex; gap: 0.35rem; align-items: center; margin-left: auto; }
     .cs-spell-slot-max-input { width: 50px; }
 
+    /* ── Your Story cards (Who You Are / Your Background / Your Past) ──
+       Figma 51:1103/51:1218. Wider description cards, not small pills —
+       real player answers run from short phrases to full paragraphs. ── */
+    .cs-story-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-s);
+      margin-top: var(--char-ov-gap-m);
+    }
+    .cs-story-card {
+      flex: 1 0 260px;
+      min-width: 240px;
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-s);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .cs-story-card-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .cs-story-card-title {
+      font-family: var(--font-display);
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+    }
+    .cs-story-card-sub {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.78rem;
+      color: var(--text);
+      opacity: 0.75;
+    }
+    .cs-story-card-text {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.88rem;
+      line-height: var(--line-height);
+      color: var(--text);
+      opacity: 0.9;
+    }
+    .cs-story-benefits {
+      margin-top: 0.3rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .cs-story-benefit-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-right: 0.15rem;
+    }
+    .cs-story-benefit-tag {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--char-accent-tint);
+      border-radius: 20px;
+      padding: 0.15rem 0.65rem;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      color: var(--char-text-muted);
+    }
+    .cs-story-quest-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--gold);
+      margin-right: 0.3rem;
+    }
+
     /* ── Narrative summary card (generateSummary() output, read-only) ── */
     .cs-ov-summary-card {
       background: var(--blue-700);
@@ -2194,6 +2274,11 @@
   var ABILITY_SCORES = {}; // set from player_characters.ability_scores in renderCharacter()
   var CLASS_ROW  = null;   // classes table row for ch.class_id, once fetchClassData() resolves
   var SPECIES_ROW = null;  // species table row for ch.species, once fetchSpeciesData() resolves
+  var BACKGROUND_ROW = null; // backgrounds table row for ch.background_id, once fetchBackgroundData() resolves
+  var REGION_ROW = null;     // regions table row for ch.home_region, once fetchRegionData() resolves
+  var CH = null;              // player_characters row, set once by renderCharacter() — lets async
+                               // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
+                               // without threading it through every call site.
   var LANGUAGE_ROW = null; // languages table row for ch.language_extra, once fetchLanguageData() resolves
 
   // ── Tab shell ─────────────────────────────────────────────────────
@@ -2247,6 +2332,30 @@
     person:'A person', place:'A place', 'object':'An object',
     'unfinished-business':'Unfinished business', 'responsibility':'A responsibility', nothing:'Nothing'
   };
+  // "Personal quest" line for the Why You Left card — pulled verbatim from
+  // character.html's data-effect attributes on the real why-left option
+  // cards (the only 5 that actually exist there; WHY_LEFT_LABELS above has
+  // extra keys that don't correspond to any real character-creator option —
+  // pre-existing, predates this session, not touched here).
+  var WHY_LEFT_QUEST = {
+    'ran-from-something':  'Figure out if you can stop running.',
+    'received-message':    'Follow the thread.',
+    'restlessness':        'Discover something worth staying for.',
+    'saw-the-grey':        'Push the grey back.',
+    'someone-disappeared': 'Find them, or find out what happened.'
+  };
+  // Ability-score delta granted by the "Who Raised You" answer — mirrors
+  // PAST_EFFECTS.raised[*].abilities in character.js. Only "raised" ever
+  // grants an ability delta (friend/org only ever grant skills/items/gold),
+  // confirmed by reading PAST_EFFECTS in full, not assumed.
+  var RAISED_ABILITY_BONUS = {
+    'grandparent':      [{ key:'wis', amount:1 }],
+    'kind-parents':      [{ key:'wis', amount:1 }],
+    'single-parent':     [{ key:'con', amount:1 }],
+    'strict-religious':  [{ key:'int', amount:1 }, { key:'cha', amount:-1 }],
+    'the-streets':       [{ key:'dex', amount:1 }, { key:'wis', amount:-1 }]
+  };
+  var ABILITY_FULL_NAME = { str:'Str', dex:'Dex', con:'Con', int:'Int', wis:'Wis', cha:'Cha' };
   var WHY_LEFT_LABELS = {
     'someone-disappeared':'Left searching for someone who disappeared',
     'saw-the-grey':'Left after watching the grey arrive',
@@ -2329,6 +2438,28 @@
   // ── Helpers ───────────────────────────────────────────────────────
   function cap(str) { if (!str) return '—'; return str.charAt(0).toUpperCase() + str.slice(1); }
   function label(map, key) { if (!key) return '—'; return map[key] || cap((key+'').replace(/-/g,' ')); }
+  // Ported verbatim from js/character.js — bg.bonuses entries are either an
+  // ability delta ("+1 Wis") or a feat name ("Tough"); this is the same
+  // parsing character.js uses for its own live preview, kept identical so
+  // the two can't drift. Only the two functions are ported, not the data.
+  var ABILITY_WORD_MAP = { 'Str':'str', 'Dex':'dex', 'Con':'con', 'Int':'int', 'Wis':'wis', 'Cha':'cha' };
+  function parseBackgroundAbilityBonuses(bgObj) {
+    var result = {};
+    if (!bgObj || !bgObj.bonuses) return result;
+    bgObj.bonuses.forEach(function(b) {
+      var m = b.match(/^([+-]\d+)\s+(\w+)$/);
+      if (m && ABILITY_WORD_MAP[m[2]]) {
+        var key = ABILITY_WORD_MAP[m[2]];
+        result[key] = (result[key] || 0) + parseInt(m[1]);
+      }
+    });
+    return result;
+  }
+  function getBackgroundFeat(bgObj) {
+    if (!bgObj || !bgObj.bonuses) return null;
+    var feat = bgObj.bonuses.find(function(b) { return !/^[+-]\d+\s+\w+$/.test(b); });
+    return feat || null;
+  }
   function abMod(v) { var m = Math.floor((v-10)/2); return (m>=0?'+':'')+m; }
   function escHtml(str) {
     if (!str) return '';
@@ -2406,6 +2537,7 @@
 
   // ── Render static character data (from player_characters) ─────────
   function renderCharacter(ch) {
+    CH = ch;
     var main = document.getElementById('cs-main');
 
     var typeKey     = (ch.class_gigglegloom || '').toLowerCase();
@@ -2421,48 +2553,16 @@
 
     var classDisplay   = cap((ch.class_id      || '').replace(/-/g,' '));
     var speciesDisplay = cap((ch.species        || '').replace(/-/g,' '));
-    var bgDisplay      = cap((ch.background_id  || '').replace(/-/g,' '));
 
     var appearanceDesc = ch.appearance_prompt || buildAppearanceDesc(app) || null;
     var gearList       = buildGearList(app);
 
     var mainInfoHtml = buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc);
-    var overviewCardsHtml = buildOverviewCardsHtml(ch, typeKey, typeMeta, bgDisplay);
+    var whoYouAreHtml = buildWhoYouAreHtml(ch);
+    var yourBackgroundHtml = buildYourBackgroundHtml(ch, typeKey, typeMeta);
+    var yourPastHtml = buildYourPastHtml(ch);
     var classTabHtml = buildClassTabHtml(ch, classDisplay);
     var abilityScoresHtml = buildAbilityScoresHtml(scores);
-
-    // Proficient skills — chosen from the class's skill list at Stage 2,
-    // stored on player_characters.skills.
-    var skillsArr = Array.isArray(ch.skills) ? ch.skills : [];
-    var skillsVal = skillsArr.length ? skillsArr.join(', ') : '—';
-
-    // Skill bonuses — flat +1 modifiers from the imagined-past answers (not
-    // full proficiency), computed once at submission by buildCharacterEntry().
-    var skillBonusesArr = Array.isArray(ch.skill_bonuses) ? ch.skill_bonuses : [];
-    var skillBonusesVal = skillBonusesArr.length
-      ? skillBonusesArr.map(function(b) { return '+' + b.amount + ' ' + b.skill; }).join(', ')
-      : '—';
-
-    // Story rows
-    var storyRows = [
-      { k:'Who raised you',  v: label(RAISED_LABELS, ch.who_raised_you) },
-      { k:'Dearest friend',  v: ch.dearest_friend || '—' },
-      { k:'Had a pet',       v: label(PET_LABELS, ch.had_pet) },
-      { k:'Fallen in love',  v: label(LOVE_LABELS, ch.fallen_in_love) },
-      { k:'Organization',    v: label(ORG_LABELS, ch.organization_joined) },
-      { k:'Left behind',     v: label(LEFT_BEHIND_LABELS, ch.left_behind) },
-      { k:'Why you left',    v: label(WHY_LEFT_LABELS, ch.why_you_left) },
-      { k:'Cares about',     v: ch.cares_about || '—' },
-      { k:'Deepest fear',    v: ch.deepest_fear || '—' },
-      { k:'What you seek',   v: ch.seeking || '—' },
-      { k:'Proficient skills', v: skillsVal },
-      { k:'Bonus skills',    v: skillBonusesVal }
-    ];
-    var storyHtml = storyRows.filter(function(r) { return r.v && r.v !== '—'; })
-      .map(function(r) {
-        return '<div class="cs-story-row"><div class="cs-story-key">' + r.k + '</div>'
-          + '<div class="cs-story-val">' + r.v + '</div></div>';
-      }).join('');
 
     // Gear HTML
     var gearHtml = gearList.length
@@ -2472,15 +2572,6 @@
             + g.slot + '</span>  ' + g.val + '</span></div>';
         }).join('')
       : '<div class="cs-gear-item"><div class="cs-gear-dot"></div><em style="color:var(--char-text-faint);">Starting gear to be determined</em></div>';
-
-    // DM-add items promised by an organization answer (e.g. "Wanderkeep
-    // Field Kit") — never auto-granted. The DM clears each entry once
-    // handed over (sccMarkPendingItemAdded() in dm.html's SCC player bar).
-    var pendingItemsArr = Array.isArray(ch.dm_pending_items) ? ch.dm_pending_items : [];
-    var pendingItemsHtml = pendingItemsArr.map(function(item) {
-      return '<div class="cs-gear-item"><div class="cs-gear-dot"></div>'
-        + '<span>' + (item.label || 'Item') + ' <em style="color:var(--char-text-faint);">— ask your DM</em></span></div>';
-    }).join('');
 
     // Appearance chips (the appearance paragraph itself now lives in the
     // shared MainInfo header — see buildMainInfoHtml())
@@ -2499,13 +2590,15 @@
         }).join('')
       + '</div>';
 
-    // "Your Story" tab content — everything that isn't part of the shared
-    // header or the (now real) Ability Scores tab: Overview cards,
-    // Appearance chips, Gear, Pending items, Your Past, Gold, Equipped,
-    // Inventory, Notes. Gets split further across Class/Inventory in later
-    // slices.
+    // "Your Story" tab content: Who You Are / Your Background / Your Past
+    // accordions (Figma 51:1103/51:1218), plus everything else that isn't
+    // part of the shared header or the Ability Scores/Class tabs — Appearance
+    // chips, Gear, Gold, Equipped, Inventory, Notes. The old flat "Pending
+    // From Your DM" section is gone — dm_pending_items now renders inside
+    // the Organization card's Benefits box in Your Past, its real home.
     var storyTabHtml =
-      overviewCardsHtml
+      whoYouAreHtml
+      + yourBackgroundHtml
 
       // Appearance (chips only now — paragraph moved to MainInfo)
       + (chipsHtml ? (
@@ -2518,17 +2611,7 @@
       + '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
         + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
 
-      // Pending from your DM — only shown once there's something to show
-      + (pendingItemsArr.length ? (
-          '<div class="cs-section"><div class="cs-section-label">Pending From Your DM</div>'
-          + '<div class="cs-gear-grid">' + pendingItemsHtml + '</div></div>'
-        ) : '')
-
-      // Story
-      + (storyHtml ? (
-          '<div class="cs-section"><div class="cs-section-label">Your Past</div>'
-          + '<div class="cs-story-block">' + storyHtml + '</div></div>'
-        ) : '')
+      + yourPastHtml
 
       + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>'
 
@@ -2620,11 +2703,10 @@
     });
   }
 
-  // ── Overview + Ability Scores (redesign) ───────────────────────────
   // Ability Scores tab content (Figma 51:1663/51:1668) — 6 cards from
   // ability_scores jsonb, math unchanged. Feats moved to the Background
-  // card (buildOverviewCardsHtml) per the Tab Redesign v1 spec — not
-  // rendered here anymore.
+  // card (buildYourBackgroundHtml, Your Story tab) per the Tab Redesign v1
+  // spec — not rendered here anymore.
   function buildAbilityScoresHtml(scores) {
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_SHORT = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
@@ -2974,74 +3056,156 @@
   // ── Overview cards (alignment / background / gigglegloom / class /
   // summary) — still "Your Story" tab content for this pass; will move to
   // their real tabs (Class, Your Story > Your Background) in later slices. ──
-  function buildOverviewCardsHtml(ch, typeKey, typeMeta, bgDisplay) {
-    var alignKey = (ch.alignment || '').toLowerCase();
-    var bgKey    = (ch.background_id || '').toLowerCase();
+  // ── Your Story tab (Figma 51:1103/51:1218) — Who You Are / Your
+  // Background / Your Past. Replaces the old pre-redesign "Overview"
+  // accordion (alignment/background/gigglegloom cards + narrative summary)
+  // entirely — those cards move into Your Background below; the feat chip
+  // that landed on the old Background card in the Ability Scores slice was
+  // always meant to be transitional pending this exact rebuild. ──
 
-    // Overview cards — alignment / background / gigglegloom. No invented
-    // flavor text: PHB-equivalent subtitles come from real lookups; a
-    // background/alignment "archetype" subtitle (e.g. Figma's "(Gladiator)"
-    // for the alignment card) doesn't exist in canon data and isn't built here.
-    var alignName = ALIGNMENT_TRAIT_NAME[alignKey] || label(ALIGNMENT_LABELS, ch.alignment);
-    var alignPhb  = ALIGNMENT_PHB[alignKey];
-    var alignCard = '<div class="cs-ov-card">'
-      + '<img class="cs-ov-card-img" src="../assets/images/img-alignment.webp" alt="">'
-      + '<div class="cs-ov-card-txt">'
-        + '<div class="cs-ov-card-label">Alignment</div>'
-        + '<div class="cs-ov-card-title">' + alignName + '</div>'
-        + (alignPhb ? '<div class="cs-ov-card-sub">(' + alignPhb + ')</div>' : '')
-      + '</div></div>';
-
-    var bgPhb = BG_PHB[bgKey];
-    // Feats — granted by the chosen background (player_characters.feats),
-    // e.g. "Tough", "Alert". Moved here from the Ability Scores tab per the
-    // Tab Redesign v1 spec ("Feats have moved off this tab onto Your Story's
-    // Background card"). FEAT_TIPS mirrors character.js's rules text.
-    var featsArr = Array.isArray(ch.feats) ? ch.feats : [];
-    var featsHtml = featsArr.length
-      ? '<div class="cs-feat-list">' + featsArr.map(function(f) {
-          return '<div class="cs-feat-chip"><span class="cs-feat-chip-name">' + f + '</span>'
-            + (FEAT_TIPS[f] ? '<span class="cs-feat-chip-desc">' + FEAT_TIPS[f] + '</span>' : '')
-          + '</div>';
-        }).join('') + '</div>'
-      : '';
-    var bgCard = '<div class="cs-ov-card">'
-      + '<img class="cs-ov-card-img" src="../assets/images/backgrounds/bg-' + (bgKey || 'default') + '.png" alt="" onerror="this.style.display=\'none\'">'
-      + '<div class="cs-ov-card-txt">'
-        + '<div class="cs-ov-card-label">Background</div>'
-        + '<div class="cs-ov-card-title">' + bgDisplay + '</div>'
-        + (bgPhb ? '<div class="cs-ov-card-sub">(' + bgPhb + ')</div>' : '')
-        + featsHtml
-      + '</div></div>';
-
-    var ggColorVar = typeKey ? '--' + typeKey : null;
-    var ggCard = '<div class="cs-ov-card">'
-      + '<div class="cs-ov-card-icon-wrap" style="box-shadow:inset 0 0 40px 0 ' + (ggColorVar ? 'var(' + ggColorVar + ')' : typeMeta.color) + ';">'
-        + (typeKey ? '<img class="cs-ov-card-icon" style="color:' + (ggColorVar ? 'var(' + ggColorVar + ')' : typeMeta.color) + ';" src="../assets/icons/icon-' + typeKey + '.svg" alt="">' : '')
+  function accordionShell(id, title, bodyHtml) {
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-ov-acc" id="' + id + '">'
+        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'' + id + '\')">'
+          + '<span class="cs-ov-acc-title">' + title + '</span>'
+          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+        + '</button>'
+        + '<div class="cs-ov-acc-body">' + bodyHtml + '</div>'
       + '</div>'
-      + '<div class="cs-ov-card-txt">'
-        + '<div class="cs-ov-card-label">Gigglegloom</div>'
-        + '<div class="cs-ov-card-title">' + typeMeta.name + '</div>'
-      + '</div></div>';
+    + '</div></div>';
+  }
+  function storyCard(label, title, text, benefitsHtml) {
+    return '<div class="cs-story-card">'
+      + '<div class="cs-story-card-label">' + label + '</div>'
+      + (title ? '<div class="cs-story-card-title">' + title + '</div>' : '')
+      + (text ? '<div class="cs-story-card-text">' + escHtml(text) + '</div>' : '')
+      + (benefitsHtml || '')
+    + '</div>';
+  }
+  function benefitTagsHtml(tags) {
+    return tags.length ? '<div class="cs-story-benefits"><span class="cs-story-benefit-label">Benefits:</span>' + tags.join('') + '</div>' : '';
+  }
 
+  // ── Who You Are ──────────────────────────────────────────────────
+  function buildWhoYouAreHtml(ch) {
     // Narrative summary — generateSummary() (character.js) writes
     // player_characters.summary as plain text, "LABEL\n\nparagraph" blocks
     // joined by "\n\n\n". Read-only display; free-text player answers are
     // baked into this string, so it's HTML-escaped like any other field.
     var summaryCardHtml = buildSummaryCardHtml(ch.summary);
+    var cards = [
+      { label:'First Impression', text: ch.personality_immediate },
+      { label:'Misunderstood',    text: ch.personality_wrong },
+      { label:'Makes You Laugh',  text: ch.personality_laugh },
+      { label:'Care About',       text: ch.cares_about },
+      { label:'Fear',             text: ch.deepest_fear },
+      { label:'Quest',            text: ch.seeking }
+    ].filter(function(c) { return c.text; })
+     .map(function(c) { return storyCard(c.label, null, c.text, null); }).join('');
+    return accordionShell('cs-ov-acc-whoyouare', 'Who You Are',
+      summaryCardHtml + (cards ? '<div class="cs-story-cards">' + cards + '</div>' : ''));
+  }
 
-    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
-      + '<div class="cs-ov-acc" id="cs-ov-acc-overview">'
-        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-ov-acc-overview\')">'
-          + '<span class="cs-ov-acc-title">Overview</span>'
-          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
-        + '</button>'
-        + '<div class="cs-ov-acc-body">'
-          + '<div class="cs-ov-cards">' + alignCard + bgCard + ggCard + '</div>'
-          + summaryCardHtml
-        + '</div>'
-      + '</div>'
-    + '</div></div>';
+  // ── Your Background ──────────────────────────────────────────────
+  // Gigglegloom/Alignment render immediately from ch; Region/Background lore
+  // + benefits populate once fetchRegionData()/fetchBackgroundData() resolve
+  // (renderBackgroundCardsDynamic(), called from both).
+  function renderBackgroundCardsHtml(ch, typeKey, typeMeta) {
+    var alignKey = (ch.alignment || '').toLowerCase();
+    var alignName = ALIGNMENT_TRAIT_NAME[alignKey] || label(ALIGNMENT_LABELS, ch.alignment);
+    var alignPhb  = ALIGNMENT_PHB[alignKey];
+    var ggCard = storyCard('Gigglegloom Affinity', typeMeta.name, typeMeta.desc, null);
+    var regionCard = storyCard('Home Region', REGION_ROW ? REGION_ROW.name : cap(ch.home_region || ''),
+      REGION_ROW ? REGION_ROW.summary : null, null);
+    var alignTitle = alignName + (alignPhb ? ' <span class="cs-story-card-sub">(' + alignPhb + ')</span>' : '');
+    var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_TRAIT_SENTENCE[alignKey] || null, null);
+
+    var bgKey = (ch.background_id || '').toLowerCase();
+    var bgPhb = BG_PHB[bgKey];
+    var bgName = BACKGROUND_ROW ? BACKGROUND_ROW.name : cap((ch.background_id || '').replace(/-/g,' '));
+    var bgTitle = bgName + (bgPhb ? ' <span class="cs-story-card-sub">(' + bgPhb + ')</span>' : '');
+    var abilityBonuses = parseBackgroundAbilityBonuses(BACKGROUND_ROW);
+    var tags = Object.keys(abilityBonuses).map(function(k) {
+      var amt = abilityBonuses[k];
+      return '<span class="cs-story-benefit-tag">' + (amt >= 0 ? '+' : '') + amt + ' ' + ABILITY_FULL_NAME[k] + '</span>';
+    });
+    var bgFeat = getBackgroundFeat(BACKGROUND_ROW);
+    if (bgFeat) {
+      var featTip = FEAT_TIPS[bgFeat];
+      tags.push('<span class="cs-story-benefit-tag">' + bgFeat
+        + (featTip ? '<span class="cs-ab-tip" data-tip="' + featTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>');
+    }
+    (BACKGROUND_ROW && Array.isArray(BACKGROUND_ROW.skills) ? BACKGROUND_ROW.skills : []).forEach(function(sk) {
+      tags.push('<span class="cs-story-benefit-tag">' + escHtml(sk) + ' (Skill Proficiency)</span>');
+    });
+    var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitTagsHtml(tags));
+
+    return ggCard + regionCard + alignCard + bgCard;
+  }
+  function buildYourBackgroundHtml(ch, typeKey, typeMeta) {
+    return accordionShell('cs-ov-acc-background', 'Your Background',
+      '<div class="cs-story-cards" id="cs-background-cards">' + renderBackgroundCardsHtml(ch, typeKey, typeMeta) + '</div>');
+  }
+  function renderBackgroundCardsDynamic() {
+    if (!CH) return;
+    var el = document.getElementById('cs-background-cards');
+    if (!el) return;
+    var typeKey = (CH.class_gigglegloom || '').toLowerCase();
+    var typeMeta = TYPE_META[typeKey] || { name: cap(typeKey), color:'#c8940a' };
+    el.innerHTML = renderBackgroundCardsHtml(CH, typeKey, typeMeta);
+    wireAllTooltips();
+  }
+
+  // ── Your Past ─────────────────────────────────────────────────────
+  // Benefits boxes read player_characters.skill_bonuses, filtering on the
+  // "past_raised:"/"past_friend:"/"past_org:" source prefixes tagged at
+  // submission (buildCharacterEntry() in character.js) — confirmed against
+  // real data (Kael: source "past_raised:single-parent" etc.) before writing
+  // this filter, not assumed from the build spec.
+  function buildYourPastHtml(ch) {
+    var skillBonusesArr = Array.isArray(ch.skill_bonuses) ? ch.skill_bonuses : [];
+    function bonusesForPrefix(prefix) {
+      return skillBonusesArr.filter(function(b) { return typeof b.source === 'string' && b.source.indexOf(prefix) === 0; });
+    }
+    function skillTag(b) { return '<span class="cs-story-benefit-tag">+' + b.amount + ' ' + escHtml(b.skill) + ' (Skill Proficiency)</span>'; }
+
+    var cards = [];
+    if (ch.who_raised_you) {
+      var raisedTags = (RAISED_ABILITY_BONUS[ch.who_raised_you] || []).map(function(a) {
+        return '<span class="cs-story-benefit-tag">' + (a.amount >= 0 ? '+' : '') + a.amount + ' ' + ABILITY_FULL_NAME[a.key] + '</span>';
+      }).concat(bonusesForPrefix('past_raised:').map(skillTag));
+      cards.push(storyCard('Upbringing', null, label(RAISED_LABELS, ch.who_raised_you), benefitTagsHtml(raisedTags)));
+    }
+    if (ch.dearest_friend) {
+      var friendTags = bonusesForPrefix('past_friend:').map(skillTag);
+      cards.push(storyCard('Friend', null, ch.dearest_friend, benefitTagsHtml(friendTags)));
+    }
+    if (ch.had_pet) cards.push(storyCard('Pet', null, label(PET_LABELS, ch.had_pet), null));
+    if (ch.fallen_in_love) cards.push(storyCard('Love', null, label(LOVE_LABELS, ch.fallen_in_love), null));
+    if (ch.organization_joined) {
+      var orgTags = bonusesForPrefix('past_org:').map(skillTag);
+      (Array.isArray(ch.dm_pending_items) ? ch.dm_pending_items : []).forEach(function(item) {
+        orgTags.push('<span class="cs-story-benefit-tag">' + escHtml(item.label || 'Item') + ' (DM adds)</span>');
+      });
+      cards.push(storyCard('Organization', null, label(ORG_LABELS, ch.organization_joined), benefitTagsHtml(orgTags)));
+    }
+    if (ch.left_behind) cards.push(storyCard('Left Behind', null, label(LEFT_BEHIND_LABELS, ch.left_behind), null));
+    if (ch.why_you_left) {
+      var quest = WHY_LEFT_QUEST[ch.why_you_left];
+      var questHtml = quest ? '<div class="cs-story-benefits"><span class="cs-story-quest-label">Personal quest:</span>' + escHtml(quest) + '</div>' : null;
+      cards.push(storyCard('Why You Left', null, label(WHY_LEFT_LABELS, ch.why_you_left), questHtml));
+    }
+    var cardsHtml = cards.join('');
+
+    // Proficient skills (class-chosen at Stage 2) — distinct from the flat
+    // +1 bonuses above, which now live in their own cards' Benefits boxes.
+    var skillsArr = Array.isArray(ch.skills) ? ch.skills : [];
+    var skillsRow = skillsArr.length
+      ? '<div class="cs-story-block"><div class="cs-story-row"><div class="cs-story-key">Proficient skills</div><div class="cs-story-val">' + escHtml(skillsArr.join(', ')) + '</div></div></div>'
+      : '';
+
+    return accordionShell('cs-ov-acc-past', 'Your Past',
+      (cardsHtml ? '<div class="cs-story-cards">' + cardsHtml + '</div>' : '') + skillsRow);
   }
 
   function toggleSheetAccordion(id) {
@@ -3362,6 +3526,21 @@
     el.innerHTML = '<span class="cs-mi-speaks-glyph" style="color:' + (LANGUAGE_ROW.color || 'inherit') + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
       + '<span class="cs-mi-speaks-txt"><span class="cs-mi-speaks-name">' + escHtml(LANGUAGE_ROW.name || '') + '</span>'
       + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '') + '</span>';
+  }
+
+  // ── Background / Region (Your Story tab, new) ───────────────────────
+  function fetchBackgroundData(ch) {
+    if (!ch.background_id) return Promise.resolve();
+    return sb.from('backgrounds').select('*').eq('id', ch.background_id).maybeSingle()
+      .then(function(res) { if (!res.error && res.data) BACKGROUND_ROW = res.data; renderBackgroundCardsDynamic(); })
+      .catch(function() { renderBackgroundCardsDynamic(); });
+  }
+  function fetchRegionData(ch) {
+    var regionKey = (ch.home_region || '').toLowerCase();
+    if (!regionKey) return Promise.resolve();
+    return sb.from('regions').select('id,name,summary').eq('id', regionKey).maybeSingle()
+      .then(function(res) { if (!res.error && res.data) REGION_ROW = res.data; renderBackgroundCardsDynamic(); })
+      .catch(function() { renderBackgroundCardsDynamic(); });
   }
 
   // ── Gold ──────────────────────────────────────────────────────────
@@ -4794,6 +4973,8 @@
           fetchClassData(ch).then(function() { return fetchOrCreateSheet(ch); }).then(function() { return fetchEquipped(ch); }),
           fetchSpeciesData(ch),
           fetchLanguageData(ch),
+          fetchBackgroundData(ch),
+          fetchRegionData(ch),
           fetchInventory(),
           fetchNotes(),
           fetchPhoto()
