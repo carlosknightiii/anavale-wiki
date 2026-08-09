@@ -289,47 +289,6 @@
       cursor: pointer;
     }
     .cs-ov-portrait-upload-btn:hover { background: rgba(200,148,10,0.35); border-color: rgba(200,148,10,0.6); }
-    .cs-ov-money-row {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      gap: 10px;
-      padding: 0 8px;
-    }
-    .cs-ov-money-cell {
-      flex: 1 0 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 4px;
-      border-radius: var(--radius-sm);
-    }
-    .cs-ov-money-cell--copper { background: var(--currency-copper); }
-    .cs-ov-money-cell--silver { background: var(--currency-silver); }
-    .cs-ov-money-cell--gold   { background: var(--currency-gold-coin); }
-    .cs-ov-money-label {
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      font-weight: 900;
-      color: var(--blue-800, var(--surface-0));
-      text-align: center;
-    }
-    .cs-ov-money-cell--copper .cs-ov-money-label { color: var(--text); }
-    .cs-ov-money-input {
-      width: 100%;
-      height: 19px;
-      border: 1px solid #000;
-      border-radius: 3px;
-      background: #fff;
-      color: var(--surface-0);
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      text-align: center;
-      padding: 0;
-    }
-    .cs-ov-money-input::-webkit-outer-spin-button,
-    .cs-ov-money-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .cs-ov-weight {
       position: relative;
       z-index: 2;
@@ -2645,7 +2604,7 @@
     var yourBackgroundHtml = buildYourBackgroundHtml(ch, typeKey, typeMeta);
     var yourPastHtml = buildYourPastHtml(ch);
     var classTabHtml = buildClassTabHtml(ch, classDisplay);
-    var abilityScoresHtml = buildAbilityScoresHtml(scores);
+    var abilityScoresHtml = buildAbilityScoresHtml(scores, ch);
 
     // Gear HTML
     var gearHtml = gearList.length
@@ -2674,32 +2633,61 @@
       + '</div>';
 
     // "Your Story" tab content: Who You Are / Your Background / Your Past
-    // accordions (Figma 51:1103/51:1218), plus everything else that isn't
-    // part of the shared header or the Ability Scores/Class tabs — Appearance
-    // chips, Gear, Gold, Equipped, Inventory, Notes. The old flat "Pending
+    // accordions (Figma 51:1103/51:1218), plus Appearance chips and Notes.
+    // Gold/Equipped/Inventory/Starting Gear moved to the Inventory tab (see
+    // inventoryTabHtml below) — they were only ever here because the tab
+    // shell hadn't given Inventory real content yet. The old flat "Pending
     // From Your DM" section is gone — dm_pending_items now renders inside
     // the Organization card's Benefits box in Your Past, its real home.
     var storyTabHtml =
       whoYouAreHtml
-      + yourBackgroundHtml
 
-      // Appearance (chips only now — paragraph moved to MainInfo)
+      // Appearance (chips only now — paragraph moved to MainInfo). Kept
+      // right after Who You Are, near the rest of the who-you-are content,
+      // rather than floating between the Your Background/Your Past accordions.
       + (chipsHtml ? (
           '<div class="cs-section"><div class="cs-section-label">Appearance</div>'
           + '<div class="cs-appearance-chips">' + chipsHtml + '</div>'
           + '</div>'
         ) : '')
 
-      // Starting gear
-      + '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
-        + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
-
+      + yourBackgroundHtml
       + yourPastHtml
 
       + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>'
 
+      // Notes
+      + '<div class="cs-section">'
+        + '<div class="cs-section-label">Notes</div>'
+        + '<div class="cs-notes-tabs" id="cs-notes-tabs"></div>'
+        + '<div class="cs-notes-search-wrap">'
+          + '<span class="cs-notes-search-icon">🔍</span>'
+          + '<input class="cs-notes-search" id="cs-notes-search" type="text" placeholder="Search all notes…" oninput="onNotesSearchInput(this)">'
+        + '</div>'
+        + '<div class="cs-notes-search-results" id="cs-notes-search-results"></div>'
+        + '<div class="cs-notes-list" id="cs-notes-list"></div>'
+        + '<button class="cs-notes-add-btn" onclick="addNote()">＋ New note</button>'
+      + '</div>'
+
+      // Photo input — hidden, triggered from the portrait card's Replace button
+      + '<input class="cs-photo-input" type="file" id="cs-photo-input" accept="image/*" onchange="uploadPhoto(this)">'
+
+      + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
+
+    // "Inventory" tab content — Starting Gear, Gold, Equipped, Inventory.
+    // Relocated here as-is from Your Story (pre-tab-redesign leftover, never
+    // moved when the tab shell landed), unstyled/unredesigned — same stopgap
+    // treatment as Spell Slots under Class. No markup or logic changed, only
+    // where it renders; all ids (cs-gold-block, cs-equipped-block, cs-inv-*)
+    // are unchanged so renderGold()/renderEquipped()/renderInventory() and
+    // the inventory search/custom-item flow keep working untouched.
+    var inventoryTabHtml =
+      // Starting gear
+      '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
+        + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
+
       // ── Live-play sections (populated by renderLivePlay) ──────────
-      // HP now renders in the shared MainInfo header — see cs-mi-hp-slot.
+      // HP renders in the shared MainInfo header — see cs-mi-hp-slot.
 
       // Gold
       + '<div class="cs-section" id="cs-gold-section">'
@@ -2734,25 +2722,7 @@
         + '</div>'
         + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
         + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
-      + '</div>'
-
-      // Notes
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Notes</div>'
-        + '<div class="cs-notes-tabs" id="cs-notes-tabs"></div>'
-        + '<div class="cs-notes-search-wrap">'
-          + '<span class="cs-notes-search-icon">🔍</span>'
-          + '<input class="cs-notes-search" id="cs-notes-search" type="text" placeholder="Search all notes…" oninput="onNotesSearchInput(this)">'
-        + '</div>'
-        + '<div class="cs-notes-search-results" id="cs-notes-search-results"></div>'
-        + '<div class="cs-notes-list" id="cs-notes-list"></div>'
-        + '<button class="cs-notes-add-btn" onclick="addNote()">＋ New note</button>'
-      + '</div>'
-
-      // Photo input — hidden, triggered from the portrait card's Replace button
-      + '<input class="cs-photo-input" type="file" id="cs-photo-input" accept="image/*" onchange="uploadPhoto(this)">'
-
-      + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
+      + '</div>';
 
     // Assemble — MainInfo (shared, once) + tab bar + one content block per tab
     main.innerHTML =
@@ -2760,7 +2730,7 @@
       + tabBarHtml
       + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + abilityScoresHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden><div class="cs-tab-placeholder">Inventory tab — coming soon.</div></div>'
+      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden>' + inventoryTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + classTabHtml + '</div>';
 
     ACTIVE_TAB = 'story';
@@ -2790,7 +2760,7 @@
   // ability_scores jsonb, math unchanged. Feats moved to the Background
   // card (buildYourBackgroundHtml, Your Story tab) per the Tab Redesign v1
   // spec — not rendered here anymore.
-  function buildAbilityScoresHtml(scores) {
+  function buildAbilityScoresHtml(scores, ch) {
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_SHORT = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
     var cards = AB_KEYS.map(function(ab) {
@@ -2809,7 +2779,17 @@
         + '</div>'
       + '</div>';
     }).join('');
-    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
+
+    // Proficient skills (class-chosen at Stage 2) — distinct from the flat
+    // +1 bonuses shown in Your Story's cards. Relocated here from Your Past
+    // (had no real home there — see Decision Log) since it's about skill
+    // proficiencies, which conceptually belongs on the Ability Scores tab.
+    var skillsArr = Array.isArray(ch && ch.skills) ? ch.skills : [];
+    var skillsRow = skillsArr.length
+      ? '<div class="cs-story-block"><div class="cs-story-row"><div class="cs-story-key">Proficient skills</div><div class="cs-story-val">' + escHtml(skillsArr.join(', ')) + '</div></div></div>'
+      : '';
+
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div>' + skillsRow + '</div></div>';
   }
 
   // Hit Die/Saves/Weapons get a "?" tooltip from the matching classes.*_tip
@@ -3072,15 +3052,16 @@
     }
     return null;
   }
-  // Read-only — no editing affordance, matches the rest of the Overview card visually.
+  // Read-only — no editing affordance, matches the rest of the Overview card
+  // visually. Shows only the "WHO ARE YOU" section of generateSummary()'s
+  // text, not all six — Your Magic/Your Background/Your Past/Your Appearance/
+  // Your Compass are already fully covered by their own dedicated cards
+  // (Gigglegloom Affinity, Background, Organization, the header's appearance
+  // paragraph, Alignment), so repeating them here was pure duplication.
   function buildSummaryCardHtml(summaryText) {
-    var sections = parseSummaryBlocks(summaryText);
-    if (!sections.length) return '';
-    var body = sections.map(function(sec) {
-      return '<div class="cs-ov-summary-heading">' + escHtml(sec.label) + '</div>'
-        + '<p class="cs-ov-summary-text">' + escHtml(sec.text) + '</p>';
-    }).join('');
-    return '<div class="cs-ov-summary-card">' + body + '</div>';
+    var text = extractSummarySection(summaryText, 'WHO ARE YOU');
+    if (!text) return '';
+    return '<div class="cs-ov-summary-card"><p class="cs-ov-summary-text">' + escHtml(text) + '</p></div>';
   }
 
   // ── MainInfo — shared header (Figma 51:1385), renders once above the
@@ -3120,11 +3101,6 @@
         + '<div class="cs-ov-portrait">'
           + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
           + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
-          + '<div class="cs-ov-money-row">'
-            + '<div class="cs-ov-money-cell cs-ov-money-cell--copper"><div class="cs-ov-money-label">Copper</div><input class="cs-ov-money-input" id="cs-ov-cp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
-            + '<div class="cs-ov-money-cell cs-ov-money-cell--silver"><div class="cs-ov-money-label">Silver</div><input class="cs-ov-money-input" id="cs-ov-sp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
-            + '<div class="cs-ov-money-cell cs-ov-money-cell--gold"><div class="cs-ov-money-label">Gold</div><input class="cs-ov-money-input" id="cs-ov-gp" type="number" min="0" inputmode="numeric" onblur="onOverviewMoneyChange()"></div>'
-          + '</div>'
           + '<div class="cs-ov-weight" id="cs-ov-weight">'
             + '<div class="cs-ov-weight-fill" id="cs-ov-weight-fill" style="width:0%;"></div>'
             + '<div class="cs-ov-weight-label"><span class="cs-ov-weight-icon">&#9878;</span><span id="cs-ov-weight-nums">0 / 0 LBS</span></div>'
@@ -3301,15 +3277,8 @@
     }
     var cardsHtml = cards.join('');
 
-    // Proficient skills (class-chosen at Stage 2) — distinct from the flat
-    // +1 bonuses above, which now live in their own cards' Benefits boxes.
-    var skillsArr = Array.isArray(ch.skills) ? ch.skills : [];
-    var skillsRow = skillsArr.length
-      ? '<div class="cs-story-block"><div class="cs-story-row"><div class="cs-story-key">Proficient skills</div><div class="cs-story-val">' + escHtml(skillsArr.join(', ')) + '</div></div></div>'
-      : '';
-
     return accordionShell('cs-ov-acc-past', 'Your Past',
-      (cardsHtml ? '<div class="cs-story-cards">' + cardsHtml + '</div>' : '') + skillsRow);
+      (cardsHtml ? '<div class="cs-story-cards">' + cardsHtml + '</div>' : ''));
   }
 
   function toggleSheetAccordion(id) {
@@ -3318,30 +3287,6 @@
     var collapsed = el.classList.toggle('collapsed');
     var labelEl = el.querySelector('.cs-ov-acc-toggle-label');
     if (labelEl) labelEl.textContent = collapsed ? 'Expand' : 'Collapse';
-  }
-
-  // ── Overview money (cp/sp/gp) — combines into / splits from the same
-  // character_sheet.gold_cp field as the Gold section's setGold(), so both
-  // editors and the character-creation HUD/Stage 3 panel stay in sync. ──
-  function renderOverviewMoney() {
-    var cp = SHEET ? (SHEET.gold_cp || 0) : 0;
-    var gpEl = document.getElementById('cs-ov-gp');
-    var spEl = document.getElementById('cs-ov-sp');
-    var cpEl = document.getElementById('cs-ov-cp');
-    if (gpEl) gpEl.value = Math.floor(cp / 100);
-    if (spEl) spEl.value = Math.floor((cp % 100) / 10);
-    if (cpEl) cpEl.value = cp % 10;
-  }
-  function onOverviewMoneyChange() {
-    if (!SHEET) return;
-    var gp = parseInt(document.getElementById('cs-ov-gp').value) || 0;
-    var sp = parseInt(document.getElementById('cs-ov-sp').value) || 0;
-    var cp = parseInt(document.getElementById('cs-ov-cp').value) || 0;
-    SHEET.gold_cp = Math.max(0, (gp * 100) + (sp * 10) + cp);
-    saveSheet({ gold_cp: SHEET.gold_cp });
-    renderOverviewMoney();
-    renderGold();
-    showToast('Gold updated');
   }
 
   // ── Overview weight bar — capacity = STR × 15, current = full inventory
@@ -3370,7 +3315,6 @@
     renderHeaderHP();
     renderEquipped();
     renderGold();
-    renderOverviewMoney();
     renderInventory();
     renderNotes();
     renderPhoto();
@@ -3714,7 +3658,6 @@
     saveSheet({ gold_cp: SHEET.gold_cp });
     input.value = '';
     renderGold();
-    renderOverviewMoney();
     showToast('Gold updated');
   }
 
