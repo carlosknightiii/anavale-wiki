@@ -2117,6 +2117,11 @@
     var overviewHtml = buildOverviewHtml(ch, scores, app, typeKey, typeMeta, regionLabel, speciesDisplay, classDisplay, bgDisplay, portraitSrc);
     var abilityScoresHtml = buildAbilityScoresHtml(scores, ch.feats);
 
+    // Proficient skills — chosen from the class's skill list at Stage 2,
+    // stored on player_characters.skills.
+    var skillsArr = Array.isArray(ch.skills) ? ch.skills : [];
+    var skillsVal = skillsArr.length ? skillsArr.join(', ') : '—';
+
     // Skill bonuses — flat +1 modifiers from the imagined-past answers (not
     // full proficiency), computed once at submission by buildCharacterEntry().
     var skillBonusesArr = Array.isArray(ch.skill_bonuses) ? ch.skill_bonuses : [];
@@ -2136,6 +2141,7 @@
       { k:'Cares about',     v: ch.cares_about || '—' },
       { k:'Deepest fear',    v: ch.deepest_fear || '—' },
       { k:'What you seek',   v: ch.seeking || '—' },
+      { k:'Proficient skills', v: skillsVal },
       { k:'Bonus skills',    v: skillBonusesVal }
     ];
     var storyHtml = storyRows.filter(function(r) { return r.v && r.v !== '—'; })
