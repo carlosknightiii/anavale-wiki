@@ -3514,6 +3514,7 @@ function buildCharacterEntry(d, token) {
     level: 1,
     class_id: d.class_id,
     class_gigglegloom: d.gigglegloom_type,
+    skills: d.class_id ? (d['skills_' + d.class_id] || []) : [],
     species: d.species_id,
     background_id: d.background_id,
     alignment: d.alignment,
