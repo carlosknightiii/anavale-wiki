@@ -10357,7 +10357,7 @@ function sccRenderPlayerBar() {
             + pending.map(function(item, i) {
                 return '<div class="scc-player-pending-item">'
                   + '<span>&#128230; ' + sccEsc(item.label || 'Item') + '</span>'
-                  + '<button class="scc-btn-sm" onclick="sccMarkPendingItemAdded(\'' + sccEsc(p.id) + '\',' + i + ')">Mark Added</button>'
+                  + '<button class="scc-btn-sm" title="Confirms you\'ve already added the item yourself — this only clears it from the list, it doesn\'t grant anything automatically." onclick="sccMarkPendingItemAdded(\'' + sccEsc(p.id) + '\',' + i + ')">I Added This</button>'
                 + '</div>';
               }).join('')
             + '</div>'
