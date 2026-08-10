@@ -3873,6 +3873,15 @@
   // element instead of call sites wiring each one by hand; wireTooltip()
   // itself stays idempotent (el._tipWired) so both styles of call are safe.
   function wireAllTooltips() {
+    // A shown tooltip bubble lives in document.body, tied to a mouseleave
+    // on its source element. Clicking a control INSIDE that element (e.g.
+    // a condition pill's own × button) fires the click without the mouse
+    // ever leaving the pill, and the click's re-render then replaces the
+    // pill via innerHTML — destroying it without a mouseleave ever firing,
+    // so the bubble is orphaned and stays on screen. Every re-render calls
+    // wireAllTooltips() right after rebuilding its DOM, so sweeping stray
+    // bubbles here (before rewiring) catches every such case in one place.
+    document.querySelectorAll('.cs-tooltip').forEach(function(t) { t.remove(); });
     document.querySelectorAll('[data-tip]').forEach(wireTooltip);
   }
   function wireTooltip(el) {
