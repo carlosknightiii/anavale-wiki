@@ -315,7 +315,8 @@
     }
     .cs-ov-acc-title {
       font-family: var(--font-display);
-      font-size: var(--text-4xl);
+      font-weight: 700;
+      font-size: var(--char-ov-h3);
       color: var(--text);
       text-align: left;
     }
@@ -587,6 +588,7 @@
     .cs-story-cards {
       display: flex;
       flex-wrap: wrap;
+      align-items: flex-start;
       gap: var(--char-ov-gap-s);
       margin-top: var(--char-ov-gap-m);
     }
@@ -710,7 +712,7 @@
       font-family: var(--font-body);
       font-weight: 700;
       font-size: 16px;
-      color: var(--gold);
+      color: var(--text);
       margin-right: 0.3rem;
     }
 
@@ -798,8 +800,17 @@
     .cs-ab-tip {
       display: inline-block;
       margin-left: 0.3rem;
-      font-size: 0.7rem;
-      color: var(--gold);
+      width: 13px;
+      height: 13px;
+      line-height: 13px;
+      text-align: center;
+      vertical-align: middle;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--blue-800);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 9px;
       cursor: help;
     }
     .cs-ab-val {
@@ -1110,10 +1121,9 @@
       .cs-ab-img { width: 72px; height: 72px; }
       .cs-ov-class-details { gap: 1rem; }
       /* Single unbreakable words ("Overview") can't shrink to share a row
-         with the toggle at 48px — wrap the toggle onto its own line rather
-         than letting it overflow past the viewport edge. */
+         with the toggle — wrap the toggle onto its own line rather than
+         letting it overflow past the viewport edge. */
       .cs-ov-acc-header { flex-wrap: wrap; row-gap: 0.4rem; }
-      .cs-ov-acc-title { font-size: 2.25rem; }
     }
 
     /* ── Not-found state ── */
