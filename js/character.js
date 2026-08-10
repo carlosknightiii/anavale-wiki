@@ -2172,6 +2172,23 @@ function getTiersUpTo(maxTier) {
   return TIER_ORDER.slice(0, maxIdx + 1);
 }
 
+// Maps CLASS_STARTING_GEAR[cls].armor's PHB-style display string (the only
+// "what mechanical armor does this character start with" concept that
+// exists in the creator — there is no real catalog-item/equipped selection
+// at character-creation time at all, confirmed by grep, that lives entirely
+// in sheet/index.html post-creation) to the real CLOTHING_TIERS cosmetic
+// option value, where one genuinely exists. Only 2 of the 3 PHB armor
+// names classes actually start with have a real cosmetic match:
+// 'Leather Armor' -> 'leather jerkin' (same light-tier leather concept,
+// different label) and 'Scale Mail' -> 'scale mail' (exact). 'Chain Mail'
+// (fighter/paladin) has NO cosmetic equivalent — CLOTHING_TIERS only has
+// 'chainmail shirt', which is a different, lighter garment already mapped
+// to the real catalog's separate Chain Shirt item, not Chain Mail — so it's
+// correctly left unmatched rather than forced into a wrong default.
+var CLASS_ARMOR_TO_COSMETIC = {
+  'leather armor': 'leather jerkin',
+  'scale mail':     'scale mail'
+};
 function filterClothingByClass(cls) {
   var maxTier  = CLASS_ARMOR_TIER[cls] || 'unarmored';
   var tiers    = getTiersUpTo(maxTier);
@@ -2193,9 +2210,16 @@ function filterClothingByClass(cls) {
         topSel.appendChild(o);
       });
     });
-    // Re-select previous value if still valid, else blank
+    // Re-select previous value if still valid; else default to the
+    // cosmetic match for the class's starting armor, if one exists (sync
+    // only happens here, at creation — no ongoing re-sync after this, so
+    // drift from a later Stage 4 swap or live-play re-equip is expected
+    // and left alone).
+    var syncedCosmetic = CLASS_ARMOR_TO_COSMETIC[startingArmorStr] || '';
     if (topCurrent && topSel.querySelector('option[value="' + topCurrent + '"]')) {
       topSel.value = topCurrent;
+    } else if (syncedCosmetic && topSel.querySelector('option[value="' + syncedCosmetic + '"]')) {
+      topSel.value = syncedCosmetic;
     } else {
       topSel.value = '';
     }
