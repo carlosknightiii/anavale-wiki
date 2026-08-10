@@ -27,7 +27,10 @@
       overflow-x: hidden;
     }
 
-    /* ── Nav Bar ── */
+    /* ── Nav Bar ──
+       Logo removed (was duplicating the PageTitle component below it —
+       the mockup shows exactly one Anavale logo, the PageTitle's). Nav
+       now holds only the Return-to-Wiki link. */
     .cs-nav {
       position: sticky;
       top: 0;
@@ -39,20 +42,8 @@
       padding: 0.75rem 1.5rem;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 1rem;
-    }
-    .cs-nav-title {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      transition: opacity 0.2s;
-    }
-    .cs-nav-title:hover { opacity: 0.85; }
-    .cs-nav-logo {
-      height: 22px;
-      width: auto;
-      display: block;
     }
     .cs-nav-back {
       font-family: var(--font-sans);
@@ -926,13 +917,12 @@
       line-height: var(--line-height);
       color: var(--char-text-muted);
     }
-    .cs-mi-speaks {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    /* Glyph + name sit inline on one row; "spoken where" sits on its own
+       full-width row below (Figma 51:1385) — not nested under the name, so
+       it isn't indented past the glyph. */
+    .cs-mi-speaks { display: flex; flex-direction: column; gap: 0.2rem; }
+    .cs-mi-speaks-row { display: flex; align-items: center; gap: 0.5rem; }
     .cs-mi-speaks-glyph { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
-    .cs-mi-speaks-txt { display: flex; flex-direction: column; gap: 0.1rem; }
     .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); }
     .cs-mi-speaks-sub { font-family: var(--font-body); font-weight: 300; font-size: 0.82rem; color: var(--char-text-muted); }
 
@@ -1038,7 +1028,10 @@
     }
     .cs-mi-insp-badge.active .cs-mi-insp-badge-state { color: var(--gold-light); }
 
-    .cs-mi-hp-slot { flex: 0 0 auto; }
+    /* HP grows to fill the row (Figma 51:1385: the bar takes up whatever
+       width is left after the label/inputs) — Temp HP has no bar (see
+       renderHeaderHP()) so it stays sized to its own content. */
+    .cs-mi-hp-slot { flex: 1 1 320px; min-width: 220px; }
     .cs-mi-temp-hp { flex: 0 0 auto; display: flex; align-items: center; }
 
     /* Compact HP/Temp HP row (Figma 51:1385) — label + directly-editable
@@ -1066,11 +1059,15 @@
     .cs-mi-hp-num-input::-webkit-outer-spin-button,
     .cs-mi-hp-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .cs-mi-hp-compact-max { font-family: var(--font-body); font-weight: 700; font-size: 18px; color: var(--text); }
+    /* Prominent, full-height bar filling the remaining row width (Figma
+       51:1385: bar height matches the row's full 37px, not a thin sliver) —
+       flex:1 so it grows/shrinks with .cs-mi-hp-slot's available space. */
     .cs-mi-hp-compact-bar {
-      width: 120px;
-      height: 10px;
+      flex: 1 1 auto;
+      min-width: 50px;
+      height: 37px;
       border-radius: 999px;
-      background: #371212;
+      background: var(--red-track);
       overflow: hidden;
     }
     .cs-mi-hp-compact-bar-fill { height: 100%; background: var(--red-strong); transition: width 0.25s ease; }
@@ -1216,7 +1213,6 @@
 
   <!-- Nav -->
   <nav class="cs-nav">
-    <a class="cs-nav-title" href="../index.html"><img class="cs-nav-logo" src="../assets/logo-Anavale.svg" alt="Anavale"></a>
     <a class="cs-nav-back" href="../index.html">← Return to Wiki</a>
   </nav>
 
@@ -1374,8 +1370,9 @@
        uniform string. */
     .cs-mi-ac-badge {
       display: inline-flex;
-      align-items: baseline;
-      gap: 0.35rem;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       background: var(--blue-100);
       color: var(--blue-800);
       border-radius: 0 0 55px 55px;
@@ -1385,11 +1382,13 @@
       font-family: var(--font-body);
       font-weight: 700;
       font-size: 24px;
+      line-height: 1;
     }
     .cs-mi-ac-num {
       font-family: var(--font-display);
       font-weight: 700;
       font-size: 32px;
+      line-height: 1;
     }
     .cs-equipped-grid {
       display: grid;
@@ -2735,11 +2734,11 @@
     // Tab bar — Tab Redesign v1. Only "Your Story" holds real content this
     // pass; the other three are inert placeholders until their own build
     // slices land (see docs build spec's suggested build order).
-    var tabBarHtml = '<div class="cs-tabbar" id="cs-tabbar">'
+    var tabBarHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-tabbar" id="cs-tabbar">'
       + TABS.map(function(t) {
           return '<button class="cs-tab-btn" data-tab="' + t.key + '" onclick="setActiveTab(\'' + t.key + '\')">' + t.label + '</button>';
         }).join('')
-      + '</div>';
+      + '</div></div></div>';
 
     // "Your Story" tab content: Who You Are / Your Background / Your Past
     // accordions (Figma 51:1103/51:1218), plus Notes. Gold/Equipped/
@@ -2827,11 +2826,10 @@
         + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
       + '</div>';
 
-    // Page title (Figma 51:1385) — logo + "Character Sheet", was missing
-    // entirely; renders once above MainInfo, same breakout width as the rest
-    // of the header. Duplicates the sticky nav's logo deliberately — this is
-    // a real Figma component distinct from the site-wide nav bar, not a
-    // redundant copy of it.
+    // Page title (Figma 51:1385) — logo + "Character Sheet", renders once
+    // above MainInfo, same breakout width as the rest of the header. The
+    // sticky nav's own logo was removed (see .cs-nav above) so this is the
+    // only Anavale logo on the page, matching the mockup.
     var sheetPageTitleHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-sheet-title">'
         + '<img class="cs-sheet-title-logo" src="../assets/logo-Anavale.svg" alt="Anavale">'
@@ -3786,9 +3784,9 @@
     if (!el) return;
     if (!LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
     el.style.display = '';
-    el.innerHTML = '<span class="cs-mi-speaks-glyph" style="color:' + (LANGUAGE_ROW.color || 'inherit') + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
-      + '<span class="cs-mi-speaks-txt"><span class="cs-mi-speaks-name">' + escHtml(LANGUAGE_ROW.name || '') + '</span>'
-      + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '') + '</span>';
+    el.innerHTML = '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + (LANGUAGE_ROW.color || 'inherit') + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
+      + '<span class="cs-mi-speaks-name">' + escHtml(LANGUAGE_ROW.name || '') + '</span></div>'
+      + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '');
   }
 
   // ── Background / Region (Your Story tab, new) ───────────────────────
