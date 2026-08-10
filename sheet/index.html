@@ -150,36 +150,45 @@
       flex-shrink: 0;
     }
 
-    /* ── Gold display ── */
-    .cs-gold-block {
+    /* ── Currency — 3 pills (Figma 51:2260) ── */
+    .cs-currency-row {
       display: flex;
+      gap: 0.6rem;
+      width: 100%;
+    }
+    .cs-currency-pill {
+      flex: 1 0 0;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.85rem;
-      background: var(--char-highlight-tint);
-      border: 1px solid var(--char-highlight-border);
-      border-radius: 10px;
-      padding: 0.85rem 1.25rem;
+      gap: 0.25rem;
+      padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
+      border-radius: var(--radius-sm);
     }
-    .cs-gold-icon {
-      font-size: 1.4rem;
-      color: var(--gold-light);
-      flex-shrink: 0;
+    .cs-currency-pill--gold   { background: var(--currency-gold-coin); }
+    .cs-currency-pill--silver { background: var(--currency-silver); }
+    .cs-currency-pill--copper { background: var(--currency-copper); }
+    .cs-currency-pill-label {
+      font-family: var(--font-body);
+      font-weight: 900;
+      font-size: 18px;
+      color: var(--blue-800);
+      text-align: center;
     }
-    .cs-gold-val {
-      font-family: var(--font-serif);
-      font-size: 1.5rem;
-      color: var(--gold-light);
-      line-height: 1;
+    .cs-currency-pill--copper .cs-currency-pill-label { color: var(--text); }
+    .cs-currency-input {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid black;
+      color: var(--blue-800);
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 18px;
+      text-align: center;
+      padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
+      box-sizing: border-box;
     }
-    .cs-gold-label {
-      font-family: var(--font-sans);
-      font-size: 0.62rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(200,148,10,0.6);
-      font-weight: 700;
-      margin-top: 0.15rem;
-    }
+    .cs-currency-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(240,180,41,0.4); }
 
     /* ══════════════════════════════════════════════════════════════
        OVERVIEW + ABILITY SCORES (redesign)
@@ -1342,38 +1351,6 @@
     }
     .cs-hp-apply:hover { background: rgba(200,148,10,0.35); }
 
-    /* ── Gold tracker ── */
-    .cs-gold-edit-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-      align-items: center;
-    }
-    .cs-gold-input {
-      width: 90px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(200,148,10,0.3);
-      border-radius: 6px;
-      color: var(--gold-light);
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      padding: 0.3rem 0.5rem;
-      text-align: center;
-    }
-    .cs-gold-save {
-      padding: 0.3rem 0.75rem;
-      background: rgba(200,148,10,0.2);
-      border: 1px solid rgba(200,148,10,0.4);
-      border-radius: 6px;
-      color: var(--gold-light);
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .cs-gold-save:hover { background: rgba(200,148,10,0.35); }
-
     /* ── Equipped ── */
     /* AC badge (Figma 51:1385) — flat-top, rounded-bottom shield shape;
        "AC" label and the number are separately sized/weighted, not one
@@ -1400,73 +1377,145 @@
       font-size: 32px;
       line-height: 1;
     }
-    .cs-equipped-grid {
+    /* ── Equipped Gear — 10-slot doll (Figma 51:2260, 2026-08-09) ──────
+       Desktop lays the 10 positions out via grid-template-areas echoing
+       the humanoid silhouette (Head top-center, Neck/Earrings upper-right,
+       Back upper-left, Chest/Arms mid, Left/Right Hand mid-edges, Legs,
+       Feet). The real Figma frame instead absolute-positions every slot in
+       raw px against a fixed canvas width — that breaks the mobile frame
+       outright (slots render off-screen, confirmed via screenshot) and
+       would silently misalign at any desktop width other than the exact
+       design canvas. Grid-areas reproduce the same relative arrangement
+       without hardcoding a canvas width, and share one mobile fallback
+       with the already-DM-approved mobile deviation below.
+       Slot frame + body silhouette use the real exported Figma assets
+       (assets/images/character-sheet/equipped-gear/*, found staged
+       on disk but untracked/never wired in — not invented here) rather
+       than a CSS approximation. */
+    .cs-equip-damage-row {
+      text-align: center;
+      margin-bottom: 0.6rem;
+    }
+    .cs-equip-doll {
+      position: relative;
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-areas:
+        ".     head  .     ."
+        ".     .     neck  earrings"
+        "back  .     .     ."
+        ".     chest arms  ."
+        "handL .     .     handR"
+        ".     .     legs  ."
+        ".     feet  .     .";
+      gap: 1.1rem 0.75rem;
+      justify-items: center;
+      max-width: 480px;
+      margin: 0 auto;
     }
-    .cs-equipped-slot {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: var(--char-radius);
-      padding: 0.85rem 1rem;
+    .cs-equip-doll-silhouette {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 30%;
+      transform: translateX(-50%);
+      object-fit: contain;
+      object-position: center top;
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: 0;
     }
-    .cs-equipped-slot-label {
-      font-family: var(--font-sans);
-      font-size: 0.6rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--char-text-faint);
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    .cs-equipped-item {
-      font-family: var(--font-sans);
-      font-size: 0.86rem;
-      color: var(--char-text-muted);
-    }
-    .cs-equipped-stat {
+    .cs-equip-slot-wrap {
+      position: relative;
+      z-index: 1;
       display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-      font-size: 0.76rem;
-      color: var(--char-text-faint);
-      padding: 0.25rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .cs-equipped-stat:last-child { border-bottom: none; }
-    .cs-equipped-empty-btn {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
       width: 100%;
-      padding: 0.6rem;
-      background: rgba(255,255,255,0.04);
-      border: 1px dashed rgba(255,255,255,0.15);
-      border-radius: 8px;
-      color: var(--char-text-faint);
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
+      max-width: 96px;
     }
-    .cs-equipped-empty-btn:hover { background: rgba(200,148,10,0.1); border-color: rgba(200,148,10,0.35); }
-    .cs-equipped-unequip {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.25);
+    .cs-equip-slot-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius);
+      background: var(--char-card-bg) url('../assets/images/character-sheet/equipped-gear/gear-slot.jpg') center/cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .cs-equip-slot-empty {
       cursor: pointer;
-      font-size: 0.85rem;
-      padding: 0 0.2rem;
-      flex-shrink: 0;
+      transition: filter 0.15s;
+      padding: 0;
+      border: none;
+    }
+    .cs-equip-slot-empty:hover { filter: brightness(1.3); }
+    .cs-equip-slot-filled {
+      cursor: pointer;
+    }
+    .cs-equip-slot-locked {
+      opacity: 0.4;
+    }
+    .cs-equip-slot-thumb {
+      width: 76%;
+      height: 76%;
+      object-fit: cover;
+      border-radius: calc(var(--radius) - 4px);
+    }
+    .cs-equip-slot-thumb-icon {
+      font-size: 1.8rem;
+      color: var(--gold-light);
+    }
+    .cs-equip-slot-unequip {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,15,0.75);
+      border: none;
+      border-radius: 50%;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      font-size: 0.7rem;
       transition: color 0.15s;
     }
-    .cs-equipped-unequip:hover { color: #f87171; }
-    .cs-equipped-locked {
-      width: 100%;
-      padding: 0.6rem;
+    .cs-equip-slot-unequip:hover { color: #f87171; }
+    .cs-equip-slot-label {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: var(--char-text-faint);
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      font-style: italic;
       text-align: center;
+    }
+    .cs-equip-slot-name {
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      color: var(--char-text-muted);
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    @media (max-width: 600px) {
+      .cs-equip-doll {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: none;
+      }
+      .cs-equip-doll-silhouette { display: none; }
+      .cs-equip-slot-wrap { width: 84px; }
     }
     .cs-equipped-damage-sep {
       display: inline-block;
@@ -1543,9 +1592,10 @@
       color: var(--gold-light);
       font-size: 1rem;
     }
-    .cs-equip-icon-armor::before  { content: '🛡'; }
-    .cs-equip-icon-shield::before { content: '🛡'; }
-    .cs-equip-icon-weapon::before { content: '⚔'; }
+    .cs-equip-icon-armor::before      { content: '🛡'; }
+    .cs-equip-icon-shield::before     { content: '🛡'; }
+    .cs-equip-icon-weapon::before     { content: '⚔'; }
+    .cs-equip-icon-accessory::before  { content: '💍'; }
     .cs-equip-result-info {
       flex: 1;
       min-width: 0;
@@ -1571,17 +1621,7 @@
       flex: none;
       text-align: right;
     }
-    @media (max-width: 600px) {
-      .cs-equipped-grid { grid-template-columns: 1fr; }
-    }
-
     /* ── Inventory ── */
-    .cs-inv-add-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.85rem;
-      flex-wrap: wrap;
-    }
     .cs-inv-input {
       flex: 1;
       min-width: 140px;
@@ -1595,32 +1635,6 @@
     }
     .cs-inv-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,148,10,0.25); }
     .cs-inv-input::placeholder { color: rgba(255,255,255,0.4); }
-    .cs-inv-add-btn {
-      padding: 0.45rem 1rem;
-      background: rgba(200,148,10,0.2);
-      border: 1px solid rgba(200,148,10,0.4);
-      border-radius: 6px;
-      color: var(--gold-light);
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .cs-inv-add-btn:hover { background: rgba(200,148,10,0.35); }
-    .cs-inv-list { display: flex; flex-direction: column; gap: 0.4rem; }
-    .cs-inv-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.45; flex-shrink: 0; }
-    .cs-inv-name { font-family: var(--font-sans); font-size: 0.86rem; color: var(--char-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cs-inv-qty {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--char-text-faint);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 4px;
-      padding: 0.1rem 0.45rem;
-    }
     .cs-inv-del {
       background: none;
       border: none;
@@ -1639,13 +1653,6 @@
       padding: 0.75rem 0;
       text-align: center;
     }
-    .cs-inv-weight-total {
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      color: var(--char-text-faint);
-      margin-bottom: 0.6rem;
-      letter-spacing: 0.05em;
-    }
     .cs-inv-search-row {
       display: flex;
       gap: 0.5rem;
@@ -1661,6 +1668,9 @@
       padding: 0.45rem 0.6rem;
       flex: none;
     }
+    /* Shared with the Notes tab's Pinned/Notes group labels — do not remove
+       even though Inventory's own favorites grouping (which used to use
+       this class too) is gone. */
     .cs-inv-section-label {
       font-family: var(--font-sans);
       font-size: 0.68rem;
@@ -1670,46 +1680,8 @@
       margin: 0.6rem 0 0.35rem;
       font-weight: 700;
     }
-    .cs-inv-row {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px;
-      padding: 0.6rem 0.85rem;
-      display: grid;
-      grid-template-columns: 16px 32px 20px 1fr 90px 55px 110px 55px 20px 20px;
-      align-items: center;
-      gap: 0.6rem;
-    }
-    .cs-inv-drag-handle {
-      color: rgba(255,255,255,0.2);
-      cursor: grab;
-      font-size: 0.9rem;
-      flex: none;
-    }
-    .cs-inv-fav-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.2);
-      font-size: 1rem;
-      cursor: pointer;
-      flex: none;
-      padding: 0;
-    }
-    .cs-inv-fav-btn.active { color: var(--gold); }
-    .cs-inv-type-tag {
-      font-family: var(--font-sans);
-      font-size: 0.62rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--char-text-faint);
-      background: rgba(255,255,255,0.05);
-      border-radius: 4px;
-      padding: 0.2rem 0.5rem;
-      text-align: center;
-      white-space: nowrap;
-    }
     .cs-inv-qty-input {
-      width: 100%;
+      width: 54px;
       box-sizing: border-box;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.12);
@@ -1720,19 +1692,6 @@
       text-align: center;
       padding: 0.2rem 0.3rem;
     }
-    .cs-inv-cost, .cs-inv-weight {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--char-text-faint);
-      text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .cs-inv-sortable { display: flex; flex-direction: column; gap: 0.4rem; }
-    .cs-inv-row-wrap.dragging { opacity: 0.4; }
-    .cs-inv-row { cursor: grab; }
-    .cs-inv-row:active { cursor: grabbing; }
     .cs-inv-search-wrap { position: relative; }
     .cs-inv-search-dropdown {
       display: none;
@@ -1781,7 +1740,7 @@
       display: inline-block;
       width: auto;
       padding: 0.55rem 1.1rem;
-      margin-bottom: 0.75rem;
+      margin-top: 0.75rem;
       background: rgba(200,148,10,0.85);
       border: 1px solid rgba(200,148,10,1);
       border-radius: 8px;
@@ -1807,21 +1766,6 @@
       justify-content: center;
       font-size: 1rem;
     }
-    .cs-inv-row-wrap { display: flex; flex-direction: column; }
-    .cs-inv-name-wrap { flex: 1; min-width: 0; }
-    .cs-inv-expand-arrow { font-size: 1.3rem; color: var(--gold-light); margin-left: 0.4rem; display: inline-block; transition: transform 0.15s; }
-    .cs-inv-desc-panel {
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
-      color: var(--char-text-faint);
-      line-height: 1.6;
-      padding: 0.7rem 0.85rem 0.7rem 4.2rem;
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-top: 1px solid rgba(200,148,10,0.25);
-      border-radius: 0 0 8px 8px;
-      margin-top: -0.6rem;
-    }
     .cs-inv-edit {
       background: none;
       border: none;
@@ -1832,6 +1776,195 @@
       flex: none;
     }
     .cs-inv-edit:hover { color: var(--gold-light); }
+
+    /* ── Inventory tab header, +Add Item, Equipped/Currency row (Figma 51:2260) ── */
+    .cs-inv-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--char-ov-gap-xs);
+      margin-bottom: var(--char-ov-gap-s);
+      flex-wrap: wrap;
+    }
+    .cs-inv-additem-btn {
+      background: var(--gold);
+      border: none;
+      border-radius: 9999px;
+      padding: var(--char-ov-gap-xs) var(--char-ov-gap-s);
+      color: var(--blue-800);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1.2rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .cs-inv-additem-btn:hover { background: var(--gold-bright); }
+    .cs-inv-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-s);
+      justify-content: space-between;
+      margin-bottom: var(--char-ov-gap-m);
+    }
+    .cs-inv-top-col { flex: 1 1 0; min-width: 358px; }
+    .cs-inv-top-col--currency { max-width: 480px; display: flex; flex-direction: column; align-items: center; }
+    .cs-inv-col-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+      text-align: center;
+      margin: 0 0 var(--char-ov-gap-xs);
+    }
+    .cs-inv-carrying-title { text-align: left; }
+
+    /* ── Carrying bar — capacity = STR x 15, standard progress-bar reading:
+       track (--blue-700) always full width, fill (--blue-300) grows from
+       the left as current weight rises toward capacity. ── */
+    .cs-inv-weight-bar {
+      position: relative;
+      width: 100%;
+      height: 44px;
+      border-radius: 9999px;
+      background: var(--blue-700);
+      overflow: hidden;
+      margin-bottom: var(--char-ov-gap-m);
+    }
+    .cs-inv-weight-fill {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      background: var(--blue-300);
+      border-right: 1px solid var(--blue-200);
+      transition: width 0.2s ease;
+    }
+    .cs-inv-weight-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    /* ── Own-inventory search/category filter (Figma 51:2260) ── */
+    .cs-inv-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: var(--char-ov-gap-xs);
+      margin-bottom: var(--char-ov-gap-xs);
+    }
+    .cs-inv-filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-2xs);
+      flex: 1 1 240px;
+      min-width: 200px;
+    }
+    .cs-inv-filter-label { font-family: var(--font-body); font-size: 1rem; color: var(--text); }
+    .cs-inv-filter-input, .cs-inv-filter-select {
+      background: var(--blue-600);
+      border: 1px solid var(--blue-200);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      padding: var(--char-ov-gap-xs) 1rem;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .cs-inv-filter-input { border-radius: 9999px; }
+    .cs-inv-filter-input::placeholder { color: rgba(232,232,240,0.75); }
+    .cs-inv-filter-btn {
+      flex: none;
+      background: var(--gold);
+      border: none;
+      border-radius: 9999px;
+      padding: var(--char-ov-gap-xs) var(--char-ov-gap-s);
+      color: var(--blue-800);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-inv-filter-btn:hover { background: var(--gold-bright); }
+
+    /* ── Bulk delete bar — "Select" column has no bulk action in the
+       mockup, built as multi-select -> Delete selected (see build spec). ── */
+    .cs-inv-bulk-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--char-ov-gap-xs);
+      background: var(--dm-bulk-bg);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 1rem;
+      margin-bottom: var(--char-ov-gap-2xs);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .cs-inv-bulk-delete-btn {
+      background: rgba(214,43,43,0.2);
+      border: 1px solid var(--red-border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--red);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cs-inv-bulk-delete-btn:hover { background: rgba(214,43,43,0.35); }
+
+    /* ── Item table (Figma 51:2260) — alternating row shading matches the
+       Class tab's Key Features table pattern. ── */
+    .cs-inv-table-wrap { width: 100%; overflow-x: auto; }
+    .cs-inv-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .cs-inv-th {
+      background: var(--blue-700);
+      color: var(--white);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-align: center;
+      padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
+    }
+    .cs-inv-th-select, .cs-inv-th-thumb { width: 60px; }
+    .cs-inv-th-actions { width: 132px; }
+    .cs-inv-tr:nth-child(odd)  .cs-inv-td { background: var(--blue-600); }
+    .cs-inv-tr:nth-child(even) .cs-inv-td { background: var(--blue-500); }
+    .cs-inv-tr.selected .cs-inv-td { background: var(--dm-row-selected); }
+    .cs-inv-td {
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(0,0,0,0.15);
+    }
+    .cs-inv-td-select, .cs-inv-td-thumb, .cs-inv-td-cat, .cs-inv-td-price, .cs-inv-td-weight, .cs-inv-td-specs, .cs-inv-td-actions { text-align: center; }
+    .cs-inv-td-select input { width: 18px; height: 18px; cursor: pointer; }
+    .cs-inv-td-thumb .cs-inv-thumb, .cs-inv-td-thumb .cs-inv-thumb-icon { margin: 0 auto; }
+    .cs-inv-row-actions { display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+    .cs-inv-empty-row {
+      text-align: center;
+      padding: 1.5rem;
+      font-family: var(--font-sans);
+      font-style: italic;
+      color: var(--char-text-faint);
+    }
+    @media (max-width: 900px) {
+      .cs-inv-table { table-layout: auto; min-width: 860px; }
+    }
+
     .cs-modal-overlay {
       display: none;
       position: fixed;
@@ -2313,7 +2446,12 @@
   var CHAR_ID    = null;   // player_characters.id
   var TOKEN      = null;   // from URL query string
   var ACTIVE_NOTE_TAB = 'general';
-  var EQUIPPED   = { armor: null, shield: null, hand_right: null, hand_left: null };
+  // 10-slot doll (Figma 51:2260, 2026-08-09) — armor/shield/hand_right/hand_left
+  // are the original 4 keys, the other 7 are new equip_slot values added for
+  // the full doll. Left Hand is a single doll position backed by two mutually
+  // exclusive keys (hand_left OR shield) — see EQUIP_DOLL_SLOTS.
+  var EQUIPPED   = { armor: null, shield: null, hand_right: null, hand_left: null,
+    head: null, neck: null, earrings: null, arms: null, back: null, legs: null, feet: null };
   var EQUIPPED_ITEMS = {}; // item_id → full item row from items table
   var ABILITY_SCORES = {}; // set from player_characters.ability_scores in renderCharacter()
   var CLASS_ROW  = null;   // classes table row for ch.class_id, once fetchClassData() resolves
@@ -2786,55 +2924,89 @@
         + '<button class="cs-notes-add-btn" onclick="addNote()">＋ New note</button>'
       + '</div>';
 
-    // "Inventory" tab content — Starting Gear, Gold, Equipped, Inventory.
-    // Relocated here as-is from Your Story (pre-tab-redesign leftover, never
-    // moved when the tab shell landed), unstyled/unredesigned — same stopgap
-    // treatment as Spell Slots under Class. No markup or logic changed, only
-    // where it renders; all ids (cs-gold-block, cs-equipped-block, cs-inv-*)
-    // are unchanged so renderGold()/renderEquipped()/renderInventory() and
-    // the inventory search/custom-item flow keep working untouched.
-    var inventoryTabHtml =
-      // Starting gear
-      '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
-        + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
-
-      // ── Live-play sections (populated by renderLivePlay) ──────────
-      // HP renders in the shared MainInfo header — see cs-mi-hp-slot.
-
-      // Gold
-      + '<div class="cs-section" id="cs-gold-section">'
-        + '<div class="cs-section-label">Gold</div>'
-        + '<div id="cs-gold-block"></div>'
+    // "Inventory" tab content — real Figma pass (51:2260 desktop / 51:2265
+    // mobile), 2026-08-09. Own title+button row here instead of the shared
+    // pageTitleHtml() helper every other tab uses — Figma puts "Inventory"
+    // and "+Add Item" in one row, which the shared helper (a title alone)
+    // can't produce, so this tab skips it and builds its own (see the
+    // assembly line below, which omits pageTitleHtml('Inventory')).
+    var inventoryTabHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-inv-header-row">'
+        + '<h2 class="cs-page-title">Inventory</h2>'
+        + '<button class="cs-inv-additem-btn" onclick="openAddItemModal()">+Add Item</button>'
       + '</div>'
 
-      // Equipped
-      + '<div class="cs-section cs-equipped-section" id="cs-equipped-section">'
-        + '<div class="cs-section-label">Equipped</div>'
-        + '<div id="cs-equipped-block"></div>'
-      + '</div>'
-
-      // Inventory
-      + '<div class="cs-section">'
-        + '<div class="cs-section-label">Inventory</div>'
-        + '<div class="cs-inv-weight-total" id="cs-inv-weight-total">Carrying: 0 lb</div>'
-        + '<div class="cs-inv-search-wrap">'
-          + '<div class="cs-inv-search-row">'
-            + '<input class="cs-inv-input" id="cs-inv-search-input" placeholder="Search items…" autocomplete="off" oninput="onInventorySearchInput()">'
-            + '<select class="cs-inv-cat-select" id="cs-inv-cat-select" onchange="onInventorySearchInput()">'
-              + '<option value="">All</option>'
-              + '<option value="accessory">Accessory</option>'
-              + '<option value="armor">Armor</option>'
-              + '<option value="consumable">Consumable</option>'
-              + '<option value="shield">Shield</option>'
-              + '<option value="tool">Tool</option>'
-              + '<option value="weapon">Weapon</option>'
-            + '</select>'
-          + '</div>'
-          + '<div class="cs-inv-search-dropdown" id="cs-inv-search-results"></div>'
+      // Equipped Gear (doll) + Currency
+      + '<div class="cs-inv-top-row">'
+        + '<div class="cs-inv-top-col">'
+          + '<h3 class="cs-inv-col-title">Equipped Gear</h3>'
+          + '<div id="cs-equipped-block"></div>'
         + '</div>'
-        + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
-        + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
-      + '</div>';
+        + '<div class="cs-inv-top-col cs-inv-top-col--currency">'
+          + '<h3 class="cs-inv-col-title">Currency</h3>'
+          + '<div id="cs-gold-block"></div>'
+        + '</div>'
+      + '</div>'
+
+      // Carrying
+      + '<h3 class="cs-inv-col-title cs-inv-carrying-title">Carrying</h3>'
+      + '<div class="cs-inv-weight-bar" id="cs-inv-weight-bar"></div>'
+
+      // Search / Category / Search — filters the player's own inventory
+      // table below (client-side); distinct from the catalog search that
+      // now lives behind +Add Item.
+      + '<div class="cs-inv-filter-row">'
+        + '<div class="cs-inv-filter-field">'
+          + '<label class="cs-inv-filter-label">Search</label>'
+          + '<input class="cs-inv-filter-input" id="cs-my-inv-search-input" placeholder="Search your inventory&#8230;" onkeydown="if(event.key===\'Enter\')applyInventoryFilter()">'
+        + '</div>'
+        + '<div class="cs-inv-filter-field">'
+          + '<label class="cs-inv-filter-label">Category</label>'
+          + '<select class="cs-inv-filter-select" id="cs-my-inv-cat-select">'
+            + '<option value="">Select</option>'
+            + '<option value="accessory">Accessory</option>'
+            + '<option value="armor">Armor</option>'
+            + '<option value="consumable">Consumable</option>'
+            + '<option value="misc">Misc</option>'
+            + '<option value="shield">Shield</option>'
+            + '<option value="tool">Tool</option>'
+            + '<option value="weapon">Weapon</option>'
+          + '</select>'
+        + '</div>'
+        + '<button class="cs-inv-filter-btn" onclick="applyInventoryFilter()">Search</button>'
+      + '</div>'
+
+      + '<div class="cs-inv-bulk-bar" id="cs-inv-bulk-bar"></div>'
+
+      // Item table
+      + '<div class="cs-inv-table-wrap">'
+        + '<table class="cs-inv-table">'
+          + '<thead><tr>'
+            + '<th class="cs-inv-th cs-inv-th-select">Select</th>'
+            + '<th class="cs-inv-th cs-inv-th-thumb"></th>'
+            + '<th class="cs-inv-th">Name</th>'
+            + '<th class="cs-inv-th">Category</th>'
+            + '<th class="cs-inv-th">Price (G, S, C)</th>'
+            + '<th class="cs-inv-th">Weight (lbs)</th>'
+            + '<th class="cs-inv-th">Specs</th>'
+            + '<th class="cs-inv-th">Description</th>'
+            + '<th class="cs-inv-th cs-inv-th-actions">Actions</th>'
+          + '</tr></thead>'
+          + '<tbody id="cs-inv-tbody"><tr><td class="cs-inv-empty-row" colspan="9">Loading inventory&#8230;</td></tr></tbody>'
+        + '</table>'
+      + '</div>'
+    + '</div></div>'
+
+      // Starting Gear — legacy stopgap section from before the tab redesign.
+      // No equivalent section exists in the Figma Inventory frame at all
+      // (confirmed via get_design_context — the frame is Equipped Gear /
+      // Currency / Carrying / Search / table only), and it wasn't in this
+      // pass's build order, so left as-is/unstyled rather than dropped or
+      // redesigned unprompted.
+      + '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+        + '<div class="cs-section"><div class="cs-section-label">Starting Gear</div>'
+          + '<div class="cs-gear-grid">' + gearHtml + '</div></div>'
+      + '</div></div>';
 
     // Page title (Figma 51:1385) — logo + "Character Sheet", renders once
     // above MainInfo, same breakout width as the rest of the header. The
@@ -2854,7 +3026,7 @@
       + tabBarHtml
       + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + pageTitleHtml('Ability Scores') + abilityScoresHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden>' + pageTitleHtml('Inventory') + inventoryTabHtml + '</div>'
+      + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden>' + inventoryTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + pageTitleHtml('Class') + classTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="notes" id="cs-tab-notes" hidden>' + pageTitleHtml('Notes') + notesTabHtml + '</div>';
 
@@ -3497,7 +3669,7 @@
   }
 
   // ── Overview weight bar — capacity = STR × 15, current = full inventory
-  // (equipped + carried), same sum cs-inv-weight-total already uses. ──
+  // (equipped + carried), same sum the Carrying bar (renderCarryingBar) uses. ──
   function computeCarriedWeight() {
     return INVENTORY.reduce(function(sum, item) {
       var w = item.item_id ? (catalogWeightFor(item.item_id) || 0) : (parseFloat(item.weight_lb) || 0);
@@ -3824,49 +3996,62 @@
       .catch(function() {});
   }
 
-  // ── Gold ──────────────────────────────────────────────────────────
+  // ── Currency — 3 pill inputs (Figma 51:2260) ────────────────────────
+  // Replaces the old single "Set Gold" flow. gold_cp is still the only
+  // real column — each pill is a plain display/edit surface over it, not
+  // an independent value; blurring any of the three recomputes the whole
+  // total from all three fields' current values, same pattern the header's
+  // old HP-max-modifier trick used.
   function renderGold() {
     var block = document.getElementById('cs-gold-block');
     if (!block) return;
-    var cp     = SHEET ? (SHEET.gold_cp || 0) : 0;
-    var gpWhole = Math.floor(cp / 100);
-    var spRem   = Math.floor((cp % 100) / 10);
-    var cpRem   = cp % 10;
-    var display = gpWhole + ' gp';
-    if (spRem) display += ' ' + spRem + ' sp';
-    if (cpRem) display += ' ' + cpRem + ' cp';
-    block.innerHTML =
-      '<div class="cs-gold-block">'
-        + '<div class="cs-gold-icon">◈</div>'
-        + '<div>'
-          + '<div class="cs-gold-val" id="cs-gold-val">' + display + '</div>'
-          + '<div class="cs-gold-label">Current gold</div>'
-        + '</div>'
-      + '</div>'
-      + '<div class="cs-gold-edit-row">'
-        + '<input class="cs-gold-input" id="cs-gold-input" type="number" placeholder="gp" title="Enter gold pieces">'
-        + '<button class="cs-gold-save" onclick="setGold()">Set Gold</button>'
+    var cp = SHEET ? (SHEET.gold_cp || 0) : 0;
+    var gp    = Math.floor(cp / 100);
+    var spRem = Math.floor((cp % 100) / 10);
+    var cpRem = cp % 10;
+    block.innerHTML = '<div class="cs-currency-row">' + [
+      { key:'gp', label:'Gold',   mod:'gold',   val:gp    },
+      { key:'sp', label:'Silver', mod:'silver', val:spRem },
+      { key:'cp', label:'Copper', mod:'copper', val:cpRem }
+    ].map(function(c) {
+      return '<div class="cs-currency-pill cs-currency-pill--' + c.mod + '">'
+        + '<div class="cs-currency-pill-label">' + c.label + '</div>'
+        + '<input class="cs-currency-input" id="cs-currency-' + c.key + '" type="number" min="0" value="' + c.val + '" onblur="onCurrencyBlur()" onkeydown="if(event.key===\'Enter\')this.blur()">'
       + '</div>';
+    }).join('') + '</div>';
   }
 
-  function setGold() {
+  function onCurrencyBlur() {
     if (!SHEET) return;
-    var input = document.getElementById('cs-gold-input');
-    var gp = parseFloat(input.value);
-    if (isNaN(gp)) return;
-    SHEET.gold_cp = Math.round(gp * 100);
+    var gp = parseInt(document.getElementById('cs-currency-gp').value) || 0;
+    var sp = parseInt(document.getElementById('cs-currency-sp').value) || 0;
+    var cp = parseInt(document.getElementById('cs-currency-cp').value) || 0;
+    SHEET.gold_cp = Math.max(0, gp * 100 + sp * 10 + cp);
     saveSheet({ gold_cp: SHEET.gold_cp });
-    input.value = '';
     renderGold();
     showToast('Gold updated');
   }
 
-  // ── Equipped ──────────────────────────────────────────────────────
-  var EQUIP_SLOTS = [
-    { key:'armor',      label:'Armor',     type:'armor',  category:'armor'  },
-    { key:'shield',     label:'Shield',    type:'shield', category:'shield' },
-    { key:'hand_right', label:'Main Hand', type:'weapon', category:'weapon' },
-    { key:'hand_left',  label:'Off Hand',  type:'weapon', category:'weapon' }
+  // ── Equipped — 10-slot doll (Figma 51:2260) ─────────────────────────
+  // Ten visual doll positions, each backed by one or two EQUIPPED keys.
+  // Left Hand is the one position with two keys (hand_left, shield) —
+  // mutually exclusive, see selectEquipItem()/autoUnequipOffHandForTwoHanded().
+  // accessorySlotKey narrows catalog candidates to the matching items.equip_slot
+  // value for the 7 new accessory positions (head/neck/earrings/arms/back/legs/feet);
+  // custom (non-catalog) inventory rows have no per-slot data, so they match any
+  // accessory-typed slot broadly, same permissive fallback the old armor/shield/
+  // weapon slots already used.
+  var EQUIP_DOLL_SLOTS = [
+    { area:'head',     label:'Head',       keys:['head'],                categories:['accessory'], accessorySlotKey:'head' },
+    { area:'neck',     label:'Neck',       keys:['neck'],                categories:['accessory'], accessorySlotKey:'neck' },
+    { area:'earrings', label:'Earrings',   keys:['earrings'],            categories:['accessory'], accessorySlotKey:'earrings' },
+    { area:'back',     label:'Back',       keys:['back'],                categories:['accessory'], accessorySlotKey:'back' },
+    { area:'chest',    label:'Chest',      keys:['armor'],               categories:['armor'] },
+    { area:'arms',     label:'Arms',       keys:['arms'],                categories:['accessory'], accessorySlotKey:'arms' },
+    { area:'handL',    label:'Left Hand',  keys:['hand_left','shield'],  categories:['weapon','shield'] },
+    { area:'handR',    label:'Right Hand', keys:['hand_right'],          categories:['weapon'] },
+    { area:'legs',     label:'Legs',       keys:['legs'],                categories:['accessory'], accessorySlotKey:'legs' },
+    { area:'feet',     label:'Feet',       keys:['feet'],                categories:['accessory'], accessorySlotKey:'feet' }
   ];
   // Minimal tooltip: reads data-tip off an element and shows a floating
   // bubble on hover — same data-tip convention character.html's
@@ -3914,25 +4099,33 @@
     if (!block) return;
     var mainHandItem = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
     var isTwoHanded = !!(mainHandItem && Array.isArray(mainHandItem.properties) && mainHandItem.properties.indexOf('two-handed') !== -1);
-    if (isTwoHanded && EQUIPPED.hand_left) {
+    if (isTwoHanded && (EQUIPPED.hand_left || EQUIPPED.shield)) {
       autoUnequipOffHandForTwoHanded();
     }
-    block.innerHTML = computeWeaponDamageHtml()
-      + '<div class="cs-equipped-grid">' + EQUIP_SLOTS.map(function(slot) { return renderEquippedSlot(slot, isTwoHanded); }).join('') + '</div>';
+    var dmgHtml = computeWeaponDamageHtml();
+    block.innerHTML = (dmgHtml ? '<div class="cs-equip-damage-row">' + dmgHtml + '</div>' : '')
+      + '<div class="cs-equip-doll">'
+        + '<img class="cs-equip-doll-silhouette" src="../assets/images/character-sheet/equipped-gear/equipped-gear-silhouete.png" alt="" aria-hidden="true">'
+        + EQUIP_DOLL_SLOTS.map(function(slot) { return renderEquippedSlot(slot, isTwoHanded); }).join('')
+      + '</div>';
     renderACBadge();
   }
-  // Clears Off Hand when Main Hand holds/gains a two-handed weapon — covers
-  // both directions (equipping two-handed while Off Hand is occupied, and
-  // Off Hand simply staying locked afterward via renderEquippedSlot).
+  // Clears the Left Hand doll position (hand_left AND shield — mutually
+  // exclusive at that one position) when Main Hand holds/gains a two-handed
+  // weapon. Covers both directions (equipping two-handed while Left Hand is
+  // occupied, and Left Hand simply staying locked afterward via renderEquippedSlot).
   function autoUnequipOffHandForTwoHanded() {
     if (!SHEET) return;
     var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
-    var removedId = equipped.hand_left;
-    delete equipped.hand_left;
+    ['hand_left', 'shield'].forEach(function(k) {
+      var removedId = equipped[k];
+      if (!removedId) return;
+      delete equipped[k];
+      EQUIPPED[k] = null;
+      var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
+      if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
+    });
     SHEET.equipped = equipped;
-    EQUIPPED.hand_left = null;
-    var stillUsed = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === removedId; });
-    if (removedId && !stillUsed) delete EQUIPPED_ITEMS[removedId];
     saveSheet({ equipped: equipped });
   }
   function buildWeaponDamageHtml(item) {
@@ -4003,70 +4196,55 @@
     el.innerHTML = '<span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">' + r.ac + '</span>';
     wireTooltip(el);
   }
-  function renderEquippedStat(labelText, value, fullRow) {
-    return '<div class="cs-equipped-stat"' + (fullRow ? ' style="grid-column:1/-1;"' : '') + '>'
-      + '<span>' + labelText + '</span><span>' + value + '</span></div>';
-  }
+  // New doll slot visual (Figma 51:2260) — a plain square showing the item's
+  // catalog thumbnail (or a category icon fallback) plus its name, matching
+  // the empty state's icon+label layout with the item name added underneath.
+  // No stat breakdown in the doll itself (that lived in the old 4-slot cards);
+  // this is a DM-unconfirmed default from the build spec, flag if wrong.
   function renderEquippedSlot(slot, mainHandTwoHanded) {
-    if (slot.key === 'hand_left' && mainHandTwoHanded) {
-      return '<div class="cs-equipped-slot"><div class="cs-equipped-slot-label">' + slot.label.toUpperCase() + '</div>'
-        + '<div class="cs-equipped-locked">Two-handed weapon equipped</div></div>';
-    }
-    var itemId = EQUIPPED[slot.key];
-    var item   = itemId ? EQUIPPED_ITEMS[itemId] : null;
-    var body;
-    if (!item) {
-      body = '<button class="cs-equipped-empty-btn" onclick="openEquipModal(\'' + slot.key + '\')">Search to equip&#8230;</button>';
-    } else {
-      var stats = [];
-      if (slot.type === 'armor') {
-        stats.push(renderEquippedStat('Base AC', item.base_ac != null ? item.base_ac : '&mdash;'));
-        if (item.armor_weight_class) stats.push(renderEquippedStat('Weight Class', cap(item.armor_weight_class)));
-        if (item.stealth_disadvantage) stats.push(renderEquippedStat('Stealth', 'Disadvantage'));
-        if (item.str_requirement) stats.push(renderEquippedStat('Str Req', item.str_requirement));
-        if (item.magic_bonus) stats.push(renderEquippedStat('Magic Bonus', '+' + item.magic_bonus));
-        if (item.weight_lb != null) stats.push(renderEquippedStat('Weight', item.weight_lb + ' lb'));
-      } else if (slot.type === 'shield') {
-        stats.push(renderEquippedStat('AC Bonus', '+' + (item.ac_bonus != null ? item.ac_bonus : 2)));
-        if (item.magic_bonus) stats.push(renderEquippedStat('Magic Bonus', '+' + item.magic_bonus));
-        if (item.weight_lb != null) stats.push(renderEquippedStat('Weight', item.weight_lb + ' lb'));
-      } else if (slot.type === 'weapon') {
-        var isRanged = !!item.range_normal;
-        stats.push(renderEquippedStat('Attack', isRanged ? 'Ranged' : 'Melee'));
-        if (item.damage_dice) stats.push(renderEquippedStat('Damage', item.damage_dice + (item.damage_type ? ' ' + item.damage_type : '')));
-        if (item.versatile_dice) stats.push(renderEquippedStat('Versatile', item.versatile_dice));
-        if (Array.isArray(item.properties) && item.properties.length) stats.push(renderEquippedStat('Properties', item.properties.join(', ')));
-        if (isRanged) stats.push(renderEquippedStat('Range', item.range_normal + (item.range_long ? ' / ' + item.range_long : '')));
-        if (item.magic_bonus) stats.push(renderEquippedStat('Magic Bonus', '+' + item.magic_bonus));
-        if (item.weight_lb != null) stats.push(renderEquippedStat('Weight', item.weight_lb + ' lb'));
-      }
-      if (Array.isArray(item.grants_advantage) && item.grants_advantage.length) {
-        stats.push(renderEquippedStat('Advantage', item.grants_advantage.join(', '), true));
-      }
-      if (item.story_note) {
-        stats.push('<div class="cs-equipped-stat" style="grid-column:1/-1;font-style:italic;">' + item.story_note + '</div>');
-      }
-      body = '<div class="cs-equipped-item">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">'
-          + '<strong>' + item.name + '</strong>'
-          + '<button class="cs-equipped-unequip" onclick="unequipSlot(\'' + slot.key + '\')" title="Unequip">&#10005;</button>'
-        + '</div>'
-        + stats.join('')
+    if (slot.area === 'handL' && mainHandTwoHanded) {
+      return '<div class="cs-equip-slot-wrap" style="grid-area:' + slot.area + ';">'
+        + '<div class="cs-equip-slot-box cs-equip-slot-locked" title="Two-handed weapon equipped"></div>'
+        + '<div class="cs-equip-slot-label">' + slot.label.toUpperCase() + '</div>'
       + '</div>';
     }
-    return '<div class="cs-equipped-slot"><div class="cs-equipped-slot-label">' + slot.label.toUpperCase() + '</div>' + body + '</div>';
+    var activeKey = null;
+    for (var i = 0; i < slot.keys.length; i++) { if (EQUIPPED[slot.keys[i]]) { activeKey = slot.keys[i]; break; } }
+    var itemId = activeKey ? EQUIPPED[activeKey] : null;
+    var item   = itemId ? EQUIPPED_ITEMS[itemId] : null;
+    var box;
+    if (!item) {
+      box = '<button class="cs-equip-slot-box cs-equip-slot-empty" onclick="openEquipModal(\'' + slot.area + '\')" aria-label="Equip ' + slot.label + '"></button>';
+    } else {
+      var thumb = item.image
+        ? '<img class="cs-equip-slot-thumb" src="' + item.image + '" alt="" onerror="this.remove();">'
+        : '<div class="cs-equip-slot-thumb-icon cs-equip-icon-' + (item.category || slot.categories[0]) + '"></div>';
+      box = '<div class="cs-equip-slot-box cs-equip-slot-filled" onclick="openEquipModal(\'' + slot.area + '\')">'
+        + thumb
+        + '<button class="cs-equip-slot-unequip" onclick="event.stopPropagation();unequipSlot(\'' + activeKey + '\')" title="Unequip">&#10005;</button>'
+      + '</div>';
+    }
+    return '<div class="cs-equip-slot-wrap" style="grid-area:' + slot.area + ';">'
+      + box
+      + '<div class="cs-equip-slot-label">' + slot.label.toUpperCase() + '</div>'
+      + (item ? '<div class="cs-equip-slot-name">' + item.name + '</div>' : '')
+    + '</div>';
   }
 
   // ── Equip search modal ────────────────────────────────────────────
-  var EQUIP_TARGET_SLOT = null;
-  var EQUIP_SLOT_TITLES = { armor:'Equip Armor', shield:'Equip Shield', hand_right:'Equip Main Hand', hand_left:'Equip Off Hand' };
-  function equipSlotByKey(key) {
-    for (var i = 0; i < EQUIP_SLOTS.length; i++) { if (EQUIP_SLOTS[i].key === key) return EQUIP_SLOTS[i]; }
+  var EQUIP_TARGET_SLOT = null; // a doll "area" key now, not a raw EQUIPPED key
+  var EQUIP_SLOT_TITLES = {
+    head:'Equip Head', neck:'Equip Neck', earrings:'Equip Earrings', back:'Equip Back',
+    chest:'Equip Armor', arms:'Equip Arms', handL:'Equip Left Hand', handR:'Equip Right Hand',
+    legs:'Equip Legs', feet:'Equip Feet'
+  };
+  function equipSlotByArea(area) {
+    for (var i = 0; i < EQUIP_DOLL_SLOTS.length; i++) { if (EQUIP_DOLL_SLOTS[i].area === area) return EQUIP_DOLL_SLOTS[i]; }
     return null;
   }
-  function openEquipModal(slotKey) {
-    EQUIP_TARGET_SLOT = slotKey;
-    document.getElementById('cs-equip-modal-title').textContent = EQUIP_SLOT_TITLES[slotKey] || 'Equip Item';
+  function openEquipModal(area) {
+    EQUIP_TARGET_SLOT = area;
+    document.getElementById('cs-equip-modal-title').textContent = EQUIP_SLOT_TITLES[area] || 'Equip Item';
     document.getElementById('cs-equip-search-input').value = '';
     renderEquipResults('');
     document.getElementById('cs-equip-modal-overlay').style.display = 'flex';
@@ -4075,20 +4253,38 @@
     document.getElementById('cs-equip-modal-overlay').style.display = 'none';
     EQUIP_TARGET_SLOT = null;
   }
+  // ── +Add Item modal (Figma 51:2260) — wraps the existing catalog search,
+  // opened from the new header button instead of an always-visible inline bar.
+  function openAddItemModal() {
+    document.getElementById('cs-inv-search-input').value = '';
+    document.getElementById('cs-inv-search-results').innerHTML = '';
+    document.getElementById('cs-inv-search-results').classList.remove('visible');
+    document.getElementById('cs-additem-modal-overlay').style.display = 'flex';
+  }
+  function closeAddItemModal() {
+    document.getElementById('cs-additem-modal-overlay').style.display = 'none';
+  }
   function onEquipSearchInput() {
     var q = (document.getElementById('cs-equip-search-input').value || '').trim();
     renderEquipResults(q);
   }
-  // Inventory rows relevant to a slot — custom rows match by item_type,
-  // catalog-linked rows match by the linked catalog item's category.
-  function getEquipCandidates(slotKey) {
-    var slot = equipSlotByKey(slotKey);
+  // Inventory rows relevant to a doll position — custom rows match by
+  // item_type against the slot's broad categories (no per-accessory-slot
+  // data exists on custom rows, same permissive fallback armor/shield/weapon
+  // always used). Catalog rows match by category, narrowed further by the
+  // real items.equip_slot value for the 7 accessory positions so e.g. a ring
+  // doesn't show up as a Head candidate.
+  function getEquipCandidates(area) {
+    var slot = equipSlotByArea(area);
     if (!slot) return [];
     return INVENTORY.filter(function(item) {
-      var catalogItem  = item.item_id ? CATALOG_CACHE[item.item_id] : null;
-      var matchesCustom  = item.item_type === slot.category;
-      var matchesCatalog = !!(item.item_id && catalogItem && catalogItem.category === slot.category);
-      return matchesCustom || matchesCatalog;
+      var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+      if (catalogItem) {
+        if (slot.categories.indexOf(catalogItem.category) === -1) return false;
+        if (catalogItem.category === 'accessory') return catalogItem.equip_slot === slot.accessorySlotKey;
+        return true;
+      }
+      return slot.categories.indexOf(item.item_type) !== -1;
     });
   }
   // Stats line for an equip search result — reads catalog fields when the
@@ -4130,7 +4326,7 @@
   }
   function renderEquipResults(q) {
     var resultsEl = document.getElementById('cs-equip-search-results');
-    var slot = equipSlotByKey(EQUIP_TARGET_SLOT);
+    var slot = equipSlotByArea(EQUIP_TARGET_SLOT);
     if (!resultsEl || !slot) return;
     var candidates = getEquipCandidates(EQUIP_TARGET_SLOT);
     if (!candidates.length) {
@@ -4141,7 +4337,8 @@
     var rows = candidates.map(function(item) {
       var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
       var name = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
-      return { item: item, catalogItem: catalogItem, name: name };
+      var rowCategory = catalogItem ? catalogItem.category : (item.item_type || slot.categories[0]);
+      return { item: item, catalogItem: catalogItem, name: name, category: rowCategory };
     });
     if (query) {
       rows = rows.filter(function(r) { return r.name.toLowerCase().indexOf(query) !== -1; });
@@ -4153,8 +4350,8 @@
     resultsEl.innerHTML = rows.map(function(r) {
       var weightSrc = r.catalogItem ? r.catalogItem.weight_lb : r.item.weight_lb;
       var weight = parseFloat(weightSrc) || 0;
-      var stats  = buildEquipResultStats(slot.category, r.catalogItem || r.item);
-      var thumb  = buildEquipResultThumb(slot.category, r.catalogItem);
+      var stats  = buildEquipResultStats(r.category, r.catalogItem || r.item);
+      var thumb  = buildEquipResultThumb(r.category, r.catalogItem);
       return '<div class="cs-equip-result" onclick="selectEquipItem(\'' + r.item.id + '\')">'
         + thumb
         + '<div class="cs-equip-result-info">'
@@ -4166,26 +4363,41 @@
     }).join('');
   }
   function selectEquipItem(invItemId) {
-    var slotKey = EQUIP_TARGET_SLOT;
-    if (!slotKey || !SHEET) return;
+    var slot = equipSlotByArea(EQUIP_TARGET_SLOT);
+    if (!slot || !SHEET) return;
     var invItem = INVENTORY.find(function(i) { return i.id === invItemId; });
     if (!invItem) return;
+    var catalogItem = invItem.item_id ? CATALOG_CACHE[invItem.item_id] : null;
+    var itemCategory = catalogItem ? catalogItem.category : invItem.item_type;
+    // Which real EQUIPPED key this goes to — only ambiguous for the merged
+    // Left Hand position (handL), where the chosen item's own category picks
+    // hand_left (weapon) vs shield (shield).
+    var targetKey = (slot.keys.length > 1) ? (itemCategory === 'shield' ? 'shield' : 'hand_left') : slot.keys[0];
     var catalogId = invItem.item_id || null;
     var equipKey  = catalogId || invItem.id;
     var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
-    equipped[slotKey] = equipKey;
+    // Mutual exclusion: clear any sibling key sharing this doll position.
+    slot.keys.forEach(function(k) {
+      if (k === targetKey || !equipped[k]) return;
+      var removedId = equipped[k];
+      delete equipped[k];
+      EQUIPPED[k] = null;
+      var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
+      if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
+    });
+    equipped[targetKey] = equipKey;
     SHEET.equipped = equipped;
-    EQUIPPED[slotKey] = equipKey;
+    EQUIPPED[targetKey] = equipKey;
     saveSheet({ equipped: equipped });
-    invItem.equipped_slot = slotKey;
-    sb.from('inventory').update({ equipped_slot: slotKey }).eq('id', invItem.id).then(function(res) {
+    invItem.equipped_slot = targetKey;
+    sb.from('inventory').update({ equipped_slot: targetKey }).eq('id', invItem.id).then(function(res) {
       if (res.error) showToast('Equip saved, but inventory record not updated — ' + res.error.message, true);
     });
     closeEquipModal();
     showToast('Equipped');
     // CATALOG_CACHE only carries the partial fields used by the inventory list
     // (name, category, cost_gp, weight_lb, summary, image) — not enough for AC
-    // calculation or the equipped-slot stat display, so fetch the full row.
+    // calculation or the doll thumbnail (item.category), so fetch the full row.
     if (catalogId) {
       sb.from('items').select('*').eq('id', catalogId).single().then(function(res) {
         if (res.error) {
@@ -4203,7 +4415,7 @@
         renderEquipped();
       });
     } else {
-      EQUIPPED_ITEMS[equipKey] = { name: invItem.custom_name || 'Unknown item', weight_lb: invItem.weight_lb || 0 };
+      EQUIPPED_ITEMS[equipKey] = { name: invItem.custom_name || 'Unknown item', weight_lb: invItem.weight_lb || 0, category: itemCategory };
       renderEquipped();
     }
   }
@@ -4221,132 +4433,142 @@
   }
 
   // ── Inventory ─────────────────────────────────────────────────────
+  // ── Carrying bar (Figma 51:2260) — capacity = STR x 15, current =
+  // computeCarriedWeight() (unchanged, equipped + carried). ──
+  function renderCarryingBar() {
+    var bar = document.getElementById('cs-inv-weight-bar');
+    if (!bar) return;
+    var current  = Math.round(computeCarriedWeight() * 10) / 10;
+    var capacity = (parseInt(ABILITY_SCORES.str) || 10) * 15;
+    var pct = capacity > 0 ? Math.max(0, Math.min(100, (current / capacity) * 100)) : 0;
+    bar.innerHTML = '<div class="cs-inv-weight-fill" style="width:' + pct + '%;"></div>'
+      + '<div class="cs-inv-weight-label">' + current + ' / ' + capacity + ' LBS</div>';
+  }
+
+  // ── Own-inventory search/category filter (Figma 51:2260) — client-side
+  // over the already-loaded INVENTORY array, click-to-search (not
+  // live-as-you-type — that stays on the separate catalog search in the
+  // +Add Item modal, unchanged old behavior). ──
+  var INV_FILTER = { q:'', category:'' };
+  function applyInventoryFilter() {
+    INV_FILTER.q = (document.getElementById('cs-my-inv-search-input').value || '').trim().toLowerCase();
+    INV_FILTER.category = document.getElementById('cs-my-inv-cat-select').value;
+    renderInventory();
+  }
+  function invRowMatchesFilter(item) {
+    var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+    var name     = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
+    var category = catalogItem ? catalogItem.category : (item.item_type || 'other');
+    if (INV_FILTER.category && category !== INV_FILTER.category) return false;
+    if (INV_FILTER.q && name.toLowerCase().indexOf(INV_FILTER.q) === -1) return false;
+    return true;
+  }
+
+  // ── Item table (Figma 51:2260) — replaces the old card-row layout.
+  // Select checkbox has no bulk action in the mockup — built as multi-select
+  // -> "Delete selected" (the standard reason a table gets row checkboxes),
+  // lowest-risk guess, easy to repurpose later. Favorites/drag-reorder
+  // dropped from this view (no equivalent in the new table design) — the
+  // is_favorite/sort_order columns and the drag logic elsewhere in the file
+  // are untouched, just unused here. sort_order still stable-sorts the rows
+  // and is still written on insert, just no longer player-reorderable here. ──
+  var SELECTED_INV_IDS = {};
   function renderInventory() {
-    var list = document.getElementById('cs-inv-list');
-    if (!list) return;
-    var totalWeight = computeCarriedWeight();
-    var weightEl = document.getElementById('cs-inv-weight-total');
-    if (weightEl) weightEl.textContent = 'Carrying: ' + (Math.round(totalWeight * 10) / 10) + ' lb';
-    if (!INVENTORY.length) {
-      list.innerHTML = '<div class="cs-inv-empty">No items yet — search above or add a custom item.</div>';
-      return;
+    var tbody = document.getElementById('cs-inv-tbody');
+    if (!tbody) return;
+    renderCarryingBar();
+    var rows = INVENTORY.filter(invRowMatchesFilter).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td class="cs-inv-empty-row" colspan="9">'
+        + (INVENTORY.length ? 'No items match your search.' : 'No items yet — use +Add Item above.')
+        + '</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(renderInvRow).join('');
     }
-    var favorites = INVENTORY.filter(function(i) { return i.is_favorite; }).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
-    var regular   = INVENTORY.filter(function(i) { return !i.is_favorite; }).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
-    var html = '';
-    if (favorites.length) {
-      html += '<div class="cs-inv-section-label">★ Favorites</div>';
-      html += '<div class="cs-inv-sortable" data-group="favorite">' + favorites.map(renderInvRow).join('') + '</div>';
-    }
-    if (regular.length) {
-      if (favorites.length) html += '<div class="cs-inv-section-label">Items</div>';
-      html += '<div class="cs-inv-sortable" data-group="regular">' + regular.map(renderInvRow).join('') + '</div>';
-    }
-    list.innerHTML = html;
-    wireInventoryDragDrop();
+    renderBulkDeleteBar();
   }
   var TYPE_ICONS = {
     weapon:'⚔️', armor:'🛡️', shield:'🛡️', consumable:'🧪', tool:'🔧',
     accessory:'💍', spell:'📜', food:'🍖', resource:'🪵', treasure:'💰', other:'📦'
   };
+  // Category-dependent one-line mechanical summary — reuses fields already
+  // read elsewhere (computeAC()/buildWeaponDamageHtml()), no new columns.
+  function invRowSpecs(category, src) {
+    if (category === 'armor')  return src.base_ac  != null ? 'AC ' + src.base_ac : '&mdash;';
+    if (category === 'shield') return src.ac_bonus != null ? 'AC +' + src.ac_bonus : '&mdash;';
+    if (category === 'weapon') return src.damage_dice ? src.damage_dice + (src.damage_type ? ' (' + src.damage_type + ')' : '') : '&mdash;';
+    return '&mdash;';
+  }
   function renderInvRow(item) {
     var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
-    var name = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
-    var type = catalogItem ? catalogItem.category : (item.item_type || 'other');
+    var name     = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
+    var category = catalogItem ? catalogItem.category : (item.item_type || 'other');
     var costGp = catalogItem ? (catalogItem.cost_gp || 0) : (item.cost_gp || 0);
     var costSp = item.item_id ? 0 : (item.cost_sp || 0);
     var costCp = item.item_id ? 0 : (item.cost_cp || 0);
-    var costStr = [costGp ? costGp + 'gp' : '', costSp ? costSp + 'sp' : '', costCp ? costCp + 'cp' : ''].filter(Boolean).join(' ') || '—';
     var weight = catalogItem ? (catalogItem.weight_lb || 0) : (item.weight_lb || 0);
-    var desc = catalogItem ? catalogItem.summary : item.custom_desc;
-    var thumb = (catalogItem && catalogItem.image)
+    var desc   = (catalogItem ? catalogItem.summary : item.custom_desc) || '&mdash;';
+    var specs  = invRowSpecs(category, catalogItem || item);
+    var thumb  = (catalogItem && catalogItem.image)
       ? '<img class="cs-inv-thumb" src="' + catalogItem.image + '" alt="">'
-      : '<div class="cs-inv-thumb cs-inv-thumb-icon">' + (TYPE_ICONS[type] || '📦') + '</div>';
+      : '<div class="cs-inv-thumb cs-inv-thumb-icon">' + (TYPE_ICONS[category] || '📦') + '</div>';
+    // Quantity/edit/delete controls aren't part of Figma's 8 columns, but
+    // the functionality still needs a home. DM correction: a 9th Actions
+    // column, not squeezed into Description (which stays flavor-text only
+    // per the confirmed decision at the top of the build spec).
     var editBtn = !item.item_id
-      ? '<button class="cs-inv-edit" onclick="openCustomItemModal(\'' + item.id + '\')" title="Edit">✎</button>'
+      ? '<button class="cs-inv-edit" onclick="openCustomItemModal(\'' + item.id + '\')" title="Edit">&#9998;</button>'
       : '';
-    return '<div class="cs-inv-row-wrap">'
-      + '<div class="cs-inv-row" draggable="true" data-id="' + item.id + '" id="inv-' + item.id + '">'
-        + '<span class="cs-inv-drag-handle">⠿</span>'
-        + thumb
-        + '<button class="cs-inv-fav-btn' + (item.is_favorite ? ' active' : '') + '" onclick="toggleFavorite(\'' + item.id + '\')" title="Favorite">★</button>'
-        + '<div class="cs-inv-name-wrap">'
-          + '<div class="cs-inv-name"' + (desc ? ' onclick="toggleInvDesc(\'' + item.id + '\')" style="cursor:pointer;"' : '') + '>' + name + (desc ? ' <span class="cs-inv-expand-arrow" id="arrow-' + item.id + '">▾</span>' : '') + '</div>'
+    return '<tr class="cs-inv-tr' + (SELECTED_INV_IDS[item.id] ? ' selected' : '') + '" id="inv-row-' + item.id + '">'
+      + '<td class="cs-inv-td cs-inv-td-select"><input type="checkbox" ' + (SELECTED_INV_IDS[item.id] ? 'checked' : '') + ' onchange="toggleInvSelect(\'' + item.id + '\', this.checked)"></td>'
+      + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-name">' + name + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-price">' + costGp + ',' + costSp + ',' + costCp + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-specs">' + specs + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-desc">' + desc + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-actions">'
+        + '<div class="cs-inv-row-actions">'
+          + '<input class="cs-inv-qty-input" type="number" min="0" value="' + (item.quantity||0) + '" onchange="updateInvQuantity(\'' + item.id + '\', this.value)" title="Quantity">'
+          + editBtn
+          + '<button class="cs-inv-del" onclick="confirmDeleteItem(\'' + item.id + '\', \'' + name.replace(/'/g,"\\'") + '\')" title="Remove">&#10005;</button>'
         + '</div>'
-        + '<span class="cs-inv-type-tag">' + type + '</span>'
-        + '<input class="cs-inv-qty-input" type="number" min="0" value="' + (item.quantity||0) + '" onchange="updateInvQuantity(\'' + item.id + '\', this.value)">'
-        + '<span class="cs-inv-cost">' + costStr + '</span>'
-        + '<span class="cs-inv-weight">' + (weight||0) + 'lb</span>'
-        + editBtn
-        + '<button class="cs-inv-del" onclick="confirmDeleteItem(\'' + item.id + '\', \'' + name.replace(/'/g,"\\'") + '\')" title="Remove">×</button>'
-      + '</div>'
-      + (desc ? '<div class="cs-inv-desc-panel" id="desc-' + item.id + '" style="display:none;">' + desc + '</div>' : '')
-    + '</div>';
+      + '</td>'
+    + '</tr>';
   }
-  var DRAG_ITEM_ID = null;
-  function wireInventoryDragDrop() {
-    document.querySelectorAll('.cs-inv-row').forEach(function(row) {
-      row.addEventListener('dragstart', function(e) {
-        DRAG_ITEM_ID = row.dataset.id;
-        row.closest('.cs-inv-row-wrap').classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      row.addEventListener('dragend', function() {
-        document.querySelectorAll('.cs-inv-row-wrap.dragging').forEach(function(el) { el.classList.remove('dragging'); });
-        DRAG_ITEM_ID = null;
-      });
-    });
-    document.querySelectorAll('.cs-inv-sortable').forEach(function(container) {
-      container.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        var dragging = container.querySelector('.cs-inv-row-wrap.dragging');
-        if (!dragging) return;
-        var afterEl = getDragAfterElement(container, e.clientY);
-        if (afterEl == null) {
-          container.appendChild(dragging);
-        } else {
-          container.insertBefore(dragging, afterEl);
-        }
-      });
-      container.addEventListener('drop', function(e) {
-        e.preventDefault();
-        persistDragOrder(container);
-      });
-    });
+  function toggleInvSelect(id, checked) {
+    if (checked) SELECTED_INV_IDS[id] = true; else delete SELECTED_INV_IDS[id];
+    var row = document.getElementById('inv-row-' + id);
+    if (row) row.classList.toggle('selected', !!checked);
+    renderBulkDeleteBar();
   }
-  function getDragAfterElement(container, y) {
-    var els = Array.prototype.slice.call(container.querySelectorAll('.cs-inv-row-wrap:not(.dragging)'));
-    return els.reduce(function(closest, el) {
-      var box = el.getBoundingClientRect();
-      var offset = y - box.top - box.height / 2;
-      if (offset < 0 && offset > closest.offset) {
-        return { offset: offset, element: el };
-      } else {
-        return closest;
-      }
-    }, { offset: -Infinity, element: null }).element;
+  function renderBulkDeleteBar() {
+    var bar = document.getElementById('cs-inv-bulk-bar');
+    if (!bar) return;
+    var n = Object.keys(SELECTED_INV_IDS).length;
+    if (!n) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+    bar.style.display = 'flex';
+    bar.innerHTML = '<span>' + n + ' selected</span><button class="cs-inv-bulk-delete-btn" onclick="confirmBulkDelete()">Delete selected</button>';
   }
-  function persistDragOrder(container) {
-    var isFavorite = container.dataset.group === 'favorite';
-    var rows = Array.prototype.slice.call(container.querySelectorAll('.cs-inv-row'));
-    var updates = rows.map(function(row, idx) {
-      var item = INVENTORY.find(function(i){ return i.id === row.dataset.id; });
-      if (item) item.sort_order = idx;
-      return { id: row.dataset.id, sort_order: idx };
-    });
-    updates.forEach(function(u) {
-      sb.from('inventory').update({ sort_order: u.sort_order }).eq('id', u.id).then(function(res) {
-        if (res.error) console.warn('Sort order save failed for', u.id, res.error);
-      });
-    });
+  function confirmBulkDelete() {
+    var ids = Object.keys(SELECTED_INV_IDS);
+    if (!ids.length) return;
+    document.getElementById('cs-delete-confirm-text').textContent = 'Remove ' + ids.length + ' selected item' + (ids.length===1?'':'s') + ' from your inventory? This cannot be undone.';
+    var btn = document.getElementById('cs-delete-confirm-btn');
+    btn.onclick = function() { bulkDeleteSelected(); closeDeleteConfirm(); };
+    document.getElementById('cs-delete-confirm-overlay').style.display = 'flex';
   }
-  function toggleInvDesc(id) {
-    var panel = document.getElementById('desc-' + id);
-    var arrow = document.getElementById('arrow-' + id);
-    if (!panel) return;
-    var open = panel.style.display !== 'none';
-    panel.style.display = open ? 'none' : 'block';
-    if (arrow) arrow.textContent = open ? '▾' : '▴';
+  function bulkDeleteSelected() {
+    var ids = Object.keys(SELECTED_INV_IDS);
+    if (!ids.length) return;
+    sb.from('inventory').delete().in('id', ids).then(function(res) {
+      if (res.error) { showToast('Could not delete selected items', true); return; }
+      INVENTORY = INVENTORY.filter(function(i) { return !SELECTED_INV_IDS[i.id]; });
+      SELECTED_INV_IDS = {};
+      renderInventory();
+      showToast(ids.length + ' item' + (ids.length===1?'':'s') + ' removed');
+    });
   }
   var CATALOG_CACHE = {};
   var SEARCH_DEBOUNCE = null;
@@ -4398,14 +4620,12 @@
     if (!it) return;
     var qtyInput = document.getElementById('qty-' + itemId);
     var qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
-    var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+    var maxSort = Math.max(0, ...INVENTORY.map(function(i){return i.sort_order||0;}));
     var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
     sb.from('inventory').insert(row).select().then(function(res) {
       if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
       INVENTORY.push(res.data[0]);
-      document.getElementById('cs-inv-search-input').value = '';
-      document.getElementById('cs-inv-search-results').innerHTML = '';
-      document.getElementById('cs-inv-search-results').classList.remove('visible');
+      closeAddItemModal();
       renderInventory();
       showToast(it.name + ' added');
     });
@@ -4516,7 +4736,7 @@
           showToast('Item updated');
         });
       } else {
-        var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+        var maxSort = Math.max(0, ...INVENTORY.map(function(i){return i.sort_order||0;}));
         fields.character_id = CHAR_ID;
         fields.token = TOKEN;
         fields.sort_order = maxSort + 1;
@@ -4524,6 +4744,7 @@
           if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
           INVENTORY.push(res.data[0]);
           closeCustomItemModal();
+          closeAddItemModal();
           renderInventory();
           showToast(name + ' added');
         });
@@ -4536,25 +4757,15 @@
       if (res.error || !res.data) { showToast('Could not find that item', true); return; }
       CATALOG_CACHE[itemId] = res.data;
       var qty = parseInt(document.getElementById('ci-qty') ? document.getElementById('ci-qty').value : 1) || 1;
-      var maxSort = Math.max(0, ...INVENTORY.filter(function(i){return !i.is_favorite;}).map(function(i){return i.sort_order||0;}));
+      var maxSort = Math.max(0, ...INVENTORY.map(function(i){return i.sort_order||0;}));
       var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
       sb.from('inventory').insert(row).select().then(function(insertRes) {
         if (insertRes.error) { showToast('Could not add item — ' + insertRes.error.message, true); return; }
         INVENTORY.push(insertRes.data[0]);
+        closeAddItemModal();
         renderInventory();
         showToast(res.data.name + ' added');
       });
-    });
-  }
-  function toggleFavorite(id) {
-    var item = INVENTORY.find(function(i) { return i.id === id; });
-    if (!item) return;
-    item.is_favorite = !item.is_favorite;
-    var maxSort = Math.max(0, ...INVENTORY.filter(function(i){ return i.is_favorite === item.is_favorite && i.id !== id; }).map(function(i){return i.sort_order||0;}));
-    item.sort_order = maxSort + 1;
-    sb.from('inventory').update({ is_favorite: item.is_favorite, sort_order: item.sort_order }).eq('id', id).then(function(res) {
-      if (res.error) { showToast('Could not update favorite', true); return; }
-      renderInventory();
     });
   }
   function updateInvQuantity(id, val) {
@@ -4580,6 +4791,7 @@
     sb.from('inventory').delete().eq('id', id).then(function(res) {
       if (res.error) { showToast('Could not remove item', true); return; }
       INVENTORY = INVENTORY.filter(function(i) { return i.id !== id; });
+      delete SELECTED_INV_IDS[id];
       renderInventory();
       showToast('Item removed');
     });
@@ -5145,7 +5357,14 @@
       armor:      equipped.armor      || null,
       shield:     equipped.shield     || null,
       hand_right: equipped.hand_right || null,
-      hand_left:  equipped.hand_left  || null
+      hand_left:  equipped.hand_left  || null,
+      head:       equipped.head       || null,
+      neck:       equipped.neck       || null,
+      earrings:   equipped.earrings   || null,
+      arms:       equipped.arms       || null,
+      back:       equipped.back       || null,
+      legs:       equipped.legs       || null,
+      feet:       equipped.feet       || null
     };
     var ids = Object.keys(EQUIPPED).map(function(k) { return EQUIPPED[k]; }).filter(Boolean);
     var uniqueIds = ids.filter(function(id, idx) { return ids.indexOf(id) === idx; });
@@ -5227,6 +5446,33 @@
             + '<div class="cs-modal-body">'
               + '<input class="cs-inv-input" id="cs-equip-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onEquipSearchInput()">'
               + '<div class="cs-equip-results" id="cs-equip-search-results"></div>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        // +Add Item modal (Figma 51:2260) — the *existing* catalog search
+        // (onInventorySearchInput/cs-inv-search-results/openCustomItemModal)
+        // relocated here behind a trigger button, unchanged logic, same ids.
+        + '<div class="cs-modal-overlay" id="cs-additem-modal-overlay" style="display:none" onclick="if(event.target===this)closeAddItemModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title">Add Item</div>'
+            + '<div class="cs-modal-body">'
+              + '<div class="cs-inv-search-wrap">'
+                + '<div class="cs-inv-search-row">'
+                  + '<input class="cs-inv-input" id="cs-inv-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onInventorySearchInput()">'
+                  + '<select class="cs-inv-cat-select" id="cs-inv-cat-select" onchange="onInventorySearchInput()">'
+                    + '<option value="">All</option>'
+                    + '<option value="accessory">Accessory</option>'
+                    + '<option value="armor">Armor</option>'
+                    + '<option value="consumable">Consumable</option>'
+                    + '<option value="misc">Misc</option>'
+                    + '<option value="shield">Shield</option>'
+                    + '<option value="tool">Tool</option>'
+                    + '<option value="weapon">Weapon</option>'
+                  + '</select>'
+                + '</div>'
+                + '<div class="cs-inv-search-dropdown" id="cs-inv-search-results"></div>'
+              + '</div>'
+              + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
             + '</div>'
           + '</div>'
         + '</div>';
