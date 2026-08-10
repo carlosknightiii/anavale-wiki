@@ -96,39 +96,6 @@
       opacity: 0.6;
     }
 
-    /* ── Appearance block ── */
-    .cs-appearance-block {
-      background: var(--char-card-bg);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: var(--char-radius);
-      padding: 1.25rem 1.5rem;
-      font-family: var(--font-sans);
-      font-size: 0.88rem;
-      color: var(--char-text-muted);
-      line-height: 1.8;
-      font-style: italic;
-    }
-    .cs-appearance-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-top: 1rem;
-    }
-    .cs-chip {
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      padding: 0.2rem 0.65rem;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.14);
-      color: var(--char-text-faint);
-      background: var(--char-accent-tint);
-    }
-    .cs-chip-label {
-      color: rgba(200,148,10,0.7);
-      font-weight: 700;
-      margin-right: 0.3rem;
-    }
-
     /* ── Story panel ── */
     .cs-story-block {
       background: var(--char-card-bg);
@@ -243,6 +210,20 @@
       padding: 0 1.25rem;
     }
 
+    /* ── Page title (Figma 51:1385) — logo + "Character Sheet" ── */
+    .cs-sheet-title-logo {
+      height: 22px;
+      width: auto;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .cs-sheet-title-text {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 24px;
+      color: var(--text);
+    }
+
     /* ── Portrait / money / weight card ── */
     .cs-ov-maininfo {
       position: relative;
@@ -289,31 +270,6 @@
       cursor: pointer;
     }
     .cs-ov-portrait-upload-btn:hover { background: rgba(200,148,10,0.35); border-color: rgba(200,148,10,0.6); }
-    .cs-ov-weight {
-      position: relative;
-      z-index: 2;
-      height: 32px;
-      background: var(--blue-200);
-    }
-    .cs-ov-weight-fill {
-      height: 100%;
-      background: var(--surface-4);
-      transition: width 0.25s ease;
-    }
-    .cs-ov-weight-fill.encumbered { background: var(--red-strong); }
-    .cs-ov-weight-label {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      font-family: var(--font-body);
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .cs-ov-weight-icon { font-size: 0.85rem; }
 
     /* ── Name / pills / blurb / accordions ── */
     .cs-ov-info {
@@ -396,13 +352,26 @@
       flex-shrink: 0;
       transition: transform 0.2s ease;
     }
+    /* Expand/collapse transition — grid-template-rows 1fr→0fr rather than a
+       JS-measured max-height, so it works for any content height without
+       recalculating. cs-ov-acc-body-outer is the grid container/animated
+       element; cs-ov-acc-body (unchanged internal flex layout) just needs
+       overflow:hidden so it clips cleanly mid-transition. */
+    .cs-ov-acc-body-outer {
+      display: grid;
+      grid-template-rows: 1fr;
+      opacity: 1;
+      transition: grid-template-rows 0.22s ease, opacity 0.2s ease;
+    }
     .cs-ov-acc-body {
+      overflow: hidden;
+      min-height: 0;
       padding-bottom: var(--char-ov-gap-2xs);
       display: flex;
       flex-direction: column;
       gap: var(--char-ov-gap-m);
     }
-    .cs-ov-acc.collapsed .cs-ov-acc-body { display: none; }
+    .cs-ov-acc.collapsed .cs-ov-acc-body-outer { grid-template-rows: 0fr; opacity: 0; }
     .cs-ov-acc.collapsed .cs-ov-acc-chevron { transform: rotate(180deg); }
 
     /* ── Overview cards (alignment / background / gigglegloom) ── */
@@ -642,8 +611,8 @@
     }
     .cs-story-card-head { display: flex; align-items: center; gap: 0.6rem; }
     .cs-story-card-img {
-      width: 48px;
-      height: 48px;
+      width: 75px;
+      height: 75px;
       border-radius: var(--radius-sm);
       object-fit: cover;
       flex-shrink: 0;
@@ -651,11 +620,11 @@
     .cs-story-card-headtext { display: flex; flex-direction: column; gap: 0.15rem; }
     .cs-story-card-label {
       font-family: var(--font-body);
-      font-weight: 700;
-      font-size: 0.68rem;
+      font-weight: 300;
+      font-size: 12px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--gold);
+      color: var(--blue-100);
     }
     .cs-story-card-title {
       font-family: var(--font-display);
@@ -669,6 +638,39 @@
       color: var(--text);
       opacity: 0.75;
     }
+    /* Your Past cards (Figma 51:1218) — fixed 358px width (not the flexible
+       Your Background sizing), 18px titles (not 26px), and two layouts:
+       default puts the icon beside just the eyebrow/title header row;
+       --full (Left Behind, Why You Left) puts the icon beside the entire
+       content column instead — a real structural split, not a styling one. */
+    .cs-past-card {
+      width: 358px;
+      flex: 0 0 358px;
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-xs);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .cs-past-card-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h5);
+      color: var(--text);
+    }
+    .cs-past-card--full {
+      flex-direction: row;
+      gap: 0.75rem;
+    }
+    .cs-past-card--full .cs-story-card-img { margin-top: 0; }
+    .cs-past-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex: 1;
+      min-width: 0;
+    }
     .cs-story-card-text {
       font-family: var(--font-body);
       font-weight: 300;
@@ -677,63 +679,86 @@
       color: var(--text);
       opacity: 0.9;
     }
+    /* Benefits box (Figma 51:1218) — typed lines, not pill tags. Lighter
+       than the card's own blue/700 background so it reads as a distinct
+       inset panel. */
     .cs-story-benefits {
-      margin-top: 0.3rem;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.35rem;
+      margin-top: 0.5rem;
+      background: var(--blue-600);
+      border-radius: var(--radius);
+      padding: 8px;
     }
     .cs-story-benefit-label {
       font-family: var(--font-body);
       font-weight: 700;
-      font-size: 0.68rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-right: 0.15rem;
+      font-size: 12px;
+      color: var(--currency-gold-coin);
+      margin-bottom: 0.2rem;
     }
-    .cs-story-benefit-tag {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--char-accent-tint);
-      border-radius: 20px;
-      padding: 0.15rem 0.65rem;
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      color: var(--char-text-muted);
+    .cs-benefit-line {
+      font-size: 12px;
+      color: var(--text);
+      margin-top: 0.2rem;
+    }
+    .cs-benefit-line:first-of-type { margin-top: 0; }
+    .cs-benefit-amount { font-weight: 700; color: var(--green); }
+    .cs-benefit-amount.negative { color: var(--red); }
+    .cs-benefit-name { font-weight: 700; color: var(--text); }
+    .cs-benefit-desc { font-weight: 300; color: var(--text); }
+    .cs-benefit-suffix { font-weight: 300; color: var(--char-text-muted); }
+    /* "Personal quest" line (Why You Left) — plain text, not a Benefits box. */
+    .cs-past-quest {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 24px;
+      color: var(--text);
+      margin-top: 0.5rem;
     }
     .cs-story-quest-label {
       font-family: var(--font-body);
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: 16px;
       color: var(--gold);
       margin-right: 0.3rem;
     }
 
-    /* ── Narrative summary card (generateSummary() output, read-only) ── */
-    .cs-ov-summary-card {
+    /* ── Who You Are (Figma 51:1103) — ONE card: summary heading/paragraph
+       + personality items as flush left-border strips, not separate boxes
+       like Your Background/Your Past. ── */
+    .cs-whoyouare-card {
       background: var(--blue-700);
       border-radius: var(--radius-lg);
       padding: var(--char-ov-gap-s);
       width: 100%;
     }
-    .cs-ov-summary-heading {
-      font-family: var(--font-body);
-      font-weight: 700;
-      font-size: 0.7rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin: 1.4em 0 0.4em;
-    }
-    .cs-ov-summary-heading:first-child { margin-top: 0; }
     .cs-ov-summary-text {
       font-family: var(--font-body);
       font-weight: 300;
-      font-size: 0.94rem;
-      line-height: var(--line-height);
+      font-size: 18px;
+      line-height: 24px;
       color: var(--text);
-      margin: 0;
+      margin: 0.5em 0 0;
+    }
+    .cs-whoyouare-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-xs);
+      margin-top: var(--char-ov-gap-s);
+    }
+    .cs-whoyouare-item {
+      flex: 1 1 200px;
+      border-left: 4px solid var(--blue-400);
+      padding: 8px 8px 8px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .cs-whoyouare-item-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h5);
+      color: var(--text);
     }
 
     /* ── Ability score cards ── */
@@ -836,30 +861,32 @@
        carries real content today; Ability Scores/Inventory/Class are
        placeholders until their own build slices land.
        ══════════════════════════════════════════════════════════════ */
+    /* Tab bar (Figma 51:1103) — pill tabs, not underlines. Inactive tabs sit
+       at 50% text opacity on a darker fill; the active tab gets full
+       opacity on a lighter fill. */
     .cs-tabbar {
       display: flex;
       gap: 0.5rem;
       margin-bottom: 1.75rem;
-      border-bottom: 1px solid var(--char-highlight-border);
+      border-bottom: 4px solid var(--blue-400);
       overflow-x: auto;
     }
     .cs-tab-btn {
-      background: none;
+      background: var(--blue-600);
       border: none;
-      border-bottom: 2px solid transparent;
-      padding: 0.75rem 1rem;
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-weight: 700;
-      color: var(--char-text-faint);
+      border-radius: 8px 8px 0 0;
+      padding: 10px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text);
+      opacity: 0.5;
       cursor: pointer;
       white-space: nowrap;
-      transition: color 0.15s, border-color 0.15s;
+      transition: background 0.15s, opacity 0.15s;
     }
-    .cs-tab-btn:hover { color: var(--char-text-muted); }
-    .cs-tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .cs-tab-btn:hover { opacity: 0.75; }
+    .cs-tab-btn.active { background: var(--blue-400); opacity: 1; }
     .cs-tab-content[hidden] { display: none; }
     .cs-tab-placeholder {
       padding: 3rem 0;
@@ -1014,65 +1041,42 @@
     .cs-mi-hp-slot { flex: 0 0 auto; }
     .cs-mi-temp-hp { flex: 0 0 auto; display: flex; align-items: center; }
 
-    /* Compact HP/Temp HP badge+bar — shared shape/classes for both, with a
-       --temp modifier for the blue Temp HP colorway. */
+    /* Compact HP/Temp HP row (Figma 51:1385) — label + directly-editable
+       number input(s) + bar. No Edit toggle, no separate control panel:
+       typing into the input and blurring is the entire interaction. */
     .cs-mi-hp-compact { display: flex; align-items: center; gap: 0.5rem; }
     .cs-mi-hp-compact-label {
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
+      font-family: var(--font-body);
       font-weight: 700;
+      font-size: 24px;
       color: var(--text);
     }
-    .cs-mi-hp-compact-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 28px;
-      height: 24px;
-      padding: 0 0.4rem;
-      background: #fff;
-      color: var(--surface-0);
-      border-radius: 6px;
-      font-family: var(--font-sans);
-      font-size: 0.85rem;
+    .cs-mi-hp-num-input {
+      width: 44px;
+      background: var(--blue-50);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      text-align: center;
+      font-family: var(--font-body);
       font-weight: 700;
+      font-size: 18px;
+      color: var(--blue-800);
     }
-    .cs-mi-hp-compact-max { font-family: var(--font-sans); font-size: 0.85rem; color: var(--char-text-muted); }
+    .cs-mi-hp-num-input::-webkit-outer-spin-button,
+    .cs-mi-hp-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .cs-mi-hp-compact-max { font-family: var(--font-body); font-weight: 700; font-size: 18px; color: var(--text); }
     .cs-mi-hp-compact-bar {
       width: 120px;
       height: 10px;
-      border-radius: 6px;
-      background: rgba(180,60,60,0.2);
+      border-radius: 999px;
+      background: #371212;
       overflow: hidden;
     }
-    .cs-mi-hp-compact-bar-fill { height: 100%; background: linear-gradient(90deg, #b43c3c, #f87171); transition: width 0.25s ease; }
-    .cs-mi-hp-mod.positive { color: #6ecf6e; }
-    .cs-mi-hp-mod.negative { color: #f87171; }
-    .cs-mi-hp-compact-edit {
-      background: none;
-      border: none;
-      color: var(--char-text-faint);
-      font-size: 0.7rem;
-      cursor: pointer;
-      text-decoration: underline;
-      padding: 0;
-    }
-    .cs-mi-hp-edit-panel { margin-top: 0.4rem; }
-    .cs-mi-hp-edit-panel > * + * { margin-top: 0.35rem; }
-    .cs-mi-hp-controls { display: flex; gap: 0.4rem; align-items: center; }
-    .cs-mi-hp-max-row { display: flex; gap: 0.4rem; align-items: center; }
-
-    .cs-mi-temp-hp-add {
-      background: none;
-      border: 1px dashed var(--char-accent-border);
-      border-radius: 8px;
-      padding: 0.35rem 0.7rem;
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      color: var(--char-text-faint);
-      cursor: pointer;
-    }
-    .cs-mi-temp-hp-add:hover { border-color: var(--blue-border); color: var(--blue); }
+    .cs-mi-hp-compact-bar-fill { height: 100%; background: var(--red-strong); transition: width 0.25s ease; }
+    /* Death-save-state Heal row only (0 Current HP) — the normal-state HP
+       row above has no button controls left, just the two inputs. */
+    .cs-mi-hp-controls { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
 
     .cs-mi-death-saves {
       flex: 1 1 260px;
@@ -1365,17 +1369,27 @@
     .cs-gold-save:hover { background: rgba(200,148,10,0.35); }
 
     /* ── Equipped ── */
-    .cs-equipped-ac-badge {
-      display: inline-block;
-      font-family: var(--font-serif);
-      font-size: 1.7rem;
+    /* AC badge (Figma 51:1385) — flat-top, rounded-bottom shield shape;
+       "AC" label and the number are separately sized/weighted, not one
+       uniform string. */
+    .cs-mi-ac-badge {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      background: var(--blue-100);
+      color: var(--blue-800);
+      border-radius: 0 0 55px 55px;
+      padding: 8px 18px;
+    }
+    .cs-mi-ac-label {
+      font-family: var(--font-body);
       font-weight: 700;
-      color: var(--gold-light);
-      background: var(--char-highlight-tint);
-      border: 1px solid var(--char-highlight-border);
-      border-radius: 10px;
-      padding: 0.5rem 1.25rem;
-      margin-bottom: 0.85rem;
+      font-size: 24px;
+    }
+    .cs-mi-ac-num {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 32px;
     }
     .cs-equipped-grid {
       display: grid;
@@ -2309,7 +2323,8 @@
     { key:'story',     label:'Your Story' },
     { key:'abilities', label:'Ability Scores' },
     { key:'inventory', label:'Inventory' },
-    { key:'class',     label:'Class' }
+    { key:'class',     label:'Class' },
+    { key:'notes',     label:'Notes' }
   ];
 
   // ── Lookup tables ─────────────────────────────────────────────────
@@ -2363,6 +2378,17 @@
     'unusual':'Yes — something unusual',
     'wanted-one':'No, but I wanted one'
   };
+  // Situational benefit text for the Had a Pet card's Benefits box — pulled
+  // verbatim from character.html's data-effect attributes on the real
+  // had_pet option cards, same pattern as WHY_LEFT_QUEST. Pet is the only
+  // Your Past field whose benefit is flavor text rather than a mechanical
+  // bonus, so it's the only one that needs this kind of lookup.
+  var PET_EFFECT = {
+    'loyal-animal': 'Creatures that protect tend to trust you faster',
+    'never-wanted': 'Neutral. The Fluffets don\'t take it personally.',
+    'unusual':      'You have patience with strange things that most people don\'t',
+    'wanted-one':   'You notice animals. They sometimes notice back.'
+  };
   var LOVE_LABELS = {
     'complicated':'Yes — and it\'s complicated',
     'ended-badly':'Yes — and it ended badly',
@@ -2407,7 +2433,6 @@
     'strict-religious':  [{ key:'int', amount:1 }, { key:'cha', amount:-1 }],
     'the-streets':       [{ key:'dex', amount:1 }, { key:'wis', amount:-1 }]
   };
-  var ABILITY_FULL_NAME = { str:'Str', dex:'Dex', con:'Con', int:'Int', wis:'Wis', cha:'Cha' };
   var WHY_LEFT_LABELS = {
     'someone-disappeared':'Left searching for someone who disappeared',
     'saw-the-grey':'Left after watching the grey arrive',
@@ -2707,14 +2732,6 @@
         }).join('')
       : '<div class="cs-gear-item"><div class="cs-gear-dot"></div><em style="color:var(--char-text-faint);">Starting gear to be determined</em></div>';
 
-    // Appearance chips (the appearance paragraph itself now lives in the
-    // shared MainInfo header — see buildMainInfoHtml())
-    var chipSlots = ['height','build','age','skin_tone','face_shape','eye_color','eye_shape','hair_color','hair_style'];
-    var chipsHtml = chipSlots.filter(function(k) { return app[k]; }).map(function(k) {
-      return '<span class="cs-chip"><span class="cs-chip-label">' + k.replace(/_/g,' ') + '</span>'
-        + cap((app[k]||'').replace(/-/g,' ')) + '</span>';
-    }).join('');
-
     // Tab bar — Tab Redesign v1. Only "Your Story" holds real content this
     // pass; the other three are inert placeholders until their own build
     // slices land (see docs build spec's suggested build order).
@@ -2725,32 +2742,30 @@
       + '</div>';
 
     // "Your Story" tab content: Who You Are / Your Background / Your Past
-    // accordions (Figma 51:1103/51:1218), plus Appearance chips and Notes.
-    // Gold/Equipped/Inventory/Starting Gear moved to the Inventory tab (see
+    // accordions (Figma 51:1103/51:1218), plus Notes. Gold/Equipped/
+    // Inventory/Starting Gear moved to the Inventory tab (see
     // inventoryTabHtml below) — they were only ever here because the tab
     // shell hadn't given Inventory real content yet. The old flat "Pending
     // From Your DM" section is gone — dm_pending_items now renders inside
-    // the Organization card's Benefits box in Your Past, its real home.
+    // the Organization card's Benefits box in Your Past, its real home. The
+    // structured Appearance chips section (height/build/age/etc.) is gone
+    // too — confirmed redundant with the header's Appearance paragraph,
+    // which pulls the same underlying appearance_data.
     var storyTabHtml =
       pageTitleHtml('Your Story')
       + whoYouAreHtml
 
-      // Appearance (chips only now — paragraph moved to MainInfo). Kept
-      // right after Who You Are, near the rest of the who-you-are content,
-      // rather than floating between the Your Background/Your Past accordions.
-      + (chipsHtml ? (
-          '<div class="cs-section"><div class="cs-section-label">Appearance</div>'
-          + '<div class="cs-appearance-chips">' + chipsHtml + '</div>'
-          + '</div>'
-        ) : '')
-
       + yourBackgroundHtml
       + yourPastHtml
 
-      + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>'
+      // Photo input — hidden, triggered from the portrait card's Replace button
+      + '<input class="cs-photo-input" type="file" id="cs-photo-input" accept="image/*" onchange="uploadPhoto(this)">';
 
-      // Notes
-      + '<div class="cs-section">'
+    // "Notes" tab content — relocated here verbatim from Your Story (same
+    // pattern as the earlier Gold/Equipped/Inventory move), completely
+    // unstyled/unredesigned. Real visual pass comes later.
+    var notesTabHtml =
+      '<div class="cs-section">'
         + '<div class="cs-section-label">Notes</div>'
         + '<div class="cs-notes-tabs" id="cs-notes-tabs"></div>'
         + '<div class="cs-notes-search-wrap">'
@@ -2760,12 +2775,7 @@
         + '<div class="cs-notes-search-results" id="cs-notes-search-results"></div>'
         + '<div class="cs-notes-list" id="cs-notes-list"></div>'
         + '<button class="cs-notes-add-btn" onclick="addNote()">＋ New note</button>'
-      + '</div>'
-
-      // Photo input — hidden, triggered from the portrait card's Replace button
-      + '<input class="cs-photo-input" type="file" id="cs-photo-input" accept="image/*" onchange="uploadPhoto(this)">'
-
-      + '<div class="cs-divider"><span class="cs-divider-glyph">✦ · ✦</span></div>';
+      + '</div>';
 
     // "Inventory" tab content — Starting Gear, Gold, Equipped, Inventory.
     // Relocated here as-is from Your Story (pre-tab-redesign leftover, never
@@ -2817,14 +2827,28 @@
         + '<div class="cs-inv-list" id="cs-inv-list"><div class="cs-inv-empty">Loading inventory…</div></div>'
       + '</div>';
 
+    // Page title (Figma 51:1385) — logo + "Character Sheet", was missing
+    // entirely; renders once above MainInfo, same breakout width as the rest
+    // of the header. Duplicates the sticky nav's logo deliberately — this is
+    // a real Figma component distinct from the site-wide nav bar, not a
+    // redundant copy of it.
+    var sheetPageTitleHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-sheet-title">'
+        + '<img class="cs-sheet-title-logo" src="../assets/logo-Anavale.svg" alt="Anavale">'
+        + '<div class="cs-sheet-title-text">Character Sheet</div>'
+      + '</div>'
+    + '</div></div>';
+
     // Assemble — MainInfo (shared, once) + tab bar + one content block per tab
     main.innerHTML =
-      mainInfoHtml
+      sheetPageTitleHtml
+      + mainInfoHtml
       + tabBarHtml
       + '<div class="cs-tab-content" data-tab-content="story" id="cs-tab-story">' + storyTabHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="abilities" id="cs-tab-abilities" hidden>' + pageTitleHtml('Ability Scores') + abilityScoresHtml + '</div>'
       + '<div class="cs-tab-content" data-tab-content="inventory" id="cs-tab-inventory" hidden>' + pageTitleHtml('Inventory') + inventoryTabHtml + '</div>'
-      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + pageTitleHtml('Class') + classTabHtml + '</div>';
+      + '<div class="cs-tab-content" data-tab-content="class" id="cs-tab-class" hidden>' + pageTitleHtml('Class') + classTabHtml + '</div>'
+      + '<div class="cs-tab-content" data-tab-content="notes" id="cs-tab-notes" hidden>' + pageTitleHtml('Notes') + notesTabHtml + '</div>';
 
     ACTIVE_TAB = 'story';
     updateTabUI();
@@ -3154,7 +3178,7 @@
   function buildSummaryCardHtml(summaryText) {
     var text = extractSummarySection(summaryText, 'WHO ARE YOU');
     if (!text) return '';
-    return '<div class="cs-ov-summary-card"><p class="cs-ov-summary-text">' + escHtml(text) + '</p></div>';
+    return '<div class="cs-story-card-title">Summary</div><p class="cs-ov-summary-text">' + escHtml(text) + '</p>';
   }
 
   // ── MainInfo — shared header (Figma 51:1385), renders once above the
@@ -3182,10 +3206,6 @@
         + '<div class="cs-ov-portrait">'
           + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
           + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
-          + '<div class="cs-ov-weight" id="cs-ov-weight">'
-            + '<div class="cs-ov-weight-fill" id="cs-ov-weight-fill" style="width:0%;"></div>'
-            + '<div class="cs-ov-weight-label"><span class="cs-ov-weight-icon">&#9878;</span><span id="cs-ov-weight-nums">0 / 0 LBS</span></div>'
-          + '</div>'
         + '</div>'
         + '<div class="cs-ov-info">'
           + '<div class="cs-mi-top-row">'
@@ -3194,15 +3214,10 @@
           + '<div class="cs-ov-main">'
             + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
             + '<div class="cs-mi-vitals">'
-              + '<div class="cs-equipped-ac-badge cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip="">AC —</div>'
+              + '<div class="cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip=""><span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">—</span></div>'
               + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
               + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
             + '</div>'
-            // Edit controls for HP/Temp HP render here, below the compact
-            // row, instead of inline inside it — keeping them inline caused
-            // the AC badge to reflow unpredictably when a panel opened
-            // (flex-wrap fighting a growing flex item mid-row).
-            + '<div class="cs-mi-hp-edit-panel" id="cs-mi-hp-edit-panel" style="display:none;"></div>'
             + blurbHtml
           + '</div>'
           + '<div class="cs-mi-triple-row">'
@@ -3238,7 +3253,7 @@
           + '<span class="cs-ov-acc-title">' + title + '</span>'
           + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
         + '</button>'
-        + '<div class="cs-ov-acc-body">' + bodyHtml + '</div>'
+        + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">' + bodyHtml + '</div></div>'
       + '</div>'
     + '</div></div>';
   }
@@ -3253,28 +3268,111 @@
       + (benefitsHtml || '')
     + '</div>';
   }
-  function benefitTagsHtml(tags) {
-    return tags.length ? '<div class="cs-story-benefits"><span class="cs-story-benefit-label">Benefits:</span>' + tags.join('') + '</div>' : '';
+  // ── Benefits box (Figma 51:1218) — typed lines inside a blue/600 box,
+  // not the old rounded pill-tags. Ability deltas combine onto one
+  // comma-joined line; everything else (skill/feat/DM-add/situational)
+  // gets its own line with a type-specific suffix. Only skill and feat
+  // lines get the gold tooltip icon — plain ability lines and DM-add/
+  // situational lines don't (confirmed against the real Figma benefit
+  // boxes on both Your Background's Background card and Your Past's
+  // cards, not assumed). ──
+  function abilityDeltaLineHtml(deltas) {
+    if (!deltas || !deltas.length) return '';
+    var parts = deltas.map(function(d) {
+      return '<span class="cs-benefit-amount ' + (d.amount >= 0 ? 'positive' : 'negative') + '">' + (d.amount >= 0 ? '+' : '') + d.amount + '</span> <span class="cs-benefit-name">' + d.key.toUpperCase() + '</span>';
+    });
+    return '<div class="cs-benefit-line">' + parts.join(', ') + '</div>';
+  }
+  // amount is optional — Your Past's skill_bonuses carry a real +N amount,
+  // Your Background's flat skill grants don't (confirmed against Figma:
+  // Background's skill lines have no "+1" prefix, Your Past's do).
+  function skillBenefitLineHtml(name, amount) {
+    var tip = SKILL_TIPS[name];
+    return '<div class="cs-benefit-line">'
+      + (amount != null ? '<span class="cs-benefit-amount positive">+' + amount + '</span> ' : '')
+      + '<span class="cs-benefit-name">' + escHtml(name) + '</span> <span class="cs-benefit-suffix">(Skill Proficiency)</span>'
+      + (tip ? '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>' : '')
+    + '</div>';
+  }
+  function featBenefitLineHtml(name) {
+    var tip = FEAT_TIPS[name];
+    return '<div class="cs-benefit-line">'
+      + '<span class="cs-benefit-name">' + escHtml(name) + '</span> <span class="cs-benefit-suffix">(Ability)</span>'
+      + (tip ? '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>' : '')
+    + '</div>';
+  }
+  function dmAddBenefitLineHtml(label) {
+    return '<div class="cs-benefit-line"><span class="cs-benefit-name">' + escHtml(label) + '</span> <span class="cs-benefit-suffix">(DM adds)</span></div>';
+  }
+  function situationalBenefitLineHtml(text) {
+    return '<div class="cs-benefit-line"><span class="cs-benefit-desc">' + escHtml(text) + '</span> <span class="cs-benefit-suffix">(Situational)</span></div>';
+  }
+  function benefitsBoxHtml(lines) {
+    var real = lines.filter(Boolean);
+    if (!real.length) return '';
+    return '<div class="cs-story-benefits"><div class="cs-story-benefit-label">Benefits:</div>' + real.join('') + '</div>';
+  }
+
+  // ── Your Past card (Figma 51:1218) — distinct from storyCard(): fixed
+  // 358px width, 18px titles (vs Your Background's 26px), and two layout
+  // variants. 'header' (5 of 7 cards) puts the icon beside just the eyebrow
+  // + title; 'full' (Left Behind, Why You Left) puts the icon beside the
+  // ENTIRE content column including body text — a real structural
+  // difference confirmed against the Figma frame, not a styling nuance. ──
+  function pastCard(eyebrow, title, text, benefitsHtml, imgSrc, layout) {
+    var headTextHtml = '<div class="cs-story-card-label">' + eyebrow + '</div>'
+      + '<div class="cs-past-card-title">' + title + '</div>';
+    var bodyInner = (text ? '<div class="cs-story-card-text">' + escHtml(text) + '</div>' : '') + (benefitsHtml || '');
+    if (layout === 'full') {
+      return '<div class="cs-past-card cs-past-card--full">'
+        + (imgSrc ? '<img class="cs-story-card-img" src="' + imgSrc + '" alt="" loading="lazy">' : '')
+        + '<div class="cs-past-card-body">' + headTextHtml + bodyInner + '</div>'
+      + '</div>';
+    }
+    return '<div class="cs-past-card">'
+      + '<div class="cs-story-card-head">'
+        + (imgSrc ? '<img class="cs-story-card-img" src="' + imgSrc + '" alt="" loading="lazy">' : '')
+        + '<div class="cs-story-card-headtext">' + headTextHtml + '</div>'
+      + '</div>'
+      + bodyInner
+    + '</div>';
   }
 
   // ── Who You Are ──────────────────────────────────────────────────
+  // Figma 51:1103: this is ONE card (cs-whoyouare-card), not five/six
+  // separate rounded boxes like Your Background/Your Past — the summary
+  // and the personality items all sit inside the same blue-700 container.
+  // Each item is a flush left-border strip (cs-whoyouare-item), not its
+  // own bg/radius. Eyebrow + title text confirmed verbatim against the
+  // real Figma frame (5 of 6 shown there; "Laugh" / personality_laugh
+  // wasn't in that frame — eyebrow/title supplied by the DM directly).
+  var WHOYOUARE_FIELDS = [
+    { key:'personality_immediate', eyebrow:'First Impression', title:'People Instantly Notice About You' },
+    { key:'personality_wrong',     eyebrow:'Misunderstood',     title:'People Get Wrong About You' },
+    { key:'personality_laugh',     eyebrow:'Laugh',             title:'What Always Makes You Laugh' },
+    { key:'cares_about',           eyebrow:'Primary Care',      title:'Care About' },
+    { key:'deepest_fear',          eyebrow:'Fear',              title:'Deepest Fear' },
+    { key:'seeking',               eyebrow:'Quest',             title:'What You Seek' }
+  ];
+  function whoYouAreItem(eyebrow, title, text) {
+    return '<div class="cs-whoyouare-item">'
+      + '<div class="cs-story-card-label">' + eyebrow + '</div>'
+      + '<div class="cs-whoyouare-item-title">' + title + '</div>'
+      + '<div class="cs-story-card-text">' + escHtml(text) + '</div>'
+    + '</div>';
+  }
   function buildWhoYouAreHtml(ch) {
     // Narrative summary — generateSummary() (character.js) writes
     // player_characters.summary as plain text, "LABEL\n\nparagraph" blocks
     // joined by "\n\n\n". Read-only display; free-text player answers are
     // baked into this string, so it's HTML-escaped like any other field.
     var summaryCardHtml = buildSummaryCardHtml(ch.summary);
-    var cards = [
-      { label:'First Impression', text: ch.personality_immediate },
-      { label:'Misunderstood',    text: ch.personality_wrong },
-      { label:'Makes You Laugh',  text: ch.personality_laugh },
-      { label:'Care About',       text: ch.cares_about },
-      { label:'Fear',             text: ch.deepest_fear },
-      { label:'Quest',            text: ch.seeking }
-    ].filter(function(c) { return c.text; })
-     .map(function(c) { return storyCard(c.label, null, c.text, null); }).join('');
+    var items = WHOYOUARE_FIELDS
+      .filter(function(f) { return ch[f.key]; })
+      .map(function(f) { return whoYouAreItem(f.eyebrow, f.title, ch[f.key]); }).join('');
+    var bodyHtml = summaryCardHtml + (items ? '<div class="cs-whoyouare-items">' + items + '</div>' : '');
     return accordionShell('cs-ov-acc-whoyouare', 'Who You Are',
-      summaryCardHtml + (cards ? '<div class="cs-story-cards">' + cards + '</div>' : ''));
+      '<div class="cs-whoyouare-card">' + bodyHtml + '</div>');
   }
 
   // ── Your Background ──────────────────────────────────────────────
@@ -3309,22 +3407,14 @@
     var bgName = BACKGROUND_ROW ? BACKGROUND_ROW.name : cap((ch.background_id || '').replace(/-/g,' '));
     var bgTitle = bgName + (bgPhb ? ' <span class="cs-story-card-sub">(' + bgPhb + ')</span>' : '');
     var abilityBonuses = parseBackgroundAbilityBonuses(BACKGROUND_ROW);
-    var tags = Object.keys(abilityBonuses).map(function(k) {
-      var amt = abilityBonuses[k];
-      return '<span class="cs-story-benefit-tag">' + (amt >= 0 ? '+' : '') + amt + ' ' + ABILITY_FULL_NAME[k] + '</span>';
-    });
+    var abilityDeltas = Object.keys(abilityBonuses).map(function(k) { return { key: k, amount: abilityBonuses[k] }; });
+    var bgLines = [abilityDeltaLineHtml(abilityDeltas)];
     var bgFeat = getBackgroundFeat(BACKGROUND_ROW);
-    if (bgFeat) {
-      var featTip = FEAT_TIPS[bgFeat];
-      tags.push('<span class="cs-story-benefit-tag">' + bgFeat
-        + (featTip ? '<span class="cs-ab-tip" data-tip="' + featTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>');
-    }
+    if (bgFeat) bgLines.push(featBenefitLineHtml(bgFeat));
     (BACKGROUND_ROW && Array.isArray(BACKGROUND_ROW.skills) ? BACKGROUND_ROW.skills : []).forEach(function(sk) {
-      var skillTip = SKILL_TIPS[sk];
-      tags.push('<span class="cs-story-benefit-tag">' + escHtml(sk) + ' (Skill Proficiency)'
-        + (skillTip ? '<span class="cs-ab-tip" data-tip="' + skillTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>');
+      bgLines.push(skillBenefitLineHtml(sk, null));
     });
-    var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitTagsHtml(tags),
+    var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitsBoxHtml(bgLines),
       bgKey ? '../assets/images/backgrounds/bg-' + bgKey + '.png' : null);
 
     return ggCard + regionCard + alignCard + bgCard;
@@ -3354,37 +3444,34 @@
     function bonusesForPrefix(prefix) {
       return skillBonusesArr.filter(function(b) { return typeof b.source === 'string' && b.source.indexOf(prefix) === 0; });
     }
-    function skillTag(b) {
-      var skillTip = SKILL_TIPS[b.skill];
-      return '<span class="cs-story-benefit-tag">+' + b.amount + ' ' + escHtml(b.skill) + ' (Skill Proficiency)'
-        + (skillTip ? '<span class="cs-ab-tip" data-tip="' + skillTip.replace(/"/g,'&quot;') + '">?</span>' : '') + '</span>';
-    }
 
     var cards = [];
     if (ch.who_raised_you) {
-      var raisedTags = (RAISED_ABILITY_BONUS[ch.who_raised_you] || []).map(function(a) {
-        return '<span class="cs-story-benefit-tag">' + (a.amount >= 0 ? '+' : '') + a.amount + ' ' + ABILITY_FULL_NAME[a.key] + '</span>';
-      }).concat(bonusesForPrefix('past_raised:').map(skillTag));
-      cards.push(storyCard('Upbringing', null, label(RAISED_LABELS, ch.who_raised_you), benefitTagsHtml(raisedTags), pastCardImg('who_raised_you', ch.who_raised_you)));
+      var raisedDeltas = RAISED_ABILITY_BONUS[ch.who_raised_you] || [];
+      var raisedSkillLines = bonusesForPrefix('past_raised:').map(function(b) { return skillBenefitLineHtml(b.skill, b.amount); });
+      var raisedBenefits = benefitsBoxHtml([abilityDeltaLineHtml(raisedDeltas)].concat(raisedSkillLines));
+      cards.push(pastCard('Upbringing', 'Who Raised You', label(RAISED_LABELS, ch.who_raised_you), raisedBenefits, pastCardImg('who_raised_you', ch.who_raised_you), 'header'));
     }
     if (ch.dearest_friend) {
-      var friendTags = bonusesForPrefix('past_friend:').map(skillTag);
-      cards.push(storyCard('Friend', null, label(FRIEND_LABELS, ch.dearest_friend), benefitTagsHtml(friendTags), pastCardImg('dearest_friend', ch.dearest_friend)));
+      var friendSkillLines = bonusesForPrefix('past_friend:').map(function(b) { return skillBenefitLineHtml(b.skill, b.amount); });
+      cards.push(pastCard('Friend', 'Dearest Friend', label(FRIEND_LABELS, ch.dearest_friend), benefitsBoxHtml(friendSkillLines), pastCardImg('dearest_friend', ch.dearest_friend), 'header'));
     }
-    if (ch.had_pet) cards.push(storyCard('Pet', null, label(PET_LABELS, ch.had_pet), null, pastCardImg('had_pet', ch.had_pet)));
-    if (ch.fallen_in_love) cards.push(storyCard('Love', null, label(LOVE_LABELS, ch.fallen_in_love), null, pastCardImg('fallen_in_love', ch.fallen_in_love)));
+    if (ch.had_pet) {
+      var petEffect = PET_EFFECT[ch.had_pet];
+      var petBenefits = benefitsBoxHtml([petEffect ? situationalBenefitLineHtml(petEffect) : null]);
+      cards.push(pastCard('Pet', 'Had a Pet', label(PET_LABELS, ch.had_pet), petBenefits, pastCardImg('had_pet', ch.had_pet), 'header'));
+    }
+    if (ch.fallen_in_love) cards.push(pastCard('Love', 'Fallen in Love', label(LOVE_LABELS, ch.fallen_in_love), null, pastCardImg('fallen_in_love', ch.fallen_in_love), 'header'));
     if (ch.organization_joined) {
-      var orgTags = bonusesForPrefix('past_org:').map(skillTag);
-      (Array.isArray(ch.dm_pending_items) ? ch.dm_pending_items : []).forEach(function(item) {
-        orgTags.push('<span class="cs-story-benefit-tag">' + escHtml(item.label || 'Item') + ' (DM adds)</span>');
-      });
-      cards.push(storyCard('Organization', null, label(ORG_LABELS, ch.organization_joined), benefitTagsHtml(orgTags), pastCardImg('organization_joined', ch.organization_joined)));
+      var orgDmLines = (Array.isArray(ch.dm_pending_items) ? ch.dm_pending_items : []).map(function(item) { return dmAddBenefitLineHtml(item.label || 'Item'); });
+      var orgSkillLines = bonusesForPrefix('past_org:').map(function(b) { return skillBenefitLineHtml(b.skill, b.amount); });
+      cards.push(pastCard('Organization', 'Organization', label(ORG_LABELS, ch.organization_joined), benefitsBoxHtml(orgDmLines.concat(orgSkillLines)), pastCardImg('organization_joined', ch.organization_joined), 'header'));
     }
-    if (ch.left_behind) cards.push(storyCard('Left Behind', null, label(LEFT_BEHIND_LABELS, ch.left_behind), null, pastCardImg('left_behind', ch.left_behind)));
+    if (ch.left_behind) cards.push(pastCard('Left Behind', 'Left Behind', label(LEFT_BEHIND_LABELS, ch.left_behind), null, pastCardImg('left_behind', ch.left_behind), 'full'));
     if (ch.why_you_left) {
       var quest = WHY_LEFT_QUEST[ch.why_you_left];
-      var questHtml = quest ? '<div class="cs-story-benefits"><span class="cs-story-quest-label">Personal quest:</span>' + escHtml(quest) + '</div>' : null;
-      cards.push(storyCard('Why You Left', null, label(WHY_LEFT_LABELS, ch.why_you_left), questHtml, pastCardImg('why_you_left', ch.why_you_left)));
+      var questHtml = quest ? '<div class="cs-past-quest"><span class="cs-story-quest-label">Personal quest:</span> ' + escHtml(quest) + '</div>' : null;
+      cards.push(pastCard('Why You Left', 'Why You Left', label(WHY_LEFT_LABELS, ch.why_you_left), questHtml, pastCardImg('why_you_left', ch.why_you_left), 'full'));
     }
     var cardsHtml = cards.join('');
 
@@ -3408,19 +3495,6 @@
       return sum + (w * (parseInt(item.quantity) || 0));
     }, 0);
   }
-  function renderOverviewWeight() {
-    var fillEl = document.getElementById('cs-ov-weight-fill');
-    var numsEl = document.getElementById('cs-ov-weight-nums');
-    if (!fillEl || !numsEl) return;
-    var strRaw   = parseInt(ABILITY_SCORES.str) || 10;
-    var capacity = strRaw * 15;
-    var carried  = Math.round(computeCarriedWeight() * 10) / 10;
-    var pct = capacity > 0 ? Math.min((carried / capacity) * 100, 100) : 0;
-    fillEl.style.width = pct + '%';
-    fillEl.classList.toggle('encumbered', capacity > 0 && carried > capacity);
-    numsEl.textContent = carried + ' / ' + capacity + ' LBS';
-  }
-
   // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
   function renderLivePlay() {
     renderHeaderHP();
@@ -3436,46 +3510,21 @@
   }
 
   // ── HP (MainInfo header) ────────────────────────────────────────────
-  // Current/Max HP math is unchanged from the old cs-hp-section (see
-  // adjustHP/setMaxHPModifier below). Display rebuilt to match the Figma
-  // compact single row (AC badge + HP badge/bar + Temp HP badge) — the
-  // −/+/Apply/Max-Mod/Set controls Figma's static mockup doesn't depict are
-  // kept exactly as before, just tucked behind an "Edit" toggle instead of
-  // always visible (or, for Temp HP, always taking layout space once shown).
-  // Both toggles write into the single shared #cs-mi-hp-edit-panel BELOW the
-  // compact row rather than inline within it — an earlier version rendered
-  // each panel inside its own flex item inside .cs-mi-vitals, which made the
-  // AC badge reflow unpredictably when a panel opened (flex-wrap fighting a
-  // flex item that had just grown taller). Rendering both below the row
-  // sidesteps that entirely. HP_EDIT_OPEN/TEMP_HP_EDIT_OPEN persist across
-  // renderHeaderHP() re-renders (every HP/Temp HP mutation calls it again
-  // after saving) so the HP panel doesn't snap shut after every adjust
-  // click — Temp HP's panel is the exception, explicitly closed by
-  // setTempHP() on save, matching its original set-and-forget behavior.
-  // Temp HP is a plain number badge — no bar — and hides entirely at
-  // 0/null (5e has no "max temp HP" to show a bar or proportion against;
-  // an earlier pass here added a decorative always-100%-filled bar to
-  // visually match AC/HP, which was reverted — it implied a real max that
-  // doesn't exist in the data model). At 0 Current HP the bar+controls are
-  // replaced in-place by a death-save tracker.
-  var HP_EDIT_OPEN = false;
-  var TEMP_HP_EDIT_OPEN = false;
-  function toggleHPEditControls() {
-    HP_EDIT_OPEN = !HP_EDIT_OPEN;
-    renderHeaderHP();
-  }
-  function toggleTempHPEditControls() {
-    TEMP_HP_EDIT_OPEN = !TEMP_HP_EDIT_OPEN;
-    renderHeaderHP();
-    if (TEMP_HP_EDIT_OPEN) {
-      var input = document.getElementById('cs-hp-temp-input');
-      if (input) input.focus();
-    }
-  }
+  // Rebuilt to match Figma 51:1385 exactly: label + directly-editable
+  // number input(s), no Edit toggle, no separate −/+/Apply/Set-Max-Mod
+  // panel — typing a value and blurring the field is the entire
+  // interaction. Current AND max are both live inputs now (per DM
+  // decision): editing "max" derives hp_max_modifier from the typed value
+  // minus the real hp_max base, replacing the old separate Max-Mod control
+  // rather than adding a third field. Temp HP gets the same input treatment
+  // (no bar, no denominator — still no real "max temp HP" to show one
+  // against) and is now always visible rather than hiding at 0, since a
+  // typeable field needs to exist to type into. At 0 Current HP the row is
+  // still replaced in-place by the death-save tracker (untouched — Figma's
+  // mockup doesn't depict that state, so its Heal input/button stay as-is).
   function renderHeaderHP() {
     var slot = document.getElementById('cs-mi-hp-slot');
     var tempEl = document.getElementById('cs-mi-temp-hp');
-    var editPanel = document.getElementById('cs-mi-hp-edit-panel');
     if (!slot) return;
     var hpCur = SHEET ? (parseInt(SHEET.hp_current) || 0) : 0;
     var hpMaxBase = SHEET ? (parseInt(SHEET.hp_max) || 0) : 0;
@@ -3485,9 +3534,9 @@
     var atZero = SHEET && hpCur <= 0;
 
     if (atZero) {
-      // Still need a way to heal back up from 0 — the bar (and its −/+/Apply
-      // controls) is gone in this branch, so keep a minimal heal input here.
-      // Any positive Apply crosses back above 0 and swaps the bar back in.
+      // Still need a way to heal back up from 0 — the bar/inputs are gone
+      // in this branch, so keep a minimal heal input here. Any positive
+      // Apply crosses back above 0 and swaps the bar back in.
       slot.innerHTML = renderDeathSavesHtml()
         + '<div class="cs-mi-hp-controls">'
           + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="+HP">'
@@ -3498,54 +3547,19 @@
       slot.innerHTML =
         '<div class="cs-mi-hp-compact">'
           + '<span class="cs-mi-hp-compact-label">HP</span>'
-          + '<span class="cs-mi-hp-compact-badge">' + hpCur + '</span>'
-          + '<span class="cs-mi-hp-compact-max">/ ' + hpMaxEffective
-            + (hpModifier !== 0 ? ' <span class="cs-mi-hp-mod ' + (hpModifier > 0 ? 'positive' : 'negative') + '">(' + (hpModifier > 0 ? '+' : '') + hpModifier + ')</span>' : '')
-          + '</span>'
+          + '<input class="cs-mi-hp-num-input" type="number" value="' + hpCur + '" onblur="setHPCurrentDirect(this)" onkeydown="if(event.key===\'Enter\')this.blur()">'
+          + '<span class="cs-mi-hp-compact-max">/</span>'
+          + '<input class="cs-mi-hp-num-input" type="number" value="' + hpMaxEffective + '" onblur="setHPMaxDirect(this)" onkeydown="if(event.key===\'Enter\')this.blur()">'
           + '<div class="cs-mi-hp-compact-bar"><div class="cs-mi-hp-compact-bar-fill" style="width:' + pct + '%;"></div></div>'
-          + '<button class="cs-mi-hp-compact-edit" onclick="toggleHPEditControls()">Edit</button>'
         + '</div>';
     }
 
     if (tempEl) {
-      if (hpTemp > 0) {
-        tempEl.innerHTML =
-          '<div class="cs-mi-hp-compact cs-mi-hp-compact--temp">'
-            + '<span class="cs-mi-hp-compact-label">Temp HP</span>'
-            + '<span class="cs-mi-hp-compact-badge">' + hpTemp + '</span>'
-            + '<button class="cs-mi-hp-compact-edit" onclick="toggleTempHPEditControls()">Edit</button>'
-          + '</div>';
-      } else {
-        tempEl.innerHTML = '<button class="cs-mi-temp-hp-add" onclick="toggleTempHPEditControls()">+ Temp HP</button>';
-      }
-    }
-
-    if (editPanel) {
-      var panelParts = [];
-      if (!atZero && HP_EDIT_OPEN) {
-        panelParts.push(
-          '<div class="cs-mi-hp-controls">'
-            + '<button class="cs-hp-btn" onclick="adjustHP(-1)" title="−1">−</button>'
-            + '<button class="cs-hp-btn" onclick="adjustHP(1)"  title="+1">+</button>'
-            + '<input class="cs-hp-input" id="cs-hp-delta" type="number" placeholder="±">'
-            + '<button class="cs-hp-apply" onclick="applyHPDelta()">Apply</button>'
-          + '</div>'
-          + '<div class="cs-mi-hp-max-row">'
-            + '<input class="cs-hp-input" id="cs-hp-max-modifier" type="number" placeholder="±" title="Temporary max HP change from a status effect">'
-            + '<button class="cs-hp-apply" onclick="setMaxHPModifier()">Set Max Mod</button>'
-          + '</div>'
-        );
-      }
-      if (TEMP_HP_EDIT_OPEN) {
-        panelParts.push(
-          '<div class="cs-mi-hp-controls">'
-            + '<input class="cs-hp-input" id="cs-hp-temp-input" type="number" min="0" placeholder="Temp HP">'
-            + '<button class="cs-hp-apply" onclick="setTempHP()">Set</button>'
-          + '</div>'
-        );
-      }
-      editPanel.innerHTML = panelParts.join('');
-      editPanel.style.display = panelParts.length ? '' : 'none';
+      tempEl.innerHTML =
+        '<div class="cs-mi-hp-compact cs-mi-hp-compact--temp">'
+          + '<span class="cs-mi-hp-compact-label">Temp HP</span>'
+          + '<input class="cs-mi-hp-num-input" type="number" min="0" value="' + hpTemp + '" onblur="setTempHPDirect(this)" onkeydown="if(event.key===\'Enter\')this.blur()">'
+        + '</div>';
     }
   }
 
@@ -3602,24 +3616,52 @@
     saveSheet(patch);
     renderHeaderHP();
   }
-  function setTempHP() {
+  // Direct-edit handlers (Figma 51:1385) — replace the old Edit-toggle +
+  // −/+/Apply/Set-Max-Mod panel entirely. Each input saves on blur/Enter;
+  // an invalid (non-numeric) value just reverts the field via a re-render
+  // rather than saving garbage.
+  function setHPCurrentDirect(input) {
     if (!SHEET) return;
-    var input = document.getElementById('cs-hp-temp-input');
     var val = parseInt(input.value);
-    if (isNaN(val) || val < 0) return;
-    SHEET.hp_temp = val;
-    saveSheet({ hp_temp: val });
-    TEMP_HP_EDIT_OPEN = false;
+    if (isNaN(val)) { renderHeaderHP(); return; }
+    var maxEffective = (parseInt(SHEET.hp_max) || 0) + (parseInt(SHEET.hp_max_modifier) || 0);
+    var prevCur = parseInt(SHEET.hp_current) || 0;
+    var next = Math.max(0, Math.min(maxEffective, val));
+    SHEET.hp_current = next;
+    var patch = { hp_current: next };
+    // Healing from 0 clears death saves — 5e rule, and required for the
+    // header's bar/death-save swap to make sense next time HP hits 0.
+    if (prevCur <= 0 && next > 0) {
+      SHEET.death_save_successes = 0;
+      SHEET.death_save_failures = 0;
+      patch.death_save_successes = 0;
+      patch.death_save_failures = 0;
+    }
+    saveSheet(patch);
     renderHeaderHP();
   }
-  function setMaxHPModifier() {
+  // Max HP has no direct column — hp_max is the real base (class/CON-derived)
+  // and hp_max_modifier is a temporary offset from status effects. Typing a
+  // new effective max here derives the modifier from it (typed − base)
+  // instead of asking for the modifier itself, replacing the old separate
+  // "Set Max Mod" control.
+  function setHPMaxDirect(input) {
     if (!SHEET) return;
-    var input = document.getElementById('cs-hp-max-modifier');
     var val = parseInt(input.value);
-    if (isNaN(val)) return;
-    SHEET.hp_max_modifier = val;
-    saveSheet({ hp_max_modifier: val });
-    input.value = '';
+    if (isNaN(val)) { renderHeaderHP(); return; }
+    var base = parseInt(SHEET.hp_max) || 0;
+    var modifier = val - base;
+    SHEET.hp_max_modifier = modifier;
+    saveSheet({ hp_max_modifier: modifier });
+    renderHeaderHP();
+  }
+  function setTempHPDirect(input) {
+    if (!SHEET) return;
+    var val = parseInt(input.value);
+    if (isNaN(val)) { renderHeaderHP(); return; }
+    val = Math.max(0, val);
+    SHEET.hp_temp = val;
+    saveSheet({ hp_temp: val });
     renderHeaderHP();
   }
 
@@ -3940,7 +3982,7 @@
     if (!el) return;
     var r = computeAC();
     el.setAttribute('data-tip', r.tip.replace(/"/g,'&quot;'));
-    el.textContent = 'AC ' + r.ac;
+    el.innerHTML = '<span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">' + r.ac + '</span>';
     wireTooltip(el);
   }
   function renderEquippedStat(labelText, value, fullRow) {
@@ -4167,7 +4209,6 @@
     var totalWeight = computeCarriedWeight();
     var weightEl = document.getElementById('cs-inv-weight-total');
     if (weightEl) weightEl.textContent = 'Carrying: ' + (Math.round(totalWeight * 10) / 10) + ' lb';
-    renderOverviewWeight();
     if (!INVENTORY.length) {
       list.innerHTML = '<div class="cs-inv-empty">No items yet — search above or add a custom item.</div>';
       return;
