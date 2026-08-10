@@ -3397,10 +3397,10 @@
     // renderGigglogloomAffinity() → assets/icons/icon-{typeId}.svg,
     // the home-region cards' inline background-image → assets/images/regions/
     // img-{region}-landscape.webp, renderBackgroundCards() → assets/images/
-    // backgrounds/bg-{bg.id}.png. Moral Alignment has no image anywhere in
-    // the codebase — character.html's .char-alignment-card is text-only, no
-    // data-img/background-image/icon of any kind — so it gets no thumbnail
-    // here rather than a fabricated one.
+    // backgrounds/bg-{bg.id}.png. Moral Alignment has no per-value icon (its
+    // .char-alignment-card is text-only) — per the DM, it uses the one
+    // shared img-alignment.webp illustration of all 5 alignments together,
+    // the same image regardless of which alignment the character has.
     var regionKey = (ch.home_region || '').toLowerCase();
     var ggCard = storyCard('Gigglegloom Affinity', typeMeta.name, typeMeta.desc, null,
       typeKey ? '../assets/icons/icon-' + typeKey + '.svg' : null);
@@ -3408,7 +3408,8 @@
       REGION_ROW ? REGION_ROW.summary : null, null,
       regionKey ? '../assets/images/regions/img-' + regionKey + '-landscape.webp' : null);
     var alignTitle = alignName + (alignPhb ? ' <span class="cs-story-card-sub">(' + alignPhb + ')</span>' : '');
-    var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_CARD_DESC[alignKey] || null, null);
+    var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_CARD_DESC[alignKey] || null, null,
+      '../assets/images/img-alignment.webp');
 
     var bgKey = (ch.background_id || '').toLowerCase();
     var bgPhb = BG_PHB[bgKey];
