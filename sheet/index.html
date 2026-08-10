@@ -1414,15 +1414,12 @@
       margin: 0 auto;
     }
     .cs-equip-doll-silhouette {
-      position: absolute;
-      left: 50%;
-      top: 0;
-      bottom: 0;
-      width: 30%;
-      transform: translateX(-50%);
+      grid-column: 2 / 4;
+      grid-row: 1 / -1;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      object-position: center top;
-      opacity: 0.9;
+      object-position: center;
       pointer-events: none;
       z-index: 0;
     }
@@ -1693,13 +1690,16 @@
       padding: 0.2rem 0.3rem;
     }
     .cs-inv-search-wrap { position: relative; }
+    /* Normal-flow, not absolute — this lives inside the +Add Item modal,
+       which already scrolls (.cs-modal has its own max-height/overflow-y).
+       An absolutely-positioned dropdown gets clipped by that ancestor's
+       overflow box once the modal's own visible content is short (search
+       input + category + button), cutting results off mid-list. In-flow
+       lets the modal grow to contain it (up to its own 85vh cap, then the
+       modal's own scrollbar takes over), while this list's own max-height
+       + overflow-y keeps a long result set from making the modal huge. */
     .cs-inv-search-dropdown {
       display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 30;
       background: rgba(12,16,28,0.98);
       border: 1px solid rgba(200,148,10,0.3);
       border-radius: 8px;
@@ -1821,7 +1821,16 @@
 
     /* ── Carrying bar — capacity = STR x 15, standard progress-bar reading:
        track (--blue-700) always full width, fill (--blue-300) grows from
-       the left as current weight rises toward capacity. ── */
+       the left as current weight rises toward capacity. Live-tested report
+       of "no visible fill" investigated via getComputedStyle() — both
+       colors and the fill-width % were resolving correctly (confirmed
+       against a real character: 14/195lb -> width:7.18%, backgroundColor
+       rgb(71,84,127) on the fill vs rgb(18,24,41) on the track), so this
+       wasn't a broken calc or an unresolved CSS variable. What's real:
+       at low carry percentages the fill is a thin strip and the two blues
+       are close enough in value that it reads as blank at a glance —
+       widened the border accent and floored the width so the fill always
+       has an unambiguous, visible presence. ── */
     .cs-inv-weight-bar {
       position: relative;
       width: 100%;
@@ -1834,8 +1843,9 @@
     .cs-inv-weight-fill {
       position: absolute;
       top: 0; left: 0; bottom: 0;
+      min-width: 8px;
       background: var(--blue-300);
-      border-right: 1px solid var(--blue-200);
+      border-right: 2px solid var(--blue-200);
       transition: width 0.2s ease;
     }
     .cs-inv-weight-label {
@@ -1865,6 +1875,10 @@
       flex: 1 1 240px;
       min-width: 200px;
     }
+    /* Category is a short "Select"/category-name value, not free text —
+       sizing it to match the Search field's width left a lot of empty
+       dropdown space. Sized to content instead. */
+    .cs-inv-filter-field--cat { flex: 0 1 auto; min-width: 0; }
     .cs-inv-filter-label { font-family: var(--font-body); font-size: 1rem; color: var(--text); }
     .cs-inv-filter-input, .cs-inv-filter-select {
       background: var(--blue-600);
@@ -1879,6 +1893,7 @@
     }
     .cs-inv-filter-input { border-radius: 9999px; }
     .cs-inv-filter-input::placeholder { color: rgba(232,232,240,0.75); }
+    .cs-inv-filter-select { width: auto; }
     .cs-inv-filter-btn {
       flex: none;
       background: var(--gold);
@@ -1927,7 +1942,7 @@
     /* ── Item table (Figma 51:2260) — alternating row shading matches the
        Class tab's Key Features table pattern. ── */
     .cs-inv-table-wrap { width: 100%; overflow-x: auto; }
-    .cs-inv-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .cs-inv-table { width: 100%; border-collapse: collapse; table-layout: auto; }
     .cs-inv-th {
       background: var(--blue-700);
       color: var(--white);
@@ -1962,7 +1977,7 @@
       color: var(--char-text-faint);
     }
     @media (max-width: 900px) {
-      .cs-inv-table { table-layout: auto; min-width: 860px; }
+      .cs-inv-table { min-width: 860px; }
     }
 
     .cs-modal-overlay {
@@ -2954,15 +2969,19 @@
 
       // Search / Category / Search — filters the player's own inventory
       // table below (client-side); distinct from the catalog search that
-      // now lives behind +Add Item.
+      // now lives behind +Add Item. Live-filters as you type/select
+      // (DM reversed the original click-gated decision) — matches the
+      // Add Item catalog search's own live-filter behavior. The Search
+      // button stays as an explicit no-op-if-already-current trigger,
+      // harmless to keep for a deliberate re-apply/click affordance.
       + '<div class="cs-inv-filter-row">'
         + '<div class="cs-inv-filter-field">'
           + '<label class="cs-inv-filter-label">Search</label>'
-          + '<input class="cs-inv-filter-input" id="cs-my-inv-search-input" placeholder="Search your inventory&#8230;" onkeydown="if(event.key===\'Enter\')applyInventoryFilter()">'
+          + '<input class="cs-inv-filter-input" id="cs-my-inv-search-input" placeholder="Search your inventory&#8230;" oninput="applyInventoryFilter()" onkeydown="if(event.key===\'Enter\')applyInventoryFilter()">'
         + '</div>'
-        + '<div class="cs-inv-filter-field">'
+        + '<div class="cs-inv-filter-field cs-inv-filter-field--cat">'
           + '<label class="cs-inv-filter-label">Category</label>'
-          + '<select class="cs-inv-filter-select" id="cs-my-inv-cat-select">'
+          + '<select class="cs-inv-filter-select" id="cs-my-inv-cat-select" onchange="applyInventoryFilter()">'
             + '<option value="">Select</option>'
             + '<option value="accessory">Accessory</option>'
             + '<option value="armor">Armor</option>'
@@ -4358,7 +4377,7 @@
           + '<span class="cs-equip-result-name">' + r.name + '</span>'
           + (stats ? '<span class="cs-equip-result-stats">' + stats + '</span>' : '')
         + '</div>'
-        + '<span class="cs-equip-result-weight">' + weight + 'lb</span>'
+        + '<span class="cs-equip-result-weight">' + weight + ' lb</span>'
       + '</div>';
     }).join('');
   }
@@ -4605,7 +4624,7 @@
           + thumb
           + '<div class="cs-inv-result-info" onclick="event.stopPropagation()">'
             + '<span class="cs-inv-result-name">' + it.name + '</span>'
-            + '<span class="cs-inv-result-meta">' + (it.category||'') + ' · ' + (it.cost_gp||0) + 'gp · ' + (it.weight_lb||0) + 'lb</span>'
+            + '<span class="cs-inv-result-meta">' + (it.category||'') + ' · ' + (it.cost_gp||0) + 'gp · ' + (it.weight_lb||0) + ' lb</span>'
           + '</div>'
           + '<div class="cs-inv-result-add">'
             + '<input class="cs-inv-qty-input" type="number" min="1" value="1" id="qty-' + it.id + '" onclick="event.stopPropagation()">'
@@ -5422,13 +5441,7 @@
     var modalRoot = document.getElementById('cs-modal-root');
     if (modalRoot) {
       modalRoot.innerHTML =
-        '<div class="cs-modal-overlay" id="cs-item-modal-overlay" style="display:none" onclick="if(event.target===this)closeCustomItemModal()">'
-          + '<div class="cs-modal">'
-            + '<div class="cs-modal-title" id="cs-item-modal-title">Create New Item</div>'
-            + '<div class="cs-modal-body" id="cs-item-modal-body"></div>'
-          + '</div>'
-        + '</div>'
-        + '<div class="cs-modal-overlay" id="cs-delete-confirm-overlay" style="display:none" onclick="if(event.target===this)closeDeleteConfirm()">'
+        '<div class="cs-modal-overlay" id="cs-delete-confirm-overlay" style="display:none" onclick="if(event.target===this)closeDeleteConfirm()">'
           + '<div class="cs-modal cs-modal-sm">'
             + '<div class="cs-modal-title">Remove Item</div>'
             + '<div class="cs-modal-body">'
@@ -5474,6 +5487,17 @@
               + '</div>'
               + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
             + '</div>'
+          + '</div>'
+        + '</div>'
+        // Create New/Edit Item modal — rendered LAST so it wins the
+        // same-z-index (200) DOM-order tie-break over +Add Item, which
+        // opens it via "Can't find it?" and must render on top of it, not
+        // behind it. useMatchInstead()/submitCustomItem() rely on +Add
+        // Item still being open underneath while this one is up.
+        + '<div class="cs-modal-overlay" id="cs-item-modal-overlay" style="display:none" onclick="if(event.target===this)closeCustomItemModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title" id="cs-item-modal-title">Create New Item</div>'
+            + '<div class="cs-modal-body" id="cs-item-modal-body"></div>'
           + '</div>'
         + '</div>';
     }
