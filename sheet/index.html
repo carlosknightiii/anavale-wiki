@@ -1350,72 +1350,109 @@
       font-size: 32px;
       line-height: 1;
     }
-    /* ── Equipped Gear — 10-slot doll (Figma 51:2260, 2026-08-09) ──────
-       Desktop lays the 10 positions out via grid-template-areas echoing
-       the humanoid silhouette (Head top-center, Neck/Earrings upper-right,
-       Back upper-left, Chest/Arms mid, Left/Right Hand mid-edges, Legs,
-       Feet). The real Figma frame instead absolute-positions every slot in
-       raw px against a fixed canvas width — that breaks the mobile frame
-       outright (slots render off-screen, confirmed via screenshot) and
-       would silently misalign at any desktop width other than the exact
-       design canvas. Grid-areas reproduce the same relative arrangement
-       without hardcoding a canvas width, and share one mobile fallback
-       with the already-DM-approved mobile deviation below.
-       Slot frame + body silhouette use the real exported Figma assets
-       (assets/images/character-sheet/equipped-gear/*, found staged
-       on disk but untracked/never wired in — not invented here) rather
-       than a CSS approximation. */
+    /* ── Equipped Gear — 10-slot doll (Figma 68:7354, corrected 2026-08-10,
+       replacing the earlier grid-area build below at DM request — the
+       first pass was built with no Figma reference for this node; the
+       DM has since designed the real layout there). Structure per the
+       real node: one flex row, items-end (bottom-anchored), gap 10px,
+       justify-center — a left group (Left Hand slot at gap-16px beside a
+       4-slot stacked column: Head/Chest/Arms/Feet) and a mirrored right
+       group (Neck/Earrings/Back/Legs column at gap-16px beside Right
+       Hand), flanking a centered silhouette. Each stacked slot's row is
+       177.249px tall with its content (140.691x143.249 frame + label)
+       bottom-justified inside it — that's what produces the "everything
+       sits on one shared baseline" look, vs. the old grid's slots spread
+       across the silhouette's full height with big gaps between them.
+       Fluid via container query units (cqi), not raw px: the previous
+       pass's own fix comment below already diagnosed the failure mode of
+       copying Figma's canvas px onto a container of a different aspect
+       ratio — same risk here, since this doll now lives inside a
+       flexible .cs-inv-top-col that can be anywhere from ~360px to
+       ~1000px+ wide depending on viewport and whether Currency wraps
+       below it. Every descendant dimension (including heights, not just
+       widths) is expressed as a %% of the doll's own inline-size via
+       cqi, so the whole layout scales as one unit — the same effect as
+       resizing a photo from a corner handle — instead of hardcoding one
+       canvas width. clamp() floors stop slot boxes/text from shrinking
+       below a usable size once the container gets narrow; below the
+       600px viewport breakpoint the silhouette hides entirely (existing
+       DM-approved mobile deviation — the real Figma mobile frame reuses
+       this same desktop component with no mobile layout of its own, a
+       gap flagged in docs/inventory-tab-build-spec.md, not something to
+       invent a design for here) and the two groups' own floor sizes are
+       small enough to sit side by side down to 375px.
+       Slot frame + body silhouette still use the real exported Figma
+       assets (assets/images/character-sheet/equipped-gear/*). */
     .cs-equip-damage-row {
       text-align: center;
       margin-bottom: 0.6rem;
     }
     .cs-equip-doll {
-      position: relative;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-areas:
-        ".     head  .     ."
-        ".     .     neck  earrings"
-        "back  .     .     ."
-        ".     chest arms  ."
-        "handL .     .     handR"
-        ".     .     legs  ."
-        ".     feet  .     .";
-      gap: 1.1rem 0.75rem;
-      justify-items: center;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    /* Root-cause fix (2026-08-10): the previous pass pulled exact geometry
-       from Figma node 68:7354 (silhouette x:449.723 y:0 w:362.553
-       h:759.268 within a 1180x759.268 container) and converted it to
-       left:38.11%/width:30.72%/height:100% — percentages that only
-       reproduce Figma's proportions if the container they're applied to
-       has the SAME aspect ratio as Figma's 1180x759 (1.55:1) canvas. This
-       grid's actual container is capped at max-width:480px and grows
-       tall from its own 7 stacked slot-rows (rendered ~480x945, a 0.51:1
-       ratio) — applying Figma's percentages there squashed the silhouette
-       into a ~147x945px sliver (confirmed via getBoundingClientRect
-       before this fix), which is what "tiny/misaligned" actually was.
-       Not a caching issue — a real aspect-ratio mismatch, verified via
-       computed geometry, not just a screenshot glance (that's what let it
-       through the previous pass's verification).
-       Fix: stop borrowing Figma's absolute canvas ratio. Place the
-       silhouette as a real grid item spanning the two center columns
-       (where Head/Chest/Feet at col 2 and Neck/Legs at col 3 already put
-       the visual spine) across every row, sized to fill that cell via
-       object-fit:contain so the image's own real aspect ratio (329x689,
-       confirmed equal to the Figma export ratio) is preserved no matter
-       how tall the grid ends up rendering. */
-    .cs-equip-doll-silhouette {
-      grid-column: 2 / 4;
-      grid-row: 1 / -1;
+      container-type: inline-size;
       width: 100%;
-      height: 100%;
+      max-width: 61.08rem; /* 977.317px — the node's own reference width */
+      margin: 0 auto;
+      display: flex;
+      /* nowrap deliberately, not a "safety net" wrap: because every
+         descendant width below is a %% of this element's OWN inline-size
+         (cqi), the three children's widths always sum to ~100% of the
+         container by construction — they can never overflow it in the
+         fluid range. flex-wrap:wrap was tried here first and caused a
+         real bug: at container widths where the cqi sum lands within a
+         sub-pixel of 100% (common, since the percentages are tuned to
+         hit ~100%), browser rounding tips one child over the edge and
+         wrap silently drops the second side group onto its own line
+         below the item table — confirmed live via getBoundingClientRect
+         (side groups landed 700px+ apart vertically) before switching to
+         nowrap. Floors below only bite at the ~350px container floor
+         (comfortably below this column's own 358px architectural
+         minimum elsewhere in this file), where nowrap can't overflow
+         either since the floors were sized specifically to fit inside
+         that minimum. */
+      flex-wrap: nowrap;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.625rem; /* 10px */
+    }
+    .cs-equip-doll-side {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.36rem, 1.637cqi, 1rem); /* 16px */
+      flex: 0 0 auto;
+    }
+    .cs-equip-doll-col {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.22rem, 1.023cqi, 0.625rem); /* 10px */
+      flex: 0 0 auto;
+    }
+    .cs-equip-slot-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(0.22rem, 1.023cqi, 0.625rem); /* 10px */
+      min-height: clamp(3.97rem, 18.135cqi, 11.08rem); /* 177.249px */
+    }
+    /* Previous pass's root-cause fix (2026-08-10, kept for history): the
+       pass before that had pulled exact geometry from Figma node 68:7354
+       (silhouette x:449.723 y:0 w:362.553 h:759.268 within a 1180x759.268
+       container) and converted it to left:38.11%/width:30.72%/height:100%
+       — percentages that only reproduce Figma's proportions if the
+       container they're applied to has the SAME aspect ratio as Figma's
+       1180x759 (1.55:1) canvas. That grid's actual container was capped
+       at max-width:480px and grew tall from its own 7 stacked slot-rows,
+       squashing the silhouette into a sliver. The cqi-based rebuild above
+       supersedes this entirely (silhouette is a real flex sibling now,
+       not an absolutely-positioned overlay), but the lesson stands: never
+       borrow Figma's absolute canvas ratio onto a container shaped
+       differently from Figma's own frame. */
+    .cs-equip-doll-silhouette {
+      width: clamp(8.12rem, 37.098cqi, 22.66rem); /* 362.553px */
+      height: clamp(17rem, 77.688cqi, 47.45rem); /* 759.268px */
       object-fit: contain;
-      object-position: center;
       pointer-events: none;
-      z-index: 0;
+      flex: 0 0 auto;
     }
     .cs-equip-slot-wrap {
       position: relative;
@@ -1423,14 +1460,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.4rem;
-      width: 100%;
-      max-width: 96px;
+      gap: clamp(0.2rem, 0.9cqi, 0.5rem);
+      width: clamp(3.15rem, 14.396cqi, 8.79rem); /* 140.691px */
+      flex: 0 0 auto;
     }
     .cs-equip-slot-box {
       position: relative;
       width: 100%;
-      aspect-ratio: 1 / 1;
+      height: clamp(3.21rem, 14.658cqi, 8.95rem); /* 143.249px */
       border-radius: var(--radius);
       background: var(--char-card-bg) url('../assets/images/character-sheet/equipped-gear/gear-slot.jpg') center/cover;
       display: flex;
@@ -1479,32 +1516,13 @@
       transition: color 0.15s;
     }
     .cs-equip-slot-unequip:hover { color: #f87171; }
-    /* Sparkle badge — a real mechanical item is equipped here, independent
-       of whatever art the slot is showing (cosmetic or mechanical
-       fallback). Mirrors .cs-equip-slot-unequip's corner-badge treatment,
-       opposite corner so the two never collide. */
-    .cs-equip-slot-badge {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 18px;
-      height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(10,10,15,0.75);
-      border-radius: 50%;
-      color: var(--gold-light);
-      font-size: 0.65rem;
-      pointer-events: none;
-    }
     .cs-equip-slot-label {
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 0.65rem;
+      font-size: clamp(0.75rem, 1.842cqi, var(--char-ov-h5)); /* 18px */
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--char-text-faint);
+      color: var(--white);
       text-align: center;
     }
     .cs-equip-slot-name {
@@ -1517,15 +1535,36 @@
       white-space: nowrap;
       max-width: 100%;
     }
+    /* Per-slot weapon damage, directly under the name line (handL/handR
+       only in practice — buildSlotDamageText() returns '' for any item
+       without damage_dice, so armor/accessory slots never produce this
+       without needing an explicit area check). Same red already used for
+       the HP bar fill (--red-strong), not a new color. */
+    .cs-equip-slot-damage {
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--red-strong);
+      text-align: center;
+    }
+    /* Mobile fallback (existing DM-approved deviation, carried over from
+       the grid build): the real Figma mobile frame reuses this same
+       desktop component with no mobile-specific layout of its own, so
+       there's no mobile geometry to match here. Hiding the silhouette
+       frees up enough width to raise the slot-size floor for a better
+       touch target than the base floor allows (that base floor is tuned
+       tight — ~350px total — specifically to survive the doll rendering
+       alongside a still-visible silhouette in a squeezed desktop column;
+       mobile doesn't have that constraint once the silhouette is gone,
+       so it gets its own larger floor here instead of inheriting the
+       tight one). */
     @media (max-width: 600px) {
-      .cs-equip-doll {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: none;
-      }
       .cs-equip-doll-silhouette { display: none; }
-      .cs-equip-slot-wrap { width: 84px; }
+      .cs-equip-slot-wrap { width: clamp(4.4rem, 14.396cqi, 8.79rem); }
+      .cs-equip-slot-box { height: clamp(4.48rem, 14.658cqi, 8.95rem); }
+      .cs-equip-slot-row { min-height: clamp(5.55rem, 18.135cqi, 11.08rem); }
+      .cs-equip-doll-side { gap: clamp(0.5rem, 1.637cqi, 1rem); }
+      .cs-equip-doll-col { gap: clamp(0.32rem, 1.023cqi, 0.625rem); }
     }
     .cs-equipped-damage-sep {
       display: inline-block;
@@ -1655,19 +1694,6 @@
       flex: none;
       text-align: right;
     }
-    /* ── Slot popover — two independent rows (single-doll redesign) ── */
-    .cs-slot-popover-section + .cs-slot-popover-section {
-      margin-top: 1.1rem;
-      padding-top: 1.1rem;
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
-    .cs-slot-popover-heading {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--text);
-      margin-bottom: 0.5rem;
-    }
     .cs-equip-current-clear {
       background: none;
       border: none;
@@ -1680,50 +1706,32 @@
       margin-left: 0.4rem;
     }
     .cs-equip-current-clear:hover { color: #f87171; }
-    .cs-wearing-select {
-      width: 100%;
-      background: var(--blue-600);
-      border: 1px solid var(--blue-200);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      padding: 0.5rem 0.75rem;
-      box-sizing: border-box;
-    }
-    .cs-wearing-empty {
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
-      font-style: italic;
-      color: var(--char-text-faint);
-    }
-    /* ── Rings — cosmetic-only, no doll position (Part B step 6) ── */
+    /* ── Rings — no doll position (existing DM instruction, carried over
+       unchanged: stay their own row below the doll), but real inventory-
+       backed slots like every other position now — same
+       .cs-equip-slot-wrap/-box tile, same popover, same single-picker
+       model. Sized via the exact same width:100%/max-width:61.08rem/
+       container-type:inline-size formula as .cs-equip-doll rather than
+       sharing its cqi containment
+       formula as .cs-equip-doll rather than sharing its cqi containment
+       directly — #cs-ring-row is a sibling of #cs-equipped-block, not a
+       descendant, so it can't inherit the doll's own containment context.
+       Giving it an identical formula (both derive their width from the
+       same .cs-inv-top-col parent) means their cqi math always resolves
+       to the same absolute px at any viewport, so ring tiles stay
+       visually identical in size to the other 10 — not a coincidence,
+       matching this deliberately. */
     .cs-ring-row {
+      container-type: inline-size;
+      width: 100%;
+      max-width: 61.08rem;
+      margin: 1.25rem auto 0;
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
+      flex-wrap: nowrap;
+      align-items: flex-end;
       justify-content: center;
-      margin-top: 1.25rem;
-      max-width: 480px;
-      margin-left: auto;
-      margin-right: auto;
+      gap: 0.625rem;
     }
-    .cs-ring-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-      flex: 1 1 160px;
-      max-width: 220px;
-    }
-    .cs-ring-label {
-      font-family: var(--font-sans);
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--char-text-faint);
-      text-align: center;
-    }
-    .cs-ring-select { font-size: 0.8rem; padding: 0.4rem 0.6rem; }
     /* ── Inventory ── */
     .cs-inv-input {
       flex: 1;
@@ -1751,7 +1759,7 @@
     .cs-inv-empty {
       font-family: var(--font-sans);
       font-size: 0.82rem;
-      color: rgba(255, 255, 255, 0.2);
+      color: var(--char-text-faint);
       font-style: italic;
       padding: 0.75rem 0;
       text-align: center;
@@ -2576,7 +2584,8 @@
   // the full doll. Left Hand is a single doll position backed by two mutually
   // exclusive keys (hand_left OR shield) — see EQUIP_DOLL_SLOTS.
   var EQUIPPED   = { armor: null, shield: null, hand_right: null, hand_left: null,
-    head: null, neck: null, earrings: null, arms: null, back: null, legs: null, feet: null };
+    head: null, neck: null, earrings: null, arms: null, back: null, legs: null, feet: null,
+    ring_right: null, ring_left: null };
   var EQUIPPED_ITEMS = {}; // item_id → full item row from items table
   var ABILITY_SCORES = {}; // set from player_characters.ability_scores in renderCharacter()
   var CLASS_ROW  = null;   // classes table row for ch.class_id, once fetchClassData() resolves
@@ -4144,166 +4153,45 @@
   // custom (non-catalog) inventory rows have no per-slot data, so they match any
   // accessory-typed slot broadly, same permissive fallback the old armor/shield/
   // weapon slots already used.
+  // 10 doll positions + 2 ring slots, all backed by real character_sheet.
+  // equipped keys and real inventory — one item per slot, sourced from
+  // items the character actually owns (single-picker model, replacing the
+  // old mechanical/cosmetic split). accessorySlotKey narrows catalog
+  // candidates to the matching items.equip_slot value; custom (non-catalog)
+  // inventory rows have no per-slot data, so they match any slot sharing
+  // their broad category. Chest accepts both real armor (category 'armor')
+  // and non-armor clothing (category 'accessory', equip_slot 'chest') —
+  // one mechanical key ('armor') either way. Rings have no doll position
+  // (rendered in their own row, see renderRingsRow()) but share one
+  // catalog equip_slot ('ring') between both hands, same as every other
+  // slot otherwise.
   var EQUIP_DOLL_SLOTS = [
-    { area:'head',     label:'Head',       keys:['head'],                categories:['accessory'], accessorySlotKey:'head' },
-    { area:'neck',     label:'Neck',       keys:['neck'],                categories:['accessory'], accessorySlotKey:'neck' },
-    { area:'earrings', label:'Earrings',   keys:['earrings'],            categories:['accessory'], accessorySlotKey:'earrings' },
-    { area:'back',     label:'Back',       keys:['back'],                categories:['accessory'], accessorySlotKey:'back' },
-    { area:'chest',    label:'Chest',      keys:['armor'],               categories:['armor'] },
-    { area:'arms',     label:'Arms',       keys:['arms'],                categories:['accessory'], accessorySlotKey:'arms' },
-    { area:'handL',    label:'Left Hand',  keys:['hand_left','shield'],  categories:['weapon','shield'] },
-    { area:'handR',    label:'Right Hand', keys:['hand_right'],          categories:['weapon'] },
-    { area:'legs',     label:'Legs',       keys:['legs'],                categories:['accessory'], accessorySlotKey:'legs' },
-    { area:'feet',     label:'Feet',       keys:['feet'],                categories:['accessory'], accessorySlotKey:'feet' }
+    { area:'head',       label:'Head',       keys:['head'],                categories:['accessory'], accessorySlotKey:'head' },
+    { area:'neck',       label:'Neck',       keys:['neck'],                categories:['accessory'], accessorySlotKey:'neck' },
+    { area:'earrings',   label:'Earrings',   keys:['earrings'],            categories:['accessory'], accessorySlotKey:'earrings' },
+    { area:'back',       label:'Back',       keys:['back'],                categories:['accessory'], accessorySlotKey:'back' },
+    { area:'chest',      label:'Chest',      keys:['armor'],               categories:['armor','accessory'], accessorySlotKey:'chest' },
+    { area:'arms',       label:'Arms',       keys:['arms'],                categories:['accessory'], accessorySlotKey:'arms' },
+    { area:'handL',      label:'Left Hand',  keys:['hand_left','shield'],  categories:['weapon','shield'] },
+    { area:'handR',      label:'Right Hand', keys:['hand_right'],          categories:['weapon'] },
+    { area:'legs',       label:'Legs',       keys:['legs'],                categories:['accessory'], accessorySlotKey:'legs' },
+    { area:'feet',       label:'Feet',       keys:['feet'],                categories:['accessory'], accessorySlotKey:'feet' },
+    { area:'ring_right', label:'Right Ring', keys:['ring_right'],          categories:['accessory'], accessorySlotKey:'ring' },
+    { area:'ring_left',  label:'Left Ring',  keys:['ring_left'],           categories:['accessory'], accessorySlotKey:'ring' }
   ];
-
-  // ── Cosmetic layer (player_characters.appearance_data) ──────────────
-  // Doll area -> appearance_data key. 'arms' has no cosmetic field at all
-  // (confirmed against every real character's appearance_data and every
-  // app-* select in character.html — no bracer/glove/arm option exists
-  // anywhere in the creator), so it's the one slot with no "Currently
-  // Wearing" row. Rings have no doll position (see RING_SLOTS below) and
-  // aren't part of this map.
-  var SLOT_APPEARANCE_KEY = {
-    head: 'hat', neck: 'necklace', earrings: 'earrings', back: 'cloak',
-    chest: 'top', arms: null, handL: 'hand_left', handR: 'hand_right',
-    legs: 'lower', feet: 'shoes'
-  };
-  // Static option lists ported verbatim (value -> label) from character.html's
-  // real app-* <select> elements, so the sheet's cosmetic picker offers
-  // exactly the same vocabulary the creator does. app-top/app-lower are
-  // flattened across all of CLOTHING_TIERS/LOWER_TIERS (js/character.js) —
-  // the creator restricts those by class armor-tier eligibility, which
-  // doesn't apply here (this is describing appearance during play, not a
-  // mechanical proficiency choice). app-hand-right/app-hand-left aren't a
-  // fixed vocabulary in the creator at all (populated from the player's
-  // actual chosen weapons) — handled separately via getEquipCandidates()
-  // in buildWearingPicker() rather than a static list here.
-  var APPEARANCE_OPTIONS = {
-    hat: [
-      { value:'', label:'None' },
-      { value:'a wide-brimmed hat', label:'Wide-brimmed hat' },
-      { value:'a circlet', label:'Circlet' },
-      { value:'a crown', label:'Crown' },
-      { value:'a helmet', label:'Helmet' },
-      { value:'a headband', label:'Headband' },
-      { value:'a turban', label:'Turban' }
-    ],
-    cloak: [
-      { value:'', label:'No cloak' },
-      { value:'colourful', label:'Colourful cloak' },
-      { value:'fur-trimmed', label:'Fur-trimmed cloak' },
-      { value:'hooded', label:'Hood' },
-      { value:'long dark', label:'Long dark cloak' },
-      { value:'short dark', label:'Short dark cloak' },
-      { value:'tattered', label:'Tattered cloak' }
-    ],
-    shoes: [
-      { value:'', label:'— choose —' },
-      { value:'fine boots', label:'Fine boots' },
-      { value:'sandals', label:'Sandals' },
-      { value:'sturdy boots', label:'Sturdy boots' },
-      { value:'worn boots', label:'Worn boots' }
-    ],
-    necklace: [
-      { value:'', label:'— none —' },
-      { value:'a beaded necklace', label:'Beaded necklace' },
-      { value:'a gold chain necklace', label:'Gold chain' },
-      { value:'a holy symbol on a chain', label:'Holy symbol' },
-      { value:'a leather cord necklace', label:'Leather cord' },
-      { value:'a pendant necklace', label:'Pendant' },
-      { value:'a silver necklace', label:'Silver necklace' }
-    ],
-    earrings: [
-      { value:'', label:'— none —' },
-      { value:'bone or carved earrings', label:'Carved bone' },
-      { value:'dangling gold earrings', label:'Gold hoops' },
-      { value:'dangling silver earrings', label:'Silver hoops' },
-      { value:'gemstone earrings', label:'Gemstone earrings' },
-      { value:'small gold earrings', label:'Gold studs' },
-      { value:'small silver earrings', label:'Silver studs' }
-    ],
-    ring: [
-      { value:'', label:'— none —' },
-      { value:'a braided cord ring', label:'Braided cord ring' },
-      { value:'a gemstone ring', label:'Gemstone ring' },
-      { value:'a gold ring', label:'Gold ring' },
-      { value:'a plain iron ring', label:'Plain iron ring' },
-      { value:'a signet ring', label:'Signet ring' },
-      { value:'a silver ring', label:'Silver ring' }
-    ],
-    top: [
-      { value:'', label:'— choose —' },
-      { value:'arcane vestments', label:'Arcane vestments' },
-      { value:'linen shirt', label:'Linen shirt' },
-      { value:"monk's gi", label:"Monk's gi" },
-      { value:'robes', label:'Robes' },
-      { value:'simple tunic', label:'Simple tunic' },
-      { value:'wrapped cloth', label:'Wrapped cloth' },
-      { value:'leather jerkin', label:'Leather jerkin' },
-      { value:'padded gambeson', label:'Padded gambeson' },
-      { value:'studded leather', label:'Studded leather' },
-      { value:"traveller's coat", label:"Traveller's coat" },
-      { value:'breastplate', label:'Breastplate' },
-      { value:'chainmail shirt', label:'Chain shirt' },
-      { value:"ranger's mail", label:"Ranger's mail" },
-      { value:'scale mail', label:'Scale mail' },
-      { value:'half-plate cuirass', label:'Half-plate cuirass' },
-      { value:'plate armour', label:'Plate armour' },
-      { value:'splint coat', label:'Splint coat' }
-    ],
-    lower: [
-      { value:'', label:'— choose —' },
-      { value:'flowing robes', label:'Flowing robes' },
-      { value:'a long skirt', label:'Long skirt' },
-      { value:'a skirt', label:'Skirt' },
-      { value:'trousers', label:'Trousers' },
-      { value:'wrapped cloth lower', label:'Wrapped cloth' },
-      { value:'leather breeches', label:'Leather breeches' },
-      { value:'armoured greaves', label:'Armoured greaves' }
-    ]
-  };
   // Rings have no doll position — surfaced as their own small row below the
-  // doll instead (per DM instruction, no Figma reference for this).
+  // doll instead (per DM instruction, no Figma reference for this). Terse
+  // labels matching the other 10 slots' style ("Head", "Chest", not
+  // "Head Slot") — used both on the tile itself and as the popover title.
   var RING_SLOTS = [
-    { key:'ring_right', label:'Right Hand Ring' },
-    { key:'ring_left',  label:'Left Hand Ring' }
+    { key:'ring_right', label:'Right Ring' },
+    { key:'ring_left',  label:'Left Ring' }
   ];
-  // Image-preview resolution — ported verbatim from js/character.js
-  // (APPEARANCE_IMG_OVERRIDE/appearanceImgSlug) so the doll's cosmetic art
-  // resolves to the exact same real files the creator already uses
-  // (assets/images/appearance/*.webp), not a second guessed convention.
-  var APPEARANCE_IMG_OVERRIDE = {
-    'colourful': 'colourful-cloak', 'fur-trimmed': 'fur-trimmed-cloak',
-    'hooded': 'hooded-cloak', 'long dark': 'long-dark-cloak',
-    'short dark': 'short-dark-cloak', 'tattered': 'tattered-cloak',
-    'a long skirt': 'long-skirt', 'a skirt': 'skirt',
-    'chainmail shirt': 'chain-shirt', 'flowing robes': 'robes',
-    'a wide-brimmed hat': 'wide-brimmed-hat', 'a circlet': 'circlet',
-    'a crown': 'crown', 'a helmet': 'helmet', 'a headband': 'headband',
-    'a turban': 'turban', 'a beaded necklace': 'beaded-necklace',
-    'a gold chain necklace': 'gold-chain-necklace',
-    'a holy symbol on a chain': 'holy-symbol-chain',
-    'a leather cord necklace': 'leather-cord-necklace',
-    'a pendant necklace': 'pendant-necklace', 'a silver necklace': 'silver-necklace',
-    'a braided cord ring': 'braided-cord-ring', 'a gemstone ring': 'gemstone-ring',
-    'a gold ring': 'gold-ring', 'a plain iron ring': 'plain-iron-ring',
-    'a signet ring': 'signet-ring', 'a silver ring': 'silver-ring',
-    'bone or carved earrings': 'bone-carved-earrings'
-  };
-  function appearanceImgSlug(value) {
-    if (!value) return '';
-    if (APPEARANCE_IMG_OVERRIDE[value]) return APPEARANCE_IMG_OVERRIDE[value];
-    return value.trim().replace(/\s+/g, '-').replace(/'/g, '').replace(/[^a-z0-9\-]/gi, '').toLowerCase();
-  }
-  function appearanceImgSrc(value) {
-    var slug = appearanceImgSlug(value);
-    return slug ? '../assets/images/appearance/' + slug + '.webp' : null;
-  }
-  // Persist one appearance_data key. Merge-patches the JSON column, same
-  // pattern as saveSheet()'s partial updates elsewhere in this file — never
-  // overwrites the whole blob, so unrelated cosmetic/portrait fields
-  // (hair_color, skin_tone, etc.) can't be clobbered by an equip-doll edit.
+  // Persist one appearance_data key — portrait/description fields only
+  // (height, build, skin tone, hair, etc.); equip slots live in
+  // character_sheet.equipped now, not here (see EQUIP_DOLL_SLOTS above).
+  // Merge-patches the JSON column, same pattern as saveSheet()'s partial
+  // updates elsewhere in this file — never overwrites the whole blob.
   function saveAppearance(key, value) {
     if (!CH) return;
     APPEARANCE[key] = value;
@@ -4353,49 +4241,82 @@
       if (tipEl) { tipEl.remove(); tipEl = null; }
     });
   }
+  // Which hand (if either) holds a two-handed weapon right now, symmetric
+  // in both directions — a two-handed weapon can land in either doll
+  // position (selectEquipItem() routes a Left Hand pick to hand_left same
+  // as a Right Hand pick routes to hand_right, no hand is privileged), so
+  // this checks both instead of assuming hand_right is always "main hand".
+  // lockedKeys carries what needs auto-clearing on the *other* side —
+  // Left Hand has two backing keys (hand_left, shield) since a shield can
+  // occupy that same doll position; Right Hand only ever has one.
+  function detectTwoHandedLock() {
+    var rightItem = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
+    var leftItem  = EQUIPPED.hand_left  ? EQUIPPED_ITEMS[EQUIPPED.hand_left]  : null;
+    var rightIsTwoHanded = !!(rightItem && Array.isArray(rightItem.properties) && rightItem.properties.indexOf('two-handed') !== -1);
+    var leftIsTwoHanded  = !!(leftItem  && Array.isArray(leftItem.properties)  && leftItem.properties.indexOf('two-handed') !== -1);
+    if (rightIsTwoHanded) return { activeArea: 'handR', lockedArea: 'handL', item: rightItem, lockedKeys: ['hand_left', 'shield'] };
+    if (leftIsTwoHanded)  return { activeArea: 'handL', lockedArea: 'handR', item: leftItem,  lockedKeys: ['hand_right'] };
+    return null;
+  }
   function renderEquipped() {
     var block = document.getElementById('cs-equipped-block');
     if (!block) return;
-    var mainHandItem = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
-    var isTwoHanded = !!(mainHandItem && Array.isArray(mainHandItem.properties) && mainHandItem.properties.indexOf('two-handed') !== -1);
-    if (isTwoHanded && (EQUIPPED.hand_left || EQUIPPED.shield)) {
-      autoUnequipOffHandForTwoHanded();
+    var twoHandedLock = detectTwoHandedLock();
+    if (twoHandedLock && twoHandedLock.lockedKeys.some(function(k) { return !!EQUIPPED[k]; })) {
+      autoUnequipOffHandForTwoHanded(twoHandedLock.lockedKeys);
     }
     var dmgHtml = computeWeaponDamageHtml();
+    // Nesting mirrors Figma node 68:7354 exactly: a flanking hand slot
+    // beside a stacked column on each side, silhouette centered between
+    // them. Each stacked area renders inside its own .cs-equip-slot-row
+    // so the CSS can bottom-justify content within a fixed-proportion row
+    // (image at the row's bottom, label under it) — the flanking hand
+    // slots aren't row-wrapped since Figma sizes them to their own
+    // content, centered against the column via the side group's own
+    // items-center, not a matching fixed row height.
+    function doStackedCol(areas) {
+      return '<div class="cs-equip-doll-col">'
+        + areas.map(function(area) {
+            return '<div class="cs-equip-slot-row">' + renderEquippedSlot(equipSlotByArea(area), twoHandedLock) + '</div>';
+          }).join('')
+      + '</div>';
+    }
     block.innerHTML = (dmgHtml ? '<div class="cs-equip-damage-row">' + dmgHtml + '</div>' : '')
       + '<div class="cs-equip-doll">'
+        + '<div class="cs-equip-doll-side">'
+          + renderEquippedSlot(equipSlotByArea('handL'), twoHandedLock)
+          + doStackedCol(['head', 'chest', 'arms', 'feet'])
+        + '</div>'
         + '<img class="cs-equip-doll-silhouette" src="../assets/images/character-sheet/equipped-gear/equipped-gear-silhouete.png" alt="" aria-hidden="true">'
-        + EQUIP_DOLL_SLOTS.map(function(slot) { return renderEquippedSlot(slot, isTwoHanded); }).join('')
+        + '<div class="cs-equip-doll-side">'
+          + doStackedCol(['neck', 'earrings', 'back', 'legs'])
+          + renderEquippedSlot(equipSlotByArea('handR'), twoHandedLock)
+        + '</div>'
       + '</div>';
     renderACBadge();
     renderRingsRow();
     wireAllTooltips();
   }
   // Rings — cosmetic-only (appearance_data.ring_right/ring_left), no doll
-  // position exists for them. A small standalone row below the doll.
+  // position exists for them (unchanged from before) — real slot tiles
+  // now, same renderEquippedSlot() every doll position uses, just not
+  // placed on the doll itself.
   function renderRingsRow() {
     var row = document.getElementById('cs-ring-row');
     if (!row) return;
-    row.innerHTML = RING_SLOTS.map(function(ring) {
-      var currentVal = realCosmeticValue(APPEARANCE[ring.key]);
-      var opts = (APPEARANCE_OPTIONS.ring || []).map(function(o) {
-        var sel = o.value === currentVal ? ' selected' : '';
-        return '<option value="' + o.value.replace(/"/g, '&quot;') + '"' + sel + '>' + o.label + '</option>';
-      }).join('');
-      return '<div class="cs-ring-item">'
-        + '<span class="cs-ring-label">' + ring.label + '</span>'
-        + '<select class="cs-wearing-select cs-ring-select" onchange="saveAppearance(\'' + ring.key + '\', this.value); renderRingsRow();">' + opts + '</select>'
-      + '</div>';
-    }).join('');
+    row.innerHTML = RING_SLOTS.map(function(r) { return renderEquippedSlot(equipSlotByArea(r.key), null); }).join('');
   }
-  // Clears the Left Hand doll position (hand_left AND shield — mutually
-  // exclusive at that one position) when Main Hand holds/gains a two-handed
-  // weapon. Covers both directions (equipping two-handed while Left Hand is
-  // occupied, and Left Hand simply staying locked afterward via renderEquippedSlot).
-  function autoUnequipOffHandForTwoHanded() {
+  // Clears whichever keys back the *other* hand's doll position when one
+  // hand holds/gains a two-handed weapon — keys come from
+  // detectTwoHandedLock().lockedKeys, so this works the same whether the
+  // two-handed weapon (and therefore the lock) is on the left or right.
+  // Covers both directions (equipping two-handed while the other hand is
+  // occupied, and that hand simply staying locked afterward via
+  // renderEquippedSlot()).
+  function autoUnequipOffHandForTwoHanded(keys) {
     if (!SHEET) return;
     var equipped = (typeof SHEET.equipped === 'object' && SHEET.equipped) ? SHEET.equipped : {};
-    ['hand_left', 'shield'].forEach(function(k) {
+    keys.forEach(function(k) {
       var removedId = equipped[k];
       if (!removedId) return;
       delete equipped[k];
@@ -4409,6 +4330,16 @@
   function buildWeaponDamageHtml(item) {
     return '<span class="cs-equipped-damage-dice">' + item.damage_dice + '</span>'
       + (item.damage_type ? ' <span class="cs-equipped-damage-type">' + item.damage_type + '</span>' : '');
+  }
+  // Per-slot damage line under a hand slot's name (e.g. "1d8 (Piercing)") —
+  // a plain-text sibling of buildWeaponDamageHtml() above, not a reuse of
+  // it, since that one's spans are hardcoded gold (.cs-equip-damage-row's
+  // combined summary above the doll) and this needs red (.cs-equip-slot-
+  // damage, var(--red-strong)) instead. Returns '' for non-weapons — no
+  // area check needed, only weapon items ever carry damage_dice.
+  function buildSlotDamageText(item) {
+    if (!item || !item.damage_dice) return '';
+    return item.damage_dice + (item.damage_type ? ' (' + item.damage_type + ')' : '');
   }
   // AC math is unchanged from the old renderEquippedAC() — factored into a
   // pure computeAC() so the badge can render in the MainInfo header
@@ -4474,100 +4405,59 @@
     el.innerHTML = '<span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">' + r.ac + '</span>';
     wireTooltip(el);
   }
-  // New doll slot visual (Figma 51:2260) — a plain square showing the item's
-  // catalog thumbnail (or a category icon fallback) plus its name, matching
-  // the empty state's icon+label layout with the item name added underneath.
-  // No stat breakdown in the doll itself (that lived in the old 4-slot cards);
-  // this is a DM-unconfirmed default from the build spec, flag if wrong.
-  // Filled slots get a data-tip (name + basic stats) via the existing
-  // wireTooltip()/wireAllTooltips() pattern already used sitewide — no new
-  // tooltip mechanism, per the "reuse existing patterns" instruction.
-  // "__two_handed__" is a portrait-description sentinel character.js writes
-  // into appearance_data.hand_left when the right hand holds a two-handed
-  // weapon (both "hands" shown gripping it in the portrait) — not a real
-  // cosmetic item choice. Never resolved to art or shown as a name.
-  function realCosmeticValue(val) {
-    return (val && val !== '__two_handed__') ? val : '';
-  }
-  // Cosmetic image failed to load (e.g. a hand slot's weapon-name cosmetic
-  // value has no real asset in assets/images/appearance/) — fall through to
-  // the mechanical item's own real image once, then give up silently.
-  function equipArtFallback(img) {
-    var fb = img.dataset.fallback;
-    if (fb) {
-      img.removeAttribute('data-fallback');
-      img.onerror = function() { img.remove(); };
-      img.src = fb;
-    } else {
-      img.remove();
-    }
-  }
-  function renderEquippedSlot(slot, mainHandTwoHanded) {
-    if (slot.area === 'handL' && mainHandTwoHanded) {
-      return '<div class="cs-equip-slot-wrap" style="grid-area:' + slot.area + ';">'
-        + '<div class="cs-equip-slot-box cs-equip-slot-locked" title="Two-handed weapon equipped"></div>'
+  // Doll slot visual (Figma 51:2260) — a plain square showing the equipped
+  // item's real catalog thumbnail (or a category icon fallback) plus its
+  // name. One item per slot, sourced only from what the character actually
+  // owns — no separate cosmetic layer (see EQUIP_DOLL_SLOTS above). Filled
+  // slots get a data-tip (name + basic stats) via the existing
+  // wireTooltip()/wireAllTooltips() pattern already used sitewide.
+  function renderEquippedSlot(slot, twoHandedLock) {
+    // The other hand's slot while a two-handed weapon is active: shows
+    // the same weapon's own art, greyed via the existing
+    // .cs-equip-slot-locked opacity treatment — this position isn't
+    // independently equippable right now. No name/damage text: that
+    // belongs on the hand actually holding it.
+    if (twoHandedLock && slot.area === twoHandedLock.lockedArea) {
+      var lockedItem = twoHandedLock.item;
+      var lockedArt = (lockedItem && lockedItem.image)
+        ? '<img class="cs-equip-slot-thumb" src="' + lockedItem.image + '" alt="" onerror="this.remove();">'
+        : (lockedItem ? '<div class="cs-equip-slot-thumb-icon cs-equip-icon-' + (lockedItem.category || 'weapon') + '"></div>' : '');
+      return '<div class="cs-equip-slot-wrap">'
+        + '<div class="cs-equip-slot-box cs-equip-slot-locked" title="Two-handed weapon equipped">' + lockedArt + '</div>'
         + '<div class="cs-equip-slot-label">' + slot.label.toUpperCase() + '</div>'
       + '</div>';
     }
     var active = getSlotActiveItem(slot);
     var item = active.item;
-    var appKey = SLOT_APPEARANCE_KEY[slot.area];
-    var cosmeticVal = appKey ? realCosmeticValue(APPEARANCE[appKey]) : '';
-    var cosmeticImg = cosmeticVal ? appearanceImgSrc(cosmeticVal) : null;
-
-    // Art: cosmetic choice first, mechanical item's own art as the default
-    // look if no cosmetic choice exists, otherwise the category icon. Hand
-    // slots' cosmetic values are weapon names (e.g. "longbow") but
-    // assets/images/appearance/ has no weapon art at all — that folder only
-    // ever covered clothing/accessories, even in the creator itself (hand
-    // slots were excluded from its own initAppearancePreviews() pairing).
-    // Confirmed live via a real 404 on appearance/longbow.webp before this
-    // fix — equipArtFallback() lets the <img> fall through to the
-    // mechanical item's own real image on load failure instead of just
-    // going blank.
     var art;
-    if (cosmeticImg) {
-      var fallbackSrc = (item && item.image) ? item.image : '';
-      art = '<img class="cs-equip-slot-thumb" src="' + cosmeticImg + '" alt=""'
-        + (fallbackSrc ? ' data-fallback="' + fallbackSrc.replace(/"/g, '&quot;') + '" onerror="equipArtFallback(this)"' : ' onerror="this.remove();"')
-        + '>';
-    } else if (item && item.image) {
+    if (item && item.image) {
       art = '<img class="cs-equip-slot-thumb" src="' + item.image + '" alt="" onerror="this.remove();">';
     } else if (item) {
       art = '<div class="cs-equip-slot-thumb-icon cs-equip-icon-' + (item.category || slot.categories[0]) + '"></div>';
     } else {
       art = '';
     }
-    // Sparkle badge — a real mechanical item is equipped here, regardless
-    // of whether its art matches what's cosmetically shown (e.g. a cosmetic
-    // "robes" choice over a mechanically-equipped Breastplate still badges).
-    var badge = item ? '<span class="cs-equip-slot-badge" title="Mechanical item equipped">&#10024;</span>' : '';
     var unequipBtn = item ? '<button class="cs-equip-slot-unequip" onclick="event.stopPropagation();unequipSlot(\'' + active.key + '\')" title="Unequip">&#10005;</button>' : '';
-    var filled = !!(item || cosmeticVal);
 
-    var box = '<div class="cs-equip-slot-box' + (filled ? ' cs-equip-slot-filled' : ' cs-equip-slot-empty') + '" onclick="openSlotPopover(\'' + slot.area + '\')" role="button" tabindex="0" aria-label="' + slot.label + '">'
-      + art + badge + unequipBtn
+    var box = '<div class="cs-equip-slot-box' + (item ? ' cs-equip-slot-filled' : ' cs-equip-slot-empty') + '" onclick="openSlotPopover(\'' + slot.area + '\')" role="button" tabindex="0" aria-label="' + slot.label + '">'
+      + art + unequipBtn
     + '</div>';
 
-    var nameLine = item ? item.name : (cosmeticVal ? cap(cosmeticVal) : '');
+    var nameLine = item ? item.name : '';
+    var dmgText = buildSlotDamageText(item);
     var tip = item ? buildEquippedTooltipText(item, item.category || slot.categories[0]).replace(/"/g, '&quot;') : '';
-    return '<div class="cs-equip-slot-wrap" style="grid-area:' + slot.area + ';"' + (tip ? ' data-tip="' + tip + '"' : '') + '>'
+    return '<div class="cs-equip-slot-wrap"' + (tip ? ' data-tip="' + tip + '"' : '') + '>'
       + box
       + '<div class="cs-equip-slot-label">' + slot.label.toUpperCase() + '</div>'
       + (nameLine ? '<div class="cs-equip-slot-name">' + nameLine + '</div>' : '')
+      + (dmgText ? '<div class="cs-equip-slot-damage">' + dmgText + '</div>' : '')
     + '</div>';
   }
 
-  // ── Slot popover — one popover per doll slot with two independent rows:
-  // "Currently Equipped" (real item/stats, from items+inventory) and
-  // "Currently Wearing" (cosmetic choice, from appearance_data). Reuses the
-  // existing equip-search modal markup/CSS rather than a second popover. ──
+  // ── Slot popover — one picker per slot, listing only items the character
+  // actually owns that are valid here (getEquipCandidates()/
+  // renderEquipResults() below). No cosmetic layer, no second section. ──
   var EQUIP_TARGET_SLOT = null; // a doll "area" key, not a raw EQUIPPED key
-  var EQUIP_SLOT_TITLES = {
-    head:'Head', neck:'Neck', earrings:'Earrings', back:'Back',
-    chest:'Chest', arms:'Arms', handL:'Left Hand', handR:'Right Hand',
-    legs:'Legs', feet:'Feet'
-  };
   function equipSlotByArea(area) {
     for (var i = 0; i < EQUIP_DOLL_SLOTS.length; i++) { if (EQUIP_DOLL_SLOTS[i].area === area) return EQUIP_DOLL_SLOTS[i]; }
     return null;
@@ -4601,9 +4491,9 @@
   function openSlotPopover(area) {
     EQUIP_TARGET_SLOT = area;
     var slot = equipSlotByArea(area);
-    document.getElementById('cs-equip-modal-title').textContent = (slot ? slot.label : 'Slot') + ' — Equipped Gear';
-    renderPopoverMechanicalRow();
-    renderPopoverCosmeticRow();
+    if (!slot) return;
+    document.getElementById('cs-equip-modal-title').textContent = slot.label;
+    renderPopoverCurrent();
     document.getElementById('cs-equip-search-input').value = '';
     renderEquipResults('');
     document.getElementById('cs-equip-modal-overlay').style.display = 'flex';
@@ -4612,71 +4502,20 @@
     document.getElementById('cs-equip-modal-overlay').style.display = 'none';
     EQUIP_TARGET_SLOT = null;
   }
-  // Row 1: Currently Equipped (mechanical). Independently editable — its
-  // own inline Unequip control, separate from the cosmetic row below.
-  function renderPopoverMechanicalRow() {
+  // Currently-equipped line, with an inline Unequip control.
+  function renderPopoverCurrent() {
     var el = document.getElementById('cs-equip-current');
     if (!el) return;
     var active = getSlotActiveItem(equipSlotByArea(EQUIP_TARGET_SLOT));
     el.innerHTML = active.item
-      ? ('Currently equipped: <strong>' + active.item.name + '</strong> <button class="cs-equip-current-clear" onclick="popoverUnequip()">Unequip</button>')
-      : 'Currently equipped: <em>nothing</em>';
+      ? ('<strong>' + active.item.name + '</strong> <button class="cs-equip-current-clear" onclick="popoverUnequip()">Unequip</button>')
+      : '<em>Nothing equipped</em>';
   }
   function popoverUnequip() {
     var active = getSlotActiveItem(equipSlotByArea(EQUIP_TARGET_SLOT));
     if (active.key) unequipSlot(active.key);
-    renderPopoverMechanicalRow();
+    renderPopoverCurrent();
     renderEquipResults((document.getElementById('cs-equip-search-input').value || ''));
-  }
-  // Row 2: Currently Wearing (cosmetic, appearance_data). Independently
-  // editable from Row 1 — setting one never touches the other. Hand slots
-  // pull their option list from the player's real weapon inventory (the
-  // creator itself has no fixed vocabulary there either, it's populated
-  // from chosen weapons); every other slot uses the static option lists
-  // ported from character.html.
-  function renderPopoverCosmeticRow() {
-    var section = document.getElementById('cs-wearing-section');
-    if (!section) return;
-    var area = EQUIP_TARGET_SLOT;
-    var appKey = SLOT_APPEARANCE_KEY[area];
-    if (!appKey) {
-      section.innerHTML = '<div class="cs-slot-popover-heading">Currently Wearing</div>'
-        + '<div class="cs-wearing-empty">No appearance option for this slot.</div>';
-      return;
-    }
-    var currentVal = realCosmeticValue(APPEARANCE[appKey]);
-    var optionsHtml;
-    if (appKey === 'hand_left' || appKey === 'hand_right') {
-      var candidates = getEquipCandidates(area).filter(function(invItem) {
-        var catalogItem = invItem.item_id ? CATALOG_CACHE[invItem.item_id] : null;
-        var cat = catalogItem ? catalogItem.category : invItem.item_type;
-        return cat === 'weapon';
-      });
-      var names = candidates.map(function(invItem) {
-        var catalogItem = invItem.item_id ? CATALOG_CACHE[invItem.item_id] : null;
-        return catalogItem ? catalogItem.name : (invItem.custom_name || 'Unknown item');
-      }).filter(function(n, i, arr) { return arr.indexOf(n) === i; });
-      optionsHtml = '<option value="">— none —</option>' + names.map(function(n) {
-        var sel = n.toLowerCase() === currentVal.toLowerCase() ? ' selected' : '';
-        return '<option value="' + n.toLowerCase() + '"' + sel + '>' + n + '</option>';
-      }).join('');
-    } else {
-      var opts = APPEARANCE_OPTIONS[appKey] || [];
-      optionsHtml = opts.map(function(o) {
-        var sel = o.value === currentVal ? ' selected' : '';
-        return '<option value="' + o.value.replace(/"/g, '&quot;') + '"' + sel + '>' + o.label + '</option>';
-      }).join('');
-    }
-    section.innerHTML = '<div class="cs-slot-popover-heading">Currently Wearing</div>'
-      + '<select class="cs-wearing-select" id="cs-wearing-select" onchange="onWearingChange()">' + optionsHtml + '</select>';
-  }
-  function onWearingChange() {
-    var appKey = SLOT_APPEARANCE_KEY[EQUIP_TARGET_SLOT];
-    if (!appKey) return;
-    var val = document.getElementById('cs-wearing-select').value;
-    saveAppearance(appKey, val);
-    renderEquipped();
-    showToast('Appearance updated');
   }
   // ── +Add Item modal (Figma 51:2260) — wraps the existing catalog search,
   // opened from the new header button instead of an always-visible inline bar.
@@ -4751,9 +4590,14 @@
   }
   function renderEquipResults(q) {
     var resultsEl = document.getElementById('cs-equip-search-results');
+    var searchInput = document.getElementById('cs-equip-search-input');
     var slot = equipSlotByArea(EQUIP_TARGET_SLOT);
     if (!resultsEl || !slot) return;
     var candidates = getEquipCandidates(EQUIP_TARGET_SLOT);
+    // Nothing to search — an empty search box next to an empty-state
+    // message reads as broken (live QC: "what is this field for?"), so
+    // hide it entirely rather than leave it with nothing to do.
+    if (searchInput) searchInput.style.display = candidates.length ? '' : 'none';
     if (!candidates.length) {
       resultsEl.innerHTML = '<div class="cs-inv-empty">No items in inventory for this slot</div>';
       return;
@@ -4822,6 +4666,24 @@
       var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
       if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
     });
+    // Same physical inventory row moving from a different slot entirely —
+    // not a sibling key above (e.g. handL/handR both take 'weapon', or
+    // ring_right/ring_left both take 'ring'; two separate slots that
+    // happen to share a candidate category, not two keys backing one doll
+    // position). Detected off this ROW's own equipped_slot, not the
+    // catalog id, so two distinct owned rows of the same catalog item
+    // (e.g. two real rings) never falsely clear each other — only
+    // re-selecting the literal same row triggers this. Guarded against
+    // unequipSlot() never resetting a row's equipped_slot column (a
+    // pre-existing, separate gap): only clears if the live equipped map
+    // still actually shows this same item at that old key right now.
+    var priorSlotKey = invItem.equipped_slot;
+    if (priorSlotKey && priorSlotKey !== targetKey && equipped[priorSlotKey] === equipKey) {
+      delete equipped[priorSlotKey];
+      EQUIPPED[priorSlotKey] = null;
+      var stillUsedPrior = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === equipKey; });
+      if (!stillUsedPrior) delete EQUIPPED_ITEMS[equipKey];
+    }
     equipped[targetKey] = equipKey;
     SHEET.equipped = equipped;
     EQUIPPED[targetKey] = equipKey;
@@ -5801,7 +5663,9 @@
       arms:       equipped.arms       || null,
       back:       equipped.back       || null,
       legs:       equipped.legs       || null,
-      feet:       equipped.feet       || null
+      feet:       equipped.feet       || null,
+      ring_right: equipped.ring_right || null,
+      ring_left:  equipped.ring_left  || null
     };
     var ids = Object.keys(EQUIPPED).map(function(k) { return EQUIPPED[k]; }).filter(Boolean);
     var uniqueIds = ids.filter(function(id, idx) { return ids.indexOf(id) === idx; });
@@ -5871,20 +5735,15 @@
             + '</div>'
           + '</div>'
         + '</div>'
-        // Slot popover — two independent rows: Currently Equipped
-        // (mechanical, items+inventory) and Currently Wearing (cosmetic,
-        // appearance_data). One popover per slot, not two.
+        // Slot popover — one picker per slot: current item + Unequip,
+        // then a search + list of every owned item valid for this slot.
         + '<div class="cs-modal-overlay" id="cs-equip-modal-overlay" style="display:none" onclick="if(event.target===this)closeEquipModal()">'
           + '<div class="cs-modal">'
             + '<div class="cs-modal-title" id="cs-equip-modal-title">Slot</div>'
             + '<div class="cs-modal-body">'
-              + '<div class="cs-slot-popover-section">'
-                + '<div class="cs-slot-popover-heading">Currently Equipped</div>'
-                + '<div class="cs-equip-current" id="cs-equip-current"></div>'
-                + '<input class="cs-inv-input" id="cs-equip-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onEquipSearchInput()">'
-                + '<div class="cs-equip-results" id="cs-equip-search-results"></div>'
-              + '</div>'
-              + '<div class="cs-slot-popover-section" id="cs-wearing-section"></div>'
+              + '<div class="cs-equip-current" id="cs-equip-current"></div>'
+              + '<input class="cs-inv-input" id="cs-equip-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onEquipSearchInput()">'
+              + '<div class="cs-equip-results" id="cs-equip-search-results"></div>'
             + '</div>'
           + '</div>'
         + '</div>'
