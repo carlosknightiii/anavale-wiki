@@ -2510,6 +2510,16 @@
             <span class="field-help">Where this item came from — who made it, how it was found, what events shaped it</span>
             <textarea class="field-textarea" id="item-history" placeholder="Origin, creation, notable past events…"></textarea>
           </div>
+          <div class="field-group">
+            <label class="field-label" for="item-effect-mechanical">Equipped Effect — Mechanical</label>
+            <span class="field-help">A real gameplay effect while this item is equipped (resistance, speed change, sentience, etc.) — shown to players on the sheet</span>
+            <textarea class="field-textarea" id="item-effect-mechanical" placeholder="e.g. Resistance to cold damage while worn."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-effect-flavor">Equipped Effect — Flavor</label>
+            <span class="field-help">Pure narrative flavor while this item is equipped — no mechanical weight, shown to players on the sheet</span>
+            <textarea class="field-textarea" id="item-effect-flavor" placeholder="e.g. Hums faintly when near running water."></textarea>
+          </div>
         </div>
 
         <!-- WORLD SETTINGS -->
@@ -8654,6 +8664,8 @@ function generateItem() {
     gigglegloom_relationship: orNull(val('item-gigglegloom')),
     gigglegloom_type:         null,
     history:                  orNull(val('item-history')),
+    equipped_effect_mechanical: orNull(val('item-effect-mechanical')),
+    equipped_effect_flavor:     orNull(val('item-effect-flavor')),
     current_location:         orNull(val('item-location')),
     current_owner:            orNull(val('item-owner')),
     dm_notes:                 orNull(val('item-dm-notes')),
@@ -9726,6 +9738,8 @@ function cmPopulateForm(entry, type) {
     sv('item-description', entry.description);
     sv('item-history',     entry.history);
     sv('item-gigglegloom', entry.gigglegloom_relationship);
+    sv('item-effect-mechanical', entry.equipped_effect_mechanical);
+    sv('item-effect-flavor',     entry.equipped_effect_flavor);
     sv('item-location',    entry.current_location);
     sv('item-owner',       entry.current_owner);
     sv('item-dm-notes',    entry.dm_notes);

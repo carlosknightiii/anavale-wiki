@@ -1901,6 +1901,32 @@
     }
     .cs-inv-carrying-title { text-align: left; }
 
+    /* ── Special Effects panel — reuses .cs-story-card as the card shell
+       (same bg/radius/padding as Your Story cards) and .cs-story-card-title
+       for the item name. Rows split by kind, same accent logic used
+       elsewhere in this tab: --red-strong is the established "mechanical"
+       red (weapon damage text, HP fill) — reused here, not invented; flavor
+       rows get a plain, calmer italic treatment instead of a colored box. ── */
+    .cs-effect-cards { display: flex; flex-direction: column; gap: var(--char-ov-gap-xs); }
+    .cs-effect-row {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    .cs-effect-row--mech {
+      background: var(--blue-600);
+      border-left: 3px solid var(--red-strong);
+      border-radius: var(--radius);
+      padding: 4px 8px;
+      color: var(--text);
+      font-weight: 400;
+    }
+    .cs-effect-row--flavor {
+      color: var(--char-text-muted);
+      font-weight: 300;
+      font-style: italic;
+    }
+
     /* ── Carrying bar — capacity = STR x 15, standard progress-bar reading:
        track (--blue-700) always full width, fill (--blue-300) grows from
        the left as current weight rises toward capacity. Live-tested report
@@ -3028,6 +3054,15 @@
           // Rings — no doll position exists for them (per DM instruction,
           // surfaced as their own small row below the doll instead).
           + '<div class="cs-ring-row" id="cs-ring-row"></div>'
+        + '</div>'
+        // Special Effects — read-only, DM-written via DM Tools item form
+        // (grants_advantage/grants_proficiency/magic_bonus already existed;
+        // equipped_effect_mechanical/equipped_effect_flavor are new). Hidden
+        // entirely (not an empty box) when no currently-equipped item has
+        // anything to show — see renderSpecialEffects().
+        + '<div class="cs-inv-top-col" id="cs-special-effects-col" style="display:none">'
+          + '<h3 class="cs-inv-col-title">Special Effects</h3>'
+          + '<div id="cs-special-effects-block"></div>'
         + '</div>'
         + '<div class="cs-inv-top-col cs-inv-top-col--currency">'
           + '<h3 class="cs-inv-col-title">Currency</h3>'
@@ -4261,7 +4296,53 @@
       + '</div>';
     renderACBadge();
     renderRingsRow();
+    renderSpecialEffects();
     wireAllTooltips();
+  }
+  // Special Effects panel — read-only summary of every currently-equipped
+  // item (any of the 13 EQUIPPED keys, doll slots + both rings) that has a
+  // real effect set: grants_advantage/grants_proficiency/magic_bonus (the
+  // pre-existing structured mechanical fields) or the new
+  // equipped_effect_mechanical/equipped_effect_flavor free-text fields.
+  // Items with none of these stay out of the panel entirely; if nothing
+  // across the whole loadout has anything to show, the column itself
+  // hides (see the display toggle at the end) rather than rendering an
+  // empty box. Iterated in EQUIPPED's own key order — no separate slot
+  // list to keep in sync.
+  function buildSpecialEffectRows(item) {
+    var rows = [];
+    if (item.magic_bonus) {
+      rows.push({ kind: 'mech', text: (item.magic_bonus > 0 ? '+' : '') + item.magic_bonus + ' magic bonus' });
+    }
+    (item.grants_advantage || []).forEach(function(g) {
+      rows.push({ kind: 'mech', text: 'Advantage on ' + g });
+    });
+    (item.grants_proficiency || []).forEach(function(g) {
+      rows.push({ kind: 'mech', text: 'Proficiency: ' + g });
+    });
+    if (item.equipped_effect_mechanical) rows.push({ kind: 'mech', text: item.equipped_effect_mechanical });
+    if (item.equipped_effect_flavor) rows.push({ kind: 'flavor', text: item.equipped_effect_flavor });
+    return rows;
+  }
+  function renderSpecialEffects() {
+    var col = document.getElementById('cs-special-effects-col');
+    var block = document.getElementById('cs-special-effects-block');
+    if (!col || !block) return;
+    var cardsHtml = Object.keys(EQUIPPED).map(function(key) {
+      var itemId = EQUIPPED[key];
+      var item = itemId ? EQUIPPED_ITEMS[itemId] : null;
+      if (!item) return '';
+      var rows = buildSpecialEffectRows(item);
+      if (!rows.length) return '';
+      return '<div class="cs-story-card">'
+        + '<div class="cs-story-card-title">' + escHtml(item.name || 'Unknown item') + '</div>'
+        + rows.map(function(r) {
+            return '<div class="cs-effect-row cs-effect-row--' + r.kind + '">' + escHtml(r.text) + '</div>';
+          }).join('')
+      + '</div>';
+    }).join('');
+    block.innerHTML = '<div class="cs-effect-cards">' + cardsHtml + '</div>';
+    col.style.display = cardsHtml ? '' : 'none';
   }
   // Rings — cosmetic-only (appearance_data.ring_right/ring_left), no doll
   // position exists for them (unchanged from before) — real slot tiles
