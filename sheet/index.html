@@ -1383,10 +1383,6 @@
        small enough to sit side by side down to 375px.
        Slot frame + body silhouette still use the real exported Figma
        assets (assets/images/character-sheet/equipped-gear/*). */
-    .cs-equip-damage-row {
-      text-align: center;
-      margin-bottom: 0.6rem;
-    }
     .cs-equip-doll {
       container-type: inline-size;
       width: 100%;
@@ -1565,34 +1561,6 @@
       .cs-equip-slot-row { min-height: clamp(5.55rem, 18.135cqi, 11.08rem); }
       .cs-equip-doll-side { gap: clamp(0.5rem, 1.637cqi, 1rem); }
       .cs-equip-doll-col { gap: clamp(0.32rem, 1.023cqi, 0.625rem); }
-    }
-    .cs-equipped-damage-sep {
-      display: inline-block;
-      vertical-align: middle;
-      color: var(--gold);
-      font-size: 0.8em;
-      margin: 0 0.4rem;
-    }
-    .cs-equipped-damage {
-      display: inline-block;
-      vertical-align: middle;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--gold);
-    }
-    .cs-equipped-damage-dice {
-      font-family: var(--font-display);
-    }
-    .cs-equipped-damage-type {
-      font-family: var(--font-body);
-      font-size: 0.85em;
-      color: var(--gold);
-      opacity: 0.75;
-    }
-    .cs-equipped-damage-slash {
-      color: var(--gold);
-      opacity: 0.4;
-      margin: 0 0.3rem;
     }
     .cs-tooltip {
       position: fixed;
@@ -4265,7 +4233,6 @@
     if (twoHandedLock && twoHandedLock.lockedKeys.some(function(k) { return !!EQUIPPED[k]; })) {
       autoUnequipOffHandForTwoHanded(twoHandedLock.lockedKeys);
     }
-    var dmgHtml = computeWeaponDamageHtml();
     // Nesting mirrors Figma node 68:7354 exactly: a flanking hand slot
     // beside a stacked column on each side, silhouette centered between
     // them. Each stacked area renders inside its own .cs-equip-slot-row
@@ -4281,8 +4248,7 @@
           }).join('')
       + '</div>';
     }
-    block.innerHTML = (dmgHtml ? '<div class="cs-equip-damage-row">' + dmgHtml + '</div>' : '')
-      + '<div class="cs-equip-doll">'
+    block.innerHTML = '<div class="cs-equip-doll">'
         + '<div class="cs-equip-doll-side">'
           + renderEquippedSlot(equipSlotByArea('handL'), twoHandedLock)
           + doStackedCol(['head', 'chest', 'arms', 'feet'])
@@ -4327,16 +4293,9 @@
     SHEET.equipped = equipped;
     saveSheet({ equipped: equipped });
   }
-  function buildWeaponDamageHtml(item) {
-    return '<span class="cs-equipped-damage-dice">' + item.damage_dice + '</span>'
-      + (item.damage_type ? ' <span class="cs-equipped-damage-type">' + item.damage_type + '</span>' : '');
-  }
-  // Per-slot damage line under a hand slot's name (e.g. "1d8 (Piercing)") —
-  // a plain-text sibling of buildWeaponDamageHtml() above, not a reuse of
-  // it, since that one's spans are hardcoded gold (.cs-equip-damage-row's
-  // combined summary above the doll) and this needs red (.cs-equip-slot-
-  // damage, var(--red-strong)) instead. Returns '' for non-weapons — no
-  // area check needed, only weapon items ever carry damage_dice.
+  // Damage line under a hand slot's name (e.g. "1d8 (Piercing)") — red
+  // (.cs-equip-slot-damage, var(--red-strong)). Returns '' for non-weapons
+  // — no area check needed, only weapon items ever carry damage_dice.
   function buildSlotDamageText(item) {
     if (!item || !item.damage_dice) return '';
     return item.damage_dice + (item.damage_type ? ' (' + item.damage_type + ')' : '');
@@ -4385,17 +4344,6 @@
       }
     }
     return { ac: ac, tip: breakdown.join(' + ') + ' = ' + ac };
-  }
-  function computeWeaponDamageHtml() {
-    var mainHand = EQUIPPED.hand_right ? EQUIPPED_ITEMS[EQUIPPED.hand_right] : null;
-    var offHand  = EQUIPPED.hand_left  ? EQUIPPED_ITEMS[EQUIPPED.hand_left]  : null;
-    var dmgParts = [];
-    if (mainHand && mainHand.damage_dice) dmgParts.push(buildWeaponDamageHtml(mainHand));
-    if (offHand && offHand.damage_dice) dmgParts.push(buildWeaponDamageHtml(offHand));
-    return dmgParts.length
-      ? '<span class="cs-equipped-damage-sep">&#9876;</span><span class="cs-equipped-damage">'
-        + dmgParts.join('<span class="cs-equipped-damage-slash"> / </span>') + '</span>'
-      : '';
   }
   function renderACBadge() {
     var el = document.getElementById('cs-mi-ac-badge');
@@ -4537,11 +4485,25 @@
   // data exists on custom rows, same permissive fallback armor/shield/weapon
   // always used). Catalog rows match by category, narrowed further by the
   // real items.equip_slot value for the 7 accessory positions so e.g. a ring
-  // doesn't show up as a Head candidate.
+  // doesn't show up as a Head candidate. Excludes whichever specific row is
+  // already equipped in THIS slot (redundant with the "Currently equipped"
+  // line above the list) — keyed off that row's own equipped_slot AND its
+  // own catalog/row id matching EQUIPPED[activeKey] (same equipKey formula
+  // selectEquipItem() uses), not equipped_slot alone. A stale equipped_slot
+  // left over from before unequipSlot() cleared it properly (or any other
+  // drift between a row's own column and the live equipped map) must not
+  // hide an otherwise-real, currently-unequipped candidate — confirmed
+  // live via Kael's Shortsword, whose equipped_slot was stale 'hand_right'
+  // from a much older session while character_sheet.equipped.hand_right
+  // was actually the Longbow.
   function getEquipCandidates(area) {
     var slot = equipSlotByArea(area);
     if (!slot) return [];
+    var activeKey = getSlotActiveItem(slot).key;
+    var activeEquipKey = activeKey ? EQUIPPED[activeKey] : null;
     return INVENTORY.filter(function(item) {
+      var rowEquipKey = item.item_id || item.id;
+      if (activeKey && item.equipped_slot === activeKey && rowEquipKey === activeEquipKey) return false;
       var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
       if (catalogItem) {
         if (slot.categories.indexOf(catalogItem.category) === -1) return false;
@@ -4643,6 +4605,23 @@
       + '</div>';
     }).join('');
   }
+  // Clears any inventory row(s) whose own equipped_slot column still
+  // points at slotKey, back to null — called anywhere character_sheet.
+  // equipped stops pointing a given key at an item, so a row's own
+  // column and the live equipped map can't drift apart. Previously only
+  // ever set, never reset (unequipSlot() left it stale forever), which
+  // is what created every stale-equipped_slot bug found tonight: the
+  // ring double-equip, and Right Hand's candidate list wrongly excluding
+  // a real owned Shortsword. Loops all matches, not just one, in case
+  // more than one row is already stale from before this fix existed.
+  function clearInventoryEquippedSlot(slotKey) {
+    INVENTORY.filter(function(i) { return i.equipped_slot === slotKey; }).forEach(function(invRow) {
+      invRow.equipped_slot = null;
+      sb.from('inventory').update({ equipped_slot: null }).eq('id', invRow.id).then(function(res) {
+        if (res.error) console.warn('Could not clear inventory equipped_slot:', res.error);
+      });
+    });
+  }
   function selectEquipItem(invItemId) {
     var slot = equipSlotByArea(EQUIP_TARGET_SLOT);
     if (!slot || !SHEET) return;
@@ -4663,6 +4642,7 @@
       var removedId = equipped[k];
       delete equipped[k];
       EQUIPPED[k] = null;
+      clearInventoryEquippedSlot(k);
       var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
       if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
     });
@@ -4673,16 +4653,27 @@
     // position). Detected off this ROW's own equipped_slot, not the
     // catalog id, so two distinct owned rows of the same catalog item
     // (e.g. two real rings) never falsely clear each other — only
-    // re-selecting the literal same row triggers this. Guarded against
-    // unequipSlot() never resetting a row's equipped_slot column (a
-    // pre-existing, separate gap): only clears if the live equipped map
-    // still actually shows this same item at that old key right now.
+    // re-selecting the literal same row triggers this. No separate
+    // clearInventoryEquippedSlot() call needed here — this exact row's
+    // own equipped_slot column gets overwritten to targetKey a few lines
+    // below in the same update, which already replaces the stale value.
+    // The equipped[priorSlotKey]===equipKey guard stays as defensive
+    // insurance against any remaining drift (e.g. manual DB edits), even
+    // though unequipSlot() no longer creates this drift itself.
     var priorSlotKey = invItem.equipped_slot;
     if (priorSlotKey && priorSlotKey !== targetKey && equipped[priorSlotKey] === equipKey) {
       delete equipped[priorSlotKey];
       EQUIPPED[priorSlotKey] = null;
       var stillUsedPrior = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === equipKey; });
       if (!stillUsedPrior) delete EQUIPPED_ITEMS[equipKey];
+    }
+    // Direct replacement — targetKey already holds a *different* item
+    // (e.g. swapping Longbow for Shortsword, both in hand_right). Not a
+    // sibling key, not this row moving from elsewhere — the outgoing
+    // item's own inventory row still needs its equipped_slot cleared, or
+    // it goes stale exactly like the unequipSlot()/sibling gaps did.
+    if (equipped[targetKey] && equipped[targetKey] !== equipKey) {
+      clearInventoryEquippedSlot(targetKey);
     }
     equipped[targetKey] = equipKey;
     SHEET.equipped = equipped;
@@ -4725,6 +4716,7 @@
     delete equipped[slotKey];
     SHEET.equipped = equipped;
     EQUIPPED[slotKey] = null;
+    clearInventoryEquippedSlot(slotKey);
     var stillUsed = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === removedId; });
     if (removedId && !stillUsed) delete EQUIPPED_ITEMS[removedId];
     saveSheet({ equipped: equipped });
@@ -4791,7 +4783,7 @@
     accessory:'💍', spell:'📜', food:'🍖', resource:'🪵', treasure:'💰', other:'📦'
   };
   // Category-dependent one-line mechanical summary — reuses fields already
-  // read elsewhere (computeAC()/buildWeaponDamageHtml()), no new columns.
+  // read elsewhere (computeAC()), no new columns.
   function invRowSpecs(category, src) {
     if (category === 'armor')  return src.base_ac  != null ? 'AC ' + src.base_ac : '&mdash;';
     if (category === 'shield') return src.ac_bonus != null ? 'AC +' + src.ac_bonus : '&mdash;';
