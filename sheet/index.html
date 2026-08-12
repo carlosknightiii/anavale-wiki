@@ -837,16 +837,31 @@
       font-family: var(--font-body);
       font-size: 0.8rem;
     }
+    /* Fixed-width marker slot so the name column lines up whether the row
+       shows the "Prof." text label or a dot. */
+    .cs-ab-skill-marker {
+      flex: 0 0 26px;
+      display: flex;
+      align-items: center;
+    }
+    .cs-ab-skill-prof-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--gold);
+    }
     .cs-ab-skill-dot {
-      flex: 0 0 auto;
       width: 8px;
       height: 8px;
       border-radius: 50%;
     }
-    /* Three distinct states — proficient (filled gold), flat +1 from an
-       imagined-past bonus (gold ring, unfilled — a lesser, non-proficiency
-       source), neither (no dot at all, muted name). */
-    .cs-ab-skill--proficient .cs-ab-skill-dot { background: var(--gold); }
+    /* Three distinct states — proficient ("Prof." text label; a filled dot
+       wasn't intuitive on live review), flat +1 from an imagined-past bonus
+       (gold ring dot, unfilled — a lesser, non-proficiency source, its
+       amount also called out in parens next to the total), neither (no
+       marker, muted name). */
     .cs-ab-skill--proficient .cs-ab-skill-name { color: var(--text); font-weight: 700; }
     .cs-ab-skill--flat .cs-ab-skill-dot { background: transparent; border: 2px solid var(--gold); }
     .cs-ab-skill--flat .cs-ab-skill-name { color: var(--text); font-weight: 400; }
@@ -3308,7 +3323,10 @@
   // (Kael: Animal Handling/Survival, Hana: Insight) that proficiency
   // supersedes rather than stacks, per 2024 PHB stacking rules (same-target
   // bonuses don't add — the higher one applies, and proficiency bonus is
-  // always ≥ the flat +1). Neither state renders with no dot, muted name.
+  // always ≥ the flat +1). Marker: a "Prof." text label for proficient
+  // (a dot-based indicator wasn't intuitive on live review), a small gold
+  // ring dot for a flat-bonus skill (whose amount also appears in
+  // parentheses next to its total, e.g. "+2 (+1)"), no marker for neither.
   function abilitySkillsInnerHtml(ab, modNum, profBonus, ch) {
     var skillNames = ABILITY_SKILLS[ab] || [];
     if (!skillNames.length) {
@@ -3318,14 +3336,20 @@
     var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
     return skillNames.map(function(name) {
       var isProficient = skillsArr.indexOf(name) !== -1;
-      var hasFlatBonus = !isProficient && bonusesArr.some(function(b) { return b && b.skill === name; });
-      var total = modNum + (isProficient ? profBonus : hasFlatBonus ? 1 : 0);
-      var totalStr = (total >= 0 ? '+' : '') + total;
+      var flatBonusObj = !isProficient ? bonusesArr.find(function(b) { return b && b.skill === name; }) : null;
+      var flatAmount = flatBonusObj ? (parseInt(flatBonusObj.amount) || 1) : 0;
+      var hasFlatBonus = !!flatBonusObj;
+      var total = modNum + (isProficient ? profBonus : hasFlatBonus ? flatAmount : 0);
+      var totalStr = (total >= 0 ? '+' : '') + total
+        + (hasFlatBonus ? ' (+' + flatAmount + ')' : '');
       var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
       var stateCls = isProficient ? 'cs-ab-skill--proficient' : hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
       var tip = SKILL_TIPS[name];
+      var markerHtml = '<span class="cs-ab-skill-marker">'
+        + (isProficient ? '<span class="cs-ab-skill-prof-label">Prof.</span>' : '<span class="cs-ab-skill-dot"></span>')
+      + '</span>';
       return '<div class="cs-ab-skill ' + stateCls + '">'
-        + '<span class="cs-ab-skill-dot"></span>'
+        + markerHtml
         + '<span class="cs-ab-skill-name">' + escHtml(name)
           + (tip ? '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>' : '')
         + '</span>'
