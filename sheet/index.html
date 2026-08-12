@@ -838,7 +838,7 @@
       font-size: 0.8rem;
     }
     /* Fixed-width marker slot so the name column lines up whether the row
-       shows the "Prof." text label or a dot. */
+       shows the "Prof." text label or is empty (flat-bonus/neither). */
     .cs-ab-skill-marker {
       flex: 0 0 26px;
       display: flex;
@@ -852,20 +852,12 @@
       letter-spacing: 0.02em;
       color: var(--gold);
     }
-    .cs-ab-skill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    /* Three distinct states — proficient ("Prof." text label; a filled dot
-       wasn't intuitive on live review), flat +1 from an imagined-past bonus
-       (gold ring dot, unfilled — a lesser, non-proficiency source, its
-       amount also called out in parens next to the total), neither (no
-       marker, muted name). */
+    /* Three distinct states — proficient ("Prof." text label), flat +1 from
+       an imagined-past bonus (no marker — its amount is called out in parens
+       next to the total instead; a dot here read as a second, unexplained
+       state per DM feedback), neither (no marker, muted name). */
     .cs-ab-skill--proficient .cs-ab-skill-name { color: var(--text); font-weight: 700; }
-    .cs-ab-skill--flat .cs-ab-skill-dot { background: transparent; border: 2px solid var(--gold); }
     .cs-ab-skill--flat .cs-ab-skill-name { color: var(--text); font-weight: 400; }
-    .cs-ab-skill--none .cs-ab-skill-dot { visibility: hidden; }
     .cs-ab-skill--none .cs-ab-skill-name { color: var(--char-text-faint); font-weight: 400; }
     .cs-ab-skill-name { flex: 1 1 auto; }
     .cs-ab-skill-total { flex: 0 0 auto; font-weight: 700; color: var(--text); }
@@ -3323,10 +3315,10 @@
   // (Kael: Animal Handling/Survival, Hana: Insight) that proficiency
   // supersedes rather than stacks, per 2024 PHB stacking rules (same-target
   // bonuses don't add — the higher one applies, and proficiency bonus is
-  // always ≥ the flat +1). Marker: a "Prof." text label for proficient
-  // (a dot-based indicator wasn't intuitive on live review), a small gold
-  // ring dot for a flat-bonus skill (whose amount also appears in
-  // parentheses next to its total, e.g. "+2 (+1)"), no marker for neither.
+  // always ≥ the flat +1). Marker: a "Prof." text label for proficient,
+  // no marker at all for flat-bonus or neither — a dot next to a flat-bonus
+  // skill read as a second, unexplained state once the "(+1)" next to its
+  // total already said the same thing (DM feedback on live review).
   function abilitySkillsInnerHtml(ab, modNum, profBonus, ch) {
     var skillNames = ABILITY_SKILLS[ab] || [];
     if (!skillNames.length) {
@@ -3345,9 +3337,9 @@
       var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
       var stateCls = isProficient ? 'cs-ab-skill--proficient' : hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
       var tip = SKILL_TIPS[name];
-      var markerHtml = '<span class="cs-ab-skill-marker">'
-        + (isProficient ? '<span class="cs-ab-skill-prof-label">Prof.</span>' : '<span class="cs-ab-skill-dot"></span>')
-      + '</span>';
+      var markerHtml = isProficient
+        ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
+        : '<span class="cs-ab-skill-marker"></span>';
       return '<div class="cs-ab-skill ' + stateCls + '">'
         + markerHtml
         + '<span class="cs-ab-skill-name">' + escHtml(name)
