@@ -31,7 +31,9 @@
 
 ## 2. Current Focus
 
-*Session Aug 12 2026 (same session, after the Figma-styling pass below, live DM review on the deployed site) — doll/Special-Effects flex ratio reversed from 2:3 to 3:2 (`sheet/index.html`): DM reviewed the pushed layout live and called Special Effects "too wide" against the doll being "more important" — flipped `.cs-inv-top-col--doll`/`--effects` so the doll now gets the larger share (896px vs. 598px at 1600px viewport, confirmed). Mobile unaffected (flex-grow is moot once both columns wrap to stacked below the shared min-width). Committed but **not pushed** — awaiting DM go-ahead. See Decision Log for full detail.*
+*Session Aug 12 2026 (same session, live DM review continued) — committed and pushed the brighter equipped-gear silhouette PNG that had been sitting uncommitted in the working tree since an Aug 10 session (flagged then as "already replaced by the DM, left untouched" pending a decision). DM confirmed live on the deployed site that the doll looked too dark; the already-present lighter-gray replacement is now live. Pushed — no code changed, asset-only commit. See Decision Log for full detail.*
+
+*Session Aug 12 2026 (same session, after the Figma-styling pass below, live DM review on the deployed site) — doll/Special-Effects flex ratio reversed from 2:3 to 3:2 (`sheet/index.html`): DM reviewed the pushed layout live and called Special Effects "too wide" against the doll being "more important" — flipped `.cs-inv-top-col--doll`/`--effects` so the doll now gets the larger share (896px vs. 598px at 1600px viewport, confirmed). Mobile unaffected (flex-grow is moot once both columns wrap to stacked below the shared min-width). Pushed live. See Decision Log for full detail.*
 
 *Session Aug 12 2026 — Special Effects panel's internal styling rebuilt against a fresh Figma pull (node 51:2260, re-pulled this session — the panel had been built from-scratch with no Figma reference before this) — one shared bordered box per Figma's own "list"/"row" structure (not per-item cards like Your Story), item names in Roboto Bold 26px (was Cinzel Decorative), sparkle+gold mechanical lines at 32px/24px, book+italic flavor lines with a 13px icon gap, every item bottom-divided including the last, panel `min-height:277px` that genuinely grows (verified to 405px with 3 items + a long flavor line, no clip/scroll). One new token added (`--char-ov-pl`, 24px) — everything else reused existing tokens exactly. Committed but **not pushed** — awaiting DM go-ahead. See Decision Log for full detail.*
 
@@ -313,6 +315,11 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 ## 10. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-12 (later same day, live DM review continued) — Committed and pushed the brighter equipped-gear silhouette PNG (`assets/images/character-sheet/equipped-gear/equipped-gear-silhouete.png`).**
+DM reported the doll looking too dark on the live deployed site and asked to confirm the "new, brighter version" was live. Checked before assuming anything needed building: `git status`/`git diff --stat` showed the working-tree file was already a different, smaller PNG (128,721 bytes) than the committed one (181,525 bytes) — this is the exact file an Aug 10 session had already flagged as "the DM's already-replaced version... left the image itself untouched" pending a decision, still sitting uncommitted three sessions later. Rendered both to confirm visually rather than trusting file size alone: the committed version is a near-solid-black silhouette, the uncommitted working-tree version a visibly lighter mid-gray one — genuinely brighter, matching the DM's own description exactly. No code change needed, no new asset created — just committed and pushed what was already sitting there.
 
 ---
 
