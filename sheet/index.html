@@ -1911,30 +1911,79 @@
     }
     .cs-inv-carrying-title { text-align: left; }
 
-    /* ── Special Effects panel — reuses .cs-story-card as the card shell
-       (same bg/radius/padding as Your Story cards) and .cs-story-card-title
-       for the item name. Rows split by kind, same accent logic used
-       elsewhere in this tab: --red-strong is the established "mechanical"
-       red (weapon damage text, HP fill) — reused here, not invented; flavor
-       rows get a plain, calmer italic treatment instead of a colored box. ── */
-    .cs-effect-cards { display: flex; flex-direction: column; gap: var(--char-ov-gap-xs); }
-    .cs-effect-row {
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      line-height: 1.4;
-    }
-    .cs-effect-row--mech {
-      background: var(--blue-600);
-      border-left: 3px solid var(--red-strong);
+    /* ── Special Effects panel — matches Figma 51:2260 (node 91:1440 "list")
+       pulled fresh 2026-08-12, not the earlier from-scratch build. ONE
+       shared bordered box (not per-item cards like Your Story) — each
+       equipped item is a "row" inside it (Figma's own node naming), each
+       row individually bottom-divided, including the last one (Figma's own
+       2-item example already borders both). min-height, not height: the
+       277px is Figma's canvas size for a 2-item example, not a real cap —
+       must grow for more/longer content, never clip or scroll. ── */
+    .cs-effect-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 277px;
+      box-sizing: border-box;
+      background: var(--blue-700);
+      border: 1px solid var(--blue-300);
       border-radius: var(--radius);
-      padding: 4px 8px;
-      color: var(--text);
-      font-weight: 400;
+      padding: var(--char-ov-gap-s);
     }
-    .cs-effect-row--flavor {
-      color: var(--char-text-muted);
-      font-weight: 300;
+    .cs-effect-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      border-bottom: 2px solid var(--blue-300);
+      padding-bottom: var(--char-ov-gap-2xs);
+    }
+    .cs-effect-name {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+      width: 100%;
+    }
+    .cs-effect-mech {
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      width: 100%;
+    }
+    .cs-effect-mech-icon {
+      font-size: var(--char-ov-h3);
+      font-weight: 700;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+    .cs-effect-mech-text {
+      font-family: var(--font-body);
+      font-weight: 400;
+      font-size: var(--char-ov-pl);
+      color: var(--gold);
+    }
+    .cs-effect-flavor {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      width: 100%;
+      font-family: var(--font-body);
+      font-weight: 400;
       font-style: italic;
+      color: var(--text);
+    }
+    .cs-effect-flavor-icon {
+      font-size: var(--char-ov-pl);
+      flex-shrink: 0;
+    }
+    .cs-effect-flavor-text {
+      flex: 1 1 0;
+      min-width: 0;
+      font-size: var(--char-ov-h5);
     }
 
     /* ── Carrying bar — capacity = STR x 15, standard progress-bar reading:
@@ -4348,21 +4397,39 @@
     var col = document.getElementById('cs-special-effects-col');
     var block = document.getElementById('cs-special-effects-block');
     if (!col || !block) return;
-    var cardsHtml = Object.keys(EQUIPPED).map(function(key) {
+    // One shared panel box (Figma 91:1440 "list"), each equipped item its
+    // own bottom-divided "row" inside (Figma's own node name for this) —
+    // not a per-item card like Your Story. A "row" can hold multiple
+    // sparkle lines (magic_bonus/grants_advantage/grants_proficiency/
+    // equipped_effect_mechanical each render their own) since the data
+    // model allows several mechanical facts per item even though Figma's
+    // own example only shows one — the divider still applies once, to the
+    // whole item, matching Figma's real DOM (border-b-2 on the row that
+    // wraps name+mechanical+flavor together, not on each fact line).
+    var itemsHtml = Object.keys(EQUIPPED).map(function(key) {
       var itemId = EQUIPPED[key];
       var item = itemId ? EQUIPPED_ITEMS[itemId] : null;
       if (!item) return '';
       var rows = buildSpecialEffectRows(item);
       if (!rows.length) return '';
-      return '<div class="cs-story-card">'
-        + '<div class="cs-story-card-title">' + escHtml(item.name || 'Unknown item') + '</div>'
+      return '<div class="cs-effect-item">'
+        + '<div class="cs-effect-name">' + escHtml(item.name || 'Unknown item') + '</div>'
         + rows.map(function(r) {
-            return '<div class="cs-effect-row cs-effect-row--' + r.kind + '">' + escHtml(r.text) + '</div>';
+            if (r.kind === 'mech') {
+              return '<div class="cs-effect-mech">'
+                + '<span class="cs-effect-mech-icon">&#10024;</span>'
+                + '<span class="cs-effect-mech-text">' + escHtml(r.text) + '</span>'
+              + '</div>';
+            }
+            return '<div class="cs-effect-flavor">'
+              + '<span class="cs-effect-flavor-icon">&#128214;</span>'
+              + '<span class="cs-effect-flavor-text">' + escHtml(r.text) + '</span>'
+            + '</div>';
           }).join('')
       + '</div>';
     }).join('');
-    block.innerHTML = '<div class="cs-effect-cards">' + cardsHtml + '</div>';
-    col.style.display = cardsHtml ? '' : 'none';
+    block.innerHTML = itemsHtml ? '<div class="cs-effect-panel">' + itemsHtml + '</div>' : '';
+    col.style.display = itemsHtml ? '' : 'none';
   }
   // Rings — cosmetic-only (appearance_data.ring_right/ring_left), no doll
   // position exists for them (unchanged from before) — real slot tiles
