@@ -10757,15 +10757,27 @@ function sccLiveAddNote() {
 function sccLiveSaveNote() {
   var input = document.getElementById('scc-live-note-input');
   if (!input || !input.value.trim()) return;
+  var ts = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   var existing = document.getElementById('scc-note-decisions');
-  if (existing) {
-    var ts = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    existing.value = (existing.value ? existing.value + '\n' : '') + '[' + ts + '] ' + input.value.trim();
-  }
+  var updated = (existing && existing.value ? existing.value + '\n' : '') + '[' + ts + '] ' + input.value.trim();
+  if (existing) existing.value = updated;
   input.value = '';
   var wrap = document.getElementById('scc-live-note-wrap');
   if (wrap) wrap.style.display = 'none';
-  showDMToast('Note saved to Player Decisions &#10003;', 'success');
+
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Note saved locally — no active session to sync to', 'error'); return; }
+  var body = { session_number: num, player_decisions: updated };
+  sccPatch('session_notes', '?session_number=eq.' + num, body).then(function(r) {
+    if (r.ok) {
+      SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
+      showDMToast('Note saved to Player Decisions &#10003;', 'success');
+    } else {
+      showDMToast('Note saved locally — sync failed', 'error');
+    }
+  }).catch(function() {
+    showDMToast('Note saved locally — sync failed', 'error');
+  });
 }
 // ── Die Roller ──
 function sccRollDie(sides) {
@@ -12766,14 +12778,23 @@ function sccSaveNotes() {
     follow_up_needed:   (document.getElementById('scc-note-followup')  ||{}).value || null,
     milestone_notes:    (document.getElementById('scc-note-milestone') ||{}).value || null
   };
-  sccPost('session_notes', body).then(function(r) {
+  var onNotesDone = function(r) {
     if (r.ok) {
       SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
       showDMToast('Session notes saved ✓', 'success');
       var st = document.getElementById('scc-notes-status');
       if (st) { st.textContent = '✓ Saved'; setTimeout(function(){ st.textContent=''; }, 3000); }
     } else { showDMToast('Save failed', 'error'); }
-  }).catch(function() { showDMToast('Save failed', 'error'); });
+  };
+  var onNotesFail = function() { showDMToast('Save failed', 'error'); };
+  // Use PATCH if session already exists, POST if new — mirrors sccSaveSetup().
+  // (sccPost has no on_conflict target for session_notes' UNIQUE(session_number),
+  // so POSTing against an existing session_number 409s instead of merging.)
+  if (SCC_SESSION && SCC_SESSION.session_number === num) {
+    sccPatch('session_notes', '?session_number=eq.' + num, body).then(onNotesDone).catch(onNotesFail);
+  } else {
+    sccPost('session_notes', body).then(onNotesDone).catch(onNotesFail);
+  }
 }
 
 function sccCopyPostSessionSummary() {
@@ -12851,7 +12872,7 @@ function sccGlobalResultClick(typeKey, id) {
   if (resultsEl) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; }
   if (searchEl)  searchEl.value = '';
   // Open the quick lookup panel with the result
-  var lookupType = typeKey === 'nation' ? 'city' : typeKey === 'organization' ? 'city' : typeKey;
+  var lookupType = typeKey === 'nation' ? 'city' : typeKey;
   sccOpenLookup(lookupType, id);
 }
 
@@ -13104,6 +13125,104 @@ function sccOpenLookup(type, id) {
       + (q.hook ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Hook</div><div class="scc-ql-section-body">' + sccEsc(q.hook) + '</div></div>' : '')
       + (beatsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Beats</div>' + beatsHtml + '</div>' : '')
       + (q.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(q.dm_notes) + '</div></div>' : '');
+  } else if (type === 'organization') {
+    var orgs = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
+    var org = orgs.find(function(x){ return x.id === id; });
+    if (!org) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+
+    var opfVal   = org.player_facing;
+    var opfLabel = opfVal === true || opfVal === 'true' ? 'Visible to Players' : opfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var opfColor = opfVal === true || opfVal === 'true' ? 'var(--green)' : opfVal === 'teaser' ? 'var(--gold)' : 'var(--red)';
+
+    var orgPortraitHtml = org.image
+      ? '<img class="scc-ql-portrait" src="' + sccEsc(org.image) + '" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-ql-portrait-fallback">' + sccEsc((org.name||'?').charAt(0)) + '</div>';
+
+    var orgTagsHtml = '';
+    if (org.tags && org.tags.length) {
+      orgTagsHtml = org.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    }
+
+    html = ''
+      // ── HEADER ──
+      + '<div class="scc-ql-header">'
+        + orgPortraitHtml
+        + '<div class="scc-ql-header-info">'
+          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
+            + '<span class="scc-ql-pf-badge" style="color:' + opfColor + ';border-color:' + opfColor + '">' + sccEsc(opfLabel) + '</span>'
+          + '</div>'
+          + '<div class="scc-ql-name">' + sccEsc(org.full_name || org.name) + '</div>'
+          + '<div class="scc-ql-role">'
+            + (org.alignment    ? '<span class="scc-ql-bold">Alignment:</span> ' + sccEsc(org.alignment) : '')
+            + (org.alignment && org.headquarters ? ' &nbsp;·&nbsp; ' : '')
+            + (org.headquarters ? '<span class="scc-ql-bold">HQ:</span> ' + sccEsc(org.headquarters) : '')
+          + '</div>'
+        + '</div>'
+      + '</div>'
+      // ── FIELDS ──
+      + '<div class="scc-ql-fields">'
+        + (org.org_type   ? '<div class="scc-ql-row"><span class="scc-ql-label">Type</span><span class="scc-ql-value">' + sccEsc(org.org_type) + '</span></div>' : '')
+        + (org.leadership ? '<div class="scc-ql-row"><span class="scc-ql-label">Leadership</span><span class="scc-ql-value">' + sccEsc(org.leadership) + '</span></div>' : '')
+      + '</div>'
+      // ── PROSE SECTIONS ──
+      + (org.summary                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(org.summary) + '</div></div>' : '')
+      + (org.purpose                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Purpose</div><div class="scc-ql-section-body">' + sccEsc(org.purpose) + '</div></div>' : '')
+      + (org.description             ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(org.description) + '</div></div>' : '')
+      + (org.history                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">History</div><div class="scc-ql-section-body">' + sccEsc(org.history) + '</div></div>' : '')
+      + (org.known_members           ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Known Members</div><div class="scc-ql-section-body">' + sccEsc(org.known_members) + '</div></div>' : '')
+      + (org.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(org.gigglegloom_relationship) + '</div></div>' : '')
+      + (org.public_perception       ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Public Perception</div><div class="scc-ql-section-body">' + sccEsc(org.public_perception) + '</div></div>' : '')
+      // ── DM-ONLY ──
+      + (org.secret    ? '<div class="scc-dm-block"><div class="scc-dm-label">&#9888; Secret</div><div class="scc-dm-text">' + sccEsc(org.secret) + '</div></div>' : '')
+      + (org.dm_notes  ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(org.dm_notes) + '</div></div>' : '')
+      // ── TAGS ──
+      + (orgTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + orgTagsHtml + '</div></div>' : '');
+  } else if (type === 'item') {
+    var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+    var it = itemsAll.find(function(x){ return x.id === id; });
+    if (!it) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+
+    var itPortraitHtml = it.image
+      ? '<img class="scc-ql-portrait" src="' + sccEsc(it.image) + '" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-ql-portrait-fallback">' + sccEsc((it.name||'?').charAt(0)) + '</div>';
+
+    var itTagsHtml = '';
+    if (it.tags && it.tags.length) {
+      itTagsHtml = it.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    }
+
+    html = (it.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">&#128214; Read Aloud</div><div class="scc-ra-text">' + sccEsc(it.read_aloud) + '</div></div>' : '')
+      // ── HEADER ──
+      + '<div class="scc-ql-header">'
+        + itPortraitHtml
+        + '<div class="scc-ql-header-info">'
+          + '<div class="scc-ql-name">' + sccEsc(it.name) + '</div>'
+          + '<div class="scc-ql-role">'
+            + (it.category ? '<span class="scc-ql-bold">Category:</span> ' + sccEsc(it.category) : '')
+            + (it.category && it.rarity ? ' &nbsp;·&nbsp; ' : '')
+            + (it.rarity   ? '<span class="scc-ql-bold">Rarity:</span> ' + sccEsc(it.rarity) : '')
+          + '</div>'
+        + '</div>'
+      + '</div>'
+      // ── FIELDS ──
+      + '<div class="scc-ql-fields">'
+        + (it.cost_gp != null    ? '<div class="scc-ql-row"><span class="scc-ql-label">Cost</span><span class="scc-ql-value">' + it.cost_gp + ' gp</span></div>' : '')
+        + (it.weight_lb != null  ? '<div class="scc-ql-row"><span class="scc-ql-label">Weight</span><span class="scc-ql-value">' + it.weight_lb + ' lb</span></div>' : '')
+        + (it.equip_slot         ? '<div class="scc-ql-row"><span class="scc-ql-label">Equip Slot</span><span class="scc-ql-value">' + sccEsc(it.equip_slot) + '</span></div>' : '')
+        + (it.damage_dice        ? '<div class="scc-ql-row"><span class="scc-ql-label">Damage</span><span class="scc-ql-value">' + sccEsc(it.damage_dice) + (it.damage_type ? ' ' + sccEsc(it.damage_type) : '') + '</span></div>' : '')
+        + (it.base_ac != null    ? '<div class="scc-ql-row"><span class="scc-ql-label">Base AC</span><span class="scc-ql-value">' + it.base_ac + '</span></div>' : '')
+        + (it.magic_bonus        ? '<div class="scc-ql-row"><span class="scc-ql-label">Magic Bonus</span><span class="scc-ql-value">+' + it.magic_bonus + '</span></div>' : '')
+      + '</div>'
+      // ── PROSE SECTIONS ──
+      + (it.summary                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(it.summary) + '</div></div>' : '')
+      + (it.description             ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(it.description) + '</div></div>' : '')
+      + (it.history                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">History</div><div class="scc-ql-section-body">' + sccEsc(it.history) + '</div></div>' : '')
+      + (it.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(it.gigglegloom_relationship) + '</div></div>' : '')
+      + (it.story_note              ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Story Note</div><div class="scc-ql-section-body">' + sccEsc(it.story_note) + '</div></div>' : '')
+      // ── DM-ONLY ──
+      + (it.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(it.dm_notes) + '</div></div>' : '')
+      // ── TAGS ──
+      + (itTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + itTagsHtml + '</div></div>' : '');
   }
   content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
 }
