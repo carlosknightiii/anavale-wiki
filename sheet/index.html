@@ -809,6 +809,53 @@
     .cs-ab-mod-num { font-weight: 700; }
     .cs-ab-mod-num.positive { color: var(--green); }
     .cs-ab-mod-num.negative { color: var(--red); }
+    /* Skills list under each ability card — no Figma reference, ad-hoc
+       against existing tokens (same approach as Special Effects). */
+    .cs-ab-skills {
+      width: 100%;
+      align-self: stretch;
+      box-sizing: border-box;
+      padding: 0 var(--char-ov-gap-xs) var(--char-ov-gap-2xs);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .cs-ab-skills-empty {
+      width: 100%;
+      align-self: stretch;
+      box-sizing: border-box;
+      padding: 0 var(--char-ov-gap-xs) var(--char-ov-gap-2xs);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      color: var(--char-text-faint);
+      text-align: center;
+    }
+    .cs-ab-skill {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+    }
+    .cs-ab-skill-dot {
+      flex: 0 0 auto;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    /* Three distinct states — proficient (filled gold), flat +1 from an
+       imagined-past bonus (gold ring, unfilled — a lesser, non-proficiency
+       source), neither (no dot at all, muted name). */
+    .cs-ab-skill--proficient .cs-ab-skill-dot { background: var(--gold); }
+    .cs-ab-skill--proficient .cs-ab-skill-name { color: var(--text); font-weight: 700; }
+    .cs-ab-skill--flat .cs-ab-skill-dot { background: transparent; border: 2px solid var(--gold); }
+    .cs-ab-skill--flat .cs-ab-skill-name { color: var(--text); font-weight: 400; }
+    .cs-ab-skill--none .cs-ab-skill-dot { visibility: hidden; }
+    .cs-ab-skill--none .cs-ab-skill-name { color: var(--char-text-faint); font-weight: 400; }
+    .cs-ab-skill-name { flex: 1 1 auto; }
+    .cs-ab-skill-total { flex: 0 0 auto; font-weight: 700; color: var(--text); }
+    .cs-ab-skill-total.positive { color: var(--green); }
+    .cs-ab-skill-total.negative { color: var(--red); }
     .cs-feat-list {
       display: flex;
       flex-wrap: wrap;
@@ -2876,6 +2923,18 @@
     'Stealth':          'Dexterity — moving silently and hiding from notice.',
     'Survival':         'Wisdom — tracking, foraging, navigating, and surviving the wild.'
   };
+  // Fixed D&D skill→ability mapping — 18 skills, not derived from any stored
+  // data (this is rules, not content). CON has no skills; rendered as a
+  // clear "No skills" state rather than an empty gap. Order within each
+  // ability matches the alphabetical order the ask was specified in.
+  var ABILITY_SKILLS = {
+    str: ['Athletics'],
+    dex: ['Acrobatics', 'Sleight of Hand', 'Stealth'],
+    con: [],
+    int: ['Arcana', 'History', 'Investigation', 'Nature', 'Religion'],
+    wis: ['Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival'],
+    cha: ['Deception', 'Intimidation', 'Performance', 'Persuasion']
+  };
   // Ability score tooltips — verbatim from character.html's .char-ability-name
   // data-tip text (richer than the sheet had before; this replaces the old
   // per-tab copy rather than merging with it).
@@ -3242,9 +3301,58 @@
   // ability_scores jsonb, math unchanged. Feats moved to the Background
   // card (buildYourBackgroundHtml, Your Story tab) per the Tab Redesign v1
   // spec — not rendered here anymore.
+  // Skill list under one ability card. Three distinct states, per the ask:
+  // proficient (class-chosen, ch.skills) uses the real proficiency_bonus
+  // from character_sheet; a PAST_EFFECTS flat +1 (ch.skill_bonuses) only
+  // applies when NOT proficient — confirmed against real overlap cases
+  // (Kael: Animal Handling/Survival, Hana: Insight) that proficiency
+  // supersedes rather than stacks, per 2024 PHB stacking rules (same-target
+  // bonuses don't add — the higher one applies, and proficiency bonus is
+  // always ≥ the flat +1). Neither state renders with no dot, muted name.
+  function abilitySkillsInnerHtml(ab, modNum, profBonus, ch) {
+    var skillNames = ABILITY_SKILLS[ab] || [];
+    if (!skillNames.length) {
+      return '<div class="cs-ab-skills-empty">No skills</div>';
+    }
+    var skillsArr  = Array.isArray(ch && ch.skills) ? ch.skills : [];
+    var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
+    return skillNames.map(function(name) {
+      var isProficient = skillsArr.indexOf(name) !== -1;
+      var hasFlatBonus = !isProficient && bonusesArr.some(function(b) { return b && b.skill === name; });
+      var total = modNum + (isProficient ? profBonus : hasFlatBonus ? 1 : 0);
+      var totalStr = (total >= 0 ? '+' : '') + total;
+      var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
+      var stateCls = isProficient ? 'cs-ab-skill--proficient' : hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
+      var tip = SKILL_TIPS[name];
+      return '<div class="cs-ab-skill ' + stateCls + '">'
+        + '<span class="cs-ab-skill-dot"></span>'
+        + '<span class="cs-ab-skill-name">' + escHtml(name)
+          + (tip ? '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>' : '')
+        + '</span>'
+        + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
+      + '</div>';
+    }).join('');
+  }
+
+  // Ability Scores tab content (Figma 51:1663/51:1668) — 6 cards from
+  // ability_scores jsonb, math unchanged. Feats moved to the Background
+  // card (buildYourBackgroundHtml, Your Story tab) per the Tab Redesign v1
+  // spec — not rendered here anymore.
+  //
+  // Skills section (no Figma reference for this — ad-hoc, matching existing
+  // card/token styling, same approach as Special Effects): all 18 skills,
+  // grouped under their parent ability card, replacing the old flat
+  // "Proficient skills: X, Y, Z" comma-list this tab used to render (that
+  // row is gone — the grouped list below covers the same information plus
+  // bonus math and flat-bonus skills it never showed). Each card's skills
+  // block gets an id so renderAbilitySkills() can refresh it once SHEET
+  // (holding the real proficiency_bonus) loads — this initial build runs
+  // before that fetch resolves, same ordering constraint renderHeaderHP()
+  // already works around.
   function buildAbilityScoresHtml(scores, ch) {
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_SHORT = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
+    var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
     var cards = AB_KEYS.map(function(ab) {
       var raw    = parseInt(scores[ab]) || 0;
       var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
@@ -3259,19 +3367,28 @@
           + '<div class="cs-ab-val">' + (raw || '—') + '</div>'
           + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
         + '</div>'
+        + '<div class="cs-ab-skills" id="cs-ab-skills-' + ab + '">' + abilitySkillsInnerHtml(ab, modNum, profBonus, ch) + '</div>'
       + '</div>';
     }).join('');
 
-    // Proficient skills (class-chosen at Stage 2) — distinct from the flat
-    // +1 bonuses shown in Your Story's cards. Relocated here from Your Past
-    // (had no real home there — see Decision Log) since it's about skill
-    // proficiencies, which conceptually belongs on the Ability Scores tab.
-    var skillsArr = Array.isArray(ch && ch.skills) ? ch.skills : [];
-    var skillsRow = skillsArr.length
-      ? '<div class="cs-story-block"><div class="cs-story-row"><div class="cs-story-key">Proficient skills</div><div class="cs-story-val">' + escHtml(skillsArr.join(', ')) + '</div></div></div>'
-      : '';
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
+  }
 
-    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div>' + skillsRow + '</div></div>';
+  // Refreshes the 6 skill blocks in place once SHEET (real proficiency_bonus)
+  // has loaded — called from renderLivePlay(). ch.skills/ch.skill_bonuses
+  // don't change after initial load, so only the proficiency-bonus-dependent
+  // math needs a second pass; ability modifiers are re-read from the same
+  // global ABILITY_SCORES buildAbilityScoresHtml used initially.
+  function renderAbilitySkills() {
+    if (!CH) return;
+    var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    ['str','dex','con','int','wis','cha'].forEach(function(ab) {
+      var el = document.getElementById('cs-ab-skills-' + ab);
+      if (!el) return;
+      var raw = parseInt(ABILITY_SCORES[ab]) || 0;
+      var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
+      el.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
+    });
   }
 
   // Hit Die/Saves/Weapons get a "?" tooltip from the matching classes.*_tip
@@ -3872,6 +3989,7 @@
     renderConditions();
     renderInspiration();
     renderSpellSlots();
+    renderAbilitySkills();
     wireAllTooltips();
   }
 
