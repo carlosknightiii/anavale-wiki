@@ -31,6 +31,8 @@
 
 ## 2. Current Focus
 
+*Session Aug 12 2026 (same session, live DM review continued) — fixed the Speaks block's language name text to match the glyph's per-language color (`sheet/index.html`): `renderSpeaksBlock()` already colored the rune glyph from `languages.color` but left the name text on a fixed `var(--blue)` CSS rule regardless of language — DM caught this live (Hana's "Jugabi Canopy" name not matching its own green glyph). `languages.color` is already the closest real per-region signal in the data model (no separate hex color exists on `regions` itself, only a `color_health` status word) and visibly tracks each language's origin region already (Jugabi Canopy green, Nombi Frost blue, Sohot Old Tongue gold, etc.) — applied the same inline color to both spans. Pushed live. See Decision Log for full detail.*
+
 *Session Aug 12 2026 (same session, live DM review continued) — committed and pushed the brighter equipped-gear silhouette PNG that had been sitting uncommitted in the working tree since an Aug 10 session (flagged then as "already replaced by the DM, left untouched" pending a decision). DM confirmed live on the deployed site that the doll looked too dark; the already-present lighter-gray replacement is now live. Pushed — no code changed, asset-only commit. See Decision Log for full detail.*
 
 *Session Aug 12 2026 (same session, after the Figma-styling pass below, live DM review on the deployed site) — doll/Special-Effects flex ratio reversed from 2:3 to 3:2 (`sheet/index.html`): DM reviewed the pushed layout live and called Special Effects "too wide" against the doll being "more important" — flipped `.cs-inv-top-col--doll`/`--effects` so the doll now gets the larger share (896px vs. 598px at 1600px viewport, confirmed). Mobile unaffected (flex-grow is moot once both columns wrap to stacked below the shared min-width). Pushed live. See Decision Log for full detail.*
@@ -315,6 +317,11 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 ## 10. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-12 (later same day, live DM review continued) — Fixed the Speaks block's language name text color (`sheet/index.html`).**
+DM flagged live on Hana Sable's sheet (screenshot from `carlosknightiii.github.io`): "Jugabi Canopy" read as blue text next to its own green rune glyph, and asked for the text to match "the color of the region it is from." Checked the data model before assuming a fix: `regions` has no hex color column at all (only `color_health`, a status word — Dire/Excellent/Faded/Good/Moderate, confirmed via `information_schema`), so there's no literal region-color field to join against. `languages.color` is the real signal — confirmed via a full table read that it already tracks each language's origin region visually (`jugabi-canopy` `#4a9a3a` green, `nombi-frost` `#2266b8` blue, `sohot-old` `#c8882a` gold, `caparian-deep` `#2a7a3a` green, `conclave-script` `#6a3aaa` purple, `pre-partition` `#8a6a2a` brown) — this is what the glyph already used. Root cause confirmed live via `getComputedStyle()` before touching anything: `.cs-mi-speaks-glyph` got `LANGUAGE_ROW.color` as an inline style, `.cs-mi-speaks-name` never did, staying on a fixed `color: var(--blue)` CSS rule regardless of language. Fix: `renderSpeaksBlock()` now applies the same `LANGUAGE_ROW.color` inline to both spans; the CSS rule's `var(--blue)` is now just an unreachable fallback for the (currently nonexistent) case of a character with no `language_extra` row resolved. Verified on both Hana (Jugabi Canopy, glyph+name both `rgb(74,154,58)`) and Kael (Nombi Frost, both `rgb(34,102,184)`) via computed style, not just visual read. Zero console errors.
 
 ---
 

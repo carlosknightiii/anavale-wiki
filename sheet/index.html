@@ -917,7 +917,7 @@
     .cs-mi-speaks { display: flex; flex-direction: column; gap: 0.2rem; }
     .cs-mi-speaks-row { display: flex; align-items: center; gap: 0.5rem; }
     .cs-mi-speaks-glyph { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
-    .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); }
+    .cs-mi-speaks-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); } /* fallback only — real color is inline per-language, see renderSpeaksBlock() */
     .cs-mi-speaks-sub { font-family: var(--font-body); font-weight: 300; font-size: 0.82rem; color: var(--char-text-muted); }
 
     /* Conditions — inline pill row above the name (Figma 51:1385). Per-pill
@@ -4152,8 +4152,9 @@
     if (!el) return;
     if (!LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
     el.style.display = '';
-    el.innerHTML = '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + (LANGUAGE_ROW.color || 'inherit') + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
-      + '<span class="cs-mi-speaks-name">' + escHtml(LANGUAGE_ROW.name || '') + '</span></div>'
+    var langColor = LANGUAGE_ROW.color || 'inherit';
+    el.innerHTML = '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + langColor + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
+      + '<span class="cs-mi-speaks-name" style="color:' + langColor + ';">' + escHtml(LANGUAGE_ROW.name || '') + '</span></div>'
       + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '');
   }
 
