@@ -1891,15 +1891,16 @@
     }
     .cs-inv-top-col { flex: 1 1 0; min-width: 358px; }
     /* Doll/Special-Effects row (Currency moved down to share a row with
-       Carrying instead — see the markup assembly). Unequal grow: Effects
-       gets the bigger share since it's the panel most likely to grow
-       multi-line over time; doll still keeps its own base min-width
-       (358px, unchanged) plus its internal 61.08rem cap, so it's never
-       actually starved — it just stops soaking up width Effects needs
-       more. flex-basis 0 on both (not a px value) so the grow ratio alone
-       decides the split once both are past their min-width floor. */
-    .cs-inv-top-col--doll { flex: 2 1 0; }
-    .cs-inv-top-col--effects { flex: 3 1 0; }
+       Carrying instead — see the markup assembly). Unequal grow, doll
+       favored: live DM review of the 2:3 (Effects-favored) split called
+       Special Effects "too wide" against the doll being "more important" —
+       reversed to 3:2 doll:Effects. Effects still keeps its own base
+       min-width (358px, unchanged), so a real multi-line card still has
+       room — it just no longer outgrows the doll by default. flex-basis 0
+       on both so the grow ratio alone decides the split once both are
+       past their min-width floor. */
+    .cs-inv-top-col--doll { flex: 3 1 0; }
+    .cs-inv-top-col--effects { flex: 2 1 0; }
     .cs-inv-top-col--currency { max-width: 480px; display: flex; flex-direction: column; align-items: center; }
     .cs-inv-col-title {
       font-family: var(--font-display);
