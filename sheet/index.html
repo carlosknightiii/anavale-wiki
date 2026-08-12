@@ -1890,6 +1890,16 @@
       margin-bottom: var(--char-ov-gap-m);
     }
     .cs-inv-top-col { flex: 1 1 0; min-width: 358px; }
+    /* Doll/Special-Effects row (Currency moved down to share a row with
+       Carrying instead — see the markup assembly). Unequal grow: Effects
+       gets the bigger share since it's the panel most likely to grow
+       multi-line over time; doll still keeps its own base min-width
+       (358px, unchanged) plus its internal 61.08rem cap, so it's never
+       actually starved — it just stops soaking up width Effects needs
+       more. flex-basis 0 on both (not a px value) so the grow ratio alone
+       decides the split once both are past their min-width floor. */
+    .cs-inv-top-col--doll { flex: 2 1 0; }
+    .cs-inv-top-col--effects { flex: 3 1 0; }
     .cs-inv-top-col--currency { max-width: 480px; display: flex; flex-direction: column; align-items: center; }
     .cs-inv-col-title {
       font-family: var(--font-display);
@@ -3046,9 +3056,11 @@
         + '<button class="cs-inv-additem-btn" onclick="openAddItemModal()">+Add Item</button>'
       + '</div>'
 
-      // Equipped Gear (doll) + Currency
+      // Equipped Gear (doll) + Special Effects — Currency moved down to
+      // share a row with Carrying instead (DM-requested layout change),
+      // freeing this row's width between just these two.
       + '<div class="cs-inv-top-row">'
-        + '<div class="cs-inv-top-col">'
+        + '<div class="cs-inv-top-col cs-inv-top-col--doll">'
           + '<h3 class="cs-inv-col-title">Equipped Gear</h3>'
           + '<div id="cs-equipped-block"></div>'
           // Rings — no doll position exists for them (per DM instruction,
@@ -3060,19 +3072,27 @@
         // equipped_effect_mechanical/equipped_effect_flavor are new). Hidden
         // entirely (not an empty box) when no currently-equipped item has
         // anything to show — see renderSpecialEffects().
-        + '<div class="cs-inv-top-col" id="cs-special-effects-col" style="display:none">'
+        + '<div class="cs-inv-top-col cs-inv-top-col--effects" id="cs-special-effects-col" style="display:none">'
           + '<h3 class="cs-inv-col-title">Special Effects</h3>'
           + '<div id="cs-special-effects-block"></div>'
         + '</div>'
+      + '</div>'
+
+      // Currency + Carrying — same row now. Currency stays capped at
+      // 480px (.cs-inv-top-col--currency, unchanged); the weight-bar
+      // column is a plain .cs-inv-top-col (flex:1 1 0, no cap) so it
+      // grows to fill whatever width Currency doesn't use — same row
+      // pattern reused wholesale, nothing new invented for this pairing.
+      + '<div class="cs-inv-top-row">'
         + '<div class="cs-inv-top-col cs-inv-top-col--currency">'
           + '<h3 class="cs-inv-col-title">Currency</h3>'
           + '<div id="cs-gold-block"></div>'
         + '</div>'
+        + '<div class="cs-inv-top-col">'
+          + '<h3 class="cs-inv-col-title cs-inv-carrying-title">Carrying</h3>'
+          + '<div class="cs-inv-weight-bar" id="cs-inv-weight-bar"></div>'
+        + '</div>'
       + '</div>'
-
-      // Carrying
-      + '<h3 class="cs-inv-col-title cs-inv-carrying-title">Carrying</h3>'
-      + '<div class="cs-inv-weight-bar" id="cs-inv-weight-bar"></div>'
 
       // Search / Category / Search — filters the player's own inventory
       // table below (client-side); distinct from the catalog search that
