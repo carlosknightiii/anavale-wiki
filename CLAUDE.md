@@ -31,6 +31,8 @@
 
 ## 2. Current Focus
 
+*Session Aug 12 2026 (same session, second live-review round on the Skills section) — dropped the ring dot on flat-bonus skills (`sheet/index.html`) — DM flagged it as a second, unexplained marker now that the "(+N)" next to the total already carries that information. Only proficient rows show a marker ("Prof." label) now; flat-bonus and neither both render an empty marker slot. Pushed live. See Decision Log for full detail.*
+
 *Session Aug 12 2026 (same session, DM live-reviewed the Skills section below and asked for one legibility fix) — replaced the proficient-skill filled dot with a "Prof." text label (`sheet/index.html`) — DM found the filled-vs-outlined dot distinction unintuitive. Flat-bonus skills keep their outline dot and now also show the bonus amount in parens next to the total (e.g. "+2 (+1)"). Verified on Kael and Hana (both real overlap cases still correctly show proficient-only, no stray parenthetical). Pushed live. See Decision Log for full detail.*
 
 *Session Aug 12 2026 (same session, after the Speaks-color fix below) — added a Skills section to the Ability Scores tab (`sheet/index.html`): all 18 skills grouped under their parent ability card, each showing proficiency state (proficient / flat +1 / neither, three visually distinct states) and total bonus. Investigated first per DM instruction — no Figma frame exists for this section (confirmed via `get_metadata`/`get_screenshot` on both breakpoints), `character_sheet.proficiency_bonus` is a real stored column that was never read anywhere before this, and real overlap cases exist on 2 of 3 characters (Kael, Hana) where a skill is both class-proficient and has a `PAST_EFFECTS` flat +1 — DM confirmed proficiency supersedes rather than stacks, citing 2024 PHB stacking rules. Old flat "Proficient skills: X, Y, Z" row removed, fully superseded. Verified live on all 3 characters (including both real overlap cases) plus mobile. Pushed live. See Decision Log for full detail.*
@@ -321,6 +323,12 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 ## 10. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-12 (later same day, second live-review round on the Skills section below) — Dropped the ring dot on flat-bonus skills (`sheet/index.html`).**
+DM flagged the outline dot next to a flat-bonus skill (e.g. History showing a gold ring plus "+2 (+1)") as confusing — a second, unexplained marker once the parenthetical amount already said the same thing on its own. Removed the dot entirely for flat-bonus and neither states; only proficient rows render a marker now (the "Prof." label from the prior fix). `abilitySkillsInnerHtml()`'s `markerHtml` simplified to a plain `isProficient ? <label> : <empty>` branch — the `.cs-ab-skill-dot` CSS rule and its two per-state overrides (`--flat`'s gold ring, `--none`'s `visibility:hidden`) are now dead and removed rather than left orphaned. The fixed-width `.cs-ab-skill-marker` wrapper is untouched, so the name column still lines up across all three states even with an empty marker.
+Verified on Kael: Athletics (his real flat-bonus skill) now reads "+2 (+1)" with no dot at all; Animal Handling/Perception/Survival (proficient) unaffected, still showing the "Prof." label. Zero console errors. `new Function()` syntax check clean. Pushed live.
 
 ---
 
