@@ -2994,6 +2994,19 @@
     fighter:'The Tested', monk:'The Still', wizard:'The Learned',
     sorcerer:'The Sparked', warlock:'The Bound', barbarian:'The Furious'
   };
+  // Real PHB (5e Player's Handbook) species name for each Anavale-flavor
+  // species — the in-world names (Veilstepped, Duskborn, etc.) are reskins
+  // of real 5e species and don't tell a player which rules chapter to read.
+  // Shown in parens next to the Anavale name in the header blurb so the
+  // mechanical identity is never lost. (Class names are already real PHB
+  // terms — class_id itself, e.g. "ranger" — only the Gigglegloom-flavor
+  // class name, e.g. "The Wanderer", needs its PHB equivalent called out.)
+  var SPECIES_PHB = {
+    brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
+    gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
+    scalegrace:'Dragonborn', solmeri:'Human', stonemarked:'Dwarf',
+    tallwalker:'Goliath', veilstepped:'Changeling', verdathi:'Elf'
+  };
 
   // ── Helpers ───────────────────────────────────────────────────────
   function cap(str) { if (!str) return '—'; return str.charAt(0).toUpperCase() + str.slice(1); }
@@ -3683,6 +3696,7 @@
   // tab bar and is reused across all four tabs (not duplicated per tab). ──
   function buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc) {
     var classKey   = (ch.class_id || '').toLowerCase();
+    var speciesKey = (ch.species || '').toLowerCase();
     var alignKey   = (ch.alignment || '').toLowerCase();
     var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
     var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey) };
@@ -3690,10 +3704,17 @@
     // Blurb — species + class's Gigglegloom-flavor name + type + region,
     // plus the alignment trait sentence. Sourced from the same lookups
     // character.js's (pre-rewrite) generateSummary() draws from, not invented.
+    // Both the species and class-flavor name are Anavale reskins of real PHB
+    // terms — each gets its real term in parens right after it, so the
+    // mechanical identity (which species/class rules apply) is never lost
+    // behind the in-world flavor name.
     var blurbParts = [];
     var flavorName = CLASS_FLAVOR_NAME[classKey];
     if (speciesDisplay && flavorName && typeMeta.name) {
-      blurbParts.push('A ' + speciesDisplay + ' ' + flavorName + ' who carries the ' + typeMeta.name
+      var speciesWithPhb = speciesDisplay + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : '');
+      var classPhbName = classKey ? cap(classKey.replace(/-/g, ' ')) : '';
+      var flavorWithPhb = flavorName + (classPhbName ? ' (' + classPhbName + ')' : '');
+      blurbParts.push('A ' + speciesWithPhb + ' ' + flavorWithPhb + ' who carries the ' + typeMeta.name
         + (regionLabel && regionLabel !== '—' ? ' — from ' + regionLabel + '.' : '.'));
     }
     if (ALIGNMENT_TRAIT_SENTENCE[alignKey]) blurbParts.push(ALIGNMENT_TRAIT_SENTENCE[alignKey]);
