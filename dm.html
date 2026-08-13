@@ -3146,7 +3146,7 @@
               <div class="scc-fg-box scc-fg-box--grey">
                 <div class="scc-fg-box-label">HOW TO USE THIS GUIDE</div>
                 <p>This document is organized in the order things will probably happen. Section 1 opens the session. Section 2 is the four-beat story spine. Section 3 is NPC quick reference. Section 4 is the off-script scenario table. Section 5 is combat. Sections 6&#x2013;14 are the expanded reference material &#x2014; read those the night before.</p>
-                <p><em>Green boxes = read aloud to players. &nbsp; Yellow boxes = DM only. &nbsp; Blue boxes = world lore. &nbsp; Purple boxes = comedy beats. &nbsp; Orange boxes = loot and shop.</em></p>
+                <p><em>Green boxes = read aloud to players. &nbsp; Cyan boxes = DM only. &nbsp; Blue boxes = world lore. &nbsp; Purple boxes = comedy beats. &nbsp; Orange boxes = loot and shop.</em></p>
               </div>
               <div class="scc-fg-doc-h1">SECTION 1 &#x2014; Opening the Session</div>
               <p class="scc-fg-doc-italic">Do this before anyone touches a die. The entire opening sequence is scripted and takes about 10 minutes.</p>
@@ -5450,6 +5450,7 @@ function showDMToast(msg, type) {
   color: var(--dm-gold);
 }
 .scc-npc2-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.scc-npc2-badge-row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.15rem; }
 .scc-npc2-rel-badge {
   display: inline-block;
   padding: 0.1rem 0.55rem;
@@ -5461,9 +5462,12 @@ function showDMToast(msg, type) {
   border-radius: 2px;
   cursor: pointer;
   width: fit-content;
-  margin-bottom: 0.15rem;
   user-select: none;
 }
+/* Quest-related indicator — icon only, no fill/background on the badge or card;
+   reuses the gold accent so it reads as "notable" without competing with the
+   relationship badge's own color (which stays SCC_REL_CYCLE's, unchanged). */
+.scc-npc2-quest-icon { font-size: 0.8rem; line-height: 1; color: var(--gold); cursor: default; }
 .scc-npc2-name {
   font-family: var(--font-serif);
   font-size: 1.75rem;
@@ -6413,9 +6417,13 @@ function showDMToast(msg, type) {
 .scc-fg-box--green { background: rgba(134,239,172,0.07); border-left: 3px solid rgba(134,239,172,0.5); }
 .scc-fg-box--green .scc-fg-box-label { color: #4ade80; }
 .scc-fg-box--green p { font-style: italic; color: #c6f0d8 !important; }
-.scc-fg-box--yellow { background: rgba(251,191,36,0.07); border-left: 3px solid rgba(251,191,36,0.4); }
-.scc-fg-box--yellow .scc-fg-box-label { color: var(--dm-gold); }
-.scc-fg-box--yellow p { color: #fef3c7 !important; }
+/* .scc-fg-box--yellow: class name kept as-is (used ~20x in the static Field Guide
+   markup below), but recolored cyan — DM Only now shares one color everywhere it
+   appears (see also player_facing badge in sccOpenLookup) instead of gold here and
+   red on the badge. */
+.scc-fg-box--yellow { background: rgba(34,211,238,0.07); border-left: 3px solid var(--cyan-border); }
+.scc-fg-box--yellow .scc-fg-box-label { color: var(--cyan); }
+.scc-fg-box--yellow p { color: #cffafe !important; }
 .scc-fg-box--blue { background: rgba(96,165,250,0.07); border-left: 3px solid rgba(96,165,250,0.4); }
 .scc-fg-box--blue .scc-fg-box-label { color: #7eb8f0; }
 .scc-fg-box--blue p { color: #dbeafe !important; }
@@ -11828,7 +11836,10 @@ function sccFilterNpcs() {
             : '<div class="scc-npc2-portrait-fallback">' + sccEsc(c.name.charAt(0)) + '</div>')
         + '</div>'
         + '<div class="scc-npc2-info">'
-          + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + REL_TEXT_COLOR + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
+          + '<div class="scc-npc2-badge-row">'
+            + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + REL_TEXT_COLOR + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
+            + (linkedQuests.length ? '<span class="scc-npc2-quest-icon" title="Quest-related' + (linkedQuests.length > 1 ? ' (' + linkedQuests.length + ' quests)' : ' (' + sccEsc(linkedQuests[0].name) + ')') + '">&#128220;</span>' : '')
+          + '</div>'
           + '<div class="scc-npc2-name">' + sccEsc(c.name) + '</div>'
           + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Role:</span> ' + sccEsc(c.role || c.category || '—') + '</div>'
           + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Location:</span> ' + sccEsc(c.location || '—') + '</div>'
@@ -12911,7 +12922,7 @@ function sccOpenLookup(type, id) {
                 : 'DM Only';
     var pfColor = pfVal === true || pfVal === 'true' ? 'var(--green)'
                 : pfVal === 'teaser' ? 'var(--gold)'
-                : 'var(--red)';
+                : 'var(--cyan)';
 
     // World associations
     var assocHtml = '';
@@ -13132,7 +13143,7 @@ function sccOpenLookup(type, id) {
 
     var opfVal   = org.player_facing;
     var opfLabel = opfVal === true || opfVal === 'true' ? 'Visible to Players' : opfVal === 'teaser' ? 'Teaser' : 'DM Only';
-    var opfColor = opfVal === true || opfVal === 'true' ? 'var(--green)' : opfVal === 'teaser' ? 'var(--gold)' : 'var(--red)';
+    var opfColor = opfVal === true || opfVal === 'true' ? 'var(--green)' : opfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
 
     var orgPortraitHtml = org.image
       ? '<img class="scc-ql-portrait" src="' + sccEsc(org.image) + '" onerror="this.style.display=\'none\'" alt="">'
