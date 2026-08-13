@@ -1214,6 +1214,7 @@
     <button class="dm-tab active" data-tab="manage"  onclick="switchTab('manage')">📋 Manage</button>
     <button class="dm-tab"        data-tab="quests"  onclick="switchTab('quests')">⚔️ Quests</button>
     <button class="dm-tab"        data-tab="players" onclick="switchTab('players')">👥 Players</button>
+    <button class="dm-tab"        data-tab="setup"   onclick="switchTab('setup')">🧭 Setup</button>
     <button class="dm-tab" data-tab="session" onclick="switchTab('session')">🎲 Session</button>
     <button class="dm-btn-add-entry" onclick="switchTab('add')" title="Add a new world entry">＋ New Entry</button>
   </div>
@@ -2724,6 +2725,136 @@
       </div><!-- /form-quests -->
 
       <!-- ══════════════════════════════════════
+           SESSION SETUP (top-level tab — moved out of
+           the Session Command Center's sub-nav so it's
+           reachable independently of a running session)
+           ══════════════════════════════════════ -->
+      <div id="form-setup" class="dm-form">
+        <div class="scc-panel-inner">
+          <div class="scc-section-title">Session Setup</div>
+          <div class="scc-setup-grid">
+            <div class="scc-setup-card">
+              <div class="scc-setup-card-label">Session Number</div>
+              <div id="scc-session-number-display" style="font-family:var(--font-sans);font-size:1.8rem;color:var(--dm-gold);font-weight:700;padding:0.25rem 0;line-height:1;">—</div>
+              <input type="hidden" id="scc-session-number" value="">
+            </div>
+            <div class="scc-setup-card">
+              <div class="scc-setup-card-label">Session Date</div>
+              <input type="date" id="scc-session-date" class="scc-input">
+              <div id="scc-session-date-display" class="scc-audit-readonly-val" style="display:none;">—</div>
+            </div>
+          </div>
+
+          <!-- Collapsible prep notes -->
+          <div class="scc-collapsible-toggle" id="scc-prep-toggle" onclick="sccTogglePrep()">
+            <span class="scc-toggle-arrow">▶</span>
+            <span>Prep Notes (optional)</span>
+          </div>
+          <div class="scc-collapsible-body" id="scc-prep-body">
+            <div class="scc-setup-card" style="margin-bottom:0.75rem;">
+              <div class="scc-setup-card-label">Session Premise</div>
+              <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
+            </div>
+            <div class="scc-setup-card">
+              <div class="scc-setup-card-label">Prep Notes</div>
+              <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
+            </div>
+          </div>
+
+          <!-- Entity pickers -->
+          <div class="scc-section-title" style="margin-top:1.5rem">Assign Session Entities</div>
+          <div class="scc-entity-pickers">
+
+            <div class="scc-picker-group">
+              <div class="scc-picker-label">📍 Locations</div>
+              <div class="scc-picker-controls">
+                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                  <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities, POIs, nations…" oninput="sccPickerSearch('location', this.value)" autocomplete="off">
+                  <div class="scc-picker-dropdown" id="scc-drop-location"></div>
+                </div>
+                <button class="scc-browse-btn" onclick="sccToggleBrowse('location')">Browse All ▾</button>
+              </div>
+              <div class="scc-browse-panel" id="scc-browse-location"></div>
+              <div class="scc-picker-chips" id="scc-chips-location"></div>
+            </div>
+
+            <div class="scc-picker-group">
+              <div class="scc-picker-label">🧙 NPCs</div>
+              <div class="scc-picker-controls">
+                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                  <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)" autocomplete="off">
+                  <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
+                </div>
+                <button class="scc-browse-btn" onclick="sccToggleBrowse('npc')">Browse All ▾</button>
+              </div>
+              <div class="scc-browse-panel" id="scc-browse-npc"></div>
+              <div class="scc-picker-chips" id="scc-chips-npc"></div>
+            </div>
+
+            <div class="scc-picker-group">
+              <div class="scc-picker-label">🐾 Creatures</div>
+              <div class="scc-picker-controls">
+                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                  <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)" autocomplete="off">
+                  <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
+                </div>
+                <button class="scc-browse-btn" onclick="sccToggleBrowse('creature')">Browse All ▾</button>
+              </div>
+              <div class="scc-browse-panel" id="scc-browse-creature"></div>
+              <div class="scc-picker-chips" id="scc-chips-creature"></div>
+            </div>
+
+            <div class="scc-picker-group">
+              <div class="scc-picker-label">📜 Quests</div>
+              <div class="scc-picker-controls">
+                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                  <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)" autocomplete="off">
+                  <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
+                </div>
+                <button class="scc-browse-btn" onclick="sccToggleBrowse('quest')">Browse All ▾</button>
+              </div>
+              <div class="scc-browse-panel" id="scc-browse-quest"></div>
+              <div class="scc-picker-chips" id="scc-chips-quest"></div>
+            </div>
+
+            <div class="scc-picker-group">
+              <div class="scc-picker-label">⚔️ Items</div>
+              <div class="scc-picker-controls">
+                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                  <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)" autocomplete="off">
+                  <div class="scc-picker-dropdown" id="scc-drop-item"></div>
+                </div>
+                <button class="scc-browse-btn" onclick="sccToggleBrowse('item')">Browse All ▾</button>
+              </div>
+              <div class="scc-browse-panel" id="scc-browse-item"></div>
+              <div class="scc-picker-chips" id="scc-chips-item"></div>
+            </div>
+
+          </div>
+          <div class="scc-setup-actions">
+            <button class="scc-btn-primary" onclick="sccSaveSetup()">✦ Save Session Setup</button>
+            <span class="scc-save-status" id="scc-setup-status"></span>
+          </div>
+          <div class="scc-session-complete-bar" style="margin-top:1.5rem;">
+            <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks it for audit and opens the next one.</div>
+            <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
+          </div>
+
+          <!-- ── SESSION SCENARIOS EDITOR — session_notes.session_scenarios,
+               read by the Field Guide's off-script table and the Live
+               Session panel's Scenarios search. Previously Supabase-only. ── -->
+          <div class="scc-section-title" style="margin-top:2rem">Session Scenarios</div>
+          <div class="scc-scenario-editor-hint">Player-action / DM-response pairs, grouped by location or topic. Shown in the Live Session panel's Scenarios search and read by the Field Guide.</div>
+          <div id="scc-scenario-editor-groups"></div>
+          <div class="scc-setup-actions" style="margin-top:0.75rem;">
+            <button class="scc-btn-secondary" onclick="sccAddScenarioGroup()">+ Add Group</button>
+            <button class="scc-btn-primary" onclick="sccSaveScenarios()">✦ Save Scenarios</button>
+            <span class="scc-save-status" id="scc-scenarios-status"></span>
+          </div>
+        </div>
+      </div><!-- /form-setup -->
+
+      <!-- ══════════════════════════════════════
            SESSION COMMAND CENTER
            ══════════════════════════════════════ -->
       <div id="form-session" class="dm-form scc-form">
@@ -2744,8 +2875,7 @@
                 </div>
               </div>
             </div>
-            <button class="scc-tab-btn active" data-scc="setup"     onclick="sccSwitchPanel('setup')">Setup</button>
-            <button class="scc-tab-btn"        data-scc="npcs"      onclick="sccSwitchPanel('npcs')">NPCs</button>
+            <button class="scc-tab-btn active" data-scc="npcs"      onclick="sccSwitchPanel('npcs')">NPCs</button>
             <button class="scc-tab-btn"        data-scc="locations" onclick="sccSwitchPanel('locations')">Locations</button>
             <button class="scc-tab-btn"        data-scc="quests"    onclick="sccSwitchPanel('quests')">Quests</button>
             <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
@@ -2766,121 +2896,8 @@
           📋 Viewing Session <span id="scc-readonly-session-num"></span> (read-only audit) —
           <button class="scc-btn-sm" onclick="sccLoadCurrentSession()" style="margin-left:0.5rem;">↩ Back to Current Session</button>
         </div>
-        <!-- ══ PANEL: SETUP ══════════════════ -->
-        <div class="scc-panel active" id="scc-panel-setup">
-          <div class="scc-panel-inner">
-            <div class="scc-section-title">Session Setup</div>
-            <div class="scc-setup-grid">
-              <div class="scc-setup-card">
-                <div class="scc-setup-card-label">Session Number</div>
-                <div id="scc-session-number-display" style="font-family:var(--font-sans);font-size:1.8rem;color:var(--dm-gold);font-weight:700;padding:0.25rem 0;line-height:1;">—</div>
-                <input type="hidden" id="scc-session-number" value="">
-              </div>
-              <div class="scc-setup-card">
-                <div class="scc-setup-card-label">Session Date</div>
-                <input type="date" id="scc-session-date" class="scc-input">
-                <div id="scc-session-date-display" class="scc-audit-readonly-val" style="display:none;">—</div>
-              </div>
-            </div>
-
-            <!-- Collapsible prep notes -->
-            <div class="scc-collapsible-toggle" id="scc-prep-toggle" onclick="sccTogglePrep()">
-              <span class="scc-toggle-arrow">▶</span>
-              <span>Prep Notes (optional)</span>
-            </div>
-            <div class="scc-collapsible-body" id="scc-prep-body">
-              <div class="scc-setup-card" style="margin-bottom:0.75rem;">
-                <div class="scc-setup-card-label">Session Premise</div>
-                <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
-              </div>
-              <div class="scc-setup-card">
-                <div class="scc-setup-card-label">Prep Notes</div>
-                <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
-              </div>
-            </div>
-
-            <!-- Entity pickers -->
-            <div class="scc-section-title" style="margin-top:1.5rem">Assign Session Entities</div>
-            <div class="scc-entity-pickers">
-
-              <div class="scc-picker-group">
-                <div class="scc-picker-label">📍 Locations</div>
-                <div class="scc-picker-controls">
-                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                    <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities, POIs, nations…" oninput="sccPickerSearch('location', this.value)" autocomplete="off">
-                    <div class="scc-picker-dropdown" id="scc-drop-location"></div>
-                  </div>
-                  <button class="scc-browse-btn" onclick="sccToggleBrowse('location')">Browse All ▾</button>
-                </div>
-                <div class="scc-browse-panel" id="scc-browse-location"></div>
-                <div class="scc-picker-chips" id="scc-chips-location"></div>
-              </div>
-
-              <div class="scc-picker-group">
-                <div class="scc-picker-label">🧙 NPCs</div>
-                <div class="scc-picker-controls">
-                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                    <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)" autocomplete="off">
-                    <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
-                  </div>
-                  <button class="scc-browse-btn" onclick="sccToggleBrowse('npc')">Browse All ▾</button>
-                </div>
-                <div class="scc-browse-panel" id="scc-browse-npc"></div>
-                <div class="scc-picker-chips" id="scc-chips-npc"></div>
-              </div>
-
-              <div class="scc-picker-group">
-                <div class="scc-picker-label">🐾 Creatures</div>
-                <div class="scc-picker-controls">
-                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                    <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)" autocomplete="off">
-                    <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
-                  </div>
-                  <button class="scc-browse-btn" onclick="sccToggleBrowse('creature')">Browse All ▾</button>
-                </div>
-                <div class="scc-browse-panel" id="scc-browse-creature"></div>
-                <div class="scc-picker-chips" id="scc-chips-creature"></div>
-              </div>
-
-              <div class="scc-picker-group">
-                <div class="scc-picker-label">📜 Quests</div>
-                <div class="scc-picker-controls">
-                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                    <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)" autocomplete="off">
-                    <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
-                  </div>
-                  <button class="scc-browse-btn" onclick="sccToggleBrowse('quest')">Browse All ▾</button>
-                </div>
-                <div class="scc-browse-panel" id="scc-browse-quest"></div>
-                <div class="scc-picker-chips" id="scc-chips-quest"></div>
-              </div>
-
-              <div class="scc-picker-group">
-                <div class="scc-picker-label">⚔️ Items</div>
-                <div class="scc-picker-controls">
-                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                    <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)" autocomplete="off">
-                    <div class="scc-picker-dropdown" id="scc-drop-item"></div>
-                  </div>
-                  <button class="scc-browse-btn" onclick="sccToggleBrowse('item')">Browse All ▾</button>
-                </div>
-                <div class="scc-browse-panel" id="scc-browse-item"></div>
-                <div class="scc-picker-chips" id="scc-chips-item"></div>
-              </div>
-
-            </div>
-            <div class="scc-setup-actions">
-              <button class="scc-btn-primary" onclick="sccSaveSetup()">✦ Save Session Setup</button>
-              <span class="scc-save-status" id="scc-setup-status"></span>
-            </div>
-            <div class="scc-session-complete-bar" style="margin-top:1.5rem;">
-              <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks it for audit and opens the next one.</div>
-              <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
-            </div>
-          </div>
-        </div><!-- /scc-panel-setup -->
         <!-- ══ PANEL: NPCs ════════════════════ -->
-        <div class="scc-panel" id="scc-panel-npcs">
+        <div class="scc-panel active" id="scc-panel-npcs">
           <div class="scc-panel-inner scc-npc-panel-inner">
             <div class="scc-npc-page-header">
               <div class="scc-npc-page-label">SESSION</div>
@@ -2996,6 +3013,10 @@
             <!-- Encounter builder -->
             <div class="scc-combat-builder">
               <div class="scc-section-subtitle">Build Encounter</div>
+              <!-- Creatures already assigned to this session in Setup — surfaced first so the
+                   DM doesn't have to re-search from scratch for what's already been prepped. -->
+              <div class="scc-combat-session-label">From Session Roster</div>
+              <div class="scc-combat-session-creatures" id="scc-combat-session-creatures"></div>
               <div class="scc-combat-top-row">
                 <div class="scc-picker-group" style="flex:1">
                   <div class="scc-picker-search-wrap">
@@ -6083,6 +6104,39 @@ function showDMToast(msg, type) {
   padding: 1rem;
   margin-bottom: 1.5rem;
 }
+.scc-combat-session-label {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.4rem;
+}
+.scc-combat-session-creatures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.scc-combat-session-chip {
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: 20px;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-combat-session-chip:hover { background: var(--dm-gold-dim-hover); }
+.scc-combat-session-chip.added {
+  background: transparent;
+  border-color: var(--scc-border-mid);
+  color: var(--dm-text-faint);
+  cursor: default;
+}
 .scc-combat-top-row {
   display: flex;
   gap: 1rem;
@@ -6706,6 +6760,63 @@ function showDMToast(msg, type) {
 .scc-tagnote-body:focus { outline: none; }
 .scc-tagnote-body::placeholder { color: var(--dm-text-faint); }
 .scc-audit-mode .scc-tagnote-section { display: none !important; }
+/* ── Session Scenarios Editor (Setup page) ── */
+.scc-scenario-editor-hint {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-text-muted);
+  margin: 0.35rem 0 0.85rem;
+  line-height: 1.5;
+}
+.scc-scenario-editor-group {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius);
+  margin-bottom: 0.6rem;
+  overflow: hidden;
+}
+.scc-scenario-editor-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+}
+.scc-scenario-editor-collapse {
+  background: transparent;
+  border: none;
+  color: var(--dm-text-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0.2rem;
+  flex-shrink: 0;
+}
+.scc-scenario-group-name-input {
+  flex: 1;
+  font-weight: 700;
+}
+.scc-scenario-editor-count {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-faint);
+  flex-shrink: 0;
+}
+.scc-scenario-editor-rows {
+  padding: 0 0.75rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.scc-scenario-editor-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.scc-scenario-editor-row-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
 /* ── Quick Lookup Slide Panel ── */
 .scc-lookup-backdrop {
   position: fixed;
@@ -7059,6 +7170,7 @@ function showDMToast(msg, type) {
 .scc-audit-mode .scc-chip-remove { display: none !important; }
 .scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }
 .scc-audit-mode .scc-picker-label { margin-bottom: 0.4rem; }
+.scc-audit-mode .scc-scenario-editor-group .scc-tagnote-del { display: none !important; }
 .scc-audit-readonly-val {
   font-family: var(--font-sans);
   font-size: 0.9rem;
@@ -10567,7 +10679,7 @@ function sccEsc(str) {
 var _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
-  if (tab === 'session') {
+  if (tab === 'session' || tab === 'setup') {
     setTimeout(sccInit, 0);
   }
 };
@@ -11140,6 +11252,7 @@ function sccSwitchPanel(name) {
   if (name === 'live') { sccRenderLivePanel(); }
   if (name === 'fieldguide') { sccRenderFieldGuide(); }
   if (name === 'notes') { sccRenderTaggedNotes(); }
+  if (name === 'combat') { sccRenderCombatSessionCreatures(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 var SCC_FG_DATA    = null;   // cached on first load
@@ -11384,12 +11497,14 @@ function sccLoadLatestSession() {
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
+    sccRenderCombatSessionCreatures();
     sccUpdateHeaderSub();
   }).catch(function() {
     sccSetSessionDisplay(1);
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
+    sccRenderCombatSessionCreatures();
   });
 }
 function sccSetSessionDisplay(num) {
@@ -11433,9 +11548,13 @@ function sccLoadHistorySession(sessionNum) {
   var panel = document.getElementById('scc-history-panel');
   if (panel) panel.classList.remove('open');
   SCC_VIEWING_HISTORY = true;
-  // Apply audit mode to the SCC form
+  // Apply audit mode to the SCC form — Setup is a separate top-level form since
+  // the nav restructure, so it needs the same read-only lockdown independently
+  // or a completed session's setup/scenarios would stay live-editable there.
   var form = document.getElementById('form-session');
   if (form) form.classList.add('scc-audit-mode');
+  var setupForm = document.getElementById('form-setup');
+  if (setupForm) setupForm.classList.add('scc-audit-mode');
   // Show read-only banner
   var banner = document.getElementById('scc-readonly-banner');
   var bannerNum = document.getElementById('scc-readonly-session-num');
@@ -11479,6 +11598,8 @@ function sccLoadCurrentSession() {
   // Remove audit mode from form
   var form = document.getElementById('form-session');
   if (form) form.classList.remove('scc-audit-mode');
+  var setupForm = document.getElementById('form-setup');
+  if (setupForm) setupForm.classList.remove('scc-audit-mode');
   // Restore date input, hide static display
   var dateInput   = document.getElementById('scc-session-date');
   var dateDisplay = document.getElementById('scc-session-date-display');
@@ -11580,6 +11701,8 @@ function sccPopulateSetupForm(s) {
   restore('creature', s.creature_ids);
   restore('quest',    s.quest_ids_active);
   restore('item',     s.item_ids_awarded);
+
+  sccRenderScenarioEditor(s);
 }
 
 // ── Browse All grouped panel ──────────────────────────────────────
@@ -11976,6 +12099,125 @@ function sccSaveSetup() {
       .then(function(r) { if (r.ok) onSuccess(); else onFail(); })
       .catch(onFail);
   }
+}
+
+// ── Session Scenarios Editor (session_notes.session_scenarios) ─────
+// Real shape confirmed against live data before building this:
+// [{ group: string, scenarios: [{ action: string, response: string }] }]
+// Edited in a local working copy, saved as one PATCH on demand — not
+// autosaved per keystroke, since a group can hold a dozen+ rows.
+var SCC_SCENARIO_EDIT = [];
+
+function sccRenderScenarioEditor(s) {
+  var container = document.getElementById('scc-scenario-editor-groups');
+  if (!container) return;
+  var src = (s && s.session_scenarios) ? s.session_scenarios : [];
+  SCC_SCENARIO_EDIT = JSON.parse(JSON.stringify(src));
+  sccDrawScenarioEditor();
+}
+
+function sccDrawScenarioEditor() {
+  var container = document.getElementById('scc-scenario-editor-groups');
+  if (!container) return;
+  if (!SCC_SCENARIO_EDIT.length) {
+    container.innerHTML = '<div class="scc-empty-state">No scenarios yet for this session — add a group below.</div>';
+    return;
+  }
+  container.innerHTML = SCC_SCENARIO_EDIT.map(function(group, gi) {
+    var rows = (group.scenarios || []).map(function(sc, si) {
+      return '<div class="scc-scenario-editor-row">'
+        + '<div class="scc-scenario-editor-row-fields">'
+          + '<input type="text" class="scc-input" placeholder="Player action (e.g. &#8216;Ask about the food&#8217;)" value="' + sccEsc(sc.action || '') + '" onchange="sccScenarioFieldChanged(' + gi + ',' + si + ',\'action\',this.value)">'
+          + '<textarea class="scc-textarea" rows="2" placeholder="DM response" onchange="sccScenarioFieldChanged(' + gi + ',' + si + ',\'response\',this.value)">' + sccEsc(sc.response || '') + '</textarea>'
+        + '</div>'
+        + '<button class="scc-tagnote-del" title="Delete scenario" onclick="sccDeleteScenarioRow(' + gi + ',' + si + ')">&#10005;</button>'
+      + '</div>';
+    }).join('');
+    return '<div class="scc-scenario-editor-group">'
+      + '<div class="scc-scenario-editor-group-head">'
+        + '<button class="scc-scenario-editor-collapse" id="scc-scen-edit-chev-' + gi + '" onclick="sccToggleScenarioGroupEdit(' + gi + ')">&#9654;</button>'
+        + '<input type="text" class="scc-input scc-scenario-group-name-input" placeholder="Group name (e.g. &#8216;At the Bridge&#8217;)" value="' + sccEsc(group.group || '') + '" onchange="sccScenarioGroupNameChanged(' + gi + ',this.value)">'
+        + '<span class="scc-scenario-editor-count">' + (group.scenarios || []).length + '</span>'
+        + '<button class="scc-tagnote-del" title="Delete group" onclick="sccDeleteScenarioGroup(' + gi + ')">&#10005;</button>'
+      + '</div>'
+      + '<div class="scc-scenario-editor-rows" id="scc-scen-edit-body-' + gi + '" style="display:none;">'
+        + rows
+        + '<button class="scc-browse-btn" onclick="sccAddScenarioRow(' + gi + ')">+ Add Scenario</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function sccToggleScenarioGroupEdit(gi) {
+  var body = document.getElementById('scc-scen-edit-body-' + gi);
+  var chev = document.getElementById('scc-scen-edit-chev-' + gi);
+  if (!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  if (chev) chev.innerHTML = open ? '&#9654;' : '&#9660;';
+}
+
+function sccScenarioGroupNameChanged(gi, val) {
+  if (SCC_SCENARIO_EDIT[gi]) SCC_SCENARIO_EDIT[gi].group = val;
+}
+
+function sccScenarioFieldChanged(gi, si, field, val) {
+  if (SCC_SCENARIO_EDIT[gi] && SCC_SCENARIO_EDIT[gi].scenarios && SCC_SCENARIO_EDIT[gi].scenarios[si]) {
+    SCC_SCENARIO_EDIT[gi].scenarios[si][field] = val;
+  }
+}
+
+function sccAddScenarioGroup() {
+  SCC_SCENARIO_EDIT.push({ group: '', scenarios: [] });
+  sccDrawScenarioEditor();
+  var chev = document.getElementById('scc-scen-edit-chev-' + (SCC_SCENARIO_EDIT.length - 1));
+  var body = document.getElementById('scc-scen-edit-body-' + (SCC_SCENARIO_EDIT.length - 1));
+  if (body) body.style.display = '';
+  if (chev) chev.innerHTML = '&#9660;';
+}
+
+function sccDeleteScenarioGroup(gi) {
+  if (!confirm('Delete this scenario group and all its rows?')) return;
+  SCC_SCENARIO_EDIT.splice(gi, 1);
+  sccDrawScenarioEditor();
+}
+
+function sccAddScenarioRow(gi) {
+  if (!SCC_SCENARIO_EDIT[gi]) return;
+  if (!SCC_SCENARIO_EDIT[gi].scenarios) SCC_SCENARIO_EDIT[gi].scenarios = [];
+  SCC_SCENARIO_EDIT[gi].scenarios.push({ action: '', response: '' });
+  sccDrawScenarioEditor();
+  var body = document.getElementById('scc-scen-edit-body-' + gi);
+  var chev = document.getElementById('scc-scen-edit-chev-' + gi);
+  if (body) body.style.display = '';
+  if (chev) chev.innerHTML = '&#9660;';
+}
+
+function sccDeleteScenarioRow(gi, si) {
+  if (!SCC_SCENARIO_EDIT[gi] || !SCC_SCENARIO_EDIT[gi].scenarios) return;
+  SCC_SCENARIO_EDIT[gi].scenarios.splice(si, 1);
+  sccDrawScenarioEditor();
+}
+
+function sccSaveScenarios() {
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var statusEl = document.getElementById('scc-scenarios-status');
+  if (statusEl) statusEl.textContent = 'Saving…';
+  sccPatch('session_notes', '?session_number=eq.' + num, { session_scenarios: SCC_SCENARIO_EDIT }).then(function(r) {
+    if (r.ok) {
+      SCC_SESSION.session_scenarios = JSON.parse(JSON.stringify(SCC_SCENARIO_EDIT));
+      if (statusEl) { statusEl.textContent = '\u2713 Saved'; setTimeout(function(){ statusEl.textContent = ''; }, 3000); }
+      showDMToast('Scenarios saved \u2713', 'success');
+      if (typeof sccLiveRenderScenarios === 'function') sccLiveRenderScenarios();
+    } else {
+      if (statusEl) statusEl.textContent = '';
+      showDMToast('Scenarios not saved', 'error');
+    }
+  }).catch(function() {
+    if (statusEl) statusEl.textContent = '';
+    showDMToast('Scenarios not saved', 'error');
+  });
 }
 
 // ── NPC Panel ────────────────────────────────────────────────────
@@ -12449,6 +12691,32 @@ function sccCycleBeatStatus(questId, beatOrder) {
 }
 
 // ── Combat Tracker ────────────────────────────────────────────────
+// Surfaces creatures already assigned to this session in Setup (SCC_SELECTED.creature)
+// as one-click adds, so the DM doesn't have to re-search from scratch for something
+// already prepped. Full search (sccPickerSearch('combatant', ...)) stays available
+// below for anything not pre-assigned, or for adding players.
+function sccRenderCombatSessionCreatures() {
+  var el = document.getElementById('scc-combat-session-creatures');
+  if (!el) return;
+  var assigned = SCC_SELECTED.creature || [];
+  if (!assigned.length) {
+    el.innerHTML = '<div class="scc-empty-state" style="padding:0.4rem 0;">No creatures assigned in Setup yet — search below, or add them in Setup first.</div>';
+    return;
+  }
+  el.innerHTML = assigned.map(function(sel) {
+    var inEncounter = SCC_COMBATANTS.some(function(c) { return c.id === sel.id; });
+    return inEncounter
+      ? '<span class="scc-combat-session-chip added" title="Already in this encounter">&#10003; ' + sccEsc(sel.name) + '</span>'
+      : '<button type="button" class="scc-combat-session-chip" onclick="sccQuickAddCombatant(\'' + sccEsc(sel.id) + '\',\'' + sccEsc(sel.name) + '\')">+ ' + sccEsc(sel.name) + '</button>';
+  }).join('');
+}
+
+function sccQuickAddCombatant(id, name) {
+  if (SCC_COMBATANTS.some(function(c) { return c.id === id; })) return;
+  sccAddToCombatStaging(id, name);
+  sccRenderCombatSessionCreatures();
+}
+
 function sccAddToCombatStaging(id, name) {
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = creatures.find(function(c) { return c.id === id; });
@@ -12481,6 +12749,7 @@ function sccAddAllPlayers() {
 function sccRenderStagingList() {
   var el = document.getElementById('scc-combatant-staging');
   if (!el) return;
+  sccRenderCombatSessionCreatures();
   if (!SCC_COMBATANTS.length) {
     el.innerHTML = '<div class="scc-empty-state">Add creatures and players above to build the encounter.</div>';
     document.getElementById('scc-start-combat-btn').style.display = 'none';
