@@ -20,16 +20,20 @@
 2. Search project knowledge for any file or function before touching it.
 3. If what you find in the file conflicts with project knowledge, stop and say so.
 4. Never answer from memory or assumption — read the file first.
+5. Before starting new work: check `git worktree list` / `git diff --stat main...<other-branch>` for parallel work on the same files, **and** check Section 3 (⚠ Pending / Blocked) for a known blocker already sitting on the same file/area. Flag either before proceeding.
 
 **End (standing requirement — do not wait to be asked):**
 1. Append an entry to the Decision Log (date, what changed, why).
 2. Update "Current Focus" below to reflect what comes next.
 3. If any rule turned out to be wrong or incomplete, correct it here and commit.
 4. If a new bug pattern was discovered, add it to the Decision Log.
+5. If a branch merged to `main` this session: check Section 3 (⚠ Pending / Blocked) — does anything there just become unblocked? If so, flag it to the DM in this session's summary and move it to Next Priorities.
 
 ---
 
 ## 2. Current Focus
+
+*Session Aug 13 2026 (continuing the same session — process addendum, no sheet/dm.html code changes) — added a new CLAUDE.md §3 "⚠ Pending / Blocked" section, separate from Next Priorities, for work incomplete specifically because of an external dependency (branch merge, open DM decision, schema someone else owns) rather than just unstarted backlog. Moved the one existing case — the Attunement checkbox deferred from `dm.html` in the previous session — out of Next Priorities and into this new section. Renumbered §3 onward through §11 (Decision Log) to make room; fixed the one internal cross-reference (C4 "See Section 3" → "See Section 4") that pointed at the old numbering. Also formalized two standing habits that were previously only in Claude Code's private memory, not in this shared file: added Start step 5 (check parallel-branch overlap *and* §3 for a known blocker before starting new work) and End step 5 (check §3 for newly-unblocked items whenever a branch merges to `main`, flag proactively, move to Next Priorities) to §1's own session checklist. See Decision Log for full detail.*
 
 *Session Aug 13 2026 (continuing the same session — last of the 5-item placement roadmap, Inventory tab piece) — added Magic Item Attunement (`sheet/index.html`, `items`/`character_sheet` schema): new "Attunement (N/3)" box under the Equipped Gear doll, showing only currently-equipped items flagged `items.requires_attunement`, with Attune/Unattune buttons and a 3-item cap. Checked for parallel-branch overlap first (standing workflow) and found real, heavy overlap in `dm.html`'s item-form region specifically — deferred just the DM Tools checkbox (no item is flagged attunement-requiring yet, so nothing is blocked); built everything else, which lives entirely in `sheet/index.html` with zero overlap. Real bug caught and fixed before shipping, not just a clean build: the handoff's suggested "clear attunement on unequip" hook needed adding at 4 places an item leaves `EQUIPPED` (found a 4th the handoff didn't mention, `autoUnequipOffHandForTwoHanded()`), but one of the 3 the handoff implied — `selectEquipItem()`'s same-item slot-move path — would have wrongly cleared attunement on a same-item slot move (e.g. moving a ring left→right hand) rather than an actual unequip; caught via careful tracing before writing the call, not via testing after. Used `EQUIPPED_ITEMS` (always a full item row for equipped items) instead of the handoff's suggested `CATALOG_CACHE` (a mixed cache — partial rows from item search, full rows from inventory fetch), since attunement specifically needs `requires_attunement`, a field the partial rows never carry. Verified end-to-end on Kael with 3 temporarily-flagged real items (reverted after): attune-to-cap, cap correctly blocks a 4th, unequip correctly clears attunement, slot-move correctly preserves it (the exact bug the fix prevents), zero console errors, zero mobile overflow. This closes the original 5-item roadmap — Cantrips & Prepared Spells remains as its own separate, larger session per the original scope note. See Decision Log for full detail.*
 
@@ -133,7 +137,6 @@
 
 **Next priorities:**
 - Placement roadmap (Aug 12 2026) is complete — Saves/Passive Perception, Spellcasting Stats, Initiative/Hit Dice, Speed/Size, and Magic Item Attunement all shipped. Only the always-separate, larger Cantrips & Prepared Spells build (Class tab) remains, per the roadmap's own scope note — needs real per-class known-vs-prepared design decisions, not just a schema/UI build.
-- **DM Tools checkbox for `items.requires_attunement` is not built yet** — deferred because `dm.html`'s item-form region is under heavy, active edit on the `anavale-wiki-scc-ux` branch (confirmed via `git diff --stat` before starting, per the standing parallel-worktree check). Not urgent: no item is flagged attunement-requiring yet, so nothing is blocked. Flag an item via direct SQL (`update items set requires_attunement = true where id = '...'`) if the DM wants to test the feature before the checkbox lands; add the checkbox once that branch merges.
 - No rest-flow (long/short rest button) exists anywhere on the sheet — Hit Dice/Death Saves/Spell Slots all restore via manual pip-clicking only. Flagged as a real future gap, not built (explicitly out of scope on the Hit Dice handoff).
 - `species.phb_equivalent` (a real column) could replace the hardcoded `SPECIES_PHB` JS mirror in `sheet/index.html` added in an earlier session — found while building Speed/Size, not fixed (out of scope on that handoff). Candidate for a small cleanup pass.
 - Run the `classes` table migration once DM confirms the tools/casting_summary drafts.
@@ -146,7 +149,18 @@
 
 ---
 
-## 3. Repo & Deployment
+## 3. ⚠ Pending / Blocked
+
+*Work that's incomplete because of an external dependency — a branch merge, an open DM decision, a schema change someone else owns — not just unstarted backlog (that's Next Priorities, above). Two standing habits attach to this section:*
+
+1. ***Check on merge.*** *Whenever any branch merges to `main`, check this section before calling the merge "done" — does anything here just become unblocked by what landed? If so, flag it to the DM directly in that session's summary (don't wait to be asked), and move the item to Next Priorities — don't leave it here once it's no longer blocked.*
+2. ***Check before starting.*** *Before starting new work that touches a file/area named here, check this section first — same standing habit as the parallel-worktree overlap check, extended to also catch "is there a known blocker already sitting on this exact area."*
+
+- **Attunement checkbox in DM Tools item form** — `requires_attunement` field needs a checkbox added to the item edit form in `dm.html`. Blocked on: `anavale-wiki-scc-ux` branch merging to `main` (that branch is under heavy active edit in the exact form region this needs). Everything else in the Attunement build (schema, sheet-side UI, toggle logic) already shipped — this is the one remaining piece.
+
+---
+
+## 4. Repo & Deployment
 
 **Local path:** `Documents/DND/Anavale/anavale-wiki/`
 
@@ -194,7 +208,7 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 
 ---
 
-## 4. Architecture
+## 5. Architecture
 
 **Code changes → git push.** HTML, CSS, JS files only.
 **Content changes → Supabase only. Never git push for content.** The `data/*.js` files are legacy seeds — not the source of truth. Never read from them in new code.
@@ -216,7 +230,7 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 
 ---
 
-## 5. Supabase
+## 6. Supabase
 
 **URL:** `https://ebppsgaftzyvftemfeom.supabase.co`
 **Anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg`
@@ -234,7 +248,7 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 
 ---
 
-## 6. Debugging Rules (D1–D7)
+## 7. Debugging Rules (D1–D7)
 
 **D1 — 2-attempt hard limit (non-negotiable).** If a fix fails twice, STOP. Do not write a third variation. Something is wrong with the diagnosis, not the fix. Say: *"I have reached the 2-attempt limit. I will not write another fix until I have read the exact current state of the broken code and identified the specific line that is wrong."*
 
@@ -252,7 +266,7 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 
 ---
 
-## 7. Site Integrity Rules (C1–C5)
+## 8. Site Integrity Rules (C1–C5)
 
 **C1 — Read dm.html before every edit. No exceptions.** Read the current state of the target function with line numbers before writing any replacement. Project knowledge is never sufficient.
 
@@ -262,13 +276,13 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 
 **C3 — Pre-push confirmation for dm.html.** Before any dm.html push, show the diff and confirm: no literal emoji in JS strings, no unmatched quotes.
 
-**C4 — Site crash recovery: `git reset --hard`, not `git revert` chains.** See Section 3.
+**C4 — Site crash recovery: `git reset --hard`, not `git revert` chains.** See Section 4.
 
 **C5 — Rejected diagnosis is confirmed wrong. Stop completely.** If the DM says a diagnosis is wrong, stop all iteration. Read the actual current code state. State the new diagnosis with the specific line and reason. Write one fix only after the new diagnosis is confirmed.
 
 ---
 
-## 8. Code Authoring Rules
+## 9. Code Authoring Rules
 
 **Claude Code prompts containing code blocks:**
 Always use a bash heredoc when writing file contents that include backtick code blocks. Never wrap such a prompt in a fenced code block — inner backticks will break the outer fence and content will be silently dropped.
@@ -321,7 +335,7 @@ Always use a bash heredoc when writing file contents that include backtick code 
 
 ---
 
-## 9. Design Tokens
+## 10. Design Tokens
 
 All tokens live in `css/tokens.css` — single source of truth. No `:root` blocks anywhere else.
 
@@ -338,9 +352,17 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 
 ---
 
-## 10. Decision Log
+## 11. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-13 (continuing the same session — process addendum, no code changes) — Added CLAUDE.md §3 "⚠ Pending / Blocked", formalized two standing habits into §1.**
+DM's ask, prompted directly by the Attunement build's deferred DM Tools checkbox from the previous entry: a blocked item sitting in a flat "Next Priorities" list reads identically to an ordinary unstarted backlog item — nothing marks it as time-sensitive (waiting on someone else's branch, not just waiting on attention). Built the section the DM specified verbatim, moved the one real case into it.
+**Numbering**: inserting a new top-level section between "Current Focus" (§2) and "Repo & Deployment" (old §3) meant renumbering everything after it — §3 through §10 became §4 through §11. Checked for internal cross-references before renumbering rather than assuming none existed: found exactly one, C4's "See Section 3" (referring to the git-crash-recovery procedure, now §4) — updated it. The `§6`/`§8` references elsewhere in the Decision Log are to the *external* Aug 7 handoff doc's own section numbers, unrelated to this file's numbering — confirmed before leaving them untouched, not assumed safe.
+**Formalizing the existing habit, not just adding the new one.** The DM's spec for the new section's "check before starting" habit explicitly said "same as the existing 'check branch overlap first' habit already in place" — but that habit has only ever lived in Claude Code's private cross-session memory (established 2026-08-12, this session's earlier turns), never written into this shared file. Since the DM is directing that this new, related habit be added to the team-visible doc, formalized both together: §1's Start checklist gained a step covering both the branch-diff check and the new §3 check in one line; End gained a step for the "check on merge, flag proactively, move to Next Priorities" behavior. Private memory updated to reference this file as the now-canonical copy, rather than leaving the shared doc and private memory as two separately-maintained descriptions of the same habit that could drift apart.
+Verified: `grep "^## "` confirms §1 through §11 sequential with no gaps or duplicates. `grep "See Section"` confirms only the one fixed cross-reference exists. No `sheet/index.html`/`dm.html` changes — confirmed via `git status` before committing that only `CLAUDE.md` is staged, matching the handoff's explicit scope note. Pushed live.
 
 ---
 
