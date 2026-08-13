@@ -3064,6 +3064,19 @@
               <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks the session for audit and opens the next one.</div>
               <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
             </div>
+
+            <!-- ── TAGGED NOTES — quick-capture, tagged, filterable/searchable,
+                 separate from the 5 structured recap fields above. ── -->
+            <div class="scc-tagnote-section">
+              <div class="scc-section-title">Tagged Notes</div>
+              <div class="scc-tagnote-toolbar">
+                <input type="text" class="scc-input" id="scc-tagnote-search" placeholder="Search tagged notes…" oninput="sccNoteSearchInput(this.value)">
+                <select id="scc-tagnote-new-cat" class="cm-select"></select>
+                <button class="scc-btn-secondary" onclick="sccAddTagNote()">+ New Note</button>
+              </div>
+              <div class="scc-tagnote-filters" id="scc-tagnote-filters"></div>
+              <div class="scc-tagnote-list" id="scc-tagnote-list"><div class="scc-lookup-loading">Loading&#8230;</div></div>
+            </div>
           </div>
         </div><!-- /scc-panel-notes -->
         <!-- ══ PANEL: LIVE SESSION ══════════════ -->
@@ -6590,6 +6603,109 @@ function showDMToast(msg, type) {
   letter-spacing: 0.1em;
   color: var(--dm-text-muted);
 }
+/* ── Tagged Notes (session_note_entries — separate from the 5 structured recap fields above) ── */
+.scc-tagnote-section { margin-top: 2rem; }
+.scc-tagnote-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0.75rem;
+}
+.scc-tagnote-toolbar .scc-input { flex: 1; }
+.scc-tagnote-toolbar .cm-select { flex-shrink: 0; width: 12rem; }
+.scc-tagnote-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+.scc-tagnote-filter-btn {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: 20px;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-tagnote-filter-btn:hover { color: var(--dm-text); border-color: var(--scc-border-gold); }
+.scc-tagnote-filter-btn.active { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
+.scc-tagnote-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.scc-tagnote-card {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius);
+  padding: 0.85rem 1rem;
+}
+.scc-tagnote-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.scc-tagnote-badge {
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: 4px;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.5rem;
+}
+.scc-tagnote-badge--dmonly { background: var(--cyan-dim); border-color: var(--cyan-border); color: var(--cyan); }
+.scc-tagnote-badge--quest  { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
+.scc-tagnote-time {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dm-text-faint);
+  flex: 1;
+}
+.scc-tagnote-copy, .scc-tagnote-del {
+  background: transparent;
+  border: none;
+  color: var(--dm-text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.3rem;
+  transition: var(--dm-transition);
+}
+.scc-tagnote-copy:hover { color: var(--dm-gold); }
+.scc-tagnote-del:hover  { color: var(--dm-red); }
+.scc-tagnote-title {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 0.15rem 0;
+  margin-bottom: 0.35rem;
+  box-sizing: border-box;
+}
+.scc-tagnote-title:focus { outline: none; border-bottom-color: var(--scc-border-gold); }
+.scc-tagnote-title::placeholder { color: var(--dm-text-faint); font-weight: 400; }
+.scc-tagnote-body {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 50px;
+  padding: 0;
+  box-sizing: border-box;
+}
+.scc-tagnote-body:focus { outline: none; }
+.scc-tagnote-body::placeholder { color: var(--dm-text-faint); }
+.scc-audit-mode .scc-tagnote-section { display: none !important; }
 /* ── Quick Lookup Slide Panel ── */
 .scc-lookup-backdrop {
   position: fixed;
@@ -11023,6 +11139,7 @@ function sccSwitchPanel(name) {
   });
   if (name === 'live') { sccRenderLivePanel(); }
   if (name === 'fieldguide') { sccRenderFieldGuide(); }
+  if (name === 'notes') { sccRenderTaggedNotes(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 var SCC_FG_DATA    = null;   // cached on first load
@@ -12998,6 +13115,162 @@ function sccCopyPostSessionSummary() {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(lines).then(function(){ showDMToast('Post-session summary copied ✓','success'); });
   } else { prompt('Copy this summary:', lines); }
+}
+
+// ── Tagged Notes (session_note_entries) ─────────────────────────────
+// Separate, one-row-per-note table alongside session_notes' 5 structured
+// recap fields — see CLAUDE.md Decision Log (data-model recommendation)
+// for why session_notes itself wasn't restructured to this shape.
+// Categories fold in the original ask (DM-Only/Player Actions/Quest-Related/
+// Follow-Up) with the 5 existing textarea themes, merging near-duplicates
+// (Player Decisions→Player Actions, Follow-Up Needed→Follow-Up) rather than
+// keeping two near-identical tags.
+var SCC_NOTE_CATEGORIES = [
+  { id: 'dm-only',     label: 'DM-Only' },
+  { id: 'player',      label: 'Player Actions' },
+  { id: 'quest',       label: 'Quest-Related' },
+  { id: 'followup',    label: 'Follow-Up' },
+  { id: 'unexpected',  label: 'Unexpected Moment' },
+  { id: 'thread',      label: 'Loose Thread' },
+  { id: 'milestone',   label: 'Milestone' }
+];
+var SCC_NOTE_ENTRIES = [];
+var SCC_NOTE_FILTER_CAT = '';
+var SCC_NOTE_FILTER_Q = '';
+
+function sccNoteCategoryLabel(id) {
+  var c = SCC_NOTE_CATEGORIES.find(function(x){ return x.id === id; });
+  return c ? c.label : 'Uncategorized';
+}
+
+function sccRenderTaggedNotes() {
+  var newCatSel = document.getElementById('scc-tagnote-new-cat');
+  if (newCatSel && !newCatSel.options.length) {
+    newCatSel.innerHTML = SCC_NOTE_CATEGORIES.map(function(c) {
+      return '<option value="' + c.id + '">' + sccEsc(c.label) + '</option>';
+    }).join('');
+  }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  var listEl = document.getElementById('scc-tagnote-list');
+  if (!listEl) return;
+  if (!num) { listEl.innerHTML = '<div class="scc-empty-state">Save session setup first.</div>'; return; }
+  listEl.innerHTML = '<div class="scc-lookup-loading">Loading&#8230;</div>';
+  sccFetch('session_note_entries', '&session_number=eq.' + num + '&order=updated_at.desc').then(function(rows) {
+    SCC_NOTE_ENTRIES = Array.isArray(rows) ? rows : [];
+    sccRenderTagNoteFilters();
+    sccFilterTagNotes();
+  });
+}
+
+function sccRenderTagNoteFilters() {
+  var el = document.getElementById('scc-tagnote-filters');
+  if (!el) return;
+  var counts = {};
+  SCC_NOTE_ENTRIES.forEach(function(n) { counts[n.category] = (counts[n.category] || 0) + 1; });
+  el.innerHTML = '<button class="scc-tagnote-filter-btn' + (!SCC_NOTE_FILTER_CAT ? ' active' : '') + '" onclick="sccSetNoteFilterCat(\'\')">All (' + SCC_NOTE_ENTRIES.length + ')</button>'
+    + SCC_NOTE_CATEGORIES.map(function(c) {
+        var n = counts[c.id] || 0;
+        return '<button class="scc-tagnote-filter-btn' + (SCC_NOTE_FILTER_CAT === c.id ? ' active' : '') + '" onclick="sccSetNoteFilterCat(\'' + c.id + '\')">' + sccEsc(c.label) + ' (' + n + ')</button>';
+      }).join('');
+}
+
+function sccSetNoteFilterCat(cat) {
+  SCC_NOTE_FILTER_CAT = cat;
+  sccRenderTagNoteFilters();
+  sccFilterTagNotes();
+}
+
+function sccNoteSearchInput(v) {
+  SCC_NOTE_FILTER_Q = (v || '').toLowerCase().trim();
+  sccFilterTagNotes();
+}
+
+function sccFilterTagNotes() {
+  var listEl = document.getElementById('scc-tagnote-list');
+  if (!listEl) return;
+  var q = SCC_NOTE_FILTER_Q;
+  var filtered = SCC_NOTE_ENTRIES.filter(function(n) {
+    if (SCC_NOTE_FILTER_CAT && n.category !== SCC_NOTE_FILTER_CAT) return false;
+    if (q && (n.title || '').toLowerCase().indexOf(q) < 0 && (n.content || '').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="scc-empty-state">' + (SCC_NOTE_ENTRIES.length ? 'No notes match.' : 'No tagged notes yet — add one above.') + '</div>';
+    return;
+  }
+  listEl.innerHTML = filtered.map(sccBuildTagNoteCard).join('');
+}
+
+function sccNoteTimeAgo(iso) {
+  if (!iso) return '';
+  var diffMs = Date.now() - new Date(iso).getTime();
+  var mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+function sccBuildTagNoteCard(n) {
+  var catClass = n.category === 'dm-only' ? ' scc-tagnote-badge--dmonly' : n.category === 'quest' ? ' scc-tagnote-badge--quest' : '';
+  return '<div class="scc-tagnote-card" data-note-id="' + sccEsc(n.id) + '">'
+    + '<div class="scc-tagnote-card-head">'
+      + '<span class="scc-tagnote-badge' + catClass + '">' + sccEsc(sccNoteCategoryLabel(n.category)) + '</span>'
+      + '<span class="scc-tagnote-time">' + sccEsc(sccNoteTimeAgo(n.updated_at)) + '</span>'
+      + '<button class="scc-tagnote-copy" title="Copy note" onclick="sccCopyTagNote(\'' + sccEsc(n.id) + '\')">&#128203;</button>'
+      + '<button class="scc-tagnote-del" title="Delete note" onclick="sccDeleteTagNote(\'' + sccEsc(n.id) + '\')">&#10005;</button>'
+    + '</div>'
+    + '<input type="text" class="scc-tagnote-title" value="' + sccEsc(n.title || '') + '" placeholder="Untitled note" onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'title\',this.value)">'
+    + '<textarea class="scc-tagnote-body" placeholder="Write a note&#8230;" onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'content\',this.value)">' + sccEsc(n.content || '') + '</textarea>'
+  + '</div>';
+}
+
+function sccAddTagNote() {
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var catSel = document.getElementById('scc-tagnote-new-cat');
+  var category = catSel && catSel.value ? catSel.value : SCC_NOTE_CATEGORIES[0].id;
+  sccPost('session_note_entries', { session_number: num, category: category, title: '', content: '' }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not create note', 'error'); return; }
+    sccRenderTaggedNotes();
+  });
+}
+
+function sccSaveTagNoteField(id, field, value) {
+  var entry = SCC_NOTE_ENTRIES.find(function(n) { return n.id === id; });
+  if (entry) entry[field] = value;
+  var patch = {};
+  patch[field] = value;
+  sccPatch('session_note_entries', '?id=eq.' + encodeURIComponent(id), patch).then(function(r) {
+    if (!r.ok) showDMToast('Note not saved', 'error');
+  });
+}
+
+function sccDeleteTagNote(id) {
+  fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Delete failed', 'error'); return; }
+    SCC_NOTE_ENTRIES = SCC_NOTE_ENTRIES.filter(function(n) { return n.id !== id; });
+    sccRenderTagNoteFilters();
+    sccFilterTagNotes();
+    showDMToast('Note deleted', 'success');
+  }).catch(function() { showDMToast('Delete failed', 'error'); });
+}
+
+function sccCopyTagNote(id) {
+  var entry = SCC_NOTE_ENTRIES.find(function(n) { return n.id === id; });
+  if (!entry) return;
+  var text = '[' + sccNoteCategoryLabel(entry.category) + ']' + (entry.title ? ' ' + entry.title : '') + '\n' + (entry.content || '');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      showDMToast('Note copied to clipboard \u2713', 'success');
+    }).catch(function() { showDMToast('Copy failed', 'error'); });
+  } else {
+    prompt('Copy this note:', text);
+  }
 }
 
 // ── Global Search ─────────────────────────────────────────────────
