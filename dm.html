@@ -1155,7 +1155,58 @@
     <div class="scc-global-search-wrap">
       <span class="scc-global-search-icon">🔍</span>
       <input type="text" class="scc-global-search" id="scc-global-search" placeholder="Search all world entries…" oninput="sccGlobalSearch(this.value)" autocomplete="off">
+      <button type="button" class="scc-global-filter-toggle" id="scc-global-filter-toggle" onclick="sccGlobalToggleFilters()" title="Filters">&#9881;</button>
     </div>
+  </div>
+  <div class="scc-global-filters-bar" id="scc-global-filters-bar">
+    <select id="scc-gf-type" class="cm-select" onchange="sccGlobalTypeChanged()">
+      <option value="">All Types</option>
+      <option value="character">NPC</option>
+      <option value="city">Location</option>
+      <option value="creature">Creature</option>
+      <option value="organization">Organization</option>
+      <option value="item">Item</option>
+      <option value="quest">Quest</option>
+    </select>
+    <span class="scc-gf-group" data-gftype="character">
+      <select id="scc-gf-character-category" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Category: All</option></select>
+      <select id="scc-gf-character-player_facing" class="cm-select" onchange="sccGlobalFilterChanged()">
+        <option value="">Visibility: All</option>
+        <option value="true">Visible to Players</option>
+        <option value="false">DM Only</option>
+      </select>
+    </span>
+    <span class="scc-gf-group" data-gftype="city">
+      <select id="scc-gf-city-region" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Region: All</option></select>
+      <select id="scc-gf-city-nation" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Nation: All</option></select>
+      <select id="scc-gf-city-city_type" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Type: All</option></select>
+      <select id="scc-gf-city-player_facing" class="cm-select" onchange="sccGlobalFilterChanged()">
+        <option value="">Visibility: All</option>
+        <option value="true">Visible to Players</option>
+        <option value="false">DM Only</option>
+      </select>
+    </span>
+    <span class="scc-gf-group" data-gftype="creature">
+      <select id="scc-gf-creature-category" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Category: All</option></select>
+      <select id="scc-gf-creature-tier" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Tier: All</option></select>
+      <select id="scc-gf-creature-player_facing" class="cm-select" onchange="sccGlobalFilterChanged()">
+        <option value="">Visibility: All</option>
+        <option value="true">Visible to Players</option>
+        <option value="false">DM Only</option>
+      </select>
+    </span>
+    <span class="scc-gf-group" data-gftype="organization">
+      <select id="scc-gf-organization-alignment" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Alignment: All</option></select>
+    </span>
+    <span class="scc-gf-group" data-gftype="item">
+      <select id="scc-gf-item-category" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Category: All</option></select>
+      <select id="scc-gf-item-rarity" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Rarity: All</option></select>
+      <select id="scc-gf-item-equip_slot" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Equip Slot: All</option></select>
+    </span>
+    <span class="scc-gf-group" data-gftype="quest">
+      <select id="scc-gf-quest-status" class="cm-select" onchange="sccGlobalFilterChanged()"><option value="">Status: All</option></select>
+    </span>
+    <button type="button" class="scc-global-filters-reset" onclick="sccGlobalResetFilters()">Reset</button>
   </div>
   <div class="scc-global-results" id="scc-global-results"></div>
 
@@ -6704,6 +6755,7 @@ function showDMToast(msg, type) {
   font-size: 0.88rem;
   color: var(--text);
   line-height: 1.65;
+  white-space: pre-wrap;
 }
 .scc-ql-tags {
   display: flex;
@@ -7032,9 +7084,13 @@ function showDMToast(msg, type) {
   position: relative;
   flex: 1;
   max-width: 340px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .scc-global-search {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   background: var(--dm-surface-high);
   border: 1px solid var(--scc-border-mid);
   border-radius: var(--dm-radius-sm);
@@ -7050,6 +7106,43 @@ function showDMToast(msg, type) {
   border-color: var(--dm-gold);
   box-shadow: var(--dm-gold-glow);
 }
+.scc-global-filter-toggle {
+  flex-shrink: 0;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.38rem 0.55rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-global-filter-toggle:hover,
+.scc-global-filter-toggle.active { color: var(--dm-gold); border-color: var(--scc-border-gold); }
+.scc-global-filters-bar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--dm-surface-high);
+  border-bottom: 1px solid var(--scc-border-mid);
+  padding: 0.6rem 2rem;
+}
+.scc-global-filters-bar.open { display: flex; }
+.scc-gf-group { display: none; align-items: center; gap: 0.5rem; }
+.scc-gf-group.open { display: inline-flex; }
+.scc-global-filters-reset {
+  background: transparent;
+  border: none;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+.scc-global-filters-reset:hover { color: var(--dm-gold); }
 .scc-global-search-icon {
   position: absolute;
   left: 0.6rem;
@@ -12831,36 +12924,153 @@ function sccCopyPostSessionSummary() {
 }
 
 // ── Global Search ─────────────────────────────────────────────────
+// ── Global Search Filters ──────────────────────────────────────────
+// Filter dimensions per type — real columns confirmed against live data,
+// not the Content Manager's stale color_health/item-category lists.
+var SCC_GF_TYPE_FIELDS = {
+  character:    ['category', 'player_facing'],
+  city:         ['region', 'nation', 'city_type', 'player_facing'],
+  creature:     ['category', 'tier', 'player_facing'],
+  organization: ['alignment'],
+  item:         ['category', 'rarity', 'equip_slot'],
+  quest:        ['status']
+};
+
+function sccGlobalToggleFilters() {
+  var bar = document.getElementById('scc-global-filters-bar');
+  var btn = document.getElementById('scc-global-filter-toggle');
+  if (!bar) return;
+  var open = bar.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', open);
+  if (open) sccGlobalPopulateFilterOptions();
+}
+
+// Distinct option values are pulled live from the already-loaded in-memory
+// collections each time the filter bar opens — never hardcoded — so this
+// can't go stale the way Content Manager's dropdowns did.
+function sccGlobalPopulateFilterOptions() {
+  function distinct(arr, field) {
+    var seen = {}, out = [];
+    (arr || []).forEach(function(e) {
+      var v = e[field];
+      if (v && !seen[v]) { seen[v] = true; out.push(v); }
+    });
+    out.sort();
+    return out;
+  }
+  function fillSelect(id, label, values) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">' + sccEsc(label) + ': All</option>'
+      + values.map(function(v) { return '<option value="' + sccEsc(v) + '">' + sccEsc(v) + '</option>'; }).join('');
+    if (values.indexOf(current) >= 0) sel.value = current;
+  }
+
+  var chars     = typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [];
+  var cities    = typeof CITIES        !== 'undefined' ? CITIES        : [];
+  var creatures = typeof CREATURES     !== 'undefined' ? CREATURES     : [];
+  var orgs      = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
+  var items     = typeof ITEMS         !== 'undefined' ? ITEMS         : [];
+  var quests    = typeof QUESTS        !== 'undefined' ? QUESTS        : [];
+
+  fillSelect('scc-gf-character-category',     'Category',   distinct(chars, 'category'));
+  fillSelect('scc-gf-city-region',            'Region',     distinct(cities, 'region'));
+  fillSelect('scc-gf-city-nation',             'Nation',     distinct(cities, 'nation'));
+  fillSelect('scc-gf-city-city_type',          'Type',       distinct(cities, 'city_type'));
+  fillSelect('scc-gf-creature-category',       'Category',   distinct(creatures, 'category'));
+  fillSelect('scc-gf-creature-tier',           'Tier',       distinct(creatures, 'tier'));
+  fillSelect('scc-gf-organization-alignment',  'Alignment',  distinct(orgs, 'alignment'));
+  fillSelect('scc-gf-item-category',           'Category',   distinct(items, 'category'));
+  fillSelect('scc-gf-item-rarity',             'Rarity',     distinct(items, 'rarity'));
+  fillSelect('scc-gf-item-equip_slot',         'Equip Slot', distinct(items, 'equip_slot'));
+  fillSelect('scc-gf-quest-status',            'Status',     distinct(quests, 'status'));
+}
+
+function sccGlobalTypeChanged() {
+  var type = (document.getElementById('scc-gf-type') || {}).value || '';
+  document.querySelectorAll('.scc-gf-group').forEach(function(g) {
+    var match = g.getAttribute('data-gftype') === type;
+    g.classList.toggle('open', match);
+    if (!match) g.querySelectorAll('select').forEach(function(s) { s.value = ''; });
+  });
+  sccGlobalFilterChanged();
+}
+
+function sccGlobalFilterChanged() {
+  sccGlobalSearch((document.getElementById('scc-global-search') || {}).value || '');
+}
+
+function sccGlobalResetFilters() {
+  var typeSel = document.getElementById('scc-gf-type');
+  if (typeSel) typeSel.value = '';
+  document.querySelectorAll('#scc-global-filters-bar select').forEach(function(s) { s.value = ''; });
+  document.querySelectorAll('.scc-gf-group').forEach(function(g) { g.classList.remove('open'); });
+  sccGlobalFilterChanged();
+}
+
+function sccGlobalFieldMatcher(typeKey, fields) {
+  var active = {}, any = false;
+  fields.forEach(function(f) {
+    var el = document.getElementById('scc-gf-' + typeKey + '-' + f);
+    var v = el ? el.value : '';
+    if (v) { active[f] = v; any = true; }
+  });
+  if (!any) return null;
+  return function(e) {
+    for (var f in active) {
+      if (f === 'player_facing') {
+        if (Boolean(e.player_facing) !== (active[f] === 'true')) return false;
+      } else if (String(e[f] || '') !== active[f]) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
+function sccGlobalAnyFilterActive() {
+  if ((document.getElementById('scc-gf-type') || {}).value) return true;
+  var selects = document.querySelectorAll('#scc-global-filters-bar select');
+  for (var i = 0; i < selects.length; i++) { if (selects[i].value) return true; }
+  return false;
+}
+
 function sccGlobalSearch(query) {
   var resultsEl = document.getElementById('scc-global-results');
   if (!resultsEl) return;
   query = (query || '').toLowerCase().trim();
-  if (!query) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
+  var gfType = (document.getElementById('scc-gf-type') || {}).value || '';
+  if (!query && !sccGlobalAnyFilterActive()) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
 
   var allEntries = [];
-  var addCollection = function(arr, type, typeLabel) {
+  var addCollection = function(arr, type, typeLabel, matchExtra) {
+    if (gfType && gfType !== type) return;
     (arr || []).forEach(function(e) {
       if (!e.name) return;
-      if (e.name.toLowerCase().indexOf(query) >= 0 || (e.summary||'').toLowerCase().indexOf(query) >= 0) {
-        allEntries.push({ type: typeLabel, typeKey: type, id: e.id, name: e.name, summary: (e.summary||e.description||'').slice(0,80) });
-      }
+      if (query && e.name.toLowerCase().indexOf(query) < 0 && (e.summary||'').toLowerCase().indexOf(query) < 0) return;
+      if (matchExtra && !matchExtra(e)) return;
+      allEntries.push({ type: typeLabel, typeKey: type, id: e.id, name: e.name, summary: (e.summary||e.description||'').slice(0,80) });
     });
   };
 
-  addCollection(typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [], 'character',    'NPC');
-  addCollection(typeof CITIES        !== 'undefined' ? CITIES        : [], 'city',         'Location');
-  addCollection(typeof POIS          !== 'undefined' ? POIS          : [], 'city',         'POI');
+  addCollection(typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [], 'character',    'NPC',         sccGlobalFieldMatcher('character', SCC_GF_TYPE_FIELDS.character));
+  addCollection(typeof CITIES        !== 'undefined' ? CITIES        : [], 'city',         'Location',    sccGlobalFieldMatcher('city', SCC_GF_TYPE_FIELDS.city));
+  addCollection(typeof POIS          !== 'undefined' ? POIS          : [], 'city',         'POI',         sccGlobalFieldMatcher('city', SCC_GF_TYPE_FIELDS.city));
   addCollection(typeof NATIONS       !== 'undefined' ? NATIONS       : [], 'nation',       'Nation');
-  addCollection(typeof CREATURES     !== 'undefined' ? CREATURES     : [], 'creature',     'Creature');
-  addCollection(typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [], 'organization', 'Organization');
-  addCollection(typeof ITEMS         !== 'undefined' ? ITEMS         : [], 'item',         'Item');
-  addCollection(typeof QUESTS        !== 'undefined' ? QUESTS        : [], 'quest',        'Quest');
+  addCollection(typeof CREATURES     !== 'undefined' ? CREATURES     : [], 'creature',     'Creature',    sccGlobalFieldMatcher('creature', SCC_GF_TYPE_FIELDS.creature));
+  addCollection(typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [], 'organization', 'Organization', sccGlobalFieldMatcher('organization', SCC_GF_TYPE_FIELDS.organization));
+  addCollection(typeof ITEMS         !== 'undefined' ? ITEMS         : [], 'item',         'Item',        sccGlobalFieldMatcher('item', SCC_GF_TYPE_FIELDS.item));
+  addCollection(typeof QUESTS        !== 'undefined' ? QUESTS        : [], 'quest',        'Quest',       sccGlobalFieldMatcher('quest', SCC_GF_TYPE_FIELDS.quest));
+  addCollection(typeof REGIONS       !== 'undefined' ? REGIONS       : [], 'region',       'Region');
+  addCollection(typeof RELIGIONS     !== 'undefined' ? RELIGIONS     : [], 'religion',     'Religion');
+  addCollection(typeof SPECIES       !== 'undefined' ? SPECIES       : [], 'species',      'Species');
 
   allEntries.sort(function(a,b){ return a.name.localeCompare(b.name); });
   allEntries = allEntries.slice(0, 20);
 
   if (!allEntries.length) {
-    resultsEl.innerHTML = '<div class="scc-global-empty">No results for "' + sccEsc(query) + '"</div>';
+    resultsEl.innerHTML = '<div class="scc-global-empty">No results' + (query ? ' for "' + sccEsc(query) + '"' : ' match the current filters') + '</div>';
     resultsEl.classList.add('open');
     return;
   }
@@ -13234,6 +13444,120 @@ function sccOpenLookup(type, id) {
       + (it.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(it.dm_notes) + '</div></div>' : '')
       // ── TAGS ──
       + (itTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + itTagsHtml + '</div></div>' : '');
+  } else if (type === 'region') {
+    var regionsAll = typeof REGIONS !== 'undefined' ? REGIONS : [];
+    var reg = regionsAll.find(function(x){ return x.id === id; });
+    if (!reg) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+
+    var rgPfVal   = reg.player_facing;
+    var rgPfLabel = rgPfVal === true || rgPfVal === 'true' ? 'Visible to Players' : rgPfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var rgPfColor = rgPfVal === true || rgPfVal === 'true' ? 'var(--green)' : rgPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+
+    var rgCh = (reg.color_health || '').toLowerCase();
+    var rgIsVivid  = rgCh.indexOf('vivid')  >= 0 || rgCh.indexOf('excellent') >= 0 || rgCh.indexOf('good') >= 0;
+    var rgIsMuted  = rgCh.indexOf('muted')  >= 0;
+    var rgIsFaded  = rgCh.indexOf('faded')  >= 0 || rgCh.indexOf('fading') >= 0 || rgCh.indexOf('stage-1') >= 0;
+    var rgIsDimmed = rgCh.indexOf('dimmed') >= 0 || rgCh.indexOf('stage-2') >= 0 || rgCh.indexOf('dire') >= 0;
+    var rgHBg  = rgIsVivid ? '#6ee6d2' : rgIsMuted ? '#f0b429' : rgIsFaded ? '#aaa0c8' : rgIsDimmed ? '#a0a0b0' : '#666666';
+    var rgHTxt = rgIsMuted ? '#1a1008' : '#0b0e16';
+    var rgHealthBadgeHtml = reg.color_health
+      ? '<span class="scc-loc2-health-badge" style="background:' + rgHBg + ';color:' + rgHTxt + '">' + sccEsc(reg.color_health.replace(/-/g,' ').toUpperCase()) + '</span>'
+      : '';
+
+    var regionPortraitHtml = reg.image
+      ? '<img class="scc-ql-portrait" src="' + sccEsc(reg.image) + '" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-ql-portrait-fallback">' + sccEsc((reg.name||'?').charAt(0)) + '</div>';
+
+    var regionTagsHtml = '';
+    if (reg.tags && reg.tags.length) {
+      regionTagsHtml = reg.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    }
+
+    html = ''
+      // ── HEADER ──
+      + '<div class="scc-ql-header">'
+        + regionPortraitHtml
+        + '<div class="scc-ql-header-info">'
+          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
+            + rgHealthBadgeHtml
+            + '<span class="scc-ql-pf-badge" style="color:' + rgPfColor + ';border-color:' + rgPfColor + '">' + sccEsc(rgPfLabel) + '</span>'
+          + '</div>'
+          + '<div class="scc-ql-name">' + sccEsc(reg.name) + '</div>'
+          + (reg.tone ? '<div class="scc-ql-role">' + sccEsc(reg.tone) + '</div>' : '')
+        + '</div>'
+      + '</div>'
+      // ── PROSE SECTIONS ──
+      + (reg.summary     ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(reg.summary) + '</div></div>' : '')
+      + (reg.description ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(reg.description) + '</div></div>' : '')
+      // ── TAGS ──
+      + (regionTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + regionTagsHtml + '</div></div>' : '');
+  } else if (type === 'religion') {
+    var religionsAll = typeof RELIGIONS !== 'undefined' ? RELIGIONS : [];
+    var relg = religionsAll.find(function(x){ return x.id === id; });
+    if (!relg) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+
+    var relgPfVal   = relg.player_facing;
+    var relgPfLabel = relgPfVal === true || relgPfVal === 'true' ? 'Visible to Players' : relgPfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var relgPfColor = relgPfVal === true || relgPfVal === 'true' ? 'var(--green)' : relgPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+
+    var religionTagsHtml = '';
+    if (relg.tags && relg.tags.length) {
+      religionTagsHtml = relg.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    }
+
+    html = ''
+      // ── HEADER ── (religions table has no image column — fallback portrait only)
+      + '<div class="scc-ql-header">'
+        + '<div class="scc-ql-portrait-fallback">' + sccEsc((relg.name||'?').charAt(0)) + '</div>'
+        + '<div class="scc-ql-header-info">'
+          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
+            + '<span class="scc-ql-pf-badge" style="color:' + relgPfColor + ';border-color:' + relgPfColor + '">' + sccEsc(relgPfLabel) + '</span>'
+          + '</div>'
+          + '<div class="scc-ql-name">' + sccEsc(relg.name) + '</div>'
+          + '<div class="scc-ql-role">'
+            + (relg.deity        ? '<span class="scc-ql-bold">Deity:</span> ' + sccEsc(relg.deity) : '')
+            + (relg.deity && relg.headquarters ? ' &nbsp;·&nbsp; ' : '')
+            + (relg.headquarters ? '<span class="scc-ql-bold">HQ:</span> ' + sccEsc(relg.headquarters) : '')
+          + '</div>'
+        + '</div>'
+      + '</div>'
+      // ── FIELDS ──
+      + (relg.symbol ? '<div class="scc-ql-fields"><div class="scc-ql-row"><span class="scc-ql-label">Symbol</span><span class="scc-ql-value">' + sccEsc(relg.symbol) + '</span></div></div>' : '')
+      // ── PROSE SECTIONS ──
+      + (relg.summary     ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(relg.summary) + '</div></div>' : '')
+      + (relg.description ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(relg.description) + '</div></div>' : '')
+      + (relg.beliefs     ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Beliefs</div><div class="scc-ql-section-body">' + sccEsc(relg.beliefs) + '</div></div>' : '')
+      + (relg.practices   ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Practices</div><div class="scc-ql-section-body">' + sccEsc(relg.practices) + '</div></div>' : '')
+      // ── TAGS ──
+      + (religionTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + religionTagsHtml + '</div></div>' : '');
+  } else if (type === 'species') {
+    var speciesAll = typeof SPECIES !== 'undefined' ? SPECIES : [];
+    var sp = speciesAll.find(function(x){ return x.id === id; });
+    if (!sp) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+
+    var spPfVal   = sp.player_facing;
+    var spPfLabel = spPfVal === true || spPfVal === 'true' ? 'Visible to Players' : spPfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var spPfColor = spPfVal === true || spPfVal === 'true' ? 'var(--green)' : spPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+
+    html = ''
+      // ── HEADER ── (species table has no image column — fallback portrait only)
+      + '<div class="scc-ql-header">'
+        + '<div class="scc-ql-portrait-fallback">' + sccEsc((sp.name||'?').charAt(0)) + '</div>'
+        + '<div class="scc-ql-header-info">'
+          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
+            + '<span class="scc-ql-pf-badge" style="color:' + spPfColor + ';border-color:' + spPfColor + '">' + sccEsc(spPfLabel) + '</span>'
+          + '</div>'
+          + '<div class="scc-ql-name">' + sccEsc(sp.name) + '</div>'
+          + (sp.phb_equivalent ? '<div class="scc-ql-role"><span class="scc-ql-bold">PHB Equivalent:</span> ' + sccEsc(sp.phb_equivalent) + '</div>' : '')
+        + '</div>'
+      + '</div>'
+      // ── FIELDS ──
+      + '<div class="scc-ql-fields">'
+        + (sp.region   ? '<div class="scc-ql-row"><span class="scc-ql-label">Region</span><span class="scc-ql-value">' + sccEsc(sp.region) + '</span></div>' : '')
+        + (sp.affinity ? '<div class="scc-ql-row"><span class="scc-ql-label">Affinity</span><span class="scc-ql-value">' + sccEsc(sp.affinity) + '</span></div>' : '')
+      + '</div>'
+      // ── PROSE SECTIONS ──
+      + (sp.description ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(sp.description) + '</div></div>' : '');
   }
   content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
 }
