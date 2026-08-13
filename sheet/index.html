@@ -593,7 +593,12 @@
       object-fit: cover;
       flex-shrink: 0;
     }
-    .cs-story-card-headtext { display: flex; flex-direction: column; gap: 0.15rem; }
+    /* min-width:0 override needed — flex children default to min-width:auto
+       (their content's min-content size), so an unbreakable long title word
+       (e.g. a one-word background name like "Greywitnessed") pushed this
+       row wider than the card, clipping raggedly at the card edge with no
+       ellipsis. Same class of fix .cs-past-card-body already has. */
+    .cs-story-card-headtext { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
     .cs-story-card-label {
       font-family: var(--font-body);
       font-weight: 300;
@@ -606,6 +611,12 @@
       font-family: var(--font-display);
       font-size: var(--char-ov-h4);
       color: var(--text);
+      /* Wrap rather than truncate — these are lore names (backgrounds,
+         orgs, etc.) a player should be able to read in full, not the kind
+         of secondary label an ellipsis (.cs-equip-slot-name's pattern) is
+         fine for. overflow-wrap only breaks a word when it would otherwise
+         overflow, so normal multi-word titles wrap at spaces as before. */
+      overflow-wrap: break-word;
     }
     .cs-story-card-sub {
       font-family: var(--font-body);
@@ -634,6 +645,12 @@
       font-weight: 700;
       font-size: var(--char-ov-h5);
       color: var(--text);
+      /* Same gap as .cs-story-card-title, and same fix — needed even for
+         the --full layout, where the title sits in .cs-past-card-body
+         (already min-width:0) but the title text itself still has no
+         wrap handling of its own: min-width:0 stops the box from being
+         pushed wider, it doesn't make unbreakable text wrap within it. */
+      overflow-wrap: break-word;
     }
     .cs-past-card--full {
       flex-direction: row;
