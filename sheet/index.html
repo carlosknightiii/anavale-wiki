@@ -863,6 +863,42 @@
     .cs-ab-skill-total { flex: 0 0 auto; font-weight: 700; color: var(--text); }
     .cs-ab-skill-total.positive { color: var(--green); }
     .cs-ab-skill-total.negative { color: var(--red); }
+    /* Saving-throw row — one .cs-ab-skill row per card, wrapped for its own
+       spacing (mirrors .cs-ab-skills' side padding, plus a small gap before
+       the skills list below it so "Save" doesn't read as just another skill). */
+    .cs-ab-save {
+      width: 100%;
+      align-self: stretch;
+      box-sizing: border-box;
+      padding: 0 var(--char-ov-gap-xs);
+      margin-bottom: 0.4rem;
+    }
+    /* Passive Perception — small gold-accented pill on the WIS card only,
+       not a rollable stat so deliberately distinct from the skill list
+       (smaller scale than .cs-mi-ac-badge — this isn't as load-bearing as AC). */
+    .cs-ab-passive {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.35rem;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gold);
+      cursor: help;
+    }
+    .cs-ab-passive-label {
+      font-family: var(--font-body);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--gold);
+    }
+    .cs-ab-passive-val {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
     .cs-feat-list {
       display: flex;
       flex-wrap: wrap;
@@ -2942,6 +2978,31 @@
     wis: ['Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival'],
     cha: ['Deception', 'Intimidation', 'Performance', 'Persuasion']
   };
+  // Full ability name per short key — matches classes.saving_throws' format
+  // ("Strength, Constitution", confirmed against all 12 real classes) so
+  // parseSavingThrows() can map it back to the str/dex/con/int/wis/cha keys
+  // used everywhere else on this tab.
+  var AB_FULL = { str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma' };
+  // Saving-throw tooltips — plain language for new players, one per ability.
+  var SAVE_TIPS = {
+    str: 'Resisting being physically shoved, grappled, or restrained.',
+    dex: 'Dodging fireballs, traps, and other effects that hit an area.',
+    con: 'Resisting poison and disease, and staying focused to keep a spell going.',
+    int: 'Resisting effects that mess with your mind — illusions, psychic attacks.',
+    wis: 'Resisting charm, fear, and other effects aimed at your willpower.',
+    cha: 'Resisting effects that try to banish you or take over your identity.'
+  };
+  // classes.saving_throws is a comma-separated string of full ability names
+  // (e.g. "Strength, Dexterity") — confirmed against all 12 real classes.
+  function parseSavingThrows(savesStr) {
+    if (!savesStr) return {};
+    var proficient = {};
+    var names = savesStr.split(',').map(function(s) { return s.trim(); });
+    Object.keys(AB_FULL).forEach(function(ab) {
+      if (names.indexOf(AB_FULL[ab]) !== -1) proficient[ab] = true;
+    });
+    return proficient;
+  }
   // Ability score tooltips — verbatim from character.html's .char-ability-name
   // data-tip text (richer than the sheet had before; this replaces the old
   // per-tab copy rather than merging with it).
@@ -3332,25 +3393,36 @@
   // no marker at all for flat-bonus or neither — a dot next to a flat-bonus
   // skill read as a second, unexplained state once the "(+1)" next to its
   // total already said the same thing (DM feedback on live review).
+  // Single source of truth for a skill's proficiency state/total — shared by
+  // each skill row below and the Passive Perception badge, so the two can't
+  // drift on the same "is proficiency superseding a flat +1" math.
+  function computeSkillTotal(name, modNum, profBonus, ch) {
+    var skillsArr  = Array.isArray(ch && ch.skills) ? ch.skills : [];
+    var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
+    var isProficient = skillsArr.indexOf(name) !== -1;
+    var flatBonusObj = !isProficient ? bonusesArr.find(function(b) { return b && b.skill === name; }) : null;
+    var flatAmount = flatBonusObj ? (parseInt(flatBonusObj.amount) || 1) : 0;
+    var hasFlatBonus = !!flatBonusObj;
+    return {
+      total: modNum + (isProficient ? profBonus : hasFlatBonus ? flatAmount : 0),
+      isProficient: isProficient,
+      hasFlatBonus: hasFlatBonus,
+      flatAmount: flatAmount
+    };
+  }
   function abilitySkillsInnerHtml(ab, modNum, profBonus, ch) {
     var skillNames = ABILITY_SKILLS[ab] || [];
     if (!skillNames.length) {
       return '<div class="cs-ab-skills-empty">No skills</div>';
     }
-    var skillsArr  = Array.isArray(ch && ch.skills) ? ch.skills : [];
-    var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
     return skillNames.map(function(name) {
-      var isProficient = skillsArr.indexOf(name) !== -1;
-      var flatBonusObj = !isProficient ? bonusesArr.find(function(b) { return b && b.skill === name; }) : null;
-      var flatAmount = flatBonusObj ? (parseInt(flatBonusObj.amount) || 1) : 0;
-      var hasFlatBonus = !!flatBonusObj;
-      var total = modNum + (isProficient ? profBonus : hasFlatBonus ? flatAmount : 0);
-      var totalStr = (total >= 0 ? '+' : '') + total
-        + (hasFlatBonus ? ' (+' + flatAmount + ')' : '');
-      var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
-      var stateCls = isProficient ? 'cs-ab-skill--proficient' : hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
+      var s = computeSkillTotal(name, modNum, profBonus, ch);
+      var totalStr = (s.total >= 0 ? '+' : '') + s.total
+        + (s.hasFlatBonus ? ' (+' + s.flatAmount + ')' : '');
+      var totalCls = s.total > 0 ? 'positive' : s.total < 0 ? 'negative' : '';
+      var stateCls = s.isProficient ? 'cs-ab-skill--proficient' : s.hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
       var tip = SKILL_TIPS[name];
-      var markerHtml = isProficient
+      var markerHtml = s.isProficient
         ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
         : '<span class="cs-ab-skill-marker"></span>';
       return '<div class="cs-ab-skill ' + stateCls + '">'
@@ -3361,6 +3433,38 @@
         + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
       + '</div>';
     }).join('');
+  }
+  // Saving-throw row — same visual family as a skill row (reuses
+  // .cs-ab-skill* classes verbatim, just labeled "Save"), one per ability
+  // card. Proficiency comes from classes.saving_throws via
+  // parseSavingThrows(), not ch.skills — a different proficiency source
+  // than the skill rows above.
+  function abilitySaveRowHtml(ab, modNum, profBonus, isProficient) {
+    var total = modNum + (isProficient ? profBonus : 0);
+    var totalStr = (total >= 0 ? '+' : '') + total;
+    var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
+    var stateCls = isProficient ? 'cs-ab-skill--proficient' : 'cs-ab-skill--none';
+    var markerHtml = isProficient
+      ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
+      : '<span class="cs-ab-skill-marker"></span>';
+    return '<div class="cs-ab-skill ' + stateCls + '">'
+      + markerHtml
+      + '<span class="cs-ab-skill-name">Save'
+        + '<span class="cs-ab-tip" data-tip="' + SAVE_TIPS[ab].replace(/"/g,'&quot;') + '">?</span>'
+      + '</span>'
+      + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
+    + '</div>';
+  }
+  // Passive Perception — 10 + Perception's total (proficiency or flat bonus,
+  // same computeSkillTotal() math the Perception skill row uses). WIS-card
+  // only; not a rollable stat, so styled as a distinct small pill rather
+  // than folded into the skill list.
+  function passivePerceptionBadgeHtml(wisModNum, profBonus, ch) {
+    var passive = 10 + computeSkillTotal('Perception', wisModNum, profBonus, ch).total;
+    return '<div class="cs-ab-passive" data-tip="A background number, not a roll. The DM checks this quietly to see if you notice something without trying — a hidden trap, someone lurking nearby.">'
+      + '<span class="cs-ab-passive-label">Passive Perception</span>'
+      + '<span class="cs-ab-passive-val">' + passive + '</span>'
+    + '</div>';
   }
 
   // Ability Scores tab content (Figma 51:1663/51:1668) — 6 cards from
@@ -3382,6 +3486,12 @@
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_SHORT = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    // classes.saving_throws hasn't necessarily resolved yet on this first,
+    // synchronous render (CLASS_ROW is null until fetchClassData() settles)
+    // — same ordering gap profBonus already works around via SHEET. Falls
+    // back to all-non-proficient rather than hiding the row; renderAbility-
+    // Skills() re-derives this once CLASS_ROW is guaranteed loaded.
+    var savesProficient = parseSavingThrows(CLASS_ROW ? CLASS_ROW.saving_throws : null);
     var cards = AB_KEYS.map(function(ab) {
       var raw    = parseInt(scores[ab]) || 0;
       var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
@@ -3395,7 +3505,9 @@
           + '</div>'
           + '<div class="cs-ab-val">' + (raw || '—') + '</div>'
           + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
+          + (ab === 'wis' ? '<div id="cs-ab-passive-perception">' + passivePerceptionBadgeHtml(modNum, profBonus, ch) + '</div>' : '')
         + '</div>'
+        + '<div class="cs-ab-save" id="cs-ab-save-' + ab + '">' + abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab]) + '</div>'
         + '<div class="cs-ab-skills" id="cs-ab-skills-' + ab + '">' + abilitySkillsInnerHtml(ab, modNum, profBonus, ch) + '</div>'
       + '</div>';
     }).join('');
@@ -3403,20 +3515,31 @@
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
   }
 
-  // Refreshes the 6 skill blocks in place once SHEET (real proficiency_bonus)
-  // has loaded — called from renderLivePlay(). ch.skills/ch.skill_bonuses
-  // don't change after initial load, so only the proficiency-bonus-dependent
-  // math needs a second pass; ability modifiers are re-read from the same
-  // global ABILITY_SCORES buildAbilityScoresHtml used initially.
+  // Refreshes the 6 skill blocks, 6 save rows, and the Passive Perception
+  // badge in place once SHEET (real proficiency_bonus) and CLASS_ROW (real
+  // saving_throws) have both loaded — called from renderLivePlay(), which
+  // only runs after the Promise.all covering both fetches resolves, so
+  // CLASS_ROW is guaranteed set here even though it isn't on the first,
+  // synchronous buildAbilityScoresHtml() render above. ch.skills/
+  // ch.skill_bonuses don't change after initial load, so only the
+  // proficiency-bonus/saving-throws-dependent math needs a second pass;
+  // ability modifiers are re-read from the same global ABILITY_SCORES
+  // buildAbilityScoresHtml used initially.
   function renderAbilitySkills() {
     if (!CH) return;
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    var savesProficient = parseSavingThrows(CLASS_ROW ? CLASS_ROW.saving_throws : null);
     ['str','dex','con','int','wis','cha'].forEach(function(ab) {
-      var el = document.getElementById('cs-ab-skills-' + ab);
-      if (!el) return;
       var raw = parseInt(ABILITY_SCORES[ab]) || 0;
       var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
-      el.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
+      var skillsEl = document.getElementById('cs-ab-skills-' + ab);
+      if (skillsEl) skillsEl.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
+      var saveEl = document.getElementById('cs-ab-save-' + ab);
+      if (saveEl) saveEl.innerHTML = abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab]);
+      if (ab === 'wis') {
+        var passiveEl = document.getElementById('cs-ab-passive-perception');
+        if (passiveEl) passiveEl.innerHTML = passivePerceptionBadgeHtml(modNum, profBonus, CH);
+      }
     });
   }
 
