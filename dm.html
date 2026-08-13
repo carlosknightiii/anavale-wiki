@@ -7014,6 +7014,72 @@ function showDMToast(msg, type) {
   color: var(--text-muted);
 }
 
+/* ── Vendor / Shop section (Quick Lookup drawer) ── */
+.scc-shop-section { margin-top: 0.5rem; }
+.scc-shop-buyer-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.scc-shop-buyer-label {
+  font-family: var(--font-body); font-size: 0.75rem; color: var(--text-muted);
+}
+.scc-shop-buyer-row select { max-width: 220px; }
+.scc-shop-empty {
+  font-family: var(--font-body); font-size: 0.82rem; color: var(--text-muted);
+  font-style: italic; padding: 0.5rem 0;
+}
+.scc-shop-row {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--border-mid);
+}
+.scc-shop-row:last-of-type { border-bottom: none; }
+.scc-shop-thumb {
+  width: 40px; height: 40px; border-radius: var(--radius-sm, 6px);
+  object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-mid);
+}
+.scc-shop-thumb-fallback {
+  width: 40px; height: 40px; border-radius: var(--radius-sm, 6px);
+  background: var(--surface-3); border: 1px solid var(--border-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headers); color: var(--text-muted); flex-shrink: 0;
+}
+.scc-shop-row-info { flex: 1; min-width: 0; }
+.scc-shop-row-name {
+  font-family: var(--font-body); font-size: 0.88rem; font-weight: 600; color: var(--text);
+}
+.scc-shop-catalog-price {
+  font-weight: 400; color: var(--text-muted); font-size: 0.75rem;
+}
+.scc-shop-row-edit {
+  display: flex; align-items: center; gap: 0.35rem; margin-top: 0.3rem;
+}
+.scc-shop-row-edit label {
+  font-family: var(--font-body); font-size: 0.68rem; color: var(--text-muted);
+}
+.scc-shop-mini-input {
+  width: 60px; padding: 0.15rem 0.35rem;
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm); color: var(--dm-text);
+  font-family: var(--font-sans); font-size: 0.75rem;
+}
+.scc-shop-qty-input {
+  width: 48px; padding: 0.25rem 0.4rem;
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm); color: var(--dm-text);
+  font-family: var(--font-sans); font-size: 0.78rem; flex-shrink: 0;
+}
+.scc-shop-unavailable {
+  font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted);
+  font-style: italic; flex-shrink: 0; white-space: nowrap;
+}
+.scc-shop-del {
+  background: transparent; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 0.8rem; flex-shrink: 0; padding: 0.2rem;
+  transition: var(--dm-transition);
+}
+.scc-shop-del:hover { color: var(--dm-red); }
+.scc-shop-add-row { margin-top: 0.7rem; }
+
 .scc-lookup-loading {
   color: var(--dm-text-muted);
   font-family: var(--font-sans);
@@ -10696,7 +10762,8 @@ function sccInit() {
     sccFetch('quests').then(function(rows) { if (Array.isArray(rows) && rows.length) window.QUESTS = rows; }),
     sccFetch('species', '&order=sort_order.asc').then(function(rows) { window.SPECIES = Array.isArray(rows) ? rows : []; }),
     sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; }),
-    sccFetch('conditions', '&order=sort_order.asc').then(function(rows) { window.SCC_CONDITIONS_DATA = Array.isArray(rows) ? rows : []; })
+    sccFetch('conditions', '&order=sort_order.asc').then(function(rows) { window.SCC_CONDITIONS_DATA = Array.isArray(rows) ? rows : []; }),
+    sccFetch('vendor_stock', '&order=sort_order.asc').then(function(rows) { window.VENDOR_STOCK = Array.isArray(rows) ? rows : []; })
   ]).then(function() {
     sccLoadPlayers();
     sccLoadLatestSession();
@@ -13150,6 +13217,166 @@ function sccAwardItem(combatantIdx, itemIdx) {
   });
 }
 
+// ── Vendor / Shop (woven into the Quick Lookup drawer for POIs/orgs) ──
+function sccVendorStockFor(collection, entityId) {
+  var all = typeof VENDOR_STOCK !== 'undefined' ? VENDOR_STOCK : [];
+  return all.filter(function(s) { return s.entity_collection === collection && s.entity_id === entityId; });
+}
+
+function sccVendorShopSectionHtml(collection, entityId) {
+  var stock = sccVendorStockFor(collection, entityId);
+  var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var players = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+  var buyerSelId = 'scc-shop-buyer-' + collection + '-' + entityId;
+  var buyerOptions = players.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
+  var dropId = 'scc-shop-search-drop-' + collection + '-' + entityId;
+
+  var rowsHtml = stock.map(function(s) {
+    var item = itemsAll.find(function(x) { return x.id === s.item_id; });
+    var name = item ? item.name : s.item_id;
+    var catalogPrice = item && item.cost_gp != null ? item.cost_gp : null;
+    var effectivePrice = (s.price_gp_override != null) ? s.price_gp_override : catalogPrice;
+    var outOfStock = s.quantity != null && s.quantity <= 0;
+    var canBuy = effectivePrice != null && !outOfStock && players.length;
+    var thumb = (item && item.image)
+      ? '<img class="scc-shop-thumb" src="' + sccEsc(item.image) + '" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-shop-thumb-fallback">' + sccEsc((name || '?').charAt(0)) + '</div>';
+    return '<div class="scc-shop-row">'
+      + thumb
+      + '<div class="scc-shop-row-info">'
+        + '<div class="scc-shop-row-name">' + sccEsc(name) + (catalogPrice != null ? '<span class="scc-shop-catalog-price"> (catalog: ' + catalogPrice + ' gp)</span>' : '') + '</div>'
+        + '<div class="scc-shop-row-edit">'
+          + '<label>Price (gp)</label>'
+          + '<input type="number" step="0.01" min="0" class="scc-shop-mini-input" placeholder="' + (catalogPrice != null ? catalogPrice : '—') + '" value="' + (s.price_gp_override != null ? s.price_gp_override : '') + '" onblur="sccVendorSetField(\'' + escQ(s.id) + '\',\'price_gp_override\',this.value===\'\'?null:parseFloat(this.value))">'
+          + '<label>Qty</label>'
+          + '<input type="number" step="1" min="0" class="scc-shop-mini-input" placeholder="&#8734;" value="' + (s.quantity != null ? s.quantity : '') + '" onblur="sccVendorSetField(\'' + escQ(s.id) + '\',\'quantity\',this.value===\'\'?null:parseInt(this.value))">'
+        + '</div>'
+      + '</div>'
+      + (canBuy
+        ? '<input type="number" min="1" value="1" class="scc-shop-qty-input" id="scc-shop-buyqty-' + s.id + '">'
+          + '<button class="scc-btn-sm" onclick="sccVendorBuy(\'' + escQ(s.id) + '\',\'' + escQ(buyerSelId) + '\')">Buy</button>'
+        : '<span class="scc-shop-unavailable">' + (outOfStock ? 'Out of stock' : (!players.length ? 'No players' : 'No price set')) + '</span>')
+      + '<button class="scc-shop-del" title="Remove from stock" onclick="sccVendorRemoveStock(\'' + escQ(s.id) + '\',\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\')">&#10005;</button>'
+    + '</div>';
+  }).join('');
+
+  return '<div class="scc-ql-section scc-shop-section">'
+    + '<div class="scc-ql-section-label">Shop</div>'
+    + (players.length ? '<div class="scc-shop-buyer-row"><span class="scc-shop-buyer-label">Buying as</span><select class="scc-input" id="' + buyerSelId + '">' + buyerOptions + '</select></div>' : '')
+    + (rowsHtml || '<div class="scc-shop-empty">Nothing in stock yet.</div>')
+    + '<div class="scc-picker-search-wrap scc-shop-add-row">'
+      + '<input type="text" class="scc-picker-search" placeholder="Search items to add to stock&#8230;" oninput="sccVendorSearchStock(\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\',this.value)" autocomplete="off">'
+      + '<div class="scc-picker-dropdown" id="' + dropId + '"></div>'
+    + '</div>'
+  + '</div>';
+}
+
+function sccVendorSearchStock(collection, entityId, query) {
+  var dropId = 'scc-shop-search-drop-' + collection + '-' + entityId;
+  var drop = document.getElementById(dropId);
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var items = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var already = sccVendorStockFor(collection, entityId).map(function(s) { return s.item_id; });
+  var results = items.filter(function(i) {
+    return i.name.toLowerCase().indexOf(query) >= 0 && already.indexOf(i.id) === -1;
+  }).slice(0, 10);
+  if (!results.length) {
+    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+    drop.classList.add('open');
+    return;
+  }
+  drop.innerHTML = results.map(function(item) {
+    return '<div class="scc-picker-option" onclick="sccVendorAddStock(\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\',\'' + escQ(item.id) + '\')">'
+      + sccEsc(item.name)
+      + '<div class="scc-picker-option-sub">' + sccEsc(item.category || '') + (item.cost_gp != null ? ' &middot; ' + item.cost_gp + ' gp' : '') + '</div>'
+    + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+
+function sccVendorRefreshLookup(collection, entityId) {
+  sccOpenLookup(collection === 'pois' ? 'city' : 'organization', entityId);
+}
+
+function sccVendorAddStock(collection, entityId, itemId) {
+  var body = {
+    entity_collection: collection,
+    entity_id: entityId,
+    item_id: itemId,
+    sort_order: sccVendorStockFor(collection, entityId).length
+  };
+  sccPost('vendor_stock', body).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to add item to stock', 'error'); return; }
+    return sccFetch('vendor_stock', '&order=sort_order.asc').then(function(rows) {
+      window.VENDOR_STOCK = Array.isArray(rows) ? rows : [];
+      sccVendorRefreshLookup(collection, entityId);
+      showDMToast('Added to shop stock', 'success');
+    });
+  }).catch(function() { showDMToast('Failed to add item to stock', 'error'); });
+}
+
+function sccVendorSetField(stockId, field, value) {
+  var stock = (typeof VENDOR_STOCK !== 'undefined' ? VENDOR_STOCK : []).find(function(s) { return s.id === stockId; });
+  if (!stock) return;
+  stock[field] = value;
+  var patch = {};
+  patch[field] = value;
+  sccPatch('vendor_stock', '?id=eq.' + encodeURIComponent(stockId), patch).then(function(r) {
+    if (!r.ok) { showDMToast('Save failed', 'error'); return; }
+    sccVendorRefreshLookup(stock.entity_collection, stock.entity_id);
+  });
+}
+
+function sccVendorRemoveStock(stockId, collection, entityId) {
+  fetch(SCC_URL + '/rest/v1/vendor_stock?id=eq.' + encodeURIComponent(stockId), {
+    method: 'DELETE',
+    headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Remove failed', 'error'); return; }
+    window.VENDOR_STOCK = (typeof VENDOR_STOCK !== 'undefined' ? VENDOR_STOCK : []).filter(function(s) { return s.id !== stockId; });
+    sccVendorRefreshLookup(collection, entityId);
+    showDMToast('Removed from shop stock', 'success');
+  }).catch(function() { showDMToast('Remove failed', 'error'); });
+}
+
+function sccVendorBuy(stockId, buyerSelId) {
+  var stock = (typeof VENDOR_STOCK !== 'undefined' ? VENDOR_STOCK : []).find(function(s) { return s.id === stockId; });
+  if (!stock) return;
+  var item = (typeof ITEMS !== 'undefined' ? ITEMS : []).find(function(x) { return x.id === stock.item_id; });
+  var price = (stock.price_gp_override != null) ? stock.price_gp_override : (item && item.cost_gp != null ? item.cost_gp : null);
+  if (price == null) { showDMToast('This item has no price set', 'error'); return; }
+  var buyerSel = document.getElementById(buyerSelId);
+  var buyerIdx = buyerSel ? parseInt(buyerSel.value) : 0;
+  var player = SCC_PLAYERS[buyerIdx];
+  if (!player) { showDMToast('No player selected', 'error'); return; }
+  var sheet = SCC_SHEETS[player.id];
+  if (!sheet) { showDMToast('No character sheet found for ' + player.name, 'error'); return; }
+  var qtyInput = document.getElementById('scc-shop-buyqty-' + stockId);
+  var qty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 1;
+  if (stock.quantity != null && qty > stock.quantity) { showDMToast('Only ' + stock.quantity + ' in stock', 'error'); return; }
+  var totalCP = Math.round(price * 100) * qty;
+  var currentCP = sheet.gold_cp || 0;
+  if (totalCP > currentCP) { showDMToast(player.name + ' cannot afford this (' + (totalCP / 100) + 'gp needed)', 'error'); return; }
+  var newGold = currentCP - totalCP;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(player.id), { gold_cp: newGold }).then(function(r) {
+    if (!r.ok) { showDMToast('Purchase failed', 'error'); return null; }
+    sheet.gold_cp = newGold;
+    return sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: stock.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: false });
+  }).then(function(r2) {
+    if (!r2) return;
+    if (!r2.ok) { showDMToast('Gold deducted but item grant failed', 'error'); return; }
+    if (stock.quantity != null) {
+      var newQty = stock.quantity - qty;
+      stock.quantity = newQty;
+      sccPatch('vendor_stock', '?id=eq.' + encodeURIComponent(stock.id), { quantity: newQty });
+    }
+    showDMToast((item ? item.name : 'Item') + ' purchased for ' + player.name, 'success');
+    sccVendorRefreshLookup(stock.entity_collection, stock.entity_id);
+  }).catch(function() { showDMToast('Purchase failed', 'error'); });
+}
+
 function sccAwardCoins(combatantIdx) {
   var c = SCC_INITIATIVE[combatantIdx];
   if (!c || !c.loot) return;
@@ -13908,7 +14135,9 @@ function sccOpenLookup(type, id) {
           return html2;
         })()
       // ── TAGS ──
-      + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '');
+      + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '')
+      // ── SHOP (POIs only) ──
+      + ((typeof POIS !== 'undefined' ? POIS : []).some(function(p){ return p.id === loc.id; }) ? sccVendorShopSectionHtml('pois', loc.id) : '');
   } else if (type === 'creature') {
     var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
     var cr = creatures.find(function(x){ return x.id===id; });
@@ -14016,7 +14245,9 @@ function sccOpenLookup(type, id) {
       + (org.secret    ? '<div class="scc-dm-block"><div class="scc-dm-label">&#9888; Secret</div><div class="scc-dm-text">' + sccEsc(org.secret) + '</div></div>' : '')
       + (org.dm_notes  ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(org.dm_notes) + '</div></div>' : '')
       // ── TAGS ──
-      + (orgTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + orgTagsHtml + '</div></div>' : '');
+      + (orgTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + orgTagsHtml + '</div></div>' : '')
+      // ── SHOP ──
+      + sccVendorShopSectionHtml('organizations', org.id);
   } else if (type === 'item') {
     var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
     var it = itemsAll.find(function(x){ return x.id === id; });
