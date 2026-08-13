@@ -899,6 +899,17 @@
       font-size: 0.95rem;
       color: var(--text);
     }
+    /* Saving-throw intro tip (STR's row only) — same .cs-ab-tip pill, but a
+       distinct blue "i" instead of the standard gold "?" so it reads as a
+       general "what's a saving throw" explainer, not a fact specific to
+       Strength. Precedes the "Save" text, so its spacing is mirrored
+       (margin-right instead of the base rule's margin-left). */
+    .cs-ab-tip--intro {
+      margin-left: 0;
+      margin-right: 0.35rem;
+      background: var(--blue-400);
+      color: var(--text);
+    }
     .cs-feat-list {
       display: flex;
       flex-wrap: wrap;
@@ -2992,6 +3003,15 @@
     wis: 'Resisting charm, fear, and other effects aimed at your willpower.',
     cha: 'Resisting effects that try to banish you or take over your identity.'
   };
+  // Top-level "what is a saving throw" explainer — one concept, shown once
+  // (on STR's row only, see abilitySaveRowHtml), distinct from the six
+  // per-ability SAVE_TIPS below which explain what triggers *that* save.
+  // DM's explicit decision (addendum to the original handoff): a single
+  // explainer, not six, and — since saves render one-per-card with no
+  // shared "Saving Throws" heading to hang a tip off of — attached to the
+  // first row with a visually distinct treatment so it doesn't read as
+  // STR-specific.
+  var SAVE_INTRO_TIP = 'Saving throws — When something bad is about to happen to you (a trap, a spell, a monster\'s breath attack), you roll to resist it. This shows how good you are at resisting each type.';
   // classes.saving_throws is a comma-separated string of full ability names
   // (e.g. "Strength, Dexterity") — confirmed against all 12 real classes.
   function parseSavingThrows(savesStr) {
@@ -3439,7 +3459,7 @@
   // card. Proficiency comes from classes.saving_throws via
   // parseSavingThrows(), not ch.skills — a different proficiency source
   // than the skill rows above.
-  function abilitySaveRowHtml(ab, modNum, profBonus, isProficient) {
+  function abilitySaveRowHtml(ab, modNum, profBonus, isProficient, showIntroTip) {
     var total = modNum + (isProficient ? profBonus : 0);
     var totalStr = (total >= 0 ? '+' : '') + total;
     var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
@@ -3447,9 +3467,17 @@
     var markerHtml = isProficient
       ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
       : '<span class="cs-ab-skill-marker"></span>';
+    // Intro tip (STR's row only) renders first and uses a distinct blue "i"
+    // pill, not the standard gold "?" — so it reads as "what's a saving
+    // throw" in general, not as another fact specific to Strength.
+    var introTipHtml = showIntroTip
+      ? '<span class="cs-ab-tip cs-ab-tip--intro" data-tip="' + SAVE_INTRO_TIP.replace(/"/g,'&quot;') + '">i</span>'
+      : '';
     return '<div class="cs-ab-skill ' + stateCls + '">'
       + markerHtml
-      + '<span class="cs-ab-skill-name">Save'
+      + '<span class="cs-ab-skill-name">'
+        + introTipHtml
+        + 'Save'
         + '<span class="cs-ab-tip" data-tip="' + SAVE_TIPS[ab].replace(/"/g,'&quot;') + '">?</span>'
       + '</span>'
       + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
@@ -3507,7 +3535,7 @@
           + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
           + (ab === 'wis' ? '<div id="cs-ab-passive-perception">' + passivePerceptionBadgeHtml(modNum, profBonus, ch) + '</div>' : '')
         + '</div>'
-        + '<div class="cs-ab-save" id="cs-ab-save-' + ab + '">' + abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab]) + '</div>'
+        + '<div class="cs-ab-save" id="cs-ab-save-' + ab + '">' + abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab], ab === 'str') + '</div>'
         + '<div class="cs-ab-skills" id="cs-ab-skills-' + ab + '">' + abilitySkillsInnerHtml(ab, modNum, profBonus, ch) + '</div>'
       + '</div>';
     }).join('');
@@ -3535,7 +3563,7 @@
       var skillsEl = document.getElementById('cs-ab-skills-' + ab);
       if (skillsEl) skillsEl.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
       var saveEl = document.getElementById('cs-ab-save-' + ab);
-      if (saveEl) saveEl.innerHTML = abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab]);
+      if (saveEl) saveEl.innerHTML = abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab], ab === 'str');
       if (ab === 'wis') {
         var passiveEl = document.getElementById('cs-ab-passive-perception');
         if (passiveEl) passiveEl.innerHTML = passivePerceptionBadgeHtml(modNum, profBonus, CH);
