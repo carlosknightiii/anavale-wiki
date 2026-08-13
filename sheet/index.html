@@ -3728,6 +3728,10 @@
         + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
         + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
       + '</div>'
+      + '<div class="cs-ov-class-card cs-spell-slots-card" id="cs-spellcasting-stats-card" style="display:none;">'
+        + '<div class="cs-class-features-label" style="margin-top:0;">Spellcasting</div>'
+        + '<div id="cs-class-spellcasting-stats"></div>'
+      + '</div>'
       + '<div class="cs-ov-class-card cs-spell-slots-card">'
         + '<div class="cs-class-features-label" style="margin-top:0;">Spell Slots</div>'
         + '<div id="cs-class-spell-slots"></div>'
@@ -3795,6 +3799,43 @@
     saveSheet({ spell_slots_max: maxObj, spell_slots: curObj });
     input.value = '';
     renderSpellSlots();
+  }
+
+  // ── Spellcasting stats (Class tab, new) — Spellcasting Modifier / Spell
+  // Save DC / Spell Attack Bonus. Card above Spell Slots, same
+  // .cs-ov-class-card family. classes.spellcasting_ability is a new column
+  // (str/dex/con/int/wis/cha, null for non-casters) — added this session;
+  // classes.primary_ability was confirmed unreliable for this (a combined
+  // string for half-casters, e.g. paladin "Strength & Charisma", ranger
+  // "Dexterity & Wisdom" — the casting ability is only one of the two, and
+  // only recoverable by parsing casting_summary's free text, which the
+  // build doc explicitly said not to do). Hidden entirely for non-casters,
+  // not rendered as an empty/zeroed card — same style="display:none"
+  // pattern the card starts with on its first, synchronous paint before
+  // CLASS_ROW has loaded.
+  function spellStatRowHtml(label, value, tip) {
+    return '<div class="cs-ab-skill">'
+      + '<span class="cs-ab-skill-name">' + label
+        + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
+      + '</span>'
+      + '<span class="cs-ab-skill-total">' + value + '</span>'
+    + '</div>';
+  }
+  function renderSpellcastingStats() {
+    var card = document.getElementById('cs-spellcasting-stats-card');
+    var el = document.getElementById('cs-class-spellcasting-stats');
+    if (!card || !el) return;
+    var castingAbility = CLASS_ROW ? CLASS_ROW.spellcasting_ability : null;
+    if (!castingAbility) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    var abMod = Math.floor(((parseInt(ABILITY_SCORES[castingAbility]) || 10) - 10) / 2);
+    var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    var saveDC = 8 + profBonus + abMod;
+    var atkBonus = profBonus + abMod;
+    el.innerHTML =
+        spellStatRowHtml('Spellcasting Modifier', (abMod >= 0 ? '+' : '') + abMod, 'The ability modifier your class uses to cast spells.')
+      + spellStatRowHtml('Spell Save DC', saveDC, 'The number a creature must roll at or above to resist your spell.')
+      + spellStatRowHtml('Spell Attack Bonus', (atkBonus >= 0 ? '+' : '') + atkBonus, 'Added to the d20 when you make an attack roll with a spell.');
   }
 
   // Populated once fetchClassData() resolves — the `classes` table is the
@@ -4177,6 +4218,7 @@
     renderConditions();
     renderInspiration();
     renderSpellSlots();
+    renderSpellcastingStats();
     renderAbilitySkills();
     wireAllTooltips();
   }
