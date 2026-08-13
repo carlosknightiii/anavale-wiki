@@ -1220,6 +1220,21 @@
 
   <div class="dm-main">
 
+    <!-- ── SLIDE-IN QUICK LOOKUP PANEL ───────────
+         Lives at page level (not nested in any one tab's .dm-form) so
+         sccOpenLookup() paints correctly no matter which tab it's opened
+         from — it used to live inside #form-session only, so it silently
+         failed to render when opened from Manage/Quests/Players. -->
+    <div id="scc-lookup-panel" class="scc-lookup-panel" aria-hidden="true">
+      <div class="scc-lookup-inner">
+        <button class="scc-lookup-close" onclick="sccCloseLookup()" aria-label="Close">✕</button>
+        <div id="scc-lookup-content" class="scc-lookup-content">
+          <div class="scc-lookup-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+    <div id="scc-lookup-backdrop" class="scc-lookup-backdrop" onclick="sccCloseLookup()"></div>
+
     <!-- ════════════════════════════════════════
          FORMS PANEL
          ════════════════════════════════════════ -->
@@ -2712,16 +2727,6 @@
            SESSION COMMAND CENTER
            ══════════════════════════════════════ -->
       <div id="form-session" class="dm-form scc-form">
-        <!-- ── SLIDE-IN QUICK LOOKUP PANEL ─── -->
-        <div id="scc-lookup-panel" class="scc-lookup-panel" aria-hidden="true">
-          <div class="scc-lookup-inner">
-            <button class="scc-lookup-close" onclick="sccCloseLookup()" aria-label="Close">✕</button>
-            <div id="scc-lookup-content" class="scc-lookup-content">
-              <div class="scc-lookup-loading">Loading…</div>
-            </div>
-          </div>
-        </div>
-        <div id="scc-lookup-backdrop" class="scc-lookup-backdrop" onclick="sccCloseLookup()"></div>
         <!-- ── HEADER ──────────────────────── -->
         <div class="scc-header">
           <div class="scc-header-left">
@@ -4373,7 +4378,10 @@ function showDMToast(msg, type) {
   border-radius: 20px;
   font-size: var(--text-xs);
   font-family: var(--font-sans);
+  cursor: pointer;
+  transition: var(--dm-transition);
 }
+.quest-related-tag:hover { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); }
 .quest-status-select {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -10137,6 +10145,29 @@ function selectQuest(id) {
   renderQuestDetail(id);
 }
 
+// Maps a quest.related[].collection value (real Supabase table name) to the
+// matching sccOpenLookup() type key + the in-memory array to resolve a real
+// display name from. Covers every collection sccOpenLookup() has a branch
+// for, not just the 4 currently used in real quest data (organizations/
+// cities/creatures/characters), so it doesn't need revisiting if the DM
+// links a quest to a region/religion/species/item/quest later.
+function sccRelatedCollectionInfo(collection) {
+  var map = {
+    characters:    { type: 'character',    arr: function(){ return typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : []; } },
+    cities:        { type: 'city',         arr: function(){ return typeof CITIES        !== 'undefined' ? CITIES        : []; } },
+    pois:          { type: 'city',         arr: function(){ return typeof POIS          !== 'undefined' ? POIS          : []; } },
+    nations:       { type: 'city',         arr: function(){ return typeof NATIONS       !== 'undefined' ? NATIONS       : []; } },
+    creatures:     { type: 'creature',     arr: function(){ return typeof CREATURES     !== 'undefined' ? CREATURES     : []; } },
+    organizations: { type: 'organization', arr: function(){ return typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : []; } },
+    items:         { type: 'item',         arr: function(){ return typeof ITEMS         !== 'undefined' ? ITEMS         : []; } },
+    quests:        { type: 'quest',        arr: function(){ return typeof QUESTS        !== 'undefined' ? QUESTS        : []; } },
+    regions:       { type: 'region',       arr: function(){ return typeof REGIONS       !== 'undefined' ? REGIONS       : []; } },
+    religions:     { type: 'religion',     arr: function(){ return typeof RELIGIONS     !== 'undefined' ? RELIGIONS     : []; } },
+    species:       { type: 'species',      arr: function(){ return typeof SPECIES       !== 'undefined' ? SPECIES       : []; } }
+  };
+  return map[collection] || null;
+}
+
 function renderQuestDetail(id) {
   var el = document.getElementById('quests-detail');
   if (!el) return;
@@ -10169,7 +10200,14 @@ function renderQuestDetail(id) {
     relatedHtml = '<div class="quest-section-label">Related Entries</div>'
       + '<div class="quest-related-list">'
       + quest.related.map(function(r) {
-          return '<span class="quest-related-tag">' + escQ(r.collection) + ': ' + escQ(r.id) + '</span>';
+          var info  = sccRelatedCollectionInfo(r.collection);
+          var entry = info ? info.arr().find(function(x){ return x.id === r.id; }) : null;
+          var label = (entry && entry.name ? entry.name : r.id) + ' (' + escQ(r.collection) + ')';
+          if (!info) {
+            // Unknown collection — no lookup branch to open, render inert as before.
+            return '<span class="quest-related-tag" style="cursor:default;" title="No lookup available for this entry type">' + escQ(label) + '</span>';
+          }
+          return '<span class="quest-related-tag" onclick="sccOpenLookup(\'' + escQ(info.type) + '\',\'' + escQ(r.id) + '\')" title="Open lookup">' + escQ(label) + '</span>';
         }).join('')
       + '</div>';
   }
@@ -10182,6 +10220,7 @@ function renderQuestDetail(id) {
     + '<div class="quest-detail-meta">'
     + '<span class="q-badge q-status-' + (quest.status||'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
     + '<span class="q-badge q-stakes-' + (quest.stakes||'low') + '">' + escQ(quest.stakes||'') + ' stakes</span>'
+    + (quest.suggested_level != null ? '<span class="q-badge" style="background:var(--dm-gold-dim);color:var(--dm-gold);">Suggested Level ' + escQ(quest.suggested_level) + '</span>' : '')
     + (quest.first_available ? '<span class="q-badge" style="background:rgba(0,0,0,0.05);color:var(--ink-faint);">First available: ' + escQ(quest.first_available) + '</span>' : '')
     + '</div>'
     + '<div class="quest-section-label">Hook</div>'
@@ -10198,6 +10237,11 @@ function renderQuestDetail(id) {
     + statusOptions
     + '</select>'
     + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-status-msg-' + escQ(id) + '"></span>'
+    + '</div>'
+    + '<div class="quest-status-select">'
+    + '<label for="q-level-' + escQ(id) + '">Suggested Level:</label>'
+    + '<input type="number" min="1" max="20" step="1" class="cm-select" style="width:5rem;" id="q-level-' + escQ(id) + '" placeholder="—" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
+    + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-level-msg-' + escQ(id) + '"></span>'
     + '</div>';
 }
 
@@ -10226,6 +10270,39 @@ function setQuestStatus(id, newStatus) {
     if (r.ok) showDMToast(quest.name + ' → ' + statusLabel(newStatus) + ' ✓', 'success');
   }).catch(function() {
     if (msgEl) msgEl.textContent = '⚠ Save failed';
+  });
+}
+
+function setQuestSuggestedLevel(id, rawValue) {
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var quest = quests.find(function(q) { return q.id === id; });
+  if (!quest) return;
+  var trimmed = String(rawValue == null ? '' : rawValue).trim();
+  var newLevel = trimmed === '' ? null : parseInt(trimmed, 10);
+  if (newLevel != null && (isNaN(newLevel) || newLevel < 1 || newLevel > 20)) {
+    showDMToast('Suggested level must be 1–20', 'error');
+    return;
+  }
+  quest.suggested_level = newLevel;
+  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
+  var msgEl = document.getElementById('quest-level-msg-' + id);
+  if (msgEl) msgEl.textContent = 'Saving…';
+  fetch(SB_URL + '/rest/v1/quests?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_ANON,
+      'Authorization': 'Bearer ' + SB_ANON,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ suggested_level: newLevel })
+  }).then(function(r) {
+    if (msgEl) msgEl.textContent = r.ok ? '\u2713 Saved' : '\u26a0 Save failed';
+    if (msgEl) setTimeout(function(){ msgEl.textContent = ''; }, 3000);
+    if (r.ok) { showDMToast(quest.name + ' suggested level saved \u2713', 'success'); renderQuestDetail(id); }
+  }).catch(function() {
+    if (msgEl) msgEl.textContent = '\u26a0 Save failed';
   });
 }
 
