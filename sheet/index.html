@@ -2139,6 +2139,57 @@
       font-size: var(--char-ov-h5);
     }
 
+    /* ── Attunement (Inventory tab, new) — under the doll, own bordered
+       box reusing .cs-effect-panel's token choices (blue-700/blue-300)
+       rather than inventing new colors, but its own layout since rows
+       need a button, unlike Special Effects' plain text rows. ── */
+    .cs-attune-block {
+      margin-top: var(--char-ov-gap-s);
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--blue-700);
+      border: 1px solid var(--blue-300);
+      border-radius: var(--radius);
+      padding: var(--char-ov-gap-xs) var(--char-ov-gap-s);
+    }
+    .cs-attune-header {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h5);
+      color: var(--text);
+      margin-bottom: var(--char-ov-gap-2xs);
+    }
+    .cs-attune-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-top: 1px solid var(--blue-300);
+    }
+    .cs-attune-row:first-of-type { border-top: none; }
+    .cs-attune-name {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .cs-attune-btn {
+      flex-shrink: 0;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gold);
+      background: none;
+      color: var(--gold);
+      cursor: pointer;
+    }
+    .cs-attune-btn.active { background: var(--gold); color: var(--blue-800); }
+    .cs-attune-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* ── Carrying bar — capacity = STR x 15, standard progress-bar reading:
        track (--blue-700) always full width, fill (--blue-300) grows from
        the left as current weight rises toward capacity. Live-tested report
@@ -3341,6 +3392,12 @@
           // Rings — no doll position exists for them (per DM instruction,
           // surfaced as their own small row below the doll instead).
           + '<div class="cs-ring-row" id="cs-ring-row"></div>'
+          // Attunement — under the doll, not a 3rd top-row column (that row's
+          // 3:2 doll:Effects ratio was already DM-tuned once; adding a 3rd
+          // flex item would need re-tuning it again for no real reason).
+          // Hidden entirely (not an empty box) when nothing is currently
+          // equipped that requires attunement — see renderAttunement().
+          + '<div id="cs-attunement-col" style="display:none"><div id="cs-attunement-block"></div></div>'
         + '</div>'
         // Special Effects — read-only, DM-written via DM Tools item form
         // (grants_advantage/grants_proficiency/magic_bonus already existed;
@@ -4854,6 +4911,7 @@
     renderACBadge();
     renderRingsRow();
     renderSpecialEffects();
+    renderAttunement();
     wireAllTooltips();
   }
   // Special Effects panel — read-only summary of every currently-equipped
@@ -4928,6 +4986,89 @@
     if (!row) return;
     row.innerHTML = RING_SLOTS.map(function(r) { return renderEquippedSlot(equipSlotByArea(r.key), null); }).join('');
   }
+  // ── Magic Item Attunement (Inventory tab, new) — 5e's real cap is 3
+  // attuned items at once. Only currently-equipped items flagged
+  // items.requires_attunement are eligible; a custom (non-catalog)
+  // inventory row has no such field to check and is never eligible, same
+  // as it already sits outside other catalog-only mechanics elsewhere in
+  // this file (combat stats, Special Effects, etc.).
+  //
+  // Reads EQUIPPED_ITEMS, not CATALOG_CACHE — CATALOG_CACHE is a mixed
+  // cache (the +Add Item search modal populates it with a partial select,
+  // name/category/cost_gp/weight_lb/summary/base_ac/damage_dice/
+  // damage_type/image only — no requires_attunement); EQUIPPED_ITEMS is
+  // always a full items.* row for exactly the items in EQUIPPED (both its
+  // write paths, fetchEquipped() and selectEquipItem(), select('*')), so
+  // it's the correct, purpose-built source for this, not a guess.
+  function getAttunableEquippedItems() {
+    var out = [];
+    Object.keys(EQUIPPED).forEach(function(key) {
+      var itemKey = EQUIPPED[key];
+      if (!itemKey) return;
+      var item = EQUIPPED_ITEMS[itemKey];
+      if (item && item.requires_attunement) out.push({ key: itemKey, name: item.name });
+    });
+    return out;
+  }
+  function renderAttunement() {
+    var col = document.getElementById('cs-attunement-col');
+    var el = document.getElementById('cs-attunement-block');
+    if (!col || !el) return;
+    var eligible = getAttunableEquippedItems();
+    if (!eligible.length) { col.style.display = 'none'; return; }
+    col.style.display = '';
+    var attuned = (SHEET && Array.isArray(SHEET.attuned_items)) ? SHEET.attuned_items : [];
+    el.innerHTML = '<div class="cs-attune-block">'
+      + '<div class="cs-attune-header">Attunement (' + attuned.length + '/3)'
+        + '<span class="cs-ab-tip" data-tip="Some magic items need you to bond with them before their full power works. You can be attuned to up to 3 items at once, and attuning happens during a short rest.">?</span>'
+      + '</div>'
+      + eligible.map(function(it) {
+          var isAttuned = attuned.indexOf(it.key) !== -1;
+          var atCap = attuned.length >= 3 && !isAttuned;
+          return '<div class="cs-attune-row">'
+            + '<span class="cs-attune-name">' + escHtml(it.name || 'Unknown item') + '</span>'
+            + '<button class="cs-attune-btn' + (isAttuned ? ' active' : '') + '"'
+              + (atCap ? ' disabled title="Already attuned to 3 items"' : '')
+              + ' onclick="toggleAttunement(\'' + it.key + '\')">'
+              + (isAttuned ? 'Attuned' : 'Attune')
+            + '</button>'
+          + '</div>';
+        }).join('')
+    + '</div>';
+  }
+  function toggleAttunement(itemKey) {
+    if (!SHEET) return;
+    var attuned = Array.isArray(SHEET.attuned_items) ? SHEET.attuned_items.slice() : [];
+    var idx = attuned.indexOf(itemKey);
+    if (idx !== -1) {
+      attuned.splice(idx, 1);
+    } else {
+      if (attuned.length >= 3) { showToast('Already attuned to 3 items', true); return; }
+      attuned.push(itemKey);
+    }
+    SHEET.attuned_items = attuned;
+    saveSheet({ attuned_items: attuned });
+    renderAttunement();
+    wireAllTooltips();
+  }
+  // Drops itemKey from attunement once it's no longer equipped anywhere —
+  // 5e: you can't stay attuned to something you've taken off. Called
+  // additively alongside the existing "still used elsewhere" EQUIPPED_ITEMS
+  // cleanup already present at all 3 places an item leaves EQUIPPED
+  // (unequipSlot(), selectEquipItem()'s sibling-clear and prior-slot-clear)
+  // rather than folded into that logic — this file's equip/unequip code has
+  // a real history of subtle stale-state bugs from exactly this area, so
+  // this stays a separate, independently-correct check rather than risk
+  // altering already-tested lines.
+  function clearAttunementIfUnequipped(itemKey) {
+    if (!SHEET || !itemKey || !Array.isArray(SHEET.attuned_items)) return;
+    if (SHEET.attuned_items.indexOf(itemKey) === -1) return;
+    var stillEquipped = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === itemKey; });
+    if (stillEquipped) return;
+    var next = SHEET.attuned_items.filter(function(k) { return k !== itemKey; });
+    SHEET.attuned_items = next;
+    saveSheet({ attuned_items: next });
+  }
   // Clears whichever keys back the *other* hand's doll position when one
   // hand holds/gains a two-handed weapon — keys come from
   // detectTwoHandedLock().lockedKeys, so this works the same whether the
@@ -4945,6 +5086,7 @@
       EQUIPPED[k] = null;
       var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
       if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
+      clearAttunementIfUnequipped(removedId);
     });
     SHEET.equipped = equipped;
     saveSheet({ equipped: equipped });
@@ -5301,6 +5443,7 @@
       clearInventoryEquippedSlot(k);
       var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
       if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
+      clearAttunementIfUnequipped(removedId);
     });
     // Same physical inventory row moving from a different slot entirely —
     // not a sibling key above (e.g. handL/handR both take 'weapon', or
@@ -5322,6 +5465,11 @@
       EQUIPPED[priorSlotKey] = null;
       var stillUsedPrior = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === equipKey; });
       if (!stillUsedPrior) delete EQUIPPED_ITEMS[equipKey];
+      // No clearAttunementIfUnequipped() call here, deliberately — this is
+      // the same physical item moving to a *different* slot (targetKey,
+      // set a few lines below), not actually coming off. Clearing
+      // attunement here would be a real bug: the item never left EQUIPPED,
+      // it's mid-move within this same function call.
     }
     // Direct replacement — targetKey already holds a *different* item
     // (e.g. swapping Longbow for Shortsword, both in hand_right). Not a
@@ -5375,6 +5523,7 @@
     clearInventoryEquippedSlot(slotKey);
     var stillUsed = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === removedId; });
     if (removedId && !stillUsed) delete EQUIPPED_ITEMS[removedId];
+    clearAttunementIfUnequipped(removedId);
     saveSheet({ equipped: equipped });
     renderEquipped();
   }
