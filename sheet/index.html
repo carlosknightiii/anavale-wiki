@@ -4178,6 +4178,21 @@
     var regionCard = storyCard('Home Region', REGION_ROW ? REGION_ROW.name : cap(ch.home_region || ''),
       REGION_ROW ? REGION_ROW.summary : null, null,
       regionKey ? '../assets/images/regions/img-' + regionKey + '-landscape.webp' : null);
+    // Speed & Size — species.speed_ft/size, new columns this session (2024
+    // PHB values, seeded per species.phb_equivalent). Low-frequency
+    // reference data, placed here rather than the header per DM decision —
+    // this accordion is already the species/region/alignment/background
+    // facts cluster, unlike Who You Are (personality/narrative content).
+    // No image asset exists for this (not a player-chosen option card like
+    // the others), no benefits box, no title-vs-label split beyond the
+    // value itself — self-explanatory once labeled, per the handoff.
+    var speedSizeCard = '';
+    if (SPECIES_ROW && (SPECIES_ROW.speed_ft || SPECIES_ROW.size)) {
+      var speedSizeParts = [];
+      if (SPECIES_ROW.speed_ft) speedSizeParts.push(SPECIES_ROW.speed_ft + ' ft');
+      if (SPECIES_ROW.size) speedSizeParts.push(SPECIES_ROW.size);
+      speedSizeCard = storyCard('Speed & Size', speedSizeParts.join(' · '), null, null, null);
+    }
     var alignTitle = alignName + (alignPhb ? ' <span class="cs-story-card-sub">(' + alignPhb + ')</span>' : '');
     var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_CARD_DESC[alignKey] || null, null,
       '../assets/images/img-alignment.webp');
@@ -4197,7 +4212,7 @@
     var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitsBoxHtml(bgLines),
       bgKey ? '../assets/images/backgrounds/bg-' + bgKey + '.png' : null);
 
-    return ggCard + regionCard + alignCard + bgCard;
+    return ggCard + regionCard + speedSizeCard + alignCard + bgCard;
   }
   function buildYourBackgroundHtml(ch, typeKey, typeMeta) {
     return accordionShell('cs-ov-acc-background', 'Your Background',
@@ -4594,8 +4609,13 @@
       .then(function(res) {
         if (!res.error && res.data) SPECIES_ROW = res.data;
         renderSpeciesDesc();
+        // Speed & Size lives in the Your Background accordion (renderBackgroundCardsHtml()),
+        // not here — piggybacks on the same refresh renderBackgroundCardsDynamic()
+        // already provides for Region/Background, same "reuse the existing
+        // refresh call" instruction as the header species description above.
+        renderBackgroundCardsDynamic();
       })
-      .catch(function() { renderSpeciesDesc(); });
+      .catch(function() { renderSpeciesDesc(); renderBackgroundCardsDynamic(); });
   }
   function renderSpeciesDesc() {
     var el = document.getElementById('cs-mi-species-desc');
