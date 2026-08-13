@@ -1194,6 +1194,26 @@
     .cs-mi-ds-pip--success.filled { background: #6ecf6e; border-color: #6ecf6e; }
     .cs-mi-ds-pip--failure.filled { background: #f87171; border-color: #f87171; }
 
+    /* Hit Dice (MainInfo header, new) — same pip interaction as Death Saves,
+       but its own class/color semantics rather than reusing .cs-mi-ds-pip:
+       an available hit die is the *good* state here (unlike a filled death-
+       save pip, which is bad), so available pips are the bright/filled
+       look and spent pips are the dim/hollow one — inverted from Death
+       Saves, not copied. Gold matches the existing "active resource" gold
+       fill convention (e.g. Inspiration's badge when active). */
+    .cs-mi-hit-dice { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+    .cs-mi-hd-label {
+      font-family: var(--font-body);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--char-text-faint);
+      white-space: nowrap;
+    }
+    .cs-mi-hd-row { display: flex; gap: 0.35rem; }
+    .cs-mi-hd-pip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--gold); background: var(--gold); cursor: pointer; padding: 0; }
+    .cs-mi-hd-pip.spent { background: none; border-color: rgba(255,255,255,0.25); }
+
     @media (max-width: 900px) {
       .cs-ov-portrait { width: 100%; min-height: 340px; }
       .cs-ov-info { min-width: 100%; }
@@ -1450,6 +1470,37 @@
       font-weight: 700;
       font-size: 32px;
       line-height: 1;
+    }
+    /* Initiative badge — same structural pattern as the AC badge (flex
+       column, centered) but deliberately a secondary/smaller variant so it
+       doesn't compete with AC: dark blue/600 fill instead of AC's light
+       blue/100, smaller type scale. Same token family as AC (blue-*), just
+       a different step of it. */
+    .cs-mi-init-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue-600);
+      color: var(--blue-100);
+      border: 1px solid var(--blue-400);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      cursor: help;
+    }
+    .cs-mi-init-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .cs-mi-init-num {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 1.4;
     }
     /* ── Equipped Gear — 10-slot doll (Figma 68:7354, corrected 2026-08-10,
        replacing the earlier grid-area build below at DM request — the
@@ -3115,6 +3166,20 @@
     return feat || null;
   }
   function abMod(v) { var m = Math.floor((v-10)/2); return (m>=0?'+':'')+m; }
+  // Initiative — DEX mod + 5 if the character has the Alert feat (the only
+  // feat in FEAT_TIPS affecting initiative). Depends only on data already
+  // synchronous by the time buildMainInfoHtml() runs (ABILITY_SCORES/ch.feats
+  // are both set from the initial player_characters fetch, no SHEET/
+  // CLASS_ROW wait), so this renders once, correctly, on first paint — no
+  // separate refresh function needed, unlike AC/saves/spellcasting stats.
+  function computeInitiative(ch) {
+    var dexRaw = parseInt(ABILITY_SCORES.dex) || 10;
+    var dexMod = Math.floor((dexRaw - 10) / 2);
+    var hasAlert = Array.isArray(ch && ch.feats) && ch.feats.indexOf('Alert') !== -1;
+    var bonus = hasAlert ? 5 : 0;
+    var total = dexMod + bonus;
+    return { total: total, tip: dexMod + ' Dex' + (hasAlert ? ' + 5 (Alert)' : '') + ' = ' + total };
+  }
   function escHtml(str) {
     if (!str) return '';
     return String(str)
@@ -3892,6 +3957,7 @@
     var alignKey   = (ch.alignment || '').toLowerCase();
     var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
     var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey) };
+    var initBadge  = computeInitiative(ch);
 
     // Blurb — species + class's Gigglegloom-flavor name + type + region,
     // plus the alignment trait sentence. Sourced from the same lookups
@@ -3926,8 +3992,10 @@
             + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
             + '<div class="cs-mi-vitals">'
               + '<div class="cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip=""><span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">—</span></div>'
+              + '<div class="cs-mi-init-badge" data-tip="' + initBadge.tip.replace(/"/g,'&quot;') + '"><span class="cs-mi-init-label">Init</span><span class="cs-mi-init-num">' + (initBadge.total >= 0 ? '+' : '') + initBadge.total + '</span></div>'
               + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
               + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
+              + '<div id="cs-mi-hit-dice-slot"></div>'
             + '</div>'
             + blurbHtml
           + '</div>'
@@ -4210,6 +4278,7 @@
   // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
   function renderLivePlay() {
     renderHeaderHP();
+    renderHitDice();
     renderEquipped();
     renderGold();
     renderInventory();
@@ -4310,6 +4379,55 @@
     SHEET.death_save_failures = next;
     saveSheet({ death_save_failures: next });
     renderHeaderHP();
+  }
+
+  // ── Hit Dice (MainInfo header, new) — near HP, same "spendable healing
+  // resource belongs in this visual neighborhood" reasoning as Death Saves.
+  // Max is never stored — always ch.level, computed live (same
+  // derive-don't-cache principle js/hp-calc.js already uses for HP), so
+  // this keeps working correctly as the party levels past 1 with no
+  // migration needed then. Pip interaction mirrors the death-save/spell-
+  // slot toggle convention (click a spent pip to un-spend it and everything
+  // after; click an available one to spend up through it), but its own
+  // class/colors — see the .cs-mi-hd-pip CSS comment for why the semantics
+  // are inverted from .cs-mi-ds-pip, not copied. No rest-flow to auto-
+  // restore spent dice exists anywhere on this sheet yet (same gap Death
+  // Saves and Spell Slots already have) — restoring is a manual click,
+  // deliberately out of scope here per the handoff's own instruction not
+  // to scope-creep into building one.
+  // Uses character_sheet.hit_dice_used — a pre-existing column, populated
+  // (1/0/0 for all 3 characters) but never referenced anywhere in the
+  // codebase before this. The handoff assumed no tracking column existed;
+  // caught via SQL before shipping, so this reuses hit_dice_used rather
+  // than the hit_dice_spent this build first (wrongly) added. Its sibling
+  // hit_dice_total is still dead/unused — max is deliberately computed live
+  // from ch.level instead, per the handoff's own don't-cache-max instruction.
+  function renderHitDiceHtml() {
+    var level = (CH && CH.level) || 1;
+    var dieType = CLASS_ROW ? CLASS_ROW.hit_die : 'd?';
+    var spent = SHEET ? (parseInt(SHEET.hit_dice_used) || 0) : 0;
+    var pips = Array.from({ length: level }, function(_, i) {
+      var n = i + 1;
+      var isSpent = n <= spent;
+      return '<button class="cs-mi-hd-pip' + (isSpent ? ' spent' : '') + '" onclick="toggleHitDie(' + n + ')" aria-label="Hit die ' + n + (isSpent ? ' (spent)' : ' (available)') + '"></button>';
+    }).join('');
+    return '<div class="cs-mi-hit-dice">'
+      + '<div class="cs-mi-hd-label">Hit Dice (' + dieType + ')</div>'
+      + '<div class="cs-mi-hd-row">' + pips + '</div>'
+    + '</div>';
+  }
+  function toggleHitDie(n) {
+    if (!SHEET) return;
+    var cur = parseInt(SHEET.hit_dice_used) || 0;
+    var next = (cur === n) ? n - 1 : n;
+    SHEET.hit_dice_used = next;
+    saveSheet({ hit_dice_used: next });
+    renderHitDice();
+  }
+  function renderHitDice() {
+    var el = document.getElementById('cs-mi-hit-dice-slot');
+    if (!el) return;
+    el.innerHTML = renderHitDiceHtml();
   }
 
   function adjustHP(delta) {
