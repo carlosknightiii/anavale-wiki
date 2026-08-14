@@ -3083,6 +3083,24 @@
                 <textarea id="scc-note-milestone" class="scc-textarea" placeholder="XP awarded, level ups, major story beats completed…"></textarea>
               </div>
             </div>
+            <!-- ── TAGGED NOTES — quick-capture, tagged, filterable/searchable,
+                 separate from the 5 structured recap fields above. Sits
+                 before the wrap-up controls below: tagging happens *during*
+                 the session, Save/Copy/Complete happen at the *end* of it. ── -->
+            <div class="scc-tagnote-section">
+              <div class="scc-section-title">Tagged Notes</div>
+              <div class="scc-tagnote-hint">Quick-capture notes as things happen at the table — tag them so they're easy to find later.</div>
+              <div class="scc-tagnote-add-row">
+                <select id="scc-tagnote-new-cat" class="cm-select"></select>
+                <button class="scc-btn-primary" onclick="sccAddTagNote()">+ New Note</button>
+              </div>
+              <div class="scc-tagnote-toolbar">
+                <input type="text" class="scc-input" id="scc-tagnote-search" placeholder="Search tagged notes…" oninput="sccNoteSearchInput(this.value)">
+              </div>
+              <div class="scc-tagnote-filters" id="scc-tagnote-filters"></div>
+              <div class="scc-tagnote-list" id="scc-tagnote-list"><div class="scc-lookup-loading">Loading&#8230;</div></div>
+            </div>
+
             <div class="scc-setup-actions">
               <button class="scc-btn-primary" onclick="sccSaveNotes()">✦ Save Notes</button>
               <button class="scc-btn-secondary" onclick="sccCopyPostSessionSummary()">📋 Copy Post-Session Summary</button>
@@ -3091,19 +3109,6 @@
             <div class="scc-session-complete-bar">
               <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks the session for audit and opens the next one.</div>
               <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
-            </div>
-
-            <!-- ── TAGGED NOTES — quick-capture, tagged, filterable/searchable,
-                 separate from the 5 structured recap fields above. ── -->
-            <div class="scc-tagnote-section">
-              <div class="scc-section-title">Tagged Notes</div>
-              <div class="scc-tagnote-toolbar">
-                <input type="text" class="scc-input" id="scc-tagnote-search" placeholder="Search tagged notes…" oninput="sccNoteSearchInput(this.value)">
-                <select id="scc-tagnote-new-cat" class="cm-select"></select>
-                <button class="scc-btn-secondary" onclick="sccAddTagNote()">+ New Note</button>
-              </div>
-              <div class="scc-tagnote-filters" id="scc-tagnote-filters"></div>
-              <div class="scc-tagnote-list" id="scc-tagnote-list"><div class="scc-lookup-loading">Loading&#8230;</div></div>
             </div>
           </div>
         </div><!-- /scc-panel-notes -->
@@ -4064,6 +4069,11 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
 }
 .cm-select:focus { border-color: var(--dm-gold); }
+/* A number input styled with .cm-select reads less obviously "clickable" than
+   a real <select> (no dropdown chevron) — dashed border while empty plus a
+   hover cue make it clear this is an editable field, not static label text. */
+.q-level-input:placeholder-shown { border-style: dashed; }
+.q-level-input:hover { border-color: var(--dm-text-muted); cursor: text; }
 
 .cm-count {
   color: var(--dm-text-faint);
@@ -5152,10 +5162,13 @@ function showDMToast(msg, type) {
   line-height: 1.6;
   font-weight: 400;
 }
-/* DM Only block */
+/* DM Only block — was still hardcoded red (#d62b2b), untouched by either
+   earlier DM-Only recolor pass since this is a third, separate rendering
+   surface (NPC/location panel expanded-card view, not the lookup drawer's
+   .scc-dm-block or the player_facing status badges). Same teal now. */
 .scc-npc2-dm-block {
   background: #0b0e16;
-  border: 3px solid #d62b2b;
+  border: 3px solid var(--cyan);
   border-radius: 16px;
   padding: 1.5rem;
 }
@@ -5163,7 +5176,7 @@ function showDMToast(msg, type) {
   font-family: var(--font-serif);
   font-size: 1.4rem;
   font-weight: 700;
-  color: #d62b2b;
+  color: var(--cyan);
   margin-bottom: 1rem;
 }
 .scc-npc2-dm-rows { display: flex; flex-direction: column; gap: 1rem; }
@@ -5175,7 +5188,7 @@ function showDMToast(msg, type) {
   border-bottom: 2px solid #2c3757;
 }
 .scc-npc2-dm-rows > .scc-npc2-dm-row:last-child { border-bottom: none; padding-bottom: 0; }
-.scc-npc2-red { color: #d62b2b !important; }
+.scc-npc2-red { color: var(--cyan) !important; }
 .scc-npc2-quest-link {
   font-family: var(--font-sans);
   font-size: 0.9rem;
@@ -5297,7 +5310,7 @@ function showDMToast(msg, type) {
 .scc-dm-text {
   font-family: var(--font-sans);
   font-size: 0.82rem;
-  color: var(--dm-red);
+  color: var(--scc-dm-only-text);
   line-height: 1.55;
 }
 /* Linked quests on NPC cards */
@@ -5636,8 +5649,8 @@ function showDMToast(msg, type) {
   background: transparent;
   border-color: var(--scc-border-mid);
   color: var(--dm-text-faint);
-  cursor: default;
 }
+.scc-combat-session-chip.added:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
 .scc-combat-filters-bar {
   display: flex;
   flex-wrap: wrap;
@@ -6038,7 +6051,12 @@ function showDMToast(msg, type) {
 /* Quick actions */
 .scc-live-quick-actions { display: flex; flex-direction: column; }
 /* ── Field Guide Panel ── */
-#scc-panel-fieldguide { display: flex; flex-direction: column; overflow: hidden; }
+/* Was an unconditional ID rule — higher specificity than the base
+   .scc-panel { display:none }, so this panel (search bar, filters, "Loading
+   Field Guide…" placeholder) stayed visible underneath every other Session
+   sub-tab regardless of which one was actually active. Gate it on .active
+   like every other panel; the flex/column layout only matters once shown. */
+#scc-panel-fieldguide.active { display: flex; flex-direction: column; overflow: hidden; }
 .scc-fg-layout { display: grid; grid-template-columns: 44% 1fr; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
 .scc-fg-left { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--scc-border); }
 .scc-fg-doc { overflow-y: auto; background: var(--scc-surface); }
@@ -6245,13 +6263,32 @@ function showDMToast(msg, type) {
 }
 /* ── Tagged Notes (session_note_entries — separate from the 5 structured recap fields above) ── */
 .scc-tagnote-section { margin-top: 2rem; }
+.scc-tagnote-hint {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-text-muted);
+  margin: 0.35rem 0 0.85rem;
+}
+/* The add-note action gets its own visually distinct, boxed row — separate
+   from the search/filter row below it — so it reads as "the primary way to
+   add a note here" rather than one more filter control in a plain list. */
+.scc-tagnote-add-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.85rem;
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+}
+.scc-tagnote-add-row .cm-select { flex: 1; max-width: 18rem; }
 .scc-tagnote-toolbar {
   display: flex;
   gap: 0.6rem;
-  margin: 0.75rem 0 0.75rem;
+  margin: 0 0 0.75rem;
 }
 .scc-tagnote-toolbar .scc-input { flex: 1; }
-.scc-tagnote-toolbar .cm-select { flex-shrink: 0; width: 12rem; }
 .scc-tagnote-filters {
   display: flex;
   flex-wrap: wrap;
@@ -10121,7 +10158,7 @@ function renderQuestDetail(id) {
     + '</div>'
     + '<div class="quest-status-select">'
     + '<label for="q-level-' + escQ(id) + '">Suggested Level:</label>'
-    + '<input type="number" min="1" max="20" step="1" class="cm-select" style="width:6.5rem;" id="q-level-' + escQ(id) + '" placeholder="Not set" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
+    + '<input type="number" min="1" max="20" step="1" class="cm-select q-level-input" style="width:6.5rem;" id="q-level-' + escQ(id) + '" placeholder="Not set" title="Click to set a suggested level (1–20)" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
     + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-level-msg-' + escQ(id) + '"></span>'
     + '</div>';
 }
@@ -12843,16 +12880,19 @@ function sccRenderCombatSessionCreatures() {
     el.innerHTML = '<div class="scc-empty-state" style="padding:0.4rem 0;">No creatures assigned in Setup yet — search below, or add them in Setup first.</div>';
     return;
   }
+  // Stays clickable indefinitely (matches the search box's own multi-add
+  // fix) — a ×N count replaces the old permanent checkmark-and-disable so
+  // the DM still gets an at-a-glance "already used" signal without losing
+  // the ability to add a 2nd/3rd copy of the same session-roster creature.
   el.innerHTML = assigned.map(function(sel) {
-    var inEncounter = SCC_COMBATANTS.some(function(c) { return c.id === sel.id; });
-    return inEncounter
-      ? '<span class="scc-combat-session-chip added" title="Already in this encounter">&#10003; ' + sccEsc(sel.name) + '</span>'
-      : '<button type="button" class="scc-combat-session-chip" onclick="sccQuickAddCombatant(\'' + sccEsc(sel.id) + '\',\'' + sccEsc(sel.name) + '\')">+ ' + sccEsc(sel.name) + '</button>';
+    var count = SCC_COMBATANTS.filter(function(c) { return c.id === sel.id; }).length;
+    var label = count > 0 ? '&#10003; ' + sccEsc(sel.name) + (count > 1 ? ' &times;' + count : '') : '+ ' + sccEsc(sel.name);
+    var titleAttr = count > 0 ? 'Click to add another' : 'Add to encounter';
+    return '<button type="button" class="scc-combat-session-chip' + (count > 0 ? ' added' : '') + '" title="' + titleAttr + '" onclick="sccQuickAddCombatant(\'' + sccEsc(sel.id) + '\',\'' + sccEsc(sel.name) + '\')">' + label + '</button>';
   }).join('');
 }
 
 function sccQuickAddCombatant(id, name) {
-  if (SCC_COMBATANTS.some(function(c) { return c.id === id; })) return;
   sccAddToCombatStaging(id, name);
   sccRenderCombatSessionCreatures();
 }
