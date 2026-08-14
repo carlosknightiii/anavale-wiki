@@ -636,36 +636,69 @@
     .cs-limuse-seg.active { background: var(--green); color: var(--blue-900); }
     .cs-limuse-seg.spent { background: rgba(34,197,94,0.25); color: var(--text); opacity: 0.5; }
 
-    /* ── Spell slots (Class tab, stopgap — see Decision Log) ── */
-    .cs-spell-slots-card { margin-top: var(--char-ov-gap-s); }
-    .cs-spell-slot-row {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--char-ov-gap-2xs);
-      padding: 0.35rem 0;
+    /* ── Spell Slots (Features accordion, sibling group to Class-Specific —
+       Handoff B, Figma 52:2705). Reuses .cs-limuse-* structure verbatim
+       (group/card/header/name/count/bar), just with a --magic-blue segment
+       treatment instead of Class-Specific's --green, since this is a
+       distinct component per the real Figma pull, not a generic pip. ── */
+    .cs-spellslot-explainer {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--text);
+      opacity: 0.85;
+      line-height: 1.5;
     }
-    .cs-spell-slot-level {
-      width: 70px;
-      flex-shrink: 0;
+    .cs-spellslot-explainer ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .cs-spellslot-seg.active { background: var(--magic-blue); color: var(--blue-900); }
+    .cs-spellslot-seg.spent { background: var(--magic-blue-dim); color: var(--text); opacity: 0.5; }
+    .cs-spell-slot-none { color: var(--char-text-faint); font-size: 0.8rem; }
+
+    /* ── Spells Prepared (Features accordion, sibling group — Handoff B) ── */
+    .cs-prepared-header-row { display: flex; justify-content: space-between; align-items: center; gap: var(--char-ov-gap-2xs); }
+    .cs-prepared-count { font-family: var(--font-body); font-weight: 700; font-size: var(--char-ov-pl); color: var(--text); flex-shrink: 0; }
+    .cs-prepared-explainer { font-family: var(--font-body); font-size: 0.82rem; color: var(--text); opacity: 0.85; margin-top: 0.2rem; }
+    .cs-prepared-pills { display: flex; flex-wrap: wrap; gap: var(--char-ov-gap-2xs); margin-top: var(--char-ov-gap-xs); }
+    .cs-prepared-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      background: var(--magic-blue);
+      color: var(--blue-900);
       font-family: var(--font-body);
       font-weight: 700;
-      font-size: 0.85rem;
-      color: var(--text);
+      font-size: 0.82rem;
+      border: none;
     }
-    .cs-spell-slot-pips { display: flex; gap: 0.3rem; }
-    .cs-spell-slot-pip {
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.25);
+    .cs-prepared-pill-x {
       background: none;
+      border: none;
+      color: inherit;
+      opacity: 0.7;
       cursor: pointer;
       padding: 0;
+      font-size: 0.75rem;
+      line-height: 1;
     }
-    .cs-spell-slot-pip.filled { background: var(--gold); border-color: var(--gold); }
-    .cs-spell-slot-none { color: var(--char-text-faint); font-size: 0.8rem; }
-    .cs-spell-slot-max-edit { display: flex; gap: 0.35rem; align-items: center; margin-left: auto; }
-    .cs-spell-slot-max-input { width: 50px; }
+    .cs-prepared-pill-x:hover { opacity: 1; }
+    .cs-prepared-pill--add {
+      background: none;
+      border: 1px dashed var(--blue-200);
+      color: var(--text);
+      opacity: 0.8;
+      cursor: pointer;
+    }
+    .cs-prepared-pill--add:hover { opacity: 1; }
+
+    /* ── Spells Learned browser (Class tab, full-width card — Handoff B).
+       Table styling reuses .cs-inv-table verbatim (same tr/td/th classes as
+       the Inventory tab's item table) — no new table CSS needed. Filter row
+       reuses .cs-inv-filter-* verbatim (same classes as the Inventory tab's
+       own-inventory search/category row), just with more fields. ── */
+    .cs-spells-learned-card { margin-top: var(--char-ov-gap-s); }
+    .cs-spell-thumb { width: 28px; height: 28px; object-fit: contain; display: block; margin: 0 auto; }
+    .cs-spell-thumb-fallback { display: block; text-align: center; opacity: 0.5; font-size: 1rem; }
 
     /* ── Your Story cards (Who You Are / Your Background / Your Past) ──
        Figma 51:1103/51:1218. Wider description cards, not small pills —
@@ -2969,6 +3002,8 @@
   var BACKGROUND_ROW = null; // backgrounds table row for ch.background_id, once fetchBackgroundData() resolves
   var REGION_ROW = null;     // regions table row for ch.home_region, once fetchRegionData() resolves
   var CONDITIONS_DATA = [];  // conditions table rows (id/name/color_bg/color_border/color_text/tip/sort_order), once fetchConditionsData() resolves
+  var SPELLS_DATA = [];  // all 414 spells table rows, once fetchSpellsData() resolves — Handoff B (Spells Learned browser)
+  var SPELLS_BY_ID = {}; // spells.id -> row, built alongside SPELLS_DATA for O(1) lookup (Prepared pills, spell picker)
   var CH = null;              // player_characters row, set once by renderCharacter() — lets async
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
@@ -4029,73 +4064,352 @@
         + '<div class="cs-class-features-label" style="margin-top:0;">Spellcasting</div>'
         + '<div id="cs-class-spellcasting-stats"></div>'
       + '</div>'
-      + '<div class="cs-ov-class-card cs-spell-slots-card">'
-        + '<div class="cs-class-features-label" style="margin-top:0;">Spell Slots</div>'
-        + '<div id="cs-class-spell-slots"></div>'
+      + '<div class="cs-ov-class-card cs-spells-learned-card" id="cs-spells-learned-card" style="display:none;">'
+        + '<div class="cs-class-features-label" style="margin-top:0;">Spells Learned</div>'
+        + '<div class="cs-inv-filter-row">'
+          + '<div class="cs-inv-filter-field">'
+            + '<label class="cs-inv-filter-label">Search</label>'
+            + '<input class="cs-inv-filter-input" id="cs-sl-search" placeholder="Search spells&#8230;" oninput="applySpellsLearnedFilter()">'
+          + '</div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Level</label><select class="cs-inv-filter-select" id="cs-sl-level" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Category</label><select class="cs-inv-filter-select" id="cs-sl-school" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Casting Time</label><select class="cs-inv-filter-select" id="cs-sl-ct" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Range</label><select class="cs-inv-filter-select" id="cs-sl-range" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Components</label><select class="cs-inv-filter-select" id="cs-sl-components" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Duration</label><select class="cs-inv-filter-select" id="cs-sl-duration" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+        + '</div>'
+        + '<div class="cs-inv-table-wrap">'
+          + '<table class="cs-inv-table">'
+            + '<thead><tr>'
+              + '<th class="cs-inv-th cs-inv-th-select">Prepared</th>'
+              + '<th class="cs-inv-th cs-inv-th-thumb"></th>'
+              + '<th class="cs-inv-th">Name</th>'
+              + '<th class="cs-inv-th">Level</th>'
+              + '<th class="cs-inv-th">Category</th>'
+              + '<th class="cs-inv-th">Casting Time</th>'
+              + '<th class="cs-inv-th">Range</th>'
+              + '<th class="cs-inv-th">Components</th>'
+              + '<th class="cs-inv-th">Duration</th>'
+              + '<th class="cs-inv-th">Description</th>'
+            + '</tr></thead>'
+            + '<tbody id="cs-spells-learned-tbody"><tr><td class="cs-inv-empty-row" colspan="10">Loading spells&#8230;</td></tr></tbody>'
+          + '</table>'
+        + '</div>'
       + '</div>'
     + '</div></div>';
   }
 
-  // ── Spell slots (Class tab, new — stopgap only) ─────────────────────
-  // The build spec described this as relocating an "existing" tracker, but
-  // no such UI has ever existed anywhere in this codebase (confirmed via
-  // full-repo grep) despite character_sheet.spell_slots/spell_slots_max
-  // both being real, empty ({}) columns on all 3 characters. Built minimal
-  // and functional per the DM's explicit call: current/max pips per spell
-  // level (1–9), wired to those columns, no new visual design beyond
-  // existing card tokens. This is a stopgap, not the real Figma redesign —
-  // see CLAUDE.md Decision Log.
-  var SPELL_LEVELS = [1,2,3,4,5,6,7,8,9];
-  function renderSpellSlots() {
-    var el = document.getElementById('cs-class-spell-slots');
+  // ── Spell Slots (Features accordion, Handoff B — replaces the earlier
+  // pip stopgap). Max is derived live from classes.spell_slot_progression
+  // (a real 9-element-array-per-level table, verified against the 2024 PHB
+  // for every casting class including Warlock's distinct Pact Magic table)
+  // at the character's current level — same "derive, don't cache" principle
+  // hp-calc.js already uses for HP, so leveling up just changes which slots
+  // show up, no migration/manual edit needed. character_sheet.spell_slots
+  // is repurposed from "current available count" (the old stopgap's
+  // meaning) to "spent count" (matching the Class-Specific tracker's
+  // segment convention below) — safe, confirmed via SQL that all 3 real
+  // characters' columns were still empty/zero, never used in real play.
+  var SPELL_LEVEL_ROMAN = {1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI',7:'VII',8:'VIII',9:'IX'};
+  function computeSpellSlotsArray() {
+    if (!CLASS_ROW || !CLASS_ROW.spell_slot_progression) return null;
+    var chLevel = (CH && CH.level) || 1;
+    return CLASS_ROW.spell_slot_progression[String(chLevel)] || null;
+  }
+  // Same left-to-right-available / right-to-left-spent fill convention as
+  // limitedUseCardHtml() below, just with a --magic-blue segment treatment
+  // (confirmed against the real Figma pull) instead of Class-Specific's
+  // --green — reuses .cs-limuse-card/-header/-name/-count/-bar verbatim.
+  function spellSlotCardHtml(level, max, spent) {
+    var segments = [];
+    for (var i = 0; i < max; i++) {
+      var isSpent = i >= (max - spent);
+      segments.push('<button class="cs-limuse-seg cs-spellslot-seg' + (isSpent ? ' spent' : ' active') + '" onclick="toggleSpellSlotSeg(' + level + ', ' + i + ')">'
+        + (isSpent ? '<span class="cs-limuse-seg-label">Spent</span>' : '<span class="cs-limuse-seg-num">' + (i + 1) + '</span>')
+        + '</button>');
+    }
+    return '<div class="cs-limuse-card">'
+      + '<div class="cs-limuse-header">'
+        + '<span class="cs-limuse-name">Level ' + (SPELL_LEVEL_ROMAN[level] || level) + '</span>'
+        + '<span class="cs-limuse-count">Used: ' + spent + '/' + max + '</span>'
+      + '</div>'
+      + '<div class="cs-limuse-bar">' + segments.join('') + '</div>'
+    + '</div>';
+  }
+  function renderSpellSlotsGroup() {
+    var el = document.getElementById('cs-spellslot-cards');
     if (!el) return;
-    var maxObj = (SHEET && typeof SHEET.spell_slots_max === 'object' && SHEET.spell_slots_max) ? SHEET.spell_slots_max : {};
-    var curObj = (SHEET && typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? SHEET.spell_slots : {};
-    el.innerHTML = SPELL_LEVELS.map(function(lvl) {
-      var max = parseInt(maxObj[lvl]) || 0;
-      var cur = parseInt(curObj[lvl]) || 0;
-      var pips = max > 0
-        ? Array.from({ length: max }, function(_, i) {
-            var n = i + 1;
-            return '<button class="cs-spell-slot-pip' + (n <= cur ? ' filled' : '') + '" onclick="toggleSpellSlot(' + lvl + ',' + n + ')" aria-label="Level ' + lvl + ' slot ' + n + '"></button>';
-          }).join('')
-        : '<span class="cs-spell-slot-none">&mdash;</span>';
-      return '<div class="cs-spell-slot-row">'
-        + '<span class="cs-spell-slot-level">Level ' + lvl + '</span>'
-        + '<span class="cs-spell-slot-pips">' + pips + '</span>'
-        + '<span class="cs-spell-slot-max-edit">'
-          + '<input class="cs-hp-input cs-spell-slot-max-input" type="number" min="0" placeholder="' + max + '" id="cs-spell-max-' + lvl + '">'
-          + '<button class="cs-hp-apply" onclick="setSpellSlotMax(' + lvl + ')">Set Max</button>'
-        + '</span>'
-      + '</div>';
+    var arr = computeSpellSlotsArray();
+    if (!arr) { el.innerHTML = '<div class="cs-spell-slot-none">No spell slots at this level.</div>'; return; }
+    var spentObj = (SHEET && typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? SHEET.spell_slots : {};
+    var html = '';
+    for (var i = 0; i < 9; i++) {
+      var max = parseInt(arr[i]) || 0;
+      if (max <= 0) continue;
+      var level = i + 1;
+      var spent = Math.min(parseInt(spentObj[level]) || 0, max);
+      html += spellSlotCardHtml(level, max, spent);
+    }
+    el.innerHTML = html || '<div class="cs-spell-slot-none">No spell slots at this level.</div>';
+  }
+  function toggleSpellSlotSeg(level, segIdx) {
+    if (!SHEET) return;
+    var arr = computeSpellSlotsArray();
+    var max = arr ? (parseInt(arr[level - 1]) || 0) : 0;
+    if (max <= 0) return;
+    var spentObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
+    var cur = parseInt(spentObj[level]) || 0;
+    var next = (cur === (max - segIdx)) ? (max - segIdx) - 1 : (max - segIdx);
+    if (next < 0) next = 0;
+    if (next > max) next = max;
+    spentObj[level] = next;
+    SHEET.spell_slots = spentObj;
+    saveSheet({ spell_slots: spentObj });
+    renderSpellSlotsGroup();
+  }
+
+  // ── Spells Prepared (Features accordion, Handoff B) ─────────────────
+  // classes.prepared_count_formula: {type:"fixed_table", values:{level:count}}
+  // for Bard/Sorcerer/Warlock (2024 PHB calls this "Prepared Spells" too —
+  // no separate "known spells" concept anymore), or {type:
+  // "ability_mod_plus_level", level_divisor, round:"down"|null, min} for the
+  // two ability-mod-based groups. Verified against the 2024 PHB directly —
+  // caught and corrected two real errors in the handoff doc along the way:
+  // Paladin was wrongly grouped with the full-level casters (Cleric/Druid/
+  // Wizard) when it actually uses the half-level formula, same as Ranger;
+  // and Ranger's rounding was stated as "round up" when the real rule
+  // rounds down (both now share level_divisor:2, round:"down").
+  function computePreparedMax() {
+    if (!CLASS_ROW || !CLASS_ROW.prepared_count_formula) return 0;
+    var f = CLASS_ROW.prepared_count_formula;
+    var chLevel = (CH && CH.level) || 1;
+    var min = parseInt(f.min) || 1;
+    if (f.type === 'fixed_table') {
+      var n = f.values ? parseInt(f.values[String(chLevel)]) : 0;
+      return Math.max(min, n || 0);
+    }
+    if (f.type === 'ability_mod_plus_level') {
+      var castingAbility = CLASS_ROW.spellcasting_ability;
+      var abMod = castingAbility ? Math.floor(((parseInt(ABILITY_SCORES[castingAbility]) || 10) - 10) / 2) : 0;
+      var divisor = parseInt(f.level_divisor) || 1;
+      var levelPart = Math.floor(chLevel / divisor);
+      return Math.max(min, abMod + levelPart);
+    }
+    return 0;
+  }
+  // Swap-rule copy verbatim per class group, per the handoff doc: Cleric/
+  // Druid/Wizard can change any number after a Long Rest; Paladin/Ranger
+  // can swap just one after a Long Rest; Bard/Sorcerer/Warlock only swap
+  // one when they gain a class level (matches their fixed-table formula —
+  // there's no daily "prepare from a wider pool" for these three).
+  var PREPARED_SWAP_RULES = {
+    cleric: 'After a Long Rest, you can change any number of your prepared spells.',
+    druid: 'After a Long Rest, you can change any number of your prepared spells.',
+    wizard: 'After a Long Rest, you can change any number of your prepared spells.',
+    paladin: 'After a Long Rest, you can swap out one of your prepared spells for another.',
+    ranger: 'After a Long Rest, you can swap out one of your prepared spells for another.',
+    bard: 'When you gain a level in this class, you can swap out one spell you know for another.',
+    sorcerer: 'When you gain a level in this class, you can swap out one spell you know for another.',
+    warlock: 'When you gain a level in this class, you can swap out one spell you know for another.'
+  };
+  function renderPreparedSpells() {
+    var countEl = document.getElementById('cs-prepared-count');
+    var explainerEl = document.getElementById('cs-prepared-explainer');
+    var pillsEl = document.getElementById('cs-prepared-pills');
+    if (!countEl || !pillsEl) return;
+    var classKey = (CH && CH.class_id || '').toLowerCase();
+    var max = computePreparedMax();
+    var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    countEl.textContent = prepared.length + '/' + max;
+    if (explainerEl) explainerEl.textContent = PREPARED_SWAP_RULES[classKey] || '';
+    var html = prepared.map(function(id) {
+      var sp = SPELLS_BY_ID[id];
+      var name = sp ? sp.name : id;
+      return '<span class="cs-prepared-pill">' + escHtml(name)
+        + '<button class="cs-prepared-pill-x" onclick="unprepareSpell(\'' + id + '\')" aria-label="Unprepare ' + escHtml(name) + '">&#10005;</button>'
+      + '</span>';
     }).join('');
+    if (prepared.length < max) {
+      html += '<button class="cs-prepared-pill cs-prepared-pill--add" onclick="openSpellPicker()">+ Prepare</button>';
+    }
+    pillsEl.innerHTML = html;
   }
-  // Clicking a filled pip un-fills it and everything after (spend a slot);
-  // clicking an empty pip fills up to it (restore slots, e.g. after a rest)
-  // — same toggle pattern as the death-save pips.
-  function toggleSpellSlot(level, n) {
+  function unprepareSpell(id) {
     if (!SHEET) return;
-    var curObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
-    var cur = parseInt(curObj[level]) || 0;
-    curObj[level] = (cur === n) ? n - 1 : n;
-    SHEET.spell_slots = curObj;
-    saveSheet({ spell_slots: curObj });
-    renderSpellSlots();
+    var prepared = (Array.isArray(SHEET.prepared_spells) ? SHEET.prepared_spells : []).filter(function(x){ return x !== id; });
+    SHEET.prepared_spells = prepared;
+    saveSheet({ prepared_spells: prepared });
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
   }
-  function setSpellSlotMax(level) {
+  function prepareSpell(id) {
     if (!SHEET) return;
-    var input = document.getElementById('cs-spell-max-' + level);
-    var val = parseInt(input.value);
-    if (isNaN(val) || val < 0) return;
-    var maxObj = (typeof SHEET.spell_slots_max === 'object' && SHEET.spell_slots_max) ? Object.assign({}, SHEET.spell_slots_max) : {};
-    var curObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
-    maxObj[level] = val;
-    if ((parseInt(curObj[level]) || 0) > val) curObj[level] = val;
-    SHEET.spell_slots_max = maxObj;
-    SHEET.spell_slots = curObj;
-    saveSheet({ spell_slots_max: maxObj, spell_slots: curObj });
-    input.value = '';
-    renderSpellSlots();
+    var prepared = (Array.isArray(SHEET.prepared_spells) ? SHEET.prepared_spells : []).slice();
+    var max = computePreparedMax();
+    if (prepared.indexOf(id) === -1 && prepared.length < max) prepared.push(id);
+    SHEET.prepared_spells = prepared;
+    saveSheet({ prepared_spells: prepared });
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
+  }
+  // Shared picker modal for "+ Prepare" — lists spells already on this
+  // character's Learned list (see Spells Learned below) that aren't
+  // prepared yet. A spell must be learned before it can be prepared, same
+  // relationship as a real spellbook/known-spells list feeding a daily
+  // prepared subset.
+  function openSpellPicker() {
+    var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
+    var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    var pool = learned.filter(function(id){ return prepared.indexOf(id) === -1; })
+      .map(function(id){ return SPELLS_BY_ID[id]; }).filter(Boolean)
+      .sort(function(a,b){ return (a.level - b.level) || a.name.localeCompare(b.name); });
+    var resultsEl = document.getElementById('cs-spell-picker-results');
+    if (!resultsEl) return;
+    resultsEl.innerHTML = pool.length
+      ? pool.map(function(s) {
+          return '<div class="cs-equip-result" onclick="prepareSpell(\'' + s.id + '\'); closeSpellPickerModal();">'
+            + '<span class="cs-equip-result-name">' + escHtml(s.name) + ' <span style="opacity:0.6;">(' + (s.level === 0 ? 'Cantrip' : 'Level ' + s.level) + ')</span></span>'
+          + '</div>';
+        }).join('')
+      : '<div class="cs-inv-empty">No learned spells available to prepare — learn one from the Spells Learned table first.</div>';
+    document.getElementById('cs-spell-picker-modal-overlay').style.display = 'flex';
+  }
+  function closeSpellPickerModal() {
+    var overlay = document.getElementById('cs-spell-picker-modal-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  // ── Spells Learned browser (Class tab, Handoff B) ────────────────────
+  // character_sheet.learned_spells — spells the player has added to their
+  // personal list via this browser. Real spells.school/casting_time/range/
+  // components/duration/classes were all empty before this handoff (DM's
+  // explicit instruction: populate them with real 2024 PHB data rather
+  // than build the browser against empty columns) — SPELLS_DATA is fetched
+  // once at boot (see fetchSpellsData()) now that the data is real.
+  // "Category" column = spells.school (DM's explicit choice over
+  // Gigglegloom types, which is what this file's own earlier read of the
+  // Figma mockup had assumed before asking).
+  var SPELL_TYPE_ICON_SRC = {
+    Bubbleseed: '../assets/icons/icon-bubbleseed.svg',
+    Featherflow: '../assets/icons/icon-featherflow.svg',
+    Steelfist: '../assets/icons/icon-steelfist.svg',
+    Flamerage: '../assets/icons/icon-flamerage.svg'
+  };
+  function spellThumbHtml(spell) {
+    var t = spell.types && spell.types[0];
+    var src = t ? SPELL_TYPE_ICON_SRC[t] : null;
+    return src ? '<img class="cs-spell-thumb" src="' + src + '" alt="">' : '<span class="cs-spell-thumb-fallback">&#10022;</span>';
+  }
+  // Only spells on this character's own class list are ever offered — a
+  // spell not on your class's list isn't something you could learn, per
+  // the 5e rule. This became viable only once spells.classes was populated
+  // with real data this same handoff; the doc's original "Add to Learned"
+  // recommendation (any spell, unrestricted) was written when that column
+  // was still empty for every row.
+  function spellsLearnedEligible() {
+    var classKey = (CH && CH.class_id || '').toLowerCase();
+    return SPELLS_DATA.filter(function(s) { return Array.isArray(s.classes) && s.classes.indexOf(classKey) >= 0; });
+  }
+  function populateSpellsLearnedFilterOptions() {
+    var eligible = spellsLearnedEligible();
+    var fields = [
+      { id: 'cs-sl-level', key: 'level', label: function(v){ return v === '0' ? 'Cantrip' : 'Level ' + v; } },
+      { id: 'cs-sl-school', key: 'school' },
+      { id: 'cs-sl-ct', key: 'casting_time' },
+      { id: 'cs-sl-range', key: 'range' },
+      { id: 'cs-sl-components', key: 'components' },
+      { id: 'cs-sl-duration', key: 'duration' }
+    ];
+    fields.forEach(function(f) {
+      var el = document.getElementById(f.id);
+      if (!el) return;
+      var seen = {};
+      eligible.forEach(function(s) { var v = s[f.key]; if (v !== null && v !== undefined && v !== '') seen[String(v)] = true; });
+      var vals = Object.keys(seen).sort(function(a,b) { return f.key === 'level' ? (parseInt(a) - parseInt(b)) : a.localeCompare(b); });
+      el.innerHTML = '<option value="">All</option>' + vals.map(function(v) {
+        return '<option value="' + escHtml(v) + '">' + escHtml(f.label ? f.label(v) : v) + '</option>';
+      }).join('');
+    });
+  }
+  function applySpellsLearnedFilter() {
+    var card = document.getElementById('cs-spells-learned-card');
+    var tbody = document.getElementById('cs-spells-learned-tbody');
+    if (!card || !tbody) return;
+    var classKey = (CH && CH.class_id || '').toLowerCase();
+    if (!classKey) { card.style.display = 'none'; return; }
+    var eligible = spellsLearnedEligible();
+    if (!eligible.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    var q = (document.getElementById('cs-sl-search').value || '').toLowerCase().trim();
+    var lvl = document.getElementById('cs-sl-level').value;
+    var sch = document.getElementById('cs-sl-school').value;
+    var ct = document.getElementById('cs-sl-ct').value;
+    var rng = document.getElementById('cs-sl-range').value;
+    var comp = document.getElementById('cs-sl-components').value;
+    var dur = document.getElementById('cs-sl-duration').value;
+    var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
+    var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    var maxPrepared = computePreparedMax();
+    var list = eligible.filter(function(s) {
+      if (q && s.name.toLowerCase().indexOf(q) === -1) return false;
+      if (lvl && String(s.level) !== lvl) return false;
+      if (sch && s.school !== sch) return false;
+      if (ct && s.casting_time !== ct) return false;
+      if (rng && s.range !== rng) return false;
+      if (comp && s.components !== comp) return false;
+      if (dur && s.duration !== dur) return false;
+      return true;
+    }).sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+    tbody.innerHTML = list.length ? list.map(function(s) {
+      var isLearned = learned.indexOf(s.id) >= 0;
+      var isPrepared = prepared.indexOf(s.id) >= 0;
+      var levelLabel = s.level === 0 ? 'Cantrip' : String(s.level);
+      var preparedCell = isLearned
+        ? '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">'
+        : '<button class="cs-inv-filter-btn" style="padding:0.2rem 0.6rem;font-size:0.72rem;" onclick="learnSpell(\'' + s.id + '\')">+ Learn</button>';
+      return '<tr class="cs-inv-tr">'
+        + '<td class="cs-inv-td cs-inv-td-select">' + preparedCell + '</td>'
+        + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
+        + '<td class="cs-inv-td">' + escHtml(s.name) + '</td>'
+        + '<td class="cs-inv-td cs-inv-td-cat">' + levelLabel + '</td>'
+        + '<td class="cs-inv-td">' + (s.school ? escHtml(s.school) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.casting_time ? escHtml(s.casting_time) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.range ? escHtml(s.range) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.components ? escHtml(s.components) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.duration ? escHtml(s.duration) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td" style="max-width:320px;">' + (s.spell_desc ? escHtml(s.spell_desc) : '') + '</td>'
+      + '</tr>';
+    }).join('') : '<tr><td class="cs-inv-empty-row" colspan="10">No spells match.</td></tr>';
+  }
+  function learnSpell(id) {
+    if (!SHEET) return;
+    var learned = (Array.isArray(SHEET.learned_spells) ? SHEET.learned_spells : []).slice();
+    if (learned.indexOf(id) === -1) learned.push(id);
+    SHEET.learned_spells = learned;
+    saveSheet({ learned_spells: learned });
+    applySpellsLearnedFilter();
+  }
+  function togglePreparedFromTable(id, checked) {
+    if (!SHEET) return;
+    var prepared = (Array.isArray(SHEET.prepared_spells) ? SHEET.prepared_spells : []).slice();
+    var max = computePreparedMax();
+    if (checked) {
+      if (prepared.indexOf(id) === -1 && prepared.length < max) prepared.push(id);
+    } else {
+      prepared = prepared.filter(function(x){ return x !== id; });
+    }
+    SHEET.prepared_spells = prepared;
+    saveSheet({ prepared_spells: prepared });
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
+  }
+  // Called once from renderClassTabDynamic() (CLASS_ROW loaded, populates
+  // the eligible-spell-derived filter option lists) — separate from
+  // applySpellsLearnedFilter() itself, which also needs SHEET and re-runs
+  // from renderLivePlay(), same two-phase pattern as the rest of this tab.
+  function renderSpellsLearnedFilters() {
+    populateSpellsLearnedFilterOptions();
+    applySpellsLearnedFilter();
   }
 
   // ── Spellcasting stats (Class tab, new) — Spellcasting Modifier / Spell
@@ -4224,11 +4538,17 @@
   // every time it's called (not just once), so it also correctly clears
   // itself back out if a reload ever finds zero features where there used
   // to be some.
+  // Handoff B folded Spell Slots + Spells Prepared into this same accordion
+  // as sibling groups to Class-Specific, per the real Figma (52:2705) —
+  // shown whenever the class has EITHER limited-use features OR any spell
+  // slot progression (a caster), not just the former as before.
   function renderClassFeaturesAccordion() {
     var wrap = document.getElementById('cs-class-features-acc-wrap');
     if (!wrap) return;
     var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
-    if (!features.length) { wrap.innerHTML = ''; return; }
+    var hasLimitedUse = features.length > 0;
+    var hasCasting = !!(CLASS_ROW && CLASS_ROW.spell_slot_progression);
+    if (!hasLimitedUse && !hasCasting) { wrap.innerHTML = ''; return; }
     if (!document.getElementById('cs-class-features-acc')) {
       wrap.innerHTML = '<div class="cs-ov-acc" id="cs-class-features-acc">'
         + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-class-features-acc\')">'
@@ -4236,14 +4556,29 @@
           + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
         + '</button>'
         + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
-          + '<div class="cs-limuse-group">'
-            + '<div class="cs-limuse-group-label">Class-Specific</div>'
-            + '<div id="cs-class-specific"></div>'
-          + '</div>'
+          + (hasLimitedUse ? '<div class="cs-limuse-group">'
+              + '<div class="cs-limuse-group-label">Class-Specific</div>'
+              + '<div id="cs-class-specific"></div>'
+            + '</div>' : '')
+          + (hasCasting ? '<div class="cs-limuse-group">'
+              + '<div class="cs-limuse-group-label">Spell Slots</div>'
+              + '<div class="cs-spellslot-explainer">Spell slots represent a caster&#8217;s limited daily magical energy.'
+                + '<ul><li><strong>Casting:</strong> To cast a spell, you must expend a slot of the spell&#8217;s level or higher.</li>'
+                + '<li><strong>Recovery:</strong> All expended spell slots are restored after finishing a Long Rest.</li></ul>'
+              + '</div>'
+              + '<div id="cs-spellslot-cards"></div>'
+            + '</div>' : '')
+          + (hasCasting ? '<div class="cs-limuse-group">'
+              + '<div class="cs-prepared-header-row"><span class="cs-limuse-group-label">Spells Prepared</span><span class="cs-prepared-count" id="cs-prepared-count"></span></div>'
+              + '<div class="cs-prepared-explainer" id="cs-prepared-explainer"></div>'
+              + '<div class="cs-prepared-pills" id="cs-prepared-pills"></div>'
+            + '</div>' : '')
         + '</div></div>'
       + '</div>';
     }
     renderLimitedUseFeatures();
+    renderSpellSlotsGroup();
+    renderPreparedSpells();
   }
 
   function renderClassTabDynamic() {
@@ -4252,6 +4587,7 @@
     if (detailsEl) detailsEl.innerHTML = renderClassDetailsHtml(CLASS_ROW);
     if (featuresEl) featuresEl.innerHTML = buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null);
     renderClassFeaturesAccordion();
+    renderSpellsLearnedFilters();
     wireAllTooltips();
   }
 
@@ -4643,7 +4979,9 @@
     renderPhoto();
     renderConditions();
     renderInspiration();
-    renderSpellSlots();
+    renderSpellSlotsGroup();
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
     renderSpellcastingStats();
     renderLimitedUseFeatures();
     renderAbilitySkills();
@@ -6689,6 +7027,22 @@
       .catch(function() { renderClassTabDynamic(); });
   }
 
+  // ── Fetch all spells (Handoff B — Spells Learned browser) ──────────
+  // Fetched once at boot, same pattern as fetchConditionsData() — 414 rows,
+  // small enough to hold in memory and filter/search client-side rather
+  // than round-tripping to Supabase per filter change.
+  function fetchSpellsData() {
+    return sb.from('spells').select('*')
+      .then(function(res) {
+        if (!res.error && Array.isArray(res.data)) {
+          SPELLS_DATA = res.data;
+          SPELLS_BY_ID = {};
+          SPELLS_DATA.forEach(function(s) { SPELLS_BY_ID[s.id] = s; });
+        }
+      })
+      .catch(function() {});
+  }
+
   // ── Fetch or create character_sheet row ───────────────────────────
   function fetchOrCreateSheet(ch) {
     return sb.from('character_sheet').select('*').eq('character_id', CHAR_ID).maybeSingle()
@@ -6830,6 +7184,19 @@
             + '</div>'
           + '</div>'
         + '</div>'
+        // Spell picker modal (Handoff B) — shared by the Spells Prepared
+        // "+ Prepare" pill; lists learned-but-unprepared spells only.
+        + '<div class="cs-modal-overlay" id="cs-spell-picker-modal-overlay" style="display:none" onclick="if(event.target===this)closeSpellPickerModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title">Prepare a Spell</div>'
+            + '<div class="cs-modal-body">'
+              + '<div class="cs-equip-results" id="cs-spell-picker-results"></div>'
+              + '<div style="display:flex;justify-content:flex-end;margin-top:0.8rem;">'
+                + '<button class="cs-modal-btn-secondary" onclick="closeSpellPickerModal()">Close</button>'
+              + '</div>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
         // +Add Item modal (Figma 51:2260) — the *existing* catalog search
         // (onInventorySearchInput/cs-inv-search-results/openCustomItemModal)
         // relocated here behind a trigger button, unchanged logic, same ids.
@@ -6909,6 +7276,7 @@
           fetchBackgroundData(ch),
           fetchRegionData(ch),
           fetchConditionsData(),
+          fetchSpellsData(),
           fetchInventory(),
           fetchNotes(),
           fetchPhoto()
