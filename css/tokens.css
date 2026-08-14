@@ -168,12 +168,15 @@
   --purple-dim:    rgba(192,132,252,0.12);
   --purple-border: rgba(192,132,252,0.35);
 
-  /* ── STATUS — CYAN (DM Only — the one hue unused elsewhere; ── */
-  /* replaces gold at .scc-fg-box--yellow and red at the         */
-  /* player_facing "DM Only" fallback badge, so both match)      */
-  --cyan:        #22d3ee;
-  --cyan-dim:    rgba(34,211,238,0.15);
-  --cyan-border: rgba(34,211,238,0.35);
+  /* ── STATUS — CYAN/TEAL (DM Only). Originally #22d3ee (cyan);   */
+  /* moved to a true teal here since the cyan value kept reading  */
+  /* as "blue" next to Field Guide's lore boxes and the NPC       */
+  /* "neutral" relationship badge (both also blue-family) —       */
+  /* paired with a 💠 icon on the badges themselves as a second,  */
+  /* non-color signal, since hue alone had already failed once.   */
+  --cyan:        #2dd4bf;
+  --cyan-dim:    rgba(45,212,191,0.15);
+  --cyan-border: rgba(45,212,191,0.35);
 
   /* ── GIGGLEGLOOM TYPE COLORS ─────────────────────────────── */
   --bubbleseed:  #2a7a3a;
@@ -239,19 +242,20 @@
   --scc-pk-bg:          rgba(255,255,255,0.03);
   --scc-pk-border:      var(--border-mid);
   --scc-pk-label:       var(--text-muted);
-  --scc-dm-only-bg:     rgba(248,113,113,0.06);
-  --scc-dm-only-border: rgba(248,113,113,0.45);
-  --scc-dm-only-text:   var(--red);
-  --scc-dm-only-label:  rgba(248,113,113,0.9);
+  --scc-dm-only-bg:     rgba(45,212,191,0.06);
+  --scc-dm-only-border: rgba(45,212,191,0.45);
+  --scc-dm-only-text:   var(--cyan);
+  --scc-dm-only-label:  rgba(45,212,191,0.9);
   --scc-beat-done-bg:   rgba(34,197,94,0.12);
   --scc-beat-done-text: var(--green);
   --scc-beat-prog-bg:   rgba(240,180,41,0.12);
   --scc-beat-prog-text: var(--gold);
   --scc-beat-todo-bg:   rgba(255,255,255,0.04);
   --scc-beat-todo-text: var(--text-muted);
+  --orange-vivid:       #fb923c;
   --scc-diff-low:       var(--green);
   --scc-diff-moderate:  var(--gold);
-  --scc-diff-high:      var(--purple);
+  --scc-diff-high:      var(--orange-vivid);
   --scc-diff-deadly:    var(--red);
   --scc-init-active-bg:     rgba(240,180,41,0.12);
   --scc-init-active-border: var(--gold-border);

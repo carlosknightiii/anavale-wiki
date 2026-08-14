@@ -3040,6 +3040,7 @@
               </div>
               <div style="display:flex;gap:0.5rem;align-items:center;">
                 <button class="scc-btn-secondary" id="scc-add-all-players-btn" onclick="sccAddAllPlayers()">+ Add All Players</button>
+                <button class="scc-btn-sm scc-btn-danger" id="scc-clear-all-btn" onclick="sccClearAllCombatants()" style="display:none">Clear All</button>
                 <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none">&#9876; Start Combat &#8212; Roll Initiative</button>
               </div>
             </div>
@@ -4172,13 +4173,9 @@ function showDMToast(msg, type) {
 
 .cm-td-name {
   font-weight: 500;
-  max-width: 220px;
 }
 .cm-td-name span {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .cm-type-badge {
@@ -4366,9 +4363,6 @@ function showDMToast(msg, type) {
 .cm-td-img { width: 56px; padding: 0.3rem 0.4rem; }
 
 /* ── Name as edit link ── */
-.cm-td-name {
-  max-width: 240px;
-}
 .cm-name-link {
   background: none;
   border: none;
@@ -4384,9 +4378,6 @@ function showDMToast(msg, type) {
   text-underline-offset: 3px;
   transition: var(--dm-transition);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
   display: inline-block;
   vertical-align: middle;
 }
@@ -6145,9 +6136,15 @@ function showDMToast(msg, type) {
 .scc-fg-box--purple { background: rgba(192,132,252,0.07); border-left: 3px solid rgba(192,132,252,0.4); }
 .scc-fg-box--purple .scc-fg-box-label { color: #c084fc; }
 .scc-fg-box--purple p { color: #ede9fe !important; }
-.scc-fg-box--orange { background: rgba(251,146,60,0.07); border-left: 3px solid rgba(251,146,60,0.4); }
-.scc-fg-box--orange .scc-fg-box-label { color: #fb923c; }
-.scc-fg-box--orange p { color: #fed7aa !important; }
+.scc-fg-box--pink { background: rgba(244,114,182,0.07); border-left: 3px solid rgba(244,114,182,0.4); }
+.scc-fg-box--pink .scc-fg-box-label { color: #f472b6; }
+.scc-fg-box--pink p { color: #fbcfe8 !important; }
+/* Softened/desaturated terracotta, not the original vivid orange (freed for
+   Combat's "high" difficulty instead) — the vivid version read as an alarm
+   color for "here's stuff to buy," per direct DM feedback. */
+.scc-fg-box--orange { background: rgba(217,166,108,0.07); border-left: 3px solid rgba(217,166,108,0.4); }
+.scc-fg-box--orange .scc-fg-box-label { color: #d9a66c; }
+.scc-fg-box--orange p { color: #f0ddc5 !important; }
 .scc-fg-box--grey { background: var(--scc-surface-mid); border: 1px solid var(--scc-border); }
 .scc-fg-box--grey .scc-fg-box-label { color: var(--dm-text); }
 .scc-fg-table { width: 100%; border-collapse: collapse; margin: 0.4rem 0 0.75rem; font-family: var(--font-body); font-size: 0.79rem; }
@@ -10124,7 +10121,7 @@ function renderQuestDetail(id) {
     + '</div>'
     + '<div class="quest-status-select">'
     + '<label for="q-level-' + escQ(id) + '">Suggested Level:</label>'
-    + '<input type="number" min="1" max="20" step="1" class="cm-select" style="width:5rem;" id="q-level-' + escQ(id) + '" placeholder="—" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
+    + '<input type="number" min="1" max="20" step="1" class="cm-select" style="width:6.5rem;" id="q-level-' + escQ(id) + '" placeholder="Not set" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
     + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-level-msg-' + escQ(id) + '"></span>'
     + '</div>';
 }
@@ -11121,8 +11118,8 @@ var SCC_FG_EDIT_MODE = false;
 var SCC_FG_EDIT_BLOCKS = null;          // working copy while editing
 var SCC_FG_EDIT_GROUP_OPEN = {};
 
-var SCC_FG_BOX_COLOR_CLASS = { grey: 'grey', green: 'green', cyan: 'yellow', blue: 'blue', purple: 'purple', orange: 'orange' };
-var SCC_FG_BOX_COLORS = ['grey', 'green', 'cyan', 'blue', 'purple', 'orange'];
+var SCC_FG_BOX_COLOR_CLASS = { grey: 'grey', green: 'green', cyan: 'yellow', blue: 'blue', purple: 'purple', orange: 'orange', pink: 'pink' };
+var SCC_FG_BOX_COLORS = ['grey', 'green', 'cyan', 'blue', 'purple', 'orange', 'pink'];
 var SCC_FG_LINK_TYPES = {
   character: { label: 'NPC', arr: function(){ return typeof CHARACTERS !== 'undefined' ? CHARACTERS : []; } },
   creature:  { label: 'Creature', arr: function(){ return typeof CREATURES !== 'undefined' ? CREATURES : []; } },
@@ -11166,8 +11163,11 @@ function sccFgRenderBlock(b) {
     case 'footer':   return '<div class="scc-fg-doc-footer">' + sccFgLinkify(b.html) + '</div>';
     case 'box':
       var colorClass = SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey';
+      // Loot/shop boxes get a coin icon prefix independent of color — reinforces
+      // the meaning even for a DM who can't rely on hue alone at a glance.
+      var boxLabelPrefix = colorClass === 'orange' ? '&#129689; ' : '';
       return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
-        + '<div class="scc-fg-box-label">' + sccEsc(b.label || '') + '</div>'
+        + '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label || '') + '</div>'
         + sccFgLinkify(b.html || '')
         + (b.table ? sccFgRenderTableBlock(b.table) : '')
       + '</div>';
@@ -12122,6 +12122,16 @@ function sccPickerSearch(type, query) {
 }
 
 function sccPickerSelect(type, id, name) {
+  // Combatants are the one picker type where re-selecting the same entry is a
+  // real, wanted action (3x Grusk Enforcer) — SCC_COMBATANTS is a plain array
+  // keyed by index everywhere it's read, not by id, so duplicate ids are safe.
+  // SCC_SELECTED['combatant'] also has no real UI consumer (unlike the other
+  // 4 types' visible chip rows), so there's nothing to dedupe against anyway.
+  if (type === 'combatant') {
+    sccPickerClose(type);
+    sccAddToCombatStaging(id, name);
+    return;
+  }
   if (SCC_SELECTED[type] && SCC_SELECTED[type].some(function(s) { return s.id === id; })) {
     sccPickerClose(type); return;
   }
@@ -12129,7 +12139,6 @@ function sccPickerSelect(type, id, name) {
   SCC_SELECTED[type].push({ id: id, name: name });
   sccRenderChips(type);
   sccPickerClose(type);
-  if (type === 'combatant') sccAddToCombatStaging(id, name);
   if (type === 'npc')       sccRenderNpcPanel();
   if (type === 'location')  sccRenderLocationPanel();
   if (type === 'quest')     { sccLoadQuestProgress([id]); setTimeout(sccRenderQuestPanel, 400); }
@@ -12985,6 +12994,8 @@ function sccRenderStagingList() {
     document.getElementById('scc-start-combat-btn').style.display = 'none';
     var addAllBtn = document.getElementById('scc-add-all-players-btn');
     if (addAllBtn) addAllBtn.style.display = 'none';
+    var clearAllBtn = document.getElementById('scc-clear-all-btn');
+    if (clearAllBtn) clearAllBtn.style.display = 'none';
     return;
   }
   el.innerHTML = SCC_COMBATANTS.map(function(c, idx) {
@@ -13022,6 +13033,16 @@ function sccRenderStagingList() {
   document.getElementById('scc-start-combat-btn').style.display = '';
   var addAllBtn = document.getElementById('scc-add-all-players-btn');
   if (addAllBtn) addAllBtn.style.display = '';
+  var clearAllBtn = document.getElementById('scc-clear-all-btn');
+  if (clearAllBtn) clearAllBtn.style.display = '';
+}
+
+function sccClearAllCombatants() {
+  if (!SCC_COMBATANTS.length) return;
+  if (!confirm('Clear the entire encounter? This removes all ' + SCC_COMBATANTS.length + ' combatant' + (SCC_COMBATANTS.length === 1 ? '' : 's') + ' currently added.')) return;
+  SCC_COMBATANTS = [];
+  sccRenderStagingList();
+  sccUpdateDifficulty();
 }
 
 function sccToggleLoot(idx) {
@@ -14138,7 +14159,7 @@ function sccOpenLookup(type, id) {
     var pfVal   = c.player_facing;
     var pfLabel = pfVal === true || pfVal === 'true' ? 'Visible to Players'
                 : pfVal === 'teaser' ? 'Teaser'
-                : 'DM Only';
+                : '\uD83D\uDCA0 DM Only';
     var pfColor = pfVal === true || pfVal === 'true' ? 'var(--green)'
                 : pfVal === 'teaser' ? 'var(--gold)'
                 : 'var(--cyan)';
@@ -14227,7 +14248,13 @@ function sccOpenLookup(type, id) {
     var locPortraitHtml = loc.image
       ? '<img class="scc-ql-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/cities/' + sccEsc(loc.id) + '.webp" onerror="this.style.display=\'none\'" alt="">'
       : '<div class="scc-ql-portrait-fallback">' + sccEsc((loc.name||'?').charAt(0)) + '</div>';
-    var typeLine = (loc._srcType === 'poi' || loc.type === 'poi') ? 'POI' : (loc.city_type || loc.type || 'Location').replace(/-/g,' ');
+    // loc._srcType is never actually set on this inline-built array (a different,
+    // unrelated function tags its own separately-built array with it) — checking
+    // real array membership directly is the only reliable way to tell POI/Nation/
+    // City apart here, same fix already applied to the Vendor/Shop POI-scoping.
+    var isNationEntry = (typeof NATIONS !== 'undefined' ? NATIONS : []).some(function(n){ return n.id === loc.id; });
+    var isPoiEntry = (typeof POIS !== 'undefined' ? POIS : []).some(function(p){ return p.id === loc.id; });
+    var typeLine = isNationEntry ? 'Nation' : isPoiEntry ? 'POI' : (loc.city_type || 'City').replace(/-/g,' ');
     // Tags
     var locTagsHtml = '';
     if (loc.tags && loc.tags.length) {
@@ -14252,11 +14279,17 @@ function sccOpenLookup(type, id) {
       + '</div>'
       // ── FIELDS ──
       + (loc.formery_present ? '<div class="scc-ql-fields"><div class="scc-ql-row"><span class="scc-ql-label">Formery</span><span class="scc-ql-value">Office present</span></div></div>' : '')
+      + ((isNationEntry && (loc.government || loc.capital_city)) ? '<div class="scc-ql-fields">'
+          + (loc.government ? '<div class="scc-ql-row"><span class="scc-ql-label">Government</span><span class="scc-ql-value">' + sccEsc(loc.government) + '</span></div>' : '')
+          + (loc.capital_city ? '<div class="scc-ql-row"><span class="scc-ql-label">Capital</span><span class="scc-ql-value">' + sccEsc(loc.capital_city) + '</span></div>' : '')
+        + '</div>' : '')
       // ── PROSE — only fields NOT shown in the accordion ──
       + (loc.strategic_importance ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Strategic Importance</div><div class="scc-ql-section-body">' + sccEsc(loc.strategic_importance) + '</div></div>' : '')
       + (loc.tone ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tone</div><div class="scc-ql-section-body">' + sccEsc(loc.tone) + '</div></div>' : '')
       + (loc.culture ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Culture</div><div class="scc-ql-section-body">' + sccEsc(loc.culture) + '</div></div>' : '')
+      + (loc.beliefs ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Beliefs</div><div class="scc-ql-section-body">' + sccEsc(loc.beliefs) + '</div></div>' : '')
       + (loc.gigglegloom_notes ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom</div><div class="scc-ql-section-body">' + sccEsc(loc.gigglegloom_notes) + '</div></div>' : '')
+      + (loc.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(loc.gigglegloom_relationship) + '</div></div>' : '')
       // ── POPULATION ──
       + (function() {
           var pd = loc.population_data;
@@ -14300,7 +14333,7 @@ function sccOpenLookup(type, id) {
       // ── TAGS ──
       + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '')
       // ── SHOP (POIs only) ──
-      + ((typeof POIS !== 'undefined' ? POIS : []).some(function(p){ return p.id === loc.id; }) ? sccVendorShopSectionHtml('pois', loc.id) : '');
+      + (isPoiEntry ? sccVendorShopSectionHtml('pois', loc.id) : '');
   } else if (type === 'creature') {
     var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
     var cr = creatures.find(function(x){ return x.id===id; });
@@ -14363,7 +14396,7 @@ function sccOpenLookup(type, id) {
     if (!org) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
 
     var opfVal   = org.player_facing;
-    var opfLabel = opfVal === true || opfVal === 'true' ? 'Visible to Players' : opfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var opfLabel = opfVal === true || opfVal === 'true' ? 'Visible to Players' : opfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
     var opfColor = opfVal === true || opfVal === 'true' ? 'var(--green)' : opfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
 
     var orgPortraitHtml = org.image
@@ -14463,7 +14496,7 @@ function sccOpenLookup(type, id) {
     if (!reg) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
 
     var rgPfVal   = reg.player_facing;
-    var rgPfLabel = rgPfVal === true || rgPfVal === 'true' ? 'Visible to Players' : rgPfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var rgPfLabel = rgPfVal === true || rgPfVal === 'true' ? 'Visible to Players' : rgPfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
     var rgPfColor = rgPfVal === true || rgPfVal === 'true' ? 'var(--green)' : rgPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
 
     var rgCh = (reg.color_health || '').toLowerCase();
@@ -14510,7 +14543,7 @@ function sccOpenLookup(type, id) {
     if (!relg) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
 
     var relgPfVal   = relg.player_facing;
-    var relgPfLabel = relgPfVal === true || relgPfVal === 'true' ? 'Visible to Players' : relgPfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var relgPfLabel = relgPfVal === true || relgPfVal === 'true' ? 'Visible to Players' : relgPfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
     var relgPfColor = relgPfVal === true || relgPfVal === 'true' ? 'var(--green)' : relgPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
 
     var religionTagsHtml = '';
@@ -14549,7 +14582,7 @@ function sccOpenLookup(type, id) {
     if (!sp) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
 
     var spPfVal   = sp.player_facing;
-    var spPfLabel = spPfVal === true || spPfVal === 'true' ? 'Visible to Players' : spPfVal === 'teaser' ? 'Teaser' : 'DM Only';
+    var spPfLabel = spPfVal === true || spPfVal === 'true' ? 'Visible to Players' : spPfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
     var spPfColor = spPfVal === true || spPfVal === 'true' ? 'var(--green)' : spPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
 
     html = ''
