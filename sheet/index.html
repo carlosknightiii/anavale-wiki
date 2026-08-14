@@ -489,6 +489,28 @@
       min-width: 0;
     }
 
+    /* ── Class tab — Overview accordion two-column layout (Figma 52:2705,
+       node 94:1560 "details", pulled fresh 2026-08-14) — Class details
+       left, Key Features right. gap-42px and min-w-171px are exact Figma
+       values (new --char-ov-gap-l token; 171px is a one-off, no existing
+       token matched it). flex-wrap so both columns stack on narrow
+       viewports, same pattern .cs-story-cards already uses. */
+    .cs-class-overview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-l);
+    }
+    .cs-class-overview-col {
+      flex: 1 0 0;
+      min-width: 171px;
+    }
+    .cs-class-col-heading {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+      margin-bottom: 10px;
+    }
     /* ── Class tab — Key Features (Figma 52:2705/52:2710) ──────────────
        Alternating row shading is pure CSS nth-child, no data dependency. */
     .cs-class-features-label {
@@ -533,6 +555,86 @@
       color: var(--text);
       opacity: 0.85;
     }
+
+    /* ── Class-Specific limited-use tracker (Features accordion, Figma
+       52:2705, node 94:1772 "slots" — pulled fresh 2026-08-14, verified via
+       get_design_context, not the handoff doc's paraphrase: the doc claimed
+       the feature name was Cinzel Decorative, the real frame is plain
+       Roboto Bold, matching the values used below). One shared box per
+       group (mirrors .cs-effect-panel's blue-700/radius-lg/padding-s
+       choice), each feature its own .cs-limuse-card inside it — gap-xs
+       between cards, no divider lines (unlike Special Effects' per-item
+       border — confirmed via the real node tree, this group uses plain
+       gap spacing instead). ── */
+    .cs-limuse-group {
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-s);
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-xs);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .cs-limuse-group-label {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+    }
+    .cs-limuse-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-xs);
+      width: 100%;
+    }
+    .cs-limuse-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--char-ov-gap-2xs);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: var(--char-ov-pl);
+      color: var(--text);
+    }
+    .cs-limuse-name { flex: 1 0 0; min-width: 0; }
+    .cs-limuse-count { flex-shrink: 0; text-align: right; }
+    /* Fully-rounded pill (radius:999px), overflow-clip so each segment's
+       square corners get cropped to the pill shape by the wrapper alone —
+       segments themselves need no border-radius of their own. */
+    .cs-limuse-bar {
+      display: flex;
+      gap: 3px;
+      align-items: stretch;
+      width: 100%;
+      border: 1px solid var(--blue-200);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .cs-limuse-seg {
+      flex: 1 0 0;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--char-ov-gap-2xs) 8px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: var(--char-ov-pl);
+      white-space: nowrap;
+    }
+    /* Available (not yet spent) — bright solid green, dark text for
+       contrast. Spent — same green at 25% opacity, light text at 50%
+       opacity. Available sits left, spent sits right (getAttunableEquipped
+       Items()-style left-to-right fill order, confirmed against the real
+       Figma example — opposite of the Hit Dice pip convention, which spends
+       left-to-right instead; not made consistent with it on purpose, this
+       matches what the real design shows for this specific component). */
+    .cs-limuse-seg.active { background: var(--green); color: var(--blue-900); }
+    .cs-limuse-seg.spent { background: rgba(34,197,94,0.25); color: var(--text); opacity: 0.5; }
 
     /* ── Spell slots (Class tab, stopgap — see Decision Log) ── */
     .cs-spell-slots-card { margin-top: var(--char-ov-gap-s); }
@@ -3718,20 +3820,25 @@
       ? text + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
       : text;
   }
+  // Hit die was dropped from this card 2026-08-14 to match the real Figma
+  // frame (52:2705, node 94:1561) exactly — confirmed via get_design_context,
+  // not assumed from the handoff doc's own (also hit-die-free) field list.
+  // Hit die still displays elsewhere (the header's Hit Dice tracker reads
+  // CLASS_ROW.hit_die directly), so this isn't a data loss, just de-duplication.
+  // classes.hit_die_tip is now unused by this function but left in the schema —
+  // same "leave a harmless unused column" precedent as hit_dice_total.
   function renderClassDetailsHtml(row) {
-    var hitDie  = row ? row.hit_die           : null;
     var primary = row ? row.primary_ability   : null;
     var saves   = row ? row.saving_throws     : null;
     var casting = row ? row.casting_summary   : null;
     var armor   = row ? row.armor             : null;
     var tools   = row ? row.tools             : null;
     var weapons = row ? row.weapons           : null;
-    var hitDieTip = row ? row.hit_die_tip : null;
     var savesTip  = row ? row.saves_tip   : null;
     var weaponsTip = row ? row.weapons_tip : null;
     return '<div class="cs-ov-class-detail">'
-        + '<div class="cs-ov-class-detail-keys"><p>' + classTraitLabel('Hit die:', hitDieTip) + '</p><p>Primary ability:</p><p>' + classTraitLabel('Saving throws:', savesTip) + '</p><p>Casting Spells:</p></div>'
-        + '<div class="cs-ov-class-detail-vals"><p>' + (hitDie || '—') + '</p><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
+        + '<div class="cs-ov-class-detail-keys"><p>Primary ability:</p><p>' + classTraitLabel('Saving throws:', savesTip) + '</p><p>Casting Spells:</p></div>'
+        + '<div class="cs-ov-class-detail-vals"><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
       + '</div>'
       + '<div class="cs-ov-class-detail">'
         + '<div class="cs-ov-class-detail-keys"><p>Armor:</p><p>Tools:</p><p>' + classTraitLabel('Weapons:', weaponsTip) + '</p></div>'
@@ -3844,13 +3951,53 @@
         + '</div>'
       + '</div>';
     }).join('');
-    return '<div class="cs-class-features-label">Key Features</div><div class="cs-class-features">' + rows + '</div>';
+    // No leading "Key Features" label here (dropped 2026-08-14) — the new
+    // Overview-accordion column heading (.cs-class-col-heading) provides it
+    // now. .cs-class-features-label itself is untouched and still used
+    // as-is by the separate Spellcasting/Spell Slots cards on this tab.
+    return '<div class="cs-class-features">' + rows + '</div>';
   }
 
   // ── Class tab (Figma 52:2705/52:2710) ───────────────────────────────
   // Basic info (image/name/level) renders immediately from player_characters;
   // mechanical fields + Key Features come from the `classes` table via
   // renderClassTabDynamic() once fetchClassData() resolves.
+  // ── Class tab Overview restructure (Figma 52:2705, pulled fresh
+  // 2026-08-14) — Basic row + a two-column "Overview" accordion (Class
+  // details left, Key Features right). Built by hand rather than calling
+  // accordionShell() verbatim: that helper wraps its own .cs-ov-breakout,
+  // and this whole tab already lives inside ONE shared breakout established
+  // once at the top of this function — nesting a second viewport-relative
+  // full-bleed wrapper (width:100vw; left:50%; margin-left:-50vw) one level
+  // deeper would double-offset, not just double-wrap harmlessly. Same
+  // .cs-ov-acc*/toggleSheetAccordion() classes and behavior are reused
+  // directly, just without accordionShell()'s outer div.
+  //
+  // Real Figma structure has the Accordion wrapping Basic + details
+  // together (collapsing "Overview" would hide the class name/image too) —
+  // deviated from that on purpose, keeping Basic always visible outside the
+  // collapsible region, per this handoff's own explicit instruction ("Basic
+  // row stays where it is"). Flagged, not silently picked either way.
+  function buildClassOverviewAccordionHtml() {
+    return '<div class="cs-ov-acc" id="cs-class-overview-acc">'
+      + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-class-overview-acc\')">'
+        + '<span class="cs-ov-acc-title">Overview</span>'
+        + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+      + '</button>'
+      + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
+        + '<div class="cs-class-overview-row">'
+          + '<div class="cs-class-overview-col">'
+            + '<div class="cs-class-col-heading">Overview</div>'
+            + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
+          + '</div>'
+          + '<div class="cs-class-overview-col">'
+            + '<div class="cs-class-col-heading">Key Features</div>'
+            + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
+          + '</div>'
+        + '</div>'
+      + '</div></div>'
+    + '</div>';
+  }
   function buildClassTabHtml(ch, classDisplay) {
     var classKey = (ch.class_id || '').toLowerCase();
     var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
@@ -3864,9 +4011,20 @@
           + '</div>'
           + '<div class="cs-ov-class-level"><div class="cs-ov-class-level-label">Level</div><div class="cs-ov-class-level-val">' + (ch.level || 1) + '</div></div>'
         + '</div>'
-        + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
-        + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
+        + buildClassOverviewAccordionHtml()
       + '</div>'
+      // Features accordion — new this handoff, holds the Class-Specific
+      // limited-use tracker (and, later, Handoff B's Spell Slots/Prepared/
+      // Learned cards as sibling groups in the same body). Always-present
+      // empty anchor div, never the accordion markup itself, on this first
+      // synchronous paint — CLASS_ROW is null here (fetchClassData()
+      // hasn't resolved yet), so whether any limited-use features exist is
+      // still unknown. renderClassFeaturesAccordion() (called from
+      // renderClassTabDynamic() once CLASS_ROW loads) fills this in only
+      // when there's real content, per the DM's explicit call not to add a
+      // hideIfEmpty flag to accordionShell() — skip emitting the accordion
+      // at all rather than emit-then-hide.
+      + '<div id="cs-class-features-acc-wrap"></div>'
       + '<div class="cs-ov-class-card cs-spell-slots-card" id="cs-spellcasting-stats-card" style="display:none;">'
         + '<div class="cs-class-features-label" style="margin-top:0;">Spellcasting</div>'
         + '<div id="cs-class-spellcasting-stats"></div>'
@@ -3979,11 +4137,121 @@
 
   // Populated once fetchClassData() resolves — the `classes` table is the
   // source for these mechanical fields (see docs/character-sheet-redesign-handoff.md §6).
+  // ── Class-Specific limited-use tracker (Features accordion, new) ────
+  // classes.limited_use_features: [{name, max_at_level: {level: max},
+  // recharge}]. Max is derived live from the character's current level —
+  // same "don't cache what you can derive" principle hp-calc.js already
+  // uses for HP — picking the highest level threshold <= current level, so
+  // leveling up just reveals more segments with no migration needed.
+  function computeLimitedUseMax(feature, chLevel) {
+    if (!feature || !feature.max_at_level) return 0;
+    var thresholds = Object.keys(feature.max_at_level).map(Number).sort(function(a,b){return a-b;});
+    var applicable = thresholds.filter(function(t){ return t <= chLevel; });
+    if (!applicable.length) return 0;
+    var pick = applicable[applicable.length - 1];
+    return feature.max_at_level[pick];
+  }
+  // Segment fill direction confirmed against the real Figma node (94:1772),
+  // not assumed: available segments render left-to-right first, spent
+  // segments fill in from the right — the opposite of the Hit Dice pip
+  // convention (spent-left/available-right) built in an earlier session.
+  // Deliberately not made consistent with that — this matches what the
+  // actual design shows for this specific component, not a generic pip.
+  function limitedUseCardHtml(feature, spent, max) {
+    var segments = [];
+    for (var i = 0; i < max; i++) {
+      var isSpent = i >= (max - spent);
+      segments.push('<button class="cs-limuse-seg' + (isSpent ? ' spent' : ' active') + '" onclick="toggleLimitedUse(\'' + escHtml(feature.name).replace(/'/g, "\\'") + '\', ' + i + ')">'
+        + (isSpent ? '<span class="cs-limuse-seg-label">Spent</span>' : '<span class="cs-limuse-seg-num">' + (i + 1) + '</span>')
+        + '</button>');
+    }
+    return '<div class="cs-limuse-card">'
+      + '<div class="cs-limuse-header">'
+        + '<span class="cs-limuse-name">' + escHtml(feature.name) + '</span>'
+        + '<span class="cs-limuse-count">Used: ' + spent + '/' + max + '</span>'
+      + '</div>'
+      + '<div class="cs-limuse-bar">' + segments.join('') + '</div>'
+    + '</div>';
+  }
+  // Refreshes card content only — assumes the group shell (#cs-class-specific
+  // and its "Class-Specific" label) already exists. Called both right after
+  // renderClassFeaturesAccordion() builds that shell (CLASS_ROW loaded,
+  // SHEET likely still null — renders a safe "0 spent" default) and again
+  // from renderLivePlay() once SHEET is guaranteed loaded, for the real
+  // spent counts — same two-pass pattern every SHEET-dependent Class tab
+  // card in this series has used.
+  function renderLimitedUseFeatures() {
+    var container = document.getElementById('cs-class-specific');
+    if (!container) return;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    if (!features.length) return;
+    var chLevel = (CH && CH.level) || 1;
+    var spentMap = (SHEET && typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? SHEET.limited_use_spent : {};
+    container.innerHTML = features.map(function(f) {
+      var max = computeLimitedUseMax(f, chLevel);
+      var spent = parseInt(spentMap[f.name]) || 0;
+      if (spent > max) spent = max;
+      return limitedUseCardHtml(f, spent, max);
+    }).join('');
+  }
+  // Click convention: clicking segment N sets spent to (max - N) — since
+  // available fills left, spent fills right, segment index 0 is the
+  // leftmost (highest-priority-available) slot. Clicking the currently-
+  // first-spent segment un-spends it, mirroring the Death Saves/Hit Dice
+  // "click the boundary segment to toggle" interaction exactly, just
+  // mapped through the reversed fill direction this component uses.
+  function toggleLimitedUse(name, segIdx) {
+    if (!SHEET) return;
+    var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
+    var cur = parseInt(spentMap[name]) || 0;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var feature = features.find(function(f){ return f.name === name; });
+    if (!feature) return;
+    var max = computeLimitedUseMax(feature, (CH && CH.level) || 1);
+    var next = (cur === (max - segIdx)) ? (max - segIdx) - 1 : (max - segIdx);
+    if (next < 0) next = 0;
+    if (next > max) next = max;
+    spentMap[name] = next;
+    SHEET.limited_use_spent = spentMap;
+    saveSheet({ limited_use_spent: spentMap });
+    renderLimitedUseFeatures();
+  }
+  // Builds (or clears) the "Features" accordion shell into the always-
+  // present #cs-class-features-acc-wrap anchor. Only emits the accordion
+  // at all once CLASS_ROW confirms there's real content — per the DM's
+  // explicit call, no hideIfEmpty flag added to accordionShell() itself,
+  // this function just skips emitting the markup instead. Re-evaluated
+  // every time it's called (not just once), so it also correctly clears
+  // itself back out if a reload ever finds zero features where there used
+  // to be some.
+  function renderClassFeaturesAccordion() {
+    var wrap = document.getElementById('cs-class-features-acc-wrap');
+    if (!wrap) return;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    if (!features.length) { wrap.innerHTML = ''; return; }
+    if (!document.getElementById('cs-class-features-acc')) {
+      wrap.innerHTML = '<div class="cs-ov-acc" id="cs-class-features-acc">'
+        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-class-features-acc\')">'
+          + '<span class="cs-ov-acc-title">Features</span>'
+          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+        + '</button>'
+        + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
+          + '<div class="cs-limuse-group">'
+            + '<div class="cs-limuse-group-label">Class-Specific</div>'
+            + '<div id="cs-class-specific"></div>'
+          + '</div>'
+        + '</div></div>'
+      + '</div>';
+    }
+    renderLimitedUseFeatures();
+  }
+
   function renderClassTabDynamic() {
     var detailsEl = document.getElementById('cs-class-details');
     var featuresEl = document.getElementById('cs-class-features');
     if (detailsEl) detailsEl.innerHTML = renderClassDetailsHtml(CLASS_ROW);
     if (featuresEl) featuresEl.innerHTML = buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null);
+    renderClassFeaturesAccordion();
     wireAllTooltips();
   }
 
@@ -4377,6 +4645,7 @@
     renderInspiration();
     renderSpellSlots();
     renderSpellcastingStats();
+    renderLimitedUseFeatures();
     renderAbilitySkills();
     wireAllTooltips();
   }
