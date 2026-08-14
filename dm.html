@@ -3017,10 +3017,16 @@
                    DM doesn't have to re-search from scratch for what's already been prepped. -->
               <div class="scc-combat-session-label">From Session Roster</div>
               <div class="scc-combat-session-creatures" id="scc-combat-session-creatures"></div>
+              <div class="scc-combat-filters-bar" id="scc-combat-filters-bar">
+                <select id="scc-cf-tier" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Tier: All</option></select>
+                <select id="scc-cf-category" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Category: All</option></select>
+                <select id="scc-cf-region" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Region: All</option></select>
+                <button type="button" class="scc-combat-filters-reset" onclick="sccCombatResetFilters()">Reset</button>
+              </div>
               <div class="scc-combat-top-row">
                 <div class="scc-picker-group" style="flex:1">
                   <div class="scc-picker-search-wrap">
-                    <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccPickerSearch('combatant', this.value)">
+                    <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccCombatantSearch(this.value)">
                     <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
                   </div>
                 </div>
@@ -6137,6 +6143,24 @@ function showDMToast(msg, type) {
   color: var(--dm-text-faint);
   cursor: default;
 }
+.scc-combat-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.scc-combat-filters-reset {
+  background: transparent;
+  border: none;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.15rem 0.3rem;
+}
+.scc-combat-filters-reset:hover { color: var(--dm-gold); }
 .scc-combat-top-row {
   display: flex;
   gap: 1rem;
@@ -7231,6 +7255,7 @@ function showDMToast(msg, type) {
 .scc-audit-mode .scc-input { display: none !important; }
 .scc-audit-mode .scc-textarea { display: none !important; }
 .scc-audit-mode .scc-picker-search { display: none !important; }
+.scc-audit-mode .scc-combat-filters-bar { display: none !important; }
 .scc-audit-mode .scc-browse-btn { display: none !important; }
 .scc-audit-mode .scc-picker-controls { gap: 0; }
 .scc-audit-mode .scc-chip-remove { display: none !important; }
@@ -11319,7 +11344,7 @@ function sccSwitchPanel(name) {
   if (name === 'live') { sccRenderLivePanel(); }
   if (name === 'fieldguide') { sccRenderFieldGuide(); }
   if (name === 'notes') { sccRenderTaggedNotes(); }
-  if (name === 'combat') { sccRenderCombatSessionCreatures(); }
+  if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 var SCC_FG_DATA    = null;   // cached on first load
@@ -12782,6 +12807,105 @@ function sccQuickAddCombatant(id, name) {
   if (SCC_COMBATANTS.some(function(c) { return c.id === id; })) return;
   sccAddToCombatStaging(id, name);
   sccRenderCombatSessionCreatures();
+}
+
+// Distinct option values pulled live from the already-loaded CREATURES array each
+// time the Combat panel opens — never hardcoded, same convention as the global
+// search filter bar. `tier`/`category` are scalar columns; `regions` is an array
+// column, so it's flattened+deduped separately and shown by real region name.
+function sccCombatPopulateFilterOptions() {
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  var regionsAll = typeof REGIONS !== 'undefined' ? REGIONS : [];
+
+  function distinct(field) {
+    var seen = {}, out = [];
+    creatures.forEach(function(c) {
+      var v = c[field];
+      if (v && !seen[v]) { seen[v] = true; out.push(v); }
+    });
+    out.sort();
+    return out;
+  }
+  function fillSelect(id, label, values, labelFor) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">' + sccEsc(label) + ': All</option>'
+      + values.map(function(v) { return '<option value="' + sccEsc(v) + '">' + sccEsc(labelFor ? labelFor(v) : v) + '</option>'; }).join('');
+    if (values.indexOf(current) >= 0) sel.value = current;
+  }
+
+  var regionIds = {};
+  creatures.forEach(function(c) { (c.regions || []).forEach(function(r) { if (r) regionIds[r] = true; }); });
+  var regionList = Object.keys(regionIds).sort();
+  function regionName(id) {
+    var r = regionsAll.find(function(x) { return x.id === id; });
+    return r ? r.name : id;
+  }
+
+  fillSelect('scc-cf-tier', 'Tier', distinct('tier'));
+  fillSelect('scc-cf-category', 'Category', distinct('category'));
+  fillSelect('scc-cf-region', 'Region', regionList, regionName);
+}
+
+function sccCombatFilterChanged() {
+  sccCombatantSearch((document.getElementById('scc-pick-combatant') || {}).value || '');
+}
+
+function sccCombatResetFilters() {
+  ['scc-cf-tier', 'scc-cf-category', 'scc-cf-region'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (sel) sel.value = '';
+  });
+  sccCombatFilterChanged();
+}
+
+// Dedicated search for the combat-add box — separate from the generic
+// sccPickerSearch() so the other 4 picker types (location/npc/quest/item)
+// stay untouched. Matches name AND habitat/description/tags (creatures only —
+// PCs have none of those fields), and applies the Tier/Category/Region filters
+// to creatures only; a PC never has tier/category/region data, so it's
+// excluded from results whenever any of those filters is active.
+function sccCombatantSearch(query) {
+  var drop = document.getElementById('scc-drop-combatant');
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+
+  var tierVal = (document.getElementById('scc-cf-tier') || {}).value || '';
+  var catVal  = (document.getElementById('scc-cf-category') || {}).value || '';
+  var regVal  = (document.getElementById('scc-cf-region') || {}).value || '';
+  var filtersActive = !!(tierVal || catVal || regVal);
+
+  if (!query && !filtersActive) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+
+  var creatures = (typeof CREATURES !== 'undefined' ? CREATURES : []).filter(function(c) {
+    if (tierVal && c.tier !== tierVal) return false;
+    if (catVal && c.category !== catVal) return false;
+    if (regVal && (c.regions || []).indexOf(regVal) < 0) return false;
+    if (query) {
+      var haystack = (c.name + ' ' + (c.habitat || '') + ' ' + (c.description || '') + ' ' + (c.tags || []).join(' ')).toLowerCase();
+      if (haystack.indexOf(query) < 0) return false;
+    }
+    return true;
+  }).map(function(c) { return { id: c.id, name: c.name, sub: 'CR ' + (c.challenge_rating != null ? c.challenge_rating : '?'), isPC: false }; });
+
+  var pcs = filtersActive ? [] : SCC_PLAYERS.filter(function(p) {
+    return !query || p.name.toLowerCase().indexOf(query) >= 0;
+  }).map(function(p) { return { id: p.id, name: p.name, sub: 'Level ' + (p.level || 1) + ' PC', isPC: true }; });
+
+  var results = creatures.concat(pcs).slice(0, 20);
+  if (!results.length) {
+    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+    drop.classList.add('open');
+    return;
+  }
+  drop.innerHTML = results.map(function(item) {
+    return '<div class="scc-picker-option" onclick="sccPickerSelect(\'combatant\',\'' + escQ(item.id) + '\',\'' + escQ(item.name) + '\')">'
+      + sccEsc(item.name)
+      + '<div class="scc-picker-option-sub">' + sccEsc(item.sub) + '</div>'
+    + '</div>';
+  }).join('');
+  drop.classList.add('open');
 }
 
 function sccAddToCombatStaging(id, name) {
