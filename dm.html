@@ -1123,9 +1123,53 @@
   padding: 2rem 0;
   line-height: 1.8;
 }
+
+/* ── Local-dev environment banner (see #dm-env-banner script) ── */
+:root { --dm-env-banner-h: 0px; }
+#dm-env-banner {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 10000;
+  background: #d62b2b;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+  padding: 0.55rem 1rem;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.5);
+}
+.gate-overlay { top: var(--dm-env-banner-h); }
+.dm-app { margin-top: var(--dm-env-banner-h); min-height: calc(100vh - var(--dm-env-banner-h)); }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════
+     LOCAL-DEV ENVIRONMENT BANNER — auto-detected from
+     window.location.hostname, no manual setup per checkout.
+     Silent (no banner, no layout shift) on the real live site.
+     ══════════════════════════════════════════ -->
+<div id="dm-env-banner"></div>
+<script>
+(function() {
+  var LIVE_HOST = 'carlosknightiii.github.io';
+  if (location.hostname === LIVE_HOST) return;
+  var el = document.getElementById('dm-env-banner');
+  if (!el) return;
+  var where = location.hostname
+    ? (location.hostname + (location.port ? ':' + location.port : ''))
+    : 'local file';
+  el.textContent = '\u26A0 LOCAL DEV BUILD \u2014 NOT LIVE \u2014 ' + where;
+  el.style.display = 'block';
+  // Measured after paint so the gate/app content below shifts down by the
+  // banner's real rendered height, whatever that ends up being.
+  requestAnimationFrame(function() {
+    document.documentElement.style.setProperty('--dm-env-banner-h', el.offsetHeight + 'px');
+  });
+})();
+</script>
 
 <!-- ══════════════════════════════════════════
      PASSWORD GATE
