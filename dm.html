@@ -3085,7 +3085,7 @@
               </div>
               <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;">
                 <button class="scc-btn-sm scc-btn-danger" id="scc-clear-all-btn" onclick="sccClearAllCombatants()" style="display:none">Clear All</button>
-                <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none;margin-left:auto;">&#9876; Start Combat &#8212; Roll Initiative</button>
+                <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none;margin-left:auto;" title="Uses any initiative you've already typed as-is; rolls a d20+DEX for anyone left blank, then sorts the full list.">&#9876; Start Combat &#8212; Sort by Initiative</button>
               </div>
             </div>
             <!-- Initiative tracker (hidden until combat starts) -->
@@ -7221,6 +7221,70 @@ function showDMToast(msg, type) {
   display: none;
 }
 .scc-loot-panel.open { display: block; }
+/* ── Per-creature stat-block panel on staging rows. Shows whatever fields are
+   real for that creature and omits the rest — no placeholders implying data
+   that doesn't exist. ── */
+.scc-statblock-panel {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  display: none;
+}
+.scc-statblock-panel.open { display: block; }
+.scc-statblock-header {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+.scc-statblock-abilities {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.scc-statblock-ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 42px;
+  padding: 0.25rem 0.4rem;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-statblock-ability-name { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; color: var(--dm-text-muted); letter-spacing: 0.05em; }
+.scc-statblock-ability-score { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 700; color: var(--dm-text); }
+.scc-statblock-ability-mod { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-text-muted); }
+.scc-statblock-rows { margin-bottom: 0.3rem; }
+.scc-statblock-row {
+  display: flex;
+  gap: 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.scc-statblock-row:last-child { border-bottom: none; }
+.scc-statblock-label { color: var(--dm-text-muted); font-weight: 700; min-width: 8.5rem; flex-shrink: 0; }
+.scc-statblock-value { color: var(--dm-text); }
+.scc-statblock-section { margin-top: 0.5rem; }
+.scc-statblock-section-title {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dm-gold);
+  margin-bottom: 0.25rem;
+}
+.scc-statblock-entry { font-family: var(--font-sans); font-size: 0.76rem; margin-bottom: 0.3rem; }
+.scc-statblock-entry-name { font-weight: 700; color: var(--dm-text); }
+.scc-statblock-entry-desc { color: var(--dm-text-muted); display: block; }
 .scc-loot-row {
   display: flex;
   gap: 0.5rem;
@@ -11243,6 +11307,17 @@ var SCC_FG_EDIT_GROUP_OPEN = {};
 
 var SCC_FG_BOX_COLOR_CLASS = { grey: 'grey', green: 'green', cyan: 'yellow', blue: 'blue', purple: 'purple', orange: 'orange', pink: 'pink' };
 var SCC_FG_BOX_COLORS = ['grey', 'green', 'cyan', 'blue', 'purple', 'orange', 'pink'];
+// Loot/shop (orange) box subtype -> icon. DM-assigned per box, never auto-detected
+// from box text (too unreliable to trust silently). An orange box with no subtype
+// set (or an unrecognized one) falls back to the universal coin icon it always had.
+var SCC_FG_LOOT_SUBTYPES = [
+  { id: 'drink',   label: 'Drink',         icon: '&#127866;' },
+  { id: 'food',    label: 'Food',          icon: '&#127869;' },
+  { id: 'general', label: 'General Store', icon: '&#128718;' },
+  { id: 'weapons', label: 'Weapons',       icon: '&#9876;'   },
+  { id: 'armor',   label: 'Armor',         icon: '&#128737;' },
+  { id: 'magic',   label: 'Magic',         icon: '&#128302;' }
+];
 var SCC_FG_LINK_TYPES = {
   character: { label: 'NPC', arr: function(){ return typeof CHARACTERS !== 'undefined' ? CHARACTERS : []; } },
   creature:  { label: 'Creature', arr: function(){ return typeof CREATURES !== 'undefined' ? CREATURES : []; } },
@@ -11286,9 +11361,15 @@ function sccFgRenderBlock(b) {
     case 'footer':   return '<div class="scc-fg-doc-footer">' + sccFgLinkify(b.html) + '</div>';
     case 'box':
       var colorClass = SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey';
-      // Loot/shop boxes get a coin icon prefix independent of color — reinforces
-      // the meaning even for a DM who can't rely on hue alone at a glance.
-      var boxLabelPrefix = colorClass === 'orange' ? '&#129689; ' : '';
+      // Loot/shop boxes get a category icon prefix independent of color — reinforces
+      // the meaning even for a DM who can't rely on hue alone at a glance. DM-assigned
+      // subtype picks a specific icon; no subtype (or an unrecognized one) falls back
+      // to the original universal coin so older, un-migrated boxes still render fine.
+      var boxLabelPrefix = '';
+      if (colorClass === 'orange') {
+        var subtypeInfo = SCC_FG_LOOT_SUBTYPES.find(function(s) { return s.id === b.subtype; });
+        boxLabelPrefix = (subtypeInfo ? subtypeInfo.icon : '&#129689;') + ' ';
+      }
       return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
         + '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label || '') + '</div>'
         + sccFgLinkify(b.html || '')
@@ -11466,6 +11547,12 @@ function sccFgRenderEditRow(b, idx) {
         + '<select class="cm-select" onchange="sccFgEditSetField(' + idx + ',\'color\',this.value)">'
           + SCC_FG_BOX_COLORS.map(function(c) { return '<option value="' + c + '"' + (b.color === c ? ' selected' : '') + '>' + c + '</option>'; }).join('')
         + '</select>'
+        + (b.color === 'orange'
+          ? '<select class="cm-select" onchange="sccFgEditSetField(' + idx + ',\'subtype\',this.value)">'
+            + '<option value="">Icon: coin (default)</option>'
+            + SCC_FG_LOOT_SUBTYPES.map(function(s) { return '<option value="' + s.id + '"' + (b.subtype === s.id ? ' selected' : '') + '>' + s.label + '</option>'; }).join('')
+          + '</select>'
+          : '')
       + '</div>'
       + sccFgHtmlFieldHtml(idx, 'html', b.html || '')
       + (b.table ? sccFgTableEditHtml(idx, 'table', b.table) : '<button class="scc-fg-row-btn" onclick="sccFgAddBoxTable(' + idx + ')">+ Add Table to This Box</button>');
@@ -13111,6 +13198,86 @@ function sccAddAllPlayers() {
   });
 }
 
+// Per-creature stat-block builder. Shows only fields that are actually populated
+// for THIS creature — no placeholder rows, no invented/estimated values for
+// anything missing. Real coverage varies a lot creature-to-creature today, so a
+// sparse result here is accurate, not a bug.
+function sccStatRow(label, value) {
+  if (value === null || value === undefined || value === '') return '';
+  return '<div class="scc-statblock-row"><span class="scc-statblock-label">' + label + '</span><span class="scc-statblock-value">' + value + '</span></div>';
+}
+
+function sccStatBlockAbilitiesHtml(c) {
+  var abilities = [['STR', c.str], ['DEX', c.dex], ['CON', c.con], ['INT', c.int], ['WIS', c.wis], ['CHA', c.cha]];
+  var present = abilities.filter(function(a) { return a[1] != null; });
+  if (!present.length) return '';
+  var cells = present.map(function(a) {
+    var mod = Math.floor((a[1] - 10) / 2);
+    var modStr = (mod >= 0 ? '+' : '') + mod;
+    return '<div class="scc-statblock-ability"><span class="scc-statblock-ability-name">' + a[0] + '</span><span class="scc-statblock-ability-score">' + a[1] + '</span><span class="scc-statblock-ability-mod">' + modStr + '</span></div>';
+  }).join('');
+  return '<div class="scc-statblock-abilities">' + cells + '</div>';
+}
+
+function sccStatBlockEntryListHtml(label, arr) {
+  if (!arr || !arr.length) return '';
+  var items = arr.map(function(x) {
+    var name = sccEsc(x.name || '');
+    var desc = x.description ? '<span class="scc-statblock-entry-desc">' + sccEsc(x.description) + '</span>' : '';
+    return '<div class="scc-statblock-entry"><span class="scc-statblock-entry-name">' + name + '</span>' + desc + '</div>';
+  }).join('');
+  return '<div class="scc-statblock-section"><div class="scc-statblock-section-title">' + label + '</div>' + items + '</div>';
+}
+
+function sccStatBlockAttacksHtml(attacks) {
+  if (!attacks || !attacks.length) return '';
+  var items = attacks.map(function(a) {
+    var parts = [];
+    if (a.damage_dice) parts.push(a.damage_dice + (a.damage_type ? ' ' + a.damage_type : ''));
+    if (a.attack_bonus != null) parts.push((a.attack_bonus >= 0 ? '+' : '') + a.attack_bonus + ' to hit');
+    if (a.reach_ft) parts.push('reach/range ' + a.reach_ft + ' ft');
+    var metaText = parts.join(', ') + (a.notes ? (parts.length ? ' — ' : '') + a.notes : '');
+    var meta = metaText ? '<span class="scc-statblock-entry-desc">' + sccEsc(metaText) + '</span>' : '';
+    return '<div class="scc-statblock-entry"><span class="scc-statblock-entry-name">' + sccEsc(a.name || '') + '</span>' + meta + '</div>';
+  }).join('');
+  return '<div class="scc-statblock-section"><div class="scc-statblock-section-title">Attacks</div>' + items + '</div>';
+}
+
+function sccBuildCreatureStatBlockHtml(creature) {
+  if (!creature) return '<div class="scc-empty-state">No catalog data for this creature.</div>';
+  var headerBits = [creature.size, creature.creature_type, creature.creature_alignment].filter(Boolean).join(', ');
+  var abilities = sccStatBlockAbilitiesHtml(creature);
+  var rows = sccStatRow('AC', creature.ac != null ? creature.ac + (creature.ac_notes ? ' (' + sccEsc(creature.ac_notes) + ')' : '') : null)
+    + sccStatRow('HP', creature.hp_max != null ? creature.hp_max + (creature.hit_dice ? ' (' + sccEsc(creature.hit_dice) + ')' : '') : null)
+    + sccStatRow('Speed', creature.speed_ft != null ? creature.speed_ft + ' ft' + (creature.speed_notes ? ' (' + sccEsc(creature.speed_notes) + ')' : '') : null)
+    + sccStatRow('CR', creature.challenge_rating != null ? creature.challenge_rating + (creature.xp_value != null ? ' (' + creature.xp_value + ' XP)' : '') : null)
+    + sccStatRow('Saving Throws', (creature.saving_throws && creature.saving_throws.length) ? sccEsc(creature.saving_throws.join(', ')) : null)
+    + sccStatRow('Skills', (creature.skill_proficiencies && creature.skill_proficiencies.length) ? sccEsc(creature.skill_proficiencies.join(', ')) : null)
+    + sccStatRow('Damage Resistances', (creature.damage_resistances && creature.damage_resistances.length) ? sccEsc(creature.damage_resistances.join(', ')) : null)
+    + sccStatRow('Damage Immunities', (creature.damage_immunities && creature.damage_immunities.length) ? sccEsc(creature.damage_immunities.join(', ')) : null)
+    + sccStatRow('Condition Immunities', (creature.condition_immunities && creature.condition_immunities.length) ? sccEsc(creature.condition_immunities.join(', ')) : null)
+    + sccStatRow('Senses', creature.senses ? sccEsc(creature.senses) : null)
+    + sccStatRow('Languages', creature.languages ? sccEsc(creature.languages) : null);
+  var attacks    = sccStatBlockAttacksHtml(creature.attacks);
+  var traits     = sccStatBlockEntryListHtml('Traits', creature.traits);
+  var actions    = sccStatBlockEntryListHtml('Actions', creature.actions);
+  var reactions  = sccStatBlockEntryListHtml('Reactions', creature.reactions);
+  var legendary  = sccStatBlockEntryListHtml('Legendary Actions', creature.legendary_actions);
+
+  if (!headerBits && !abilities && !rows && !attacks && !traits && !actions && !reactions && !legendary) {
+    return '<div class="scc-empty-state">No stat-block data recorded for this creature yet.</div>';
+  }
+  return (headerBits ? '<div class="scc-statblock-header">' + sccEsc(headerBits) + '</div>' : '')
+    + abilities
+    + (rows ? '<div class="scc-statblock-rows">' + rows + '</div>' : '')
+    + attacks + traits + actions + reactions + legendary;
+}
+
+function sccToggleStatBlock(idx) {
+  var panel = document.getElementById('scc-statblock-' + idx);
+  if (panel) panel.classList.toggle('open');
+}
+
 function sccRenderStagingList() {
   var el = document.getElementById('scc-combatant-staging');
   if (!el) return;
@@ -13124,6 +13291,7 @@ function sccRenderStagingList() {
     if (clearAllBtn) clearAllBtn.style.display = 'none';
     return;
   }
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   el.innerHTML = SCC_COMBATANTS.map(function(c, idx) {
     var modSign = c.dexMod >= 0 ? '+' : '';
     var lootChips = c.loot.items.map(function(item, iIdx) {
@@ -13137,9 +13305,15 @@ function sccRenderStagingList() {
       + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
       + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
       + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
+      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleStatBlock(' + idx + ')">Stats</button>' : '')
       + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">Loot</button>' : '')
       + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
       + '</div>'
+      + (!c.isPC
+        ? '<div class="scc-statblock-panel" id="scc-statblock-' + idx + '">'
+            + sccBuildCreatureStatBlockHtml(creatures.find(function(x) { return x.id === c.id; }))
+          + '</div>'
+        : '')
       + (!c.isPC
         ? '<div class="scc-loot-panel" id="scc-loot-' + idx + '">'
             + '<div class="scc-section-subtitle" style="margin-bottom:0.5rem;">Assign Loot for ' + sccEsc(c.name) + '</div>'
@@ -13958,10 +14132,10 @@ function sccRenderTaggedNotes() {
   }
   var num = SCC_SESSION ? SCC_SESSION.session_number : null;
   var listEl = document.getElementById('scc-tagnote-list');
-  if (!listEl) return;
-  if (!num) { listEl.innerHTML = '<div class="scc-empty-state">Save session setup first.</div>'; return; }
+  if (!listEl) return Promise.resolve();
+  if (!num) { listEl.innerHTML = '<div class="scc-empty-state">Save session setup first.</div>'; return Promise.resolve(); }
   listEl.innerHTML = '<div class="scc-lookup-loading">Loading&#8230;</div>';
-  sccFetch('session_note_entries', '&session_number=eq.' + num + '&order=updated_at.desc').then(function(rows) {
+  return sccFetch('session_note_entries', '&session_number=eq.' + num + '&order=updated_at.desc').then(function(rows) {
     SCC_NOTE_ENTRIES = Array.isArray(rows) ? rows : [];
     sccRenderTagNoteFilters();
     sccFilterTagNotes();
@@ -14037,9 +14211,45 @@ function sccAddTagNote() {
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
   var catSel = document.getElementById('scc-tagnote-new-cat');
   var category = catSel && catSel.value ? catSel.value : SCC_NOTE_CATEGORIES[0].id;
-  sccPost('session_note_entries', { session_number: num, category: category, title: '', content: '' }).then(function(r) {
+  // return=representation (not the shared sccPost helper's return=minimal) so the
+  // new row's real id comes back immediately — needed to focus the right card below,
+  // since the DM could have several blank-titled notes at once otherwise.
+  fetch(SCC_URL + '/rest/v1/session_note_entries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SCC_ANON,
+      'Authorization': 'Bearer ' + SCC_ANON,
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify({ session_number: num, category: category, title: '', content: '' })
+  }).then(function(r) {
     if (!r.ok) { showDMToast('Could not create note', 'error'); return; }
-    sccRenderTaggedNotes();
+    r.json().then(function(rows) {
+      var newId = rows && rows[0] ? rows[0].id : null;
+      // A freshly created note must always be visible regardless of whatever
+      // category filter or search text was active — reset both rather than risk
+      // it looking like the click did nothing.
+      SCC_NOTE_FILTER_CAT = '';
+      SCC_NOTE_FILTER_Q = '';
+      var searchInput = document.getElementById('scc-tagnote-search');
+      if (searchInput) searchInput.value = '';
+      sccRenderTaggedNotes().then(function() {
+        var card = null;
+        if (newId) {
+          var cards = document.querySelectorAll('.scc-tagnote-card');
+          for (var i = 0; i < cards.length; i++) {
+            if (cards[i].getAttribute('data-note-id') === newId) { card = cards[i]; break; }
+          }
+        }
+        if (card) {
+          card.scrollIntoView({ block: 'center' });
+          var titleInput = card.querySelector('.scc-tagnote-title');
+          if (titleInput) titleInput.focus();
+        }
+        showDMToast('Note added \u2713', 'success');
+      });
+    });
   });
 }
 
