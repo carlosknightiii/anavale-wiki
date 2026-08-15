@@ -3127,13 +3127,20 @@
                 <textarea id="scc-note-milestone" class="scc-textarea" placeholder="XP awarded, level ups, major story beats completed…"></textarea>
               </div>
             </div>
-            <!-- ── TAGGED NOTES — quick-capture, tagged, filterable/searchable,
-                 separate from the 5 structured recap fields above. Sits
-                 before the wrap-up controls below: tagging happens *during*
-                 the session, Save/Copy/Complete happen at the *end* of it. ── -->
+            <!-- ── QUICK NOTES (was "Tagged Notes") — quick-capture, tagged,
+                 filterable/searchable, separate from the 5 structured recap
+                 fields above. Sits before the wrap-up controls below: tagging
+                 happens *during* the session, Save/Copy/Complete happen at
+                 the *end* of it. A DM reported not understanding why this
+                 exists at all alongside the 5 boxes above — the comparison
+                 strip below exists specifically to answer that, not just
+                 describe this section in isolation. ── -->
+            <div class="scc-tagnote-compare">
+              <strong>Two different note systems, on purpose:</strong> the 5 fields above are for your end-of-session write-up — fill them out once, usually after the table wraps. <strong>Quick Notes</strong> below is for jotting something down the instant it happens, mid-session — tag it as you go, then filter or search to find it fast afterward.
+            </div>
             <div class="scc-tagnote-section">
-              <div class="scc-section-title">Tagged Notes</div>
-              <div class="scc-tagnote-hint">Quick-capture notes as things happen at the table — tag them so they're easy to find later.</div>
+              <div class="scc-section-title">Quick Notes</div>
+              <div class="scc-tagnote-hint">Something just happened at the table? Tag it and jot it here — don't wait for the recap.</div>
               <div class="scc-tagnote-add-row">
                 <select id="scc-tagnote-new-cat" class="cm-select"></select>
                 <button class="scc-btn-primary" onclick="sccAddTagNote()">+ New Note</button>
@@ -4113,12 +4120,12 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
 }
 .cm-select:focus { border-color: var(--dm-gold); }
-/* A number input styled with .cm-select reads less obviously "clickable" than
-   a real <select> (no dropdown chevron) — dashed border while empty plus a
-   hover cue make it clear this is an editable field, not static label text. */
-.q-level-input:placeholder-shown { border-style: dashed; }
-.q-level-input:hover { border-color: var(--dm-text-muted); cursor: text; }
-.q-level-hint { color: var(--dm-text-muted); font-size: var(--text-xs); margin-left: 0.5rem; }
+/* Suggested Level is read-only display now — no manual input exists, per the
+   DM's explicit call: milestone leveling has no hard formula, so this is a
+   computed range + reasoning to inform a judgment call made elsewhere, not a
+   field to fill in. */
+.q-level-readonly { color: var(--dm-text-muted); font-size: var(--text-sm); }
+.q-level-readonly--empty { font-style: italic; color: var(--dm-text-faint); }
 .q-level-hint-why { color: var(--dm-text-faint); font-style: italic; }
 
 .cm-count {
@@ -6308,7 +6315,21 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
 }
 /* ── Tagged Notes (session_note_entries — separate from the 5 structured recap fields above) ── */
-.scc-tagnote-section { margin-top: 2rem; }
+.scc-tagnote-compare {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-left: 3px solid var(--dm-gold);
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--dm-text-muted);
+}
+.scc-tagnote-compare strong { color: var(--dm-text); }
+.scc-audit-mode .scc-tagnote-compare { display: none !important; }
+.scc-tagnote-section { margin-top: 1.25rem; }
 .scc-tagnote-hint {
   font-family: var(--font-sans);
   font-size: 0.78rem;
@@ -6360,6 +6381,27 @@ function showDMToast(msg, type) {
   border: 1px solid var(--scc-border-mid);
   border-radius: var(--dm-radius);
   padding: 0.85rem 1rem;
+}
+/* The worked example reuses the real card's markup for visual accuracy, but
+   must never be mistaken for live data — dashed border, reduced opacity, and
+   a bold flag badge, plus every field inside it is actually disabled. */
+.scc-tagnote-card--example {
+  border-style: dashed;
+  opacity: 0.72;
+  margin-top: 0.75rem;
+}
+.scc-tagnote-card--example .scc-tagnote-title,
+.scc-tagnote-card--example .scc-tagnote-body { cursor: default; }
+.scc-tagnote-example-flag {
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: 4px;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.4rem;
 }
 .scc-tagnote-card-head {
   display: flex;
@@ -10250,7 +10292,6 @@ function renderQuestDetail(id) {
     + '<div class="quest-detail-meta">'
     + '<span class="q-badge q-status-' + (quest.status||'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
     + '<span class="q-badge q-stakes-' + (quest.stakes||'low') + '">' + escQ(quest.stakes||'') + ' stakes</span>'
-    + (quest.suggested_level != null ? '<span class="q-badge" style="background:var(--dm-gold-dim);color:var(--dm-gold);">Suggested Level ' + escQ(quest.suggested_level) + '</span>' : '')
     + (quest.first_available ? '<span class="q-badge" style="background:rgba(0,0,0,0.05);color:var(--ink-faint);">First available: ' + escQ(quest.first_available) + '</span>' : '')
     + '</div>'
     + '<div class="quest-section-label">Hook</div>'
@@ -10269,10 +10310,10 @@ function renderQuestDetail(id) {
     + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-status-msg-' + escQ(id) + '"></span>'
     + '</div>'
     + '<div class="quest-status-select">'
-    + '<label for="q-level-' + escQ(id) + '">Suggested Level:</label>'
-    + '<input type="number" min="1" max="20" step="1" class="cm-select q-level-input" style="width:6.5rem;" id="q-level-' + escQ(id) + '" placeholder="Not set" title="Click to set a suggested level (1–20)" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
-    + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-level-msg-' + escQ(id) + '"></span>'
-    + (levelRange ? '<span class="q-level-hint">Suggested range: lvl ' + levelRange.low + '-' + levelRange.high + ' <span class="q-level-hint-why">(' + escQ(levelRange.reasoning) + ')</span></span>' : '')
+    + '<label>Suggested Level:</label>'
+    + (levelRange
+        ? '<span class="q-level-readonly">lvl ' + levelRange.low + '-' + levelRange.high + ' <span class="q-level-hint-why">(' + escQ(levelRange.reasoning) + ')</span></span>'
+        : '<span class="q-level-readonly q-level-readonly--empty">Not enough data to suggest a range</span>')
     + '</div>';
 }
 
@@ -10339,39 +10380,6 @@ function sccSuggestedLevelRange(quest) {
   if (low >= high) high = low + 1;
 
   return { low: low, high: high, reasoning: reasoning.join(', ') };
-}
-
-function setQuestSuggestedLevel(id, rawValue) {
-  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
-  var quest = quests.find(function(q) { return q.id === id; });
-  if (!quest) return;
-  var trimmed = String(rawValue == null ? '' : rawValue).trim();
-  var newLevel = trimmed === '' ? null : parseInt(trimmed, 10);
-  if (newLevel != null && (isNaN(newLevel) || newLevel < 1 || newLevel > 20)) {
-    showDMToast('Suggested level must be 1–20', 'error');
-    return;
-  }
-  quest.suggested_level = newLevel;
-  var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
-  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
-  var msgEl = document.getElementById('quest-level-msg-' + id);
-  if (msgEl) msgEl.textContent = 'Saving…';
-  fetch(SB_URL + '/rest/v1/quests?id=eq.' + encodeURIComponent(id), {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SB_ANON,
-      'Authorization': 'Bearer ' + SB_ANON,
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({ suggested_level: newLevel })
-  }).then(function(r) {
-    if (msgEl) msgEl.textContent = r.ok ? '\u2713 Saved' : '\u26a0 Save failed';
-    if (msgEl) setTimeout(function(){ msgEl.textContent = ''; }, 3000);
-    if (r.ok) { showDMToast(quest.name + ' suggested level saved \u2713', 'success'); renderQuestDetail(id); }
-  }).catch(function() {
-    if (msgEl) msgEl.textContent = '\u26a0 Save failed';
-  });
 }
 
 function statusLabel(status) {
@@ -14175,10 +14183,34 @@ function sccFilterTagNotes() {
     return true;
   });
   if (!filtered.length) {
-    listEl.innerHTML = '<div class="scc-empty-state">' + (SCC_NOTE_ENTRIES.length ? 'No notes match.' : 'No tagged notes yet — add one above.') + '</div>';
+    // Two different empty states: filtered-to-nothing (real notes exist, just
+    // none match right now) vs. genuinely zero notes ever created — only the
+    // second one needs the worked example, since a DM staring at "no notes
+    // yet" with no context has no way to picture what a finished one looks
+    // like before making their first.
+    listEl.innerHTML = SCC_NOTE_ENTRIES.length
+      ? '<div class="scc-empty-state">No notes match.</div>'
+      : '<div class="scc-empty-state">No tagged notes yet — add one above. Here\'s what a finished one looks like:</div>' + sccBuildExampleTagNoteCard();
     return;
   }
   listEl.innerHTML = filtered.map(sccBuildTagNoteCard).join('');
+}
+
+// A real-looking, clearly-marked, fully inert worked example — shown only
+// when the DM has never created a real note, so the empty state teaches
+// instead of just saying "nothing here." Reuses the real card's exact markup
+// for visual accuracy, but every field is disabled and no button does
+// anything real — nothing here can be mistaken for live data or edited.
+function sccBuildExampleTagNoteCard() {
+  return '<div class="scc-tagnote-card scc-tagnote-card--example">'
+    + '<div class="scc-tagnote-card-head">'
+      + '<span class="scc-tagnote-example-flag">EXAMPLE</span>'
+      + '<span class="scc-tagnote-badge">Unexpected Moment</span>'
+      + '<span class="scc-tagnote-time">12m ago</span>'
+    + '</div>'
+    + '<input type="text" class="scc-tagnote-title" value="Kael went off-script and threatened Gerald" disabled>'
+    + '<textarea class="scc-tagnote-body" disabled>Wasn\'t planning this — improvised his reaction on the fly. Follow up on it next session.</textarea>'
+  + '</div>';
 }
 
 function sccNoteTimeAgo(iso) {
