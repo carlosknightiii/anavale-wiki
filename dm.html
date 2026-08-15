@@ -3074,18 +3074,18 @@
                     <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
                   </div>
                 </div>
+                <button class="scc-btn-secondary" id="scc-add-all-players-btn" onclick="sccAddAllPlayers()">+ Add All Players</button>
                 <div class="scc-difficulty-badge" id="scc-difficulty-badge">
                   <span class="scc-diff-label">Difficulty</span>
                   <span class="scc-diff-value" id="scc-diff-value">—</span>
                 </div>
               </div>
-              <div id="scc-combatant-staging" class="scc-combatant-staging">
+              <div id="scc-combatant-staging" class="scc-combatant-staging" style="margin-top:0.75rem;">
                 <div class="scc-empty-state">Add creatures and players above to build the encounter.</div>
               </div>
-              <div style="display:flex;gap:0.5rem;align-items:center;">
-                <button class="scc-btn-secondary" id="scc-add-all-players-btn" onclick="sccAddAllPlayers()">+ Add All Players</button>
+              <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;">
                 <button class="scc-btn-sm scc-btn-danger" id="scc-clear-all-btn" onclick="sccClearAllCombatants()" style="display:none">Clear All</button>
-                <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none">&#9876; Start Combat &#8212; Roll Initiative</button>
+                <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none;margin-left:auto;">&#9876; Start Combat &#8212; Roll Initiative</button>
               </div>
             </div>
             <!-- Initiative tracker (hidden until combat starts) -->
@@ -4118,6 +4118,8 @@ function showDMToast(msg, type) {
    hover cue make it clear this is an editable field, not static label text. */
 .q-level-input:placeholder-shown { border-style: dashed; }
 .q-level-input:hover { border-color: var(--dm-text-muted); cursor: text; }
+.q-level-hint { color: var(--dm-text-muted); font-size: var(--text-xs); margin-left: 0.5rem; }
+.q-level-hint-why { color: var(--dm-text-faint); font-style: italic; }
 
 .cm-count {
   color: var(--dm-text-faint);
@@ -10178,6 +10180,8 @@ function renderQuestDetail(id) {
     return '<option value="' + s + '"' + (quest.status === s ? ' selected' : '') + '>' + statusLabel(s) + '</option>';
   }).join('');
 
+  var levelRange = sccSuggestedLevelRange(quest);
+
   el.innerHTML = '<div class="quest-detail-title">' + escQ(quest.name) + '</div>'
     + '<div class="quest-detail-meta">'
     + '<span class="q-badge q-status-' + (quest.status||'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
@@ -10204,6 +10208,7 @@ function renderQuestDetail(id) {
     + '<label for="q-level-' + escQ(id) + '">Suggested Level:</label>'
     + '<input type="number" min="1" max="20" step="1" class="cm-select q-level-input" style="width:6.5rem;" id="q-level-' + escQ(id) + '" placeholder="Not set" title="Click to set a suggested level (1–20)" value="' + (quest.suggested_level != null ? escQ(quest.suggested_level) : '') + '" onchange="setQuestSuggestedLevel(\'' + escQ(id) + '\', this.value)">'
     + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-level-msg-' + escQ(id) + '"></span>'
+    + (levelRange ? '<span class="q-level-hint">Suggested range: lvl ' + levelRange.low + '-' + levelRange.high + ' <span class="q-level-hint-why">(' + escQ(levelRange.reasoning) + ')</span></span>' : '')
     + '</div>';
 }
 
@@ -10233,6 +10238,43 @@ function setQuestStatus(id, newStatus) {
   }).catch(function() {
     if (msgEl) msgEl.textContent = '⚠ Save failed';
   });
+}
+
+// Pure, read-only reasoning helper. Never writes quest.suggested_level itself —
+// the DM's manually-set field is the only thing ever persisted; this just surfaces
+// a computed range + one-line "why" next to it, since milestone leveling has no
+// hard formula and the DM needs to see and override the reasoning, not get a number.
+function sccSuggestedLevelRange(quest) {
+  var sessionNum = null;
+  if (quest.first_available) {
+    var m = /session-(\d+)/.exec(quest.first_available);
+    if (m) sessionNum = parseInt(m[1], 10);
+  }
+  if (sessionNum == null) return null;
+
+  var low = sessionNum, high = sessionNum + 1;
+  var stakes = quest.stakes || 'mid';
+  if (stakes === 'high') { low += 1; high += 1; }
+  else if (stakes === 'campaign') { low += 2; high += 2; }
+
+  var reasoning = ['session ' + sessionNum, stakes + ' stakes'];
+
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  (quest.related || []).forEach(function(r) {
+    if (r.collection !== 'creatures') return;
+    var c = creatures.find(function(x) { return x.id === r.id; });
+    if (!c || c.challenge_rating == null) return;
+    var crLevel = Math.max(1, Math.round(Number(c.challenge_rating)));
+    low  = Math.min(low, crLevel);
+    high = Math.max(high, crLevel);
+    reasoning.push((c.name || r.id) + ' is CR ' + c.challenge_rating + ' (~lvl ' + crLevel + ')');
+  });
+
+  if (low < 1) low = 1;
+  if (high > 20) high = 20;
+  if (low >= high) high = low + 1;
+
+  return { low: low, high: high, reasoning: reasoning.join(', ') };
 }
 
 function setQuestSuggestedLevel(id, rawValue) {
