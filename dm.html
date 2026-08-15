@@ -3293,7 +3293,7 @@
           <div class="scc-fg-doc" id="scc-fg-doc">
             <div class="scc-fg-doc-toolbar" id="scc-fg-doc-toolbar">
               <select id="scc-fg-session-select" class="cm-select" onchange="sccFgSessionChanged()"></select>
-              <button type="button" class="scc-btn-sm" id="scc-fg-edit-toggle" onclick="sccFgToggleEditMode()">Edit</button>
+              <button type="button" class="scc-btn-sm" id="scc-fg-edit-toggle" onclick="sccFgToggleEditMode()" title="Rewrite any section of this document, or use the Edit Box link on a specific box below instead">Edit Document</button>
             </div>
             <div class="scc-fg-doc-inner" id="scc-fg-doc-inner">
               <div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>
@@ -5218,9 +5218,14 @@ function showDMToast(msg, type) {
 /* DM Only block — was still hardcoded red (#d62b2b), untouched by either
    earlier DM-Only recolor pass since this is a third, separate rendering
    surface (NPC/location panel expanded-card view, not the lookup drawer's
-   .scc-dm-block or the player_facing status badges). Same teal now. */
+   .scc-dm-block or the player_facing status badges). Same teal now.
+   Background upgraded from flat neutral to a genuinely tinted fill, and the
+   warning icon (wrapped in its own span at the two render call sites) sized
+   well above the surrounding title text — DM-Only vs. Read-Aloud green are
+   only ~30° apart on the color wheel, too close to trust hue alone, so this
+   box needs to read as structurally different, not just differently colored. */
 .scc-npc2-dm-block {
-  background: #0b0e16;
+  background: var(--cyan-dim);
   border: 3px solid var(--cyan);
   border-radius: 16px;
   padding: 1.5rem;
@@ -5232,6 +5237,7 @@ function showDMToast(msg, type) {
   color: var(--cyan);
   margin-bottom: 1rem;
 }
+.scc-npc2-dm-icon { font-size: 2.1rem; margin-right: 0.35rem; vertical-align: middle; line-height: 1; }
 .scc-npc2-dm-rows { display: flex; flex-direction: column; gap: 1rem; }
 .scc-npc2-dm-row {
   display: flex;
@@ -5353,7 +5359,7 @@ function showDMToast(msg, type) {
 }
 .scc-dm-label {
   font-family: var(--font-sans);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -5775,6 +5781,11 @@ function showDMToast(msg, type) {
 .scc-staging-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text); flex: 1; }
 .scc-staging-type { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-text-muted); }
 .scc-staging-cr { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-gold); font-weight: 700; }
+/* AC surfaced by default (not behind the Stats toggle) — per the DM's explicit
+   real-table use case, this is the one stat worth seeing at a glance; deeper
+   stats (skills, saves, resistances, etc.) stay behind Stats since that's still
+   a lot of info not always needed instantly. */
+.scc-staging-ac { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text); font-weight: 700; }
 .scc-staging-init {
   width: 60px;
   background: var(--dm-surface);
@@ -6150,6 +6161,12 @@ function showDMToast(msg, type) {
 .scc-fg-editor-row {
   border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm);
   padding: 0.5rem 0.6rem; margin-top: 0.5rem; background: var(--dm-surface);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+/* Flash cue for "Edit Box" jump landing — fades out on its own after 2.5s. */
+.scc-fg-editor-row--jump-highlight {
+  border-color: var(--dm-gold);
+  box-shadow: 0 0 0 2px var(--dm-gold-dim);
 }
 .scc-fg-editor-row-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
 .scc-fg-editor-row-type {
@@ -6189,6 +6206,24 @@ function showDMToast(msg, type) {
 .scc-fg-doc-footer { font-family: var(--font-body); font-size: 0.72rem; color: var(--dm-text-muted); text-align: center; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--scc-border); font-style: italic; }
 .scc-fg-box { border-radius: var(--dm-radius-sm); padding: 0.75rem 1rem; margin: 0.5rem 0 0.75rem; }
 .scc-fg-box-label { font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+/* Per-box jump-to-edit link — normal-case, not uppercase/letter-spaced like the
+   label it sits next to, so it visibly reads as a UI control, not document text. */
+.scc-fg-box-edit-jump {
+  float: right;
+  background: none;
+  border: 1px solid var(--scc-border-mid);
+  border-radius: 4px;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+.scc-fg-box-edit-jump:hover { color: var(--dm-gold); border-color: var(--scc-border-gold); }
+.scc-audit-mode .scc-fg-box-edit-jump { display: none !important; }
 .scc-fg-box p { margin: 0 0 0.45rem !important; font-size: 0.82rem !important; }
 .scc-fg-box p:last-child { margin-bottom: 0 !important; }
 .scc-fg-box--green { background: rgba(134,239,172,0.07); border-left: 3px solid rgba(134,239,172,0.5); }
@@ -6197,9 +6232,32 @@ function showDMToast(msg, type) {
 /* .scc-fg-box--yellow: class name kept as-is (used ~20x in the static Field Guide
    markup below), but recolored cyan — DM Only now shares one color everywhere it
    appears (see also player_facing badge in sccOpenLookup) instead of gold here and
-   red on the badge. */
-.scc-fg-box--yellow { background: rgba(34,211,238,0.07); border-left: 3px solid var(--cyan-border); }
-.scc-fg-box--yellow .scc-fg-box-label { color: var(--cyan); }
+   red on the badge.
+   DM-Only is the single highest-stakes color in the app (a DM reading a secret
+   aloud by mistake is a real failure mode) and teal/green sit only ~30° apart on
+   the color wheel — too close to trust hue alone at a table-scanning glance. Made
+   structurally distinct instead of hunting for a new hue (every other hue in the
+   palette is already claimed): a full border instead of left-accent-only, a
+   genuinely filled background (was a stale hardcoded pre-recolor hex at 7% here —
+   real bug, now the correct token at a heavier 15%), and a large corner badge icon
+   that doesn't depend on the label's own text content. */
+.scc-fg-box--yellow {
+  position: relative;
+  background: var(--cyan-dim);
+  border: 1px solid var(--cyan-border);
+  border-left: 3px solid var(--cyan);
+}
+.scc-fg-box--yellow::before {
+  content: '\26A0';
+  position: absolute;
+  top: 0.3rem;
+  right: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--cyan);
+  opacity: 0.55;
+  line-height: 1;
+}
+.scc-fg-box--yellow .scc-fg-box-label { color: var(--cyan); font-size: 0.8rem; padding-right: 1.75rem; }
 .scc-fg-box--yellow p { color: #cffafe !important; }
 .scc-fg-box--blue { background: rgba(96,165,250,0.07); border-left: 3px solid rgba(96,165,250,0.4); }
 .scc-fg-box--blue .scc-fg-box-label { color: #7eb8f0; }
@@ -11354,7 +11412,7 @@ function sccFgRenderTableBlock(t) {
   return '<table class="' + cls + '">' + thead + tbody + '</table>';
 }
 
-function sccFgRenderBlock(b) {
+function sccFgRenderBlock(b, idx) {
   switch (b.type) {
     case 'title':    return '<div class="scc-fg-doc-title">' + sccEsc(b.text) + '</div>';
     case 'subtitle': return '<div class="scc-fg-doc-subtitle">' + sccEsc(b.text) + '</div>';
@@ -11378,8 +11436,15 @@ function sccFgRenderBlock(b) {
         var subtypeInfo = SCC_FG_LOOT_SUBTYPES.find(function(s) { return s.id === b.subtype; });
         boxLabelPrefix = (subtypeInfo ? subtypeInfo.icon : '&#129689;') + ' ';
       }
+      // Per-box jump-to-edit link, right on the box itself — a DM reported not
+      // understanding what "the block editor" even was or where to find it for a
+      // specific box. This opens the editor already scrolled to and highlighting
+      // THIS box's row (and its subtype field specifically, for orange boxes),
+      // instead of expecting the DM to find the global Edit button, expand the
+      // right one of 15 sections, and scan for the right row unassisted.
+      var editJump = (idx != null) ? '<button type="button" class="scc-fg-box-edit-jump" onclick="sccFgJumpToBlockEdit(' + idx + ')" title="Edit this box">&#9998; Edit Box</button>' : '';
       return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
-        + '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label || '') + '</div>'
+        + '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label || '') + editJump + '</div>'
         + sccFgLinkify(b.html || '')
         + (b.table ? sccFgRenderTableBlock(b.table) : '')
       + '</div>';
@@ -11388,7 +11453,7 @@ function sccFgRenderBlock(b) {
 }
 
 function sccFgRenderDoc(blocks) {
-  return (blocks || []).map(sccFgRenderBlock).join('');
+  return (blocks || []).map(function(b, idx) { return sccFgRenderBlock(b, idx); }).join('');
 }
 
 // ── Session selector ─────────────────────────────────────────────
@@ -11413,7 +11478,7 @@ function sccFgSessionChanged() {
   SCC_FG_DOC_SESSION_NUM = num;
   SCC_FG_EDIT_MODE = false;
   var toggle = document.getElementById('scc-fg-edit-toggle');
-  if (toggle) toggle.textContent = 'Edit';
+  if (toggle) toggle.textContent = 'Edit Document';
   // The sidebar's own session-scoped fetch was previously cached forever with
   // no way to invalidate it — force a refetch for the newly selected session.
   SCC_FG_DATA = null;
@@ -11459,7 +11524,7 @@ function sccFgToggleEditMode() {
   SCC_FG_EDIT_BLOCKS = JSON.parse(JSON.stringify((row && row.blocks) || []));
   SCC_FG_EDIT_MODE = !SCC_FG_EDIT_MODE;
   var toggle = document.getElementById('scc-fg-edit-toggle');
-  if (toggle) toggle.textContent = SCC_FG_EDIT_MODE ? 'Close Editor' : 'Edit';
+  if (toggle) toggle.textContent = SCC_FG_EDIT_MODE ? 'Close Editor' : 'Edit Document';
   sccFgDrawDocument();
 }
 
@@ -11480,6 +11545,39 @@ function sccFgGroupEditBlocks() {
   });
   groups.push(current);
   return groups.filter(function(g) { return g.items.length; });
+}
+
+// Opens the editor already scrolled to and highlighting the exact box the DM
+// clicked "Edit Box" on — expands whichever of the 15 sections holds it, so
+// the DM never has to guess which section their box lives in or scan for it
+// manually. For an orange (loot/shop) box specifically, focuses its subtype
+// field directly, since that's the one thing this jump exists to solve.
+function sccFgJumpToBlockEdit(idx) {
+  if (!SCC_FG_EDIT_MODE) sccFgToggleEditMode();
+  var groups = sccFgGroupEditBlocks();
+  var gi = -1;
+  groups.forEach(function(g, i) {
+    if (g.items.some(function(it) { return it.idx === idx; })) gi = i;
+  });
+  if (gi >= 0) SCC_FG_EDIT_GROUP_OPEN[gi] = true;
+  sccFgRenderEditor();
+  setTimeout(function() {
+    var row = document.getElementById('scc-fg-editor-row-' + idx);
+    if (!row) return;
+    row.scrollIntoView({ block: 'center' });
+    row.classList.add('scc-fg-editor-row--jump-highlight');
+    var block = SCC_FG_EDIT_BLOCKS[idx];
+    if (block && block.type === 'box' && block.color === 'orange') {
+      var selects = row.querySelectorAll('select');
+      var subtypeSelect = null;
+      for (var i = 0; i < selects.length; i++) {
+        var onchange = selects[i].getAttribute('onchange') || '';
+        if (onchange.indexOf("'subtype'") >= 0) { subtypeSelect = selects[i]; break; }
+      }
+      if (subtypeSelect) subtypeSelect.focus();
+    }
+    setTimeout(function() { row.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
+  }, 50);
 }
 
 function sccFgTypeLabel(b) {
@@ -11568,7 +11666,7 @@ function sccFgRenderEditRow(b, idx) {
     default:
       body = '';
   }
-  return '<div class="scc-fg-editor-row">'
+  return '<div class="scc-fg-editor-row" id="scc-fg-editor-row-' + idx + '">'
     + '<div class="scc-fg-editor-row-head">'
       + '<span class="scc-fg-editor-row-type">' + sccFgTypeLabel(b) + '</span>'
       + '<span class="scc-fg-editor-row-actions">'
@@ -11724,7 +11822,7 @@ function sccFgSetTableVariant(idx, subfield, value) {
 function sccFgCancelEdit() {
   SCC_FG_EDIT_MODE = false;
   var toggle = document.getElementById('scc-fg-edit-toggle');
-  if (toggle) toggle.textContent = 'Edit';
+  if (toggle) toggle.textContent = 'Edit Document';
   sccFgDrawDocument();
 }
 
@@ -11740,7 +11838,7 @@ function sccFgSaveDocument() {
     SCC_FG_DOC_CACHE[num] = { session_number: num, blocks: blocks };
     SCC_FG_EDIT_MODE = false;
     var toggle = document.getElementById('scc-fg-edit-toggle');
-    if (toggle) toggle.textContent = 'Edit';
+    if (toggle) toggle.textContent = 'Edit Document';
     sccFgDrawDocument();
     showDMToast('Field Guide saved', 'success');
   }).catch(function() { showDMToast('Save failed', 'error'); });
@@ -12418,6 +12516,43 @@ function sccCycleRelationship(npcId) {
   if (browsePanel && browsePanel.classList.contains('open')) {
     sccRenderBrowsePanel('npc', browsePanel);
   }
+  sccSaveNpcRelationships();
+}
+
+// Was a real data-loss bug: cycling a badge only ever mutated the in-memory
+// SCC_NPC_RELATIONSHIPS object, and npc_relationships only reached Supabase if
+// the DM separately visited Setup and clicked "Save Setup" — every other
+// interaction in this app (loot, tagged notes, quest status, HP) auto-saves on
+// its own action, so this was silently violating the app's own stated behavior.
+// Same PATCH-if-existing/POST-if-new branch sccSaveSetup() already uses, since
+// SCC_SESSION can legitimately be null right after a session completes and
+// before the next one's Setup is ever saved. Silent on success (matching
+// sccSaveTagNoteField's convention elsewhere in this file) — a toast only
+// appears on failure.
+// Debounced, not fired on every click directly: cycling *is* multiple rapid
+// clicks by design (that's how a DM reaches "deity", 4 clicks in) — firing one
+// real network request per click let responses race and land out of order,
+// confirmed live where 4 quick clicks intending "deity" saved "hostile"
+// instead (whichever request's response happened to arrive last, not
+// whichever was sent last). Debouncing to one save 400ms after the last click
+// means only the final state a DM actually lands on ever gets written.
+var SCC_REL_SAVE_TIMER = null;
+function sccSaveNpcRelationships() {
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) return;
+  clearTimeout(SCC_REL_SAVE_TIMER);
+  SCC_REL_SAVE_TIMER = setTimeout(function() {
+    var body = { npc_relationships: JSON.stringify(SCC_NPC_RELATIONSHIPS) };
+    var req = (SCC_SESSION && SCC_SESSION.session_number === num)
+      ? sccPatch('session_notes', '?session_number=eq.' + num, body)
+      : sccPost('session_notes', Object.assign({ session_number: num }, body));
+    req.then(function(r) {
+      if (!r.ok) { showDMToast('Relationship change not saved — check connection', 'error'); return; }
+      if (SCC_SESSION) SCC_SESSION.npc_relationships = body.npc_relationships;
+    }).catch(function() {
+      showDMToast('Relationship change not saved — check connection', 'error');
+    });
+  }, 400);
 }
 
 // ── Save Session Setup ────────────────────────────────────────────
@@ -12680,7 +12815,7 @@ function sccFilterNpcs() {
     var hasDm = c.secret || c.dm_notes || linkedQuests.length;
     if (hasDm) {
       bodyHtml += '<div class="scc-npc2-dm-block">'
-        + '<div class="scc-npc2-dm-title">⚠ DM Only — Do Not Read Aloud</div>'
+        + '<div class="scc-npc2-dm-title"><span class="scc-npc2-dm-icon">&#9888;</span>DM Only — Do Not Read Aloud</div>'
         + '<div class="scc-npc2-dm-rows">';
       if (c.secret) {
         bodyHtml += '<div class="scc-npc2-dm-row">'
@@ -12865,7 +13000,7 @@ function sccRenderLocationPanel() {
     }
     if (loc.dm_notes || loc.vareth_presence) {
       bodyHtml += '<div class="scc-npc2-dm-block">'
-        + '<div class="scc-npc2-dm-title">&#9888; DM Only — Do Not Read Aloud</div>'
+        + '<div class="scc-npc2-dm-title"><span class="scc-npc2-dm-icon">&#9888;</span>DM Only — Do Not Read Aloud</div>'
         + '<div class="scc-npc2-dm-rows">';
       if (loc.vareth_presence) {
         bodyHtml += '<div class="scc-npc2-dm-row">'
@@ -13184,6 +13319,7 @@ function sccAddToCombatStaging(id, name) {
   var combatant = {
     id: id, name: name, isPC: !!pc,
     cr:    creature ? creature.challenge_rating : null,
+    ac:    creature ? creature.ac : null,
     hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
     hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
     dexMod: (function() {
@@ -13311,6 +13447,7 @@ function sccRenderStagingList() {
       + '<span class="scc-staging-name">' + sccEsc(c.name) + '</span>'
       + '<span class="scc-staging-type">' + (c.isPC ? 'PC' : 'Creature') + '</span>'
       + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
+      + (c.ac != null ? '<span class="scc-staging-ac">AC ' + c.ac + '</span>' : '')
       + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
       + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
       + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleStatBlock(' + idx + ')">Stats</button>' : '')
