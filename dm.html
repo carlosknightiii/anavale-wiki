@@ -5612,8 +5612,13 @@ function showDMToast(msg, type) {
   0%, 100% { background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%); }
   50% { background: linear-gradient(90deg, rgba(240,180,41,0.32) 0%, rgba(240,180,41,0.10) 60%); }
 }
-/* Beat action row */
-.scc-beat-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+/* Beat action row -- no margin-top: this sits inside .scc-beat-meta now,
+   sharing a row with .scc-beat-xp; a leftover top margin here (from before
+   the two were consolidated onto one row) was the real remaining cause of
+   the XP badge/status dropdown vertical misalignment -- align-items:center
+   on the row can't perfectly center a sibling that's carrying its own
+   extra margin. */
+.scc-beat-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 /* Jump to Live Session button */
 .scc-beat-live-btn {
   padding: 0.2rem 0.6rem;
@@ -5711,21 +5716,31 @@ function showDMToast(msg, type) {
 .scc-beat-xp {
   display: inline-flex;
   align-items: center;
+  height: 1.35rem;
+  line-height: 1;
   font-family: var(--font-sans);
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--dm-gold);
   background: rgba(240,180,41,0.1);
   border: 1px solid rgba(240,180,41,0.3);
-  padding: 0.1rem 0.45rem;
+  padding: 0 0.45rem;
   border-radius: 8px;
 }
 /* Was .scc-beat-status-btn, a click-to-cycle button with no visible indication
    of the 3 states or which one came next -- now a real <select>, same footprint.
    Modifier classes below color the control itself by its current value, so the
-   3 states (todo/in-progress/done) are readable without opening the dropdown. */
+   3 states (todo/in-progress/done) are readable without opening the dropdown.
+   A native <select>'s intrinsic box height doesn't always shrink to match a
+   plain span's even with identical padding (a real cross-browser quirk) -- an
+   explicit height shared with .scc-beat-xp, plus flex centering on the select
+   itself (not just its container), removes any dependency on that. */
 .scc-beat-status-select {
-  padding: 0.1rem 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  height: 1.35rem;
+  line-height: 1;
+  padding: 0 0.45rem;
   font-family: var(--font-sans);
   font-size: 0.65rem;
   font-weight: 700;
@@ -13264,7 +13279,7 @@ function sccRenderQuestPanel() {
       // click, with no visible indication of what clicking it would do next —
       // a real dropdown makes the 3 states and the current one explicit.
       var statusSelect = '<select class="cm-select scc-beat-status-select scc-beat-status-select--' + st + '" onchange="sccSaveBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ',this.value)">'
-        + '<option value="not_started"' + (st === 'not_started' ? ' selected' : '') + '>To Do</option>'
+        + '<option value="not_started"' + (st === 'not_started' ? ' selected' : '') + '>Available</option>'
         + '<option value="in_progress"' + (st === 'in_progress' ? ' selected' : '') + '>&#9654; In Progress</option>'
         + '<option value="completed"' + (st === 'completed' ? ' selected' : '') + '>&#10003; Done</option>'
       + '</select>';
