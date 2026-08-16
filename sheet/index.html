@@ -489,6 +489,28 @@
       min-width: 0;
     }
 
+    /* ── Class tab — Overview accordion two-column layout (Figma 52:2705,
+       node 94:1560 "details", pulled fresh 2026-08-14) — Class details
+       left, Key Features right. gap-42px and min-w-171px are exact Figma
+       values (new --char-ov-gap-l token; 171px is a one-off, no existing
+       token matched it). flex-wrap so both columns stack on narrow
+       viewports, same pattern .cs-story-cards already uses. */
+    .cs-class-overview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-l);
+    }
+    .cs-class-overview-col {
+      flex: 1 0 0;
+      min-width: 171px;
+    }
+    .cs-class-col-heading {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h4);
+      color: var(--text);
+      margin-bottom: 10px;
+    }
     /* ── Class tab — Key Features (Figma 52:2705/52:2710) ──────────────
        Alternating row shading is pure CSS nth-child, no data dependency. */
     .cs-class-features-label {
@@ -534,36 +556,149 @@
       opacity: 0.85;
     }
 
-    /* ── Spell slots (Class tab, stopgap — see Decision Log) ── */
-    .cs-spell-slots-card { margin-top: var(--char-ov-gap-s); }
-    .cs-spell-slot-row {
+    /* ── Class-Specific limited-use tracker (Features accordion, Figma
+       52:2705, node 94:1772 "slots" — pulled fresh 2026-08-14, verified via
+       get_design_context, not the handoff doc's paraphrase: the doc claimed
+       the feature name was Cinzel Decorative, the real frame is plain
+       Roboto Bold, matching the values used below). One shared box per
+       group (mirrors .cs-effect-panel's blue-700/radius-lg/padding-s
+       choice), each feature its own .cs-limuse-card inside it — gap-xs
+       between cards, no divider lines (unlike Special Effects' per-item
+       border — confirmed via the real node tree, this group uses plain
+       gap spacing instead). ── */
+    .cs-limuse-group {
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-s);
       display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--char-ov-gap-2xs);
-      padding: 0.35rem 0;
+      flex-direction: column;
+      gap: var(--char-ov-gap-xs);
+      width: 100%;
+      box-sizing: border-box;
     }
-    .cs-spell-slot-level {
-      width: 70px;
-      flex-shrink: 0;
-      font-family: var(--font-body);
+    .cs-limuse-group-label {
+      font-family: var(--font-display);
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: var(--char-ov-h4);
       color: var(--text);
     }
-    .cs-spell-slot-pips { display: flex; gap: 0.3rem; }
-    .cs-spell-slot-pip {
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.25);
+    .cs-limuse-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-xs);
+      width: 100%;
+    }
+    .cs-limuse-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--char-ov-gap-2xs);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: var(--char-ov-pl);
+      color: var(--text);
+    }
+    .cs-limuse-name { flex: 1 0 0; min-width: 0; }
+    .cs-limuse-count { flex-shrink: 0; text-align: right; }
+    /* Fully-rounded pill (radius:999px), overflow-clip so each segment's
+       square corners get cropped to the pill shape by the wrapper alone —
+       segments themselves need no border-radius of their own. */
+    .cs-limuse-bar {
+      display: flex;
+      gap: 3px;
+      align-items: stretch;
+      width: 100%;
+      border: 1px solid var(--blue-200);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .cs-limuse-seg {
+      flex: 1 0 0;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--char-ov-gap-2xs) 8px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: var(--char-ov-pl);
+      white-space: nowrap;
+    }
+    /* Available (not yet spent) — bright solid green, dark text for
+       contrast. Spent — same green at 25% opacity, light text at 50%
+       opacity. Available sits left, spent sits right (getAttunableEquipped
+       Items()-style left-to-right fill order, confirmed against the real
+       Figma example — opposite of the Hit Dice pip convention, which spends
+       left-to-right instead; not made consistent with it on purpose, this
+       matches what the real design shows for this specific component). */
+    .cs-limuse-seg.active { background: var(--green); color: var(--blue-900); }
+    .cs-limuse-seg.spent { background: rgba(34,197,94,0.25); color: var(--text); opacity: 0.5; }
+
+    /* ── Spell Slots (Features accordion, sibling group to Class-Specific —
+       Handoff B, Figma 52:2705). Reuses .cs-limuse-* structure verbatim
+       (group/card/header/name/count/bar), just with a --magic-blue segment
+       treatment instead of Class-Specific's --green, since this is a
+       distinct component per the real Figma pull, not a generic pip. ── */
+    .cs-spellslot-explainer {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--text);
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+    .cs-spellslot-explainer ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .cs-spellslot-seg.active { background: var(--magic-blue); color: var(--blue-900); }
+    .cs-spellslot-seg.spent { background: var(--magic-blue-dim); color: var(--text); opacity: 0.5; }
+    .cs-spell-slot-none { color: var(--char-text-faint); font-size: 0.8rem; }
+
+    /* ── Spells Prepared (Features accordion, sibling group — Handoff B) ── */
+    .cs-prepared-header-row { display: flex; justify-content: space-between; align-items: center; gap: var(--char-ov-gap-2xs); }
+    .cs-prepared-count { font-family: var(--font-body); font-weight: 700; font-size: var(--char-ov-pl); color: var(--text); flex-shrink: 0; }
+    .cs-prepared-explainer { font-family: var(--font-body); font-size: 0.82rem; color: var(--text); opacity: 0.85; margin-top: 0.2rem; }
+    .cs-prepared-pills { display: flex; flex-wrap: wrap; gap: var(--char-ov-gap-2xs); margin-top: var(--char-ov-gap-xs); }
+    .cs-prepared-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      background: var(--magic-blue);
+      color: var(--blue-900);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.82rem;
+      border: none;
+    }
+    .cs-prepared-pill-x {
       background: none;
+      border: none;
+      color: inherit;
+      opacity: 0.7;
       cursor: pointer;
       padding: 0;
+      font-size: 0.75rem;
+      line-height: 1;
     }
-    .cs-spell-slot-pip.filled { background: var(--gold); border-color: var(--gold); }
-    .cs-spell-slot-none { color: var(--char-text-faint); font-size: 0.8rem; }
-    .cs-spell-slot-max-edit { display: flex; gap: 0.35rem; align-items: center; margin-left: auto; }
-    .cs-spell-slot-max-input { width: 50px; }
+    .cs-prepared-pill-x:hover { opacity: 1; }
+    .cs-prepared-pill--add {
+      background: none;
+      border: 1px dashed var(--blue-200);
+      color: var(--text);
+      opacity: 0.8;
+      cursor: pointer;
+    }
+    .cs-prepared-pill--add:hover { opacity: 1; }
+
+    /* ── Spells Learned browser (Class tab, full-width card — Handoff B).
+       Table styling reuses .cs-inv-table verbatim (same tr/td/th classes as
+       the Inventory tab's item table) — no new table CSS needed. Filter row
+       reuses .cs-inv-filter-* verbatim (same classes as the Inventory tab's
+       own-inventory search/category row), just with more fields. ── */
+    .cs-spells-learned-card { margin-top: var(--char-ov-gap-s); }
+    .cs-spell-thumb { width: 28px; height: 28px; object-fit: contain; display: block; margin: 0 auto; }
+    .cs-spell-thumb-fallback { display: block; text-align: center; opacity: 0.5; font-size: 1rem; }
 
     /* ── Your Story cards (Who You Are / Your Background / Your Past) ──
        Figma 51:1103/51:1218. Wider description cards, not small pills —
@@ -593,7 +728,12 @@
       object-fit: cover;
       flex-shrink: 0;
     }
-    .cs-story-card-headtext { display: flex; flex-direction: column; gap: 0.15rem; }
+    /* min-width:0 override needed — flex children default to min-width:auto
+       (their content's min-content size), so an unbreakable long title word
+       (e.g. a one-word background name like "Greywitnessed") pushed this
+       row wider than the card, clipping raggedly at the card edge with no
+       ellipsis. Same class of fix .cs-past-card-body already has. */
+    .cs-story-card-headtext { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
     .cs-story-card-label {
       font-family: var(--font-body);
       font-weight: 300;
@@ -606,6 +746,12 @@
       font-family: var(--font-display);
       font-size: var(--char-ov-h4);
       color: var(--text);
+      /* Wrap rather than truncate — these are lore names (backgrounds,
+         orgs, etc.) a player should be able to read in full, not the kind
+         of secondary label an ellipsis (.cs-equip-slot-name's pattern) is
+         fine for. overflow-wrap only breaks a word when it would otherwise
+         overflow, so normal multi-word titles wrap at spaces as before. */
+      overflow-wrap: break-word;
     }
     .cs-story-card-sub {
       font-family: var(--font-body);
@@ -634,6 +780,12 @@
       font-weight: 700;
       font-size: var(--char-ov-h5);
       color: var(--text);
+      /* Same gap as .cs-story-card-title, and same fix — needed even for
+         the --full layout, where the title sits in .cs-past-card-body
+         (already min-width:0) but the title text itself still has no
+         wrap handling of its own: min-width:0 stops the box from being
+         pushed wider, it doesn't make unbreakable text wrap within it. */
+      overflow-wrap: break-word;
     }
     .cs-past-card--full {
       flex-direction: row;
@@ -838,7 +990,7 @@
       font-size: 0.8rem;
     }
     /* Fixed-width marker slot so the name column lines up whether the row
-       shows the "Prof." text label or a dot. */
+       shows the "Prof." text label or is empty (flat-bonus/neither). */
     .cs-ab-skill-marker {
       flex: 0 0 26px;
       display: flex;
@@ -852,25 +1004,64 @@
       letter-spacing: 0.02em;
       color: var(--gold);
     }
-    .cs-ab-skill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    /* Three distinct states — proficient ("Prof." text label; a filled dot
-       wasn't intuitive on live review), flat +1 from an imagined-past bonus
-       (gold ring dot, unfilled — a lesser, non-proficiency source, its
-       amount also called out in parens next to the total), neither (no
-       marker, muted name). */
+    /* Three distinct states — proficient ("Prof." text label), flat +1 from
+       an imagined-past bonus (no marker — its amount is called out in parens
+       next to the total instead; a dot here read as a second, unexplained
+       state per DM feedback), neither (no marker, muted name). */
     .cs-ab-skill--proficient .cs-ab-skill-name { color: var(--text); font-weight: 700; }
-    .cs-ab-skill--flat .cs-ab-skill-dot { background: transparent; border: 2px solid var(--gold); }
     .cs-ab-skill--flat .cs-ab-skill-name { color: var(--text); font-weight: 400; }
-    .cs-ab-skill--none .cs-ab-skill-dot { visibility: hidden; }
     .cs-ab-skill--none .cs-ab-skill-name { color: var(--char-text-faint); font-weight: 400; }
     .cs-ab-skill-name { flex: 1 1 auto; }
     .cs-ab-skill-total { flex: 0 0 auto; font-weight: 700; color: var(--text); }
     .cs-ab-skill-total.positive { color: var(--green); }
     .cs-ab-skill-total.negative { color: var(--red); }
+    /* Saving-throw row — one .cs-ab-skill row per card, wrapped for its own
+       spacing (mirrors .cs-ab-skills' side padding, plus a small gap before
+       the skills list below it so "Save" doesn't read as just another skill). */
+    .cs-ab-save {
+      width: 100%;
+      align-self: stretch;
+      box-sizing: border-box;
+      padding: 0 var(--char-ov-gap-xs);
+      margin-bottom: 0.4rem;
+    }
+    /* Passive Perception — small gold-accented pill on the WIS card only,
+       not a rollable stat so deliberately distinct from the skill list
+       (smaller scale than .cs-mi-ac-badge — this isn't as load-bearing as AC). */
+    .cs-ab-passive {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.35rem;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gold);
+      cursor: help;
+    }
+    .cs-ab-passive-label {
+      font-family: var(--font-body);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--gold);
+    }
+    .cs-ab-passive-val {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    /* Saving-throw intro tip (STR's row only) — same .cs-ab-tip pill, but a
+       distinct blue "i" instead of the standard gold "?" so it reads as a
+       general "what's a saving throw" explainer, not a fact specific to
+       Strength. Precedes the "Save" text, so its spacing is mirrored
+       (margin-right instead of the base rule's margin-left). */
+    .cs-ab-tip--intro {
+      margin-left: 0;
+      margin-right: 0.35rem;
+      background: var(--blue-400);
+      color: var(--text);
+    }
     .cs-feat-list {
       display: flex;
       flex-wrap: wrap;
@@ -1155,6 +1346,26 @@
     .cs-mi-ds-pip--success.filled { background: #6ecf6e; border-color: #6ecf6e; }
     .cs-mi-ds-pip--failure.filled { background: #f87171; border-color: #f87171; }
 
+    /* Hit Dice (MainInfo header, new) — same pip interaction as Death Saves,
+       but its own class/color semantics rather than reusing .cs-mi-ds-pip:
+       an available hit die is the *good* state here (unlike a filled death-
+       save pip, which is bad), so available pips are the bright/filled
+       look and spent pips are the dim/hollow one — inverted from Death
+       Saves, not copied. Gold matches the existing "active resource" gold
+       fill convention (e.g. Inspiration's badge when active). */
+    .cs-mi-hit-dice { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+    .cs-mi-hd-label {
+      font-family: var(--font-body);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--char-text-faint);
+      white-space: nowrap;
+    }
+    .cs-mi-hd-row { display: flex; gap: 0.35rem; }
+    .cs-mi-hd-pip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--gold); background: var(--gold); cursor: pointer; padding: 0; }
+    .cs-mi-hd-pip.spent { background: none; border-color: rgba(255,255,255,0.25); }
+
     @media (max-width: 900px) {
       .cs-ov-portrait { width: 100%; min-height: 340px; }
       .cs-ov-info { min-width: 100%; }
@@ -1411,6 +1622,37 @@
       font-weight: 700;
       font-size: 32px;
       line-height: 1;
+    }
+    /* Initiative badge — same structural pattern as the AC badge (flex
+       column, centered) but deliberately a secondary/smaller variant so it
+       doesn't compete with AC: dark blue/600 fill instead of AC's light
+       blue/100, smaller type scale. Same token family as AC (blue-*), just
+       a different step of it. */
+    .cs-mi-init-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue-600);
+      color: var(--blue-100);
+      border: 1px solid var(--blue-400);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      cursor: help;
+    }
+    .cs-mi-init-label {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .cs-mi-init-num {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 1.4;
     }
     /* ── Equipped Gear — 10-slot doll (Figma 68:7354, corrected 2026-08-10,
        replacing the earlier grid-area build below at DM request — the
@@ -2048,6 +2290,57 @@
       min-width: 0;
       font-size: var(--char-ov-h5);
     }
+
+    /* ── Attunement (Inventory tab, new) — under the doll, own bordered
+       box reusing .cs-effect-panel's token choices (blue-700/blue-300)
+       rather than inventing new colors, but its own layout since rows
+       need a button, unlike Special Effects' plain text rows. ── */
+    .cs-attune-block {
+      margin-top: var(--char-ov-gap-s);
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--blue-700);
+      border: 1px solid var(--blue-300);
+      border-radius: var(--radius);
+      padding: var(--char-ov-gap-xs) var(--char-ov-gap-s);
+    }
+    .cs-attune-header {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h5);
+      color: var(--text);
+      margin-bottom: var(--char-ov-gap-2xs);
+    }
+    .cs-attune-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-top: 1px solid var(--blue-300);
+    }
+    .cs-attune-row:first-of-type { border-top: none; }
+    .cs-attune-name {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .cs-attune-btn {
+      flex-shrink: 0;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gold);
+      background: none;
+      color: var(--gold);
+      cursor: pointer;
+    }
+    .cs-attune-btn.active { background: var(--gold); color: var(--blue-800); }
+    .cs-attune-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ── Carrying bar — capacity = STR x 15, standard progress-bar reading:
        track (--blue-700) always full width, fill (--blue-300) grows from
@@ -2709,6 +3002,8 @@
   var BACKGROUND_ROW = null; // backgrounds table row for ch.background_id, once fetchBackgroundData() resolves
   var REGION_ROW = null;     // regions table row for ch.home_region, once fetchRegionData() resolves
   var CONDITIONS_DATA = [];  // conditions table rows (id/name/color_bg/color_border/color_text/tip/sort_order), once fetchConditionsData() resolves
+  var SPELLS_DATA = [];  // all 414 spells table rows, once fetchSpellsData() resolves — Handoff B (Spells Learned browser)
+  var SPELLS_BY_ID = {}; // spells.id -> row, built alongside SPELLS_DATA for O(1) lookup (Prepared pills, spell picker)
   var CH = null;              // player_characters row, set once by renderCharacter() — lets async
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
@@ -2950,6 +3245,40 @@
     wis: ['Animal Handling', 'Insight', 'Medicine', 'Perception', 'Survival'],
     cha: ['Deception', 'Intimidation', 'Performance', 'Persuasion']
   };
+  // Full ability name per short key — matches classes.saving_throws' format
+  // ("Strength, Constitution", confirmed against all 12 real classes) so
+  // parseSavingThrows() can map it back to the str/dex/con/int/wis/cha keys
+  // used everywhere else on this tab.
+  var AB_FULL = { str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma' };
+  // Saving-throw tooltips — plain language for new players, one per ability.
+  var SAVE_TIPS = {
+    str: 'Resisting being physically shoved, grappled, or restrained.',
+    dex: 'Dodging fireballs, traps, and other effects that hit an area.',
+    con: 'Resisting poison and disease, and staying focused to keep a spell going.',
+    int: 'Resisting effects that mess with your mind — illusions, psychic attacks.',
+    wis: 'Resisting charm, fear, and other effects aimed at your willpower.',
+    cha: 'Resisting effects that try to banish you or take over your identity.'
+  };
+  // Top-level "what is a saving throw" explainer — one concept, shown once
+  // (on STR's row only, see abilitySaveRowHtml), distinct from the six
+  // per-ability SAVE_TIPS below which explain what triggers *that* save.
+  // DM's explicit decision (addendum to the original handoff): a single
+  // explainer, not six, and — since saves render one-per-card with no
+  // shared "Saving Throws" heading to hang a tip off of — attached to the
+  // first row with a visually distinct treatment so it doesn't read as
+  // STR-specific.
+  var SAVE_INTRO_TIP = 'Saving throws — When something bad is about to happen to you (a trap, a spell, a monster\'s breath attack), you roll to resist it. This shows how good you are at resisting each type.';
+  // classes.saving_throws is a comma-separated string of full ability names
+  // (e.g. "Strength, Dexterity") — confirmed against all 12 real classes.
+  function parseSavingThrows(savesStr) {
+    if (!savesStr) return {};
+    var proficient = {};
+    var names = savesStr.split(',').map(function(s) { return s.trim(); });
+    Object.keys(AB_FULL).forEach(function(ab) {
+      if (names.indexOf(AB_FULL[ab]) !== -1) proficient[ab] = true;
+    });
+    return proficient;
+  }
   // Ability score tooltips — verbatim from character.html's .char-ability-name
   // data-tip text (richer than the sheet had before; this replaces the old
   // per-tab copy rather than merging with it).
@@ -3002,6 +3331,19 @@
     fighter:'The Tested', monk:'The Still', wizard:'The Learned',
     sorcerer:'The Sparked', warlock:'The Bound', barbarian:'The Furious'
   };
+  // Real PHB (5e Player's Handbook) species name for each Anavale-flavor
+  // species — the in-world names (Veilstepped, Duskborn, etc.) are reskins
+  // of real 5e species and don't tell a player which rules chapter to read.
+  // Shown in parens next to the Anavale name in the header blurb so the
+  // mechanical identity is never lost. (Class names are already real PHB
+  // terms — class_id itself, e.g. "ranger" — only the Gigglegloom-flavor
+  // class name, e.g. "The Wanderer", needs its PHB equivalent called out.)
+  var SPECIES_PHB = {
+    brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
+    gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
+    scalegrace:'Dragonborn', solmeri:'Human', stonemarked:'Dwarf',
+    tallwalker:'Goliath', veilstepped:'Changeling', verdathi:'Elf'
+  };
 
   // ── Helpers ───────────────────────────────────────────────────────
   function cap(str) { if (!str) return '—'; return str.charAt(0).toUpperCase() + str.slice(1); }
@@ -3029,6 +3371,20 @@
     return feat || null;
   }
   function abMod(v) { var m = Math.floor((v-10)/2); return (m>=0?'+':'')+m; }
+  // Initiative — DEX mod + 5 if the character has the Alert feat (the only
+  // feat in FEAT_TIPS affecting initiative). Depends only on data already
+  // synchronous by the time buildMainInfoHtml() runs (ABILITY_SCORES/ch.feats
+  // are both set from the initial player_characters fetch, no SHEET/
+  // CLASS_ROW wait), so this renders once, correctly, on first paint — no
+  // separate refresh function needed, unlike AC/saves/spellcasting stats.
+  function computeInitiative(ch) {
+    var dexRaw = parseInt(ABILITY_SCORES.dex) || 10;
+    var dexMod = Math.floor((dexRaw - 10) / 2);
+    var hasAlert = Array.isArray(ch && ch.feats) && ch.feats.indexOf('Alert') !== -1;
+    var bonus = hasAlert ? 5 : 0;
+    var total = dexMod + bonus;
+    return { total: total, tip: dexMod + ' Dex' + (hasAlert ? ' + 5 (Alert)' : '') + ' = ' + total };
+  }
   function escHtml(str) {
     if (!str) return '';
     return String(str)
@@ -3190,6 +3546,12 @@
           // Rings — no doll position exists for them (per DM instruction,
           // surfaced as their own small row below the doll instead).
           + '<div class="cs-ring-row" id="cs-ring-row"></div>'
+          // Attunement — under the doll, not a 3rd top-row column (that row's
+          // 3:2 doll:Effects ratio was already DM-tuned once; adding a 3rd
+          // flex item would need re-tuning it again for no real reason).
+          // Hidden entirely (not an empty box) when nothing is currently
+          // equipped that requires attunement — see renderAttunement().
+          + '<div id="cs-attunement-col" style="display:none"><div id="cs-attunement-block"></div></div>'
         + '</div>'
         // Special Effects — read-only, DM-written via DM Tools item form
         // (grants_advantage/grants_proficiency/magic_bonus already existed;
@@ -3323,31 +3685,42 @@
   // (Kael: Animal Handling/Survival, Hana: Insight) that proficiency
   // supersedes rather than stacks, per 2024 PHB stacking rules (same-target
   // bonuses don't add — the higher one applies, and proficiency bonus is
-  // always ≥ the flat +1). Marker: a "Prof." text label for proficient
-  // (a dot-based indicator wasn't intuitive on live review), a small gold
-  // ring dot for a flat-bonus skill (whose amount also appears in
-  // parentheses next to its total, e.g. "+2 (+1)"), no marker for neither.
+  // always ≥ the flat +1). Marker: a "Prof." text label for proficient,
+  // no marker at all for flat-bonus or neither — a dot next to a flat-bonus
+  // skill read as a second, unexplained state once the "(+1)" next to its
+  // total already said the same thing (DM feedback on live review).
+  // Single source of truth for a skill's proficiency state/total — shared by
+  // each skill row below and the Passive Perception badge, so the two can't
+  // drift on the same "is proficiency superseding a flat +1" math.
+  function computeSkillTotal(name, modNum, profBonus, ch) {
+    var skillsArr  = Array.isArray(ch && ch.skills) ? ch.skills : [];
+    var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
+    var isProficient = skillsArr.indexOf(name) !== -1;
+    var flatBonusObj = !isProficient ? bonusesArr.find(function(b) { return b && b.skill === name; }) : null;
+    var flatAmount = flatBonusObj ? (parseInt(flatBonusObj.amount) || 1) : 0;
+    var hasFlatBonus = !!flatBonusObj;
+    return {
+      total: modNum + (isProficient ? profBonus : hasFlatBonus ? flatAmount : 0),
+      isProficient: isProficient,
+      hasFlatBonus: hasFlatBonus,
+      flatAmount: flatAmount
+    };
+  }
   function abilitySkillsInnerHtml(ab, modNum, profBonus, ch) {
     var skillNames = ABILITY_SKILLS[ab] || [];
     if (!skillNames.length) {
       return '<div class="cs-ab-skills-empty">No skills</div>';
     }
-    var skillsArr  = Array.isArray(ch && ch.skills) ? ch.skills : [];
-    var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
     return skillNames.map(function(name) {
-      var isProficient = skillsArr.indexOf(name) !== -1;
-      var flatBonusObj = !isProficient ? bonusesArr.find(function(b) { return b && b.skill === name; }) : null;
-      var flatAmount = flatBonusObj ? (parseInt(flatBonusObj.amount) || 1) : 0;
-      var hasFlatBonus = !!flatBonusObj;
-      var total = modNum + (isProficient ? profBonus : hasFlatBonus ? flatAmount : 0);
-      var totalStr = (total >= 0 ? '+' : '') + total
-        + (hasFlatBonus ? ' (+' + flatAmount + ')' : '');
-      var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
-      var stateCls = isProficient ? 'cs-ab-skill--proficient' : hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
+      var s = computeSkillTotal(name, modNum, profBonus, ch);
+      var totalStr = (s.total >= 0 ? '+' : '') + s.total
+        + (s.hasFlatBonus ? ' (+' + s.flatAmount + ')' : '');
+      var totalCls = s.total > 0 ? 'positive' : s.total < 0 ? 'negative' : '';
+      var stateCls = s.isProficient ? 'cs-ab-skill--proficient' : s.hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
       var tip = SKILL_TIPS[name];
-      var markerHtml = '<span class="cs-ab-skill-marker">'
-        + (isProficient ? '<span class="cs-ab-skill-prof-label">Prof.</span>' : '<span class="cs-ab-skill-dot"></span>')
-      + '</span>';
+      var markerHtml = s.isProficient
+        ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
+        : '<span class="cs-ab-skill-marker"></span>';
       return '<div class="cs-ab-skill ' + stateCls + '">'
         + markerHtml
         + '<span class="cs-ab-skill-name">' + escHtml(name)
@@ -3356,6 +3729,46 @@
         + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
       + '</div>';
     }).join('');
+  }
+  // Saving-throw row — same visual family as a skill row (reuses
+  // .cs-ab-skill* classes verbatim, just labeled "Save"), one per ability
+  // card. Proficiency comes from classes.saving_throws via
+  // parseSavingThrows(), not ch.skills — a different proficiency source
+  // than the skill rows above.
+  function abilitySaveRowHtml(ab, modNum, profBonus, isProficient, showIntroTip) {
+    var total = modNum + (isProficient ? profBonus : 0);
+    var totalStr = (total >= 0 ? '+' : '') + total;
+    var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
+    var stateCls = isProficient ? 'cs-ab-skill--proficient' : 'cs-ab-skill--none';
+    var markerHtml = isProficient
+      ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
+      : '<span class="cs-ab-skill-marker"></span>';
+    // Intro tip (STR's row only) renders first and uses a distinct blue "i"
+    // pill, not the standard gold "?" — so it reads as "what's a saving
+    // throw" in general, not as another fact specific to Strength.
+    var introTipHtml = showIntroTip
+      ? '<span class="cs-ab-tip cs-ab-tip--intro" data-tip="' + SAVE_INTRO_TIP.replace(/"/g,'&quot;') + '">i</span>'
+      : '';
+    return '<div class="cs-ab-skill ' + stateCls + '">'
+      + markerHtml
+      + '<span class="cs-ab-skill-name">'
+        + introTipHtml
+        + 'Save'
+        + '<span class="cs-ab-tip" data-tip="' + SAVE_TIPS[ab].replace(/"/g,'&quot;') + '">?</span>'
+      + '</span>'
+      + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
+    + '</div>';
+  }
+  // Passive Perception — 10 + Perception's total (proficiency or flat bonus,
+  // same computeSkillTotal() math the Perception skill row uses). WIS-card
+  // only; not a rollable stat, so styled as a distinct small pill rather
+  // than folded into the skill list.
+  function passivePerceptionBadgeHtml(wisModNum, profBonus, ch) {
+    var passive = 10 + computeSkillTotal('Perception', wisModNum, profBonus, ch).total;
+    return '<div class="cs-ab-passive" data-tip="A background number, not a roll. The DM checks this quietly to see if you notice something without trying — a hidden trap, someone lurking nearby.">'
+      + '<span class="cs-ab-passive-label">Passive Perception</span>'
+      + '<span class="cs-ab-passive-val">' + passive + '</span>'
+    + '</div>';
   }
 
   // Ability Scores tab content (Figma 51:1663/51:1668) — 6 cards from
@@ -3377,6 +3790,12 @@
     var AB_KEYS  = ['str','dex','con','int','wis','cha'];
     var AB_SHORT = { str:'STR', dex:'DEX', con:'CON', int:'INT', wis:'WIS', cha:'CHA' };
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    // classes.saving_throws hasn't necessarily resolved yet on this first,
+    // synchronous render (CLASS_ROW is null until fetchClassData() settles)
+    // — same ordering gap profBonus already works around via SHEET. Falls
+    // back to all-non-proficient rather than hiding the row; renderAbility-
+    // Skills() re-derives this once CLASS_ROW is guaranteed loaded.
+    var savesProficient = parseSavingThrows(CLASS_ROW ? CLASS_ROW.saving_throws : null);
     var cards = AB_KEYS.map(function(ab) {
       var raw    = parseInt(scores[ab]) || 0;
       var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
@@ -3390,7 +3809,9 @@
           + '</div>'
           + '<div class="cs-ab-val">' + (raw || '—') + '</div>'
           + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
+          + (ab === 'wis' ? '<div id="cs-ab-passive-perception">' + passivePerceptionBadgeHtml(modNum, profBonus, ch) + '</div>' : '')
         + '</div>'
+        + '<div class="cs-ab-save" id="cs-ab-save-' + ab + '">' + abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab], ab === 'str') + '</div>'
         + '<div class="cs-ab-skills" id="cs-ab-skills-' + ab + '">' + abilitySkillsInnerHtml(ab, modNum, profBonus, ch) + '</div>'
       + '</div>';
     }).join('');
@@ -3398,20 +3819,31 @@
     return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
   }
 
-  // Refreshes the 6 skill blocks in place once SHEET (real proficiency_bonus)
-  // has loaded — called from renderLivePlay(). ch.skills/ch.skill_bonuses
-  // don't change after initial load, so only the proficiency-bonus-dependent
-  // math needs a second pass; ability modifiers are re-read from the same
-  // global ABILITY_SCORES buildAbilityScoresHtml used initially.
+  // Refreshes the 6 skill blocks, 6 save rows, and the Passive Perception
+  // badge in place once SHEET (real proficiency_bonus) and CLASS_ROW (real
+  // saving_throws) have both loaded — called from renderLivePlay(), which
+  // only runs after the Promise.all covering both fetches resolves, so
+  // CLASS_ROW is guaranteed set here even though it isn't on the first,
+  // synchronous buildAbilityScoresHtml() render above. ch.skills/
+  // ch.skill_bonuses don't change after initial load, so only the
+  // proficiency-bonus/saving-throws-dependent math needs a second pass;
+  // ability modifiers are re-read from the same global ABILITY_SCORES
+  // buildAbilityScoresHtml used initially.
   function renderAbilitySkills() {
     if (!CH) return;
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    var savesProficient = parseSavingThrows(CLASS_ROW ? CLASS_ROW.saving_throws : null);
     ['str','dex','con','int','wis','cha'].forEach(function(ab) {
-      var el = document.getElementById('cs-ab-skills-' + ab);
-      if (!el) return;
       var raw = parseInt(ABILITY_SCORES[ab]) || 0;
       var modNum = raw ? Math.floor((raw - 10) / 2) : 0;
-      el.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
+      var skillsEl = document.getElementById('cs-ab-skills-' + ab);
+      if (skillsEl) skillsEl.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
+      var saveEl = document.getElementById('cs-ab-save-' + ab);
+      if (saveEl) saveEl.innerHTML = abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab], ab === 'str');
+      if (ab === 'wis') {
+        var passiveEl = document.getElementById('cs-ab-passive-perception');
+        if (passiveEl) passiveEl.innerHTML = passivePerceptionBadgeHtml(modNum, profBonus, CH);
+      }
     });
   }
 
@@ -3423,20 +3855,25 @@
       ? text + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
       : text;
   }
+  // Hit die was dropped from this card 2026-08-14 to match the real Figma
+  // frame (52:2705, node 94:1561) exactly — confirmed via get_design_context,
+  // not assumed from the handoff doc's own (also hit-die-free) field list.
+  // Hit die still displays elsewhere (the header's Hit Dice tracker reads
+  // CLASS_ROW.hit_die directly), so this isn't a data loss, just de-duplication.
+  // classes.hit_die_tip is now unused by this function but left in the schema —
+  // same "leave a harmless unused column" precedent as hit_dice_total.
   function renderClassDetailsHtml(row) {
-    var hitDie  = row ? row.hit_die           : null;
     var primary = row ? row.primary_ability   : null;
     var saves   = row ? row.saving_throws     : null;
     var casting = row ? row.casting_summary   : null;
     var armor   = row ? row.armor             : null;
     var tools   = row ? row.tools             : null;
     var weapons = row ? row.weapons           : null;
-    var hitDieTip = row ? row.hit_die_tip : null;
     var savesTip  = row ? row.saves_tip   : null;
     var weaponsTip = row ? row.weapons_tip : null;
     return '<div class="cs-ov-class-detail">'
-        + '<div class="cs-ov-class-detail-keys"><p>' + classTraitLabel('Hit die:', hitDieTip) + '</p><p>Primary ability:</p><p>' + classTraitLabel('Saving throws:', savesTip) + '</p><p>Casting Spells:</p></div>'
-        + '<div class="cs-ov-class-detail-vals"><p>' + (hitDie || '—') + '</p><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
+        + '<div class="cs-ov-class-detail-keys"><p>Primary ability:</p><p>' + classTraitLabel('Saving throws:', savesTip) + '</p><p>Casting Spells:</p></div>'
+        + '<div class="cs-ov-class-detail-vals"><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
       + '</div>'
       + '<div class="cs-ov-class-detail">'
         + '<div class="cs-ov-class-detail-keys"><p>Armor:</p><p>Tools:</p><p>' + classTraitLabel('Weapons:', weaponsTip) + '</p></div>'
@@ -3549,13 +3986,53 @@
         + '</div>'
       + '</div>';
     }).join('');
-    return '<div class="cs-class-features-label">Key Features</div><div class="cs-class-features">' + rows + '</div>';
+    // No leading "Key Features" label here (dropped 2026-08-14) — the new
+    // Overview-accordion column heading (.cs-class-col-heading) provides it
+    // now. .cs-class-features-label itself is untouched and still used
+    // as-is by the separate Spellcasting/Spell Slots cards on this tab.
+    return '<div class="cs-class-features">' + rows + '</div>';
   }
 
   // ── Class tab (Figma 52:2705/52:2710) ───────────────────────────────
   // Basic info (image/name/level) renders immediately from player_characters;
   // mechanical fields + Key Features come from the `classes` table via
   // renderClassTabDynamic() once fetchClassData() resolves.
+  // ── Class tab Overview restructure (Figma 52:2705, pulled fresh
+  // 2026-08-14) — Basic row + a two-column "Overview" accordion (Class
+  // details left, Key Features right). Built by hand rather than calling
+  // accordionShell() verbatim: that helper wraps its own .cs-ov-breakout,
+  // and this whole tab already lives inside ONE shared breakout established
+  // once at the top of this function — nesting a second viewport-relative
+  // full-bleed wrapper (width:100vw; left:50%; margin-left:-50vw) one level
+  // deeper would double-offset, not just double-wrap harmlessly. Same
+  // .cs-ov-acc*/toggleSheetAccordion() classes and behavior are reused
+  // directly, just without accordionShell()'s outer div.
+  //
+  // Real Figma structure has the Accordion wrapping Basic + details
+  // together (collapsing "Overview" would hide the class name/image too) —
+  // deviated from that on purpose, keeping Basic always visible outside the
+  // collapsible region, per this handoff's own explicit instruction ("Basic
+  // row stays where it is"). Flagged, not silently picked either way.
+  function buildClassOverviewAccordionHtml() {
+    return '<div class="cs-ov-acc" id="cs-class-overview-acc">'
+      + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-class-overview-acc\')">'
+        + '<span class="cs-ov-acc-title">Overview</span>'
+        + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+      + '</button>'
+      + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
+        + '<div class="cs-class-overview-row">'
+          + '<div class="cs-class-overview-col">'
+            + '<div class="cs-class-col-heading">Overview</div>'
+            + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
+          + '</div>'
+          + '<div class="cs-class-overview-col">'
+            + '<div class="cs-class-col-heading">Key Features</div>'
+            + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
+          + '</div>'
+        + '</div>'
+      + '</div></div>'
+    + '</div>';
+  }
   function buildClassTabHtml(ch, classDisplay) {
     var classKey = (ch.class_id || '').toLowerCase();
     var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
@@ -3569,85 +4046,548 @@
           + '</div>'
           + '<div class="cs-ov-class-level"><div class="cs-ov-class-level-label">Level</div><div class="cs-ov-class-level-val">' + (ch.level || 1) + '</div></div>'
         + '</div>'
-        + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
-        + '<div id="cs-class-features">' + buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null) + '</div>'
+        + buildClassOverviewAccordionHtml()
       + '</div>'
-      + '<div class="cs-ov-class-card cs-spell-slots-card">'
-        + '<div class="cs-class-features-label" style="margin-top:0;">Spell Slots</div>'
-        + '<div id="cs-class-spell-slots"></div>'
+      // Features accordion — new this handoff, holds the Class-Specific
+      // limited-use tracker (and, later, Handoff B's Spell Slots/Prepared/
+      // Learned cards as sibling groups in the same body). Always-present
+      // empty anchor div, never the accordion markup itself, on this first
+      // synchronous paint — CLASS_ROW is null here (fetchClassData()
+      // hasn't resolved yet), so whether any limited-use features exist is
+      // still unknown. renderClassFeaturesAccordion() (called from
+      // renderClassTabDynamic() once CLASS_ROW loads) fills this in only
+      // when there's real content, per the DM's explicit call not to add a
+      // hideIfEmpty flag to accordionShell() — skip emitting the accordion
+      // at all rather than emit-then-hide.
+      + '<div id="cs-class-features-acc-wrap"></div>'
+      + '<div class="cs-ov-class-card cs-spell-slots-card" id="cs-spellcasting-stats-card" style="display:none;">'
+        + '<div class="cs-class-features-label" style="margin-top:0;">Spellcasting</div>'
+        + '<div id="cs-class-spellcasting-stats"></div>'
+      + '</div>'
+      + '<div class="cs-ov-class-card cs-spells-learned-card" id="cs-spells-learned-card" style="display:none;">'
+        + '<div class="cs-class-features-label" style="margin-top:0;">Spells Learned</div>'
+        + '<div class="cs-inv-filter-row">'
+          + '<div class="cs-inv-filter-field">'
+            + '<label class="cs-inv-filter-label">Search</label>'
+            + '<input class="cs-inv-filter-input" id="cs-sl-search" placeholder="Search spells&#8230;" oninput="applySpellsLearnedFilter()">'
+          + '</div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Level</label><select class="cs-inv-filter-select" id="cs-sl-level" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Category</label><select class="cs-inv-filter-select" id="cs-sl-school" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Casting Time</label><select class="cs-inv-filter-select" id="cs-sl-ct" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Range</label><select class="cs-inv-filter-select" id="cs-sl-range" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Components</label><select class="cs-inv-filter-select" id="cs-sl-components" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Duration</label><select class="cs-inv-filter-select" id="cs-sl-duration" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
+        + '</div>'
+        + '<div class="cs-inv-table-wrap">'
+          + '<table class="cs-inv-table">'
+            + '<thead><tr>'
+              + '<th class="cs-inv-th cs-inv-th-select">Prepared</th>'
+              + '<th class="cs-inv-th cs-inv-th-thumb"></th>'
+              + '<th class="cs-inv-th">Name</th>'
+              + '<th class="cs-inv-th">Level</th>'
+              + '<th class="cs-inv-th">Category</th>'
+              + '<th class="cs-inv-th">Casting Time</th>'
+              + '<th class="cs-inv-th">Range</th>'
+              + '<th class="cs-inv-th">Components</th>'
+              + '<th class="cs-inv-th">Duration</th>'
+              + '<th class="cs-inv-th">Description</th>'
+            + '</tr></thead>'
+            + '<tbody id="cs-spells-learned-tbody"><tr><td class="cs-inv-empty-row" colspan="10">Loading spells&#8230;</td></tr></tbody>'
+          + '</table>'
+        + '</div>'
       + '</div>'
     + '</div></div>';
   }
 
-  // ── Spell slots (Class tab, new — stopgap only) ─────────────────────
-  // The build spec described this as relocating an "existing" tracker, but
-  // no such UI has ever existed anywhere in this codebase (confirmed via
-  // full-repo grep) despite character_sheet.spell_slots/spell_slots_max
-  // both being real, empty ({}) columns on all 3 characters. Built minimal
-  // and functional per the DM's explicit call: current/max pips per spell
-  // level (1–9), wired to those columns, no new visual design beyond
-  // existing card tokens. This is a stopgap, not the real Figma redesign —
-  // see CLAUDE.md Decision Log.
-  var SPELL_LEVELS = [1,2,3,4,5,6,7,8,9];
-  function renderSpellSlots() {
-    var el = document.getElementById('cs-class-spell-slots');
+  // ── Spell Slots (Features accordion, Handoff B — replaces the earlier
+  // pip stopgap). Max is derived live from classes.spell_slot_progression
+  // (a real 9-element-array-per-level table, verified against the 2024 PHB
+  // for every casting class including Warlock's distinct Pact Magic table)
+  // at the character's current level — same "derive, don't cache" principle
+  // hp-calc.js already uses for HP, so leveling up just changes which slots
+  // show up, no migration/manual edit needed. character_sheet.spell_slots
+  // is repurposed from "current available count" (the old stopgap's
+  // meaning) to "spent count" (matching the Class-Specific tracker's
+  // segment convention below) — safe, confirmed via SQL that all 3 real
+  // characters' columns were still empty/zero, never used in real play.
+  var SPELL_LEVEL_ROMAN = {1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI',7:'VII',8:'VIII',9:'IX'};
+  function computeSpellSlotsArray() {
+    if (!CLASS_ROW || !CLASS_ROW.spell_slot_progression) return null;
+    var chLevel = (CH && CH.level) || 1;
+    return CLASS_ROW.spell_slot_progression[String(chLevel)] || null;
+  }
+  // Same left-to-right-available / right-to-left-spent fill convention as
+  // limitedUseCardHtml() below, just with a --magic-blue segment treatment
+  // (confirmed against the real Figma pull) instead of Class-Specific's
+  // --green — reuses .cs-limuse-card/-header/-name/-count/-bar verbatim.
+  function spellSlotCardHtml(level, max, spent) {
+    var segments = [];
+    for (var i = 0; i < max; i++) {
+      var isSpent = i >= (max - spent);
+      segments.push('<button class="cs-limuse-seg cs-spellslot-seg' + (isSpent ? ' spent' : ' active') + '" onclick="toggleSpellSlotSeg(' + level + ', ' + i + ')">'
+        + (isSpent ? '<span class="cs-limuse-seg-label">Spent</span>' : '<span class="cs-limuse-seg-num">' + (i + 1) + '</span>')
+        + '</button>');
+    }
+    return '<div class="cs-limuse-card">'
+      + '<div class="cs-limuse-header">'
+        + '<span class="cs-limuse-name">Level ' + (SPELL_LEVEL_ROMAN[level] || level) + '</span>'
+        + '<span class="cs-limuse-count">Used: ' + spent + '/' + max + '</span>'
+      + '</div>'
+      + '<div class="cs-limuse-bar">' + segments.join('') + '</div>'
+    + '</div>';
+  }
+  function renderSpellSlotsGroup() {
+    var el = document.getElementById('cs-spellslot-cards');
     if (!el) return;
-    var maxObj = (SHEET && typeof SHEET.spell_slots_max === 'object' && SHEET.spell_slots_max) ? SHEET.spell_slots_max : {};
-    var curObj = (SHEET && typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? SHEET.spell_slots : {};
-    el.innerHTML = SPELL_LEVELS.map(function(lvl) {
-      var max = parseInt(maxObj[lvl]) || 0;
-      var cur = parseInt(curObj[lvl]) || 0;
-      var pips = max > 0
-        ? Array.from({ length: max }, function(_, i) {
-            var n = i + 1;
-            return '<button class="cs-spell-slot-pip' + (n <= cur ? ' filled' : '') + '" onclick="toggleSpellSlot(' + lvl + ',' + n + ')" aria-label="Level ' + lvl + ' slot ' + n + '"></button>';
-          }).join('')
-        : '<span class="cs-spell-slot-none">&mdash;</span>';
-      return '<div class="cs-spell-slot-row">'
-        + '<span class="cs-spell-slot-level">Level ' + lvl + '</span>'
-        + '<span class="cs-spell-slot-pips">' + pips + '</span>'
-        + '<span class="cs-spell-slot-max-edit">'
-          + '<input class="cs-hp-input cs-spell-slot-max-input" type="number" min="0" placeholder="' + max + '" id="cs-spell-max-' + lvl + '">'
-          + '<button class="cs-hp-apply" onclick="setSpellSlotMax(' + lvl + ')">Set Max</button>'
-        + '</span>'
-      + '</div>';
+    var arr = computeSpellSlotsArray();
+    if (!arr) { el.innerHTML = '<div class="cs-spell-slot-none">No spell slots at this level.</div>'; return; }
+    var spentObj = (SHEET && typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? SHEET.spell_slots : {};
+    var html = '';
+    for (var i = 0; i < 9; i++) {
+      var max = parseInt(arr[i]) || 0;
+      if (max <= 0) continue;
+      var level = i + 1;
+      var spent = Math.min(parseInt(spentObj[level]) || 0, max);
+      html += spellSlotCardHtml(level, max, spent);
+    }
+    el.innerHTML = html || '<div class="cs-spell-slot-none">No spell slots at this level.</div>';
+  }
+  function toggleSpellSlotSeg(level, segIdx) {
+    if (!SHEET) return;
+    var arr = computeSpellSlotsArray();
+    var max = arr ? (parseInt(arr[level - 1]) || 0) : 0;
+    if (max <= 0) return;
+    var spentObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
+    var cur = parseInt(spentObj[level]) || 0;
+    var next = (cur === (max - segIdx)) ? (max - segIdx) - 1 : (max - segIdx);
+    if (next < 0) next = 0;
+    if (next > max) next = max;
+    spentObj[level] = next;
+    SHEET.spell_slots = spentObj;
+    saveSheet({ spell_slots: spentObj });
+    renderSpellSlotsGroup();
+  }
+
+  // ── Spells Prepared (Features accordion, Handoff B) ─────────────────
+  // classes.prepared_count_formula: {type:"fixed_table", values:{level:count}}
+  // for Bard/Sorcerer/Warlock (2024 PHB calls this "Prepared Spells" too —
+  // no separate "known spells" concept anymore), or {type:
+  // "ability_mod_plus_level", level_divisor, round:"down"|null, min} for the
+  // two ability-mod-based groups. Verified against the 2024 PHB directly —
+  // caught and corrected two real errors in the handoff doc along the way:
+  // Paladin was wrongly grouped with the full-level casters (Cleric/Druid/
+  // Wizard) when it actually uses the half-level formula, same as Ranger;
+  // and Ranger's rounding was stated as "round up" when the real rule
+  // rounds down (both now share level_divisor:2, round:"down").
+  function computePreparedMax() {
+    if (!CLASS_ROW || !CLASS_ROW.prepared_count_formula) return 0;
+    var f = CLASS_ROW.prepared_count_formula;
+    var chLevel = (CH && CH.level) || 1;
+    var min = parseInt(f.min) || 1;
+    if (f.type === 'fixed_table') {
+      var n = f.values ? parseInt(f.values[String(chLevel)]) : 0;
+      return Math.max(min, n || 0);
+    }
+    if (f.type === 'ability_mod_plus_level') {
+      var castingAbility = CLASS_ROW.spellcasting_ability;
+      var abMod = castingAbility ? Math.floor(((parseInt(ABILITY_SCORES[castingAbility]) || 10) - 10) / 2) : 0;
+      var divisor = parseInt(f.level_divisor) || 1;
+      var levelPart = Math.floor(chLevel / divisor);
+      return Math.max(min, abMod + levelPart);
+    }
+    return 0;
+  }
+  // Swap-rule copy verbatim per class group, per the handoff doc: Cleric/
+  // Druid/Wizard can change any number after a Long Rest; Paladin/Ranger
+  // can swap just one after a Long Rest; Bard/Sorcerer/Warlock only swap
+  // one when they gain a class level (matches their fixed-table formula —
+  // there's no daily "prepare from a wider pool" for these three).
+  var PREPARED_SWAP_RULES = {
+    cleric: 'After a Long Rest, you can change any number of your prepared spells.',
+    druid: 'After a Long Rest, you can change any number of your prepared spells.',
+    wizard: 'After a Long Rest, you can change any number of your prepared spells.',
+    paladin: 'After a Long Rest, you can swap out one of your prepared spells for another.',
+    ranger: 'After a Long Rest, you can swap out one of your prepared spells for another.',
+    bard: 'When you gain a level in this class, you can swap out one spell you know for another.',
+    sorcerer: 'When you gain a level in this class, you can swap out one spell you know for another.',
+    warlock: 'When you gain a level in this class, you can swap out one spell you know for another.'
+  };
+  function renderPreparedSpells() {
+    var countEl = document.getElementById('cs-prepared-count');
+    var explainerEl = document.getElementById('cs-prepared-explainer');
+    var pillsEl = document.getElementById('cs-prepared-pills');
+    if (!countEl || !pillsEl) return;
+    var classKey = (CH && CH.class_id || '').toLowerCase();
+    var max = computePreparedMax();
+    var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    countEl.textContent = prepared.length + '/' + max;
+    if (explainerEl) explainerEl.textContent = PREPARED_SWAP_RULES[classKey] || '';
+    var html = prepared.map(function(id) {
+      var sp = SPELLS_BY_ID[id];
+      var name = sp ? sp.name : id;
+      return '<span class="cs-prepared-pill">' + escHtml(name)
+        + '<button class="cs-prepared-pill-x" onclick="unprepareSpell(\'' + id + '\')" aria-label="Unprepare ' + escHtml(name) + '">&#10005;</button>'
+      + '</span>';
     }).join('');
+    if (prepared.length < max) {
+      html += '<button class="cs-prepared-pill cs-prepared-pill--add" onclick="openSpellPicker()">+ Prepare</button>';
+    }
+    pillsEl.innerHTML = html;
   }
-  // Clicking a filled pip un-fills it and everything after (spend a slot);
-  // clicking an empty pip fills up to it (restore slots, e.g. after a rest)
-  // — same toggle pattern as the death-save pips.
-  function toggleSpellSlot(level, n) {
+  function unprepareSpell(id) {
     if (!SHEET) return;
-    var curObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
-    var cur = parseInt(curObj[level]) || 0;
-    curObj[level] = (cur === n) ? n - 1 : n;
-    SHEET.spell_slots = curObj;
-    saveSheet({ spell_slots: curObj });
-    renderSpellSlots();
+    var prepared = (Array.isArray(SHEET.prepared_spells) ? SHEET.prepared_spells : []).filter(function(x){ return x !== id; });
+    SHEET.prepared_spells = prepared;
+    saveSheet({ prepared_spells: prepared });
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
   }
-  function setSpellSlotMax(level) {
+  function prepareSpell(id) {
     if (!SHEET) return;
-    var input = document.getElementById('cs-spell-max-' + level);
-    var val = parseInt(input.value);
-    if (isNaN(val) || val < 0) return;
-    var maxObj = (typeof SHEET.spell_slots_max === 'object' && SHEET.spell_slots_max) ? Object.assign({}, SHEET.spell_slots_max) : {};
-    var curObj = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
-    maxObj[level] = val;
-    if ((parseInt(curObj[level]) || 0) > val) curObj[level] = val;
-    SHEET.spell_slots_max = maxObj;
-    SHEET.spell_slots = curObj;
-    saveSheet({ spell_slots_max: maxObj, spell_slots: curObj });
-    input.value = '';
-    renderSpellSlots();
+    var prepared = (Array.isArray(SHEET.prepared_spells) ? SHEET.prepared_spells : []).slice();
+    var max = computePreparedMax();
+    if (prepared.indexOf(id) === -1 && prepared.length < max) prepared.push(id);
+    SHEET.prepared_spells = prepared;
+    saveSheet({ prepared_spells: prepared });
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
+  }
+  // Shared picker modal for "+ Prepare" — lists spells already on this
+  // character's Learned list (see Spells Learned below) that aren't
+  // prepared yet. A spell must be learned before it can be prepared, same
+  // relationship as a real spellbook/known-spells list feeding a daily
+  // prepared subset.
+  function openSpellPicker() {
+    var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
+    var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    var pool = learned.filter(function(id){ return prepared.indexOf(id) === -1; })
+      .map(function(id){ return SPELLS_BY_ID[id]; }).filter(Boolean)
+      .sort(function(a,b){ return (a.level - b.level) || a.name.localeCompare(b.name); });
+    var resultsEl = document.getElementById('cs-spell-picker-results');
+    if (!resultsEl) return;
+    resultsEl.innerHTML = pool.length
+      ? pool.map(function(s) {
+          return '<div class="cs-equip-result" onclick="prepareSpell(\'' + s.id + '\'); closeSpellPickerModal();">'
+            + '<span class="cs-equip-result-name">' + escHtml(s.name) + ' <span style="opacity:0.6;">(' + (s.level === 0 ? 'Cantrip' : 'Level ' + s.level) + ')</span></span>'
+          + '</div>';
+        }).join('')
+      : '<div class="cs-inv-empty">No learned spells available to prepare — learn one from the Spells Learned table first.</div>';
+    document.getElementById('cs-spell-picker-modal-overlay').style.display = 'flex';
+  }
+  function closeSpellPickerModal() {
+    var overlay = document.getElementById('cs-spell-picker-modal-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  // ── Spells Learned browser (Class tab, Handoff B) ────────────────────
+  // character_sheet.learned_spells — spells the player has added to their
+  // personal list via this browser. Real spells.school/casting_time/range/
+  // components/duration/classes were all empty before this handoff (DM's
+  // explicit instruction: populate them with real 2024 PHB data rather
+  // than build the browser against empty columns) — SPELLS_DATA is fetched
+  // once at boot (see fetchSpellsData()) now that the data is real.
+  // "Category" column = spells.school (DM's explicit choice over
+  // Gigglegloom types, which is what this file's own earlier read of the
+  // Figma mockup had assumed before asking).
+  var SPELL_TYPE_ICON_SRC = {
+    Bubbleseed: '../assets/icons/icon-bubbleseed.svg',
+    Featherflow: '../assets/icons/icon-featherflow.svg',
+    Steelfist: '../assets/icons/icon-steelfist.svg',
+    Flamerage: '../assets/icons/icon-flamerage.svg'
+  };
+  function spellThumbHtml(spell) {
+    var t = spell.types && spell.types[0];
+    var src = t ? SPELL_TYPE_ICON_SRC[t] : null;
+    return src ? '<img class="cs-spell-thumb" src="' + src + '" alt="">' : '<span class="cs-spell-thumb-fallback">&#10022;</span>';
+  }
+  // Only spells on this character's own class list are ever offered — a
+  // spell not on your class's list isn't something you could learn, per
+  // the 5e rule. This became viable only once spells.classes was populated
+  // with real data this same handoff; the doc's original "Add to Learned"
+  // recommendation (any spell, unrestricted) was written when that column
+  // was still empty for every row.
+  function spellsLearnedEligible() {
+    var classKey = (CH && CH.class_id || '').toLowerCase();
+    return SPELLS_DATA.filter(function(s) { return Array.isArray(s.classes) && s.classes.indexOf(classKey) >= 0; });
+  }
+  function populateSpellsLearnedFilterOptions() {
+    var eligible = spellsLearnedEligible();
+    var fields = [
+      { id: 'cs-sl-level', key: 'level', label: function(v){ return v === '0' ? 'Cantrip' : 'Level ' + v; } },
+      { id: 'cs-sl-school', key: 'school' },
+      { id: 'cs-sl-ct', key: 'casting_time' },
+      { id: 'cs-sl-range', key: 'range' },
+      { id: 'cs-sl-components', key: 'components' },
+      { id: 'cs-sl-duration', key: 'duration' }
+    ];
+    fields.forEach(function(f) {
+      var el = document.getElementById(f.id);
+      if (!el) return;
+      var seen = {};
+      eligible.forEach(function(s) { var v = s[f.key]; if (v !== null && v !== undefined && v !== '') seen[String(v)] = true; });
+      var vals = Object.keys(seen).sort(function(a,b) { return f.key === 'level' ? (parseInt(a) - parseInt(b)) : a.localeCompare(b); });
+      el.innerHTML = '<option value="">All</option>' + vals.map(function(v) {
+        return '<option value="' + escHtml(v) + '">' + escHtml(f.label ? f.label(v) : v) + '</option>';
+      }).join('');
+    });
+  }
+  function applySpellsLearnedFilter() {
+    var card = document.getElementById('cs-spells-learned-card');
+    var tbody = document.getElementById('cs-spells-learned-tbody');
+    if (!card || !tbody) return;
+    var classKey = (CH && CH.class_id || '').toLowerCase();
+    if (!classKey) { card.style.display = 'none'; return; }
+    var eligible = spellsLearnedEligible();
+    if (!eligible.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    var q = (document.getElementById('cs-sl-search').value || '').toLowerCase().trim();
+    var lvl = document.getElementById('cs-sl-level').value;
+    var sch = document.getElementById('cs-sl-school').value;
+    var ct = document.getElementById('cs-sl-ct').value;
+    var rng = document.getElementById('cs-sl-range').value;
+    var comp = document.getElementById('cs-sl-components').value;
+    var dur = document.getElementById('cs-sl-duration').value;
+    var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
+    var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    var maxPrepared = computePreparedMax();
+    var list = eligible.filter(function(s) {
+      if (q && s.name.toLowerCase().indexOf(q) === -1) return false;
+      if (lvl && String(s.level) !== lvl) return false;
+      if (sch && s.school !== sch) return false;
+      if (ct && s.casting_time !== ct) return false;
+      if (rng && s.range !== rng) return false;
+      if (comp && s.components !== comp) return false;
+      if (dur && s.duration !== dur) return false;
+      return true;
+    }).sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+    tbody.innerHTML = list.length ? list.map(function(s) {
+      var isLearned = learned.indexOf(s.id) >= 0;
+      var isPrepared = prepared.indexOf(s.id) >= 0;
+      var levelLabel = s.level === 0 ? 'Cantrip' : String(s.level);
+      var preparedCell = isLearned
+        ? '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">'
+        : '<button class="cs-inv-filter-btn" style="padding:0.2rem 0.6rem;font-size:0.72rem;" onclick="learnSpell(\'' + s.id + '\')">+ Learn</button>';
+      return '<tr class="cs-inv-tr">'
+        + '<td class="cs-inv-td cs-inv-td-select">' + preparedCell + '</td>'
+        + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
+        + '<td class="cs-inv-td">' + escHtml(s.name) + '</td>'
+        + '<td class="cs-inv-td cs-inv-td-cat">' + levelLabel + '</td>'
+        + '<td class="cs-inv-td">' + (s.school ? escHtml(s.school) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.casting_time ? escHtml(s.casting_time) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.range ? escHtml(s.range) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.components ? escHtml(s.components) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + (s.duration ? escHtml(s.duration) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td" style="max-width:320px;">' + (s.spell_desc ? escHtml(s.spell_desc) : '') + '</td>'
+      + '</tr>';
+    }).join('') : '<tr><td class="cs-inv-empty-row" colspan="10">No spells match.</td></tr>';
+  }
+  function learnSpell(id) {
+    if (!SHEET) return;
+    var learned = (Array.isArray(SHEET.learned_spells) ? SHEET.learned_spells : []).slice();
+    if (learned.indexOf(id) === -1) learned.push(id);
+    SHEET.learned_spells = learned;
+    saveSheet({ learned_spells: learned });
+    applySpellsLearnedFilter();
+  }
+  function togglePreparedFromTable(id, checked) {
+    if (!SHEET) return;
+    var prepared = (Array.isArray(SHEET.prepared_spells) ? SHEET.prepared_spells : []).slice();
+    var max = computePreparedMax();
+    if (checked) {
+      if (prepared.indexOf(id) === -1 && prepared.length < max) prepared.push(id);
+    } else {
+      prepared = prepared.filter(function(x){ return x !== id; });
+    }
+    SHEET.prepared_spells = prepared;
+    saveSheet({ prepared_spells: prepared });
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
+  }
+  // Called once from renderClassTabDynamic() (CLASS_ROW loaded, populates
+  // the eligible-spell-derived filter option lists) — separate from
+  // applySpellsLearnedFilter() itself, which also needs SHEET and re-runs
+  // from renderLivePlay(), same two-phase pattern as the rest of this tab.
+  function renderSpellsLearnedFilters() {
+    populateSpellsLearnedFilterOptions();
+    applySpellsLearnedFilter();
+  }
+
+  // ── Spellcasting stats (Class tab, new) — Spellcasting Modifier / Spell
+  // Save DC / Spell Attack Bonus. Card above Spell Slots, same
+  // .cs-ov-class-card family. classes.spellcasting_ability is a new column
+  // (str/dex/con/int/wis/cha, null for non-casters) — added this session;
+  // classes.primary_ability was confirmed unreliable for this (a combined
+  // string for half-casters, e.g. paladin "Strength & Charisma", ranger
+  // "Dexterity & Wisdom" — the casting ability is only one of the two, and
+  // only recoverable by parsing casting_summary's free text, which the
+  // build doc explicitly said not to do). Hidden entirely for non-casters,
+  // not rendered as an empty/zeroed card — same style="display:none"
+  // pattern the card starts with on its first, synchronous paint before
+  // CLASS_ROW has loaded.
+  function spellStatRowHtml(label, value, tip) {
+    return '<div class="cs-ab-skill">'
+      + '<span class="cs-ab-skill-name">' + label
+        + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
+      + '</span>'
+      + '<span class="cs-ab-skill-total">' + value + '</span>'
+    + '</div>';
+  }
+  function renderSpellcastingStats() {
+    var card = document.getElementById('cs-spellcasting-stats-card');
+    var el = document.getElementById('cs-class-spellcasting-stats');
+    if (!card || !el) return;
+    var castingAbility = CLASS_ROW ? CLASS_ROW.spellcasting_ability : null;
+    if (!castingAbility) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    var abMod = Math.floor(((parseInt(ABILITY_SCORES[castingAbility]) || 10) - 10) / 2);
+    var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
+    var saveDC = 8 + profBonus + abMod;
+    var atkBonus = profBonus + abMod;
+    el.innerHTML =
+        spellStatRowHtml('Spellcasting Modifier', (abMod >= 0 ? '+' : '') + abMod, 'The ability modifier your class uses to cast spells.')
+      + spellStatRowHtml('Spell Save DC', saveDC, 'The number a creature must roll at or above to resist your spell.')
+      + spellStatRowHtml('Spell Attack Bonus', (atkBonus >= 0 ? '+' : '') + atkBonus, 'Added to the d20 when you make an attack roll with a spell.');
   }
 
   // Populated once fetchClassData() resolves — the `classes` table is the
   // source for these mechanical fields (see docs/character-sheet-redesign-handoff.md §6).
+  // ── Class-Specific limited-use tracker (Features accordion, new) ────
+  // classes.limited_use_features: [{name, max_at_level: {level: max},
+  // recharge}]. Max is derived live from the character's current level —
+  // same "don't cache what you can derive" principle hp-calc.js already
+  // uses for HP — picking the highest level threshold <= current level, so
+  // leveling up just reveals more segments with no migration needed.
+  function computeLimitedUseMax(feature, chLevel) {
+    if (!feature || !feature.max_at_level) return 0;
+    var thresholds = Object.keys(feature.max_at_level).map(Number).sort(function(a,b){return a-b;});
+    var applicable = thresholds.filter(function(t){ return t <= chLevel; });
+    if (!applicable.length) return 0;
+    var pick = applicable[applicable.length - 1];
+    return feature.max_at_level[pick];
+  }
+  // Segment fill direction confirmed against the real Figma node (94:1772),
+  // not assumed: available segments render left-to-right first, spent
+  // segments fill in from the right — the opposite of the Hit Dice pip
+  // convention (spent-left/available-right) built in an earlier session.
+  // Deliberately not made consistent with that — this matches what the
+  // actual design shows for this specific component, not a generic pip.
+  function limitedUseCardHtml(feature, spent, max) {
+    var segments = [];
+    for (var i = 0; i < max; i++) {
+      var isSpent = i >= (max - spent);
+      segments.push('<button class="cs-limuse-seg' + (isSpent ? ' spent' : ' active') + '" onclick="toggleLimitedUse(\'' + escHtml(feature.name).replace(/'/g, "\\'") + '\', ' + i + ')">'
+        + (isSpent ? '<span class="cs-limuse-seg-label">Spent</span>' : '<span class="cs-limuse-seg-num">' + (i + 1) + '</span>')
+        + '</button>');
+    }
+    return '<div class="cs-limuse-card">'
+      + '<div class="cs-limuse-header">'
+        + '<span class="cs-limuse-name">' + escHtml(feature.name) + '</span>'
+        + '<span class="cs-limuse-count">Used: ' + spent + '/' + max + '</span>'
+      + '</div>'
+      + '<div class="cs-limuse-bar">' + segments.join('') + '</div>'
+    + '</div>';
+  }
+  // Refreshes card content only — assumes the group shell (#cs-class-specific
+  // and its "Class-Specific" label) already exists. Called both right after
+  // renderClassFeaturesAccordion() builds that shell (CLASS_ROW loaded,
+  // SHEET likely still null — renders a safe "0 spent" default) and again
+  // from renderLivePlay() once SHEET is guaranteed loaded, for the real
+  // spent counts — same two-pass pattern every SHEET-dependent Class tab
+  // card in this series has used.
+  function renderLimitedUseFeatures() {
+    var container = document.getElementById('cs-class-specific');
+    if (!container) return;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    if (!features.length) return;
+    var chLevel = (CH && CH.level) || 1;
+    var spentMap = (SHEET && typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? SHEET.limited_use_spent : {};
+    container.innerHTML = features.map(function(f) {
+      var max = computeLimitedUseMax(f, chLevel);
+      var spent = parseInt(spentMap[f.name]) || 0;
+      if (spent > max) spent = max;
+      return limitedUseCardHtml(f, spent, max);
+    }).join('');
+  }
+  // Click convention: clicking segment N sets spent to (max - N) — since
+  // available fills left, spent fills right, segment index 0 is the
+  // leftmost (highest-priority-available) slot. Clicking the currently-
+  // first-spent segment un-spends it, mirroring the Death Saves/Hit Dice
+  // "click the boundary segment to toggle" interaction exactly, just
+  // mapped through the reversed fill direction this component uses.
+  function toggleLimitedUse(name, segIdx) {
+    if (!SHEET) return;
+    var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
+    var cur = parseInt(spentMap[name]) || 0;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var feature = features.find(function(f){ return f.name === name; });
+    if (!feature) return;
+    var max = computeLimitedUseMax(feature, (CH && CH.level) || 1);
+    var next = (cur === (max - segIdx)) ? (max - segIdx) - 1 : (max - segIdx);
+    if (next < 0) next = 0;
+    if (next > max) next = max;
+    spentMap[name] = next;
+    SHEET.limited_use_spent = spentMap;
+    saveSheet({ limited_use_spent: spentMap });
+    renderLimitedUseFeatures();
+  }
+  // Builds (or clears) the "Features" accordion shell into the always-
+  // present #cs-class-features-acc-wrap anchor. Only emits the accordion
+  // at all once CLASS_ROW confirms there's real content — per the DM's
+  // explicit call, no hideIfEmpty flag added to accordionShell() itself,
+  // this function just skips emitting the markup instead. Re-evaluated
+  // every time it's called (not just once), so it also correctly clears
+  // itself back out if a reload ever finds zero features where there used
+  // to be some.
+  // Handoff B folded Spell Slots + Spells Prepared into this same accordion
+  // as sibling groups to Class-Specific, per the real Figma (52:2705) —
+  // shown whenever the class has EITHER limited-use features OR any spell
+  // slot progression (a caster), not just the former as before.
+  function renderClassFeaturesAccordion() {
+    var wrap = document.getElementById('cs-class-features-acc-wrap');
+    if (!wrap) return;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var hasLimitedUse = features.length > 0;
+    var hasCasting = !!(CLASS_ROW && CLASS_ROW.spell_slot_progression);
+    if (!hasLimitedUse && !hasCasting) { wrap.innerHTML = ''; return; }
+    if (!document.getElementById('cs-class-features-acc')) {
+      wrap.innerHTML = '<div class="cs-ov-acc" id="cs-class-features-acc">'
+        + '<button class="cs-ov-acc-header" type="button" onclick="toggleSheetAccordion(\'cs-class-features-acc\')">'
+          + '<span class="cs-ov-acc-title">Features</span>'
+          + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
+        + '</button>'
+        + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
+          + (hasLimitedUse ? '<div class="cs-limuse-group">'
+              + '<div class="cs-limuse-group-label">Class-Specific</div>'
+              + '<div id="cs-class-specific"></div>'
+            + '</div>' : '')
+          + (hasCasting ? '<div class="cs-limuse-group">'
+              + '<div class="cs-limuse-group-label">Spell Slots</div>'
+              + '<div class="cs-spellslot-explainer">Spell slots represent a caster&#8217;s limited daily magical energy.'
+                + '<ul><li><strong>Casting:</strong> To cast a spell, you must expend a slot of the spell&#8217;s level or higher.</li>'
+                + '<li><strong>Recovery:</strong> All expended spell slots are restored after finishing a Long Rest.</li></ul>'
+              + '</div>'
+              + '<div id="cs-spellslot-cards"></div>'
+            + '</div>' : '')
+          + (hasCasting ? '<div class="cs-limuse-group">'
+              + '<div class="cs-prepared-header-row"><span class="cs-limuse-group-label">Spells Prepared</span><span class="cs-prepared-count" id="cs-prepared-count"></span></div>'
+              + '<div class="cs-prepared-explainer" id="cs-prepared-explainer"></div>'
+              + '<div class="cs-prepared-pills" id="cs-prepared-pills"></div>'
+            + '</div>' : '')
+        + '</div></div>'
+      + '</div>';
+    }
+    renderLimitedUseFeatures();
+    renderSpellSlotsGroup();
+    renderPreparedSpells();
+  }
+
   function renderClassTabDynamic() {
     var detailsEl = document.getElementById('cs-class-details');
     var featuresEl = document.getElementById('cs-class-features');
     if (detailsEl) detailsEl.innerHTML = renderClassDetailsHtml(CLASS_ROW);
     if (featuresEl) featuresEl.innerHTML = buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null);
+    renderClassFeaturesAccordion();
+    renderSpellsLearnedFilters();
     wireAllTooltips();
   }
 
@@ -3691,17 +4631,26 @@
   // tab bar and is reused across all four tabs (not duplicated per tab). ──
   function buildMainInfoHtml(ch, app, appearanceDesc, speciesDisplay, regionLabel, portraitSrc) {
     var classKey   = (ch.class_id || '').toLowerCase();
+    var speciesKey = (ch.species || '').toLowerCase();
     var alignKey   = (ch.alignment || '').toLowerCase();
     var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
     var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey) };
+    var initBadge  = computeInitiative(ch);
 
     // Blurb — species + class's Gigglegloom-flavor name + type + region,
     // plus the alignment trait sentence. Sourced from the same lookups
     // character.js's (pre-rewrite) generateSummary() draws from, not invented.
+    // Both the species and class-flavor name are Anavale reskins of real PHB
+    // terms — each gets its real term in parens right after it, so the
+    // mechanical identity (which species/class rules apply) is never lost
+    // behind the in-world flavor name.
     var blurbParts = [];
     var flavorName = CLASS_FLAVOR_NAME[classKey];
     if (speciesDisplay && flavorName && typeMeta.name) {
-      blurbParts.push('A ' + speciesDisplay + ' ' + flavorName + ' who carries the ' + typeMeta.name
+      var speciesWithPhb = speciesDisplay + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : '');
+      var classPhbName = classKey ? cap(classKey.replace(/-/g, ' ')) : '';
+      var flavorWithPhb = flavorName + (classPhbName ? ' (' + classPhbName + ')' : '');
+      blurbParts.push('A ' + speciesWithPhb + ' ' + flavorWithPhb + ' who carries the ' + typeMeta.name
         + (regionLabel && regionLabel !== '—' ? ' — from ' + regionLabel + '.' : '.'));
     }
     if (ALIGNMENT_TRAIT_SENTENCE[alignKey]) blurbParts.push(ALIGNMENT_TRAIT_SENTENCE[alignKey]);
@@ -3721,8 +4670,10 @@
             + '<h1 class="cs-ov-name">' + (ch.name || 'Unknown') + '</h1>'
             + '<div class="cs-mi-vitals">'
               + '<div class="cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip=""><span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">—</span></div>'
+              + '<div class="cs-mi-init-badge" data-tip="' + initBadge.tip.replace(/"/g,'&quot;') + '"><span class="cs-mi-init-label">Init</span><span class="cs-mi-init-num">' + (initBadge.total >= 0 ? '+' : '') + initBadge.total + '</span></div>'
               + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
               + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
+              + '<div id="cs-mi-hit-dice-slot"></div>'
             + '</div>'
             + blurbHtml
           + '</div>'
@@ -3905,6 +4856,21 @@
     var regionCard = storyCard('Home Region', REGION_ROW ? REGION_ROW.name : cap(ch.home_region || ''),
       REGION_ROW ? REGION_ROW.summary : null, null,
       regionKey ? '../assets/images/regions/img-' + regionKey + '-landscape.webp' : null);
+    // Speed & Size — species.speed_ft/size, new columns this session (2024
+    // PHB values, seeded per species.phb_equivalent). Low-frequency
+    // reference data, placed here rather than the header per DM decision —
+    // this accordion is already the species/region/alignment/background
+    // facts cluster, unlike Who You Are (personality/narrative content).
+    // No image asset exists for this (not a player-chosen option card like
+    // the others), no benefits box, no title-vs-label split beyond the
+    // value itself — self-explanatory once labeled, per the handoff.
+    var speedSizeCard = '';
+    if (SPECIES_ROW && (SPECIES_ROW.speed_ft || SPECIES_ROW.size)) {
+      var speedSizeParts = [];
+      if (SPECIES_ROW.speed_ft) speedSizeParts.push(SPECIES_ROW.speed_ft + ' ft');
+      if (SPECIES_ROW.size) speedSizeParts.push(SPECIES_ROW.size);
+      speedSizeCard = storyCard('Speed & Size', speedSizeParts.join(' · '), null, null, null);
+    }
     var alignTitle = alignName + (alignPhb ? ' <span class="cs-story-card-sub">(' + alignPhb + ')</span>' : '');
     var alignCard = storyCard('Moral Alignment', alignTitle, ALIGNMENT_CARD_DESC[alignKey] || null, null,
       '../assets/images/img-alignment.webp');
@@ -3924,7 +4890,7 @@
     var bgCard = storyCard('Background', bgTitle, BACKGROUND_ROW ? BACKGROUND_ROW.lore : null, benefitsBoxHtml(bgLines),
       bgKey ? '../assets/images/backgrounds/bg-' + bgKey + '.png' : null);
 
-    return ggCard + regionCard + alignCard + bgCard;
+    return ggCard + regionCard + speedSizeCard + alignCard + bgCard;
   }
   function buildYourBackgroundHtml(ch, typeKey, typeMeta) {
     return accordionShell('cs-ov-acc-background', 'Your Background',
@@ -4005,6 +4971,7 @@
   // ── Render live-play data (HP, gold, inventory, notes, photo) ─────
   function renderLivePlay() {
     renderHeaderHP();
+    renderHitDice();
     renderEquipped();
     renderGold();
     renderInventory();
@@ -4012,7 +4979,11 @@
     renderPhoto();
     renderConditions();
     renderInspiration();
-    renderSpellSlots();
+    renderSpellSlotsGroup();
+    renderPreparedSpells();
+    applySpellsLearnedFilter();
+    renderSpellcastingStats();
+    renderLimitedUseFeatures();
     renderAbilitySkills();
     wireAllTooltips();
   }
@@ -4104,6 +5075,55 @@
     SHEET.death_save_failures = next;
     saveSheet({ death_save_failures: next });
     renderHeaderHP();
+  }
+
+  // ── Hit Dice (MainInfo header, new) — near HP, same "spendable healing
+  // resource belongs in this visual neighborhood" reasoning as Death Saves.
+  // Max is never stored — always ch.level, computed live (same
+  // derive-don't-cache principle js/hp-calc.js already uses for HP), so
+  // this keeps working correctly as the party levels past 1 with no
+  // migration needed then. Pip interaction mirrors the death-save/spell-
+  // slot toggle convention (click a spent pip to un-spend it and everything
+  // after; click an available one to spend up through it), but its own
+  // class/colors — see the .cs-mi-hd-pip CSS comment for why the semantics
+  // are inverted from .cs-mi-ds-pip, not copied. No rest-flow to auto-
+  // restore spent dice exists anywhere on this sheet yet (same gap Death
+  // Saves and Spell Slots already have) — restoring is a manual click,
+  // deliberately out of scope here per the handoff's own instruction not
+  // to scope-creep into building one.
+  // Uses character_sheet.hit_dice_used — a pre-existing column, populated
+  // (1/0/0 for all 3 characters) but never referenced anywhere in the
+  // codebase before this. The handoff assumed no tracking column existed;
+  // caught via SQL before shipping, so this reuses hit_dice_used rather
+  // than the hit_dice_spent this build first (wrongly) added. Its sibling
+  // hit_dice_total is still dead/unused — max is deliberately computed live
+  // from ch.level instead, per the handoff's own don't-cache-max instruction.
+  function renderHitDiceHtml() {
+    var level = (CH && CH.level) || 1;
+    var dieType = CLASS_ROW ? CLASS_ROW.hit_die : 'd?';
+    var spent = SHEET ? (parseInt(SHEET.hit_dice_used) || 0) : 0;
+    var pips = Array.from({ length: level }, function(_, i) {
+      var n = i + 1;
+      var isSpent = n <= spent;
+      return '<button class="cs-mi-hd-pip' + (isSpent ? ' spent' : '') + '" onclick="toggleHitDie(' + n + ')" aria-label="Hit die ' + n + (isSpent ? ' (spent)' : ' (available)') + '"></button>';
+    }).join('');
+    return '<div class="cs-mi-hit-dice">'
+      + '<div class="cs-mi-hd-label">Hit Dice (' + dieType + ')</div>'
+      + '<div class="cs-mi-hd-row">' + pips + '</div>'
+    + '</div>';
+  }
+  function toggleHitDie(n) {
+    if (!SHEET) return;
+    var cur = parseInt(SHEET.hit_dice_used) || 0;
+    var next = (cur === n) ? n - 1 : n;
+    SHEET.hit_dice_used = next;
+    saveSheet({ hit_dice_used: next });
+    renderHitDice();
+  }
+  function renderHitDice() {
+    var el = document.getElementById('cs-mi-hit-dice-slot');
+    if (!el) return;
+    el.innerHTML = renderHitDiceHtml();
   }
 
   function adjustHP(delta) {
@@ -4270,8 +5290,13 @@
       .then(function(res) {
         if (!res.error && res.data) SPECIES_ROW = res.data;
         renderSpeciesDesc();
+        // Speed & Size lives in the Your Background accordion (renderBackgroundCardsHtml()),
+        // not here — piggybacks on the same refresh renderBackgroundCardsDynamic()
+        // already provides for Region/Background, same "reuse the existing
+        // refresh call" instruction as the header species description above.
+        renderBackgroundCardsDynamic();
       })
-      .catch(function() { renderSpeciesDesc(); });
+      .catch(function() { renderSpeciesDesc(); renderBackgroundCardsDynamic(); });
   }
   function renderSpeciesDesc() {
     var el = document.getElementById('cs-mi-species-desc');
@@ -4510,6 +5535,7 @@
     renderACBadge();
     renderRingsRow();
     renderSpecialEffects();
+    renderAttunement();
     wireAllTooltips();
   }
   // Special Effects panel — read-only summary of every currently-equipped
@@ -4584,6 +5610,89 @@
     if (!row) return;
     row.innerHTML = RING_SLOTS.map(function(r) { return renderEquippedSlot(equipSlotByArea(r.key), null); }).join('');
   }
+  // ── Magic Item Attunement (Inventory tab, new) — 5e's real cap is 3
+  // attuned items at once. Only currently-equipped items flagged
+  // items.requires_attunement are eligible; a custom (non-catalog)
+  // inventory row has no such field to check and is never eligible, same
+  // as it already sits outside other catalog-only mechanics elsewhere in
+  // this file (combat stats, Special Effects, etc.).
+  //
+  // Reads EQUIPPED_ITEMS, not CATALOG_CACHE — CATALOG_CACHE is a mixed
+  // cache (the +Add Item search modal populates it with a partial select,
+  // name/category/cost_gp/weight_lb/summary/base_ac/damage_dice/
+  // damage_type/image only — no requires_attunement); EQUIPPED_ITEMS is
+  // always a full items.* row for exactly the items in EQUIPPED (both its
+  // write paths, fetchEquipped() and selectEquipItem(), select('*')), so
+  // it's the correct, purpose-built source for this, not a guess.
+  function getAttunableEquippedItems() {
+    var out = [];
+    Object.keys(EQUIPPED).forEach(function(key) {
+      var itemKey = EQUIPPED[key];
+      if (!itemKey) return;
+      var item = EQUIPPED_ITEMS[itemKey];
+      if (item && item.requires_attunement) out.push({ key: itemKey, name: item.name });
+    });
+    return out;
+  }
+  function renderAttunement() {
+    var col = document.getElementById('cs-attunement-col');
+    var el = document.getElementById('cs-attunement-block');
+    if (!col || !el) return;
+    var eligible = getAttunableEquippedItems();
+    if (!eligible.length) { col.style.display = 'none'; return; }
+    col.style.display = '';
+    var attuned = (SHEET && Array.isArray(SHEET.attuned_items)) ? SHEET.attuned_items : [];
+    el.innerHTML = '<div class="cs-attune-block">'
+      + '<div class="cs-attune-header">Attunement (' + attuned.length + '/3)'
+        + '<span class="cs-ab-tip" data-tip="Some magic items need you to bond with them before their full power works. You can be attuned to up to 3 items at once, and attuning happens during a short rest.">?</span>'
+      + '</div>'
+      + eligible.map(function(it) {
+          var isAttuned = attuned.indexOf(it.key) !== -1;
+          var atCap = attuned.length >= 3 && !isAttuned;
+          return '<div class="cs-attune-row">'
+            + '<span class="cs-attune-name">' + escHtml(it.name || 'Unknown item') + '</span>'
+            + '<button class="cs-attune-btn' + (isAttuned ? ' active' : '') + '"'
+              + (atCap ? ' disabled title="Already attuned to 3 items"' : '')
+              + ' onclick="toggleAttunement(\'' + it.key + '\')">'
+              + (isAttuned ? 'Attuned' : 'Attune')
+            + '</button>'
+          + '</div>';
+        }).join('')
+    + '</div>';
+  }
+  function toggleAttunement(itemKey) {
+    if (!SHEET) return;
+    var attuned = Array.isArray(SHEET.attuned_items) ? SHEET.attuned_items.slice() : [];
+    var idx = attuned.indexOf(itemKey);
+    if (idx !== -1) {
+      attuned.splice(idx, 1);
+    } else {
+      if (attuned.length >= 3) { showToast('Already attuned to 3 items', true); return; }
+      attuned.push(itemKey);
+    }
+    SHEET.attuned_items = attuned;
+    saveSheet({ attuned_items: attuned });
+    renderAttunement();
+    wireAllTooltips();
+  }
+  // Drops itemKey from attunement once it's no longer equipped anywhere —
+  // 5e: you can't stay attuned to something you've taken off. Called
+  // additively alongside the existing "still used elsewhere" EQUIPPED_ITEMS
+  // cleanup already present at all 3 places an item leaves EQUIPPED
+  // (unequipSlot(), selectEquipItem()'s sibling-clear and prior-slot-clear)
+  // rather than folded into that logic — this file's equip/unequip code has
+  // a real history of subtle stale-state bugs from exactly this area, so
+  // this stays a separate, independently-correct check rather than risk
+  // altering already-tested lines.
+  function clearAttunementIfUnequipped(itemKey) {
+    if (!SHEET || !itemKey || !Array.isArray(SHEET.attuned_items)) return;
+    if (SHEET.attuned_items.indexOf(itemKey) === -1) return;
+    var stillEquipped = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === itemKey; });
+    if (stillEquipped) return;
+    var next = SHEET.attuned_items.filter(function(k) { return k !== itemKey; });
+    SHEET.attuned_items = next;
+    saveSheet({ attuned_items: next });
+  }
   // Clears whichever keys back the *other* hand's doll position when one
   // hand holds/gains a two-handed weapon — keys come from
   // detectTwoHandedLock().lockedKeys, so this works the same whether the
@@ -4601,6 +5710,7 @@
       EQUIPPED[k] = null;
       var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
       if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
+      clearAttunementIfUnequipped(removedId);
     });
     SHEET.equipped = equipped;
     saveSheet({ equipped: equipped });
@@ -4957,6 +6067,7 @@
       clearInventoryEquippedSlot(k);
       var stillUsed = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === removedId; });
       if (!stillUsed) delete EQUIPPED_ITEMS[removedId];
+      clearAttunementIfUnequipped(removedId);
     });
     // Same physical inventory row moving from a different slot entirely —
     // not a sibling key above (e.g. handL/handR both take 'weapon', or
@@ -4978,6 +6089,11 @@
       EQUIPPED[priorSlotKey] = null;
       var stillUsedPrior = Object.keys(EQUIPPED).some(function(kk) { return EQUIPPED[kk] === equipKey; });
       if (!stillUsedPrior) delete EQUIPPED_ITEMS[equipKey];
+      // No clearAttunementIfUnequipped() call here, deliberately — this is
+      // the same physical item moving to a *different* slot (targetKey,
+      // set a few lines below), not actually coming off. Clearing
+      // attunement here would be a real bug: the item never left EQUIPPED,
+      // it's mid-move within this same function call.
     }
     // Direct replacement — targetKey already holds a *different* item
     // (e.g. swapping Longbow for Shortsword, both in hand_right). Not a
@@ -5031,6 +6147,7 @@
     clearInventoryEquippedSlot(slotKey);
     var stillUsed = Object.keys(EQUIPPED).some(function(k) { return EQUIPPED[k] === removedId; });
     if (removedId && !stillUsed) delete EQUIPPED_ITEMS[removedId];
+    clearAttunementIfUnequipped(removedId);
     saveSheet({ equipped: equipped });
     renderEquipped();
   }
@@ -5910,6 +7027,22 @@
       .catch(function() { renderClassTabDynamic(); });
   }
 
+  // ── Fetch all spells (Handoff B — Spells Learned browser) ──────────
+  // Fetched once at boot, same pattern as fetchConditionsData() — 414 rows,
+  // small enough to hold in memory and filter/search client-side rather
+  // than round-tripping to Supabase per filter change.
+  function fetchSpellsData() {
+    return sb.from('spells').select('*')
+      .then(function(res) {
+        if (!res.error && Array.isArray(res.data)) {
+          SPELLS_DATA = res.data;
+          SPELLS_BY_ID = {};
+          SPELLS_DATA.forEach(function(s) { SPELLS_BY_ID[s.id] = s; });
+        }
+      })
+      .catch(function() {});
+  }
+
   // ── Fetch or create character_sheet row ───────────────────────────
   function fetchOrCreateSheet(ch) {
     return sb.from('character_sheet').select('*').eq('character_id', CHAR_ID).maybeSingle()
@@ -6051,6 +7184,19 @@
             + '</div>'
           + '</div>'
         + '</div>'
+        // Spell picker modal (Handoff B) — shared by the Spells Prepared
+        // "+ Prepare" pill; lists learned-but-unprepared spells only.
+        + '<div class="cs-modal-overlay" id="cs-spell-picker-modal-overlay" style="display:none" onclick="if(event.target===this)closeSpellPickerModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title">Prepare a Spell</div>'
+            + '<div class="cs-modal-body">'
+              + '<div class="cs-equip-results" id="cs-spell-picker-results"></div>'
+              + '<div style="display:flex;justify-content:flex-end;margin-top:0.8rem;">'
+                + '<button class="cs-modal-btn-secondary" onclick="closeSpellPickerModal()">Close</button>'
+              + '</div>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
         // +Add Item modal (Figma 51:2260) — the *existing* catalog search
         // (onInventorySearchInput/cs-inv-search-results/openCustomItemModal)
         // relocated here behind a trigger button, unchanged logic, same ids.
@@ -6130,6 +7276,7 @@
           fetchBackgroundData(ch),
           fetchRegionData(ch),
           fetchConditionsData(),
+          fetchSpellsData(),
           fetchInventory(),
           fetchNotes(),
           fetchPhoto()
