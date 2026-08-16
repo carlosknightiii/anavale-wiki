@@ -5567,7 +5567,12 @@ function showDMToast(msg, type) {
 .scc-beat-seg:last-child { border-right: none; }
 .scc-beat-seg--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); }
 .scc-beat-seg--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); font-weight: 700; }
-.scc-beat-seg--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); }
+/* Was the same muted grey as a generic "nothing to see here" state -- DM's
+   own repeated annotation across all 4 rail segments (not just the active
+   one) confirmed this quest's whole beat rail should read as blue while it's
+   in play, not just the one beat currently in progress. Completed stays
+   green (an unambiguous, unrequested win-state) -- everything else is blue. */
+.scc-beat-seg--not_started { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); }
 .scc-beat-seg:hover { filter: brightness(1.2); }
 /* Beat detail list */
 .scc-beat-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -5699,16 +5704,16 @@ function showDMToast(msg, type) {
 .scc-beat-meta {
   display: flex;
   gap: 0.4rem;
-  margin-top: 0.4rem;
+  margin-top: 0.2rem;
   flex-wrap: wrap;
 }
 .scc-beat-xp {
   font-family: var(--font-sans);
   font-size: 0.65rem;
   font-weight: 700;
-  color: var(--dm-gold);
-  background: var(--dm-gold-dim);
-  border: 1px solid var(--scc-border-gold);
+  color: var(--dm-blue);
+  background: rgba(96,165,250,0.1);
+  border: 1px solid rgba(96,165,250,0.3);
   padding: 0.1rem 0.45rem;
   border-radius: 8px;
 }
@@ -6014,9 +6019,13 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
 }
 .scc-live-beat-item--completed .scc-live-beat-dot { background: var(--dm-green); border-color: var(--dm-green); color: #0b0e16; }
-.scc-live-beat-item--in_progress .scc-live-beat-dot { background: var(--dm-gold); border-color: var(--dm-gold); color: #0b0e16; }
+/* Same gold -> blue fix as the Session > Quests beat rail/XP badges, applied
+   here too -- this is a third, independent render of the same beat-progress
+   concept (Live Session panel), and would have reintroduced the identical
+   gold/gold collision with Stakes if left alone. */
+.scc-live-beat-item--in_progress .scc-live-beat-dot { background: var(--dm-blue); border-color: var(--dm-blue); color: #0b0e16; }
 .scc-live-beat-text { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.4; }
-.scc-live-beat-xp { font-size: 0.68rem; color: var(--dm-gold); margin-top: 0.1rem; }
+.scc-live-beat-xp { font-size: 0.68rem; color: var(--dm-blue); margin-top: 0.1rem; }
 /* Party HP */
 .scc-live-player-row {
   display: grid;
