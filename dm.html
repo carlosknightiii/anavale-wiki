@@ -7488,6 +7488,34 @@ function showDMToast(msg, type) {
   display: none;
 }
 .scc-statblock-panel.open { display: block; }
+/* Death saves -- same pips/behavior as the character sheet's own MainInfo
+   header (sheet/index.html .cs-mi-death-saves), laid out horizontally to
+   fit under a combat row instead of the sheet's stacked header slot. */
+.scc-init-ds-panel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--char-card-bg);
+  border: 1px solid var(--red-border);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-init-ds-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dm-red);
+  font-weight: 700;
+}
+.scc-init-ds-row { display: flex; align-items: center; gap: 0.5rem; }
+.scc-init-ds-row-label { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-muted); }
+.scc-init-ds-pips { display: flex; gap: 0.4rem; }
+.scc-init-ds-pip { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); background: none; cursor: pointer; padding: 0; }
+.scc-init-ds-pip--success.filled { background: #6ecf6e; border-color: #6ecf6e; }
+.scc-init-ds-pip--failure.filled { background: var(--dm-red); border-color: var(--dm-red); }
 .scc-statblock-header {
   font-family: var(--font-sans);
   font-size: 0.72rem;
@@ -13563,6 +13591,42 @@ function sccCombatantSearch(query) {
   drop.classList.add('open');
 }
 
+// Ports sheet/index.html's computeAC() verbatim (same armor-weight-class
+// dex-cap rules, same shield/magic-bonus math) -- reads window.ITEMS (already
+// fetched app-wide in sccInit()) and the PC's own character_sheet.equipped,
+// so a combatant's AC here always matches what their own sheet would show.
+function sccComputePcAC(pc, sheet) {
+  if (!pc) return null;
+  var dexRaw = (pc.ability_scores || {}).dex;
+  var dexMod = Math.floor(((dexRaw != null ? dexRaw : 10) - 10) / 2);
+  var equipped = (sheet && sheet.equipped) || {};
+  var items = window.ITEMS || [];
+  var armor  = equipped.armor  ? items.find(function(i) { return i.id === equipped.armor;  }) : null;
+  var shield = equipped.shield ? items.find(function(i) { return i.id === equipped.shield; }) : null;
+  var ac = 10;
+  if (armor) {
+    ac = parseInt(armor.base_ac) || 10;
+    var weightClass = (armor.armor_weight_class || '').toLowerCase();
+    if (weightClass === 'heavy') {
+      // no dex added
+    } else if (weightClass === 'medium') {
+      var maxDex = (armor.max_dex_bonus != null && armor.max_dex_bonus !== '') ? parseInt(armor.max_dex_bonus) : 2;
+      ac += Math.min(dexMod, maxDex);
+    } else {
+      ac += dexMod;
+    }
+    if (parseInt(armor.magic_bonus) > 0) ac += parseInt(armor.magic_bonus);
+  } else {
+    ac += dexMod;
+  }
+  if (shield) {
+    var shieldBonus = (shield.ac_bonus != null && shield.ac_bonus !== '') ? parseInt(shield.ac_bonus) : 2;
+    ac += shieldBonus;
+    if (parseInt(shield.magic_bonus) > 0) ac += parseInt(shield.magic_bonus);
+  }
+  return ac;
+}
+
 function sccAddToCombatStaging(id, name) {
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = creatures.find(function(c) { return c.id === id; });
@@ -13570,7 +13634,7 @@ function sccAddToCombatStaging(id, name) {
   var combatant = {
     id: id, name: name, isPC: !!pc,
     cr:    creature ? creature.challenge_rating : null,
-    ac:    creature ? creature.ac : null,
+    ac:    creature ? creature.ac : (pc ? sccComputePcAC(pc, SCC_SHEETS[id]) : null),
     hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
     hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
     dexMod: (function() {
@@ -13952,6 +14016,10 @@ function sccRenderInitiativeList() {
       + '<div class="scc-init-num">' + c.initiative + '</div>'
       + '<button class="scc-init-remove-btn" onclick="sccRemoveFromCombat(' + idx + ')" title="Remove from combat">&#10005;</button>'
     + '</div>'
+    // Death saves only for a downed PC -- monsters have no death-save
+    // mechanic in 5e, and always visible (not a toggle) since it's the
+    // exact information a DM needs the instant someone drops.
+    + (c.isPC && isDowned ? sccBuildDeathSavesHtml(idx, SCC_SHEETS[c.id]) : '')
     + (!c.isPC
         ? '<div class="scc-statblock-panel" id="scc-init-statblock-' + idx + '">'
             + sccBuildCreatureStatBlockHtml(creatures.find(function(x) { return x.id === c.id; }))
@@ -13966,30 +14034,90 @@ function sccNextTurn() {
   sccRenderInitiativeList();
 }
 
+// Same 5e rule the character sheet already applies (renderHeaderHP()'s
+// adjustHP()/setHPCurrentDirect()): healing a downed PC back above 0 clears
+// their death saves, since a fresh 0-HP drop should start a clean count.
+function sccClearDeathSavesIfHealed(c, prevCur, nextCur, patch) {
+  if (c.isPC && SCC_SHEETS[c.id] && prevCur <= 0 && nextCur > 0) {
+    SCC_SHEETS[c.id].death_save_successes = 0;
+    SCC_SHEETS[c.id].death_save_failures  = 0;
+    patch.death_save_successes = 0;
+    patch.death_save_failures  = 0;
+  }
+}
+
 function sccAdjustHP(idx, delta) {
   var c = SCC_INITIATIVE[idx];
   if (!c) return;
+  var prevCur = c.hpCur;
   c.hpCur = Math.max(0, Math.min(c.hpMax, c.hpCur + delta));
   sccRenderInitiativeList();
   if (c.isPC && SCC_SHEETS[c.id]) {
-    sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), { hp_current: c.hpCur });
+    var patch = { hp_current: c.hpCur };
+    sccClearDeathSavesIfHealed(c, prevCur, c.hpCur, patch);
+    sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), patch);
   }
 }
 
 function sccSetHP(idx, val) {
   var c = SCC_INITIATIVE[idx];
   if (!c) return;
+  var prevCur = c.hpCur;
   var next = Math.max(0, Math.min(c.hpMax, parseInt(val) || 0));
   c.hpCur = next;
   if (c.isPC && SCC_SHEETS[c.id]) {
     SCC_SHEETS[c.id].hp_current = next;
-    sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), { hp_current: next });
+    var patch = { hp_current: next };
+    sccClearDeathSavesIfHealed(c, prevCur, next, patch);
+    sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), patch);
   }
   sccRenderInitiativeList();
 }
 function sccRemoveFromCombat(idx) {
   SCC_INITIATIVE.splice(idx, 1);
   if (SCC_TURN_IDX >= SCC_INITIATIVE.length) SCC_TURN_IDX = Math.max(0, SCC_INITIATIVE.length - 1);
+  sccRenderInitiativeList();
+}
+
+// ── Death saves, downed PCs only (monsters have no death-save mechanic in
+// 5e) — reads/writes the exact same character_sheet.death_save_successes/
+// failures columns the player's own sheet uses, so a save marked mid-combat
+// is the same save the sheet shows if the player checks it live. Same
+// click-a-pip-to-set / click-the-filled-one-to-undo behavior as the sheet's
+// renderDeathSavesHtml()/toggleDeathSaveSuccess()/toggleDeathSaveFailure().
+function sccBuildDeathSavesHtml(idx, sheet) {
+  var succ = sheet ? (parseInt(sheet.death_save_successes) || 0) : 0;
+  var fail = sheet ? (parseInt(sheet.death_save_failures) || 0) : 0;
+  var succPips = [1,2,3].map(function(i) {
+    return '<button class="scc-init-ds-pip scc-init-ds-pip--success' + (i <= succ ? ' filled' : '') + '" onclick="sccToggleDeathSaveSuccess(' + idx + ',' + i + ')" aria-label="Death save success ' + i + '"></button>';
+  }).join('');
+  var failPips = [1,2,3].map(function(i) {
+    return '<button class="scc-init-ds-pip scc-init-ds-pip--failure' + (i <= fail ? ' filled' : '') + '" onclick="sccToggleDeathSaveFailure(' + idx + ',' + i + ')" aria-label="Death save failure ' + i + '"></button>';
+  }).join('');
+  return '<div class="scc-init-ds-panel">'
+    + '<span class="scc-init-ds-label">Death Saves</span>'
+    + '<span class="scc-init-ds-row"><span class="scc-init-ds-row-label">Success</span><span class="scc-init-ds-pips">' + succPips + '</span></span>'
+    + '<span class="scc-init-ds-row"><span class="scc-init-ds-row-label">Failure</span><span class="scc-init-ds-pips">' + failPips + '</span></span>'
+  + '</div>';
+}
+function sccToggleDeathSaveSuccess(idx, i) {
+  var c = SCC_INITIATIVE[idx];
+  if (!c || !c.isPC || !SCC_SHEETS[c.id]) return;
+  var sheet = SCC_SHEETS[c.id];
+  var cur = parseInt(sheet.death_save_successes) || 0;
+  var next = (cur === i) ? i - 1 : i;
+  sheet.death_save_successes = next;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), { death_save_successes: next });
+  sccRenderInitiativeList();
+}
+function sccToggleDeathSaveFailure(idx, i) {
+  var c = SCC_INITIATIVE[idx];
+  if (!c || !c.isPC || !SCC_SHEETS[c.id]) return;
+  var sheet = SCC_SHEETS[c.id];
+  var cur = parseInt(sheet.death_save_failures) || 0;
+  var next = (cur === i) ? i - 1 : i;
+  sheet.death_save_failures = next;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(c.id), { death_save_failures: next });
   sccRenderInitiativeList();
 }
 
