@@ -5578,6 +5578,11 @@ function showDMToast(msg, type) {
   padding: 0.55rem 0.75rem;
   border-radius: var(--dm-radius-sm);
   border: 1px solid var(--scc-border);
+  /* Reserves the same 4px --active uses below (transparent when inactive) so
+     a beat's content doesn't shift right by 3px the moment it becomes active
+     -- a real, measured misalignment, not a rounding artifact. */
+  border-left-width: 4px;
+  border-left-color: transparent;
   background: var(--scc-surface);
 }
 .scc-beat-item--completed { border-color: rgba(34,197,94,0.2); background: var(--scc-beat-done-bg); }
