@@ -2720,7 +2720,7 @@
               <option value="">All Statuses</option>
               <option value="active">🔥 Active</option>
               <option value="available">✦ Available</option>
-              <option value="dormant">💤 Dormant</option>
+              <option value="blocked">🚧 Blocked</option>
               <option value="completed">✓ Completed</option>
             </select>
             <select id="q-stakes-filter" class="cm-select" onchange="questsFilter()">
@@ -3883,7 +3883,7 @@ function showDMToast(msg, type) {
 }
 .q-status-active    { background: var(--dm-quest-active-bg);  color: var(--dm-quest-active-text); }
 .q-status-available { background: var(--dm-quest-avail-bg);   color: var(--dm-quest-avail-text); }
-.q-status-dormant   { background: var(--dm-quest-dormant-bg); color: var(--dm-quest-dormant-text); }
+.q-status-blocked   { background: var(--dm-quest-blocked-bg); color: var(--dm-quest-blocked-text); }
 .q-status-completed { background: var(--dm-quest-done-bg);    color: var(--dm-quest-done-text); }
 .q-stakes-low       { background: var(--dm-stakes-low-bg);    color: var(--dm-stakes-low-text); }
 .q-stakes-mid       { background: var(--dm-stakes-mid-bg);    color: var(--dm-stakes-mid-text); }
@@ -10192,7 +10192,7 @@ function questsFilter() {
 
   var sort = (document.getElementById('q-sort-filter') || {}).value || 'name-asc';
   var stakesOrder = { low: 1, mid: 2, high: 3 };
-  var statusOrder = { active: 1, available: 2, dormant: 3, completed: 4 };
+  var statusOrder = { active: 1, available: 2, blocked: 3, completed: 4 };
   QUESTS_FILTERED = all.filter(function(quest) {
     if (status && quest.status !== status) return false;
     if (stakes && quest.stakes !== stakes) return false;
@@ -10324,7 +10324,7 @@ function renderQuestDetail(id) {
       + '</div>';
   }
 
-  var statusOptions = ['available','active','dormant','completed'].map(function(s) {
+  var statusOptions = ['available','active','blocked','completed'].map(function(s) {
     return '<option value="' + s + '"' + (quest.status === s ? ' selected' : '') + '>' + statusLabel(s) + '</option>';
   }).join('');
 
@@ -10424,7 +10424,7 @@ function sccSuggestedLevelRange(quest) {
 }
 
 function statusLabel(status) {
-  var labels = { active: '🔥 Active', available: '✦ Available', dormant: '💤 Dormant', completed: '✓ Completed' };
+  var labels = { active: '🔥 Active', available: '✦ Available', blocked: '\ud83d\udea7 Blocked', completed: '✓ Completed' };
   return labels[status] || status || 'Unknown';
 }
 

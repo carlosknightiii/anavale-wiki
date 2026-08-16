@@ -315,17 +315,20 @@
   --dm-th-bg:            #0e0e16;
   /* Active/Available/Completed form a plain traffic-light progression
      (green = in motion, blue = offered/waiting, grey = done) reusing
-     existing hues rather than inventing new ones. Dormant keeps its
-     own cooler blue-grey tint (real meaning: gated behind a session
-     number that hasn't arrived yet, see setQuestStatus() call sites)
-     so it doesn't collide with Completed's plain neutral grey — the
-     icon prefix (fire/star/zzz/check) is the primary differentiator either way. */
+     existing hues rather than inventing new ones. "Dormant" was renamed
+     to Blocked -- its real meaning is a quest gated behind a session
+     number that hasn't arrived yet (confirmed against real quest data,
+     see setQuestStatus() call sites), not something players started and
+     abandoned; "dormant" implied the latter, a real UX complaint, fixed
+     by renaming the state itself, not just its color. Red-orange reuses
+     the exact hex Active used before this session recolored Active to
+     green -- freed up, not invented from scratch. */
   --dm-quest-active-bg:  rgba(34,197,94,0.15);
   --dm-quest-active-text:var(--green);
   --dm-quest-avail-bg:   rgba(96,165,250,0.15);
   --dm-quest-avail-text: var(--blue);
-  --dm-quest-dormant-bg: rgba(120,120,140,0.15);
-  --dm-quest-dormant-text: rgba(232,232,240,0.45);
+  --dm-quest-blocked-bg: rgba(200,60,30,0.15);
+  --dm-quest-blocked-text: #ff8066;
   --dm-quest-done-bg:    rgba(160,160,160,0.15);
   --dm-quest-done-text:  #a0a0a0;
   /* Low/Mid/High is a plain traffic-light scale (green/gold/red).
