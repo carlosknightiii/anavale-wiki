@@ -3858,6 +3858,8 @@ function showDMToast(msg, type) {
 
 .quest-card {
   border: 1px solid var(--dm-border);
+  border-top-width: 3px;
+  border-top-color: var(--dm-border);
   border-radius: var(--dm-radius-sm);
   padding: 0.85rem 1rem;
   margin-bottom: 0.5rem;
@@ -3873,6 +3875,14 @@ function showDMToast(msg, type) {
   border-color: var(--dm-gold);
   background: var(--dm-gold-dim);
 }
+/* Top border tints by status at rest -- same colors the status badge already
+   uses, just a second, always-visible signal so a DM scanning the list
+   doesn't have to read every badge. Hover/selected still take over the full
+   border (existing gold cue), same as before this was added. */
+.quest-card--status-active    { border-top-color: var(--dm-quest-active-text); }
+.quest-card--status-available { border-top-color: var(--dm-quest-avail-text); }
+.quest-card--status-blocked   { border-top-color: var(--dm-quest-blocked-text); }
+.quest-card--status-completed { border-top-color: var(--dm-quest-done-text); }
 
 .quest-card-name {
   font-family: var(--font-sans);
@@ -3910,14 +3920,28 @@ function showDMToast(msg, type) {
 .q-stakes-low       { background: var(--dm-stakes-low-bg);    color: var(--dm-stakes-low-text); }
 .q-stakes-mid       { background: var(--dm-stakes-mid-bg);    color: var(--dm-stakes-mid-text); }
 .q-stakes-high      { background: var(--dm-stakes-high-bg);   color: var(--dm-stakes-high-text); }
-.q-level-badge      { background: rgba(96,165,250,0.1); color: var(--dm-blue); }
+/* Was the same blue as the Available status badge -- a real collision, not a
+   deliberate color, now that status also drives the card's top border (see
+   .quest-card--status-*). Suggested Level isn't a status, so it gets a plain
+   neutral tone instead of a hue that means something else nearby. */
+.q-level-badge      { background: rgba(255,255,255,0.06); color: var(--ink-faint); }
 
+.quest-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
 .quest-detail-title {
   font-family: var(--font-headers);
   font-size: var(--text-2xl);
   color: var(--dm-gold);
   margin-bottom: 0.4rem;
 }
+/* Status dropdown moved here from the very bottom of the panel -- was below
+   Hook/Summary/Beats/Reveals/DM Notes/Related, so changing a quest's status
+   meant scrolling past the entire quest to find it. */
+.quest-status-select--top { margin-top: 0; padding-top: 0; border-top: none; flex-shrink: 0; }
 .quest-detail-meta {
   display: flex;
   gap: 0.4rem;
@@ -10297,7 +10321,7 @@ function renderQuestsList() {
   el.innerHTML = QUESTS_FILTERED.map(function(quest) {
     var sel = quest.id === SELECTED_QUEST_ID ? ' selected' : '';
     var levelRange = sccSuggestedLevelRange(quest);
-    return '<div class="quest-card' + sel + '" onclick="selectQuest(\'' + quest.id + '\')">'
+    return '<div class="quest-card quest-card--status-' + (quest.status || 'available') + sel + '" onclick="selectQuest(\'' + quest.id + '\')">'
       + '<div class="quest-card-name">' + escQ(quest.name) + '</div>'
       + '<div class="quest-card-meta">'
       + '<span class="q-badge q-status-' + (quest.status || 'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
@@ -10414,7 +10438,17 @@ function renderQuestDetail(id) {
         : '<span class="q-level-readonly q-level-readonly--empty">Not enough data to suggest a range</span>')
     + '</div>';
 
-  el.innerHTML = '<div class="quest-detail-title">' + escQ(quest.name) + '</div>'
+  var statusSelectHtml = '<div class="quest-status-select quest-status-select--top">'
+    + '<select id="q-status-' + escQ(id) + '" class="cm-select" onchange="setQuestStatus(\'' + escQ(id) + '\', this.value)" title="Status">'
+    + statusOptions
+    + '</select>'
+    + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-status-msg-' + escQ(id) + '"></span>'
+    + '</div>';
+
+  el.innerHTML = '<div class="quest-detail-header">'
+    + '<div class="quest-detail-title">' + escQ(quest.name) + '</div>'
+    + statusSelectHtml
+    + '</div>'
     + '<div class="quest-detail-meta">'
     + '<span class="q-badge q-status-' + (quest.status||'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
     + '<span class="q-badge q-stakes-' + (quest.stakes||'low') + '">' + escQ(stakesLabel(quest.stakes)) + '</span>'
@@ -10428,14 +10462,7 @@ function renderQuestDetail(id) {
     + beatsHtml
     + revealsHtml
     + (quest.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccLinkifyEscaped(escQ(quest.dm_notes)) + '</div></div>' : '')
-    + relatedHtml
-    + '<div class="quest-status-select">'
-    + '<label for="q-status-' + escQ(id) + '">Status:</label>'
-    + '<select id="q-status-' + escQ(id) + '" class="cm-select" onchange="setQuestStatus(\'' + escQ(id) + '\', this.value)">'
-    + statusOptions
-    + '</select>'
-    + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-status-msg-' + escQ(id) + '"></span>'
-    + '</div>';
+    + relatedHtml;
 }
 
 function setQuestStatus(id, newStatus) {
