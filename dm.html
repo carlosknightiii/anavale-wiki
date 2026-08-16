@@ -1280,6 +1280,29 @@
     </div>
     <div id="scc-lookup-backdrop" class="scc-lookup-backdrop" onclick="sccCloseLookup()"></div>
 
+    <!-- ── QUICK NOTE — global, always-accessible entry point ──────────
+         Lives at page level like the lookup panel above, for the same reason:
+         a DM report that jotting a quick note required navigating to Session
+         > Notes, scrolling past 5 other fields, then finding the button —
+         three steps for something meant to be instant, mid-session. This FAB
+         + modal is reachable from any tab; the Notes tab's own Quick Notes
+         section (browse/filter/search all of them) is untouched and stays
+         the review surface, not the only entry point. -->
+    <button id="scc-quicknote-fab" class="scc-quicknote-fab" onclick="sccOpenQuickNoteModal()" title="Add a quick note">&#128221;<span class="scc-quicknote-fab-label">Quick Note</span></button>
+    <div id="scc-quicknote-backdrop" class="scc-lookup-backdrop" onclick="sccCloseQuickNoteModal()"></div>
+    <div id="scc-quicknote-modal" class="scc-quicknote-modal" aria-hidden="true">
+      <div class="scc-quicknote-modal-inner">
+        <div class="scc-quicknote-modal-title">Quick Note</div>
+        <select id="scc-quicknote-cat" class="cm-select"></select>
+        <input type="text" id="scc-quicknote-title" class="scc-input" placeholder="What happened?" autocomplete="off">
+        <textarea id="scc-quicknote-body" class="scc-textarea" placeholder="Details (optional)&#8230;"></textarea>
+        <div class="scc-quicknote-modal-actions">
+          <button class="scc-btn-secondary" onclick="sccCloseQuickNoteModal()">Cancel</button>
+          <button class="scc-btn-primary" onclick="sccSubmitQuickNote()">+ Add Note</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ════════════════════════════════════════
          FORMS PANEL
          ════════════════════════════════════════ -->
@@ -2961,7 +2984,6 @@
                     <option value="neutral">Neutral</option>
                     <option value="caution">Caution</option>
                     <option value="hostile">Hostile</option>
-                    <option value="deity">Deity</option>
                   </select>
                 </div>
                 <div class="scc-npc-filter-group">
@@ -3888,6 +3910,7 @@ function showDMToast(msg, type) {
 .q-stakes-low       { background: var(--dm-stakes-low-bg);    color: var(--dm-stakes-low-text); }
 .q-stakes-mid       { background: var(--dm-stakes-mid-bg);    color: var(--dm-stakes-mid-text); }
 .q-stakes-high      { background: var(--dm-stakes-high-bg);   color: var(--dm-stakes-high-text); }
+.q-level-badge      { background: rgba(96,165,250,0.1); color: var(--dm-blue); }
 
 .quest-detail-title {
   font-family: var(--font-headers);
@@ -3974,6 +3997,7 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
 }
 .quest-related-tag:hover { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); }
+.quest-related-tag--quest { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); font-weight: 600; }
 .quest-status-select {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -5119,6 +5143,20 @@ function showDMToast(msg, type) {
    reuses the gold accent so it reads as "notable" without competing with the
    relationship badge's own color (which stays SCC_REL_CYCLE's, unchanged). */
 .scc-npc2-quest-icon { font-size: 0.8rem; line-height: 1; color: var(--gold); cursor: default; }
+/* Entity-type badge — separate from the relationship badge (a disposition, not a
+   type). Purple/deity is the only variant with real color treatment today, matching
+   this session's own reservation of purple for religion/deity content elsewhere. */
+.scc-npc2-cat-badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 2px;
+  cursor: default;
+  width: fit-content;
+}
+.scc-npc2-cat-badge--god { background: var(--purple-dim); border: 1px solid var(--purple-border); color: var(--purple); }
 .scc-npc2-name {
   font-family: var(--font-serif);
   font-size: 1.75rem;
@@ -5830,6 +5868,8 @@ function showDMToast(msg, type) {
   flex-shrink: 0;
 }
 .scc-init-name { font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; color: var(--dm-text); flex: 1; }
+.scc-init-ac { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; color: var(--dm-text-muted); margin-left: 0.5rem; }
+.scc-init-stats-btn { flex-shrink: 0; }
 .scc-init-hp-wrap { display: flex; align-items: center; gap: 0.4rem; }
 .scc-init-hp-cur {
   font-family: var(--font-sans);
@@ -6595,6 +6635,56 @@ function showDMToast(msg, type) {
   overflow: hidden;
 }
 .scc-lookup-panel.open { transform: translateX(0); }
+/* Global Quick Note entry point — a fixed floating button, reachable from
+   every tab, not just the Notes tab (see the JS comment above
+   sccOpenQuickNoteModal() for why). z-index sits above ordinary page content
+   but below the lookup drawer/backdrop (999/998), so opening a lookup while
+   the FAB is visible doesn't fight it for the top layer. */
+.scc-quicknote-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  background: var(--dm-gold);
+  color: #0b0e16;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: var(--dm-transition);
+}
+.scc-quicknote-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+.scc-quicknote-fab-label { font-size: 0.85rem; }
+.scc-quicknote-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.96);
+  width: 420px;
+  max-width: 90vw;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 999;
+  padding: 1.25rem;
+  display: none;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: var(--dm-shadow-lg);
+  opacity: 0;
+  transition: var(--dm-transition);
+}
+.scc-quicknote-modal.open { display: flex; opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.scc-quicknote-modal-inner { display: flex; flex-direction: column; gap: 0.65rem; }
+.scc-quicknote-modal-title { font-family: var(--font-headers); font-size: 1.1rem; color: var(--dm-gold); margin-bottom: 0.2rem; }
+.scc-quicknote-modal #scc-quicknote-body { min-height: 90px; }
+.scc-quicknote-modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.4rem; }
 .scc-lookup-inner {
   display: flex;
   flex-direction: column;
@@ -7002,39 +7092,6 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
   font-style: italic;
 }
-/* ── NPC Relationship Colors ── */
-/* NPC card relationship variants */
-.scc-npc-card.rel-ally    { border-color: var(--scc-rel-ally-border);    background: var(--scc-rel-ally-bg); }
-.scc-npc-card.rel-neutral { border-color: var(--scc-rel-neutral-border); background: var(--scc-rel-neutral-bg); }
-.scc-npc-card.rel-caution { border-color: var(--scc-rel-caution-border); background: var(--scc-rel-caution-bg); }
-.scc-npc-card.rel-hostile { border-color: var(--scc-rel-hostile-border); background: var(--scc-rel-hostile-bg); }
-.scc-npc-card.rel-deity   { border-color: var(--scc-rel-deity-border);   background: var(--scc-rel-deity-bg); }
-.scc-npc-card.rel-ally    .scc-npc-card-header { border-bottom-color: var(--scc-rel-ally-border); }
-.scc-npc-card.rel-neutral .scc-npc-card-header { border-bottom-color: var(--scc-rel-neutral-border); }
-.scc-npc-card.rel-caution .scc-npc-card-header { border-bottom-color: var(--scc-rel-caution-border); }
-.scc-npc-card.rel-hostile .scc-npc-card-header { border-bottom-color: var(--scc-rel-hostile-border); }
-.scc-npc-card.rel-deity   .scc-npc-card-header { border-bottom-color: var(--scc-rel-deity-border); }
-.scc-rel-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.12rem 0.5rem;
-  border-radius: 10px;
-  font-family: var(--font-sans);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: var(--dm-transition);
-  user-select: none;
-}
-.scc-rel-badge.rel-ally    { background: var(--scc-rel-ally-badge);    color: var(--scc-rel-ally-text); }
-.scc-rel-badge.rel-neutral { background: var(--scc-rel-neutral-badge); color: var(--scc-rel-neutral-text); }
-.scc-rel-badge.rel-caution { background: var(--scc-rel-caution-badge); color: var(--scc-rel-caution-text); }
-.scc-rel-badge.rel-hostile { background: var(--scc-rel-hostile-badge); color: var(--scc-rel-hostile-text); }
-.scc-rel-badge.rel-deity   { background: var(--scc-rel-deity-badge);   color: var(--scc-rel-deity-text); }
-.scc-rel-badge:hover { filter: brightness(1.2); }
 /* ── Browse All panel ── */
 .scc-browse-panel {
   position: fixed;
@@ -10239,11 +10296,13 @@ function renderQuestsList() {
 
   el.innerHTML = QUESTS_FILTERED.map(function(quest) {
     var sel = quest.id === SELECTED_QUEST_ID ? ' selected' : '';
+    var levelRange = sccSuggestedLevelRange(quest);
     return '<div class="quest-card' + sel + '" onclick="selectQuest(\'' + quest.id + '\')">'
       + '<div class="quest-card-name">' + escQ(quest.name) + '</div>'
       + '<div class="quest-card-meta">'
       + '<span class="q-badge q-status-' + (quest.status || 'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
-      + '<span class="q-badge q-stakes-' + (quest.stakes || 'low') + '">' + escQ(quest.stakes || '') + '</span>'
+      + '<span class="q-badge q-stakes-' + (quest.stakes || 'low') + '">' + escQ(stakesLabel(quest.stakes)) + '</span>'
+      + (levelRange ? '<span class="q-badge q-level-badge">Lvl ' + levelRange.low + '-' + levelRange.high + '</span>' : '')
       + (quest.first_available ? '<span class="q-badge" style="background:rgba(0,0,0,0.05);color:var(--ink-faint);">' + escQ(quest.first_available) + '</span>' : '')
       + '</div>'
       + (quest.hook ? '<div class="quest-card-hook">' + escQ(quest.hook) + '</div>' : '')
@@ -10297,14 +10356,21 @@ function renderQuestDetail(id) {
       + '</ul>';
   }
 
+  // Reveals is exactly as DM-eyes-only as dm_notes below, but used to get a much
+  // lighter visual treatment (a thin left-accent bar and a plain-text "(DM eyes
+  // only)" caption vs. dm_notes' full-border, iconed, uppercase-labeled block) —
+  // no real reason for the difference, just two features built at different times.
+  // Now shares the same &#9888; DM-only visual language as everything else.
   var revealsHtml = '';
   if (quest.reveals && quest.reveals.length) {
-    revealsHtml = '<div class="quest-section-label">Reveals <span style="font-size:var(--text-xs);color:var(--ink-faint);text-transform:none;letter-spacing:0;font-weight:normal;">(DM eyes only)</span></div>'
+    revealsHtml = '<div class="scc-dm-block" style="margin-top:0.75rem;">'
+      + '<div class="scc-dm-label">&#9888; Reveals <span style="text-transform:none;letter-spacing:0;font-weight:normal;">(DM eyes only)</span></div>'
       + quest.reveals.map(function(r) {
           var trigger = r.trigger ? '<span style="font-family:var(--font-sans);font-size:0.7rem;color:var(--dm-text-muted);display:block;margin-bottom:0.2rem;text-transform:uppercase;letter-spacing:0.08em;">' + escQ(r.trigger.replace(/_/g,' ')) + '</span>' : '';
-          var text    = escQ(typeof r === 'string' ? r : (r.text || ''));
-          return '<div class="quest-reveal-item">' + trigger + text + '</div>';
-        }).join('');
+          var text    = sccLinkifyEscaped(escQ(typeof r === 'string' ? r : (r.text || '')));
+          return '<div class="quest-reveal-item scc-dm-text">' + trigger + text + '</div>';
+        }).join('')
+      + '</div>';
   }
 
   var relatedHtml = '';
@@ -10312,14 +10378,23 @@ function renderQuestDetail(id) {
     relatedHtml = '<div class="quest-section-label">Related Entries</div>'
       + '<div class="quest-related-list">'
       + quest.related.map(function(r) {
-          var info  = sccRelatedCollectionInfo(r.collection);
-          var entry = info ? info.arr().find(function(x){ return x.id === r.id; }) : null;
-          var label = (entry && entry.name ? entry.name : r.id) + ' (' + escQ(r.collection) + ')';
+          var info    = sccRelatedCollectionInfo(r.collection);
+          var entry   = info ? info.arr().find(function(x){ return x.id === r.id; }) : null;
+          var isQuest = r.collection === 'quests';
+          // Quest-to-quest links get their own look (gold, a link icon, "Related
+          // Quest" instead of the raw collection name) so a narrative dependency
+          // between two quests doesn't just blend into the same tag row as a
+          // linked city or NPC. There's no direction stored (blocks/blocked-by
+          // vs. just related) -- the schema only has one flat related[] array --
+          // so this can't say which way the dependency runs, only that one exists.
+          var label = isQuest
+            ? '&#128279; ' + escQ(entry && entry.name ? entry.name : r.id)
+            : (entry && entry.name ? escQ(entry.name) : escQ(r.id)) + ' (' + escQ(r.collection) + ')';
           if (!info) {
             // Unknown collection — no lookup branch to open, render inert as before.
-            return '<span class="quest-related-tag" style="cursor:default;" title="No lookup available for this entry type">' + escQ(label) + '</span>';
+            return '<span class="quest-related-tag" style="cursor:default;" title="No lookup available for this entry type">' + escQ((entry && entry.name ? entry.name : r.id) + ' (' + r.collection + ')') + '</span>';
           }
-          return '<span class="quest-related-tag" onclick="sccOpenLookup(\'' + escQ(info.type) + '\',\'' + escQ(r.id) + '\')" title="Open lookup">' + escQ(label) + '</span>';
+          return '<span class="quest-related-tag' + (isQuest ? ' quest-related-tag--quest' : '') + '" onclick="sccOpenLookup(\'' + escQ(info.type) + '\',\'' + escQ(r.id) + '\')" title="' + (isQuest ? 'Open related quest' : 'Open lookup') + '">' + label + '</span>';
         }).join('')
       + '</div>';
   }
@@ -10329,20 +10404,30 @@ function renderQuestDetail(id) {
   }).join('');
 
   var levelRange = sccSuggestedLevelRange(quest);
+  // Moved above Hook/Summary per direct request -- this is the number a DM
+  // reaches for first when deciding whether to run a quest tonight, not
+  // something to find after reading two paragraphs and the beat list.
+  var levelBlockHtml = '<div class="quest-status-select" style="margin-top:0.75rem;border-top:none;padding-top:0;">'
+    + '<label>Suggested Level:</label>'
+    + (levelRange
+        ? '<span class="q-level-readonly">lvl ' + levelRange.low + '-' + levelRange.high + ' <span class="q-level-hint-why">(' + escQ(levelRange.reasoning) + ')</span></span>'
+        : '<span class="q-level-readonly q-level-readonly--empty">Not enough data to suggest a range</span>')
+    + '</div>';
 
   el.innerHTML = '<div class="quest-detail-title">' + escQ(quest.name) + '</div>'
     + '<div class="quest-detail-meta">'
     + '<span class="q-badge q-status-' + (quest.status||'available') + '">' + escQ(statusLabel(quest.status)) + '</span>'
-    + '<span class="q-badge q-stakes-' + (quest.stakes||'low') + '">' + escQ(quest.stakes||'') + ' stakes</span>'
+    + '<span class="q-badge q-stakes-' + (quest.stakes||'low') + '">' + escQ(stakesLabel(quest.stakes)) + '</span>'
     + (quest.first_available ? '<span class="q-badge" style="background:rgba(0,0,0,0.05);color:var(--ink-faint);">First available: ' + escQ(quest.first_available) + '</span>' : '')
     + '</div>'
+    + levelBlockHtml
     + '<div class="quest-section-label">Hook</div>'
-    + '<div class="quest-text">' + escQ(quest.hook || '') + '</div>'
+    + '<div class="quest-text">' + sccLinkifyEscaped(escQ(quest.hook || '')) + '</div>'
     + '<div class="quest-section-label">Summary</div>'
-    + '<div class="quest-text">' + escQ(quest.summary || '') + '</div>'
+    + '<div class="quest-text">' + sccLinkifyEscaped(escQ(quest.summary || '')) + '</div>'
     + beatsHtml
     + revealsHtml
-    + (quest.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + escQ(quest.dm_notes) + '</div></div>' : '')
+    + (quest.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccLinkifyEscaped(escQ(quest.dm_notes)) + '</div></div>' : '')
     + relatedHtml
     + '<div class="quest-status-select">'
     + '<label for="q-status-' + escQ(id) + '">Status:</label>'
@@ -10350,12 +10435,6 @@ function renderQuestDetail(id) {
     + statusOptions
     + '</select>'
     + '<span style="color:var(--dm-green);font-size:var(--text-xs);font-style:italic;" id="quest-status-msg-' + escQ(id) + '"></span>'
-    + '</div>'
-    + '<div class="quest-status-select">'
-    + '<label>Suggested Level:</label>'
-    + (levelRange
-        ? '<span class="q-level-readonly">lvl ' + levelRange.low + '-' + levelRange.high + ' <span class="q-level-hint-why">(' + escQ(levelRange.reasoning) + ')</span></span>'
-        : '<span class="q-level-readonly q-level-readonly--empty">Not enough data to suggest a range</span>')
     + '</div>';
 }
 
@@ -10426,6 +10505,15 @@ function sccSuggestedLevelRange(quest) {
 function statusLabel(status) {
   var labels = { active: '🔥 Active', available: '✦ Available', blocked: '\ud83d\udea7 Blocked', completed: '✓ Completed' };
   return labels[status] || status || 'Unknown';
+}
+
+// Was inconsistent between the two surfaces that show it -- the quest list's
+// left-panel card showed the bare enum value ("high"), the right-panel detail
+// view appended " stakes" itself ("high stakes") -- neither was wrong exactly,
+// they just disagreed. One function now, used by both.
+function stakesLabel(stakes) {
+  if (!stakes) return '';
+  return stakes.charAt(0).toUpperCase() + stakes.slice(1) + ' Stakes';
 }
 
 function escQ(str) {
@@ -10831,7 +10919,7 @@ function sccConditionColor(name) {
    Neutral=grey / Ally=blue per direct DM instruction; Caution/Hostile/Deity
    unchanged. Dark text on every fill for consistent contrast. */
 function sccRelColor(rel) {
-  var REL_BG = { neutral: '#9a9ab0', ally: '#60a5fa', caution: '#f0b429', hostile: '#f87171', deity: '#c084fc' };
+  var REL_BG = { neutral: '#9a9ab0', ally: '#60a5fa', caution: '#f0b429', hostile: '#f87171' };
   return { bg: REL_BG[rel] || REL_BG.neutral, text: '#0b0e16' };
 }
 
@@ -11403,6 +11491,22 @@ function sccFgLinkify(html) {
   return (html || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
     return '<span class="scc-fg-link" onclick="sccOpenLookup(\'' + type.replace(/'/g, "\\'") + '\',\'' + id.replace(/'/g, "\\'") + '\')">' + sccEsc(text) + '</span>';
+  });
+}
+
+// Same [[type:id|Label]] convention as the Field Guide (reused deliberately, not
+// reinvented -- manual markup over auto-detecting names in prose, same reasoning
+// that applied there: short real names in this dataset, e.g. "Osric," risk false
+// matches, and auto-linking a name with no real entity behind it would silently
+// produce a dead link). Field Guide content is trusted raw HTML, so sccFgLinkify()
+// re-escapes the label text on the way out; quest text is NOT raw HTML -- it's
+// already been through escQ() by the time this runs (so a stray "<" in DM prose
+// can't break the page) -- re-escaping the label here would double-escape it, so
+// this sibling function inserts it as-is instead of calling sccEsc() again.
+function sccLinkifyEscaped(escapedText) {
+  return (escapedText || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
+    var text = label != null ? label : id;
+    return '<span class="scc-fg-link" onclick="sccOpenLookup(\'' + type.replace(/'/g, "\\'") + '\',\'' + id.replace(/'/g, "\\'") + '\')">' + text + '</span>';
   });
 }
 
@@ -12502,8 +12606,22 @@ function sccRenderChips(type) {
 }
 
 // ── NPC relationship cycling ──────────────────────────────────────
-var SCC_REL_CYCLE = ['neutral','ally','caution','hostile','deity'];
-var SCC_REL_LABELS = { neutral:'Neutral', ally:'Ally', caution:'Caution', hostile:'Hostile', deity:'Deity' };
+// Deity was removed from this cycle -- it's an entity TYPE (world_characters.category
+// === 'god'), not a disposition-to-party like the other four. Shown instead as its own
+// badge (sccNpcCategoryBadgeHtml()) driven by the real category field, not this cycle.
+var SCC_REL_CYCLE = ['neutral','ally','caution','hostile'];
+var SCC_REL_LABELS = { neutral:'Neutral', ally:'Ally', caution:'Caution', hostile:'Hostile' };
+
+// Small badge for an NPC's real entity-type category, shown alongside (not instead
+// of) the relationship badge. Only 'god' gets special color treatment (purple, the
+// same hue Deity used to occupy as a relationship state, and the hue this session's
+// color rework explicitly reserved for religion/deities) -- other categories are
+// mostly internal authoring tags (npc/npc-ally/villain/etc.) with no established
+// player-facing meaning of their own, so they're not surfaced here.
+function sccNpcCategoryBadgeHtml(category) {
+  if (category !== 'god') return '';
+  return '<span class="scc-npc2-cat-badge scc-npc2-cat-badge--god" title="Entity type: deity">&#10022; God</span>';
+}
 
 function sccCycleRelationship(npcId) {
   var cur = SCC_NPC_RELATIONSHIPS[npcId] || 'neutral';
@@ -12759,7 +12877,7 @@ function sccFilterNpcs() {
   if (sortV === 'az') npcs.sort(function(a, b) { return a.name.localeCompare(b.name); });
   else if (sortV === 'za') npcs.sort(function(a, b) { return b.name.localeCompare(a.name); });
   else if (sortV === 'rel') {
-    var order = ['ally','neutral','caution','hostile','deity'];
+    var order = ['ally','neutral','caution','hostile'];
     npcs.sort(function(a, b) {
       return order.indexOf(SCC_NPC_RELATIONSHIPS[a.id]||'neutral') - order.indexOf(SCC_NPC_RELATIONSHIPS[b.id]||'neutral');
     });
@@ -12857,6 +12975,7 @@ function sccFilterNpcs() {
         + '<div class="scc-npc2-info">'
           + '<div class="scc-npc2-badge-row">'
             + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + relColor.text + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
+            + sccNpcCategoryBadgeHtml(c.category)
             + (linkedQuests.length ? '<span class="scc-npc2-quest-icon" title="Quest-related' + (linkedQuests.length > 1 ? ' (' + linkedQuests.length + ' quests)' : ' (' + sccEsc(linkedQuests[0].name) + ')') + '">&#128220;</span>' : '')
           + '</div>'
           + '<div class="scc-npc2-name">' + sccEsc(c.name) + '</div>'
@@ -13615,11 +13734,22 @@ function sccStartCombat() {
   sccRenderInitiativeList();
 }
 
+function sccToggleInitStatBlock(idx) {
+  var panel = document.getElementById('scc-init-statblock-' + idx);
+  if (panel) panel.classList.toggle('open');
+}
+
 function sccRenderInitiativeList() {
   var counter = document.getElementById('scc-round-counter');
   if (counter) counter.textContent = SCC_ROUND;
   var el = document.getElementById('scc-initiative-list');
   if (!el) return;
+  // AC and a Stats toggle used to exist only on the pre-combat staging row —
+  // once "Start Combat" ran, staging got hidden and this list took over, and
+  // neither ever made the jump over. Real DM report: needed both mid-fight,
+  // not just while building the encounter. Reuses the exact same creature
+  // lookup + sccBuildCreatureStatBlockHtml() the staging list already uses.
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   el.innerHTML = SCC_INITIATIVE.map(function(c, idx) {
     var isActive  = idx === SCC_TURN_IDX;
     var isDowned  = c.hpCur === 0;
@@ -13639,12 +13769,14 @@ function sccRenderInitiativeList() {
     var lootBtn = (!c.isPC && isDowned && c.loot && (c.loot.items.length || c.loot.gp || c.loot.sp || c.loot.cp))
       ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">Award Loot</button>' : '';
     var downedBadge = isDowned ? '<span class="scc-downed-badge">&#9760; Downed</span>' : '';
+    var statsBtn = !c.isPC ? '<button class="scc-browse-btn scc-init-stats-btn" onclick="sccToggleInitStatBlock(' + idx + ')">Stats</button>' : '';
 
     return '<div class="' + rowCls + '">'
       + '<div class="scc-init-num">' + c.initiative + '</div>'
       + '<div class="scc-init-name">'
         + sccEsc(c.name)
         + (c.isPC ? ' <span style="font-size:0.65rem;color:var(--dm-blue);">PC</span>' : '')
+        + (c.ac != null ? '<span class="scc-init-ac">AC ' + c.ac + '</span>' : '')
         + downedBadge
       + '</div>'
       + '<div class="scc-init-hp-wrap">'
@@ -13657,9 +13789,15 @@ function sccRenderInitiativeList() {
         + condTags
         + '<button class="scc-add-condition-btn" onclick="sccPromptCondition(' + idx + ')">+ Condition</button>'
       + '</div>'
+      + statsBtn
       + lootBtn
       + '<button class="scc-init-remove-btn" onclick="sccRemoveFromCombat(' + idx + ')" title="Remove from combat">&#10005;</button>'
-    + '</div>';
+    + '</div>'
+    + (!c.isPC
+        ? '<div class="scc-statblock-panel" id="scc-init-statblock-' + idx + '">'
+            + sccBuildCreatureStatBlockHtml(creatures.find(function(x) { return x.id === c.id; }))
+          + '</div>'
+        : '');
   }).join('');
 }
 
@@ -14352,6 +14490,63 @@ function sccBuildTagNoteCard(n) {
   + '</div>';
 }
 
+// Global Quick Note modal — a second, always-reachable entry point into the
+// same session_note_entries table sccAddTagNote() writes to. That function's
+// own flow (create blank row, scroll to it in the Notes tab's list, focus the
+// title) assumes the Notes tab is the active, already-rendered tab; this one
+// doesn't, since the whole point is working from any tab. Self-contained:
+// collects title/content/category right in the modal, posts once, closes.
+function sccOpenQuickNoteModal() {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quick notes are read-only here', 'error'); return; }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var catSel = document.getElementById('scc-quicknote-cat');
+  if (catSel && !catSel.options.length) {
+    catSel.innerHTML = SCC_NOTE_CATEGORIES.map(function(c) {
+      return '<option value="' + c.id + '">' + sccEsc(c.label) + '</option>';
+    }).join('');
+  }
+  document.getElementById('scc-quicknote-title').value = '';
+  document.getElementById('scc-quicknote-body').value = '';
+  document.getElementById('scc-quicknote-modal').classList.add('open');
+  document.getElementById('scc-quicknote-backdrop').classList.add('open');
+  document.getElementById('scc-quicknote-title').focus();
+}
+
+function sccCloseQuickNoteModal() {
+  document.getElementById('scc-quicknote-modal').classList.remove('open');
+  document.getElementById('scc-quicknote-backdrop').classList.remove('open');
+}
+
+function sccSubmitQuickNote() {
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var catSel   = document.getElementById('scc-quicknote-cat');
+  var category = catSel && catSel.value ? catSel.value : SCC_NOTE_CATEGORIES[0].id;
+  var title    = document.getElementById('scc-quicknote-title').value.trim();
+  var content  = document.getElementById('scc-quicknote-body').value.trim();
+  if (!title && !content) { showDMToast('Write something first', 'error'); return; }
+  fetch(SCC_URL + '/rest/v1/session_note_entries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SCC_ANON,
+      'Authorization': 'Bearer ' + SCC_ANON,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ session_number: num, category: category, title: title, content: content })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not save note', 'error'); return; }
+    sccCloseQuickNoteModal();
+    showDMToast('Note added ✓', 'success');
+    // Only refresh the Notes tab's own list if it's actually mounted —
+    // this modal works from any tab, so that list may not exist right now.
+    if (document.getElementById('scc-tagnote-list')) sccRenderTaggedNotes();
+  }).catch(function() {
+    showDMToast('Could not save note', 'error');
+  });
+}
+
 function sccAddTagNote() {
   var num = SCC_SESSION ? SCC_SESSION.session_number : null;
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
@@ -14682,6 +14877,7 @@ function sccOpenLookup(type, id) {
         + '<div class="scc-ql-header-info">'
           + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
             + '<span class="scc-ql-rel-badge" style="background:' + relBg + ';color:' + relColor.text + '" onclick="sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</span>'
+            + sccNpcCategoryBadgeHtml(c.category)
             + '<span class="scc-ql-pf-badge" style="color:' + pfColor + ';border-color:' + pfColor + '">' + sccEsc(pfLabel) + '</span>'
           + '</div>'
           + '<div class="scc-ql-name">' + sccEsc(c.name) + '</div>'
