@@ -2728,7 +2728,6 @@
               <option value="low">Low</option>
               <option value="mid">Mid</option>
               <option value="high">High</option>
-              <option value="campaign">Campaign</option>
             </select>
             <select id="q-session-filter" class="cm-select" onchange="questsFilter()">
               <option value="">All Sessions</option>
@@ -3889,7 +3888,6 @@ function showDMToast(msg, type) {
 .q-stakes-low       { background: var(--dm-stakes-low-bg);    color: var(--dm-stakes-low-text); }
 .q-stakes-mid       { background: var(--dm-stakes-mid-bg);    color: var(--dm-stakes-mid-text); }
 .q-stakes-high      { background: var(--dm-stakes-high-bg);   color: var(--dm-stakes-high-text); }
-.q-stakes-campaign  { background: var(--dm-stakes-camp-bg);   color: var(--dm-stakes-camp-text); }
 
 .quest-detail-title {
   font-family: var(--font-headers);
@@ -5221,8 +5219,8 @@ function showDMToast(msg, type) {
    only ~30° apart on the color wheel, too close to trust hue alone, so this
    box needs to read as structurally different, not just differently colored. */
 .scc-npc2-dm-block {
-  background: var(--cyan-dim);
-  border: 3px solid var(--cyan);
+  background: var(--dm-only-dim);
+  border: 3px solid var(--dm-only);
   border-radius: 16px;
   padding: 1.5rem;
 }
@@ -5230,7 +5228,7 @@ function showDMToast(msg, type) {
   font-family: var(--font-serif);
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--cyan);
+  color: var(--dm-only);
   margin-bottom: 1rem;
 }
 .scc-npc2-dm-icon { font-size: 2.1rem; margin-right: 0.35rem; vertical-align: middle; line-height: 1; }
@@ -5243,7 +5241,7 @@ function showDMToast(msg, type) {
   border-bottom: 2px solid #2c3757;
 }
 .scc-npc2-dm-rows > .scc-npc2-dm-row:last-child { border-bottom: none; padding-bottom: 0; }
-.scc-npc2-red { color: var(--cyan) !important; }
+.scc-npc2-red { color: var(--dm-only) !important; }
 .scc-npc2-quest-link {
   font-family: var(--font-sans);
   font-size: 0.9rem;
@@ -5460,15 +5458,6 @@ function showDMToast(msg, type) {
   gap: 0.4rem;
   flex-wrap: wrap;
 }
-.scc-flag {
-  padding: 0.12rem 0.5rem;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-.scc-flag--formery { background: rgba(240,180,41,0.08); color: var(--dm-gold); border: 1px solid rgba(240,180,41,0.2); }
-.scc-flag--vareth  { background: rgba(248,113,113,0.08); color: var(--dm-red);  border: 1px solid rgba(248,113,113,0.2); }
 /* ── Quest Cards (SCC) ── */
 .scc-quest-list { display: flex; flex-direction: column; gap: 1rem; }
 .scc-quest-card {
@@ -6228,51 +6217,43 @@ function showDMToast(msg, type) {
 .scc-fg-box--green { background: var(--scc-read-aloud-bg); border-left: 3px solid var(--scc-read-aloud-border); }
 .scc-fg-box--green .scc-fg-box-label { color: var(--scc-read-aloud-text); }
 .scc-fg-box--green p { font-style: italic; color: #c6f0d8 !important; }
-/* .scc-fg-box--yellow: class name kept as-is (used ~20x in the static Field Guide
-   markup below), but recolored cyan — DM Only now shares one color everywhere it
-   appears (see also player_facing badge in sccOpenLookup) instead of gold here and
-   red on the badge.
+/* .scc-fg-box--magenta: DM Only. Was .scc-fg-box--yellow (a class name that
+   stopped meaning anything the moment this box stopped being yellow) — renamed
+   once a real bright-yellow box (Comedy, below) needed that name for real.
    DM-Only is the single highest-stakes color in the app (a DM reading a secret
-   aloud by mistake is a real failure mode) and teal/green sit only ~30° apart on
-   the color wheel — too close to trust hue alone at a table-scanning glance. Made
-   structurally distinct instead of hunting for a new hue (every other hue in the
-   palette is already claimed): a full border instead of left-accent-only, a
-   genuinely filled background (was a stale hardcoded pre-recolor hex at 7% here —
-   real bug, now the correct token at a heavier 15%), and a large corner badge icon
-   that doesn't depend on the label's own text content. */
-.scc-fg-box--yellow {
+   aloud by mistake is a real failure mode), so it's structurally distinct, not
+   just differently colored: a full border instead of left-accent-only, a
+   genuinely filled background, and a large corner badge icon that doesn't
+   depend on the label's own text content. */
+.scc-fg-box--magenta {
   position: relative;
-  background: var(--cyan-dim);
-  border: 1px solid var(--cyan-border);
-  border-left: 3px solid var(--cyan);
+  background: var(--dm-only-dim);
+  border: 1px solid var(--dm-only-border);
+  border-left: 3px solid var(--dm-only);
 }
-.scc-fg-box--yellow::before {
+.scc-fg-box--magenta::before {
   content: '\26A0';
   position: absolute;
   top: 0.3rem;
   right: 0.5rem;
   font-size: 1.4rem;
-  color: var(--cyan);
+  color: var(--dm-only);
   opacity: 0.55;
   line-height: 1;
 }
-.scc-fg-box--yellow .scc-fg-box-label { color: var(--cyan); font-size: 0.8rem; padding-right: 1.75rem; }
-.scc-fg-box--yellow p { color: #cffafe !important; }
-.scc-fg-box--blue { background: rgba(96,165,250,0.07); border-left: 3px solid rgba(96,165,250,0.4); }
-.scc-fg-box--blue .scc-fg-box-label { color: #7eb8f0; }
-.scc-fg-box--blue p { color: #dbeafe !important; }
-.scc-fg-box--purple { background: rgba(192,132,252,0.07); border-left: 3px solid rgba(192,132,252,0.4); }
-.scc-fg-box--purple .scc-fg-box-label { color: #c084fc; }
-.scc-fg-box--purple p { color: #ede9fe !important; }
-.scc-fg-box--pink { background: rgba(244,114,182,0.07); border-left: 3px solid rgba(244,114,182,0.4); }
-.scc-fg-box--pink .scc-fg-box-label { color: #f472b6; }
-.scc-fg-box--pink p { color: #fbcfe8 !important; }
-/* Softened/desaturated terracotta, not the original vivid orange (freed for
-   Combat's "high" difficulty instead) — the vivid version read as an alarm
-   color for "here's stuff to buy," per direct DM feedback. */
-.scc-fg-box--orange { background: rgba(217,166,108,0.07); border-left: 3px solid rgba(217,166,108,0.4); }
-.scc-fg-box--orange .scc-fg-box-label { color: #d9a66c; }
-.scc-fg-box--orange p { color: #f0ddc5 !important; }
+.scc-fg-box--magenta .scc-fg-box-label { color: var(--dm-only); font-size: 0.8rem; padding-right: 1.75rem; }
+.scc-fg-box--magenta p { color: #ffd6fc !important; }
+/* .scc-fg-box--yellow: Comedy Beats. Genuinely bright/saturated yellow, distinct
+   from --gold (below, Loot & Shop) so the two don't read as the same hue. */
+.scc-fg-box--yellow { background: rgba(250,204,21,0.09); border-left: 3px solid rgba(250,204,21,0.45); }
+.scc-fg-box--yellow .scc-fg-box-label { color: #facc15; }
+.scc-fg-box--yellow p { color: #fef9c3 !important; }
+/* .scc-fg-box--gold: Loot & Shop. Was .scc-fg-box--orange (terracotta) — moved
+   onto the app's real --gold token per direct DM instruction, distinct from
+   Comedy's brighter yellow above. */
+.scc-fg-box--gold { background: rgba(240,180,41,0.09); border-left: 3px solid rgba(240,180,41,0.45); }
+.scc-fg-box--gold .scc-fg-box-label { color: var(--gold); }
+.scc-fg-box--gold p { color: #fbe9c2 !important; }
 .scc-fg-box--grey { background: var(--scc-surface-mid); border: 1px solid var(--scc-border); }
 .scc-fg-box--grey .scc-fg-box-label { color: var(--dm-text); }
 .scc-fg-table { width: 100%; border-collapse: collapse; margin: 0.4rem 0 0.75rem; font-family: var(--font-body); font-size: 0.79rem; }
@@ -6482,7 +6463,7 @@ function showDMToast(msg, type) {
   letter-spacing: 0.06em;
   padding: 0.15rem 0.5rem;
 }
-.scc-tagnote-badge--dmonly { background: var(--cyan-dim); border-color: var(--cyan-border); color: var(--cyan); }
+.scc-tagnote-badge--dmonly { background: var(--dm-only-dim); border-color: var(--dm-only-border); color: var(--dm-only); }
 .scc-tagnote-badge--quest  { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
 .scc-tagnote-time {
   font-family: var(--font-sans);
@@ -10210,7 +10191,7 @@ function questsFilter() {
   var all = typeof QUESTS !== 'undefined' ? QUESTS : [];
 
   var sort = (document.getElementById('q-sort-filter') || {}).value || 'name-asc';
-  var stakesOrder = { low: 1, mid: 2, high: 3, campaign: 4 };
+  var stakesOrder = { low: 1, mid: 2, high: 3 };
   var statusOrder = { active: 1, available: 2, dormant: 3, completed: 4 };
   QUESTS_FILTERED = all.filter(function(quest) {
     if (status && quest.status !== status) return false;
@@ -10421,7 +10402,6 @@ function sccSuggestedLevelRange(quest) {
   var low = sessionNum, high = sessionNum + 1;
   var stakes = quest.stakes || 'mid';
   if (stakes === 'high') { low += 1; high += 1; }
-  else if (stakes === 'campaign') { low += 2; high += 2; }
 
   var reasoning = ['session ' + sessionNum, stakes + ' stakes'];
 
@@ -10843,6 +10823,32 @@ function sccConditionColor(name) {
     if (rows[i].name === name) return { bg: rows[i].color_bg, border: rows[i].color_border, text: rows[i].color_text, tip: rows[i].tip };
   }
   return { bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.25)', text: '#c084fc', tip: name };
+}
+
+/* Single shared source for NPC relationship badge colors -- was two identical
+   hardcoded objects (session roster card + global search Quick Look card),
+   confirmed via grep to have drifted zero times only by luck, not by design.
+   Neutral=grey / Ally=blue per direct DM instruction; Caution/Hostile/Deity
+   unchanged. Dark text on every fill for consistent contrast. */
+function sccRelColor(rel) {
+  var REL_BG = { neutral: '#9a9ab0', ally: '#60a5fa', caution: '#f0b429', hostile: '#f87171', deity: '#c084fc' };
+  return { bg: REL_BG[rel] || REL_BG.neutral, text: '#0b0e16' };
+}
+
+/* Single shared source for region/location "color_health" badges -- was three
+   identical copies of the same if/else ladder (location panel card, city/POI/
+   nation lookup-drawer branch, region lookup-drawer branch). */
+function sccRegionHealthColor(colorHealth) {
+  var ch = (colorHealth || '').toLowerCase();
+  var isVivid  = ch.indexOf('vivid')  >= 0 || ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0;
+  var isMuted  = ch.indexOf('muted')  >= 0;
+  var isFaded  = ch.indexOf('faded')  >= 0 || ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0;
+  var isDimmed = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
+  return {
+    bg: isVivid ? '#6ee6d2' : isMuted ? '#f0b429' : isFaded ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#666666',
+    text: isMuted ? '#1a1008' : '#0b0e16',
+    label: colorHealth ? colorHealth.replace(/-/g,' ').toUpperCase() : ''
+  };
 }
 
 function sccLiveRenderConditions() {
@@ -11361,8 +11367,13 @@ var SCC_FG_EDIT_MODE = false;
 var SCC_FG_EDIT_BLOCKS = null;          // working copy while editing
 var SCC_FG_EDIT_GROUP_OPEN = {};
 
-var SCC_FG_BOX_COLOR_CLASS = { grey: 'grey', green: 'green', cyan: 'yellow', blue: 'blue', purple: 'purple', orange: 'orange', pink: 'pink' };
-var SCC_FG_BOX_COLORS = ['grey', 'green', 'cyan', 'blue', 'purple', 'orange', 'pink'];
+/* Semantic key === CSS class name for every color now (no more indirection
+   like the old cyan->'yellow' remap) -- 'blue' (World Lore, confusing, no
+   real signal) and 'purple' (unused, reserved app-wide for deity/religion)
+   were both dropped entirely, not just recolored. See CLAUDE.md Decision Log
+   for the real-data migration this required. */
+var SCC_FG_BOX_COLOR_CLASS = { grey: 'grey', green: 'green', magenta: 'magenta', gold: 'gold', yellow: 'yellow' };
+var SCC_FG_BOX_COLORS = ['grey', 'green', 'magenta', 'gold', 'yellow'];
 // Loot/shop (orange) box subtype -> icon. DM-assigned per box, never auto-detected
 // from box text (too unreliable to trust silently). An orange box with no subtype
 // set (or an unrecognized one) falls back to the universal coin icon it always had.
@@ -11422,7 +11433,7 @@ function sccFgRenderBlock(b, idx) {
       // subtype picks a specific icon; no subtype (or an unrecognized one) falls back
       // to the original universal coin so older, un-migrated boxes still render fine.
       var boxLabelPrefix = '';
-      if (colorClass === 'orange') {
+      if (colorClass === 'gold') {
         var subtypeInfo = SCC_FG_LOOT_SUBTYPES.find(function(s) { return s.id === b.subtype; });
         boxLabelPrefix = (subtypeInfo ? subtypeInfo.icon : '&#129689;') + ' ';
       }
@@ -11557,7 +11568,7 @@ function sccFgJumpToBlockEdit(idx) {
     row.scrollIntoView({ block: 'center' });
     row.classList.add('scc-fg-editor-row--jump-highlight');
     var block = SCC_FG_EDIT_BLOCKS[idx];
-    if (block && block.type === 'box' && block.color === 'orange') {
+    if (block && block.type === 'box' && block.color === 'gold') {
       var selects = row.querySelectorAll('select');
       var subtypeSelect = null;
       for (var i = 0; i < selects.length; i++) {
@@ -11643,7 +11654,7 @@ function sccFgRenderEditRow(b, idx) {
         + '<select class="cm-select" onchange="sccFgEditSetField(' + idx + ',\'color\',this.value)">'
           + SCC_FG_BOX_COLORS.map(function(c) { return '<option value="' + c + '"' + (b.color === c ? ' selected' : '') + '>' + c + '</option>'; }).join('')
         + '</select>'
-        + (b.color === 'orange'
+        + (b.color === 'gold'
           ? '<select class="cm-select" onchange="sccFgEditSetField(' + idx + ',\'subtype\',this.value)">'
             + '<option value="">Icon: coin (default)</option>'
             + SCC_FG_LOOT_SUBTYPES.map(function(s) { return '<option value="' + s.id + '"' + (b.subtype === s.id ? ' selected' : '') + '>' + s.label + '</option>'; }).join('')
@@ -12493,7 +12504,6 @@ function sccRenderChips(type) {
 // ── NPC relationship cycling ──────────────────────────────────────
 var SCC_REL_CYCLE = ['neutral','ally','caution','hostile','deity'];
 var SCC_REL_LABELS = { neutral:'Neutral', ally:'Ally', caution:'Caution', hostile:'Hostile', deity:'Deity' };
-var SCC_REL_ICONS  = { neutral:'🔵', ally:'🟢', caution:'🟡', hostile:'🔴', deity:'🟣' };
 
 function sccCycleRelationship(npcId) {
   var cur = SCC_NPC_RELATIONSHIPS[npcId] || 'neutral';
@@ -12760,14 +12770,11 @@ function sccFilterNpcs() {
     return;
   }
 
-  // Relationship badge bg colors (solid fill, dark text)
-  var REL_BG = { ally:'#4ade80', neutral:'#60a5fa', caution:'#f0b429', hostile:'#f87171', deity:'#c084fc' };
-  var REL_TEXT_COLOR = '#0b0e16';
-
   el.innerHTML = npcs.map(function(c) {
     var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
     var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
-    var relBg    = REL_BG[rel] || REL_BG.neutral;
+    var relColor = sccRelColor(rel);
+    var relBg    = relColor.bg;
     var linkedQuests = quests.filter(function(q) {
       return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === c.id; });
     });
@@ -12849,7 +12856,7 @@ function sccFilterNpcs() {
         + '</div>'
         + '<div class="scc-npc2-info">'
           + '<div class="scc-npc2-badge-row">'
-            + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + REL_TEXT_COLOR + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
+            + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + relColor.text + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
             + (linkedQuests.length ? '<span class="scc-npc2-quest-icon" title="Quest-related' + (linkedQuests.length > 1 ? ' (' + linkedQuests.length + ' quests)' : ' (' + sccEsc(linkedQuests[0].name) + ')') + '">&#128220;</span>' : '')
           + '</div>'
           + '<div class="scc-npc2-name">' + sccEsc(c.name) + '</div>'
@@ -12916,15 +12923,9 @@ function sccRenderLocationPanel() {
     return;
   }
   function healthBadge(loc) {
-    var ch = (loc.color_health || '').toLowerCase();
-    var isVivid  = ch.indexOf('vivid')  >= 0 || ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0;
-    var isMuted  = ch.indexOf('muted')  >= 0;
-    var isFaded  = ch.indexOf('faded')  >= 0 || ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0;
-    var isDimmed = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
-    var bg = isVivid ? '#6ee6d2' : isMuted ? '#f0b429' : isFaded ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#666666';
-    var textColor = isMuted ? '#1a1008' : '#0b0e16';
-    var label = loc.color_health ? loc.color_health.replace(/-/g,' ').toUpperCase() : 'UNKNOWN';
-    return '<span class="scc-loc2-health-badge" style="background:' + bg + ';color:' + textColor + '">' + sccEsc(label) + '</span>';
+    var hc = sccRegionHealthColor(loc.color_health);
+    var label = hc.label || 'UNKNOWN';
+    return '<span class="scc-loc2-health-badge" style="background:' + hc.bg + ';color:' + hc.text + '">' + sccEsc(label) + '</span>';
   }
   el.innerHTML = locs.map(function(loc) {
     var typeLine = loc._srcType === 'poi' ? 'POI' : (loc.city_type || loc.type || loc._srcType || '').replace(/-/g,' ');
@@ -14633,8 +14634,8 @@ function sccOpenLookup(type, id) {
 
     var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
     var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
-    var REL_BG   = { ally:'#4ade80', neutral:'#60a5fa', caution:'#f0b429', hostile:'#f87171', deity:'#c084fc' };
-    var relBg    = REL_BG[rel] || REL_BG.neutral;
+    var relColor = sccRelColor(rel);
+    var relBg    = relColor.bg;
 
     // Player facing badge
     var pfVal   = c.player_facing;
@@ -14643,7 +14644,7 @@ function sccOpenLookup(type, id) {
                 : '\uD83D\uDCA0 DM Only';
     var pfColor = pfVal === true || pfVal === 'true' ? 'var(--green)'
                 : pfVal === 'teaser' ? 'var(--gold)'
-                : 'var(--cyan)';
+                : 'var(--dm-only)';
 
     // World associations
     var assocHtml = '';
@@ -14680,7 +14681,7 @@ function sccOpenLookup(type, id) {
         + portraitHtml
         + '<div class="scc-ql-header-info">'
           + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
-            + '<span class="scc-ql-rel-badge" style="background:' + relBg + ';color:#0a0a0f" onclick="sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</span>'
+            + '<span class="scc-ql-rel-badge" style="background:' + relBg + ';color:' + relColor.text + '" onclick="sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</span>'
             + '<span class="scc-ql-pf-badge" style="color:' + pfColor + ';border-color:' + pfColor + '">' + sccEsc(pfLabel) + '</span>'
           + '</div>'
           + '<div class="scc-ql-name">' + sccEsc(c.name) + '</div>'
@@ -14711,16 +14712,9 @@ function sccOpenLookup(type, id) {
     var loc = allLocs.find(function(x){ return x.id===id; });
     if (!loc) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
     // Health badge
-    var ch = (loc.color_health || '').toLowerCase();
-    var isVivid  = ch.indexOf('vivid')  >= 0 || ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0;
-    var isMuted  = ch.indexOf('muted')  >= 0;
-    var isFaded  = ch.indexOf('faded')  >= 0 || ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0;
-    var isDimmed = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
-    var hBg = isVivid ? '#6ee6d2' : isMuted ? '#f0b429' : isFaded ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#666666';
-    var hTxt = isMuted ? '#1a1008' : '#0b0e16';
-    var hLabel = loc.color_health ? loc.color_health.replace(/-/g,' ').toUpperCase() : '';
+    var hc = sccRegionHealthColor(loc.color_health);
     var healthBadgeHtml = loc.color_health
-      ? '<span class="scc-loc2-health-badge" style="background:' + hBg + ';color:' + hTxt + '">' + sccEsc(hLabel) + '</span>'
+      ? '<span class="scc-loc2-health-badge" style="background:' + hc.bg + ';color:' + hc.text + '">' + sccEsc(hc.label) + '</span>'
       : '';
     var varethBadgeHtml = loc.vareth_presence
       ? '<span class="scc-loc2-vareth-badge"><svg width="10" height="10" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0"><path d="M12.7097 1.96538L6.75122 11.4472L0.792603 1.96538L6.75122 0.514587L12.7097 1.96538ZM0.792603 1.96538L6.75122 3.05345M6.75122 11.4472V3.05345M12.7097 1.96538L6.75122 3.05345" stroke="#0B0E16" stroke-width="1.2"/></svg>VARETH</span>'
@@ -14878,7 +14872,7 @@ function sccOpenLookup(type, id) {
 
     var opfVal   = org.player_facing;
     var opfLabel = opfVal === true || opfVal === 'true' ? 'Visible to Players' : opfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
-    var opfColor = opfVal === true || opfVal === 'true' ? 'var(--green)' : opfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+    var opfColor = opfVal === true || opfVal === 'true' ? 'var(--green)' : opfVal === 'teaser' ? 'var(--gold)' : 'var(--dm-only)';
 
     var orgPortraitHtml = org.image
       ? '<img class="scc-ql-portrait" src="' + sccEsc(org.image) + '" onerror="this.style.display=\'none\'" alt="">'
@@ -14978,17 +14972,11 @@ function sccOpenLookup(type, id) {
 
     var rgPfVal   = reg.player_facing;
     var rgPfLabel = rgPfVal === true || rgPfVal === 'true' ? 'Visible to Players' : rgPfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
-    var rgPfColor = rgPfVal === true || rgPfVal === 'true' ? 'var(--green)' : rgPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+    var rgPfColor = rgPfVal === true || rgPfVal === 'true' ? 'var(--green)' : rgPfVal === 'teaser' ? 'var(--gold)' : 'var(--dm-only)';
 
-    var rgCh = (reg.color_health || '').toLowerCase();
-    var rgIsVivid  = rgCh.indexOf('vivid')  >= 0 || rgCh.indexOf('excellent') >= 0 || rgCh.indexOf('good') >= 0;
-    var rgIsMuted  = rgCh.indexOf('muted')  >= 0;
-    var rgIsFaded  = rgCh.indexOf('faded')  >= 0 || rgCh.indexOf('fading') >= 0 || rgCh.indexOf('stage-1') >= 0;
-    var rgIsDimmed = rgCh.indexOf('dimmed') >= 0 || rgCh.indexOf('stage-2') >= 0 || rgCh.indexOf('dire') >= 0;
-    var rgHBg  = rgIsVivid ? '#6ee6d2' : rgIsMuted ? '#f0b429' : rgIsFaded ? '#aaa0c8' : rgIsDimmed ? '#a0a0b0' : '#666666';
-    var rgHTxt = rgIsMuted ? '#1a1008' : '#0b0e16';
+    var rgHc = sccRegionHealthColor(reg.color_health);
     var rgHealthBadgeHtml = reg.color_health
-      ? '<span class="scc-loc2-health-badge" style="background:' + rgHBg + ';color:' + rgHTxt + '">' + sccEsc(reg.color_health.replace(/-/g,' ').toUpperCase()) + '</span>'
+      ? '<span class="scc-loc2-health-badge" style="background:' + rgHc.bg + ';color:' + rgHc.text + '">' + sccEsc(rgHc.label) + '</span>'
       : '';
 
     var regionPortraitHtml = reg.image
@@ -15025,7 +15013,7 @@ function sccOpenLookup(type, id) {
 
     var relgPfVal   = relg.player_facing;
     var relgPfLabel = relgPfVal === true || relgPfVal === 'true' ? 'Visible to Players' : relgPfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
-    var relgPfColor = relgPfVal === true || relgPfVal === 'true' ? 'var(--green)' : relgPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+    var relgPfColor = relgPfVal === true || relgPfVal === 'true' ? 'var(--green)' : relgPfVal === 'teaser' ? 'var(--gold)' : 'var(--dm-only)';
 
     var religionTagsHtml = '';
     if (relg.tags && relg.tags.length) {
@@ -15064,7 +15052,7 @@ function sccOpenLookup(type, id) {
 
     var spPfVal   = sp.player_facing;
     var spPfLabel = spPfVal === true || spPfVal === 'true' ? 'Visible to Players' : spPfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
-    var spPfColor = spPfVal === true || spPfVal === 'true' ? 'var(--green)' : spPfVal === 'teaser' ? 'var(--gold)' : 'var(--cyan)';
+    var spPfColor = spPfVal === true || spPfVal === 'true' ? 'var(--green)' : spPfVal === 'teaser' ? 'var(--gold)' : 'var(--dm-only)';
 
     html = ''
       // ── HEADER ── (species table has no image column — fallback portrait only)

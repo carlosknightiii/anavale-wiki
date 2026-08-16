@@ -168,15 +168,15 @@
   --purple-dim:    rgba(192,132,252,0.12);
   --purple-border: rgba(192,132,252,0.35);
 
-  /* ── STATUS — CYAN/TEAL (DM Only). Originally #22d3ee (cyan);   */
-  /* moved to a true teal here since the cyan value kept reading  */
-  /* as "blue" next to Field Guide's lore boxes and the NPC       */
-  /* "neutral" relationship badge (both also blue-family) —       */
-  /* paired with a 💠 icon on the badges themselves as a second,  */
-  /* non-color signal, since hue alone had already failed once.   */
-  --cyan:        #ff00f3;
-  --cyan-dim:    rgba(255,0,243,0.15);
-  --cyan-border: rgba(255,0,243,0.35);
+  /* ── STATUS — DM ONLY. Magenta, per direct DM instruction.      */
+  /* Named for what it means, not a color history — this token    */
+  /* has been cyan, teal, and now magenta; a name tied to the hue  */
+  /* goes stale every time the color changes. --dm-only is the    */
+  /* single highest-stakes color in the app (a DM reading a       */
+  /* secret aloud by mistake is a real failure mode).              */
+  --dm-only:        #ff00f3;
+  --dm-only-dim:    rgba(255,0,243,0.15);
+  --dm-only-border: rgba(255,0,243,0.35);
 
   /* ── GIGGLEGLOOM TYPE COLORS ─────────────────────────────── */
   --bubbleseed:  #2a7a3a;
@@ -244,7 +244,7 @@
   --scc-pk-label:       var(--text-muted);
   --scc-dm-only-bg:     rgba(255,0,243,0.15);
   --scc-dm-only-border: rgba(255,0,243,0.45);
-  --scc-dm-only-text:   var(--cyan);
+  --scc-dm-only-text:   var(--dm-only);
   --scc-dm-only-label:  rgba(255,0,243,0.9);
   --scc-read-aloud-bg:     rgba(134,239,172,0.07);
   --scc-read-aloud-border: rgba(134,239,172,0.5);
@@ -264,34 +264,11 @@
   --scc-init-active-border: var(--gold-border);
   --scc-init-pc-border:     rgba(96,165,250,0.4);
   --scc-init-enemy-border:  rgba(248,113,113,0.4);
-  --scc-rel-ally-border:    rgba(74,222,128,0.5);
-  --scc-rel-ally-bg:        rgba(74,222,128,0.05);
-  --scc-rel-ally-badge:     rgba(74,222,128,0.15);
-  --scc-rel-ally-text:      #4ade80;
-  --scc-rel-neutral-border: rgba(96,165,250,0.45);
-  --scc-rel-neutral-bg:     rgba(96,165,250,0.05);
-  --scc-rel-neutral-badge:  rgba(96,165,250,0.12);
-  --scc-rel-neutral-text:   var(--blue);
-  --scc-rel-caution-border: rgba(240,180,41,0.45);
-  --scc-rel-caution-bg:     rgba(240,180,41,0.05);
-  --scc-rel-caution-badge:  rgba(240,180,41,0.15);
-  --scc-rel-caution-text:   var(--gold);
-  --scc-rel-hostile-border: rgba(248,113,113,0.5);
-  --scc-rel-hostile-bg:     rgba(248,113,113,0.05);
-  --scc-rel-hostile-badge:  rgba(248,113,113,0.14);
-  --scc-rel-hostile-text:   var(--red);
-  --scc-rel-deity-border:   rgba(192,132,252,0.5);
-  --scc-rel-deity-bg:       rgba(192,132,252,0.05);
-  --scc-rel-deity-badge:    rgba(192,132,252,0.14);
-  --scc-rel-deity-text:     var(--purple);
 
   /* ── CHARACTER SHEET OVERVIEW REDESIGN ──────────────────────
      Figma file P0tcVgf02XeI13Tz0TtRaX, nodes 36:310 (desktop) /
      36:435 (mobile). Values not already covered by an existing
      token above (surfaces, gold, radius, text, steelfist, etc). */
-  --currency-copper:      #9c5b18;
-  --currency-silver:      #babcc5;
-  --currency-gold-coin:   #daa318;
   --blue-50:              #dde1ec;
   --blue-100:             #9aa5c2;
   --blue-200:             #6b79a1;
@@ -336,22 +313,30 @@
   --dm-row-hover:        rgba(255,255,255,0.04);
   --dm-row-selected:     rgba(240,180,41,0.08);
   --dm-th-bg:            #0e0e16;
-  --dm-quest-active-bg:  rgba(200,60,30,0.15);
-  --dm-quest-active-text:#ff8066;
-  --dm-quest-avail-bg:   rgba(240,180,41,0.15);
-  --dm-quest-avail-text: var(--gold);
+  /* Active/Available/Completed form a plain traffic-light progression
+     (green = in motion, blue = offered/waiting, grey = done) reusing
+     existing hues rather than inventing new ones. Dormant keeps its
+     own cooler blue-grey tint (real meaning: gated behind a session
+     number that hasn't arrived yet, see setQuestStatus() call sites)
+     so it doesn't collide with Completed's plain neutral grey — the
+     icon prefix (fire/star/zzz/check) is the primary differentiator either way. */
+  --dm-quest-active-bg:  rgba(34,197,94,0.15);
+  --dm-quest-active-text:var(--green);
+  --dm-quest-avail-bg:   rgba(96,165,250,0.15);
+  --dm-quest-avail-text: var(--blue);
   --dm-quest-dormant-bg: rgba(120,120,140,0.15);
   --dm-quest-dormant-text: rgba(232,232,240,0.45);
-  --dm-quest-done-bg:    rgba(34,197,94,0.12);
-  --dm-quest-done-text:  var(--green);
-  --dm-stakes-low-bg:    rgba(240,180,41,0.08);
-  --dm-stakes-low-text:  var(--gold);
-  --dm-stakes-mid-bg:    rgba(96,165,250,0.12);
-  --dm-stakes-mid-text:  var(--blue);
-  --dm-stakes-high-bg:   rgba(251,146,60,0.12);
-  --dm-stakes-high-text: var(--orange-vivid);
-  --dm-stakes-camp-bg:   rgba(248,113,113,0.15);
-  --dm-stakes-camp-text: var(--red);
+  --dm-quest-done-bg:    rgba(160,160,160,0.15);
+  --dm-quest-done-text:  #a0a0a0;
+  /* Low/Mid/High is a plain traffic-light scale (green/gold/red).
+     "Campaign" stakes was removed entirely -- no real quest ever
+     used it and the DM asked for it gone, not recolored. */
+  --dm-stakes-low-bg:    rgba(34,197,94,0.08);
+  --dm-stakes-low-text:  var(--green);
+  --dm-stakes-mid-bg:    rgba(240,180,41,0.1);
+  --dm-stakes-mid-text:  var(--gold);
+  --dm-stakes-high-bg:   rgba(248,113,113,0.12);
+  --dm-stakes-high-text: var(--red);
   --dm-reveal-border:    rgba(255,0,243,0.25);
   --dm-reveal-bg:        rgba(255,0,243,0.06);
   --dm-related-bg:       rgba(96,165,250,0.08);
