@@ -5703,11 +5703,14 @@ function showDMToast(msg, type) {
 }
 .scc-beat-meta {
   display: flex;
+  align-items: center;
   gap: 0.4rem;
   margin-top: 0.2rem;
   flex-wrap: wrap;
 }
 .scc-beat-xp {
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-sans);
   font-size: 0.65rem;
   font-weight: 700;
@@ -5737,7 +5740,6 @@ function showDMToast(msg, type) {
 .scc-beat-status-select--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border-color: var(--scc-border-mid); }
 .scc-beat-status-select--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-border); }
 .scc-beat-status-select--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(34,197,94,0.3); }
-.scc-beat-status-select:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
 .scc-beat-status-select:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
 /* ── Combat Tracker ── */
 .scc-combat-builder {
