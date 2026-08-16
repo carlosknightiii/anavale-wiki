@@ -5567,12 +5567,9 @@ function showDMToast(msg, type) {
 .scc-beat-seg:last-child { border-right: none; }
 .scc-beat-seg--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); }
 .scc-beat-seg--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); font-weight: 700; }
-/* Was the same muted grey as a generic "nothing to see here" state -- DM's
-   own repeated annotation across all 4 rail segments (not just the active
-   one) confirmed this quest's whole beat rail should read as blue while it's
-   in play, not just the one beat currently in progress. Completed stays
-   green (an unambiguous, unrequested win-state) -- everything else is blue. */
-.scc-beat-seg--not_started { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); }
+/* Matches its own semantic token now (--scc-beat-todo-* = blue, per the
+   2026-08-16 Quest Status scheme) -- no longer borrowed from --prog-*. */
+.scc-beat-seg--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); }
 .scc-beat-seg:hover { filter: brightness(1.2); }
 /* Beat detail list */
 .scc-beat-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -5590,7 +5587,7 @@ function showDMToast(msg, type) {
   border-left-color: transparent;
   background: var(--scc-surface);
 }
-.scc-beat-item--completed { border-color: rgba(34,197,94,0.2); background: var(--scc-beat-done-bg); }
+.scc-beat-item--completed { border-color: rgba(160,160,160,0.25); background: var(--scc-beat-done-bg); }
 /* Initiative row — downed state */
 .scc-init-row.is-downed { opacity: 0.6; background: rgba(248,113,113,0.05); }
 .scc-downed-badge { display:inline-block; margin-left:0.4rem; font-size:0.62rem; font-weight:700; color:var(--dm-red); background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.25); border-radius:8px; padding:0.05rem 0.4rem; vertical-align:middle; }
@@ -5599,14 +5596,19 @@ function showDMToast(msg, type) {
 .scc-init-remove-btn { margin-left:0.25rem; padding:0.15rem 0.45rem; background:transparent; border:1px solid var(--scc-border-mid); border-radius:4px; color:var(--dm-text-muted); font-size:0.72rem; cursor:pointer; transition:var(--dm-transition); flex-shrink:0; }
 .scc-init-remove-btn:hover { border-color:var(--dm-red); color:var(--dm-red); background:rgba(248,113,113,0.08); }
 .scc-beat-item--in_progress { border-color: var(--scc-beat-prog-border); background: var(--scc-beat-prog-bg); }
-/* Active beat highlight -- was gold, moved to blue alongside --scc-beat-prog-*
-   above for the same reason (collided with the Stakes badge on the same card). */
+/* Active beat highlight -- gold again (2026-08-16), matching Active=Gold in
+   the Quest Status scheme now shared app-wide. Was moved to blue 2 rounds
+   earlier specifically to dodge a same-card collision with a gold Mid
+   Stakes badge -- that collision is real again now, on record, not fixed
+   here (would mean recoloring Stakes, which wasn't part of this ask). The
+   pulse keyframe below was left gold-toned when this rule went blue 2
+   rounds ago; it now matches its own base state again instead of fighting it. */
 .scc-beat-item--active {
-  border-left: 4px solid var(--dm-blue) !important;
-  border-color: var(--dm-blue) !important;
-  background: linear-gradient(90deg, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0.06) 60%) !important;
+  border-left: 4px solid var(--dm-gold) !important;
+  border-color: var(--dm-gold) !important;
+  background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%) !important;
   animation: scc-beat-pulse 2s ease-in-out infinite;
-  box-shadow: inset 3px 0 0 var(--dm-blue);
+  box-shadow: inset 3px 0 0 var(--dm-gold);
 }
 @keyframes scc-beat-pulse {
   0%, 100% { background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%); }
@@ -5752,9 +5754,9 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
   width: auto;
 }
-.scc-beat-status-select--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border-color: var(--scc-border-mid); }
+.scc-beat-status-select--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border-color: var(--scc-beat-todo-border); }
 .scc-beat-status-select--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-border); }
-.scc-beat-status-select--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(34,197,94,0.3); }
+.scc-beat-status-select--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(160,160,160,0.3); }
 .scc-beat-status-select:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
 /* ── Combat Tracker ── */
 .scc-combat-builder {
@@ -6041,12 +6043,12 @@ function showDMToast(msg, type) {
   font-size: 0.6rem; font-weight: 700;
   transition: var(--dm-transition);
 }
-.scc-live-beat-item--completed .scc-live-beat-dot { background: var(--dm-green); border-color: var(--dm-green); color: #0b0e16; }
-/* Same gold -> blue fix as the Session > Quests beat rail/XP badges, applied
-   here too -- this is a third, independent render of the same beat-progress
-   concept (Live Session panel), and would have reintroduced the identical
-   gold/gold collision with Stakes if left alone. */
-.scc-live-beat-item--in_progress .scc-live-beat-dot { background: var(--dm-blue); border-color: var(--dm-blue); color: #0b0e16; }
+/* Reuses the shared --scc-beat-* tokens directly (not --dm-green/--dm-blue
+   literals) so this third, independent render of the same beat-progress
+   concept can't drift out of sync with the Session>Quests beat rail again --
+   it already had to be chased down and fixed twice this session. */
+.scc-live-beat-item--completed .scc-live-beat-dot { background: var(--scc-beat-done-text); border-color: var(--scc-beat-done-text); color: #0b0e16; }
+.scc-live-beat-item--in_progress .scc-live-beat-dot { background: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-text); color: #0b0e16; }
 .scc-live-beat-text { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.4; }
 .scc-live-beat-xp { font-size: 0.68rem; color: var(--dm-gold); margin-top: 0.1rem; }
 /* Party HP */
