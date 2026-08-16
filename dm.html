@@ -5596,23 +5596,19 @@ function showDMToast(msg, type) {
 .scc-init-remove-btn { margin-left:0.25rem; padding:0.15rem 0.45rem; background:transparent; border:1px solid var(--scc-border-mid); border-radius:4px; color:var(--dm-text-muted); font-size:0.72rem; cursor:pointer; transition:var(--dm-transition); flex-shrink:0; }
 .scc-init-remove-btn:hover { border-color:var(--dm-red); color:var(--dm-red); background:rgba(248,113,113,0.08); }
 .scc-beat-item--in_progress { border-color: var(--scc-beat-prog-border); background: var(--scc-beat-prog-bg); }
-/* Active beat highlight -- gold again (2026-08-16), matching Active=Gold in
-   the Quest Status scheme now shared app-wide. Was moved to blue 2 rounds
-   earlier specifically to dodge a same-card collision with a gold Mid
-   Stakes badge -- that collision is real again now, on record, not fixed
-   here (would mean recoloring Stakes, which wasn't part of this ask). The
-   pulse keyframe below was left gold-toned when this rule went blue 2
-   rounds ago; it now matches its own base state again instead of fighting it. */
+/* Active beat highlight -- green (2026-08-16): In Progress/Active is its
+   own distinct color, not the same gold as Mid Stakes -- resolves the
+   collision flagged in the gold round without touching Stakes. */
 .scc-beat-item--active {
-  border-left: 4px solid var(--dm-gold) !important;
-  border-color: var(--dm-gold) !important;
-  background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%) !important;
+  border-left: 4px solid var(--dm-green) !important;
+  border-color: var(--dm-green) !important;
+  background: linear-gradient(90deg, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.06) 60%) !important;
   animation: scc-beat-pulse 2s ease-in-out infinite;
-  box-shadow: inset 3px 0 0 var(--dm-gold);
+  box-shadow: inset 3px 0 0 var(--dm-green);
 }
 @keyframes scc-beat-pulse {
-  0%, 100% { background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%); }
-  50% { background: linear-gradient(90deg, rgba(240,180,41,0.32) 0%, rgba(240,180,41,0.10) 60%); }
+  0%, 100% { background: linear-gradient(90deg, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.06) 60%); }
+  50% { background: linear-gradient(90deg, rgba(34,197,94,0.32) 0%, rgba(34,197,94,0.10) 60%); }
 }
 /* Beat action row -- no margin-top: this sits inside .scc-beat-meta now,
    sharing a row with .scc-beat-xp; a leftover top margin here (from before
