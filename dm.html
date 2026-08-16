@@ -5588,14 +5588,15 @@ function showDMToast(msg, type) {
 /* Remove from combat button */
 .scc-init-remove-btn { margin-left:0.25rem; padding:0.15rem 0.45rem; background:transparent; border:1px solid var(--scc-border-mid); border-radius:4px; color:var(--dm-text-muted); font-size:0.72rem; cursor:pointer; transition:var(--dm-transition); flex-shrink:0; }
 .scc-init-remove-btn:hover { border-color:var(--dm-red); color:var(--dm-red); background:rgba(248,113,113,0.08); }
-.scc-beat-item--in_progress { border-color: rgba(240,180,41,0.3); background: var(--scc-beat-prog-bg); }
-/* Active beat gold highlight */
+.scc-beat-item--in_progress { border-color: var(--scc-beat-prog-border); background: var(--scc-beat-prog-bg); }
+/* Active beat highlight -- was gold, moved to blue alongside --scc-beat-prog-*
+   above for the same reason (collided with the Stakes badge on the same card). */
 .scc-beat-item--active {
-  border-left: 4px solid var(--dm-gold) !important;
-  border-color: var(--dm-gold) !important;
-  background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%) !important;
+  border-left: 4px solid var(--dm-blue) !important;
+  border-color: var(--dm-blue) !important;
+  background: linear-gradient(90deg, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0.06) 60%) !important;
   animation: scc-beat-pulse 2s ease-in-out infinite;
-  box-shadow: inset 3px 0 0 var(--dm-gold);
+  box-shadow: inset 3px 0 0 var(--dm-blue);
 }
 @keyframes scc-beat-pulse {
   0%, 100% { background: linear-gradient(90deg, rgba(240,180,41,0.18) 0%, rgba(240,180,41,0.06) 60%); }
@@ -5706,7 +5707,9 @@ function showDMToast(msg, type) {
   padding: 0.1rem 0.45rem;
   border-radius: 8px;
 }
-.scc-beat-status-btn {
+/* Was .scc-beat-status-btn, a click-to-cycle button with no visible indication
+   of the 3 states or which one came next -- now a real <select>, same footprint. */
+.scc-beat-status-select {
   padding: 0.1rem 0.45rem;
   font-family: var(--font-sans);
   font-size: 0.65rem;
@@ -5717,8 +5720,9 @@ function showDMToast(msg, type) {
   background: var(--scc-surface-high);
   color: var(--dm-text-muted);
   transition: var(--dm-transition);
+  width: auto;
 }
-.scc-beat-status-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+.scc-beat-status-select:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
 /* ── Combat Tracker ── */
 .scc-combat-builder {
   background: var(--scc-surface-high);
@@ -13233,8 +13237,15 @@ function sccRenderQuestPanel() {
     }).join('');
     var beatsHtml = beats.map(function(b) {
       var st = prog[b.order] || 'not_started';
-      var stLabel = st === 'completed' ? '&#10003; Done' : st === 'in_progress' ? '&#9654; In Progress' : 'To Do';
       var isActive = st === 'in_progress';
+      // Was a button that cycled not_started -> in_progress -> completed on
+      // click, with no visible indication of what clicking it would do next —
+      // a real dropdown makes the 3 states and the current one explicit.
+      var statusSelect = '<select class="cm-select scc-beat-status-select" onchange="sccSaveBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ',this.value)">'
+        + '<option value="not_started"' + (st === 'not_started' ? ' selected' : '') + '>To Do</option>'
+        + '<option value="in_progress"' + (st === 'in_progress' ? ' selected' : '') + '>&#9654; In Progress</option>'
+        + '<option value="completed"' + (st === 'completed' ? ' selected' : '') + '>&#10003; Done</option>'
+      + '</select>';
       return '<div class="scc-beat-item scc-beat-item--' + st + (isActive ? ' scc-beat-item--active' : '') + '">'
         + '<div class="scc-beat-num">' + b.order + '</div>'
         + '<div class="scc-beat-content">'
@@ -13243,7 +13254,7 @@ function sccRenderQuestPanel() {
           + '<div class="scc-beat-meta">'
             + (b.xp ? '<span class="scc-beat-xp">+' + b.xp + ' XP</span>' : '')
             + '<div class="scc-beat-actions">'
-              + '<button class="scc-beat-status-btn" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ')">' + stLabel + '</button>'
+              + statusSelect
               + (isActive ? '<button class="scc-beat-live-btn" onclick="sccSwitchPanel(\'live\')" title="Go to Live Session">&#9654; Live Session</button>' : '')
             + '</div>'
           + '</div>'
@@ -13304,20 +13315,26 @@ function sccUpdateQuestSidebar(quest, beat) {
   }
 }
 
-function sccCycleBeatStatus(questId, beatOrder) {
+// Shared save path for both the rail/compact-item click-to-cycle interaction
+// and the explicit dropdown below -- one PATCH, two ways to reach it.
+function sccSaveBeatStatus(questId, beatOrder, status) {
   if (!SCC_PROGRESS[questId]) SCC_PROGRESS[questId] = {};
-  var cur  = SCC_PROGRESS[questId][beatOrder] || 'not_started';
-  var next = cur === 'not_started' ? 'in_progress' : cur === 'in_progress' ? 'completed' : 'not_started';
-  SCC_PROGRESS[questId][beatOrder] = next;
+  SCC_PROGRESS[questId][beatOrder] = status;
   var sessionNum = SCC_SESSION ? SCC_SESSION.session_number : null;
   sccPatch('quest_progress',
     '?quest_id=eq.' + encodeURIComponent(questId) + '&beat_order=eq.' + beatOrder,
-    { status: next, completed_in_session: next === 'completed' ? sessionNum : null }
+    { status: status, completed_in_session: status === 'completed' ? sessionNum : null }
   ).then(function(r) {
-    if (r.ok) showDMToast('Beat ' + beatOrder + ' → ' + next, 'success');
+    if (r.ok) showDMToast('Beat ' + beatOrder + ' → ' + status, 'success');
     else showDMToast('Save failed', 'error');
   });
   sccRenderQuestPanel();
+}
+
+function sccCycleBeatStatus(questId, beatOrder) {
+  var cur  = (SCC_PROGRESS[questId] || {})[beatOrder] || 'not_started';
+  var next = cur === 'not_started' ? 'in_progress' : cur === 'in_progress' ? 'completed' : 'not_started';
+  sccSaveBeatStatus(questId, beatOrder, next);
 }
 
 // ── Combat Tracker ────────────────────────────────────────────────
