@@ -268,10 +268,13 @@
   --scc-diff-moderate:  var(--gold);
   --scc-diff-high:      var(--orange-vivid);
   --scc-diff-deadly:    var(--red);
-  --scc-init-active-bg:     rgba(240,180,41,0.12);
-  --scc-init-active-border: var(--gold-border);
-  --scc-init-pc-border:     rgba(96,165,250,0.4);
-  --scc-init-enemy-border:  rgba(248,113,113,0.4);
+  /* Thicker/brighter (2026-08-16, direct DM ask) -- solid full-opacity hues
+     instead of translucent rgba, so whose-turn-it-is and PC-vs-enemy read
+     at a glance rather than on close look. */
+  --scc-init-active-bg:     rgba(240,180,41,0.16);
+  --scc-init-active-border: var(--gold);
+  --scc-init-pc-border:     var(--blue);
+  --scc-init-enemy-border:  var(--red);
 
   /* ── CHARACTER SHEET OVERVIEW REDESIGN ──────────────────────
      Figma file P0tcVgf02XeI13Tz0TtRaX, nodes 36:310 (desktop) /

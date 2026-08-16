@@ -5911,13 +5911,16 @@ function showDMToast(msg, type) {
   border-radius: var(--dm-radius-sm);
   transition: var(--dm-transition);
 }
+/* Thicker/brighter per the DM's direct ask -- solid base hues instead of the
+   previous translucent rgba borders, and a wider ring on the active-turn
+   highlight so whoever's turn it is reads at a glance, not on close look. */
 .scc-init-row.active-turn {
   background: var(--scc-init-active-bg);
   border-color: var(--scc-init-active-border);
-  box-shadow: 0 0 0 1px var(--scc-init-active-border);
+  box-shadow: 0 0 0 2px var(--scc-init-active-border);
 }
-.scc-init-row.is-pc   { border-left: 3px solid var(--scc-init-pc-border); }
-.scc-init-row.is-enemy { border-left: 3px solid var(--scc-init-enemy-border); }
+.scc-init-row.is-pc    { border-left: 5px solid var(--scc-init-pc-border); }
+.scc-init-row.is-enemy { border-left: 5px solid var(--scc-init-enemy-border); }
 .scc-init-num {
   font-family: var(--font-headers);
   font-size: 1.1rem;
@@ -5926,10 +5929,58 @@ function showDMToast(msg, type) {
   text-align: center;
   flex-shrink: 0;
 }
-.scc-init-name { font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; color: var(--dm-text); flex: 1; }
-.scc-init-ac { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; color: var(--dm-text-muted); margin-left: 0.5rem; }
+.scc-init-name { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; color: var(--dm-text); flex: 1; }
+/* Real uploaded portrait only -- no placeholder for a PC without one. */
+.scc-init-photo { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--scc-border-mid); }
+/* Same blue/rounded-bottom stacked language as the character sheet's own
+   AC badge (sheet/index.html .cs-mi-ac-badge), scaled to this row's height. */
+.scc-init-ac-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
+  background: var(--blue-100);
+  color: var(--blue-800);
+  border-radius: 0 0 8px 8px;
+  padding: 0.05rem 0.4rem;
+  margin-left: 0.25rem;
+  flex-shrink: 0;
+}
+.scc-init-ac-badge-label { font-family: var(--font-sans); font-weight: 700; font-size: 0.5rem; }
+.scc-init-ac-badge-num { font-family: var(--font-headers); font-weight: 700; font-size: 0.8rem; }
 .scc-init-stats-btn { flex-shrink: 0; }
-.scc-init-hp-wrap { display: flex; align-items: center; gap: 0.4rem; }
+/* Visual health bar, same look as the character sheet's HP bar
+   (sheet/index.html .cs-mi-hp-compact-bar/-fill, --red-track/--red-strong) --
+   the −/input/+ quick-adjust controls stay layered on top (position:absolute
+   fill, normal-flow controls) rather than being replaced, since combat needs
+   fast HP entry more than the sheet's click-to-edit model does. */
+.scc-init-hp-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 150px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--red-track);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.scc-init-hp-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--red-strong);
+  transition: width 0.25s ease;
+  z-index: 0;
+}
+/* Positioned elements paint above static siblings by default regardless of
+   DOM order -- without this, the fill (position:absolute) would render on
+   top of the −/input/+ controls instead of behind them. */
+.scc-init-hp-wrap > .scc-init-hp-btn,
+.scc-init-hp-wrap > .scc-init-hp-input,
+.scc-init-hp-wrap > .scc-init-hp-max { position: relative; z-index: 1; }
 .scc-init-hp-cur {
   font-family: var(--font-sans);
   font-size: 0.85rem;
@@ -5940,7 +5991,7 @@ function showDMToast(msg, type) {
 }
 .scc-init-hp-cur.warning { color: var(--dm-gold); }
 .scc-init-hp-cur.danger  { color: var(--dm-red); }
-.scc-init-hp-max { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-muted); }
+.scc-init-hp-max { font-family: var(--font-sans); font-size: 0.72rem; color: rgba(255,255,255,0.85); position: relative; }
 .scc-init-hp-btn {
   width: 22px; height: 22px;
   border-radius: 50%;
@@ -10663,6 +10714,7 @@ var SCC_SESSION    = null;
 var SCC_PROGRESS   = {};
 var SCC_PLAYERS    = [];
 var SCC_SHEETS     = {};
+var SCC_PLAYER_PHOTOS = {};
 var SCC_COMBATANTS = [];
 var SCC_INITIATIVE = [];
 var SCC_ROUND      = 1;
@@ -10783,13 +10835,23 @@ function sccLoadPlayers() {
     if (!ids.length) { sccRenderPlayerBar(); return; }
     Promise.all([
       sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')'),
-      sccFetch('classes', '')
+      sccFetch('classes', ''),
+      sccFetch('character_photo', '&character_id=in.(' + ids.join(',') + ')')
     ]).then(function(results) {
-      var sheets = results[0], classes = results[1];
+      var sheets = results[0], classes = results[1], photos = results[2];
       SCC_SHEETS = {};
       (Array.isArray(sheets) ? sheets : []).forEach(function(s) { SCC_SHEETS[s.character_id] = s; });
       var classById = {};
       (Array.isArray(classes) ? classes : []).forEach(function(c) { classById[c.id] = c; });
+      // Same public storage URL pattern sheet/index.html already uses for the
+      // player's own uploaded portrait -- reused here, not a new upload path.
+      var SB_URL_PHOTO = 'https://ebppsgaftzyvftemfeom.supabase.co';
+      SCC_PLAYER_PHOTOS = {};
+      (Array.isArray(photos) ? photos : []).forEach(function(row) {
+        if (row.storage_path) {
+          SCC_PLAYER_PHOTOS[row.character_id] = SB_URL_PHOTO + '/storage/v1/object/public/character-photos/' + row.storage_path;
+        }
+      });
       // HP always tracks the character's current CON/feats/level, same rule
       // as sheet/index.html's fetchOrCreateSheet() — keeps this bar from
       // drifting from the player's own sheet (AC has no such state to drift).
@@ -13849,18 +13911,31 @@ function sccRenderInitiativeList() {
       ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">Award Loot</button>' : '';
     var downedBadge = isDowned ? '<span class="scc-downed-badge">&#9760; Downed</span>' : '';
     var statsBtn = !c.isPC ? '<button class="scc-browse-btn scc-init-stats-btn" onclick="sccToggleInitStatBlock(' + idx + ')">Stats</button>' : '';
+    // Only renders for a PC with a real uploaded portrait (character_photo,
+    // fetched in sccLoadPlayers()) -- no placeholder/initial for anyone who
+    // hasn't uploaded one, matching this file's own no-invented-content rule.
+    var photoUrl = c.isPC ? SCC_PLAYER_PHOTOS[c.id] : null;
+    var photoImg = photoUrl ? '<img class="scc-init-photo" src="' + photoUrl + '" alt="">' : '';
+    var hpFillPct = Math.max(0, Math.min(100, Math.round(hpPct * 100)));
+    // Blue/rounded-bottom stacked badge, matching the AC badge on the player
+    // character sheet's own header (sheet/index.html .cs-mi-ac-badge) --
+    // scaled down to fit this row's compact height, same color language.
+    var acBadge = c.ac != null
+      ? '<span class="scc-init-ac-badge"><span class="scc-init-ac-badge-label">AC</span><span class="scc-init-ac-badge-num">' + c.ac + '</span></span>'
+      : '';
 
     return '<div class="' + rowCls + '">'
-      + '<div class="scc-init-num">' + c.initiative + '</div>'
       + '<div class="scc-init-name">'
+        + photoImg
         + sccEsc(c.name)
         + (c.isPC ? ' <span style="font-size:0.65rem;color:var(--dm-blue);">PC</span>' : '')
-        + (c.ac != null ? '<span class="scc-init-ac">AC ' + c.ac + '</span>' : '')
+        + acBadge
         + downedBadge
       + '</div>'
       + '<div class="scc-init-hp-wrap">'
+        + '<div class="scc-init-hp-bar-fill" style="width:' + hpFillPct + '%;"></div>'
         + '<button class="scc-init-hp-btn" onclick="sccAdjustHP(' + idx + ',-1)">&#8722;</button>'
-        + '<input type="number" class="scc-init-hp-input ' + hpCls + '" value="' + c.hpCur + '" min="0" max="' + c.hpMax + '" onchange="sccSetHP(' + idx + ',this.value)" style="width:38px;text-align:center;background:var(--dm-surface);border:1px solid var(--scc-border-mid);border-radius:4px;color:inherit;font-family:var(--font-sans);font-size:0.85rem;font-weight:700;padding:0.1rem;">'
+        + '<input type="number" class="scc-init-hp-input ' + hpCls + '" value="' + c.hpCur + '" min="0" max="' + c.hpMax + '" onchange="sccSetHP(' + idx + ',this.value)" style="width:38px;text-align:center;background:var(--dm-surface);border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text);font-family:var(--font-sans);font-size:0.85rem;font-weight:700;padding:0.1rem;">'
         + '<span class="scc-init-hp-max">/' + c.hpMax + '</span>'
         + '<button class="scc-init-hp-btn" onclick="sccAdjustHP(' + idx + ',1)">+</button>'
       + '</div>'
@@ -13870,6 +13945,11 @@ function sccRenderInitiativeList() {
       + '</div>'
       + statsBtn
       + lootBtn
+      // Moved from the far-left slot to just before Remove -- "farthest
+      // right" per the DM's own annotation, with Remove kept as the row's
+      // final/rightmost control (this file's established convention for
+      // destructive actions).
+      + '<div class="scc-init-num">' + c.initiative + '</div>'
       + '<button class="scc-init-remove-btn" onclick="sccRemoveFromCombat(' + idx + ')" title="Remove from combat">&#10005;</button>'
     + '</div>'
     + (!c.isPC
