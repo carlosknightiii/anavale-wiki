@@ -178,6 +178,25 @@
   --dm-only-dim:    rgba(255,0,243,0.15);
   --dm-only-border: rgba(255,0,243,0.35);
 
+  /* ── REGION HEALTH (color_health: vivid/muted/faded/dimmed/unknown) ───────
+     Single real source for the whole app -- regions/cities/pois all share
+     one color_health column and this one 5-value enum. Teal-shade palette
+     per direct DM instruction (2026-08-16), replacing the old ad hoc
+     teal/gold/blue-violet/grey/grey set. Text colors picked per swatch by
+     perceived brightness, not copy-pasted from the old palette's contrast
+     choices -- Vivid/Muted are bright enough for dark text, Faded/Dimmed/
+     Unknown are dark enough to need light text. */
+  --region-vivid:        #4EFFE1;
+  --region-vivid-text:   #0b0e16;
+  --region-muted:        #35AB97;
+  --region-muted-text:   #0b0e16;
+  --region-faded:        #206A5E;
+  --region-faded-text:   #e8e8f0;
+  --region-dimmed:       #334340;
+  --region-dimmed-text:  #e8e8f0;
+  --region-unknown:      #666666;
+  --region-unknown-text: #e8e8f0;
+
   /* ── GIGGLEGLOOM TYPE COLORS ─────────────────────────────── */
   --bubbleseed:  #2a7a3a;
   --featherflow: #2266b8;

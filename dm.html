@@ -1371,11 +1371,11 @@
                 <span class="field-help">Current Gigglegloom saturation and vitality</span>
                 <select class="field-select" id="city-color-health">
                   <option value="">— Select —</option>
-                  <option value="dire">Dire</option>
-                  <option value="excellent">Excellent</option>
+                  <option value="vivid">Vivid</option>
+                  <option value="muted">Muted</option>
                   <option value="faded">Faded</option>
-                  <option value="good">Good</option>
-                  <option value="moderate">Moderate</option>
+                  <option value="dimmed">Dimmed</option>
+                  <option value="unknown">Unknown</option>
                 </select>
               </div>
             </div>
@@ -1762,11 +1762,11 @@
               <span class="field-help">Gigglegloom saturation at this location</span>
               <select class="field-select" id="poi-color-health">
                 <option value="">— Select —</option>
-                <option value="dire">Dire / Absent</option>
-                <option value="excellent">Excellent / Surging</option>
+                <option value="vivid">Vivid</option>
+                <option value="muted">Muted</option>
                 <option value="faded">Faded</option>
-                <option value="good">Good</option>
-                <option value="moderate">Moderate</option>
+                <option value="dimmed">Dimmed</option>
+                <option value="unknown">Unknown</option>
               </select>
             </div>
           </div>
@@ -3422,11 +3422,10 @@
                 </select>
                 <select id="cm-colorhealth-filter" class="cm-select" onchange="cmApplyFilters()">
                   <option value="">All Color Health</option>
-                  <option value="compromised">Compromised</option>
-                  <option value="dire">Dire</option>
-                  <option value="excellent">Excellent</option>
-                  <option value="good">Good</option>
-                  <option value="moderate">Moderate</option>
+                  <option value="vivid">Vivid</option>
+                  <option value="muted">Muted</option>
+                  <option value="faded">Faded</option>
+                  <option value="dimmed">Dimmed</option>
                   <option value="unknown">Unknown</option>
                 </select>
                 <select id="cm-item-category-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
@@ -5039,6 +5038,37 @@ function showDMToast(msg, type) {
   margin-bottom: 0.15rem;
   user-select: none;
 }
+/* Region health rollup -- a separate, auto-computed breakdown of a region's
+   real child cities/POIs, distinct from the region's own (often free-text)
+   color_health badge above it. Chips, not one collapsed value, so a DM sees
+   the real spread at a glance. */
+.scc-region-rollup {
+  margin: 0.6rem 0 1rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-region-rollup-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.4rem;
+}
+.scc-region-rollup-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.scc-region-rollup-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dm-text);
+}
+.scc-region-rollup-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .scc-loc2-vareth-badge {
   display: inline-flex;
   align-items: center;
@@ -11081,7 +11111,12 @@ function sccRelColor(rel) {
 
 /* Single shared source for region/location "color_health" badges -- was three
    identical copies of the same if/else ladder (location panel card, city/POI/
-   nation lookup-drawer branch, region lookup-drawer branch). */
+   nation lookup-drawer branch, region lookup-drawer branch). Colors now come
+   from the real --region-* tokens in tokens.css (2026-08-16 DM teal palette)
+   instead of hardcoded hex here -- this is the only place that ever needs to
+   change again if the palette moves. Regions' own color_health is often free
+   text ("excellent near X, dire near Y") rather than a clean enum value, so
+   this still substring-matches rather than doing an exact lookup. */
 function sccRegionHealthColor(colorHealth) {
   var ch = (colorHealth || '').toLowerCase();
   var isVivid  = ch.indexOf('vivid')  >= 0 || ch.indexOf('excellent') >= 0 || ch.indexOf('good') >= 0;
@@ -11089,10 +11124,42 @@ function sccRegionHealthColor(colorHealth) {
   var isFaded  = ch.indexOf('faded')  >= 0 || ch.indexOf('fading') >= 0 || ch.indexOf('stage-1') >= 0;
   var isDimmed = ch.indexOf('dimmed') >= 0 || ch.indexOf('stage-2') >= 0 || ch.indexOf('dire') >= 0;
   return {
-    bg: isVivid ? '#6ee6d2' : isMuted ? '#f0b429' : isFaded ? '#aaa0c8' : isDimmed ? '#a0a0b0' : '#666666',
-    text: isMuted ? '#1a1008' : '#0b0e16',
+    bg:   isVivid ? 'var(--region-vivid)'      : isMuted ? 'var(--region-muted)'      : isFaded ? 'var(--region-faded)'      : isDimmed ? 'var(--region-dimmed)'      : 'var(--region-unknown)',
+    text: isVivid ? 'var(--region-vivid-text)' : isMuted ? 'var(--region-muted-text)' : isFaded ? 'var(--region-faded-text)' : isDimmed ? 'var(--region-dimmed-text)' : 'var(--region-unknown-text)',
     label: colorHealth ? colorHealth.replace(/-/g,' ').toUpperCase() : ''
   };
+}
+
+/* Auto-computed rollup of a region's real child cities/POIs color_health,
+   built live from CITIES/POIS.region (cities.region/pois.region -- confirmed
+   real, populated 23/23 and 13/13, matching real regions.id values). This is
+   a SEPARATE, new indicator alongside the region's own (often free-text)
+   color_health field -- it never reads or writes reg.color_health, and
+   doesn't touch that field's display. A city/POI with no color_health set
+   folds into the Unknown bucket here (not silently dropped), so the DM sees
+   when the underlying data is incomplete, not just when it's uniform. Colors
+   come from the same sccRegionHealthColor() every other color_health surface
+   uses -- no separate palette for this feature. */
+function sccBuildRegionHealthRollupHtml(regionId) {
+  var cities = (typeof CITIES !== 'undefined' ? CITIES : []).filter(function(c) { return c.region === regionId; });
+  var pois   = (typeof POIS   !== 'undefined' ? POIS   : []).filter(function(p) { return p.region === regionId; });
+  var all = cities.concat(pois);
+  if (!all.length) return '';
+  var counts = { vivid: 0, muted: 0, faded: 0, dimmed: 0, unknown: 0 };
+  all.forEach(function(e) {
+    var ch = (e.color_health || '').toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(counts, ch)) counts[ch]++;
+    else counts.unknown++;
+  });
+  var order = ['vivid', 'muted', 'faded', 'dimmed', 'unknown'];
+  var chips = order.filter(function(k) { return counts[k] > 0; }).map(function(k) {
+    var hc = sccRegionHealthColor(k);
+    return '<span class="scc-region-rollup-chip"><span class="scc-region-rollup-dot" style="background:' + hc.bg + '"></span>' + counts[k] + ' ' + hc.label + '</span>';
+  }).join('');
+  return '<div class="scc-region-rollup">'
+    + '<div class="scc-region-rollup-label">Cities &amp; POIs (' + all.length + ')</div>'
+    + '<div class="scc-region-rollup-chips">' + chips + '</div>'
+  + '</div>';
 }
 
 function sccLiveRenderConditions() {
@@ -15487,6 +15554,8 @@ function sccOpenLookup(type, id) {
       // ── PROSE SECTIONS ──
       + (reg.summary     ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(reg.summary) + '</div></div>' : '')
       + (reg.description ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(reg.description) + '</div></div>' : '')
+      // ── AUTO-COMPUTED ROLLUP (separate from reg.color_health above) ──
+      + sccBuildRegionHealthRollupHtml(reg.id)
       // ── TAGS ──
       + (regionTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + regionTagsHtml + '</div></div>' : '');
   } else if (type === 'religion') {
