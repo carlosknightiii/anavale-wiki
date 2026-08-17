@@ -4300,15 +4300,21 @@
     var src = t ? SPELL_TYPE_ICON_SRC[t] : null;
     return src ? '<img class="cs-spell-thumb" src="' + src + '" alt="">' : '<span class="cs-spell-thumb-fallback">&#10022;</span>';
   }
-  // Only spells on this character's own class list are ever offered — a
-  // spell not on your class's list isn't something you could learn, per
-  // the 5e rule. This became viable only once spells.classes was populated
-  // with real data this same handoff; the doc's original "Add to Learned"
-  // recommendation (any spell, unrestricted) was written when that column
-  // was still empty for every row.
+  // Round 1 Fix 1 — three-tier spell model, replacing the class-list-only
+  // scoping from Handoff B (which implied a player could learn ANY spell
+  // legal for their class at any time — not the intended model per the
+  // DM). The browser now shows the "could-learn" pool: (a) spells.classes
+  // (the class allowlist, already real data) UNION (b) this character's
+  // own character_sheet.extra_learnable_spells (DM-granted, story-reason
+  // exceptions — "Hana learned Cure Wounds from her grandmother"). Picking
+  // "+ Learn" from that pool is what actually adds a spell to learned_spells
+  // — the pool itself is eligibility, not possession.
   function spellsLearnedEligible() {
     var classKey = (CH && CH.class_id || '').toLowerCase();
-    return SPELLS_DATA.filter(function(s) { return Array.isArray(s.classes) && s.classes.indexOf(classKey) >= 0; });
+    var extras = (SHEET && Array.isArray(SHEET.extra_learnable_spells)) ? SHEET.extra_learnable_spells : [];
+    return SPELLS_DATA.filter(function(s) {
+      return (Array.isArray(s.classes) && s.classes.indexOf(classKey) >= 0) || extras.indexOf(s.id) >= 0;
+    });
   }
   function populateSpellsLearnedFilterOptions() {
     var eligible = spellsLearnedEligible();
@@ -4335,10 +4341,16 @@
     var card = document.getElementById('cs-spells-learned-card');
     var tbody = document.getElementById('cs-spells-learned-tbody');
     if (!card || !tbody) return;
-    var classKey = (CH && CH.class_id || '').toLowerCase();
-    if (!classKey) { card.style.display = 'none'; return; }
+    // Round 1 Fix 3 — gated on spellcasting_ability (true non-casters:
+    // Barbarian/Fighter/Monk/Rogue), same signal the Spellcasting Stats card
+    // and the Features accordion's Prepared group use, not on whether any
+    // eligible spells currently resolve. A real caster with a temporarily
+    // empty pool (e.g. a spells.classes data gap) should see an honest
+    // "no spells match" empty table, not have the whole card vanish as if
+    // the feature doesn't exist for their class.
+    var hasCasting = !!(CLASS_ROW && CLASS_ROW.spellcasting_ability);
+    if (!hasCasting) { card.style.display = 'none'; return; }
     var eligible = spellsLearnedEligible();
-    if (!eligible.length) { card.style.display = 'none'; return; }
     card.style.display = '';
     var q = (document.getElementById('cs-sl-search').value || '').toLowerCase().trim();
     var lvl = document.getElementById('cs-sl-level').value;
@@ -4542,12 +4554,34 @@
   // as sibling groups to Class-Specific, per the real Figma (52:2705) —
   // shown whenever the class has EITHER limited-use features OR any spell
   // slot progression (a caster), not just the former as before.
+  // Round 1 Fix 3 — visibility gates corrected against the real 2024 rules,
+  // not assumed. Investigating this surfaced that the underlying data (not
+  // just the render logic) was wrong: Ranger/Paladin actually gain their
+  // Spellcasting feature — and their first spell slots — at LEVEL 1 in the
+  // 2024 PHB (a genuine, documented rules change from 2014, where it was
+  // level 2), and Handoff B had mistakenly built the old 2014-shaped table.
+  // That's now fixed at the data layer (see the Decision Log entry), which
+  // means the QA screenshot's "hide these, a level-1 Ranger has nothing" is
+  // the wrong fix for the wrong cause — a level-1 Ranger genuinely has 2
+  // real spell slots and can prepare 2 real spells, so hiding the cards
+  // would hide correct, working functionality. The real gate:
+  // - hasCasting (spellcasting_ability set) — governs the Spells Prepared
+  //   group AND the Spells Learned card. A true non-caster (Fighter/Rogue/
+  //   Monk/Barbarian) has neither.
+  // - hasSlotsThisLevel — governs the Spell Slots group specifically.
+  //   Doesn't diverge from hasCasting for any of the 8 real casting classes
+  //   at any level 1-20 once the data fix above landed (verified via the
+  //   same raw table pull), but kept as its own check rather than collapsed
+  //   into hasCasting — a future homebrew class with a real casting-but-no-
+  //   slots-yet level shouldn't need this logic re-derived from scratch.
   function renderClassFeaturesAccordion() {
     var wrap = document.getElementById('cs-class-features-acc-wrap');
     if (!wrap) return;
     var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
     var hasLimitedUse = features.length > 0;
-    var hasCasting = !!(CLASS_ROW && CLASS_ROW.spell_slot_progression);
+    var hasCasting = !!(CLASS_ROW && CLASS_ROW.spellcasting_ability);
+    var slotsArr = hasCasting ? computeSpellSlotsArray() : null;
+    var hasSlotsThisLevel = !!(slotsArr && slotsArr.some(function(n){ return (parseInt(n) || 0) > 0; }));
     if (!hasLimitedUse && !hasCasting) { wrap.innerHTML = ''; return; }
     if (!document.getElementById('cs-class-features-acc')) {
       wrap.innerHTML = '<div class="cs-ov-acc" id="cs-class-features-acc">'
@@ -4560,7 +4594,7 @@
               + '<div class="cs-limuse-group-label">Class-Specific</div>'
               + '<div id="cs-class-specific"></div>'
             + '</div>' : '')
-          + (hasCasting ? '<div class="cs-limuse-group">'
+          + (hasSlotsThisLevel ? '<div class="cs-limuse-group">'
               + '<div class="cs-limuse-group-label">Spell Slots</div>'
               + '<div class="cs-spellslot-explainer">Spell slots represent a caster&#8217;s limited daily magical energy.'
                 + '<ul><li><strong>Casting:</strong> To cast a spell, you must expend a slot of the spell&#8217;s level or higher.</li>'
@@ -4577,8 +4611,8 @@
       + '</div>';
     }
     renderLimitedUseFeatures();
-    renderSpellSlotsGroup();
-    renderPreparedSpells();
+    if (hasSlotsThisLevel) renderSpellSlotsGroup();
+    if (hasCasting) renderPreparedSpells();
   }
 
   function renderClassTabDynamic() {
@@ -4981,7 +5015,19 @@
     renderInspiration();
     renderSpellSlotsGroup();
     renderPreparedSpells();
-    applySpellsLearnedFilter();
+    // Round 1 Fix 2 — was applySpellsLearnedFilter() alone, which re-filters
+    // the table but never re-populates the filter dropdowns' <option> lists.
+    // Root cause: renderClassTabDynamic() (fired when fetchClassData()
+    // resolves) calls renderSpellsLearnedFilters() — populate + apply —
+    // immediately, but that runs in parallel with fetchSpellsData() in the
+    // same init Promise.all and usually wins the race, so SPELLS_DATA is
+    // still [] when the dropdowns first populate (they render with zero real
+    // options). renderLivePlay() only runs once the WHOLE Promise.all
+    // resolves (SPELLS_DATA guaranteed loaded by then), so it's the correct
+    // place to re-populate, not just re-filter — using the full function
+    // fixes the empty dropdowns without needing a second, parallel fetch-
+    // ordering fix.
+    renderSpellsLearnedFilters();
     renderSpellcastingStats();
     renderLimitedUseFeatures();
     renderAbilitySkills();
