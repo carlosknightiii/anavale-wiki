@@ -1276,16 +1276,21 @@
              that have a real full-detail/edit page to deep-link into (NPC, City,
              POI, Creature, Organization, Item, Quest) — Nation/Region/Religion/
              Species have no such page today, so they never get a link here.
-             Deliberately no rel="noopener"/"noreferrer": both sever the new
-             tab's window.opener reference, and per spec (confirmed against
-             MDN's Window.sessionStorage docs) sessionStorage is only copied to
-             a new tab when it has a real opener — removing it was silently
-             defeating the one thing this link exists to do (skip the password
-             gate in the new tab). Safe here specifically because the target is
-             always this same app, same origin, never third-party content —
-             the reverse-tabnabbing risk noopener guards against doesn't apply
-             to a same-origin link into your own trusted page. -->
-        <a id="scc-lookup-newtab-link" class="scc-lookup-newtab" href="#" target="_blank" style="display:none;" title="Open the full edit/detail page in a new tab">Open in new tab &#8599;</a>
+             rel="opener" is required, not optional, for the new tab to inherit
+             sessionStorage (and skip the password gate) — confirmed against
+             MDN: modern browsers treat target="_blank" as implicitly noopener
+             by DEFAULT now, regardless of whether rel="noopener" is present.
+             ("Windows opened because of links with a target of _blank don't
+             get an opener, unless explicitly requested with rel=opener.")
+             Removing rel="noopener" alone (an earlier attempt at this same
+             fix) was necessary but not sufficient — the browser was already
+             withholding the opener by default. rel="opener" is the current,
+             correct way to explicitly ask for it back. Safe here specifically
+             because the target is always this same app, same origin, never
+             third-party content — the reverse-tabnabbing risk noopener/the
+             new default guards against doesn't apply to a same-origin link
+             into your own trusted page. -->
+        <a id="scc-lookup-newtab-link" class="scc-lookup-newtab" href="#" target="_blank" rel="opener" style="display:none;" title="Open the full edit/detail page in a new tab">Open in new tab &#8599;</a>
         <button class="scc-lookup-close" onclick="sccCloseLookup()" aria-label="Close">✕</button>
         <div id="scc-lookup-content" class="scc-lookup-content">
           <div class="scc-lookup-loading">Loading…</div>
