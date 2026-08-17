@@ -1272,6 +1272,11 @@
          failed to render when opened from Manage/Quests/Players. -->
     <div id="scc-lookup-panel" class="scc-lookup-panel" aria-hidden="true">
       <div class="scc-lookup-inner">
+        <!-- Hidden by default; sccOpenLookup() only reveals this for the 7 types
+             that have a real full-detail/edit page to deep-link into (NPC, City,
+             POI, Creature, Organization, Item, Quest) — Nation/Region/Religion/
+             Species have no such page today, so they never get a link here. -->
+        <a id="scc-lookup-newtab-link" class="scc-lookup-newtab" href="#" target="_blank" rel="noopener" style="display:none;" title="Open the full edit/detail page in a new tab">Open in new tab &#8599;</a>
         <button class="scc-lookup-close" onclick="sccCloseLookup()" aria-label="Close">✕</button>
         <div id="scc-lookup-content" class="scc-lookup-content">
           <div class="scc-lookup-loading">Loading…</div>
@@ -3561,6 +3566,14 @@
       });
       // Refresh Content Manager with live data
       if (typeof cmRefresh === 'function') cmRefresh();
+      // "Open in new tab" deep-link routing (?tab=manage&edit=type:id /
+      // ?tab=quests&quest=id) — only once real data has loaded (CM_FILTERED/
+      // QUESTS need to be populated for the lookup to find anything) and only
+      // if the gate is already unlocked, since a fresh unauthenticated tab has
+      // nothing to route into yet.
+      if (sessionStorage.getItem('dm_auth') === '1' && typeof sccHandleUrlRouting === 'function') {
+        sccHandleUrlRouting();
+      }
       var syncEl = document.getElementById('cm-last-sync');
       if (syncEl) {
         var now = new Date();
@@ -6849,6 +6862,26 @@ function showDMToast(msg, type) {
   padding: 0.25rem;
 }
 .scc-lookup-close:hover { color: var(--dm-red); }
+.scc-lookup-newtab {
+  position: absolute;
+  top: 0.65rem;
+  right: 2.7rem;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--dm-border-gold);
+  border-radius: 6px;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  z-index: 1;
+  transition: var(--dm-transition);
+}
+.scc-lookup-newtab:hover { filter: brightness(1.15); }
 .scc-lookup-content {
   flex: 1;
   overflow-y: auto;
@@ -7518,6 +7551,83 @@ function showDMToast(msg, type) {
   display: none;
 }
 .scc-statblock-panel.open { display: block; }
+/* ── Players page — per-character detail panel (Round 2 Revisions).
+   Same collapsible-panel-below-a-row convention as .scc-loot-panel/
+   .scc-statblock-panel above, not a modal — toggled open by the card's own
+   "Edit" button. Built extensibly: .scc-pd-section is one self-contained
+   block: today only Spell Assignment renders one, a future HP/equipment/
+   notes section is just another block appended after it, no restructuring
+   of the panel itself needed. ── */
+.scc-player-detail-panel {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--dm-border);
+  display: none;
+}
+.scc-player-detail-panel.open { display: block; }
+.scc-pd-section { margin-bottom: 1.25rem; }
+.scc-pd-section:last-child { margin-bottom: 0; }
+.scc-pd-section-title {
+  font-family: var(--font-headers);
+  font-size: 1rem;
+  color: var(--dm-gold);
+  margin-bottom: 0.6rem;
+}
+.scc-pd-spell-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.scc-pd-spell-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--dm-text);
+}
+.scc-pd-spell-row-name { flex: 1; min-width: 0; }
+.scc-pd-spell-row-level {
+  color: var(--dm-text-muted);
+  font-size: 0.72rem;
+  margin-left: 0.4rem;
+}
+.scc-pd-spell-row-prepared {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dm-gold);
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--dm-border-gold);
+  border-radius: 100px;
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+.scc-pd-spell-remove {
+  background: none;
+  border: none;
+  color: var(--dm-red);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+  flex-shrink: 0;
+}
+.scc-pd-spell-remove:hover { opacity: 0.7; }
+.scc-pd-empty {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+  padding: 0.4rem 0;
+}
 /* Death saves -- same pips/behavior as the character sheet's own MainInfo
    header (sheet/index.html .cs-mi-death-saves), laid out horizontally to
    fit under a combat row instead of the sheet's stacked header slot. */
@@ -10743,6 +10853,7 @@ function renderPlayers() {
             + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
               + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="padding:0.4rem 1rem;background:var(--dm-gold-dim);border:1px solid var(--dm-border-gold);border-radius:6px;color:var(--dm-gold);font-family:var(--font-sans);font-size:0.75rem;font-weight:600;text-decoration:none;white-space:nowrap;">Open Sheet ↗</a>'
               + '<button onclick="navigator.clipboard.writeText(\'' + escQ(sheetUrl) + '\').then(function(){showDMToast(\'Link copied\',\'success\')})" style="padding:0.4rem 1rem;background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:6px;color:var(--dm-text-muted);font-family:var(--font-sans);font-size:0.75rem;cursor:pointer;white-space:nowrap;">Copy Link</button>'
+              + '<button id="scc-pd-editbtn-' + escQ(pc.id) + '" onclick="sccTogglePlayerDetail(\'' + escQ(pc.id) + '\')" style="padding:0.4rem 1rem;background:var(--dm-surface);border:1px solid var(--dm-border-blue);border-radius:6px;color:var(--dm-blue);font-family:var(--font-sans);font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#9998; Edit</button>'
             + '</div>'
           + '</div>'
           + '<div style="display:flex;gap:1.5rem;margin-top:0.85rem;flex-wrap:wrap;">'
@@ -10753,9 +10864,170 @@ function renderPlayers() {
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Submitted</span><br>' + submitted + '</div>'
           + '</div>'
           + '<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:var(--dm-bg);border-radius:6px;font-family:var(--font-mono);font-size:0.68rem;color:var(--dm-text-muted);word-break:break-all;">' + escQ(sheetUrl) + '</div>'
+          + '<div class="scc-player-detail-panel" id="scc-pd-panel-' + escQ(pc.id) + '">'
+            + '<div id="scc-pd-body-' + escQ(pc.id) + '"><div class="scc-pd-empty">Loading&#8230;</div></div>'
+          + '</div>'
         + '</div>';
       }).join('')
     + '</div>';
+}
+
+// ── Players page — per-character detail panel (Round 2 Revisions) ──────
+// Extensible by design: renderPlayerDetailBody() renders one .scc-pd-section
+// block per feature. Today only Spell Assignment exists — a future section
+// (HP overrides, equipment, notes) is just another block appended to the
+// same function's output, no restructuring of the panel/toggle mechanism
+// needed. Same collapsible-panel-below-a-row convention as the Combat tab's
+// .scc-loot-panel/.scc-statblock-panel (sccToggleLoot/sccToggleStatBlock),
+// not a modal, per the instruction to match existing DM Tools conventions.
+var PD_SHEETS = {};       // character_id -> character_sheet row, fetched on first Edit click, cached
+var SPELLS_DATA_DM = null; // all spells rows, fetched once on first Edit click across any character, then reused
+
+function sccTogglePlayerDetail(charId) {
+  var panel = document.getElementById('scc-pd-panel-' + charId);
+  if (!panel) return;
+  var opening = !panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if (opening && !PD_SHEETS[charId]) {
+    sccLoadPlayerDetail(charId);
+  }
+}
+
+function sccLoadPlayerDetail(charId) {
+  var bodyEl = document.getElementById('scc-pd-body-' + charId);
+  if (bodyEl) bodyEl.innerHTML = '<div class="scc-pd-empty">Loading&#8230;</div>';
+  var needSpells = !SPELLS_DATA_DM;
+  Promise.all([
+    sccFetch('character_sheet', '&character_id=eq.' + encodeURIComponent(charId)),
+    needSpells ? sccFetch('spells', '') : Promise.resolve(null)
+  ]).then(function(results) {
+    var sheetRows = results[0];
+    if (needSpells) SPELLS_DATA_DM = Array.isArray(results[1]) ? results[1] : [];
+    PD_SHEETS[charId] = (Array.isArray(sheetRows) && sheetRows[0]) ? sheetRows[0] : {
+      character_id: charId, learned_spells: [], prepared_spells: [], extra_learnable_spells: []
+    };
+    renderPlayerDetailBody(charId);
+  }).catch(function() {
+    if (bodyEl) bodyEl.innerHTML = '<div class="scc-pd-empty">Failed to load — try again.</div>';
+  });
+}
+
+function sccPlayerCharById(charId) {
+  return PLAYERS_DATA.find(function(pc) { return pc.id === charId; });
+}
+
+function renderPlayerDetailBody(charId) {
+  var bodyEl = document.getElementById('scc-pd-body-' + charId);
+  if (!bodyEl) return;
+  bodyEl.innerHTML = '<div class="scc-pd-section">'
+    + '<div class="scc-pd-section-title">Spell Assignment</div>'
+    + renderPlayerSpellSection(charId)
+  + '</div>';
+}
+
+// Same eligibility rule as the sheet's own (now-retired) self-serve browser
+// — spells.classes includes the character's class, UNION this character's
+// own extra_learnable_spells (DM-granted story-reason exceptions, e.g.
+// "Hana learned Cure Wounds from her grandmother") — just DM-driven now
+// instead of player-driven, per the Round 2 Revisions instruction to keep
+// "the same eligibility logic as before." extra_learnable_spells itself
+// isn't given its own editor here — a spell assigned outside the class
+// list still just goes straight into learned_spells like any other pick;
+// the field stays real but is DM-SQL-managed, matching the existing §3
+// precedent for it.
+function sccPlayerSpellEligible(charId) {
+  var pc = sccPlayerCharById(charId);
+  var sheet = PD_SHEETS[charId] || {};
+  var classKey = (pc && pc.class_id || '').toLowerCase();
+  var extras = Array.isArray(sheet.extra_learnable_spells) ? sheet.extra_learnable_spells : [];
+  var pool = Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : [];
+  return pool.filter(function(s) {
+    return (Array.isArray(s.classes) && s.classes.indexOf(classKey) >= 0) || extras.indexOf(s.id) >= 0;
+  });
+}
+
+function renderPlayerSpellSection(charId) {
+  var sheet = PD_SHEETS[charId] || {};
+  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  var prepared = Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : [];
+  var byId = {};
+  (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
+  var listHtml = learned.length
+    ? '<div class="scc-pd-spell-list">' + learned.map(function(id) {
+        var s = byId[id];
+        var name = s ? s.name : id;
+        var levelLabel = s ? (s.level === 0 ? 'Cantrip' : 'Level ' + s.level) : '';
+        var isPrepared = prepared.indexOf(id) >= 0;
+        return '<div class="scc-pd-spell-row">'
+          + '<span class="scc-pd-spell-row-name">' + sccEsc(name) + (levelLabel ? '<span class="scc-pd-spell-row-level">' + sccEsc(levelLabel) + '</span>' : '') + '</span>'
+          + (isPrepared ? '<span class="scc-pd-spell-row-prepared">Prepared</span>' : '')
+          + '<button class="scc-pd-spell-remove" onclick="sccPlayerUnassignSpell(\'' + escQ(charId) + '\',\'' + escQ(id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
+        + '</div>';
+      }).join('') + '</div>'
+    : '<div class="scc-pd-empty">No spells learned yet.</div>';
+  return listHtml
+    + '<div class="scc-picker-search-wrap" style="position:relative;">'
+      + '<input type="text" class="scc-picker-search" id="scc-pd-spellsearch-' + escQ(charId) + '" placeholder="Search this character&#8217;s eligible spells&#8230;" oninput="sccPlayerSpellSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
+      + '<div class="scc-picker-dropdown" id="scc-pd-spelldrop-' + escQ(charId) + '"></div>'
+    + '</div>';
+}
+
+function sccPlayerSpellSearch(charId, query) {
+  var drop = document.getElementById('scc-pd-spelldrop-' + charId);
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var sheet = PD_SHEETS[charId] || {};
+  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  var results = sccPlayerSpellEligible(charId).filter(function(s) {
+    return s.name.toLowerCase().indexOf(query) >= 0 && learned.indexOf(s.id) === -1;
+  }).slice(0, 12);
+  if (!results.length) {
+    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+    drop.classList.add('open');
+    return;
+  }
+  drop.innerHTML = results.map(function(s) {
+    var levelLabel = s.level === 0 ? 'Cantrip' : 'Level ' + s.level;
+    return '<div class="scc-picker-option" onclick="sccPlayerAssignSpell(\'' + escQ(charId) + '\',\'' + escQ(s.id) + '\')">'
+      + sccEsc(s.name)
+      + '<div class="scc-picker-option-sub">' + sccEsc(levelLabel) + (s.school ? ' &middot; ' + sccEsc(s.school) : '') + '</div>'
+    + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+
+function sccPlayerAssignSpell(charId, spellId) {
+  var sheet = PD_SHEETS[charId] || {};
+  var learned = (Array.isArray(sheet.learned_spells) ? sheet.learned_spells : []).slice();
+  if (learned.indexOf(spellId) === -1) learned.push(spellId);
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(charId), { learned_spells: learned }).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to assign spell', 'error'); return; }
+    sheet.learned_spells = learned;
+    PD_SHEETS[charId] = sheet;
+    var searchInput = document.getElementById('scc-pd-spellsearch-' + charId);
+    if (searchInput) searchInput.value = '';
+    var drop = document.getElementById('scc-pd-spelldrop-' + charId);
+    if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+    renderPlayerDetailBody(charId);
+    showDMToast('Spell assigned', 'success');
+  }).catch(function() { showDMToast('Failed to assign spell', 'error'); });
+}
+
+function sccPlayerUnassignSpell(charId, spellId) {
+  var sheet = PD_SHEETS[charId] || {};
+  var learned = (Array.isArray(sheet.learned_spells) ? sheet.learned_spells : []).filter(function(id) { return id !== spellId; });
+  // Unlearning a currently-prepared spell un-prepares it too — a spell that's
+  // no longer known can't stay in the daily prepared list.
+  var prepared = (Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : []).filter(function(id) { return id !== spellId; });
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(charId), { learned_spells: learned, prepared_spells: prepared }).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to remove spell', 'error'); return; }
+    sheet.learned_spells = learned;
+    sheet.prepared_spells = prepared;
+    PD_SHEETS[charId] = sheet;
+    renderPlayerDetailBody(charId);
+    showDMToast('Spell removed', 'success');
+  }).catch(function() { showDMToast('Failed to remove spell', 'error'); });
 }
 </script>
 <script>
@@ -15171,15 +15443,22 @@ function sccOpenLookup(type, id) {
   var panel    = document.getElementById('scc-lookup-panel');
   var backdrop = document.getElementById('scc-lookup-backdrop');
   var content  = document.getElementById('scc-lookup-content');
+  var newTabEl = document.getElementById('scc-lookup-newtab-link');
   if (!panel || !content) return;
   content.innerHTML = '<div class="scc-lookup-loading">Loading…</div>';
   panel.classList.add('open');
   backdrop.classList.add('open');
+  if (newTabEl) newTabEl.style.display = 'none';
   var html = '';
+  // Set below only for the 7 types with a real full-detail/edit page to deep-link
+  // into. Left null (no link shown) for nation/region/religion/species, which
+  // have none — confirmed in the "open in new tab" investigation.
+  var newTabUrl = null;
   if (type === 'character') {
     var chars = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
     var c = chars.find(function(x){ return x.id === id; });
     if (!c) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    newTabUrl = sccBuildManageEditUrl('character', c.id);
 
     var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
     var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
@@ -15280,6 +15559,9 @@ function sccOpenLookup(type, id) {
     var isNationEntry = (typeof NATIONS !== 'undefined' ? NATIONS : []).some(function(n){ return n.id === loc.id; });
     var isPoiEntry = (typeof POIS !== 'undefined' ? POIS : []).some(function(p){ return p.id === loc.id; });
     var typeLine = isNationEntry ? 'Nation' : isPoiEntry ? 'POI' : (loc.city_type || 'City').replace(/-/g,' ');
+    // Nations have no Content Manager edit form at all (confirmed: not in
+    // CM_ARRAYS) — no new-tab link for them, only for real cities/POIs.
+    if (!isNationEntry) newTabUrl = sccBuildManageEditUrl(isPoiEntry ? 'poi' : 'city', loc.id);
     // Tags
     var locTagsHtml = '';
     if (loc.tags && loc.tags.length) {
@@ -15363,6 +15645,7 @@ function sccOpenLookup(type, id) {
     var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
     var cr = creatures.find(function(x){ return x.id===id; });
     if (!cr) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    newTabUrl = sccBuildManageEditUrl('creature', cr.id);
     var abMod = function(score){ if(!score) return '—'; var m=Math.floor((score-10)/2); return (m>=0?'+':'')+m; };
     var hasAbilities = cr.str||cr.dex||cr.con||cr.int||cr.wis||cr.cha;
     html = (cr.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(cr.read_aloud)+'</div></div>':'')
@@ -15389,6 +15672,7 @@ function sccOpenLookup(type, id) {
     var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
     var q = quests.find(function(x){ return x.id === id; });
     if (!q) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    newTabUrl = sccBuildQuestDetailUrl(q.id);
     var beatsHtml = '';
     if (q.beats && q.beats.length) {
       q.beats.forEach(function(b) {
@@ -15419,6 +15703,7 @@ function sccOpenLookup(type, id) {
     var orgs = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
     var org = orgs.find(function(x){ return x.id === id; });
     if (!org) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    newTabUrl = sccBuildManageEditUrl('organization', org.id);
 
     var opfVal   = org.player_facing;
     var opfLabel = opfVal === true || opfVal === 'true' ? 'Visible to Players' : opfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
@@ -15473,6 +15758,7 @@ function sccOpenLookup(type, id) {
     var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
     var it = itemsAll.find(function(x){ return x.id === id; });
     if (!it) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    newTabUrl = sccBuildManageEditUrl('item', it.id);
 
     var itPortraitHtml = it.image
       ? '<img class="scc-ql-portrait" src="' + sccEsc(it.image) + '" onerror="this.style.display=\'none\'" alt="">'
@@ -15627,6 +15913,10 @@ function sccOpenLookup(type, id) {
       + (sp.description ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(sp.description) + '</div></div>' : '');
   }
   content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
+  if (newTabEl) {
+    if (newTabUrl) { newTabEl.href = newTabUrl; newTabEl.style.display = 'inline-flex'; }
+    else { newTabEl.removeAttribute('href'); newTabEl.style.display = 'none'; }
+  }
 }
 
 function sccCloseLookup() {
@@ -15634,6 +15924,53 @@ function sccCloseLookup() {
   var backdrop = document.getElementById('scc-lookup-backdrop');
   if (panel)    panel.classList.remove('open');
   if (backdrop) backdrop.classList.remove('open');
+}
+
+// ── "Open in new tab" deep-link routing ─────────────────────────────
+// dm.html has no URL routing of any kind otherwise (confirmed via a full
+// grep — the only location.search/hash usage anywhere in the file before
+// this was the env-banner hostname check). These two URL shapes are the
+// entire routing surface, built specifically to support "open in new tab"
+// from the lookup drawer for the 7 entity types that have a real
+// full-detail/edit page — Content Manager's edit form for NPC/City/POI/
+// Creature/Organization/Item, and the Quest Dashboard's detail view for
+// Quest. Nation/Region/Religion/Species have no such page (confirmed in
+// the investigation) and never generate a link that would need routing.
+function sccRoutingUrl(query) {
+  return window.location.pathname + '?' + query;
+}
+function sccBuildManageEditUrl(type, id) {
+  return sccRoutingUrl('tab=manage&edit=' + encodeURIComponent(type) + ':' + encodeURIComponent(id));
+}
+function sccBuildQuestDetailUrl(id) {
+  return sccRoutingUrl('tab=quests&quest=' + encodeURIComponent(id));
+}
+
+// Called once, after the real Supabase data has loaded (so CM_FILTERED/
+// QUESTS are populated) and only if the password gate is already unlocked
+// — a same-origin target="_blank" link inherits sessionStorage, so a real
+// "open in new tab" click never needs this to re-prompt for the password.
+function sccHandleUrlRouting() {
+  var params = new URLSearchParams(window.location.search);
+  var tab = params.get('tab');
+  if (tab === 'manage' && params.get('edit')) {
+    var raw = params.get('edit');
+    var sep = raw.indexOf(':');
+    if (sep < 0) return;
+    var editType = raw.slice(0, sep);
+    var editId   = raw.slice(sep + 1);
+    switchTab('manage');
+    var list = typeof CM_FILTERED !== 'undefined' ? CM_FILTERED : [];
+    var found = list.find(function(item) { return item._type === editType && item._entry.id === editId; });
+    if (found) {
+      cmEditEntry(list.indexOf(found));
+    } else if (typeof showDMToast === 'function') {
+      showDMToast('Could not find that entry to open', 'error');
+    }
+  } else if (tab === 'quests' && params.get('quest')) {
+    switchTab('quests');
+    if (typeof selectQuest === 'function') selectQuest(params.get('quest'));
+  }
 }
 
 </script>
