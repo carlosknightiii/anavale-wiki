@@ -6779,7 +6779,19 @@ function showDMToast(msg, type) {
 .scc-lookup-backdrop.open { display: block; }
 .scc-lookup-panel {
   position: fixed;
-  top: 0; right: 0; bottom: 0;
+  /* Was a bare top:0, with no awareness of the dev banner (10000 z-index) —
+     the banner sits fixed at the very top of the viewport regardless, and
+     this panel's own top-right controls (close button, and the newer "Open
+     in new tab" link) both render inside that first ~33px strip, at a lower
+     z-index (999/1). They exist, they're "display:flex", they're
+     technically on-screen by their own coordinates — but the banner paints
+     over them, so they're invisible and unclickable underneath it whenever
+     the banner is showing. Confirmed live via elementFromPoint() at the
+     link's own center returning the banner, not the link. Matches the same
+     --dm-env-banner-h offset .gate-overlay/.dm-app already use, so the
+     whole panel (and everything anchored to its top edge) now starts below
+     the banner instead of the banner painting over its top strip.  */
+  top: var(--dm-env-banner-h); right: 0; bottom: 0;
   width: 500px;
   max-width: 90vw;
   background: var(--dm-surface);
@@ -7444,7 +7456,18 @@ function showDMToast(msg, type) {
 }
 .scc-global-results {
   position: fixed;
-  top: 48px;
+  /* top/right below are only the pre-JS fallback (briefly visible, if at
+     all, before sccPositionGlobalResults() runs). Was a bare hardcoded
+     48px with no awareness of the dev banner, so .dm-app's real banner
+     push-down left it pinned above the search bar it was meant to sit
+     below. A banner-aware calc() fixed that case but broke again the
+     moment the header wraps to multiple lines at a narrower viewport,
+     since the header's height isn't constant — no fixed number can track
+     that. sccGlobalSearch() now calls sccPositionGlobalResults(), which
+     sets top/right from the search box's own live getBoundingClientRect()
+     every time results are shown — correct at any viewport width,
+     banner or not, with no dependency on --dm-env-banner-h. */
+  top: 84px;
   right: 1rem;
   width: 380px;
   max-height: 480px;
@@ -7978,6 +8001,18 @@ function sortAllDropdowns() {
   selects.forEach(function(sel) {
     var options = Array.from(sel.options);
     if (options.length < 2) return;
+    // Real root cause of filters silently resurrecting: removing options one at
+    // a time via sel.remove(0) forces the native <select> to auto-reselect a
+    // new option every time the removal empties out whatever was currently
+    // selected — a cascade that, by the time every option has been detached and
+    // re-added, can leave a completely unrelated option carrying a stale
+    // selected=true flag. Re-adding that option later then silently overrides
+    // whatever the DM had actually chosen (or explicitly cleared), with no
+    // visible sign anything changed until the next real filter interaction.
+    // Fixed at the source: save the real value first, force it back after the
+    // rebuild — sel.value=... deselects every option and selects only the one
+    // actually matching this value, so no leftover node-level flag can win.
+    var savedValue = sel.value;
     var placeholder = options[0]; // keep "All X" / empty first option in place
     var rest = options.slice(1);
     rest.sort(function(a, b) {
@@ -7987,6 +8022,7 @@ function sortAllDropdowns() {
     while (sel.options.length) sel.remove(0);
     sel.add(placeholder);
     rest.forEach(function(o) { sel.add(o); });
+    sel.value = savedValue;
   });
 }
 
@@ -15369,9 +15405,26 @@ function sccGlobalAnyFilterActive() {
   return false;
 }
 
+// Positions the results dropdown from the search box's own real, live
+// bounding rect rather than a hardcoded pixel offset. A fixed top value
+// (even one that accounted for the dev banner) still broke the moment the
+// header wrapped to multiple lines at a narrower viewport — the header's
+// own height isn't constant, so nothing hardcoded against it can be. This
+// is correct at any viewport width and regardless of whether the banner is
+// showing, with no dependency on --dm-env-banner-h at all.
+function sccPositionGlobalResults() {
+  var wrap = document.querySelector('.scc-global-search-wrap');
+  var resultsEl = document.getElementById('scc-global-results');
+  if (!wrap || !resultsEl) return;
+  var r = wrap.getBoundingClientRect();
+  resultsEl.style.top = (r.bottom + 8) + 'px';
+  resultsEl.style.right = (window.innerWidth - r.right) + 'px';
+}
+
 function sccGlobalSearch(query) {
   var resultsEl = document.getElementById('scc-global-results');
   if (!resultsEl) return;
+  sccPositionGlobalResults();
   query = (query || '').toLowerCase().trim();
   var gfType = (document.getElementById('scc-gf-type') || {}).value || '';
   if (!query && !sccGlobalAnyFilterActive()) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
