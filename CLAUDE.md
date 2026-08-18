@@ -469,7 +469,7 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 
 ---
 
-## 7. Debugging Rules (D1–D7)
+## 7. Debugging Rules (D1–D8)
 
 **D1 — 2-attempt hard limit (non-negotiable).** If a fix fails twice, STOP. Do not write a third variation. Something is wrong with the diagnosis, not the fix. Say: *"I have reached the 2-attempt limit. I will not write another fix until I have read the exact current state of the broken code and identified the specific line that is wrong."*
 
@@ -484,6 +484,8 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 **D6 — Never answer without evidence.** Before answering any question about the project — code, UI, file structure, feature behavior — read the file or search project knowledge first. If the answer cannot be confirmed, say "I don't know — let me check."
 
 **D7 — When the DM corrects a factual claim:** Stop immediately. Do not defend the previous answer. Correct the record in the Decision Log before writing any code.
+
+**D8 — When a testing tool proves structurally unable to verify something, say so the first time, then loop in the DM immediately.** Example on record: a sandboxed browser tool that converts `target="_blank"` clicks into same-tab navigation instead of a real, inspectable new tab — no amount of retrying, different click techniques, or `window.open()` variants makes it capable of that specific check. The moment a limitation like this is confirmed (not suspected — actually tried and hit), say so plainly and ask the DM for one concrete, real verification step. Do not spend a second or third round writing another fix and re-running the same approximated/partial test as if it might now pass — a tool that structurally cannot observe the thing in question won't observe it any better on attempt three. Loop in the human check as soon as the ceiling is confirmed, not after exhausting further code changes against it.
 
 ---
 
@@ -576,6 +578,13 @@ All tokens live in `css/tokens.css` — single source of truth. No `:root` block
 ## 11. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-17 (new session, process addendum — new Debugging Rule D8, no code changed) — `CLAUDE.md`.**
+Prompted directly by the "open in new tab" thread two entries below: across three separate rounds, this session's sandboxed Browser-pane tool proved structurally unable to verify a real cross-tab `sessionStorage` inheritance test — every attempt (direct click, ref-based click, Cmd-modified click, `window.open()` fired from a real click handler) converted the `target="_blank"` navigation into a same-tab navigation instead of creating a second, independently-inspectable browsing context. This was tried and confirmed, not merely suspected, each round — and each round still shipped a code fix before finally saying so plainly and asking the DM to do the real check themselves, which is exactly backwards: the DM caught the second round's incompleteness only because they ran their own real-browser test, not because the tooling here ever could have.
+Added **D8** to §7 Debugging Rules (renumbered the section heading D1–D7 → D1–D8): the moment a testing tool is confirmed structurally unable to observe the thing actually in question, say so immediately and ask the DM for one concrete real verification step — do not spend further rounds writing another fix and re-running the same approximated/partial test as if a different code change might make an incapable tool suddenly capable. The rule cites the exact `target="_blank"`-becomes-same-tab-navigation case on record here as the concrete example, so a future session recognizes the same shape of limitation on sight rather than re-discovering it fix-by-fix.
+No `dm.html`/`sheet/index.html` changes this entry — pure process update, per the DM's explicit ask.
 
 ---
 
