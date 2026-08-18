@@ -304,9 +304,27 @@
   --ability-wis-gradient: #012227;
   --ability-cha-glow:     #ffc14d;
   --ability-cha-gradient: #2d2802;
-  --char-ov-h3:           2rem;      /* 32px — class name, ability score value */
-  --char-ov-h4:           1.625rem;  /* 26px — overview card titles */
-  --char-ov-h5:           1.125rem;  /* 18px — Your Past card titles, Who You Are item titles */
+  /* Round 2 QA (2026-08-17): "There should be a global CSS font scaling
+     from desktop > tablet > mobile" — DM feedback originated on the Your
+     Story tab's accordion titles (.cs-ov-acc-title, "Your Background" etc)
+     hyphenating/overflowing on narrow screens, then explicitly generalized
+     beyond that one instance. These 3 tokens ARE the site's header/heading
+     type scale (used by .cs-ov-acc-title, .cs-ov-card-title, .cs-story-
+     card-title, .cs-past-card-title, .cs-whoyouare-item-title, .cs-class-
+     col-heading, .cs-limuse-group-label, .cs-ab-val, .cs-ov-class-name,
+     plus a couple non-Cinzel reuses like .cs-ov-class-level-val and the
+     Special Effects panel's icon/text sizes) — converting them here, the
+     single source of truth, makes every one of those scale fluidly with
+     viewport width in one change instead of hunting down each selector.
+     clamp(min, preferred, max) — max holds the original fixed px value,
+     min is ~75% of it, preferred scales linearly by viewport width between
+     the two. --char-ov-pl (24px) and body-text tokens are NOT touched here
+     — per the DM's own explicit scope note, headers first, expand only
+     after review. .cs-page-title/.cs-ov-name already had their own ad hoc
+     vw-based clamps predating this token system — left as-is, unaffected. */
+  --char-ov-h3:           clamp(1.5rem, 1.25rem + 1vw, 2rem);       /* 24px → 32px — class name, ability score value */
+  --char-ov-h4:           clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem); /* 20px → 26px — overview card titles */
+  --char-ov-h5:           clamp(0.9375rem, 0.85rem + 0.36vw, 1.125rem); /* 15px → 18px — Your Past card titles, Who You Are item titles */
   --char-ov-pl:           1.5rem;    /* 24px — Figma page/fonts/pl, Special Effects mechanical-effect text */
   --char-ov-gap-2xs:      0.5rem;    /* 8px */
   --char-ov-gap-xs:       1.125rem;  /* 18px */

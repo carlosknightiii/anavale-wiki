@@ -272,8 +272,27 @@
       color: var(--text);
     }
 
-    /* ── Accordion shell (Overview / Ability Scores) ── */
-    .cs-ov-acc { width: 100%; }
+    /* ── Accordion shell (Overview / Ability Scores) ──
+       Round 2 QA: "confusing as to what is expanded and what isn't...
+       we should have the dark blue card style for the entire background
+       of all accordions to help differentiate each accordion from one
+       another." Whole shell (header + body together) now gets the same
+       --blue-700 background every individual card on this page already
+       uses (.cs-ov-card/.cs-story-card/.cs-limuse-group/etc) — reused,
+       not a new color. One exception: the Class tab's Overview accordion
+       (#cs-class-overview-acc) is nested INSIDE .cs-ov-class-card (itself
+       already blue-700, wrapping Basic info + this accordion as one visual
+       unit) — a second identical background there would just add invisible
+       padding, so it's reset back to transparent via the override below;
+       that whole card is already one distinct block against the page. */
+    .cs-ov-acc {
+      width: 100%;
+      background: var(--blue-700);
+      border-radius: var(--radius-lg);
+      padding: var(--char-ov-gap-s);
+      box-sizing: border-box;
+    }
+    .cs-ov-class-card .cs-ov-acc { background: none; padding: 0; border-radius: 0; }
     .cs-ov-acc-header {
       display: flex;
       align-items: center;
@@ -344,8 +363,20 @@
       padding-bottom: var(--char-ov-gap-2xs);
       display: flex;
       flex-direction: column;
-      gap: var(--char-ov-gap-m);
+      /* Round 2 QA: "not enough space between sections" — bumped from
+         gap-m to the largest existing gap token rather than a new value.
+         This is the right amount for accordion-to-card separation (Who You
+         Are/Your Background/Your Past content, the Class tab's Overview
+         column pair) — but Round 2 Revisions QA caught that the same rule
+         also governs the Features accordion's *internal* groups
+         (Class-Specific/Spell Slots/Spells Prepared), where it read as
+         genuine dead space, especially after a visually-short card like
+         Wild Shape's "Unlocks at level 2" message. .cs-ov-acc-body--tight
+         below scopes a smaller gap to that one case instead of reverting
+         this shared default for every accordion. */
+      gap: var(--char-ov-gap-l);
     }
+    .cs-ov-acc-body--tight { gap: var(--char-ov-gap-s); }
     .cs-ov-acc.collapsed .cs-ov-acc-body-outer { grid-template-rows: 0fr; opacity: 0; }
     .cs-ov-acc.collapsed .cs-ov-acc-chevron { transform: rotate(180deg); }
 
@@ -409,6 +440,14 @@
       font-size: 0.72rem;
       color: var(--text);
     }
+
+    /* ── Class tab — top-level section stack (Round 2 QA: more breathing
+       room between Class card / Features accordion / Spellcasting /
+       Spells Learned than the 0-gap they got by just being sibling divs
+       inside one shared .cs-ov-inner). Hidden cards (display:none until
+       their data loads) contribute no gap, so this doesn't create a
+       phantom gap before Spellcasting/Spells Learned show up. ── */
+    .cs-class-tab-stack { display: flex; flex-direction: column; gap: var(--char-ov-gap-l); }
 
     /* ── Class card ── */
     .cs-ov-class-card {
@@ -635,6 +674,12 @@
        matches what the real design shows for this specific component). */
     .cs-limuse-seg.active { background: var(--green); color: var(--blue-900); }
     .cs-limuse-seg.spent { background: rgba(34,197,94,0.25); color: var(--text); opacity: 0.5; }
+    /* Round 2 QA: a feature not yet unlocked (e.g. Wild Shape before level
+       2) rendered as a bare "Used: 0/0" with no bar and no explanation —
+       "looks broken without" one. Shown instead of the segmented bar
+       whenever computeLimitedUseMax() is genuinely 0 because the
+       character's level hasn't reached the feature's first threshold. */
+    .cs-limuse-locked { color: var(--char-text-faint); font-size: 0.82rem; font-style: italic; }
 
     /* ── Spell Slots (Features accordion, sibling group to Class-Specific —
        Handoff B, Figma 52:2705). Reuses .cs-limuse-* structure verbatim
@@ -652,6 +697,50 @@
     .cs-spellslot-seg.active { background: var(--magic-blue); color: var(--blue-900); }
     .cs-spellslot-seg.spent { background: var(--magic-blue-dim); color: var(--text); opacity: 0.5; }
     .cs-spell-slot-none { color: var(--char-text-faint); font-size: 0.8rem; }
+
+    /* ── Spellcasting stats (Class tab card, redesigned Round 2 QA) ──
+       "Looks way too sparse and the text is too small and too far apart...
+       needs to be more visually intriguing and not have so much negative
+       space." Was 3 stacked plain .cs-ab-skill rows; now a 3-column row of
+       badges — same visual language as the header's AC/Init badges
+       (label-above-value, blue-600 fill against the card's blue-700, big
+       Cinzel Decorative number) instead of a new pattern. ── */
+    .cs-spellcast-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--char-ov-gap-s);
+    }
+    .cs-spellcast-stat {
+      flex: 1 1 160px;
+      min-width: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      background: var(--blue-600);
+      border: 1px solid var(--blue-400);
+      border-radius: var(--radius);
+      padding: var(--char-ov-gap-xs) var(--char-ov-gap-2xs);
+      text-align: center;
+    }
+    .cs-spellcast-stat-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--blue-100);
+    }
+    .cs-spellcast-stat-val {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--char-ov-h3);
+      color: var(--text);
+    }
 
     /* ── Spells Prepared (Features accordion, sibling group — Handoff B) ── */
     .cs-prepared-header-row { display: flex; justify-content: space-between; align-items: center; gap: var(--char-ov-gap-2xs); }
@@ -691,14 +780,34 @@
     }
     .cs-prepared-pill--add:hover { opacity: 1; }
 
-    /* ── Spells Learned browser (Class tab, full-width card — Handoff B).
-       Table styling reuses .cs-inv-table verbatim (same tr/td/th classes as
-       the Inventory tab's item table) — no new table CSS needed. Filter row
-       reuses .cs-inv-filter-* verbatim (same classes as the Inventory tab's
-       own-inventory search/category row), just with more fields. ── */
+    /* ── Spells Learned (Class tab, full-width card). Round 2 Revisions —
+       DM-assignment-only model: this table only ever displays
+       character_sheet.learned_spells, no self-serve add/browse UI (the
+       search/filter row from the old eligible-pool browser is gone
+       entirely, per DM decision). Table styling reuses .cs-inv-table
+       verbatim (same tr/td/th classes as the Inventory tab's item table). */
     .cs-spells-learned-card { margin-top: var(--char-ov-gap-s); }
     .cs-spell-thumb { width: 28px; height: 28px; object-fit: contain; display: block; margin: 0 auto; }
     .cs-spell-thumb-fallback { display: block; text-align: center; opacity: 0.5; font-size: 1rem; }
+    /* Column widths (Round 2 Revisions 2c) — Level/Category/Casting Time/
+       Range/Components/Duration all carried excess whitespace under
+       table-layout:auto's default even-ish distribution of leftover
+       width, while Description (the most information-dense column, real
+       prose) got no proportional benefit from it. Explicit widths on the
+       narrow columns let table-layout:auto concentrate the remaining space
+       into Name/Description instead, whose own content is what actually
+       needs it. Scoped to .cs-sl-table (this table only) via nth-child —
+       matches this table's fixed 10-column layout exactly, doesn't touch
+       the Inventory tab's own reuse of .cs-inv-th/.cs-inv-td for a
+       different column set. */
+    .cs-sl-table th:nth-child(1), .cs-sl-table td:nth-child(1) { width: 70px; }
+    .cs-sl-table th:nth-child(2), .cs-sl-table td:nth-child(2) { width: 44px; }
+    .cs-sl-table th:nth-child(4), .cs-sl-table td:nth-child(4) { width: 60px; }
+    .cs-sl-table th:nth-child(5), .cs-sl-table td:nth-child(5) { width: 105px; }
+    .cs-sl-table th:nth-child(6), .cs-sl-table td:nth-child(6) { width: 115px; }
+    .cs-sl-table th:nth-child(7), .cs-sl-table td:nth-child(7) { width: 90px; }
+    .cs-sl-table th:nth-child(8), .cs-sl-table td:nth-child(8) { width: 90px; }
+    .cs-sl-table th:nth-child(9), .cs-sl-table td:nth-child(9) { width: 135px; }
 
     /* ── Your Story cards (Who You Are / Your Background / Your Past) ──
        Figma 51:1103/51:1218. Wider description cards, not small pills —
@@ -889,16 +998,34 @@
       color: var(--text);
     }
 
-    /* ── Ability score cards ── */
+    /* ── Ability score cards ──
+       Round 2 QA: "add wrapping so cards flow onto multiple rows as the
+       screen narrows." flex-wrap was already set here, but it had a real
+       bug, not just a missing property — with flex:1 0 0 on the cards,
+       whichever card(s) land alone on a wrapped row have nothing to share
+       growth with, so they stretch to fill that entire row width while
+       their siblings above sit cramped at their 100px floor (confirmed
+       live: 6 cards at ~610px viewport rendered 5 squeezed to 102px and a
+       lone 6th stretched to 560px on its own line — exactly the "squishes
+       illegibly" bug, just with an extra "then one card blows up huge"
+       twist flexbox's independent-per-line growth causes). CSS Grid fixes
+       this at the root: grid tracks are shared down every row, so a
+       leftover card on the last row keeps the same column width as every
+       card above it instead of stretching — no per-row growth mismatch is
+       possible. Round 2 Revisions QA: floor raised 100px→200px, confirmed
+       as the real current minimum before changing it (not assumed) — "at
+       all times," including mobile, so the 84px mobile override below is
+       raised to match rather than left as a separate, smaller floor. At
+       narrow widths this means cards genuinely stack one-per-row (2×200px
+       + gap already exceeds a 375px viewport) — a deliberate, direct
+       consequence of the instruction, not an oversight. */
     .cs-ab-cards {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 24px;
       width: 100%;
     }
     .cs-ab-card {
-      flex: 1 0 0;
-      min-width: 100px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1346,25 +1473,56 @@
     .cs-mi-ds-pip--success.filled { background: #6ecf6e; border-color: #6ecf6e; }
     .cs-mi-ds-pip--failure.filled { background: #f87171; border-color: #f87171; }
 
-    /* Hit Dice (MainInfo header, new) — same pip interaction as Death Saves,
-       but its own class/color semantics rather than reusing .cs-mi-ds-pip:
-       an available hit die is the *good* state here (unlike a filled death-
-       save pip, which is bad), so available pips are the bright/filled
-       look and spent pips are the dim/hollow one — inverted from Death
-       Saves, not copied. Gold matches the existing "active resource" gold
-       fill convention (e.g. Inspiration's badge when active). */
-    .cs-mi-hit-dice { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+    /* Hit Dice (MainInfo header) — Round 2 QA redesign: DM feedback was
+       "not intuitive," no specific direction given. Round-2's own suggested
+       fix, taken: bring it in line with the label/"Used: X/Y"/segmented-bar
+       pattern already established by Spell Slots and the Class-Specific
+       tracker (.cs-limuse-*) instead of the plain round pips this predates
+       that pattern with — a player who's already learned to read Spell
+       Slots shouldn't have to learn a second visual language for Hit Dice.
+       Fill direction also switched to match those (available fills left,
+       spent fills right) for the same reason — this is now consistently
+       the site's one "spend a segment" convention, not two competing ones
+       (Death Saves' pips are a genuinely different concept — marking a
+       fixed 3-of-3 toward death, not spending/restoring a pool — so those
+       are deliberately left as plain pips, not converted). Compact sizing
+       (not .cs-limuse-*'s full card treatment) since this lives inline in
+       the header's vitals row, not a full-width Features accordion card —
+       segments wrap onto a second row rather than shrinking illegibly for
+       higher-level characters with many dice. Gold keeps the existing
+       "active resource" fill convention (e.g. Inspiration's badge). */
+    .cs-mi-hit-dice { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; min-width: 120px; }
+    .cs-mi-hd-headrow { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; width: 100%; }
     .cs-mi-hd-label {
       font-family: var(--font-body);
+      font-weight: 700;
       font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--char-text-faint);
       white-space: nowrap;
     }
-    .cs-mi-hd-row { display: flex; gap: 0.35rem; }
-    .cs-mi-hd-pip { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--gold); background: var(--gold); cursor: pointer; padding: 0; }
-    .cs-mi-hd-pip.spent { background: none; border-color: rgba(255,255,255,0.25); }
+    .cs-mi-hd-count {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.65rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .cs-mi-hd-row { display: flex; flex-wrap: wrap; gap: 3px; }
+    .cs-mi-hd-seg {
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.68rem;
+    }
+    .cs-mi-hd-seg.active { background: var(--gold); color: var(--gold-text-on); }
+    .cs-mi-hd-seg.spent { background: rgba(255,255,255,0.08); color: var(--char-text-faint); }
 
     @media (max-width: 900px) {
       .cs-ov-portrait { width: 100%; min-height: 340px; }
@@ -1372,14 +1530,19 @@
     }
     @media (max-width: 600px) {
       .cs-ov-card { min-width: 100%; }
-      .cs-ab-cards { gap: 12px; }
-      .cs-ab-card { min-width: 84px; }
+      /* 200px minimum "at all times" per Round 2 Revisions QA — same floor
+         as desktop, so this override now only still matters for the gap. */
+      .cs-ab-cards { gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
       .cs-ab-img { width: 72px; height: 72px; }
       .cs-ov-class-details { gap: 1rem; }
       /* Single unbreakable words ("Overview") can't shrink to share a row
          with the toggle — wrap the toggle onto its own line rather than
          letting it overflow past the viewport edge. */
       .cs-ov-acc-header { flex-wrap: wrap; row-gap: 0.4rem; }
+      /* The new full-card accordion padding (gap-s, 26px/side) is generous
+         on desktop but eats too much width on a narrow phone — tighten it. */
+      .cs-ov-acc { padding: var(--char-ov-gap-xs); }
+      .cs-class-tab-stack { gap: var(--char-ov-gap-m); }
     }
 
     /* ── Not-found state ── */
@@ -4022,7 +4185,11 @@
       + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
         + '<div class="cs-class-overview-row">'
           + '<div class="cs-class-overview-col">'
-            + '<div class="cs-class-col-heading">Overview</div>'
+            // Round 2 QA: "Overview" appeared twice (accordion header +
+            // this column) — the accordion header already establishes
+            // context, this column's own heading is renamed to what it
+            // actually holds instead of repeating the parent's title.
+            + '<div class="cs-class-col-heading">Details</div>'
             + '<div class="cs-ov-class-details" id="cs-class-details">' + renderClassDetailsHtml(CLASS_ROW) + '</div>'
           + '</div>'
           + '<div class="cs-class-overview-col">'
@@ -4036,7 +4203,7 @@
   function buildClassTabHtml(ch, classDisplay) {
     var classKey = (ch.class_id || '').toLowerCase();
     var classImgSrc = classKey ? '../assets/images/classes/class-' + classKey + '.webp' : '';
-    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-class-tab-stack">'
       + '<div class="cs-ov-class-card">'
         + '<div class="cs-ov-class-basic">'
           + (classImgSrc ? '<img class="cs-ov-class-img" src="' + classImgSrc + '" alt="" onerror="this.style.display=\'none\'">' : '')
@@ -4061,25 +4228,20 @@
       // at all rather than emit-then-hide.
       + '<div id="cs-class-features-acc-wrap"></div>'
       + '<div class="cs-ov-class-card cs-spell-slots-card" id="cs-spellcasting-stats-card" style="display:none;">'
-        + '<div class="cs-class-features-label" style="margin-top:0;">Spellcasting</div>'
+        + '<div class="cs-limuse-group-label">Spellcasting</div>'
         + '<div id="cs-class-spellcasting-stats"></div>'
       + '</div>'
+      // Round 2 Revisions — DM decision: spells are DM-assigned only, no
+      // player self-serve. This card now just displays learned_spells (see
+      // renderSpellsLearnedTable()) — no eligible-pool browsing, so the
+      // search/filter row is gone entirely (DM's own recommendation,
+      // confirmed: filtering a short 5-15-item known list added UI weight
+      // without real benefit). Column headers unchanged; widths tightened
+      // via .cs-sl-table (Round 2 Revisions 2c).
       + '<div class="cs-ov-class-card cs-spells-learned-card" id="cs-spells-learned-card" style="display:none;">'
-        + '<div class="cs-class-features-label" style="margin-top:0;">Spells Learned</div>'
-        + '<div class="cs-inv-filter-row">'
-          + '<div class="cs-inv-filter-field">'
-            + '<label class="cs-inv-filter-label">Search</label>'
-            + '<input class="cs-inv-filter-input" id="cs-sl-search" placeholder="Search spells&#8230;" oninput="applySpellsLearnedFilter()">'
-          + '</div>'
-          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Level</label><select class="cs-inv-filter-select" id="cs-sl-level" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
-          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Category</label><select class="cs-inv-filter-select" id="cs-sl-school" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
-          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Casting Time</label><select class="cs-inv-filter-select" id="cs-sl-ct" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
-          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Range</label><select class="cs-inv-filter-select" id="cs-sl-range" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
-          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Components</label><select class="cs-inv-filter-select" id="cs-sl-components" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
-          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat"><label class="cs-inv-filter-label">Duration</label><select class="cs-inv-filter-select" id="cs-sl-duration" onchange="applySpellsLearnedFilter()"><option value="">All</option></select></div>'
-        + '</div>'
+        + '<div class="cs-limuse-group-label">Spells Learned</div>'
         + '<div class="cs-inv-table-wrap">'
-          + '<table class="cs-inv-table">'
+          + '<table class="cs-inv-table cs-sl-table">'
             + '<thead><tr>'
               + '<th class="cs-inv-th cs-inv-th-select">Prepared</th>'
               + '<th class="cs-inv-th cs-inv-th-thumb"></th>'
@@ -4096,7 +4258,7 @@
           + '</table>'
         + '</div>'
       + '</div>'
-    + '</div></div>';
+    + '</div></div></div>';
   }
 
   // ── Spell Slots (Features accordion, Handoff B — replaces the earlier
@@ -4240,7 +4402,7 @@
     SHEET.prepared_spells = prepared;
     saveSheet({ prepared_spells: prepared });
     renderPreparedSpells();
-    applySpellsLearnedFilter();
+    renderSpellsLearnedTable();
   }
   function prepareSpell(id) {
     if (!SHEET) return;
@@ -4250,7 +4412,7 @@
     SHEET.prepared_spells = prepared;
     saveSheet({ prepared_spells: prepared });
     renderPreparedSpells();
-    applySpellsLearnedFilter();
+    renderSpellsLearnedTable();
   }
   // Shared picker modal for "+ Prepare" — lists spells already on this
   // character's Learned list (see Spells Learned below) that aren't
@@ -4300,85 +4462,37 @@
     var src = t ? SPELL_TYPE_ICON_SRC[t] : null;
     return src ? '<img class="cs-spell-thumb" src="' + src + '" alt="">' : '<span class="cs-spell-thumb-fallback">&#10022;</span>';
   }
-  // Round 1 Fix 1 — three-tier spell model, replacing the class-list-only
-  // scoping from Handoff B (which implied a player could learn ANY spell
-  // legal for their class at any time — not the intended model per the
-  // DM). The browser now shows the "could-learn" pool: (a) spells.classes
-  // (the class allowlist, already real data) UNION (b) this character's
-  // own character_sheet.extra_learnable_spells (DM-granted, story-reason
-  // exceptions — "Hana learned Cure Wounds from her grandmother"). Picking
-  // "+ Learn" from that pool is what actually adds a spell to learned_spells
-  // — the pool itself is eligibility, not possession.
-  function spellsLearnedEligible() {
-    var classKey = (CH && CH.class_id || '').toLowerCase();
-    var extras = (SHEET && Array.isArray(SHEET.extra_learnable_spells)) ? SHEET.extra_learnable_spells : [];
-    return SPELLS_DATA.filter(function(s) {
-      return (Array.isArray(s.classes) && s.classes.indexOf(classKey) >= 0) || extras.indexOf(s.id) >= 0;
-    });
-  }
-  function populateSpellsLearnedFilterOptions() {
-    var eligible = spellsLearnedEligible();
-    var fields = [
-      { id: 'cs-sl-level', key: 'level', label: function(v){ return v === '0' ? 'Cantrip' : 'Level ' + v; } },
-      { id: 'cs-sl-school', key: 'school' },
-      { id: 'cs-sl-ct', key: 'casting_time' },
-      { id: 'cs-sl-range', key: 'range' },
-      { id: 'cs-sl-components', key: 'components' },
-      { id: 'cs-sl-duration', key: 'duration' }
-    ];
-    fields.forEach(function(f) {
-      var el = document.getElementById(f.id);
-      if (!el) return;
-      var seen = {};
-      eligible.forEach(function(s) { var v = s[f.key]; if (v !== null && v !== undefined && v !== '') seen[String(v)] = true; });
-      var vals = Object.keys(seen).sort(function(a,b) { return f.key === 'level' ? (parseInt(a) - parseInt(b)) : a.localeCompare(b); });
-      el.innerHTML = '<option value="">All</option>' + vals.map(function(v) {
-        return '<option value="' + escHtml(v) + '">' + escHtml(f.label ? f.label(v) : v) + '</option>';
-      }).join('');
-    });
-  }
-  function applySpellsLearnedFilter() {
+  // Round 2 Revisions — DM decision: DM-assignment-only. Reviewed the old
+  // self-serve "+ Learn" flow (Round 1 Fix 1's three-tier eligible-pool
+  // browser) and moved off it entirely — the DM now assigns every spell a
+  // character knows, via the DM Tools Players page (dm.html). This table
+  // is read-mostly: it only ever displays character_sheet.learned_spells,
+  // with zero add-a-spell path anywhere in this UI. The "could-learn"
+  // eligibility pool (spells.classes ∪ extra_learnable_spells) that Round 1
+  // built still exists — it's just moved to dm.html's own spell-assignment
+  // search, DM-driven instead of player-driven; nothing here computes it
+  // anymore. The "Prepared" checkbox is untouched — still toggles which
+  // known spells are currently prepared, exactly as built.
+  function renderSpellsLearnedTable() {
     var card = document.getElementById('cs-spells-learned-card');
     var tbody = document.getElementById('cs-spells-learned-tbody');
     if (!card || !tbody) return;
-    // Round 1 Fix 3 — gated on spellcasting_ability (true non-casters:
-    // Barbarian/Fighter/Monk/Rogue), same signal the Spellcasting Stats card
-    // and the Features accordion's Prepared group use, not on whether any
-    // eligible spells currently resolve. A real caster with a temporarily
-    // empty pool (e.g. a spells.classes data gap) should see an honest
-    // "no spells match" empty table, not have the whole card vanish as if
-    // the feature doesn't exist for their class.
+    // Same non-caster gate as before (Round 1 Fix 3) — true non-casters
+    // (Barbarian/Fighter/Monk/Rogue) never see this card at all.
     var hasCasting = !!(CLASS_ROW && CLASS_ROW.spellcasting_ability);
     if (!hasCasting) { card.style.display = 'none'; return; }
-    var eligible = spellsLearnedEligible();
     card.style.display = '';
-    var q = (document.getElementById('cs-sl-search').value || '').toLowerCase().trim();
-    var lvl = document.getElementById('cs-sl-level').value;
-    var sch = document.getElementById('cs-sl-school').value;
-    var ct = document.getElementById('cs-sl-ct').value;
-    var rng = document.getElementById('cs-sl-range').value;
-    var comp = document.getElementById('cs-sl-components').value;
-    var dur = document.getElementById('cs-sl-duration').value;
     var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
     var maxPrepared = computePreparedMax();
-    var list = eligible.filter(function(s) {
-      if (q && s.name.toLowerCase().indexOf(q) === -1) return false;
-      if (lvl && String(s.level) !== lvl) return false;
-      if (sch && s.school !== sch) return false;
-      if (ct && s.casting_time !== ct) return false;
-      if (rng && s.range !== rng) return false;
-      if (comp && s.components !== comp) return false;
-      if (dur && s.duration !== dur) return false;
-      return true;
-    }).sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+    var list = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
+      .sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+    // A level-1 caster legitimately may have nothing assigned yet — an
+    // honest "not yet" message, not a blank void implying something broke.
     tbody.innerHTML = list.length ? list.map(function(s) {
-      var isLearned = learned.indexOf(s.id) >= 0;
       var isPrepared = prepared.indexOf(s.id) >= 0;
       var levelLabel = s.level === 0 ? 'Cantrip' : String(s.level);
-      var preparedCell = isLearned
-        ? '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">'
-        : '<button class="cs-inv-filter-btn" style="padding:0.2rem 0.6rem;font-size:0.72rem;" onclick="learnSpell(\'' + s.id + '\')">+ Learn</button>';
+      var preparedCell = '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
       return '<tr class="cs-inv-tr">'
         + '<td class="cs-inv-td cs-inv-td-select">' + preparedCell + '</td>'
         + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
@@ -4389,17 +4503,9 @@
         + '<td class="cs-inv-td">' + (s.range ? escHtml(s.range) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.components ? escHtml(s.components) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.duration ? escHtml(s.duration) : '&mdash;') + '</td>'
-        + '<td class="cs-inv-td" style="max-width:320px;">' + (s.spell_desc ? escHtml(s.spell_desc) : '') + '</td>'
+        + '<td class="cs-inv-td">' + (s.spell_desc ? escHtml(s.spell_desc) : '') + '</td>'
       + '</tr>';
-    }).join('') : '<tr><td class="cs-inv-empty-row" colspan="10">No spells match.</td></tr>';
-  }
-  function learnSpell(id) {
-    if (!SHEET) return;
-    var learned = (Array.isArray(SHEET.learned_spells) ? SHEET.learned_spells : []).slice();
-    if (learned.indexOf(id) === -1) learned.push(id);
-    SHEET.learned_spells = learned;
-    saveSheet({ learned_spells: learned });
-    applySpellsLearnedFilter();
+    }).join('') : '<tr><td class="cs-inv-empty-row" colspan="10">No spells learned yet.</td></tr>';
   }
   function togglePreparedFromTable(id, checked) {
     if (!SHEET) return;
@@ -4413,15 +4519,7 @@
     SHEET.prepared_spells = prepared;
     saveSheet({ prepared_spells: prepared });
     renderPreparedSpells();
-    applySpellsLearnedFilter();
-  }
-  // Called once from renderClassTabDynamic() (CLASS_ROW loaded, populates
-  // the eligible-spell-derived filter option lists) — separate from
-  // applySpellsLearnedFilter() itself, which also needs SHEET and re-runs
-  // from renderLivePlay(), same two-phase pattern as the rest of this tab.
-  function renderSpellsLearnedFilters() {
-    populateSpellsLearnedFilterOptions();
-    applySpellsLearnedFilter();
+    renderSpellsLearnedTable();
   }
 
   // ── Spellcasting stats (Class tab, new) — Spellcasting Modifier / Spell
@@ -4436,12 +4534,14 @@
   // not rendered as an empty/zeroed card — same style="display:none"
   // pattern the card starts with on its first, synchronous paint before
   // CLASS_ROW has loaded.
-  function spellStatRowHtml(label, value, tip) {
-    return '<div class="cs-ab-skill">'
-      + '<span class="cs-ab-skill-name">' + label
+  // Round 2 QA redesign — 3-column badge row instead of 3 stacked
+  // .cs-ab-skill rows (see the .cs-spellcast-stat* CSS comment).
+  function spellStatCardHtml(label, value, tip) {
+    return '<div class="cs-spellcast-stat">'
+      + '<span class="cs-spellcast-stat-label">' + label
         + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
       + '</span>'
-      + '<span class="cs-ab-skill-total">' + value + '</span>'
+      + '<span class="cs-spellcast-stat-val">' + value + '</span>'
     + '</div>';
   }
   function renderSpellcastingStats() {
@@ -4455,10 +4555,11 @@
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
     var saveDC = 8 + profBonus + abMod;
     var atkBonus = profBonus + abMod;
-    el.innerHTML =
-        spellStatRowHtml('Spellcasting Modifier', (abMod >= 0 ? '+' : '') + abMod, 'The ability modifier your class uses to cast spells.')
-      + spellStatRowHtml('Spell Save DC', saveDC, 'The number a creature must roll at or above to resist your spell.')
-      + spellStatRowHtml('Spell Attack Bonus', (atkBonus >= 0 ? '+' : '') + atkBonus, 'Added to the d20 when you make an attack roll with a spell.');
+    el.innerHTML = '<div class="cs-spellcast-stats">'
+      + spellStatCardHtml('Spellcasting Modifier', (abMod >= 0 ? '+' : '') + abMod, 'The ability modifier your class uses to cast spells.')
+      + spellStatCardHtml('Spell Save DC', saveDC, 'The number a creature must roll at or above to resist your spell.')
+      + spellStatCardHtml('Spell Attack Bonus', (atkBonus >= 0 ? '+' : '') + atkBonus, 'Added to the d20 when you make an attack roll with a spell.')
+    + '</div>';
   }
 
   // Populated once fetchClassData() resolves — the `classes` table is the
@@ -4477,6 +4578,18 @@
     var pick = applicable[applicable.length - 1];
     return feature.max_at_level[pick];
   }
+  // Round 2 QA — the lowest level threshold at which a feature has any
+  // real uses at all (skips a threshold whose own value is 0, which some
+  // feature tables use as an explicit "not yet" entry rather than just
+  // omitting the level). Used only for the 0/0 "not unlocked yet" message
+  // below — generalizes to any limited-use feature, not just Wild Shape.
+  function firstUnlockLevel(feature) {
+    if (!feature || !feature.max_at_level) return null;
+    var thresholds = Object.keys(feature.max_at_level).map(Number)
+      .filter(function(t){ return (parseInt(feature.max_at_level[t]) || 0) > 0; })
+      .sort(function(a,b){ return a - b; });
+    return thresholds.length ? thresholds[0] : null;
+  }
   // Segment fill direction confirmed against the real Figma node (94:1772),
   // not assumed: available segments render left-to-right first, spent
   // segments fill in from the right — the opposite of the Hit Dice pip
@@ -4484,6 +4597,15 @@
   // Deliberately not made consistent with that — this matches what the
   // actual design shows for this specific component, not a generic pip.
   function limitedUseCardHtml(feature, spent, max) {
+    if (max <= 0) {
+      var unlockLevel = firstUnlockLevel(feature);
+      return '<div class="cs-limuse-card">'
+        + '<div class="cs-limuse-header">'
+          + '<span class="cs-limuse-name">' + escHtml(feature.name) + '</span>'
+        + '</div>'
+        + '<div class="cs-limuse-locked">' + (unlockLevel ? 'Unlocks at level ' + unlockLevel + '.' : 'Not available.') + '</div>'
+      + '</div>';
+    }
     var segments = [];
     for (var i = 0; i < max; i++) {
       var isSpent = i >= (max - spent);
@@ -4589,7 +4711,7 @@
           + '<span class="cs-ov-acc-title">Features</span>'
           + '<span class="cs-ov-acc-toggle"><span class="cs-ov-acc-toggle-label">Collapse</span><span class="cs-ov-acc-chevron">&#9662;</span></span>'
         + '</button>'
-        + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body">'
+        + '<div class="cs-ov-acc-body-outer"><div class="cs-ov-acc-body cs-ov-acc-body--tight">'
           + (hasLimitedUse ? '<div class="cs-limuse-group">'
               + '<div class="cs-limuse-group-label">Class-Specific</div>'
               + '<div id="cs-class-specific"></div>'
@@ -4621,7 +4743,7 @@
     if (detailsEl) detailsEl.innerHTML = renderClassDetailsHtml(CLASS_ROW);
     if (featuresEl) featuresEl.innerHTML = buildClassFeaturesHtml(CLASS_ROW ? CLASS_ROW.features : null);
     renderClassFeaturesAccordion();
-    renderSpellsLearnedFilters();
+    renderSpellsLearnedTable();
     wireAllTooltips();
   }
 
@@ -5015,19 +5137,15 @@
     renderInspiration();
     renderSpellSlotsGroup();
     renderPreparedSpells();
-    // Round 1 Fix 2 — was applySpellsLearnedFilter() alone, which re-filters
-    // the table but never re-populates the filter dropdowns' <option> lists.
-    // Root cause: renderClassTabDynamic() (fired when fetchClassData()
-    // resolves) calls renderSpellsLearnedFilters() — populate + apply —
-    // immediately, but that runs in parallel with fetchSpellsData() in the
-    // same init Promise.all and usually wins the race, so SPELLS_DATA is
-    // still [] when the dropdowns first populate (they render with zero real
-    // options). renderLivePlay() only runs once the WHOLE Promise.all
-    // resolves (SPELLS_DATA guaranteed loaded by then), so it's the correct
-    // place to re-populate, not just re-filter — using the full function
-    // fixes the empty dropdowns without needing a second, parallel fetch-
-    // ordering fix.
-    renderSpellsLearnedFilters();
+    // renderClassTabDynamic() (fired when fetchClassData() resolves) already
+    // calls renderSpellsLearnedTable() once, but that runs in parallel with
+    // fetchSpellsData() in the same init Promise.all and can win the race —
+    // SPELLS_BY_ID may still be empty at that point, so learned_spells' ids
+    // wouldn't resolve to real spell rows yet. renderLivePlay() only runs
+    // once the whole Promise.all resolves (SPELLS_BY_ID guaranteed loaded by
+    // then), so it re-renders here for real, same two-phase pattern as
+    // everything else on this tab.
+    renderSpellsLearnedTable();
     renderSpellcastingStats();
     renderLimitedUseFeatures();
     renderAbilitySkills();
@@ -5123,20 +5241,20 @@
     renderHeaderHP();
   }
 
-  // ── Hit Dice (MainInfo header, new) — near HP, same "spendable healing
+  // ── Hit Dice (MainInfo header) — near HP, same "spendable healing
   // resource belongs in this visual neighborhood" reasoning as Death Saves.
   // Max is never stored — always ch.level, computed live (same
   // derive-don't-cache principle js/hp-calc.js already uses for HP), so
   // this keeps working correctly as the party levels past 1 with no
-  // migration needed then. Pip interaction mirrors the death-save/spell-
-  // slot toggle convention (click a spent pip to un-spend it and everything
-  // after; click an available one to spend up through it), but its own
-  // class/colors — see the .cs-mi-hd-pip CSS comment for why the semantics
-  // are inverted from .cs-mi-ds-pip, not copied. No rest-flow to auto-
-  // restore spent dice exists anywhere on this sheet yet (same gap Death
-  // Saves and Spell Slots already have) — restoring is a manual click,
-  // deliberately out of scope here per the handoff's own instruction not
-  // to scope-creep into building one.
+  // migration needed then. Round 2 QA redesign — segment fill/click
+  // convention now matches .cs-limuse-*/Spell Slots exactly (available
+  // fills left, spent fills right; clicking a segment sets spent to
+  // max-segIdx, clicking the current boundary segment un-spends it) instead
+  // of the original spent-left/available-right pip convention this
+  // predates — see the .cs-mi-hit-dice CSS comment for why. No rest-flow to
+  // auto-restore spent dice exists anywhere on this sheet yet (same gap
+  // Death Saves and Spell Slots already have) — restoring is a manual
+  // click, deliberately out of scope here.
   // Uses character_sheet.hit_dice_used — a pre-existing column, populated
   // (1/0/0 for all 3 characters) but never referenced anywhere in the
   // codebase before this. The handoff assumed no tracking column existed;
@@ -5145,23 +5263,28 @@
   // hit_dice_total is still dead/unused — max is deliberately computed live
   // from ch.level instead, per the handoff's own don't-cache-max instruction.
   function renderHitDiceHtml() {
-    var level = (CH && CH.level) || 1;
+    var max = (CH && CH.level) || 1;
     var dieType = CLASS_ROW ? CLASS_ROW.hit_die : 'd?';
-    var spent = SHEET ? (parseInt(SHEET.hit_dice_used) || 0) : 0;
-    var pips = Array.from({ length: level }, function(_, i) {
-      var n = i + 1;
-      var isSpent = n <= spent;
-      return '<button class="cs-mi-hd-pip' + (isSpent ? ' spent' : '') + '" onclick="toggleHitDie(' + n + ')" aria-label="Hit die ' + n + (isSpent ? ' (spent)' : ' (available)') + '"></button>';
+    var spent = SHEET ? Math.min(parseInt(SHEET.hit_dice_used) || 0, max) : 0;
+    var segments = Array.from({ length: max }, function(_, i) {
+      var isSpent = i >= (max - spent);
+      return '<button class="cs-mi-hd-seg' + (isSpent ? ' spent' : ' active') + '" onclick="toggleHitDie(' + i + ')" aria-label="Hit die ' + (i + 1) + (isSpent ? ' (spent)' : ' (available)') + '">' + (i + 1) + '</button>';
     }).join('');
     return '<div class="cs-mi-hit-dice">'
-      + '<div class="cs-mi-hd-label">Hit Dice (' + dieType + ')</div>'
-      + '<div class="cs-mi-hd-row">' + pips + '</div>'
+      + '<div class="cs-mi-hd-headrow">'
+        + '<span class="cs-mi-hd-label">Hit Dice (' + dieType + ')<span class="cs-ab-tip" data-tip="Spend during a short rest to heal — roll this die and add your Constitution modifier. You regain some spent dice after a long rest.">?</span></span>'
+        + '<span class="cs-mi-hd-count">Used: ' + spent + '/' + max + '</span>'
+      + '</div>'
+      + '<div class="cs-mi-hd-row">' + segments + '</div>'
     + '</div>';
   }
-  function toggleHitDie(n) {
+  function toggleHitDie(segIdx) {
     if (!SHEET) return;
+    var max = (CH && CH.level) || 1;
     var cur = parseInt(SHEET.hit_dice_used) || 0;
-    var next = (cur === n) ? n - 1 : n;
+    var next = (cur === (max - segIdx)) ? (max - segIdx) - 1 : (max - segIdx);
+    if (next < 0) next = 0;
+    if (next > max) next = max;
     SHEET.hit_dice_used = next;
     saveSheet({ hit_dice_used: next });
     renderHitDice();
@@ -5170,6 +5293,11 @@
     var el = document.getElementById('cs-mi-hit-dice-slot');
     if (!el) return;
     el.innerHTML = renderHitDiceHtml();
+    // Round 2 Revisions 2e — same self-wiring pattern renderInspiration()
+    // already uses: this widget introduces its own [data-tip] element, so
+    // it wires itself rather than relying on whichever caller happens to
+    // run wireAllTooltips() afterward.
+    wireAllTooltips();
   }
 
   function adjustHP(delta) {
