@@ -2852,6 +2852,11 @@
 
             <div class="scc-picker-group">
               <div class="scc-picker-label">📍 Locations</div>
+              <!-- Carryover suggestions from the previous session's own Setup picks —
+                   hidden entirely (not an empty state) when no previous session exists
+                   or it assigned nothing here. See sccRenderSuggestedRow(). -->
+              <div class="scc-combat-session-label" id="scc-suggested-label-location" style="display:none;"></div>
+              <div class="scc-combat-session-creatures" id="scc-suggested-location" style="display:none;"></div>
               <div class="scc-picker-controls">
                 <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
                   <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities, POIs, nations…" oninput="sccPickerSearch('location', this.value)" autocomplete="off">
@@ -2865,6 +2870,8 @@
 
             <div class="scc-picker-group">
               <div class="scc-picker-label">🧙 NPCs</div>
+              <div class="scc-combat-session-label" id="scc-suggested-label-npc" style="display:none;"></div>
+              <div class="scc-combat-session-creatures" id="scc-suggested-npc" style="display:none;"></div>
               <div class="scc-picker-controls">
                 <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
                   <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)" autocomplete="off">
@@ -2878,6 +2885,8 @@
 
             <div class="scc-picker-group">
               <div class="scc-picker-label">🐾 Creatures</div>
+              <div class="scc-combat-session-label" id="scc-suggested-label-creature" style="display:none;"></div>
+              <div class="scc-combat-session-creatures" id="scc-suggested-creature" style="display:none;"></div>
               <div class="scc-picker-controls">
                 <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
                   <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)" autocomplete="off">
@@ -2891,6 +2900,8 @@
 
             <div class="scc-picker-group">
               <div class="scc-picker-label">📜 Quests</div>
+              <div class="scc-combat-session-label" id="scc-suggested-label-quest" style="display:none;"></div>
+              <div class="scc-combat-session-creatures" id="scc-suggested-quest" style="display:none;"></div>
               <div class="scc-picker-controls">
                 <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
                   <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)" autocomplete="off">
@@ -2904,6 +2915,8 @@
 
             <div class="scc-picker-group">
               <div class="scc-picker-label">⚔️ Items</div>
+              <div class="scc-combat-session-label" id="scc-suggested-label-item" style="display:none;"></div>
+              <div class="scc-combat-session-creatures" id="scc-suggested-item" style="display:none;"></div>
               <div class="scc-picker-controls">
                 <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
                   <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)" autocomplete="off">
@@ -5852,6 +5865,24 @@ function showDMToast(msg, type) {
   color: var(--dm-text-faint);
 }
 .scc-combat-session-chip.added:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
+/* Setup's "Suggested from Session N" quest chips only — flags a quest that has
+   a real in-progress beat (started, not finished last time), not just one that
+   was merely assigned. Reuses the same beat-status tokens the rest of the app
+   already uses for "in progress," not a new color. */
+.scc-suggested-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 10px;
+  background: var(--scc-beat-prog-bg);
+  color: var(--scc-beat-prog-text);
+  border: 1px solid var(--scc-beat-prog-border);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
 .scc-combat-filters-bar {
   display: flex;
   flex-wrap: wrap;
@@ -12595,6 +12626,7 @@ function sccLoadLatestSession() {
     sccRenderLocationPanel();
     sccRenderQuestPanel();
     sccRenderCombatSessionCreatures();
+    sccRenderSuggestedRows();
     sccUpdateHeaderSub();
   }).catch(function() {
     sccSetSessionDisplay(1);
@@ -12602,6 +12634,7 @@ function sccLoadLatestSession() {
     sccRenderLocationPanel();
     sccRenderQuestPanel();
     sccRenderCombatSessionCreatures();
+    sccRenderSuggestedRows();
   });
 }
 function sccSetSessionDisplay(num) {
@@ -13148,6 +13181,132 @@ function sccRenderChips(type) {
       + '<button class="scc-chip-remove" onclick="sccRemoveChip(\'' + type + '\',\'' + sccEsc(s.id) + '\')" title="Remove">✕</button>'
     + '</span>';
   }).join('');
+  sccRenderSuggestedRow(type);
+}
+
+// ── Setup: "Suggested from Session N" carryover chips ─────────────
+// Surfaces the PREVIOUS session's own Setup picks (not the current one — that's
+// what the picker chips above already show) as one-click adds, same reasoning
+// as Combat's "From Session Roster" chips: don't make the DM re-search for
+// something already known to matter. Hidden entirely (no empty-state message)
+// whenever there's no previous session, or it assigned nothing in this specific
+// category — confirmed live that Session 1 (the only real session today) has
+// no session 0 to pull from, so this is the real, current, correct resting
+// state, not a bug.
+var SCC_SUGGESTED_FIELD = {
+  location: 'location_ids', npc: 'npc_ids', creature: 'creature_ids',
+  quest: 'quest_ids_active', item: 'item_ids_awarded'
+};
+
+// The most recent session with a lower number than the one currently open in
+// Setup. Reads SCC_ALL_SESSIONS — already fetched in full (select=*) for the
+// history dropdown, so every id array is already present; no new fetch needed
+// for location/npc/creature/item. Returns null (not a stub row) when none
+// exists, so callers can tell "no previous session" apart from "previous
+// session assigned nothing."
+// Deliberately reads the hidden #scc-session-number input rather than
+// SCC_SESSION.session_number directly — SCC_SESSION is null the moment a
+// session completes and a new one hasn't been saved yet (sccLoadLatestSession()
+// sets it null and only pre-fills this input with the next number), which is
+// exactly the moment carryover suggestions are most useful, not a case to
+// silently drop. sccSetSessionDisplay() keeps this input's value correct in
+// both the real-session and pending-next-session branches.
+function sccPreviousSessionRow() {
+  if (typeof SCC_ALL_SESSIONS === 'undefined' || !SCC_ALL_SESSIONS.length) return null;
+  var numEl = document.getElementById('scc-session-number');
+  var curNum = numEl ? parseInt(numEl.value, 10) : (SCC_SESSION ? SCC_SESSION.session_number : NaN);
+  if (isNaN(curNum)) return null;
+  var earlier = SCC_ALL_SESSIONS.filter(function(s) { return s.session_number < curNum; });
+  if (!earlier.length) return null;
+  earlier.sort(function(a, b) { return b.session_number - a.session_number; });
+  return earlier[0];
+}
+
+// Resolves an id to its real catalog row for whichever collection this picker
+// type actually searches — mirrors sccOpenLookup('city', ...)'s own
+// city+POI+nation union for locations, since that's the same combined space
+// the Locations picker searches.
+function sccSuggestedResolve(type, id) {
+  var arr;
+  if (type === 'location') {
+    arr = [].concat(typeof CITIES !== 'undefined' ? CITIES : [], typeof POIS !== 'undefined' ? POIS : [], typeof NATIONS !== 'undefined' ? NATIONS : []);
+  } else if (type === 'npc') {
+    arr = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
+  } else if (type === 'creature') {
+    arr = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  } else if (type === 'quest') {
+    arr = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  } else if (type === 'item') {
+    arr = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  } else {
+    arr = [];
+  }
+  return arr.find(function(x) { return x.id === id; }) || null;
+}
+
+// True only if SCC_PROGRESS already has a real in_progress beat for this quest
+// — a stronger "pick this back up" signal than merely having been assigned,
+// since it reflects actual play, not just DM prep intent. Purely reads
+// already-loaded data; never fetches (sccRenderSuggestedRows() below is the
+// one place that ensures the previous session's quests are loaded into
+// SCC_PROGRESS before this is ever checked).
+function sccQuestHasInProgressBeat(questId) {
+  var beats = SCC_PROGRESS[questId];
+  if (!beats) return false;
+  return Object.keys(beats).some(function(k) { return beats[k] === 'in_progress'; });
+}
+
+// Pure render for one category — safe to call often (every chip add/remove
+// already does, via sccRenderChips above) since it never fetches anything
+// itself. Hides both the label and the row (not an empty-state string) the
+// moment there's nothing real to suggest, at any of the 3 points that can be
+// true: no previous session, previous session assigned nothing here, or none
+// of what it assigned still resolves to a real catalog entry.
+function sccRenderSuggestedRow(type) {
+  var wrap  = document.getElementById('scc-suggested-' + type);
+  var label = document.getElementById('scc-suggested-label-' + type);
+  if (!wrap) return;
+  var hide = function() {
+    wrap.style.display = 'none'; wrap.innerHTML = '';
+    if (label) { label.style.display = 'none'; label.textContent = ''; }
+  };
+  var prev = sccPreviousSessionRow();
+  if (!prev) { hide(); return; }
+  var ids = prev[SCC_SUGGESTED_FIELD[type]] || [];
+  if (!ids.length) { hide(); return; }
+  var resolved = ids.map(function(id) { return { id: id, entry: sccSuggestedResolve(type, id) }; })
+    .filter(function(r) { return r.entry; });
+  if (!resolved.length) { hide(); return; }
+
+  if (label) { label.style.display = ''; label.textContent = 'Suggested from Session ' + prev.session_number; }
+  wrap.style.display = '';
+  var currentIds = (SCC_SELECTED[type] || []).map(function(s) { return s.id; });
+  wrap.innerHTML = resolved.map(function(r) {
+    var already = currentIds.indexOf(r.id) >= 0;
+    var badge = (type === 'quest' && sccQuestHasInProgressBeat(r.id)) ? '<span class="scc-suggested-badge">In Progress</span>' : '';
+    var labelHtml = (already ? '&#10003; ' : '+ ') + sccEsc(r.entry.name) + badge;
+    return '<button type="button" class="scc-combat-session-chip' + (already ? ' added' : '') + '" title="' + (already ? 'Already added' : 'Add from last session') + '" onclick="sccAddChipById(\'' + type + '\',\'' + sccEsc(r.id) + '\')">' + labelHtml + '</button>';
+  }).join('');
+}
+
+// One-time orchestrator, called after SCC_SESSION/SCC_ALL_SESSIONS load (or
+// reload). Renders location/npc/creature/item immediately — no async
+// dependency for them. Quest is the one category with an extra signal
+// (in-progress beats) that isn't guaranteed loaded yet: SCC_PROGRESS is
+// normally only populated for the CURRENT session's own active quests
+// (sccLoadLatestSession()'s existing call), so the previous session's quests
+// need their own sccLoadQuestProgress() pass — a real fetch, done once here,
+// merging into the same shared SCC_PROGRESS object everything else already
+// reads from, not a parallel copy.
+function sccRenderSuggestedRows() {
+  ['location', 'npc', 'creature', 'item'].forEach(function(t) { sccRenderSuggestedRow(t); });
+  var prev = sccPreviousSessionRow();
+  var prevQuestIds = prev ? (prev.quest_ids_active || []) : [];
+  if (prevQuestIds.length) {
+    sccLoadQuestProgress(prevQuestIds).then(function() { sccRenderSuggestedRow('quest'); });
+  } else {
+    sccRenderSuggestedRow('quest');
+  }
 }
 
 // ── NPC relationship cycling ──────────────────────────────────────
