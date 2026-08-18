@@ -11345,8 +11345,14 @@ function sccMarkPendingItemAdded(playerId, index) {
 }
 
 // ── Live Session Tab ──────────────────────────────────────────────
-var SCC_LIVE_CONDITIONS = {};
-var SCC_LIVE_INSPIRATION = {};
+// Conditions and Inspiration deliberately have no local shadow state here —
+// they read/write character_sheet.conditions / .has_inspiration directly
+// (via SCC_SHEETS, the same cache Party HP already uses), the exact real
+// columns sheet/index.html's own MainInfo header reads and writes. A prior
+// version tracked these in a local object that was never persisted anywhere
+// — real data loss, confirmed via the Aug 18 Live Session audit that it
+// silently dropped on every reload despite looking identical to the real,
+// working HP tracker two rows above it.
 var SCC_LIVE_TIMER_START = null;
 var SCC_LIVE_TIMER_INTERVAL = null;
 var SCC_LIVE_TIMER_ELAPSED = 0;
@@ -11515,12 +11521,19 @@ function sccBuildRegionHealthRollupHtml(regionId) {
   + '</div>';
 }
 
+// Conditions: reads/writes character_sheet.conditions directly via SCC_SHEETS
+// (same cache + same character_sheet PATCH pattern sccLiveAdjustHp/sccLiveSetHp
+// already use for HP) — the exact real column sheet/index.html's own
+// addCondition()/removeCondition() already read and write for the same
+// player, so a condition set here is the same condition the player sees on
+// their own sheet, not a separate DM-only shadow of it.
 function sccLiveRenderConditions() {
   var el = document.getElementById('scc-live-conditions');
   if (!el) return;
   if (!SCC_PLAYERS.length) { el.innerHTML = ''; return; }
   el.innerHTML = SCC_PLAYERS.map(function(p) {
-    var conds = SCC_LIVE_CONDITIONS[p.id] || [];
+    var sheet = SCC_SHEETS[p.id] || {};
+    var conds = Array.isArray(sheet.conditions) ? sheet.conditions : [];
     var chips = conds.map(function(c) {
       var d = sccConditionColor(c);
       var tipText = d.tip + ' \u2022 Click to remove';
@@ -11560,23 +11573,34 @@ function sccLiveAddCondition(playerId) {
 function sccLiveConfirmCondition(playerId) {
   var pick = document.getElementById('scc-cond-pick');
   var v = pick ? pick.value : '';
-  if (!SCC_LIVE_CONDITIONS[playerId]) SCC_LIVE_CONDITIONS[playerId] = [];
-  if (v && SCC_LIVE_CONDITIONS[playerId].indexOf(v) < 0) SCC_LIVE_CONDITIONS[playerId].push(v);
-  sccLiveRenderConditions();
   var panel = document.getElementById('scc-cond-panel');
   if (panel) panel.remove();
-}
-function sccLiveRemoveCondition(playerId, cond) {
-  if (!SCC_LIVE_CONDITIONS[playerId]) return;
-  SCC_LIVE_CONDITIONS[playerId] = SCC_LIVE_CONDITIONS[playerId].filter(function(c) { return c !== cond; });
+  var sheet = SCC_SHEETS[playerId];
+  if (!v || !sheet) { sccLiveRenderConditions(); return; }
+  var conditions = Array.isArray(sheet.conditions) ? sheet.conditions.slice() : [];
+  if (conditions.indexOf(v) < 0) conditions.push(v);
+  sheet.conditions = conditions;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(playerId), { conditions: conditions })
+    .then(function(r) { if (!r.ok) showDMToast('Condition save failed', 'error'); });
   sccLiveRenderConditions();
 }
-// ── Inspiration ──
+function sccLiveRemoveCondition(playerId, cond) {
+  var sheet = SCC_SHEETS[playerId];
+  if (!sheet || !Array.isArray(sheet.conditions)) return;
+  var conditions = sheet.conditions.filter(function(c) { return c !== cond; });
+  sheet.conditions = conditions;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(playerId), { conditions: conditions })
+    .then(function(r) { if (!r.ok) showDMToast('Condition save failed', 'error'); });
+  sccLiveRenderConditions();
+}
+// Inspiration: same treatment — reads/writes character_sheet.has_inspiration
+// via SCC_SHEETS, the same real column the player's own sheet toggles.
 function sccLiveRenderInspiration() {
   var el = document.getElementById('scc-live-inspiration');
   if (!el) return;
   el.innerHTML = SCC_PLAYERS.map(function(p) {
-    var active = !!SCC_LIVE_INSPIRATION[p.id];
+    var sheet = SCC_SHEETS[p.id] || {};
+    var active = !!sheet.has_inspiration;
     var initials = (p.name || '?').split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0,2);
     return '<div class="scc-live-inspiration-token' + (active ? ' active' : '') + '" onclick="sccLiveToggleInspiration(\'' + sccEsc(p.id) + '\')" title="' + sccEsc(p.name || '') + '">'
       + '<span>' + sccEsc(initials) + '</span>'
@@ -11585,7 +11609,12 @@ function sccLiveRenderInspiration() {
   }).join('');
 }
 function sccLiveToggleInspiration(playerId) {
-  SCC_LIVE_INSPIRATION[playerId] = !SCC_LIVE_INSPIRATION[playerId];
+  var sheet = SCC_SHEETS[playerId];
+  if (!sheet) return;
+  var next = !sheet.has_inspiration;
+  sheet.has_inspiration = next;
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(playerId), { has_inspiration: next })
+    .then(function(r) { if (!r.ok) showDMToast('Inspiration save failed', 'error'); });
   sccLiveRenderInspiration();
 }
 // ── NPC Chips ──
