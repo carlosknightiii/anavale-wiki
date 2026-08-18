@@ -2973,13 +2973,15 @@
                 </div>
               </div>
             </div>
-            <button class="scc-tab-btn active" data-scc="npcs"      onclick="sccSwitchPanel('npcs')">NPCs</button>
-            <button class="scc-tab-btn"        data-scc="locations" onclick="sccSwitchPanel('locations')">Locations</button>
-            <button class="scc-tab-btn"        data-scc="quests"    onclick="sccSwitchPanel('quests')">Quests</button>
+            <!-- Phase 3a restructure: NPCs/Locations/Quests/Field Guide are no
+                 longer separate panels -- their content now lives as
+                 collapsible sections inside Live Session itself (see
+                 #scc-panel-live), so Live Session is the default landing
+                 view. Combat and Notes are untouched, still real separate
+                 panels with their own distinct jobs. -->
+            <button class="scc-tab-btn scc-tab-btn--live active" data-scc="live" onclick="sccSwitchPanel('live')">&#9654; Live Session</button>
             <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
             <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
-            <button class="scc-tab-btn scc-tab-btn--live" data-scc="live" onclick="sccSwitchPanel('live')">&#9654; Live Session</button>
-            <button class="scc-tab-btn scc-tab-btn--guide" data-scc="fieldguide" onclick="sccSwitchPanel('fieldguide')">&#128214; Field Guide</button>
           </div>
         </div>
         <!-- ── PLAYER BAR (always visible) ─── -->
@@ -2993,115 +2995,6 @@
         <div class="scc-readonly-banner" id="scc-readonly-banner">
           📋 Viewing Session <span id="scc-readonly-session-num"></span> (read-only audit) —
           <button class="scc-btn-sm" onclick="sccLoadCurrentSession()" style="margin-left:0.5rem;">↩ Back to Current Session</button>
-        </div>
-        <!-- ══ PANEL: NPCs ════════════════════ -->
-        <div class="scc-panel active" id="scc-panel-npcs">
-          <div class="scc-panel-inner scc-npc-panel-inner">
-            <div class="scc-npc-page-header">
-              <div class="scc-npc-page-label">SESSION</div>
-              <div class="scc-npc-page-title">NPCs</div>
-              <div class="scc-npc-page-hint">Add NPCs in Setup first. Click any card to open the full quick-lookup panel.</div>
-            </div>
-            <div class="scc-npc-controls">
-              <div class="scc-npc-search-wrap">
-                <label class="scc-npc-control-label">Search</label>
-                <input type="text" id="scc-npc-search" class="scc-npc-search-input" placeholder="Search..." oninput="sccFilterNpcs()">
-              </div>
-              <div class="scc-npc-filters">
-                <div class="scc-npc-filter-group">
-                  <label class="scc-npc-control-label">Relationship</label>
-                  <select id="scc-npc-filter-rel" class="scc-npc-select" onchange="sccFilterNpcs()">
-                    <option value="">All</option>
-                    <option value="ally">Ally</option>
-                    <option value="neutral">Neutral</option>
-                    <option value="caution">Caution</option>
-                    <option value="hostile">Hostile</option>
-                  </select>
-                </div>
-                <div class="scc-npc-filter-group">
-                  <label class="scc-npc-control-label">Location</label>
-                  <select id="scc-npc-filter-loc" class="scc-npc-select" onchange="sccFilterNpcs()">
-                    <option value="">All</option>
-                  </select>
-                </div>
-                <div class="scc-npc-filter-group">
-                  <label class="scc-npc-control-label">Sort</label>
-                  <select id="scc-npc-sort" class="scc-npc-select" onchange="sccFilterNpcs()">
-                    <option value="az">A-Z</option>
-                    <option value="za">Z-A</option>
-                    <option value="rel">Relationship</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div id="scc-npc-cards" class="scc-npc-list">
-              <div class="scc-empty-state">No NPCs assigned to this session yet. Go to Setup to add them.</div>
-            </div>
-          </div>
-        </div>
-        <!-- ══ PANEL: LOCATIONS ═══════════════ -->
-        <div class="scc-panel" id="scc-panel-locations">
-          <div class="scc-panel-inner scc-loc-panel-inner">
-              <div class="scc-npc-page-header">
-                <div class="scc-npc-page-label">SESSION</div>
-                <div class="scc-npc-page-title">Locations</div>
-                <div class="scc-npc-page-hint">Add locations in Setup first. Click any card to expand full details.</div>
-              </div>
-              <div class="scc-npc-controls">
-                <div class="scc-npc-search-wrap">
-                  <label class="scc-npc-control-label">Search</label>
-                  <input type="text" id="scc-loc-search" class="scc-npc-search-input" placeholder="Search..." oninput="sccRenderLocationPanel()">
-                </div>
-                <div class="scc-npc-filters">
-                  <div class="scc-npc-filter-group">
-                    <label class="scc-npc-control-label">Type</label>
-                    <select id="scc-loc-filter-type" class="scc-npc-select" onchange="sccRenderLocationPanel()">
-                      <option value="">All</option>
-                      <option value="city">City</option>
-                      <option value="poi">POI</option>
-                      <option value="nation">Nation</option>
-                    </select>
-                  </div>
-                  <div class="scc-npc-filter-group">
-                    <label class="scc-npc-control-label">Sort</label>
-                    <select id="scc-loc-sort" class="scc-npc-select" onchange="sccRenderLocationPanel()">
-                      <option value="az">A-Z</option>
-                      <option value="za">Z-A</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div id="scc-location-cards" class="scc-npc-list">
-                <div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>
-              </div>
-            </div>
-        </div>
-        <!-- ══ PANEL: QUESTS ══════════════════ -->
-        <div class="scc-panel" id="scc-panel-quests">
-          <div class="scc-panel-inner scc-quest-panel-inner">
-            <div class="scc-quest-two-col">
-              <!-- LEFT: quest cards -->
-              <div class="scc-quest-col-main">
-                <div class="scc-section-title">Active Quests This Session</div>
-                <div id="scc-quest-cards" class="scc-quest-list">
-                  <div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>
-                </div>
-              </div>
-              <!-- RIGHT: DM reference sidebar -->
-              <div class="scc-quest-col-sidebar">
-                <div class="scc-quest-sidebar-section">
-                  <div class="scc-section-title" style="font-size:0.78rem;">Current Beat</div>
-                  <div id="scc-quest-beat-ref" class="scc-quest-beat-ref">
-                    <div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">Mark a beat In Progress to see its details here.</div>
-                  </div>
-                </div>
-                <div class="scc-quest-sidebar-section" style="margin-top:1.25rem;">
-                  <div class="scc-section-title" style="font-size:0.78rem;">Session NPCs</div>
-                  <div id="scc-quest-npc-ref" class="scc-live-npc-chips"></div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
         <!-- ══ PANEL: COMBAT ══════════════════ -->
         <div class="scc-panel" id="scc-panel-combat">
@@ -3217,65 +3110,43 @@
           </div>
         </div><!-- /scc-panel-notes -->
         <!-- ══ PANEL: LIVE SESSION ══════════════ -->
-        <div class="scc-panel" id="scc-panel-live">
-          <div class="scc-live-layout">
-            <!-- ── LEFT COLUMN ─────────────────── -->
-            <div class="scc-live-col scc-live-col--left">
-              <!-- QUEST BEATS -->
-              <div class="scc-live-section">
-                <div class="scc-live-section-label">Quest Progress</div>
-                <div id="scc-live-beats"></div>
-              </div>
-              <!-- PARTY HP -->
-              <div class="scc-live-section">
+        <!-- Phase 3a restructure: NPCs/Locations/Quests/Field Guide, previously
+             4 separate top-level panels each requiring a full tab switch, are
+             now collapsible sections inside this one panel -- their own render
+             functions/DOM ids are untouched (sccRenderNpcPanel/sccRenderLocationPanel/
+             sccRenderQuestPanel/sccRenderFieldGuide all still target the exact
+             ids below, just relocated), so nothing about how they populate
+             changed, only where they live. The always-visible strip above them
+             replaces the old 3-column layout's Party HP/Conditions/Inspiration/
+             Quick Actions/Die Roller/Timer/Safety Net cards -- Quest Progress's
+             own full beat list (scc-live-beats) is gone, superseded by the new
+             Current Beat widget below plus the Quests section's own beat rail,
+             so there are no longer 3 independent beat-progress renderers in
+             this one tab. The local search box and standalone "NPCs This
+             Session" chip list are gone too -- the header search already covers
+             more entity types, and the real NPCs section below supersedes the
+             chip list. -->
+        <div class="scc-panel active" id="scc-panel-live">
+          <div class="scc-panel-inner scc-live-strip-wrap">
+            <!-- ── ALWAYS-VISIBLE CONTROL STRIP ─────────────────── -->
+            <div class="scc-live-strip">
+              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Party HP</div>
                 <div id="scc-live-party"></div>
               </div>
-              <!-- CONDITIONS -->
-              <div class="scc-live-section">
+              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Conditions</div>
                 <div id="scc-live-conditions"></div>
               </div>
-              <!-- INSPIRATION -->
-              <div class="scc-live-section">
+              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Inspiration</div>
                 <div id="scc-live-inspiration" class="scc-live-inspiration-row"></div>
               </div>
-              <!-- QUICK ACTIONS -->
-              <div class="scc-live-section scc-live-quick-actions">
-                <button class="scc-btn-primary" style="width:100%;margin-bottom:0.5rem;" onclick="sccSwitchPanel('combat')">&#9876; Go to Combat</button>
-                <button class="scc-btn-secondary" style="width:100%;" onclick="sccLiveAddNote()">&#128203; Quick Note</button>
+              <div class="scc-live-section scc-live-strip-item">
+                <div class="scc-live-section-label">Current Beat</div>
+                <div id="scc-live-current-beat"></div>
               </div>
-            </div><!-- /left -->
-            <!-- ── CENTER COLUMN ────────────────── -->
-            <div class="scc-live-col scc-live-col--center">
-              <!-- GLOBAL SEARCH (reuses existing SCC search) -->
-              <div class="scc-live-search-wrap">
-                <input type="text" class="scc-live-search" id="scc-live-search" placeholder="Search NPCs, locations, items, creatures&#8230;" oninput="sccLiveSearch(this.value)" autocomplete="off">
-                <div class="scc-picker-dropdown" id="scc-live-search-results"></div>
-              </div>
-              <!-- SCENARIOS -->
-              <div class="scc-live-section-label" style="margin-top:0.75rem;">Scenarios</div>
-              <div class="scc-live-scenario-filter-wrap">
-                <input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">
-                <span class="scc-scenario-filter-clear" id="scc-scenario-filter-clear" onclick="sccScenarioClearFilter()" title="Clear">&#10005;</span>
-              </div>
-              <div id="scc-live-scenarios"></div>
-              <!-- QUICK NOTE FIELD -->
-              <div class="scc-live-note-wrap" id="scc-live-note-wrap" style="display:none;">
-                <textarea id="scc-live-note-input" class="scc-textarea" rows="2" placeholder="One sentence — what just happened&#8230;"></textarea>
-                <button class="scc-btn-sm" style="margin-top:0.35rem;" onclick="sccLiveSaveNote()">Save to Session Notes</button>
-              </div>
-            </div><!-- /center -->
-            <!-- ── RIGHT COLUMN ──────────────────── -->
-            <div class="scc-live-col scc-live-col--right">
-              <!-- NPC QUICK CAST -->
-              <div class="scc-live-section">
-                <div class="scc-live-section-label">NPCs This Session</div>
-                <div id="scc-live-npcs" class="scc-live-npc-chips"></div>
-              </div>
-              <!-- DIE ROLLER -->
-              <div class="scc-live-section">
+              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Die Roller</div>
                 <div class="scc-live-dice-row">
                   <button class="scc-live-die-btn" onclick="sccRollDie(4)">d4</button>
@@ -3291,16 +3162,27 @@
                 </div>
                 <div id="scc-live-die-result" class="scc-live-die-result"></div>
               </div>
-              <!-- TIMER -->
-              <div class="scc-live-section">
+              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Timer</div>
                 <div class="scc-live-timer-row">
                   <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
                   <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
                 </div>
               </div>
-              <!-- DM SAFETY NET -->
-              <div class="scc-live-section scc-live-safety-net">
+              <div class="scc-live-section scc-live-strip-item scc-live-quick-actions">
+                <div class="scc-live-section-label">Quick Actions</div>
+                <button class="scc-btn-primary" style="width:100%;margin-bottom:0.5rem;" onclick="sccSwitchPanel('combat')">&#9876; Go to Combat</button>
+                <button class="scc-btn-secondary" style="width:100%;" onclick="sccLiveAddNote()">&#128203; Quick Note</button>
+                <!-- Fixed: used to hijack session_notes.player_decisions via a
+                     different panel's own textarea -- now a real Tagged Note,
+                     defaulted to DM-Only so capturing something stays one click,
+                     re-categorizable later from the real Notes tab if needed. -->
+                <div class="scc-live-note-wrap" id="scc-live-note-wrap" style="display:none;">
+                  <textarea id="scc-live-note-input" class="scc-textarea" rows="2" placeholder="One sentence — what just happened&#8230;"></textarea>
+                  <button class="scc-btn-sm" style="margin-top:0.35rem;" onclick="sccLiveSaveNote()">Save as DM-Only Note</button>
+                </div>
+              </div>
+              <div class="scc-live-section scc-live-strip-item scc-live-safety-net">
                 <div class="scc-live-section-label">DM Safety Net</div>
                 <div class="scc-live-safety-item">
                   <span class="scc-live-safety-trigger">Players go sideways?</span>
@@ -3319,11 +3201,149 @@
                   <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
                 </div>
               </div>
-            </div><!-- /right -->
-          </div><!-- /scc-live-layout -->
-        </div><!-- /scc-panel-live -->
-        <!-- &#9553;&#9553; PANEL: FIELD GUIDE &#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553;&#9553; -->
-        <div class="scc-panel" id="scc-panel-fieldguide">
+            </div><!-- /scc-live-strip -->
+
+            <!-- ── COLLAPSIBLE SECTIONS ─────────────────── -->
+            <div class="scc-live-accordion">
+
+              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-npcs" onclick="sccLiveToggleSection('npcs')">
+                <span class="scc-toggle-arrow">▶</span><span>NPCs</span>
+              </div>
+              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-npcs">
+          <div class="scc-panel-inner scc-npc-panel-inner">
+            <div class="scc-npc-page-header">
+              <div class="scc-npc-page-label">SESSION</div>
+              <div class="scc-npc-page-title">NPCs</div>
+              <div class="scc-npc-page-hint">Add NPCs in Setup first. Click any card to open the full quick-lookup panel.</div>
+            </div>
+            <div class="scc-npc-controls">
+              <div class="scc-npc-search-wrap">
+                <label class="scc-npc-control-label">Search</label>
+                <input type="text" id="scc-npc-search" class="scc-npc-search-input" placeholder="Search..." oninput="sccFilterNpcs()">
+              </div>
+              <div class="scc-npc-filters">
+                <div class="scc-npc-filter-group">
+                  <label class="scc-npc-control-label">Relationship</label>
+                  <select id="scc-npc-filter-rel" class="scc-npc-select" onchange="sccFilterNpcs()">
+                    <option value="">All</option>
+                    <option value="ally">Ally</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="caution">Caution</option>
+                    <option value="hostile">Hostile</option>
+                  </select>
+                </div>
+                <div class="scc-npc-filter-group">
+                  <label class="scc-npc-control-label">Location</label>
+                  <select id="scc-npc-filter-loc" class="scc-npc-select" onchange="sccFilterNpcs()">
+                    <option value="">All</option>
+                  </select>
+                </div>
+                <div class="scc-npc-filter-group">
+                  <label class="scc-npc-control-label">Sort</label>
+                  <select id="scc-npc-sort" class="scc-npc-select" onchange="sccFilterNpcs()">
+                    <option value="az">A-Z</option>
+                    <option value="za">Z-A</option>
+                    <option value="rel">Relationship</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div id="scc-npc-cards" class="scc-npc-list">
+              <div class="scc-empty-state">No NPCs assigned to this session yet. Go to Setup to add them.</div>
+            </div>
+          </div>
+              </div>
+
+              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-locations" onclick="sccLiveToggleSection('locations')">
+                <span class="scc-toggle-arrow">▶</span><span>Locations</span>
+              </div>
+              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-locations">
+          <div class="scc-panel-inner scc-loc-panel-inner">
+              <div class="scc-npc-page-header">
+                <div class="scc-npc-page-label">SESSION</div>
+                <div class="scc-npc-page-title">Locations</div>
+                <div class="scc-npc-page-hint">Add locations in Setup first. Click any card to expand full details.</div>
+              </div>
+              <div class="scc-npc-controls">
+                <div class="scc-npc-search-wrap">
+                  <label class="scc-npc-control-label">Search</label>
+                  <input type="text" id="scc-loc-search" class="scc-npc-search-input" placeholder="Search..." oninput="sccRenderLocationPanel()">
+                </div>
+                <div class="scc-npc-filters">
+                  <div class="scc-npc-filter-group">
+                    <label class="scc-npc-control-label">Type</label>
+                    <select id="scc-loc-filter-type" class="scc-npc-select" onchange="sccRenderLocationPanel()">
+                      <option value="">All</option>
+                      <option value="city">City</option>
+                      <option value="poi">POI</option>
+                      <option value="nation">Nation</option>
+                    </select>
+                  </div>
+                  <div class="scc-npc-filter-group">
+                    <label class="scc-npc-control-label">Sort</label>
+                    <select id="scc-loc-sort" class="scc-npc-select" onchange="sccRenderLocationPanel()">
+                      <option value="az">A-Z</option>
+                      <option value="za">Z-A</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div id="scc-location-cards" class="scc-npc-list">
+                <div class="scc-empty-state">No locations assigned yet. Go to Setup to add them.</div>
+              </div>
+            </div>
+              </div>
+
+              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-quests" onclick="sccLiveToggleSection('quests')">
+                <span class="scc-toggle-arrow">▶</span><span>Quests</span>
+              </div>
+              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-quests">
+          <div class="scc-panel-inner scc-quest-panel-inner">
+            <div class="scc-quest-two-col">
+              <!-- LEFT: quest cards -->
+              <div class="scc-quest-col-main">
+                <div class="scc-section-title">Active Quests This Session</div>
+                <div id="scc-quest-cards" class="scc-quest-list">
+                  <div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>
+                </div>
+              </div>
+              <!-- RIGHT: DM reference sidebar -->
+              <div class="scc-quest-col-sidebar">
+                <div class="scc-quest-sidebar-section">
+                  <div class="scc-section-title" style="font-size:0.78rem;">Current Beat</div>
+                  <div id="scc-quest-beat-ref" class="scc-quest-beat-ref">
+                    <div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">Mark a beat In Progress to see its details here.</div>
+                  </div>
+                </div>
+                <div class="scc-quest-sidebar-section" style="margin-top:1.25rem;">
+                  <div class="scc-section-title" style="font-size:0.78rem;">Session NPCs</div>
+                  <div id="scc-quest-npc-ref" class="scc-live-npc-chips"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+              </div>
+
+              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-scenarios" onclick="sccLiveToggleSection('scenarios')">
+                <span class="scc-toggle-arrow">▶</span><span>Scenarios</span>
+              </div>
+              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-scenarios">
+                <div class="scc-panel-inner">
+                  <div class="scc-live-scenario-filter-wrap">
+                    <input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">
+                    <span class="scc-scenario-filter-clear" id="scc-scenario-filter-clear" onclick="sccScenarioClearFilter()" title="Clear">&#10005;</span>
+                  </div>
+                  <div id="scc-live-scenarios"></div>
+                  <div class="scc-scenario-add-row">
+                    <button class="scc-btn-secondary" onclick="sccJumpToSetupScenarios()">+ Add Scenario</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="scc-collapsible-toggle scc-live-acc-toggle scc-live-acc-toggle--guide" id="scc-live-acc-toggle-fieldguide" onclick="sccLiveToggleSection('fieldguide')">
+                <span class="scc-toggle-arrow">▶</span><span>&#128214; Field Guide</span>
+              </div>
+              <div class="scc-collapsible-body scc-live-acc-body scc-live-acc-body--fieldguide" id="scc-live-acc-body-fieldguide">
           <div class="scc-fg-layout">
             <div class="scc-fg-left">
             <!-- search + filter bar -->
@@ -3353,7 +3373,12 @@
             </div><!-- /scc-fg-doc-inner -->
           </div><!-- /scc-fg-doc -->
         </div><!-- /scc-fg-layout -->
-        </div><!-- /scc-panel-fieldguide -->
+
+              </div>
+
+            </div><!-- /scc-live-accordion -->
+          </div><!-- /scc-live-strip-wrap -->
+        </div><!-- /scc-panel-live -->
       </div><!-- /form-session -->
 
 
@@ -5795,15 +5820,15 @@ function showDMToast(msg, type) {
   padding: 0 0.45rem;
   border-radius: 8px;
 }
-/* Was .scc-beat-status-btn, a click-to-cycle button with no visible indication
-   of the 3 states or which one came next -- now a real <select>, same footprint.
-   Modifier classes below color the control itself by its current value, so the
-   3 states (todo/in-progress/done) are readable without opening the dropdown.
-   A native <select>'s intrinsic box height doesn't always shrink to match a
-   plain span's even with identical padding (a real cross-browser quirk) -- an
-   explicit height shared with .scc-beat-xp, plus flex centering on the select
-   itself (not just its container), removes any dependency on that. */
-.scc-beat-status-select {
+/* Was a real <select> (before it, a click-to-cycle button) -- the exact same
+   status-cycling was already available one element over via the compact beat
+   rail's own click-to-cycle segments (sccCycleBeatStatus), so the expanded
+   beat item's dropdown was a second, redundant control for the identical
+   action. Phase 3a keeps only the rail as the interactive control and
+   demotes this to a plain, non-interactive status badge -- same modifier
+   classes/colors as before so a beat's state is still legible at a glance
+   in the expanded list, just not a second way to change it. */
+.scc-beat-status-badge {
   display: inline-flex;
   align-items: center;
   height: 1.35rem;
@@ -5813,17 +5838,14 @@ function showDMToast(msg, type) {
   font-size: 0.65rem;
   font-weight: 700;
   border-radius: 8px;
-  cursor: pointer;
   border: 1px solid var(--scc-border-mid);
   background: var(--scc-surface-high);
   color: var(--dm-text-muted);
-  transition: var(--dm-transition);
   width: auto;
 }
-.scc-beat-status-select--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border-color: var(--scc-beat-todo-border); }
-.scc-beat-status-select--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-border); }
-.scc-beat-status-select--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(160,160,160,0.3); }
-.scc-beat-status-select:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
+.scc-beat-status-badge--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border-color: var(--scc-beat-todo-border); }
+.scc-beat-status-badge--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-border); }
+.scc-beat-status-badge--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(160,160,160,0.3); }
 /* ── Combat Tracker ── */
 .scc-combat-builder {
   background: var(--scc-surface-high);
@@ -6265,10 +6287,7 @@ function showDMToast(msg, type) {
 }
 .scc-live-inspiration-token:hover { border-color: var(--dm-gold); }
 .scc-live-inspiration-token.active { background: var(--dm-gold); border-color: var(--dm-gold); color: #0b0e16; }
-/* Scenarios center col */
-.scc-live-search-wrap { position: relative; }
-.scc-live-search { width: 100%; box-sizing: border-box; padding: 0.45rem 0.75rem; background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm); font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text); }
-.scc-live-search:focus { outline: none; border-color: var(--scc-border-gold); }
+/* Scenarios section */
 .scc-live-scenario-group { margin-bottom: 0.4rem; border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; }
 .scc-live-scenario-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -6344,13 +6363,27 @@ function showDMToast(msg, type) {
 .scc-live-timer-display { font-family: var(--font-mono); font-size: 1.4rem; color: var(--dm-gold); letter-spacing: 0.05em; flex: 1; }
 /* Quick actions */
 .scc-live-quick-actions { display: flex; flex-direction: column; }
-/* ── Field Guide Panel ── */
-/* Was an unconditional ID rule — higher specificity than the base
-   .scc-panel { display:none }, so this panel (search bar, filters, "Loading
-   Field Guide…" placeholder) stayed visible underneath every other Session
-   sub-tab regardless of which one was actually active. Gate it on .active
-   like every other panel; the flex/column layout only matters once shown. */
-#scc-panel-fieldguide.active { display: flex; flex-direction: column; overflow: hidden; }
+/* ── Live Session: control strip + collapsible sections (Phase 3a) ──
+   The strip is a flex-wrap row of the same .scc-live-section cards the old
+   3-column layout already used -- just laid out in one row instead of 3
+   fixed columns, so no new card visual language was needed. */
+.scc-live-strip-wrap { padding: 1.5rem 2rem 3rem; max-width: none; box-sizing: border-box; }
+.scc-live-strip { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+.scc-live-strip-item { flex: 1 1 220px; min-width: 220px; }
+.scc-live-accordion { display: flex; flex-direction: column; }
+.scc-live-acc-toggle { margin-top: 0; border-bottom: 1px solid var(--scc-border); padding-bottom: 0.6rem; }
+.scc-live-acc-toggle--guide { color: #6ee7b7; }
+.scc-live-acc-toggle--guide:hover { color: #a7f3d0; }
+.scc-live-acc-body { border-bottom: 1px solid var(--scc-border); }
+.scc-scenario-add-row { margin-top: 0.75rem; }
+/* Field Guide's own internal layout (2 independently-scrolling panes) needs a
+   real, definite height to size against -- it used to get that for free by
+   being the sole full-height active panel; now that it's one collapsible
+   section among several inside a naturally-growing page, give its own
+   accordion body an explicit height when open so .scc-fg-layout's
+   height:100% still resolves exactly as before. Content/editor logic below
+   this line is completely unchanged, only its container's sizing model is. */
+.scc-collapsible-body.scc-live-acc-body--fieldguide.open { display: flex; flex-direction: column; height: 70vh; }
 .scc-fg-layout { display: grid; grid-template-columns: 44% 1fr; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
 .scc-fg-left { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--scc-border); }
 .scc-fg-doc { overflow-y: auto; background: var(--scc-surface); }
@@ -10595,6 +10628,17 @@ function questsRefresh() {
     }
     questsFilter();
     showDMToast('Quests refreshed from Supabase ✓', 'success');
+    // The Dashboard never had any quest_progress awareness at all -- beats
+    // always rendered as bare description text with no real status/XP.
+    // Loads progress for every real quest (not just a session's active
+    // ones) into the same shared SCC_PROGRESS global the Session tab and
+    // lookup drawer already read from, then re-renders so it's reflected
+    // immediately rather than waiting on the next unrelated re-render.
+    var allIds = (window.QUESTS || []).map(function(q) { return q.id; });
+    sccLoadQuestProgress(allIds).then(function() {
+      renderQuestsList();
+      if (typeof SELECTED_QUEST_ID !== 'undefined' && SELECTED_QUEST_ID) renderQuestDetail(SELECTED_QUEST_ID);
+    });
   })
   .catch(function() {
     questsFilter();
@@ -10702,6 +10746,30 @@ function sccRelatedCollectionInfo(collection) {
   return map[collection] || null;
 }
 
+// Shared read-only beat-progress renderer -- used by both the Quest
+// Dashboard (renderQuestDetail) and the global-search lookup drawer
+// (sccOpenLookup's quest branch), reading the same SCC_PROGRESS global
+// either surface already relies on. Previously the Dashboard never fetched
+// quest_progress at all and just listed bare beat descriptions with no real
+// status/XP -- silently misleading about a session's actual progress, since
+// nothing here indicated whether a beat had even started.
+function sccBuildReadOnlyBeatsHtml(q) {
+  if (!q.beats || !q.beats.length) return '';
+  var html = '';
+  q.beats.forEach(function(b) {
+    var prog = SCC_PROGRESS[q.id] ? (SCC_PROGRESS[q.id][b.order] || 'not_started') : 'not_started';
+    var dotLabel = prog === 'completed' ? '&#10003;' : prog === 'in_progress' ? '&#9654;' : String(b.order);
+    html += '<div class="scc-live-beat-item scc-live-beat-item--' + prog + '" style="pointer-events:none;">'
+      + '<div class="scc-live-beat-dot">' + dotLabel + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+        + '<div class="scc-live-beat-text">' + escQ(b.title || b.description || 'Beat ' + b.order) + '</div>'
+        + (b.description && b.title ? '<div style="font-family:var(--font-body);font-size:0.76rem;color:var(--dm-text-muted);line-height:1.4;margin-top:0.15rem;">' + escQ(b.description) + '</div>' : '')
+        + (b.xp ? '<div class="scc-live-beat-xp">+' + b.xp + ' XP</div>' : '')
+      + '</div>'
+    + '</div>';
+  });
+  return html;
+}
 function renderQuestDetail(id) {
   var el = document.getElementById('quests-detail');
   if (!el) return;
@@ -10711,12 +10779,7 @@ function renderQuestDetail(id) {
 
   var beatsHtml = '';
   if (quest.beats && quest.beats.length) {
-    beatsHtml = '<div class="quest-section-label">Beats</div>'
-      + '<ul class="quest-beats-list">'
-      + quest.beats.map(function(b) {
-          return '<li class="quest-beat-item"><span class="quest-beat-num">' + b.order + '</span><span>' + escQ(b.description) + '</span></li>';
-        }).join('')
-      + '</ul>';
+    beatsHtml = '<div class="quest-section-label">Beats</div>' + sccBuildReadOnlyBeatsHtml(quest);
   }
 
   // Reveals is exactly as DM-eyes-only as dm_notes below, but used to get a much
@@ -11244,6 +11307,11 @@ function sccLoadPlayers() {
     SCC_PLAYERS = Array.isArray(rows) ? rows : [];
     var ids = SCC_PLAYERS.map(function(p) { return p.id; });
     if (!ids.length) { sccRenderPlayerBar(); return; }
+    // Live Session's own Party HP/Conditions/Inspiration widgets read SCC_SHEETS
+    // too -- previously harmless to leave unrefreshed here since sccRenderLivePanel()
+    // only ever ran on a manual tab click (well after this had settled); now that
+    // Live Session renders on initial page load (Phase 3a default view), this fetch
+    // and that render can genuinely race, so refresh explicitly on completion below.
     Promise.all([
       sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')'),
       sccFetch('classes', ''),
@@ -11278,6 +11346,9 @@ function sccLoadPlayers() {
         }
       });
       sccRenderPlayerBar();
+      sccLiveRenderParty();
+      sccLiveRenderConditions();
+      sccLiveRenderInspiration();
     });
   }).catch(function() { sccRenderPlayerBar(); });
 }
@@ -11357,41 +11428,44 @@ var SCC_LIVE_TIMER_START = null;
 var SCC_LIVE_TIMER_INTERVAL = null;
 var SCC_LIVE_TIMER_ELAPSED = 0;
 function sccRenderLivePanel() {
-  sccLiveRenderBeats();
   sccLiveRenderParty();
   sccLiveRenderConditions();
   sccLiveRenderInspiration();
-  sccLiveRenderNpcs();
+  sccRenderCurrentBeatWidget();
   sccLiveRenderScenarios();
 }
-// ── Beats ──
-function sccLiveRenderBeats() {
-  var el = document.getElementById('scc-live-beats');
-  if (!el) return;
+// ── Current Beat (shared with the Quests section's own sidebar box) ──
+// One lookup, two renderers reading from it -- see sccRenderQuestPanel()'s
+// own call to this same function. Full unification (one DOM element instead
+// of two) is Phase 3b territory, not this round.
+function sccComputeActiveBeat() {
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
   var selected = SCC_SELECTED.quest || [];
-  if (!selected.length) { el.innerHTML = '<div class="scc-empty-state" style="font-size:0.78rem;">No quest assigned. Go to Setup.</div>'; return; }
-  var html = '';
+  var found = null;
   selected.forEach(function(sel) {
+    if (found) return;
     var q = quests.find(function(x) { return x.id === sel.id; });
     if (!q || !q.beats) return;
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;gap:0.4rem;">'
-      + '<div style="font-family:var(--font-headers);font-size:0.82rem;color:var(--dm-gold);font-weight:700;line-height:1.3;">' + sccEsc(q.name) + '</div>'
-      + '<button class="scc-btn-sm" style="flex-shrink:0;font-size:0.65rem;padding:0.15rem 0.5rem;" onclick="sccOpenLookup(\'quest\',\'' + sccEsc(q.id) + '\')">Details</button>'
-    + '</div>';
+    var prog = SCC_PROGRESS[q.id] || {};
     q.beats.forEach(function(b) {
-      var prog = SCC_PROGRESS[q.id] ? (SCC_PROGRESS[q.id][b.order] || 'not_started') : 'not_started';
-      var dotLabel = prog === 'completed' ? '&#10003;' : prog === 'in_progress' ? '&#9654;' : b.order;
-      html += '<div class="scc-live-beat-item scc-live-beat-item--' + prog + '" onclick="sccCycleBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ');sccLiveRenderBeats();">'
-        + '<div class="scc-live-beat-dot">' + dotLabel + '</div>'
-        + '<div style="flex:1;min-width:0;">'
-          + '<div class="scc-live-beat-text">' + sccEsc(b.title || b.description || 'Beat ' + b.order) + '</div>'
-          + (b.xp ? '<div class="scc-live-beat-xp">+' + b.xp + ' XP</div>' : '')
-        + '</div>'
-      + '</div>';
+      if (found) return;
+      if ((prog[b.order] || 'not_started') === 'in_progress') found = { quest: q, beat: b };
     });
   });
-  el.innerHTML = html || '<div class="scc-empty-state" style="font-size:0.78rem;">No beats found.</div>';
+  return found;
+}
+function sccRenderCurrentBeatWidget() {
+  var el = document.getElementById('scc-live-current-beat');
+  if (!el) return;
+  var active = sccComputeActiveBeat();
+  if (!active) {
+    el.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">No beat in progress. Mark one in Quests below.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="font-family:var(--font-headers);font-size:0.78rem;color:var(--dm-gold);font-weight:700;line-height:1.3;margin-bottom:0.25rem;">' + sccEsc(active.quest.name) + '</div>'
+    + '<div class="scc-live-beat-text" style="font-weight:700;">' + sccEsc(active.beat.title || active.beat.description || 'Beat ' + active.beat.order) + '</div>'
+    + (active.beat.description && active.beat.title ? '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);line-height:1.4;margin-top:0.15rem;">' + sccEsc(active.beat.description) + '</div>' : '')
+    + (active.beat.xp ? '<div class="scc-live-beat-xp">+' + active.beat.xp + ' XP</div>' : '');
 }
 // ── Party HP ──
 function sccLiveRenderParty() {
@@ -11617,19 +11691,6 @@ function sccLiveToggleInspiration(playerId) {
     .then(function(r) { if (!r.ok) showDMToast('Inspiration save failed', 'error'); });
   sccLiveRenderInspiration();
 }
-// ── NPC Chips ──
-function sccLiveRenderNpcs() {
-  var el = document.getElementById('scc-live-npcs');
-  if (!el) return;
-  var chars    = typeof CHARACTERS !== 'undefined' ? CHARACTERS : [];
-  var selected = SCC_SELECTED.npc || [];
-  if (!selected.length) { el.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);font-style:italic;">No NPCs assigned. Go to Setup.</div>'; return; }
-  el.innerHTML = selected.map(function(sel) {
-    var c = chars.find(function(x) { return x.id === sel.id; });
-    var label = c ? c.name : sel.id;
-    return '<button class="scc-live-npc-chip" onclick="sccOpenLookup(\'character\',\'' + sccEsc(sel.id) + '\')">' + sccEsc(label) + '</button>';
-  }).join('');
-}
 // ── Scenarios ──
 var SCC_USED_SCENARIOS = {};
 function sccLiveRenderScenarios() {
@@ -11726,60 +11787,84 @@ function sccScenarioClearFilter() {
   if (filterEl) { filterEl.value = ''; filterEl.focus(); }
   sccFilterScenarios('');
 }
-// ── Live Search ──
-function sccLiveSearch(query) {
-  var resultsEl = document.getElementById('scc-live-search-results');
-  if (!resultsEl) return;
-  if (!query || query.length < 2) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
-  var q = query.toLowerCase();
-  var allEntries = [];
-  var addCol = function(arr, typeKey, typeLabel) {
-    (arr || []).forEach(function(e) { if (e.name && e.name.toLowerCase().indexOf(q) >= 0) allEntries.push({ id: e.id, name: e.name, type: typeLabel, typeKey: typeKey }); });
-  };
-  addCol(typeof CHARACTERS !== 'undefined' ? CHARACTERS : [], 'character', 'NPC');
-  addCol(typeof CITIES     !== 'undefined' ? CITIES     : [], 'city',      'Location');
-  addCol(typeof POIS       !== 'undefined' ? POIS       : [], 'city',      'POI');
-  addCol(typeof CREATURES  !== 'undefined' ? CREATURES  : [], 'creature',  'Creature');
-  addCol(typeof ITEMS      !== 'undefined' ? ITEMS      : [], 'item',      'Item');
-  allEntries = allEntries.slice(0, 12);
-  if (!allEntries.length) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
-  resultsEl.innerHTML = allEntries.map(function(e) {
-    return '<div class="scc-global-result-item" onclick="sccOpenLookup(\'' + sccEsc(e.typeKey) + '\',\'' + sccEsc(e.id) + '\');document.getElementById(\'scc-live-search\').value=\'\';document.getElementById(\'scc-live-search-results\').classList.remove(\'open\');">'
-      + '<span class="scc-global-result-type">' + sccEsc(e.type) + '</span>'
-      + '<div class="scc-global-result-name">' + sccEsc(e.name) + '</div>'
-    + '</div>';
-  }).join('');
-  resultsEl.classList.add('open');
+// Exposes the existing Setup scenario editor rather than building a second
+// one -- navigates to Setup and lands on/highlights the real editor there.
+function sccJumpToSetupScenarios() {
+  switchTab('setup');
+  setTimeout(function() {
+    var el = document.getElementById('scc-scenario-editor-groups');
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('scc-fg-editor-row--jump-highlight');
+    setTimeout(function() { el.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
+  }, 50);
+}
+// ── Live Session collapsible sections ──
+var SCC_LIVE_ACC_AUTO_APPLIED = false;
+function sccLiveOpenSection(name) {
+  var toggle = document.getElementById('scc-live-acc-toggle-' + name);
+  var body   = document.getElementById('scc-live-acc-body-' + name);
+  if (!toggle || !body) return;
+  body.classList.add('open');
+  toggle.classList.add('open');
+  if (name === 'fieldguide') { sccRenderFieldGuide(); sccFgInitDocument(); }
+}
+function sccLiveToggleSection(name) {
+  var toggle = document.getElementById('scc-live-acc-toggle-' + name);
+  var body   = document.getElementById('scc-live-acc-body-' + name);
+  if (!toggle || !body) return;
+  var isOpen = body.classList.contains('open');
+  if (isOpen) { body.classList.remove('open'); toggle.classList.remove('open'); return; }
+  sccLiveOpenSection(name);
+}
+// Auto-expands Quests once per session load if any assigned quest has a real
+// in-progress beat -- guarded so it only applies once and doesn't keep
+// re-forcing the section open if the DM manually collapses it afterward.
+// Deliberately NOT called from sccRenderQuestPanel() itself -- that function
+// runs from many places (chip add/remove, etc.) with no guarantee SCC_PROGRESS
+// has actually finished loading yet; calling this too early would latch it
+// permanently closed on stale/empty data. Only called from the specific
+// bootstrap call sites below, after their own sccLoadQuestProgress() promise
+// has genuinely resolved.
+function sccLiveApplyAutoExpand() {
+  if (SCC_LIVE_ACC_AUTO_APPLIED) return;
+  SCC_LIVE_ACC_AUTO_APPLIED = true;
+  if (sccComputeActiveBeat()) sccLiveOpenSection('quests');
 }
 // ── Quick Note ──
 function sccLiveAddNote() {
   var wrap = document.getElementById('scc-live-note-wrap');
   if (wrap) { wrap.style.display = wrap.style.display === 'none' ? '' : 'none'; }
 }
+// Used to hijack session_notes.player_decisions (a completely different
+// panel's own textarea) instead of creating a real note. Now a real
+// session_note_entries row, same table/shape the Notes tab's own Tagged
+// Notes already use -- defaulted to the "dm-only" category so capturing
+// something mid-session stays a single click, not a category picker every
+// time; the DM can re-categorize it later from the real Notes tab.
 function sccLiveSaveNote() {
   var input = document.getElementById('scc-live-note-input');
   if (!input || !input.value.trim()) return;
-  var ts = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  var existing = document.getElementById('scc-note-decisions');
-  var updated = (existing && existing.value ? existing.value + '\n' : '') + '[' + ts + '] ' + input.value.trim();
-  if (existing) existing.value = updated;
+  var text = input.value.trim();
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
   input.value = '';
   var wrap = document.getElementById('scc-live-note-wrap');
   if (wrap) wrap.style.display = 'none';
-
-  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
-  if (!num) { showDMToast('Note saved locally — no active session to sync to', 'error'); return; }
-  var body = { session_number: num, player_decisions: updated };
-  sccPatch('session_notes', '?session_number=eq.' + num, body).then(function(r) {
-    if (r.ok) {
-      SCC_SESSION = Object.assign(SCC_SESSION || {}, body);
-      showDMToast('Note saved to Player Decisions &#10003;', 'success');
-    } else {
-      showDMToast('Note saved locally — sync failed', 'error');
-    }
-  }).catch(function() {
-    showDMToast('Note saved locally — sync failed', 'error');
-  });
+  if (!num) { showDMToast('No active session to save to', 'error'); return; }
+  fetch(SCC_URL + '/rest/v1/session_note_entries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SCC_ANON,
+      'Authorization': 'Bearer ' + SCC_ANON,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ session_number: num, category: 'dm-only', title: '', content: text })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Note save failed', 'error'); return; }
+    showDMToast('Note added to Tagged Notes (DM-Only) \u2713', 'success');
+    if (typeof sccRenderTaggedNotes === 'function') sccRenderTaggedNotes();
+  }).catch(function() { showDMToast('Note save failed', 'error'); });
 }
 // ── Die Roller ──
 function sccRollDie(sides) {
@@ -11846,7 +11931,6 @@ function sccSwitchPanel(name) {
     p.classList.toggle('active', p.id === 'scc-panel-' + name);
   });
   if (name === 'live') { sccRenderLivePanel(); }
-  if (name === 'fieldguide') { sccRenderFieldGuide(); sccFgInitDocument(); }
   if (name === 'notes') { sccRenderTaggedNotes(); }
   if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); }
 }
@@ -12634,10 +12718,17 @@ function sccLoadLatestSession() {
     var completedSessions = SCC_ALL_SESSIONS.filter(function(s) {
       return s.session_status === 'completed';
     });
+    var progressPromise = Promise.resolve();
     if (activeSession) {
       SCC_SESSION = activeSession;
       sccPopulateSetupForm(SCC_SESSION);
-      sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
+      // Not awaited before the render calls below (quest cards themselves
+      // only need QUESTS, already loaded earlier) -- but sccLiveApplyAutoExpand()
+      // only ever fires once, so it needs a render that's actually seen the
+      // real progress data, not just whatever happened to be in SCC_PROGRESS
+      // synchronously. Re-render once this resolves, same pattern
+      // sccLoadHistorySession() already uses.
+      progressPromise = sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
       sccSetSessionDisplay(SCC_SESSION.session_number);
     } else {
       // No active session — show next number ready for new session
@@ -12651,19 +12742,27 @@ function sccLoadLatestSession() {
       if (numEl) numEl.value = nextNum;
     }
     SCC_VIEWING_HISTORY = false;
+    SCC_LIVE_ACC_AUTO_APPLIED = false;
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
     sccRenderCombatSessionCreatures();
     sccRenderSuggestedRows();
     sccUpdateHeaderSub();
+    // Live Session is now the default landing view (Phase 3a) -- its own
+    // widgets (HP/Conditions/Inspiration/Current Beat/Scenarios) need this
+    // same load to populate them too, not just a manual tab click.
+    sccRenderLivePanel();
+    progressPromise.then(function() { sccRenderQuestPanel(); sccLiveApplyAutoExpand(); });
   }).catch(function() {
     sccSetSessionDisplay(1);
+    SCC_LIVE_ACC_AUTO_APPLIED = false;
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
     sccRenderCombatSessionCreatures();
     sccRenderSuggestedRows();
+    sccRenderLivePanel();
   });
 }
 function sccSetSessionDisplay(num) {
@@ -12734,12 +12833,15 @@ function sccLoadHistorySession(sessionNum) {
     dateDisplay.style.display = '';
     dateDisplay.className = 'scc-audit-readonly-val' + (dateVal ? '' : ' empty');
   }
+  SCC_LIVE_ACC_AUTO_APPLIED = false;
   sccLoadQuestProgress(session.quest_ids_active || []).then(function() {
     sccRenderQuestPanel();
+    sccLiveApplyAutoExpand();
   });
   sccRenderNpcPanel();
   sccRenderLocationPanel();
   sccUpdateHeaderSubHistory(sessionNum, session);
+  sccRenderLivePanel();
 }
 function sccUpdateHeaderSubHistory(num, session) {
   var el = document.getElementById('scc-header-sub');
@@ -12787,6 +12889,7 @@ function sccCompleteSession() {
     SCC_SELECTED = { location:[], npc:[], creature:[], quest:[], item:[], combatant:[] };
     SCC_NPC_RELATIONSHIPS = {};
     SCC_PROGRESS = {};
+    SCC_LIVE_ACC_AUTO_APPLIED = false;
     // Clear all form fields
     ['scc-session-date','scc-session-premise','scc-prep-notes',
      'scc-note-decisions','scc-note-unexpected','scc-note-threads',
@@ -12809,6 +12912,8 @@ function sccCompleteSession() {
     sccRenderNpcPanel();
     sccRenderLocationPanel();
     sccRenderQuestPanel();
+    sccRenderLivePanel();
+    sccLiveApplyAutoExpand();
   }).catch(function() { showDMToast('Could not complete session', 'error'); });
 }
 // Close history panel on outside click
@@ -13920,6 +14025,7 @@ function sccRenderQuestPanel() {
   if (!selected.length) {
     el.innerHTML = '<div class="scc-empty-state">No quests assigned yet. Go to Setup to add them.</div>';
     sccUpdateQuestSidebar(null, null);
+    sccRenderCurrentBeatWidget();
     return;
   }
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
@@ -13940,14 +14046,14 @@ function sccRenderQuestPanel() {
     var beatsHtml = beats.map(function(b) {
       var st = prog[b.order] || 'not_started';
       var isActive = st === 'in_progress';
-      // Was a button that cycled not_started -> in_progress -> completed on
-      // click, with no visible indication of what clicking it would do next —
-      // a real dropdown makes the 3 states and the current one explicit.
-      var statusSelect = '<select class="cm-select scc-beat-status-select scc-beat-status-select--' + st + '" onchange="sccSaveBeatStatus(\'' + sccEsc(q.id) + '\',' + b.order + ',this.value)">'
-        + '<option value="not_started"' + (st === 'not_started' ? ' selected' : '') + '>Available</option>'
-        + '<option value="in_progress"' + (st === 'in_progress' ? ' selected' : '') + '>&#9654; In Progress</option>'
-        + '<option value="completed"' + (st === 'completed' ? ' selected' : '') + '>&#10003; Done</option>'
-      + '</select>';
+      // Phase 3a: this used to be a real <select>, a second control doing the
+      // exact same job the compact rail's click-to-cycle segments already do
+      // (both ultimately call sccSaveBeatStatus). Kept only the rail as the
+      // interactive control; this is now a plain status badge -- still shows
+      // the 3 states/colors at a glance, just not a second way to change one.
+      var statusBadge = '<span class="scc-beat-status-badge scc-beat-status-badge--' + st + '">'
+        + (st === 'not_started' ? 'Available' : st === 'in_progress' ? '&#9654; In Progress' : '&#10003; Done')
+      + '</span>';
       return '<div class="scc-beat-item scc-beat-item--' + st + (isActive ? ' scc-beat-item--active' : '') + '">'
         + '<div class="scc-beat-num">' + b.order + '</div>'
         + '<div class="scc-beat-content">'
@@ -13956,8 +14062,7 @@ function sccRenderQuestPanel() {
           + '<div class="scc-beat-meta">'
             + (b.xp ? '<span class="scc-beat-xp">+' + b.xp + ' XP</span>' : '')
             + '<div class="scc-beat-actions">'
-              + statusSelect
-              + (isActive ? '<button class="scc-beat-live-btn" onclick="sccSwitchPanel(\'live\')" title="Go to Live Session">&#9654; Live Session</button>' : '')
+              + statusBadge
             + '</div>'
           + '</div>'
         + '</div>'
@@ -13980,18 +14085,12 @@ function sccRenderQuestPanel() {
       + '</div>'
     + '</div>';
   }).join('');
-  // Update sidebar with current in-progress beat
-  var allQuests = typeof QUESTS !== 'undefined' ? QUESTS : [];
-  var activeBeat = null, activeQuest = null;
-  selected.forEach(function(sel) {
-    var q = allQuests.find(function(x) { return x.id === sel.id; });
-    if (!q) return;
-    var prog = SCC_PROGRESS[q.id] || {};
-    (q.beats || []).forEach(function(b) {
-      if ((prog[b.order] || 'not_started') === 'in_progress') { activeBeat = b; activeQuest = q; }
-    });
-  });
-  sccUpdateQuestSidebar(activeQuest, activeBeat);
+  // Update the sidebar and the always-visible strip widget -- one shared
+  // lookup for both, see sccComputeActiveBeat(). Auto-expand is NOT applied
+  // here -- see sccLiveApplyAutoExpand()'s own comment for why.
+  var active = sccComputeActiveBeat();
+  sccUpdateQuestSidebar(active ? active.quest : null, active ? active.beat : null);
+  sccRenderCurrentBeatWidget();
 }
 function sccUpdateQuestSidebar(quest, beat) {
   var refEl = document.getElementById('scc-quest-beat-ref');
@@ -15928,21 +16027,7 @@ function sccOpenLookup(type, id) {
     var q = quests.find(function(x){ return x.id === id; });
     if (!q) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
     newTabUrl = sccBuildQuestDetailUrl(q.id);
-    var beatsHtml = '';
-    if (q.beats && q.beats.length) {
-      q.beats.forEach(function(b) {
-        var prog = SCC_PROGRESS[q.id] ? (SCC_PROGRESS[q.id][b.order] || 'not_started') : 'not_started';
-        var dotLabel = prog === 'completed' ? '&#10003;' : prog === 'in_progress' ? '&#9654;' : String(b.order);
-        beatsHtml += '<div class="scc-live-beat-item scc-live-beat-item--' + prog + '" style="pointer-events:none;">'
-          + '<div class="scc-live-beat-dot">' + dotLabel + '</div>'
-          + '<div style="flex:1;min-width:0;">'
-            + '<div class="scc-live-beat-text">' + sccEsc(b.title || b.description || 'Beat ' + b.order) + '</div>'
-            + (b.description && b.title ? '<div style="font-family:var(--font-body);font-size:0.76rem;color:var(--dm-text-muted);line-height:1.4;margin-top:0.15rem;">' + sccEsc(b.description) + '</div>' : '')
-            + (b.xp ? '<div class="scc-live-beat-xp">+' + b.xp + ' XP</div>' : '')
-          + '</div>'
-        + '</div>';
-      });
-    }
+    var beatsHtml = sccBuildReadOnlyBeatsHtml(q);
     html = ''
       + '<div class="scc-ql-header" style="align-items:center;">'
         + '<div class="scc-ql-portrait-fallback" style="font-size:2rem;background:var(--dm-gold-dim);border-color:var(--scc-border-gold);">&#128220;</div>'
