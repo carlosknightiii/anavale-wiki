@@ -3066,22 +3066,27 @@
               <div class="scc-note-block">
                 <label class="scc-note-label">Player Decisions</label>
                 <textarea id="scc-note-decisions" class="scc-textarea scc-textarea--tall" placeholder="What choices did the players make? What surprised you?"></textarea>
+                <div id="scc-note-decisions-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
               </div>
               <div class="scc-note-block">
                 <label class="scc-note-label">Unexpected Moments</label>
                 <textarea id="scc-note-unexpected" class="scc-textarea scc-textarea--tall" placeholder="What went sideways? What made the table laugh or go quiet?"></textarea>
+                <div id="scc-note-unexpected-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
               </div>
               <div class="scc-note-block">
                 <label class="scc-note-label">Loose Threads</label>
                 <textarea id="scc-note-threads" class="scc-textarea scc-textarea--tall" placeholder="Hooks that weren't resolved, NPCs who said something odd, things to revisit…"></textarea>
+                <div id="scc-note-threads-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
               </div>
               <div class="scc-note-block">
                 <label class="scc-note-label">Follow-Up Needed</label>
                 <textarea id="scc-note-followup" class="scc-textarea scc-textarea--tall" placeholder="What do you need to prepare before the next session? What do you need to ask me about?"></textarea>
+                <div id="scc-note-followup-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
               </div>
               <div class="scc-note-block">
                 <label class="scc-note-label">Milestone Notes</label>
                 <textarea id="scc-note-milestone" class="scc-textarea" placeholder="XP awarded, level ups, major story beats completed…"></textarea>
+                <div id="scc-note-milestone-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
               </div>
             </div>
             <!-- ── QUICK NOTES (was "Tagged Notes") — quick-capture, tagged,
@@ -6813,7 +6818,13 @@ function showDMToast(msg, type) {
 }
 .scc-tagnote-body:focus { outline: none; }
 .scc-tagnote-body::placeholder { color: var(--dm-text-faint); }
-.scc-audit-mode .scc-tagnote-section { display: none !important; }
+/* Used to hide the whole Tagged Notes section in audit mode -- confirmed via
+   the Notes panel audit that this left a completed session's real notes with
+   no read path anywhere in the app. Section itself now stays visible and
+   readable (search/filter/copy all still real read actions); only the
+   actual write surface, the add-row, is hidden -- title/body readonly and
+   Delete's own omission are handled per-card in sccBuildTagNoteCard(). */
+.scc-audit-mode .scc-tagnote-add-row { display: none !important; }
 /* ── Session Scenarios Editor (Setup page) ── */
 .scc-scenario-editor-hint {
   font-family: var(--font-sans);
@@ -7402,6 +7413,13 @@ function showDMToast(msg, type) {
 .scc-audit-readonly-val.empty {
   color: var(--dm-text-muted);
   font-style: italic;
+}
+/* The base class's single-line use (the date field) never needed line
+   breaks preserved; the 5 note fields hold real multi-paragraph recap
+   text, which a plain block-level div collapses by default without this. */
+.scc-audit-readonly-val--note {
+  white-space: pre-wrap;
+  min-height: 2.5rem;
 }
 /* ── Browse All panel ── */
 .scc-browse-panel {
@@ -11893,6 +11911,12 @@ function sccLiveAddNote() {
 // something mid-session stays a single click, not a category picker every
 // time; the DM can re-categorize it later from the real Notes tab.
 function sccLiveSaveNote() {
+  // Same guard sccOpenQuickNoteModal() already has -- SCC_SESSION isn't
+  // repointed at the historical session while viewing it, so an ungated
+  // write here would land against whichever session was actually active
+  // before History was opened, not the locked one on screen. Confusing,
+  // not corrupting, but still a real write that shouldn't be reachable.
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quick notes are read-only here', 'error'); return; }
   var input = document.getElementById('scc-live-note-input');
   if (!input || !input.value.trim()) return;
   var text = input.value.trim();
@@ -12802,6 +12826,12 @@ function sccLoadLatestSession() {
     // widgets (HP/Conditions/Inspiration/Current Beat/Scenarios) need this
     // same load to populate them too, not just a manual tab click.
     sccRenderLivePanel();
+    // Without this, returning from a history view via sccLoadCurrentSession()
+    // while sitting on the Notes tab would leave the just-viewed historical
+    // session's read-only Tagged Notes on screen instead of the real,
+    // editable current session's -- SCC_SESSION is only correctly set to the
+    // active session a few lines above this, so no override needed here.
+    sccRenderTaggedNotes();
     progressPromise.then(function() { sccRenderQuestPanel(); sccLiveApplyAutoExpand(); });
   }).catch(function() {
     sccSetSessionDisplay(1);
@@ -12812,6 +12842,7 @@ function sccLoadLatestSession() {
     sccRenderCombatSessionCreatures();
     sccRenderSuggestedRows();
     sccRenderLivePanel();
+    sccRenderTaggedNotes();
   });
 }
 function sccSetSessionDisplay(num) {
@@ -12882,6 +12913,29 @@ function sccLoadHistorySession(sessionNum) {
     dateDisplay.style.display = '';
     dateDisplay.className = 'scc-audit-readonly-val' + (dateVal ? '' : ' empty');
   }
+  // Same swap for the 5 recap fields -- sccPopulateSetupForm() above already
+  // loaded the real historical text into each textarea's value, but
+  // .scc-audit-mode .scc-textarea hides them outright with no read-only
+  // fallback, so that real data was never actually visible. Multi-paragraph
+  // text needs the --note modifier (white-space:pre-wrap) the plain date
+  // swap never needed.
+  [
+    ['scc-note-decisions',  session.player_decisions],
+    ['scc-note-unexpected', session.unexpected_moments],
+    ['scc-note-threads',    session.loose_threads],
+    ['scc-note-followup',   session.follow_up_needed],
+    ['scc-note-milestone',  session.milestone_notes]
+  ].forEach(function(pair) {
+    var textarea = document.getElementById(pair[0]);
+    var display  = document.getElementById(pair[0] + '-display');
+    if (textarea) textarea.style.display = 'none';
+    if (display) {
+      var val = pair[1];
+      display.textContent = val || '(none recorded)';
+      display.style.display = '';
+      display.className = 'scc-audit-readonly-val scc-audit-readonly-val--note' + (val ? '' : ' empty');
+    }
+  });
   SCC_LIVE_ACC_AUTO_APPLIED = false;
   sccLoadQuestProgress(session.quest_ids_active || []).then(function() {
     sccRenderQuestPanel();
@@ -12891,6 +12945,10 @@ function sccLoadHistorySession(sessionNum) {
   sccRenderLocationPanel();
   sccUpdateHeaderSubHistory(sessionNum, session);
   sccRenderLivePanel();
+  // Load *this* session's real Tagged Notes -- sccLoadHistorySession() never
+  // repoints SCC_SESSION at the historical row, so the override param exists
+  // specifically for this call.
+  sccRenderTaggedNotes(sessionNum);
 }
 function sccUpdateHeaderSubHistory(num, session) {
   var el = document.getElementById('scc-header-sub');
@@ -12915,6 +12973,13 @@ function sccLoadCurrentSession() {
   var dateDisplay = document.getElementById('scc-session-date-display');
   if (dateInput)   dateInput.style.display   = '';
   if (dateDisplay) dateDisplay.style.display = 'none';
+  // Same restore for the 5 recap fields' readonly swap from sccLoadHistorySession().
+  ['scc-note-decisions','scc-note-unexpected','scc-note-threads','scc-note-followup','scc-note-milestone'].forEach(function(id) {
+    var textarea = document.getElementById(id);
+    var display  = document.getElementById(id + '-display');
+    if (textarea) textarea.style.display = '';
+    if (display)  display.style.display  = 'none';
+  });
   SCC_VIEWING_HISTORY = false;
   sccLoadLatestSession();
 }
@@ -12939,6 +13004,20 @@ function sccCompleteSession() {
     SCC_NPC_RELATIONSHIPS = {};
     SCC_PROGRESS = {};
     SCC_LIVE_ACC_AUTO_APPLIED = false;
+    // Tagged Notes is session-scoped like everything else here, but unlike
+    // the 5 fields below it was never explicitly reset on completion -- a DM
+    // sitting on the Notes tab at this exact moment would keep seeing the
+    // just-locked session's real notes list until some unrelated action
+    // happened to trigger a re-render. sccRenderTaggedNotes() itself already
+    // shows the correct "save session setup first" empty state once
+    // SCC_SESSION is null (just set above), so this is a real fix, not a
+    // no-op -- and resetting the filters means the next session's notes
+    // don't open pre-filtered to whatever the DM last had active.
+    SCC_NOTE_FILTER_CAT = '';
+    SCC_NOTE_FILTER_Q = '';
+    var tagSearchEl = document.getElementById('scc-tagnote-search');
+    if (tagSearchEl) tagSearchEl.value = '';
+    sccRenderTaggedNotes();
     // Clear all form fields
     ['scc-session-date','scc-session-premise','scc-prep-notes',
      'scc-note-decisions','scc-note-unexpected','scc-note-threads',
@@ -15694,14 +15773,21 @@ function sccNoteCategoryLabel(id) {
   return c ? c.label : 'Uncategorized';
 }
 
-function sccRenderTaggedNotes() {
+// sessionNumOverride lets sccLoadHistorySession() load a *different*
+// session's real notes without repointing SCC_SESSION itself at the
+// historical row (SCC_SESSION deliberately stays the live/current session
+// throughout audit view, same as it already did before this fix — other
+// code paths key off it assuming "the session" means "the editable one").
+// Every existing call site passes nothing and keeps reading SCC_SESSION,
+// unchanged.
+function sccRenderTaggedNotes(sessionNumOverride) {
   var newCatSel = document.getElementById('scc-tagnote-new-cat');
   if (newCatSel && !newCatSel.options.length) {
     newCatSel.innerHTML = SCC_NOTE_CATEGORIES.map(function(c) {
       return '<option value="' + c.id + '">' + sccEsc(c.label) + '</option>';
     }).join('');
   }
-  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  var num = sessionNumOverride != null ? sessionNumOverride : (SCC_SESSION ? SCC_SESSION.session_number : null);
   var listEl = document.getElementById('scc-tagnote-list');
   if (!listEl) return Promise.resolve();
   if (!num) { listEl.innerHTML = '<div class="scc-empty-state">Save session setup first.</div>'; return Promise.resolve(); }
@@ -15756,7 +15842,12 @@ function sccFilterTagNotes() {
       : '<div class="scc-empty-state">No tagged notes yet — add one above. Here\'s what a finished one looks like:</div>' + sccBuildExampleTagNoteCard();
     return;
   }
-  listEl.innerHTML = filtered.map(sccBuildTagNoteCard).join('');
+  // A bare `filtered.map(sccBuildTagNoteCard)` would pass Array.map's own
+  // second argument (the index) as sccBuildTagNoteCard's `readonly` param —
+  // 0 is falsy (item 0 reads editable) but every index after it is truthy
+  // (reads readonly) regardless of SCC_VIEWING_HISTORY. Wrapped in a closure
+  // so every card gets the real, correct flag instead.
+  listEl.innerHTML = filtered.map(function(n) { return sccBuildTagNoteCard(n, SCC_VIEWING_HISTORY); }).join('');
 }
 
 // A real-looking, clearly-marked, fully inert worked example — shown only
@@ -15787,17 +15878,27 @@ function sccNoteTimeAgo(iso) {
   return Math.floor(hrs / 24) + 'd ago';
 }
 
-function sccBuildTagNoteCard(n) {
+// readonly (true while viewing a locked historical session) keeps the note
+// genuinely readable and copyable -- real HTML `readonly` on the title/body
+// (not `disabled`, which also blocks focus/text-selection; not a CSS
+// pointer-events hide, which would block selecting text to copy by hand
+// too) so a DM can still click in and select/copy manually alongside the
+// Copy button, which stays enabled either way since it never writes
+// anything. Only Delete is dropped entirely, matching "add/edit/delete
+// disabled" -- there's nothing to be gained by rendering a delete button
+// that can't do anything, unlike Copy which is a real read action.
+function sccBuildTagNoteCard(n, readonly) {
   var catClass = n.category === 'dm-only' ? ' scc-tagnote-badge--dmonly' : n.category === 'quest' ? ' scc-tagnote-badge--quest' : '';
+  var delBtn = readonly ? '' : '<button class="scc-tagnote-del" title="Delete note" onclick="sccDeleteTagNote(\'' + sccEsc(n.id) + '\')">&#10005;</button>';
   return '<div class="scc-tagnote-card" data-note-id="' + sccEsc(n.id) + '">'
     + '<div class="scc-tagnote-card-head">'
       + '<span class="scc-tagnote-badge' + catClass + '">' + sccEsc(sccNoteCategoryLabel(n.category)) + '</span>'
       + '<span class="scc-tagnote-time">' + sccEsc(sccNoteTimeAgo(n.updated_at)) + '</span>'
       + '<button class="scc-tagnote-copy" title="Copy note" onclick="sccCopyTagNote(\'' + sccEsc(n.id) + '\')">&#128203;</button>'
-      + '<button class="scc-tagnote-del" title="Delete note" onclick="sccDeleteTagNote(\'' + sccEsc(n.id) + '\')">&#10005;</button>'
+      + delBtn
     + '</div>'
-    + '<input type="text" class="scc-tagnote-title" value="' + sccEsc(n.title || '') + '" placeholder="Untitled note" onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'title\',this.value)">'
-    + '<textarea class="scc-tagnote-body" placeholder="Write a note&#8230;" onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'content\',this.value)">' + sccEsc(n.content || '') + '</textarea>'
+    + '<input type="text" class="scc-tagnote-title" value="' + sccEsc(n.title || '') + '" placeholder="Untitled note"' + (readonly ? ' readonly' : ' onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'title\',this.value)"') + '>'
+    + '<textarea class="scc-tagnote-body" placeholder="Write a note&#8230;"' + (readonly ? ' readonly' : ' onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'content\',this.value)"') + '>' + sccEsc(n.content || '') + '</textarea>'
   + '</div>';
 }
 
@@ -15859,6 +15960,7 @@ function sccSubmitQuickNote() {
 }
 
 function sccAddTagNote() {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quick notes are read-only here', 'error'); return; }
   var num = SCC_SESSION ? SCC_SESSION.session_number : null;
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
   var catSel = document.getElementById('scc-tagnote-new-cat');
@@ -15906,6 +16008,11 @@ function sccAddTagNote() {
 }
 
 function sccSaveTagNoteField(id, field, value) {
+  // Fix #4 disables the title/body inputs entirely in audit mode, so this
+  // shouldn't be reachable from the UI there -- kept as a second layer
+  // anyway, matching sccOpenQuickNoteModal()'s own guard, rather than
+  // relying solely on the disabled attribute to prevent a stray write.
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quick notes are read-only here', 'error'); return; }
   var entry = SCC_NOTE_ENTRIES.find(function(n) { return n.id === id; });
   if (entry) entry[field] = value;
   var patch = {};
@@ -15916,6 +16023,7 @@ function sccSaveTagNoteField(id, field, value) {
 }
 
 function sccDeleteTagNote(id) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quick notes are read-only here', 'error'); return; }
   fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + encodeURIComponent(id), {
     method: 'DELETE',
     headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
