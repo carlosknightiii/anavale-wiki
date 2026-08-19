@@ -21,6 +21,7 @@
 3. If what you find in the file conflicts with project knowledge, stop and say so.
 4. Never answer from memory or assumption — read the file first.
 5. Before starting new work: check `git worktree list` / `git diff --stat main...<other-branch>` for parallel work on the same files, **and** check Section 3 (⚠ Pending / Blocked) for a known blocker already sitting on the same file/area. Flag either before proceeding.
+6. Every new task — including deferred features and future SCC UX edits — gets its own fresh worktree, created when that work actually begins. Never reuse a worktree from a task that's already merged, completed, or removed, even if it's named in old chat history or a handoff doc — always create a new one. Name each worktree for what it's actually doing (e.g. `anavale-wiki-combat-encounters`, not `anavale-wiki-2` or a reused old name), so it's unambiguous from the name alone which task it belongs to.
 
 **End (standing requirement — do not wait to be asked):**
 1. Append an entry to the Decision Log (date, what changed, why).
@@ -569,6 +570,11 @@ This is a standing rule, not a one-off decision — a future "is this spell legi
 ## 12. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-19 (new session, process addendum — worktree hygiene rule added to §1, no code changed) — `CLAUDE.md`.**
+DM had been re-explaining the same two worktree habits by hand across sessions (fresh worktree per task, real task-named worktrees) rather than having them enforced automatically — moved both into §1's Start checklist as item 6, directly after the existing "check for parallel work" item, so Claude Chat and Claude Code both pick them up without being reminded each time. Rule: every new task (including deferred features and future SCC UX edits) gets a fresh worktree created when that work actually begins — never reuse one from a task that's already merged/completed/removed, even if it's still named in old chat history or a handoff doc; and every worktree is named for what it's actually doing (`anavale-wiki-combat-encounters`, not `anavale-wiki-2` or a reused old name), so the name alone tells you which task it belongs to. No code changed this entry — process update only.
 
 ---
 
