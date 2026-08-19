@@ -11152,6 +11152,15 @@ function renderPlayerDetailBody(charId) {
   bodyEl.innerHTML = '<div class="scc-pd-section">'
     + '<div class="scc-pd-section-title">Spell Assignment</div>'
     + renderPlayerSpellSection(charId)
+  + '</div>'
+  // Round 3 Follow-up (sheet/index.html session) — currency is now DM-only:
+  // players' Gold/Silver/Copper inputs on the sheet became read-only, this
+  // is the one real editor left for that value. Second sibling .scc-pd-
+  // section, per the extensible-by-design note above — no restructuring of
+  // Spell Assignment or the panel/toggle mechanism needed.
+  + '<div class="scc-pd-section">'
+    + '<div class="scc-pd-section-title">Currency</div>'
+    + renderPlayerCurrencySection(charId)
   + '</div>';
 }
 
@@ -11258,6 +11267,52 @@ function sccPlayerUnassignSpell(charId, spellId) {
     renderPlayerDetailBody(charId);
     showDMToast('Spell removed', 'success');
   }).catch(function() { showDMToast('Failed to remove spell', 'error'); });
+}
+
+// Currency (Round 3 Follow-up, sheet/index.html session) — same 3-field
+// GP/SP/CP editor shape as the sheet's own now-retired renderGold(): the
+// only real column is character_sheet.gold_cp, each field is a plain
+// display/edit surface over it, not an independent value — blurring any of
+// the three recomputes and PATCHes the whole total from all three fields'
+// current values. Reuses .scc-loot-coin-row/.scc-coin-input-wrap/
+// .scc-coin-input/.scc-coin-label verbatim (the Combat tab's existing
+// coin-award UI, gp/sp/cp color-coded already) rather than inventing new
+// input styling for the same 3-coin-field shape.
+function renderPlayerCurrencySection(charId) {
+  var sheet = PD_SHEETS[charId] || {};
+  var cp = sheet.gold_cp || 0;
+  var gp    = Math.floor(cp / 100);
+  var spRem = Math.floor((cp % 100) / 10);
+  var cpRem = cp % 10;
+  return '<div class="scc-loot-coin-row">' + [
+    { key: 'gp', label: 'GP', val: gp },
+    { key: 'sp', label: 'SP', val: spRem },
+    { key: 'cp', label: 'CP', val: cpRem }
+  ].map(function(c) {
+    return '<div class="scc-coin-input-wrap">'
+      + '<span class="scc-coin-label ' + c.key + '">' + c.label + '</span>'
+      + '<input type="number" min="0" class="scc-coin-input" id="scc-pd-currency-' + c.key + '-' + escQ(charId) + '" value="' + c.val + '" onblur="sccPlayerCurrencyBlur(\'' + escQ(charId) + '\')" onkeydown="if(event.key===\'Enter\')this.blur()">'
+    + '</div>';
+  }).join('') + '</div>';
+}
+
+function sccPlayerCurrencyBlur(charId) {
+  var gpEl = document.getElementById('scc-pd-currency-gp-' + charId);
+  var spEl = document.getElementById('scc-pd-currency-sp-' + charId);
+  var cpEl = document.getElementById('scc-pd-currency-cp-' + charId);
+  if (!gpEl || !spEl || !cpEl) return;
+  var gp = parseInt(gpEl.value) || 0;
+  var sp = parseInt(spEl.value) || 0;
+  var cp = parseInt(cpEl.value) || 0;
+  var newTotal = Math.max(0, gp * 100 + sp * 10 + cp);
+  var sheet = PD_SHEETS[charId] || {};
+  if ((sheet.gold_cp || 0) === newTotal) return; // no real change — skip the write
+  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(charId), { gold_cp: newTotal }).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to update currency', 'error'); return; }
+    sheet.gold_cp = newTotal;
+    PD_SHEETS[charId] = sheet;
+    showDMToast('Currency updated', 'success');
+  }).catch(function() { showDMToast('Failed to update currency', 'error'); });
 }
 </script>
 <script>
