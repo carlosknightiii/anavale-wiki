@@ -15312,7 +15312,7 @@ function sccAwardItem(combatantIdx, itemIdx) {
     if (r.ok) {
       item.awarded = true;
       item.awardedTo = player.name;
-      showDMToast(item.name + ' &#8594; ' + player.name + ' &#10003;', 'success');
+      showDMToast(item.name + ' \u2192 ' + player.name + ' \u2713', 'success');
       // Refresh the loot panel to show awarded state
       var panel = document.getElementById('scc-loot-award-panel');
       if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
@@ -15501,7 +15501,7 @@ function sccAwardCoins(combatantIdx) {
         // on c.loot regardless of downed state) can't double-count coins
         // already hand-awarded here.
         c.loot.gp = 0; c.loot.sp = 0; c.loot.cp = 0;
-        showDMToast('Coins awarded to ' + player.name + ' &#10003;', 'success');
+        showDMToast('Coins awarded to ' + player.name + ' \u2713', 'success');
         var panel = document.getElementById('scc-loot-award-panel');
         if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
       } else { showDMToast('Coin award failed', 'error'); }
@@ -15540,7 +15540,7 @@ function sccAwardCoinsAll(combatantIdx) {
             showDMToast('Coin split failed for ' + failed + ' player' + (failed === 1 ? '' : 's'), 'error');
           } else {
             c.loot.gp = 0; c.loot.sp = 0; c.loot.cp = 0;
-            showDMToast('Coins split equally to all ' + SCC_PLAYERS.length + ' players &#10003;', 'success');
+            showDMToast('Coins split equally to all ' + SCC_PLAYERS.length + ' players \u2713', 'success');
             var panel = document.getElementById('scc-loot-award-panel');
             if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
           }
@@ -15583,7 +15583,7 @@ function sccEndCombat() {
   }
   // ── Show loot summary popup immediately (coins award async in background) ──
   Promise.all(coinPromises).then(function() {
-    if (splitCP > 0) showDMToast('Coins split to all players &#10003;', 'success');
+    if (splitCP > 0) showDMToast('Coins split to all players \u2713', 'success');
   });
   (function() {
     var existing = document.getElementById('scc-end-combat-summary');
@@ -15672,7 +15672,7 @@ function sccSummaryAwardItem(iIdx) {
     if (r.ok) {
       item.awarded = true;
       item.awardedTo = player.name;
-      showDMToast(item.name + ' &#8594; ' + player.name + ' &#10003;', 'success');
+      showDMToast(item.name + ' \u2192 ' + player.name + ' \u2713', 'success');
       // Refresh row in summary panel
       var row = document.getElementById('scc-summary-row-' + iIdx);
       if (row) {
@@ -15725,10 +15725,30 @@ function sccSaveNotes() {
   }
 }
 
+// Used to only ever read the 5 textareas -- a DM who captured anything via
+// Quick Note (any of its 3 entry points) got a summary that silently
+// excluded all of it. Now also does a real, fresh fetch of that session's
+// Tagged Notes rather than trusting SCC_NOTE_ENTRIES, which may be scoped
+// to whichever session the Notes tab last rendered, not necessarily the one
+// this copy was actually triggered for.
+//
+// Resolves "which session" from #scc-session-number, the same hidden input
+// sccPreviousSessionRow() already uses for the identical reason -- it's kept
+// correct for both the live session (sccSetSessionDisplay(), called from
+// sccLoadLatestSession()) and a locked historical one (same function, called
+// from sccLoadHistorySession()), unlike SCC_SESSION, which stays pointed at
+// the live session throughout audit view by design (see the audit-mode
+// fixes above). The header (date/premise) is resolved the same way, from
+// the already-loaded SCC_ALL_SESSIONS cache rather than SCC_SESSION --
+// otherwise a summary copied from history view would show the *live*
+// session's date/premise above the *historical* session's actual recap
+// text, a real mismatch distinct from the missing-notes bug this fixes.
 function sccCopyPostSessionSummary() {
-  var s = SCC_SESSION || {};
-  var lines = [
-    '# Session ' + (s.session_number || '?') + ' Summary',
+  var numEl = document.getElementById('scc-session-number');
+  var num = numEl ? parseInt(numEl.value) : null;
+  var s = (num != null && SCC_ALL_SESSIONS.find(function(x) { return x.session_number === num; })) || SCC_SESSION || {};
+  var baseLines = [
+    '# Session ' + (s.session_number || num || '?') + ' Summary',
     s.session_date ? 'Date: ' + s.session_date : '',
     s.premise ? 'Premise: ' + s.premise : '',
     '', '## Player Decisions',
@@ -15741,10 +15761,42 @@ function sccCopyPostSessionSummary() {
     (document.getElementById('scc-note-followup')  ||{}).value || '(none recorded)',
     '', '## Milestone Notes',
     (document.getElementById('scc-note-milestone') ||{}).value || '(none recorded)',
-  ].filter(function(l){ return l !== null; }).join('\n');
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(lines).then(function(){ showDMToast('Post-session summary copied ✓','success'); });
-  } else { prompt('Copy this summary:', lines); }
+  ].filter(function(l){ return l !== null; });
+
+  var notesPromise = num != null
+    ? sccFetch('session_note_entries', '&session_number=eq.' + num + '&order=updated_at.desc')
+    : Promise.resolve([]);
+
+  notesPromise.then(function(rows) {
+    var notes = Array.isArray(rows) ? rows : [];
+    var tagLines = [];
+    // Same categories, same order Tagged Notes already renders them in
+    // (sccRenderTagNoteFilters()) -- a category with zero real notes this
+    // session is skipped entirely rather than printed as "(none recorded)"
+    // 7 times, since unlike the 5 fixed textareas these are dynamic, not
+    // always-present sections.
+    SCC_NOTE_CATEGORIES.forEach(function(cat) {
+      var inCat = notes.filter(function(n) { return n.category === cat.id; });
+      if (!inCat.length) return;
+      tagLines.push('', '## Quick Notes — ' + cat.label);
+      inCat.forEach(function(n) {
+        tagLines.push('');
+        if (n.title) tagLines.push('**' + n.title + '**');
+        tagLines.push(n.content || '');
+      });
+    });
+    var lines = baseLines.concat(tagLines).join('\n');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(lines).then(function(){ showDMToast('Post-session summary copied \u2713','success'); });
+    } else { prompt('Copy this summary:', lines); }
+  }).catch(function() {
+    // A real fetch failure shouldn't silently drop Quick Notes with no
+    // indication -- fall back to the 5-textarea summary alone, but say so.
+    showDMToast('Could not load Quick Notes — summary copied without them', 'error');
+    var lines = baseLines.join('\n');
+    if (navigator.clipboard) { navigator.clipboard.writeText(lines); }
+    else { prompt('Copy this summary:', lines); }
+  });
 }
 
 // ── Tagged Notes (session_note_entries) ─────────────────────────────
