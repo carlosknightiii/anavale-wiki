@@ -3114,10 +3114,16 @@
               <div class="scc-tagnote-list" id="scc-tagnote-list"><div class="scc-lookup-loading">Loading&#8230;</div></div>
             </div>
 
-            <div class="scc-setup-actions">
-              <button class="scc-btn-primary" onclick="sccSaveNotes()">✦ Save Notes</button>
+            <!-- Split from a single .scc-setup-actions row so audit mode can hide
+                 just the write action (Save Notes) while Copy Post-Session Summary,
+                 a pure read action confirmed correct against any session, stays
+                 reachable from a locked historical view too. -->
+            <div class="scc-notes-actions-row">
+              <span class="scc-notes-save-group">
+                <button class="scc-btn-primary" onclick="sccSaveNotes()">&#10022; Save Notes</button>
+                <span class="scc-save-status" id="scc-notes-status"></span>
+              </span>
               <button class="scc-btn-secondary" onclick="sccCopyPostSessionSummary()">📋 Copy Post-Session Summary</button>
-              <span class="scc-save-status" id="scc-notes-status"></span>
             </div>
             <div class="scc-session-complete-bar">
               <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks the session for audit and opens the next one.</div>
@@ -5103,6 +5109,15 @@ function showDMToast(msg, type) {
   color: var(--dm-green);
   font-style: italic;
 }
+/* Same visual row .scc-setup-actions already gives Setup's own save
+   buttons, kept identical here so Save Notes + Copy Post-Session Summary
+   still sit together at the same spacing -- but under this file's own
+   class name, not the shared one, so audit mode's blanket hide (which
+   correctly still applies to .scc-setup-actions everywhere else) doesn't
+   also catch Copy, a pure read action. */
+.scc-notes-actions-row { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.scc-notes-save-group { display: flex; align-items: center; gap: 1rem; }
+.scc-audit-mode .scc-notes-save-group { display: none !important; }
 /* ── NPC Panel v2 — Figma redesign ── */
 .scc-npc-panel-inner { padding: 2rem 2.5rem; width: 100%; max-width: 100%; box-sizing: border-box; }
 .scc-loc-panel-inner  { padding: 2rem 2.5rem; width: 100%; max-width: 100%; box-sizing: border-box; }
