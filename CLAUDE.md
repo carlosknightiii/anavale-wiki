@@ -11,6 +11,9 @@
 - Character system spec, SCC state, stage structure → search `docs/` in project knowledge
 - Code state → read the actual file before every edit
 
+**Feature requests & bug reports:**
+The Supabase `requests` table (`title`, `description`, `area`, `status`, `source`, `notes`) is the single, live tracker for every DM feature request and bug report — real `status` values in use: `not-started` / `in-progress` / `partial` / `needs-decision` / `done`. This list must never be copied into CLAUDE.md, a chat, a handoff doc, or any other file as text — Supabase is the only copy. A duplicate anywhere else just goes stale the moment the real one changes.
+
 ---
 
 ## 1. Every Session
@@ -29,6 +32,7 @@
 3. If any rule turned out to be wrong or incomplete, correct it here and commit.
 4. If a new bug pattern was discovered, add it to the Decision Log.
 5. If a branch merged to `main` this session: check Section 3 (⚠ Pending / Blocked) — does anything there just become unblocked? If so, flag it to the DM in this session's summary and move it to Next Priorities.
+6. Whenever you finish and push work, do both of these without being asked: (a) if it corresponds to an item in the Supabase `requests` table, update that item's `status` yourself (same anon key/URL already used everywhere else in this codebase) as part of finishing the task — don't leave it for the DM to remember; (b) if it's something the DM would want to check themselves (a UI change, a fix, a new feature), end the report with the exact local link to view it — the real port number of whatever server is actually running, the exact path (e.g. `/sheet/index.html?token=...`), and which folder/branch it's serving from. Your own in-app browser verification is not a substitute for (b) — give the DM a real, clickable link every time.
 
 ---
 
@@ -570,6 +574,16 @@ This is a standing rule, not a one-off decision — a future "is this spell legi
 ## 12. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-19 (new session, process addendum — standing rule: always end a report with the real local link, no code changed) — `CLAUDE.md`.**
+A recent QC pass was reported back as verified — real testing, real findings — but the report never included the actual local link to look at it, so the DM had to ask for it separately before they could check the work themselves. Added to §1's End checklist as item 6(b), alongside the same-day `requests`-status rule (6(a)) rather than as its own separate item, per the DM's own explicit instruction that one finishing-work item should cover both habits: whenever finished work is something the DM would want to check themselves (a UI change, a fix, a new feature), always close the report with the exact local link — real port number of whatever server is actually running, the exact path (e.g. `/sheet/index.html?token=...`), and which folder/branch it's serving from — not just a description of what was verified. My own in-app browser verification isn't a substitute for this; the DM needs a real, clickable link every time, without being asked for one.
+
+---
+
+**2026-08-19 (new session, process addendum — Supabase `requests` table adopted as the single feature-request/bug tracker, no code changed) — `CLAUDE.md`.**
+DM's requests and bug reports had been scattered across chat history, local text files, and ad hoc notes, with no one reliable place to check "is this done, is this even still wanted" — the same reliability problem CLAUDE.md's own `§3 Pending/Blocked` and `Next Priorities` sections solve for in-repo work, just for the DM-facing request layer above it. A real Supabase table, `requests` (`title`/`description`/`area`/`status`/`source`/`notes`, 35 real rows already in it, `status` values `not-started`/`in-progress`/`partial`/`needs-decision`/`done`), is now the one canonical tracker. Documented at the top of the file (new "Feature requests & bug reports" block, next to the existing "What lives where" convention) with an explicit never-copy-this-list-into-a-file rule — the same reasoning as every other "search the real source, don't duplicate it here" rule already in this file, since a copy of a live status list goes stale the moment the real one changes. Paired with a new standing rule in §1's End checklist (item 6(a), later merged with the local-QC-link habit into one combined item 6 rather than left as two separate numbered items — see that entry): whenever pushed work corresponds to a `requests` row, update that row's `status` in Supabase directly, as part of finishing the task — not left for the DM to remember, not deferred to a follow-up ask.
 
 ---
 
