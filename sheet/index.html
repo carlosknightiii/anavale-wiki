@@ -150,10 +150,15 @@
       text-align: center;
     }
     .cs-currency-pill--copper .cs-currency-pill-label { color: var(--text); }
+    /* Was background:white/border:1px solid black — plain unstyled-looking
+       browser default, inconsistent with the sheet's dark theme. Matches
+       .cs-mi-hp-num-input's existing direct-edit-number-field treatment
+       now (light token bg, no border, dark text) rather than inventing a
+       new pattern. */
     .cs-currency-input {
       width: 100%;
-      background: var(--white);
-      border: 1px solid black;
+      background: var(--blue-50);
+      border: none;
       color: var(--blue-800);
       font-family: var(--font-body);
       font-weight: 500;
@@ -162,7 +167,17 @@
       padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
       box-sizing: border-box;
     }
-    .cs-currency-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(240,180,41,0.4); }
+    .cs-currency-input::-webkit-outer-spin-button,
+    .cs-currency-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    /* Round 3 Follow-up: field is now always readonly (DM-only editing) —
+       scoped the focus glow to :not([readonly]) so it can't visually imply
+       this is still an editable field, per this round's model change. No
+       consumer currently renders a non-readonly .cs-currency-input, but
+       scoping this way (rather than deleting the rule outright) keeps the
+       glow available if a future DM-facing surface ever reuses this exact
+       class for a real edit field. */
+    .cs-currency-input:not([readonly]):focus { outline: none; box-shadow: 0 0 0 2px rgba(240,180,41,0.4); }
+    .cs-currency-input[readonly] { cursor: default; }
 
     /* ══════════════════════════════════════════════════════════════
        OVERVIEW + ABILITY SCORES (redesign)
@@ -376,7 +391,18 @@
          this shared default for every accordion. */
       gap: var(--char-ov-gap-l);
     }
-    .cs-ov-acc-body--tight { gap: var(--char-ov-gap-s); }
+    /* Round 3 QA: DM re-flagged real remaining dead space after the Round 2
+       Revisions gap-s (26px) tightening — re-measured live rather than
+       assumed still-fine: each .cs-limuse-group already carries its own
+       26px padding on every side (a real, Figma-sourced value shared with
+       .cs-effect-panel, not something to shrink) plus a visible blue-700
+       background, so a *short* group (Class-Specific/Wild Shape — 2 lines
+       of real content) reads as mostly empty box once you add another 26px
+       of gap on top before the next box starts. The padded, backgrounded
+       boxes already read as clearly separate from each other at a much
+       tighter gap — dropped to gap-2xs (8px), the smallest existing gap
+       token, rather than inventing a new one. */
+    .cs-ov-acc-body--tight { gap: var(--char-ov-gap-2xs); }
     .cs-ov-acc.collapsed .cs-ov-acc-body-outer { grid-template-rows: 0fr; opacity: 0; }
     .cs-ov-acc.collapsed .cs-ov-acc-chevron { transform: rotate(180deg); }
 
@@ -504,23 +530,52 @@
     .cs-ov-class-details {
       display: flex;
       flex-wrap: wrap;
+      /* Round 3 QA: no align-items meant the default stretch, forcing this
+         block's two .cs-ov-class-detail children (Primary/Saves/Casting,
+         Armor/Tools/Weapons) to equal height — since Casting Spells' prose
+         is the tallest cell by far, the shorter Armor/Tools/Weapons grid
+         stretched to match it, and grid's own align-content:normal (which
+         behaves as stretch here) spread that leftover space evenly across
+         its 3 auto rows, adding real, measurable gaps between rows that
+         had nothing to do with the row-alignment fix below. flex-start
+         lets each block size to its own real content. */
+      align-items: flex-start;
       gap: var(--char-ov-gap-m);
     }
+    /* Round 3 QA: was two independent flex columns (keys, values), each a
+       stack of <p>s relying on every row sharing the same fixed 24px
+       line-height to stay aligned row-for-row. Real bug, not a data-mapping
+       one — confirmed live (Hana/Druid): Armor's value ("Light, Medium,
+       Shields (no metal)") wraps to 2 lines in this column width, but its
+       key ("Armor:") stays 1 line, so every value below it in that column
+       shifts down by one row relative to its own key — Tools' key ends up
+       next to the tail of Armor's wrapped text (reads as no value), and
+       Weapons' key ends up next to Tools' actual value, with Weapons' own
+       value dangling in an extra row with no key beside it at all (reads
+       as "Weapons: Herbalism Kit / Simple (no metal)"). Fixed by locking
+       each key+value pair to the same grid row instead of trusting two
+       columns to stay in sync — grid-auto-flow row-major placement across
+       2 columns means key/value pairs emitted in DOM order (key,val,key,
+       val,...) land on the same row automatically, and a wrapped value's
+       row simply grows (row-gap:0 keeps un-wrapped rows exactly as tight
+       as before), it can never push a later row's key out of sync again. */
     .cs-ov-class-detail {
       flex: 1 0 0;
       min-width: 240px;
-      display: flex;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      column-gap: 10px;
+      row-gap: 0;
+      align-items: start;
     }
-    .cs-ov-class-detail-keys {
+    .cs-ov-class-detail-key {
       font-family: var(--font-body);
       font-weight: 700;
       font-size: 1rem;
       color: var(--text);
-      flex-shrink: 0;
     }
-    .cs-ov-class-detail-keys p, .cs-ov-class-detail-vals p { line-height: 24px; margin: 0; }
-    .cs-ov-class-detail-vals {
+    .cs-ov-class-detail-key, .cs-ov-class-detail-val { line-height: 24px; margin: 0; }
+    .cs-ov-class-detail-val {
       font-family: var(--font-body);
       font-weight: 300;
       font-size: 1rem;
@@ -1029,6 +1084,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      /* Round 3 QA: Round 2 added justify-content:center here to balance
+         cards with less content (CON's "No skills") against taller
+         siblings. DM reviewed the live result and reverted this — cards
+         go back to natural top-aligned flow. Equal row height still holds
+         (.cs-ab-cards is a Grid with default align-items:stretch, untouched
+         by this revert), only the internal content alignment changed. */
       padding: var(--char-ov-gap-xs) 0;
       border-radius: var(--radius-lg);
       background: linear-gradient(to bottom, var(--blue-700), var(--ab-gradient));
@@ -1178,16 +1239,35 @@
       font-size: 0.95rem;
       color: var(--text);
     }
-    /* Saving-throw intro tip (STR's row only) — same .cs-ab-tip pill, but a
-       distinct blue "i" instead of the standard gold "?" so it reads as a
-       general "what's a saving throw" explainer, not a fact specific to
-       Strength. Precedes the "Save" text, so its spacing is mirrored
-       (margin-right instead of the base rule's margin-left). */
-    .cs-ab-tip--intro {
-      margin-left: 0;
-      margin-right: 0.35rem;
-      background: var(--blue-400);
+    /* Shared Proficiency/Saving Throw explainer, under the Ability Scores
+       page title — replaces the per-card Save "?" tooltips (all 6) and
+       STR's separate blue "i" intro-tip icon, which were duplicated noise
+       for one concept repeated six times with minor variation. Round 3 QA:
+       was one undifferentiated paragraph running both concepts together;
+       DM asked for two clearly separated blocks, each with its own bold
+       gold sub-heading + body paragraph. */
+    .cs-ab-explainer {
+      max-width: 760px;
+      margin-bottom: var(--char-ov-gap-m);
+      display: flex;
+      flex-direction: column;
+      gap: var(--char-ov-gap-s);
+    }
+    .cs-ab-explainer-block + .cs-ab-explainer-block { margin-top: 0; }
+    .cs-ab-explainer-heading {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--gold);
+      margin-bottom: 0.25rem;
+    }
+    .cs-ab-explainer-body {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 0.95rem;
+      line-height: var(--line-height);
       color: var(--text);
+      opacity: 0.85;
     }
     .cs-feat-list {
       display: flex;
@@ -2177,7 +2257,8 @@
       color: var(--white);
       font-family: var(--font-sans);
       font-size: 0.85rem;
-      padding: 0.45rem 0.75rem;
+      height: var(--char-field-height);
+      padding: 0 0.75rem;
     }
     .cs-inv-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,148,10,0.25); }
     .cs-inv-input::placeholder { color: rgba(255,255,255,0.4); }
@@ -2211,7 +2292,8 @@
       color: var(--white);
       font-family: var(--font-sans);
       font-size: 0.8rem;
-      padding: 0.45rem 0.6rem;
+      height: var(--char-field-height);
+      padding: 0 0.6rem;
       flex: none;
     }
     /* Shared with the Notes tab's Pinned/Notes group labels — do not remove
@@ -2349,6 +2431,11 @@
       transition: background 0.15s;
     }
     .cs-inv-additem-btn:hover { background: var(--gold-bright); }
+    /* Round 3 Follow-up: sits inline in .cs-inv-filter-row now (Search,
+       Category, +Add Item) instead of the tab's title row — flex:0 0 auto
+       so it doesn't stretch/shrink like the two .cs-inv-filter-fields
+       beside it, margin-left:auto to pin it to the row's right edge. */
+    .cs-inv-additem-btn--row { flex: 0 0 auto; margin-left: auto; }
     .cs-inv-top-row {
       display: flex;
       flex-wrap: wrap;
@@ -2573,27 +2660,14 @@
       color: var(--text);
       font-family: var(--font-body);
       font-size: 1rem;
-      padding: var(--char-ov-gap-xs) 1rem;
+      height: var(--char-field-height);
+      padding: 0 1rem;
       box-sizing: border-box;
       width: 100%;
     }
     .cs-inv-filter-input { border-radius: 9999px; }
     .cs-inv-filter-input::placeholder { color: rgba(232,232,240,0.75); }
     .cs-inv-filter-select { width: auto; }
-    .cs-inv-filter-btn {
-      flex: none;
-      background: var(--gold);
-      border: none;
-      border-radius: 9999px;
-      padding: var(--char-ov-gap-xs) var(--char-ov-gap-s);
-      color: var(--blue-800);
-      font-family: var(--font-body);
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .cs-inv-filter-btn:hover { background: var(--gold-bright); }
 
     /* ── Bulk delete bar — "Select" column has no bulk action in the
        mockup, built as multi-select -> Delete selected (see build spec). ── */
@@ -2703,6 +2777,27 @@
       color: var(--gold-light);
       margin-bottom: 1rem;
     }
+    /* Round 3 Follow-up: Add Item modal only ever had click-outside to
+       dismiss (no Escape handler exists anywhere in this file, confirmed
+       via grep — a real gap, not something this modal alone was missing).
+       Scoped this fix to Add Item specifically, per the ask, rather than
+       retrofitting every modal in the file with a close icon. Title row
+       becomes flex (title left, × button right) only where this class is
+       added — every other modal's plain-block .cs-modal-title is untouched. */
+    .cs-modal-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .cs-modal-title-row .cs-modal-title { margin-bottom: 0; }
+    .cs-modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--char-text-faint);
+      opacity: 0.7;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      font-size: 1.3rem;
+      line-height: 1;
+      font-family: var(--font-body);
+    }
+    .cs-modal-close-btn:hover { opacity: 1; color: var(--text); }
     .cs-field-group { margin-bottom: 0.7rem; }
     .cs-field-label {
       display: block;
@@ -2811,7 +2906,8 @@
       color: var(--char-text-muted);
       font-family: var(--font-sans);
       font-size: 0.82rem;
-      padding: 0.55rem 0.9rem 0.55rem 2rem;
+      height: var(--char-field-height);
+      padding: 0 0.9rem 0 2rem;
       transition: border-color 0.15s;
     }
     .cs-notes-search:focus { outline: none; border-color: rgba(200,148,10,0.35); }
@@ -3413,24 +3509,33 @@
   // parseSavingThrows() can map it back to the str/dex/con/int/wis/cha keys
   // used everywhere else on this tab.
   var AB_FULL = { str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma' };
-  // Saving-throw tooltips — plain language for new players, one per ability.
-  var SAVE_TIPS = {
-    str: 'Resisting being physically shoved, grappled, or restrained.',
-    dex: 'Dodging fireballs, traps, and other effects that hit an area.',
-    con: 'Resisting poison and disease, and staying focused to keep a spell going.',
-    int: 'Resisting effects that mess with your mind — illusions, psychic attacks.',
-    wis: 'Resisting charm, fear, and other effects aimed at your willpower.',
-    cha: 'Resisting effects that try to banish you or take over your identity.'
-  };
-  // Top-level "what is a saving throw" explainer — one concept, shown once
-  // (on STR's row only, see abilitySaveRowHtml), distinct from the six
-  // per-ability SAVE_TIPS below which explain what triggers *that* save.
-  // DM's explicit decision (addendum to the original handoff): a single
-  // explainer, not six, and — since saves render one-per-card with no
-  // shared "Saving Throws" heading to hang a tip off of — attached to the
-  // first row with a visually distinct treatment so it doesn't read as
-  // STR-specific.
-  var SAVE_INTRO_TIP = 'Saving throws — When something bad is about to happen to you (a trap, a spell, a monster\'s breath attack), you roll to resist it. This shows how good you are at resisting each type.';
+  // Shared Proficiency/Saving Throw explainer (Ability Scores page header,
+  // see abilityScoresExplainerHtml()) replaced the old per-ability SAVE_TIPS
+  // "?" tooltips and STR's separate SAVE_INTRO_TIP "i" icon — six near-
+  // duplicate tooltips for one concept, per DM feedback. Close paraphrase of
+  // the real 2024 PHB definitions (Proficiency, Resolving Outcomes/Saving
+  // Throws), verified against 2 independent sources, not written from
+  // memory: "Proficiency Bonus... reflects the impact that training has on
+  // the creature's capabilities... applied... when the creature has
+  // proficiency in a skill, saving throw, or item"; "a saving throw is an
+  // instant response to an effect and is almost never made by choice...
+  // makes the most sense when something bad threatens a character and the
+  // character has a chance to avoid or resist it."
+  // Round 3 QA: split into two distinct heading+body pairs (was one flat
+  // paragraph) per DM's explicit target — "Your Proficiency Bonus" and "A
+  // Saving Throw" as separate, visually distinguished blocks, not one
+  // concept blurring into the next mid-sentence. Same verified 2024 PHB
+  // wording as before, just broken at its natural seam.
+  var ABILITY_EXPLAINER_BLOCKS = [
+    {
+      heading: 'Your Proficiency Bonus',
+      body: 'reflects your training — you add it to a roll whenever you\'re proficient in the skill, saving throw, or item involved, including spell attacks and spell save DCs.'
+    },
+    {
+      heading: 'A Saving Throw',
+      body: 'is a reflexive roll to resist or avoid something dangerous — a trap, a spell, a monster\'s breath weapon — not something you choose to do, using whichever ability score best fits the threat.'
+    }
+  ];
   // classes.saving_throws is a comma-separated string of full ability names
   // (e.g. "Strength, Dexterity") — confirmed against all 12 real classes.
   function parseSavingThrows(savesStr) {
@@ -3688,15 +3793,16 @@
       + '</div>';
 
     // "Inventory" tab content — real Figma pass (51:2260 desktop / 51:2265
-    // mobile), 2026-08-09. Own title+button row here instead of the shared
-    // pageTitleHtml() helper every other tab uses — Figma puts "Inventory"
-    // and "+Add Item" in one row, which the shared helper (a title alone)
-    // can't produce, so this tab skips it and builds its own (see the
-    // assembly line below, which omits pageTitleHtml('Inventory')).
+    // mobile), 2026-08-09. Own title row here instead of the shared
+    // pageTitleHtml() helper every other tab uses. Round 3 Follow-up:
+    // "+Add Item" moved off this row entirely, down onto the Search/
+    // Category filter row above the item table (see .cs-inv-filter-row
+    // below) — QA's own placement ask ("above the inventory table"). Left
+    // this wrapper's flex/space-between as-is with only the title inside —
+    // harmless with a single child, not worth a separate cleanup pass.
     var inventoryTabHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-inv-header-row">'
         + '<h2 class="cs-page-title">Inventory</h2>'
-        + '<button class="cs-inv-additem-btn" onclick="openAddItemModal()">+Add Item</button>'
       + '</div>'
 
       // Equipped Gear (doll) + Special Effects — Currency moved down to
@@ -3738,18 +3844,31 @@
           + '<div id="cs-gold-block"></div>'
         + '</div>'
         + '<div class="cs-inv-top-col">'
+          // Round 3 QA: icon moved from the header text into the bar
+          // itself, next to the "X / Y LBS" number (see renderCarryingBar())
+          // — DM's explicit placement ask. Icon convention (unchanged):
+          // neither sibling section title on this tab carries one, so
+          // there's no "every title gets one" rule to match; kept the
+          // sheet-wide FEAT_ICONS emoji-entity convention, no new asset.
           + '<h3 class="cs-inv-col-title cs-inv-carrying-title">Carrying</h3>'
           + '<div class="cs-inv-weight-bar" id="cs-inv-weight-bar"></div>'
         + '</div>'
       + '</div>'
 
-      // Search / Category / Search — filters the player's own inventory
-      // table below (client-side); distinct from the catalog search that
-      // now lives behind +Add Item. Live-filters as you type/select
-      // (DM reversed the original click-gated decision) — matches the
-      // Add Item catalog search's own live-filter behavior. The Search
-      // button stays as an explicit no-op-if-already-current trigger,
-      // harmless to keep for a deliberate re-apply/click affordance.
+      // Search / Category — filters the player's own inventory table below
+      // (client-side); distinct from the catalog search that lives behind
+      // +Add Item. Live-filters as you type/select. The "Search" button
+      // that used to sit here was investigated (4-fixes QA round,
+      // 2026-08-17) and confirmed fully redundant, not just probably —
+      // applyInventoryFilter() reads both this input's and this select's
+      // current .value and re-renders, identically regardless of which
+      // control invoked it, and both already invoke it live (oninput on
+      // every keystroke, onchange on every selection) — clicking the
+      // button could never produce a result the live handlers hadn't
+      // already applied. A prior session found the same fact but chose to
+      // keep the button as a "harmless deliberate re-apply affordance";
+      // removed now per this round's explicit instruction to remove it
+      // once confirmed fully redundant.
       + '<div class="cs-inv-filter-row">'
         + '<div class="cs-inv-filter-field">'
           + '<label class="cs-inv-filter-label">Search</label>'
@@ -3768,7 +3887,17 @@
             + '<option value="weapon">Weapon</option>'
           + '</select>'
         + '</div>'
-        + '<button class="cs-inv-filter-btn" onclick="applyInventoryFilter()">Search</button>'
+        // Round 3 Follow-up: relocated from the tab's title row (above the
+        // Equipped Gear doll) down here, onto the same row as Search/
+        // Category and directly above the table — per the QA placement ask.
+        // .cs-inv-filter-row is align-items:flex-end (fields have a label
+        // row above their input), so this button — no label — needs its
+        // own modifier to sit flush with the fields' own bottom edge
+        // instead of the row's cross-start; margin-left:auto pushes it to
+        // the row's far right, matching the tab's own established "primary
+        // action on the right" convention (e.g. the header row this button
+        // used to occupy, or the bulk-delete bar).
+        + '<button class="cs-inv-additem-btn cs-inv-additem-btn--row" onclick="openAddItemModal()">+Add Item</button>'
       + '</div>'
 
       + '<div class="cs-inv-bulk-bar" id="cs-inv-bulk-bar"></div>'
@@ -3897,8 +4026,9 @@
   // .cs-ab-skill* classes verbatim, just labeled "Save"), one per ability
   // card. Proficiency comes from classes.saving_throws via
   // parseSavingThrows(), not ch.skills — a different proficiency source
-  // than the skill rows above.
-  function abilitySaveRowHtml(ab, modNum, profBonus, isProficient, showIntroTip) {
+  // than the skill rows above. No per-card tooltip anymore — see
+  // ABILITY_EXPLAINER_BLOCKS above.
+  function abilitySaveRowHtml(ab, modNum, profBonus, isProficient) {
     var total = modNum + (isProficient ? profBonus : 0);
     var totalStr = (total >= 0 ? '+' : '') + total;
     var totalCls = total > 0 ? 'positive' : total < 0 ? 'negative' : '';
@@ -3906,19 +4036,9 @@
     var markerHtml = isProficient
       ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
       : '<span class="cs-ab-skill-marker"></span>';
-    // Intro tip (STR's row only) renders first and uses a distinct blue "i"
-    // pill, not the standard gold "?" — so it reads as "what's a saving
-    // throw" in general, not as another fact specific to Strength.
-    var introTipHtml = showIntroTip
-      ? '<span class="cs-ab-tip cs-ab-tip--intro" data-tip="' + SAVE_INTRO_TIP.replace(/"/g,'&quot;') + '">i</span>'
-      : '';
     return '<div class="cs-ab-skill ' + stateCls + '">'
       + markerHtml
-      + '<span class="cs-ab-skill-name">'
-        + introTipHtml
-        + 'Save'
-        + '<span class="cs-ab-tip" data-tip="' + SAVE_TIPS[ab].replace(/"/g,'&quot;') + '">?</span>'
-      + '</span>'
+      + '<span class="cs-ab-skill-name">Save</span>'
       + '<span class="cs-ab-skill-total ' + totalCls + '">' + totalStr + '</span>'
     + '</div>';
   }
@@ -3974,12 +4094,22 @@
           + (raw ? '<div class="cs-ab-mod"><span class="cs-ab-mod-num ' + modCls + '">' + modStr + '</span> Modifier</div>' : '')
           + (ab === 'wis' ? '<div id="cs-ab-passive-perception">' + passivePerceptionBadgeHtml(modNum, profBonus, ch) + '</div>' : '')
         + '</div>'
-        + '<div class="cs-ab-save" id="cs-ab-save-' + ab + '">' + abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab], ab === 'str') + '</div>'
+        + '<div class="cs-ab-save" id="cs-ab-save-' + ab + '">' + abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab]) + '</div>'
         + '<div class="cs-ab-skills" id="cs-ab-skills-' + ab + '">' + abilitySkillsInnerHtml(ab, modNum, profBonus, ch) + '</div>'
       + '</div>';
     }).join('');
 
-    return '<div class="cs-ov-breakout"><div class="cs-ov-inner"><div class="cs-ab-cards">' + cards + '</div></div></div>';
+    var explainerHtml = ABILITY_EXPLAINER_BLOCKS.map(function(b) {
+      return '<div class="cs-ab-explainer-block">'
+        + '<div class="cs-ab-explainer-heading">' + escHtml(b.heading) + '</div>'
+        + '<p class="cs-ab-explainer-body">' + escHtml(b.body) + '</p>'
+      + '</div>';
+    }).join('');
+
+    return '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
+      + '<div class="cs-ab-explainer">' + explainerHtml + '</div>'
+      + '<div class="cs-ab-cards">' + cards + '</div>'
+    + '</div></div>';
   }
 
   // Refreshes the 6 skill blocks, 6 save rows, and the Passive Perception
@@ -4002,7 +4132,7 @@
       var skillsEl = document.getElementById('cs-ab-skills-' + ab);
       if (skillsEl) skillsEl.innerHTML = abilitySkillsInnerHtml(ab, modNum, profBonus, CH);
       var saveEl = document.getElementById('cs-ab-save-' + ab);
-      if (saveEl) saveEl.innerHTML = abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab], ab === 'str');
+      if (saveEl) saveEl.innerHTML = abilitySaveRowHtml(ab, modNum, profBonus, !!savesProficient[ab]);
       if (ab === 'wis') {
         var passiveEl = document.getElementById('cs-ab-passive-perception');
         if (passiveEl) passiveEl.innerHTML = passivePerceptionBadgeHtml(modNum, profBonus, CH);
@@ -4035,12 +4165,14 @@
     var savesTip  = row ? row.saves_tip   : null;
     var weaponsTip = row ? row.weapons_tip : null;
     return '<div class="cs-ov-class-detail">'
-        + '<div class="cs-ov-class-detail-keys"><p>Primary ability:</p><p>' + classTraitLabel('Saving throws:', savesTip) + '</p><p>Casting Spells:</p></div>'
-        + '<div class="cs-ov-class-detail-vals"><p>' + (primary || '—') + '</p><p>' + (saves || '—') + '</p><p>' + (casting || '—') + '</p></div>'
+        + '<p class="cs-ov-class-detail-key">Primary ability:</p><p class="cs-ov-class-detail-val">' + (primary || '—') + '</p>'
+        + '<p class="cs-ov-class-detail-key">' + classTraitLabel('Saving throws:', savesTip) + '</p><p class="cs-ov-class-detail-val">' + (saves || '—') + '</p>'
+        + '<p class="cs-ov-class-detail-key">Casting Spells:</p><p class="cs-ov-class-detail-val">' + (casting || '—') + '</p>'
       + '</div>'
       + '<div class="cs-ov-class-detail">'
-        + '<div class="cs-ov-class-detail-keys"><p>Armor:</p><p>Tools:</p><p>' + classTraitLabel('Weapons:', weaponsTip) + '</p></div>'
-        + '<div class="cs-ov-class-detail-vals"><p>' + (armor || '—') + '</p><p>' + (tools || '—') + '</p><p>' + (weapons || '—') + '</p></div>'
+        + '<p class="cs-ov-class-detail-key">Armor:</p><p class="cs-ov-class-detail-val">' + (armor || '—') + '</p>'
+        + '<p class="cs-ov-class-detail-key">Tools:</p><p class="cs-ov-class-detail-val">' + (tools || '—') + '</p>'
+        + '<p class="cs-ov-class-detail-key">' + classTraitLabel('Weapons:', weaponsTip) + '</p><p class="cs-ov-class-detail-val">' + (weapons || '—') + '</p>'
       + '</div>';
   }
 
@@ -4226,11 +4358,13 @@
       // when there's real content, per the DM's explicit call not to add a
       // hideIfEmpty flag to accordionShell() — skip emitting the accordion
       // at all rather than emit-then-hide.
+      // Round 3 QA: Spellcasting Modifier/Save DC/Attack Bonus used to be
+      // its own standalone .cs-ov-class-card here, outside the Features
+      // accordion entirely — moved inside (see
+      // renderClassFeaturesAccordion()'s template), directly below Spells
+      // Prepared, so it reads as one Features group instead of a separate
+      // card. No standalone wrapper left behind.
       + '<div id="cs-class-features-acc-wrap"></div>'
-      + '<div class="cs-ov-class-card cs-spell-slots-card" id="cs-spellcasting-stats-card" style="display:none;">'
-        + '<div class="cs-limuse-group-label">Spellcasting</div>'
-        + '<div id="cs-class-spellcasting-stats"></div>'
-      + '</div>'
       // Round 2 Revisions — DM decision: spells are DM-assigned only, no
       // player self-serve. This card now just displays learned_spells (see
       // renderSpellsLearnedTable()) — no eligible-pool browsing, so the
@@ -4391,7 +4525,14 @@
         + '<button class="cs-prepared-pill-x" onclick="unprepareSpell(\'' + id + '\')" aria-label="Unprepare ' + escHtml(name) + '">&#10005;</button>'
       + '</span>';
     }).join('');
-    if (prepared.length < max) {
+    // Round 3 QA: was a single "+ Prepare" pill regardless of how many
+    // slots were actually empty — one per unfilled slot, per the original
+    // Figma intent (Handoff B), up to the character's real max (e.g. Hana
+    // at 0/4 shows 4 pills, not 1). Every pill opens the same shared
+    // picker — prepareSpell() itself already stops adding once max is
+    // reached, so there's no per-pill "slot index" to track.
+    var emptySlots = Math.max(0, max - prepared.length);
+    for (var i = 0; i < emptySlots; i++) {
       html += '<button class="cs-prepared-pill cs-prepared-pill--add" onclick="openSpellPicker()">+ Prepare</button>';
     }
     pillsEl.innerHTML = html;
@@ -4522,20 +4663,23 @@
     renderSpellsLearnedTable();
   }
 
-  // ── Spellcasting stats (Class tab, new) — Spellcasting Modifier / Spell
-  // Save DC / Spell Attack Bonus. Card above Spell Slots, same
-  // .cs-ov-class-card family. classes.spellcasting_ability is a new column
+  // ── Spellcasting stats (Class tab) — Spellcasting Modifier / Spell Save
+  // DC / Spell Attack Bonus. classes.spellcasting_ability is a new column
   // (str/dex/con/int/wis/cha, null for non-casters) — added this session;
   // classes.primary_ability was confirmed unreliable for this (a combined
   // string for half-casters, e.g. paladin "Strength & Charisma", ranger
   // "Dexterity & Wisdom" — the casting ability is only one of the two, and
   // only recoverable by parsing casting_summary's free text, which the
-  // build doc explicitly said not to do). Hidden entirely for non-casters,
-  // not rendered as an empty/zeroed card — same style="display:none"
-  // pattern the card starts with on its first, synchronous paint before
-  // CLASS_ROW has loaded.
+  // build doc explicitly said not to do).
   // Round 2 QA redesign — 3-column badge row instead of 3 stacked
   // .cs-ab-skill rows (see the .cs-spellcast-stat* CSS comment).
+  // Round 3 QA: relocated from a standalone card (its own
+  // style="display:none" show/hide toggle) into the Features accordion,
+  // under Spells Prepared — inclusion is now gated by the same hasCasting
+  // check the accordion's template already uses for that group (see
+  // renderClassFeaturesAccordion()), so this function no longer needs to
+  // manage its own card visibility; a non-caster simply never gets the
+  // target div rendered at all.
   function spellStatCardHtml(label, value, tip) {
     return '<div class="cs-spellcast-stat">'
       + '<span class="cs-spellcast-stat-label">' + label
@@ -4545,12 +4689,10 @@
     + '</div>';
   }
   function renderSpellcastingStats() {
-    var card = document.getElementById('cs-spellcasting-stats-card');
     var el = document.getElementById('cs-class-spellcasting-stats');
-    if (!card || !el) return;
+    if (!el) return;
     var castingAbility = CLASS_ROW ? CLASS_ROW.spellcasting_ability : null;
-    if (!castingAbility) { card.style.display = 'none'; return; }
-    card.style.display = '';
+    if (!castingAbility) { el.innerHTML = ''; return; }
     var abMod = Math.floor(((parseInt(ABILITY_SCORES[castingAbility]) || 10) - 10) / 2);
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
     var saveDC = 8 + profBonus + abMod;
@@ -4729,12 +4871,21 @@
               + '<div class="cs-prepared-explainer" id="cs-prepared-explainer"></div>'
               + '<div class="cs-prepared-pills" id="cs-prepared-pills"></div>'
             + '</div>' : '')
+          // Round 3 QA: relocated here from a standalone .cs-ov-class-card
+          // that used to sit above this whole accordion — directly below
+          // Spells Prepared per the DM's explicit placement ask, same
+          // hasCasting gate the Prepared group above it already uses (a
+          // non-caster has neither).
+          + (hasCasting ? '<div class="cs-limuse-group">'
+              + '<div class="cs-limuse-group-label">Spellcasting</div>'
+              + '<div id="cs-class-spellcasting-stats"></div>'
+            + '</div>' : '')
         + '</div></div>'
       + '</div>';
     }
     renderLimitedUseFeatures();
     if (hasSlotsThisLevel) renderSpellSlotsGroup();
-    if (hasCasting) renderPreparedSpells();
+    if (hasCasting) { renderPreparedSpells(); renderSpellcastingStats(); }
   }
 
   function renderClassTabDynamic() {
@@ -5524,11 +5675,16 @@
   }
 
   // ── Currency — 3 pill inputs (Figma 51:2260) ────────────────────────
-  // Replaces the old single "Set Gold" flow. gold_cp is still the only
-  // real column — each pill is a plain display/edit surface over it, not
-  // an independent value; blurring any of the three recomputes the whole
-  // total from all three fields' current values, same pattern the header's
-  // old HP-max-modifier trick used.
+  // Round 3 Follow-up: DM decision — currency is now DM-only, mirroring the
+  // Spells Learned model change (Round 2 Revisions). Reasoning given: too
+  // easy for a player to accidentally change a value and lose track of what
+  // it was. Pills are now read-only display over gold_cp, not an edit
+  // surface — same cs-currency-pill/-input markup and CSS (the earlier
+  // currency-styling fix stays untouched), just `readonly` added and the
+  // onblur/onkeydown save handlers removed, since there's nothing left to
+  // save from this UI. DM-side editing moves to DM Tools' Players page (see
+  // that file's own Decision Log entry) — same gold_cp field, so a DM edit
+  // there is exactly what this display re-renders on the player's next load.
   function renderGold() {
     var block = document.getElementById('cs-gold-block');
     if (!block) return;
@@ -5543,20 +5699,9 @@
     ].map(function(c) {
       return '<div class="cs-currency-pill cs-currency-pill--' + c.mod + '">'
         + '<div class="cs-currency-pill-label">' + c.label + '</div>'
-        + '<input class="cs-currency-input" id="cs-currency-' + c.key + '" type="number" min="0" value="' + c.val + '" onblur="onCurrencyBlur()" onkeydown="if(event.key===\'Enter\')this.blur()">'
+        + '<input class="cs-currency-input" id="cs-currency-' + c.key + '" type="number" value="' + c.val + '" readonly aria-readonly="true">'
       + '</div>';
     }).join('') + '</div>';
-  }
-
-  function onCurrencyBlur() {
-    if (!SHEET) return;
-    var gp = parseInt(document.getElementById('cs-currency-gp').value) || 0;
-    var sp = parseInt(document.getElementById('cs-currency-sp').value) || 0;
-    var cp = parseInt(document.getElementById('cs-currency-cp').value) || 0;
-    SHEET.gold_cp = Math.max(0, gp * 100 + sp * 10 + cp);
-    saveSheet({ gold_cp: SHEET.gold_cp });
-    renderGold();
-    showToast('Gold updated');
   }
 
   // ── Equipped — 10-slot doll (Figma 51:2260) ─────────────────────────
@@ -6336,7 +6481,7 @@
     var capacity = (parseInt(ABILITY_SCORES.str) || 10) * 15;
     var pct = capacity > 0 ? Math.max(0, Math.min(100, (current / capacity) * 100)) : 0;
     bar.innerHTML = '<div class="cs-inv-weight-fill" style="width:' + pct + '%;"></div>'
-      + '<div class="cs-inv-weight-label">' + current + ' / ' + capacity + ' LBS</div>';
+      + '<div class="cs-inv-weight-label">&#9878; ' + current + ' / ' + capacity + ' LBS</div>';
   }
 
   // ── Own-inventory search/category filter (Figma 51:2260) — client-side
@@ -7376,7 +7521,10 @@
         // relocated here behind a trigger button, unchanged logic, same ids.
         + '<div class="cs-modal-overlay" id="cs-additem-modal-overlay" style="display:none" onclick="if(event.target===this)closeAddItemModal()">'
           + '<div class="cs-modal">'
-            + '<div class="cs-modal-title">Add Item</div>'
+            + '<div class="cs-modal-title-row">'
+              + '<div class="cs-modal-title">Add Item</div>'
+              + '<button class="cs-modal-close-btn" onclick="closeAddItemModal()" aria-label="Close">&#10005;</button>'
+            + '</div>'
             + '<div class="cs-modal-body">'
               + '<div class="cs-inv-search-wrap">'
                 + '<div class="cs-inv-search-row">'

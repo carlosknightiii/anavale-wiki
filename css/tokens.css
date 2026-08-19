@@ -280,6 +280,15 @@
      Figma file P0tcVgf02XeI13Tz0TtRaX, nodes 36:310 (desktop) /
      36:435 (mobile). Values not already covered by an existing
      token above (surfaces, gold, radius, text, steelfist, etc). */
+  /* Restored 2026-08-17 (4-fixes QA round) — real Figma-sourced values from this
+     section's original 2026-08-07 commit, mistakenly deleted as "unused"
+     in a 2026-08-15 cleanup pass that didn't check sheet/index.html's
+     .cs-currency-pill--gold/--silver/--copper, which have referenced these
+     ever since the Inventory tab was built (2026-08-09) and were silently
+     rendering with a transparent background the whole time. */
+  --currency-copper:      #9c5b18;
+  --currency-silver:      #babcc5;
+  --currency-gold-coin:   #daa318;
   --blue-50:              #dde1ec;
   --blue-100:             #9aa5c2;
   --blue-200:             #6b79a1;
@@ -331,6 +340,20 @@
   --char-ov-gap-s:        1.625rem;  /* 26px */
   --char-ov-gap-m:        2rem;      /* 32px */
   --char-ov-gap-l:        2.625rem;  /* 42px — Figma page/spacing/l, Class tab Overview/Key Features column gap */
+  /* Round 3 QA (2026-08-17): shared height for real form-field-shaped
+     text inputs / dropdowns / search boxes across sheet/index.html —
+     .cs-inv-filter-input/-select (Inventory tab's own filter row, the
+     original "too tall" complaint, was ~59px), .cs-inv-input/-cat-select
+     (item search modals), .cs-notes-search (Notes tab search) all
+     previously had 3 different vertical-padding conventions (1.125rem /
+     0.45rem / 0.55rem) despite being the same functional control.
+     Deliberately NOT applied to compact badge/pill controls embedded in
+     fixed-height rows (HP number inputs, the header Conditions select,
+     currency pills, inventory-table qty steppers) — those are a
+     genuinely different, already-compact UI language (~37px, tuned
+     against sibling badges in the same row) and forcing them to this
+     token would break those calibrated layouts, not unify anything. */
+  --char-field-height:    40px;
 
   /* ── CM / QUEST / VISIBILITY TOKENS ─────────────────────── */
   --dm-vis-hidden-bg:    rgba(200,60,30,0.12);
