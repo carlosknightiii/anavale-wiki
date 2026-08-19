@@ -11349,6 +11349,12 @@ function sccLoadPlayers() {
       sccLiveRenderParty();
       sccLiveRenderConditions();
       sccLiveRenderInspiration();
+      // Phase 3b: the shared Location card's Shop section also reads
+      // SCC_PLAYERS (for the "Buying as" list) -- same race as above, newly
+      // exposed now that Locations renders at initial page load too. A
+      // location card rendered before this resolves would permanently show
+      // "No players" until something else re-renders the panel.
+      if (typeof sccRenderLocationPanel === 'function') sccRenderLocationPanel();
     });
   }).catch(function() { sccRenderPlayerBar(); });
 }
@@ -12069,16 +12075,14 @@ function sccFgToggleCard(key) {
 function sccFgCardDetail(e, type) {
   var h = '';
   if (type === 'npc') {
-    if (e.read_aloud) {
-      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
-    }
-    var fields = [
-      ['Appearance', e.appearance], ['Personality', e.personality],
-      ['Motivation', e.motivation], ['What They Know', e.player_knowledge],
-      ['Secret', e.secret], ['Location', e.location]
-    ];
-    fields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
-    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+    // Phase 3b: full field union from the shared component (see
+    // sccBuildNpcCardBodyHtml) -- was a hand-picked subset (6 fields) that
+    // silently dropped read_aloud's real "Visualization" framing, summary,
+    // pronouns/status/affiliation, gigglegloom_relationship, world
+    // associations, tags, and linked quests. Only the compact list-row
+    // summary above (icon/name/tag/one-line sub) is untouched -- a
+    // different, deliberately-terse concept, not part of this merge.
+    h += sccBuildNpcCardBodyHtml(e);
   }
   else if (type === 'creature') {
     if (e.read_aloud) {
@@ -12110,12 +12114,13 @@ function sccFgCardDetail(e, type) {
     if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
   }
   else if (type === 'location') {
-    if (e.read_aloud) {
-      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
-    }
-    var locFields = [['Summary', e.summary], ['Description', e.description], ['Gigglegloom', e.gigglegloom_notes]];
-    locFields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
-    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
+    // Phase 3b: full field union from the shared component (see
+    // sccBuildLocationCardBodyHtml) -- was 3 fields, silently dropping
+    // read_aloud's real framing, landmarks, structures, population,
+    // culture/strategic_importance/tone, formery/government/capital,
+    // gigglegloom_relationship, tags, vareth_presence, and (for POIs) the
+    // real Shop UI, none of which the sidebar ever showed before.
+    h += sccBuildLocationCardBodyHtml(e);
   }
   else if (type === 'item') {
     if (e.read_aloud) {
@@ -13461,6 +13466,340 @@ function sccNpcCategoryBadgeHtml(category) {
   return '<span class="scc-npc2-cat-badge scc-npc2-cat-badge--god" title="Entity type: deity">&#10022; God</span>';
 }
 
+// ── Shared NPC card component (Phase 3b field-union) ────────────────
+// One header + one body function, used by all 3 real render sites --
+// Live Session's NPCs section, the lookup drawer's character branch, and
+// the Field Guide sidebar's NPC detail. Verified field inventory: see
+// CLAUDE.md Decision Log. Header covers the union of what Live Session and
+// the lookup drawer each showed (portrait/relationship/category/quest-icon/
+// player_facing/name/role/location); body covers the full union across all
+// 3 sites (read_aloud/personality/summary/appearance/motivation/
+// contradiction/a fields-row for category+pronouns+status+affiliation/
+// gigglegloom_relationship/player_knowledge/world associations/tags/a
+// DM-only block for secret+dm_notes+linked quests). Field Guide's own
+// compact list-row (icon+name+category tag+one-line sub) is untouched --
+// a distinct "search result summary" concept, not part of this merge; only
+// its *detail* expansion now uses the shared body.
+function sccNpcLinkedQuests(npcId) {
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  return quests.filter(function(q) {
+    return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === npcId; });
+  });
+}
+function sccBuildNpcCardHeaderHtml(c, opts) {
+  opts = opts || {};
+  var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
+  var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
+  var relColor = sccRelColor(rel);
+  var linkedQuests = sccNpcLinkedQuests(c.id);
+
+  var pfBadgeHtml = '';
+  if (opts.showPfBadge) {
+    var pfVal   = c.player_facing;
+    var pfLabel = pfVal === true || pfVal === 'true' ? 'Visible to Players' : pfVal === 'teaser' ? 'Teaser' : '\uD83D\uDCA0 DM Only';
+    var pfColor = pfVal === true || pfVal === 'true' ? 'var(--green)' : pfVal === 'teaser' ? 'var(--gold)' : 'var(--dm-only)';
+    pfBadgeHtml = '<span class="scc-ql-pf-badge" style="color:' + pfColor + ';border-color:' + pfColor + '">' + sccEsc(pfLabel) + '</span>';
+  }
+  var badgeRowHtml = '<div class="scc-npc2-badge-row">'
+    + '<div class="scc-npc2-rel-badge" style="background:' + relColor.bg + ';color:' + relColor.text + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
+    + sccNpcCategoryBadgeHtml(c.category)
+    + pfBadgeHtml
+    + (linkedQuests.length ? '<span class="scc-npc2-quest-icon" title="Quest-related' + (linkedQuests.length > 1 ? ' (' + linkedQuests.length + ' quests)' : ' (' + sccEsc(linkedQuests[0].name) + ')') + '">&#128220;</span>' : '')
+  + '</div>';
+
+  var portraitHtml = c.image
+    ? '<img class="scc-npc2-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/' + sccEsc(c.id) + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+      + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(c.name.charAt(0)) + '</div>'
+    : '<div class="scc-npc2-portrait-fallback">' + sccEsc(c.name.charAt(0)) + '</div>';
+
+  var metaHtml = '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Role:</span> ' + sccEsc(c.role || c.category || '—') + '</div>'
+    + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Location:</span> ' + sccEsc(c.location || '—') + '</div>';
+
+  var actionsHtml = '';
+  if (opts.showActions) {
+    actionsHtml = '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
+      + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">QUICK LOOK</button>'
+      + '</div>';
+  }
+
+  return '<div class="scc-npc2-portrait-wrap">' + portraitHtml + '</div>'
+    + '<div class="scc-npc2-info">'
+      + badgeRowHtml
+      + '<div class="scc-npc2-name">' + sccEsc(c.name) + '</div>'
+      + metaHtml
+    + '</div>'
+    + actionsHtml;
+}
+function sccBuildNpcCardBodyHtml(c) {
+  var body = '';
+  if (c.read_aloud) {
+    body += '<div class="scc-npc2-section scc-npc2-quote">'
+      + '<span class="scc-npc2-quote-mark">“</span>'
+      + '<div class="scc-npc2-section-txt">'
+        + '<div class="scc-npc2-section-title">Visualization</div>'
+        + '<div class="scc-npc2-section-body">' + sccEsc(c.read_aloud) + '</div>'
+      + '</div>'
+      + '<span class="scc-npc2-quote-mark">”</span>'
+    + '</div>';
+  }
+  if (c.personality) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127917;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Personality</div><div class="scc-npc2-section-body">' + sccEsc(c.personality) + '</div></div></div>';
+  }
+  if (c.summary) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128214;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Summary</div><div class="scc-npc2-section-body">' + sccEsc(c.summary) + '</div></div></div>';
+  }
+  if (c.appearance) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128065;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Appearance</div><div class="scc-npc2-section-body">' + sccEsc(c.appearance) + '</div></div></div>';
+  }
+  if (c.motivation) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127919;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Motivation</div><div class="scc-npc2-section-body">' + sccEsc(c.motivation) + '</div></div></div>';
+  }
+  if (c.contradiction) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#9878;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Contradiction</div><div class="scc-npc2-section-body">' + sccEsc(c.contradiction) + '</div></div></div>';
+  }
+  if (c.player_knowledge) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128161;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">What They Know</div><div class="scc-npc2-section-body">' + sccEsc(c.player_knowledge) + '</div></div></div>';
+  }
+  if (c.gigglegloom_relationship) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127775;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Gigglegloom Relationship</div><div class="scc-npc2-section-body">' + sccEsc(c.gigglegloom_relationship) + '</div></div></div>';
+  }
+  // Fields row -- pronouns/status/affiliation only ever existed at the
+  // lookup drawer before this merge; category is shown both here (plain
+  // text, matches the drawer's original field list) and as a header badge
+  // (god only) -- not redundant, the badge is a visual flag, this row is
+  // the complete record.
+  var fieldsHtml = ''
+    + (c.category     ? '<div class="scc-ql-row"><span class="scc-ql-label">Category</span><span class="scc-ql-value">' + sccEsc(c.category) + '</span></div>' : '')
+    + (c.pronouns     ? '<div class="scc-ql-row"><span class="scc-ql-label">Pronouns</span><span class="scc-ql-value">' + sccEsc(c.pronouns) + '</span></div>' : '')
+    + (c.status       ? '<div class="scc-ql-row"><span class="scc-ql-label">Status</span><span class="scc-ql-value">' + sccEsc(c.status) + '</span></div>' : '')
+    + (c.affiliation  ? '<div class="scc-ql-row"><span class="scc-ql-label">Affiliation</span><span class="scc-ql-value">' + sccEsc(c.affiliation) + '</span></div>' : '');
+  if (fieldsHtml) body += '<div class="scc-ql-fields">' + fieldsHtml + '</div>';
+  // World associations
+  if (c.associated && c.associated.length) {
+    var allWorld = []
+      .concat(typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [])
+      .concat(typeof CITIES        !== 'undefined' ? CITIES        : [])
+      .concat(typeof POIS          !== 'undefined' ? POIS          : [])
+      .concat(typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [])
+      .concat(typeof CREATURES     !== 'undefined' ? CREATURES     : [])
+      .concat(typeof REGIONS       !== 'undefined' ? REGIONS       : []);
+    var assocHtml = c.associated.map(function(a) {
+      var entry = allWorld.find(function(x){ return x.id === a.id; });
+      var label = entry ? entry.name : a.id;
+      var cat   = a.collection.replace(/_/g,' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+      return '<span class="scc-ql-tag">' + sccEsc(label) + ' <span class="scc-ql-tag-cat">(' + sccEsc(cat) + ')</span></span>';
+    }).join('');
+    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">World Associations</div><div class="scc-ql-tags">' + assocHtml + '</div></div>';
+  }
+  // Tags
+  if (c.tags && c.tags.length) {
+    var tagsHtml = c.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + tagsHtml + '</div></div>';
+  }
+  // DM-only block
+  var linkedQuests = sccNpcLinkedQuests(c.id);
+  var hasDm = c.secret || c.dm_notes || linkedQuests.length;
+  if (hasDm) {
+    body += '<div class="scc-npc2-dm-block">'
+      + '<div class="scc-npc2-dm-title"><span class="scc-npc2-dm-icon">&#9888;</span>DM Only — Do Not Read Aloud</div>'
+      + '<div class="scc-npc2-dm-rows">';
+    if (c.secret) {
+      body += '<div class="scc-npc2-dm-row"><div class="scc-npc2-icon scc-npc2-icon-red">&#128274;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title scc-npc2-red">Secret</div><div class="scc-npc2-section-body">' + sccEsc(c.secret) + '</div></div></div>';
+    }
+    if (c.dm_notes) {
+      body += '<div class="scc-npc2-dm-row"><div class="scc-npc2-icon scc-npc2-icon-red">&#128203;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title scc-npc2-red">Notes</div><div class="scc-npc2-section-body">' + sccEsc(c.dm_notes) + '</div></div></div>';
+    }
+    if (linkedQuests.length) {
+      // Was sccSwitchPanel('quests') -- dead since Phase 3a removed that
+      // panel target (Quests is now a Live Session accordion section, not
+      // a switchable panel). Fixed to the same cross-reference pattern
+      // every other quest link in this file already uses, which also
+      // correctly works regardless of which of the 3 sites this card is
+      // rendered at (the drawer and Field Guide sidebar aren't always
+      // reachable "from" Live Session).
+      body += '<div class="scc-npc2-dm-row"><div class="scc-npc2-icon scc-npc2-icon-red">&#128220;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title scc-npc2-red">Linked Quests</div>'
+        + linkedQuests.map(function(q) {
+            return '<div class="scc-npc2-quest-link" onclick="sccOpenLookup(\'quest\',\'' + sccEsc(q.id) + '\')">' + sccEsc(q.name) + '</div>';
+          }).join('')
+      + '</div></div>';
+    }
+    body += '</div></div>';
+  }
+  return body;
+}
+
+// ── Shared Location card component (Phase 3b field-union) ───────────
+// Same treatment as the NPC card above -- one header + one body function
+// used by all 3 sites. landmarks[] and structures[] are BOTH real,
+// cities-only jsonb columns (confirmed via schema) covering genuinely
+// different concepts, not a naming split of one thing -- landmarks is a
+// flat list where a real entry_id substitutes in the linked entity's own
+// name/description/image; structures is grouped by category and an
+// entry_id only adds a static link icon, it never resolves anything. Both
+// are kept, unchanged, side by side. loc._srcType (set by
+// sccRenderLocationPanel's own array-tagging, used for its filter dropdown)
+// is NOT relied on here -- a shared function has to work correctly
+// regardless of caller, so type detection always uses the same real
+// array-membership check sccOpenLookup's city branch already established.
+function sccLocationTypeInfo(loc) {
+  var isNationEntry = (typeof NATIONS !== 'undefined' ? NATIONS : []).some(function(n){ return n.id === loc.id; });
+  var isPoiEntry     = (typeof POIS    !== 'undefined' ? POIS    : []).some(function(p){ return p.id === loc.id; });
+  var typeLine = isNationEntry ? 'Nation' : isPoiEntry ? 'POI' : (loc.city_type || loc.type || 'City').replace(/-/g,' ');
+  return { isNationEntry: isNationEntry, isPoiEntry: isPoiEntry, typeLine: typeLine };
+}
+function sccBuildLocationCardHeaderHtml(loc, opts) {
+  opts = opts || {};
+  var info = sccLocationTypeInfo(loc);
+  var hc = sccRegionHealthColor(loc.color_health);
+  var healthBadgeHtml = loc.color_health
+    ? '<span class="scc-loc2-health-badge" style="background:' + hc.bg + ';color:' + hc.text + '">' + sccEsc(hc.label || 'UNKNOWN') + '</span>'
+    : '';
+  var varethBadgeHtml = loc.vareth_presence
+    ? '<span class="scc-loc2-vareth-badge"><svg width="10" height="10" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0"><path d="M12.7097 1.96538L6.75122 11.4472L0.792603 1.96538L6.75122 0.514587L12.7097 1.96538ZM0.792603 1.96538L6.75122 3.05345M6.75122 11.4472V3.05345M12.7097 1.96538L6.75122 3.05345" stroke="#0B0E16" stroke-width="1.2"/></svg>VARETH</span>'
+    : '';
+  var portraitHtml = loc.image
+    ? '<img class="scc-npc2-portrait" src="' + sccEsc(loc.image) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+      + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(loc.name.charAt(0)) + '</div>'
+    : '<div class="scc-npc2-portrait-fallback">' + sccEsc(loc.name.charAt(0)) + '</div>';
+  var metaHtml = '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Type:</span> ' + sccEsc(info.typeLine) + '</div>'
+    + (loc.region ? '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Region:</span> ' + sccEsc(loc.region.charAt(0).toUpperCase() + loc.region.slice(1)) + (loc.nation ? '&nbsp;&nbsp;<span class="scc-npc2-meta-bold">Nation:</span> ' + sccEsc(loc.nation) : '') + '</div>' : '');
+  var actionsHtml = '';
+  if (opts.showActions) {
+    actionsHtml = '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
+      + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">QUICK LOOK</button>'
+      + (loc.id === 'gobblewump-crossing' ? '<a class="scc-npc2-quicklook" href="maps/gobblewump-crossing.html?dm=1" target="_blank" style="text-decoration:none;margin-left:0.5rem;">&#128506; MAP</a>' : '')
+    + '</div>';
+  }
+  return '<div class="scc-npc2-portrait-wrap">' + portraitHtml + '</div>'
+    + '<div class="scc-npc2-info">'
+      + '<div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.2rem;">' + healthBadgeHtml + varethBadgeHtml + '</div>'
+      + '<div class="scc-npc2-name">' + sccEsc(loc.name) + '</div>'
+      + metaHtml
+    + '</div>'
+    + actionsHtml;
+}
+function sccBuildLocationCardBodyHtml(loc) {
+  var info = sccLocationTypeInfo(loc);
+  var body = '';
+  if (loc.read_aloud) {
+    body += '<div class="scc-npc2-section scc-npc2-quote">'
+      + '<span class="scc-npc2-quote-mark">“</span>'
+      + '<div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Visualization</div><div class="scc-npc2-section-body">' + sccEsc(loc.read_aloud) + '</div></div>'
+      + '<span class="scc-npc2-quote-mark">”</span>'
+    + '</div>';
+  }
+  if (loc.summary) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128214;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Summary</div><div class="scc-npc2-section-body">' + sccEsc(loc.summary) + '</div></div></div>';
+  }
+  if (loc.description) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128203;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Description</div><div class="scc-npc2-section-body">' + sccEsc(loc.description) + '</div></div></div>';
+  }
+  if (loc.strategic_importance) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#9873;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Strategic Importance</div><div class="scc-npc2-section-body">' + sccEsc(loc.strategic_importance) + '</div></div></div>';
+  }
+  if (loc.tone) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127912;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Tone</div><div class="scc-npc2-section-body">' + sccEsc(loc.tone) + '</div></div></div>';
+  }
+  if (loc.culture) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127963;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Culture</div><div class="scc-npc2-section-body">' + sccEsc(loc.culture) + '</div></div></div>';
+  }
+  if (loc.beliefs) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128367;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Beliefs</div><div class="scc-npc2-section-body">' + sccEsc(loc.beliefs) + '</div></div></div>';
+  }
+  if (loc.gigglegloom_notes) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127775;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Gigglegloom</div><div class="scc-npc2-section-body">' + sccEsc(loc.gigglegloom_notes) + '</div></div></div>';
+  }
+  if (loc.gigglegloom_relationship) {
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127775;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Gigglegloom Relationship</div><div class="scc-npc2-section-body">' + sccEsc(loc.gigglegloom_relationship) + '</div></div></div>';
+  }
+  // Fields row -- formery/government/capital only ever existed at the
+  // lookup drawer before this merge.
+  var fieldsHtml = ''
+    + (loc.formery_present ? '<div class="scc-ql-row"><span class="scc-ql-label">Formery</span><span class="scc-ql-value">Office present</span></div>' : '')
+    + ((info.isNationEntry && loc.government)   ? '<div class="scc-ql-row"><span class="scc-ql-label">Government</span><span class="scc-ql-value">' + sccEsc(loc.government) + '</span></div>' : '')
+    + ((info.isNationEntry && loc.capital_city) ? '<div class="scc-ql-row"><span class="scc-ql-label">Capital</span><span class="scc-ql-value">' + sccEsc(loc.capital_city) + '</span></div>' : '');
+  if (fieldsHtml) body += '<div class="scc-ql-fields">' + fieldsHtml + '</div>';
+  // Population
+  if (loc.population_data) {
+    var pd = loc.population_data;
+    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">Population</div>';
+    if (loc.population) body += '<div class="scc-ql-section-body" style="margin-bottom:0.4rem;">' + sccEsc(loc.population) + '</div>';
+    if (pd.breakdown && pd.breakdown.length) {
+      body += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.25rem;">';
+      pd.breakdown.forEach(function(b) {
+        body += '<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.15rem 0.55rem;background:var(--dm-surface-high);border:1px solid var(--scc-border-mid);border-radius:4px;font-family:var(--font-body);font-size:0.72rem;">'
+          + '<span style="font-weight:700;color:var(--dm-text);">' + sccEsc(b.species_id || '') + '</span>'
+          + '<span style="color:var(--dm-gold);">' + (b.percent || 0) + '%</span>'
+          + (b.count_est ? '<span style="color:var(--dm-text-muted);">~' + b.count_est + '</span>' : '')
+        + '</span>';
+      });
+      body += '</div>';
+    }
+    body += '</div>';
+  }
+  // Landmarks -- flat, real entity-link resolution against CITIES+POIS
+  if (loc.landmarks && loc.landmarks.length) {
+    var allWorldLoc = []
+      .concat(typeof CITIES !== 'undefined' ? CITIES : [])
+      .concat(typeof POIS   !== 'undefined' ? POIS   : []);
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#127968;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Landmarks</div><div style="display:flex;flex-direction:column;gap:0;">'
+      + loc.landmarks.map(function(lm) {
+          var linked = lm.entry_id ? allWorldLoc.find(function(x){ return x.id === lm.entry_id; }) : null;
+          var lmName = linked ? linked.name : lm.name;
+          var lmDesc = linked ? (linked.summary || linked.description || lm.description || '') : (lm.description || '');
+          var lmImg  = linked && linked.image ? linked.image : null;
+          return '<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem 0;border-bottom:2px solid #2c3757;">'
+            + (lmImg
+              ? '<img src="' + sccEsc(lmImg) + '" style="width:40px;height:40px;border-radius:9999px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
+              : '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lmName || '?').charAt(0)) + '</div>')
+            + '<div style="flex:1;min-width:0;">'
+              + '<div style="font-family:var(--font-display);font-size:0.95rem;font-weight:700;color:var(--dm-text);margin-bottom:0.2rem;">' + sccEsc(lmName) + (linked ? ' <span style="font-family:var(--font-sans);font-size:0.68rem;font-weight:400;color:var(--dm-gold);opacity:0.7;margin-left:0.35rem;">&#128279;</span>' : '') + '</div>'
+              + (lmDesc ? '<div style="font-family:var(--font-sans);font-size:0.85rem;color:var(--dm-text);font-weight:300;line-height:1.6;">' + sccEsc(lmDesc) + '</div>' : '')
+            + '</div>'
+          + '</div>';
+        }).join('')
+    + '</div></div></div>';
+  }
+  // Structures -- nested by category, icon-only link flag, genuinely
+  // separate from landmarks (see comment above this function).
+  if (loc.structures && loc.structures.length) {
+    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">Structures (' + loc.structures.length + ' categories)</div>';
+    loc.structures.forEach(function(cat) {
+      body += '<div style="margin-bottom:0.5rem;"><div style="font-family:var(--font-body);font-size:0.72rem;font-weight:700;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">' + sccEsc(cat.category) + '</div>';
+      (cat.entries || []).forEach(function(e) {
+        body += '<div style="padding:0.2rem 0;border-bottom:1px solid var(--scc-border);font-family:var(--font-body);font-size:0.8rem;">'
+          + '<span style="font-weight:700;color:var(--dm-text);">' + sccEsc(e.name) + '</span>'
+          + (e.entry_id ? ' <span style="font-size:0.68rem;color:var(--dm-gold);">&#128279;</span>' : '')
+          + (e.description ? '<div style="color:var(--dm-text-muted);font-size:0.76rem;line-height:1.4;margin-top:0.1rem;">' + sccEsc(e.description) + '</div>' : '')
+        + '</div>';
+      });
+      body += '</div>';
+    });
+    body += '</div>';
+  }
+  // Tags
+  if (loc.tags && loc.tags.length) {
+    var locTagsHtml = loc.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
+    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>';
+  }
+  // DM-only block
+  if (loc.dm_notes || loc.vareth_presence) {
+    body += '<div class="scc-npc2-dm-block"><div class="scc-npc2-dm-title"><span class="scc-npc2-dm-icon">&#9888;</span>DM Only — Do Not Read Aloud</div><div class="scc-npc2-dm-rows">';
+    if (loc.vareth_presence) {
+      body += '<div class="scc-npc2-dm-row"><div class="scc-npc2-icon scc-npc2-icon-red">&#9888;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title scc-npc2-red">Vareth Presence</div><div class="scc-npc2-section-body">The Vareth is active in this location.</div></div></div>';
+    }
+    if (loc.dm_notes) {
+      body += '<div class="scc-npc2-dm-row"><div class="scc-npc2-icon scc-npc2-icon-red">&#128203;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title scc-npc2-red">Notes</div><div class="scc-npc2-section-body">' + sccEsc(loc.dm_notes) + '</div></div></div>';
+    }
+    body += '</div></div>';
+  }
+  // Shop -- POIs only, the real buy UI, must survive intact
+  if (info.isPoiEntry) {
+    body += sccVendorShopSectionHtml('pois', loc.id);
+  }
+  return body;
+}
+
 function sccCycleRelationship(npcId) {
   var cur = SCC_NPC_RELATIONSHIPS[npcId] || 'neutral';
   var idx = SCC_REL_CYCLE.indexOf(cur);
@@ -13726,104 +14065,18 @@ function sccFilterNpcs() {
     return;
   }
 
+  // Phase 3b: header + body now come from the one shared component used at
+  // all 3 real render sites (Live Session here, the lookup drawer, and the
+  // Field Guide sidebar's detail) -- see sccBuildNpcCardHeaderHtml/
+  // sccBuildNpcCardBodyHtml. This card's own header/chevron/actions row and
+  // collapsible body wrapper are unchanged, only what fills them.
   el.innerHTML = npcs.map(function(c) {
-    var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
-    var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
-    var relColor = sccRelColor(rel);
-    var relBg    = relColor.bg;
-    var linkedQuests = quests.filter(function(q) {
-      return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === c.id; });
-    });
-
-    // Expanded body sections
-    var bodyHtml = '';
-    if (c.read_aloud) {
-      bodyHtml += '<div class="scc-npc2-section scc-npc2-quote">'
-        + '<span class="scc-npc2-quote-mark">“</span>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Visualization</div>'
-          + '<div class="scc-npc2-section-body">' + sccEsc(c.read_aloud) + '</div>'
-        + '</div>'
-        + '<span class="scc-npc2-quote-mark">”</span>'
-      + '</div>';
-    }
-    if (c.personality) {
-      bodyHtml += '<div class="scc-npc2-section">'
-        + '<div class="scc-npc2-icon">🎭</div>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Personality</div>'
-          + '<div class="scc-npc2-section-body">' + sccEsc(c.personality) + '</div>'
-        + '</div>'
-      + '</div>';
-    }
-    if (c.summary || c.description) {
-      bodyHtml += '<div class="scc-npc2-section">'
-        + '<div class="scc-npc2-icon">📖</div>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Summary</div>'
-          + '<div class="scc-npc2-section-body">' + sccEsc(c.summary || c.description) + '</div>'
-        + '</div>'
-      + '</div>';
-    }
-    var hasDm = c.secret || c.dm_notes || linkedQuests.length;
-    if (hasDm) {
-      bodyHtml += '<div class="scc-npc2-dm-block">'
-        + '<div class="scc-npc2-dm-title"><span class="scc-npc2-dm-icon">&#9888;</span>DM Only — Do Not Read Aloud</div>'
-        + '<div class="scc-npc2-dm-rows">';
-      if (c.secret) {
-        bodyHtml += '<div class="scc-npc2-dm-row">'
-          + '<div class="scc-npc2-icon scc-npc2-icon-red">🔒</div>'
-          + '<div class="scc-npc2-section-txt">'
-            + '<div class="scc-npc2-section-title scc-npc2-red">Secret</div>'
-            + '<div class="scc-npc2-section-body">' + sccEsc(c.secret) + '</div>'
-          + '</div>'
-        + '</div>';
-      }
-      if (c.dm_notes) {
-        bodyHtml += '<div class="scc-npc2-dm-row">'
-          + '<div class="scc-npc2-icon scc-npc2-icon-red">📋</div>'
-          + '<div class="scc-npc2-section-txt">'
-            + '<div class="scc-npc2-section-title scc-npc2-red">Notes</div>'
-            + '<div class="scc-npc2-section-body">' + sccEsc(c.dm_notes) + '</div>'
-          + '</div>'
-        + '</div>';
-      }
-      if (linkedQuests.length) {
-        bodyHtml += '<div class="scc-npc2-dm-row">'
-          + '<div class="scc-npc2-icon scc-npc2-icon-red">📜</div>'
-          + '<div class="scc-npc2-section-txt">'
-            + '<div class="scc-npc2-section-title scc-npc2-red">Linked Quests</div>'
-            + linkedQuests.map(function(q) {
-                return '<div class="scc-npc2-quest-link" onclick="sccSwitchPanel(\'quests\')">' + sccEsc(q.name) + '</div>';
-              }).join('')
-          + '</div>'
-        + '</div>';
-      }
-      bodyHtml += '</div></div>';
-    }
-
+    var headerHtml = sccBuildNpcCardHeaderHtml(c, { showActions: true });
+    var bodyHtml   = sccBuildNpcCardBodyHtml(c);
     return '<div class="scc-npc2-card" id="scc-npc2-' + sccEsc(c.id) + '">'
       + '<div class="scc-npc2-header" onclick="sccToggleNpc2(\'' + sccEsc(c.id) + '\')">'
-        + '<div class="scc-npc2-portrait-wrap">'
-          + (c.image
-            ? '<img class="scc-npc2-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/' + sccEsc(c.id) + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
-            + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(c.name.charAt(0)) + '</div>'
-            : '<div class="scc-npc2-portrait-fallback">' + sccEsc(c.name.charAt(0)) + '</div>')
-        + '</div>'
-        + '<div class="scc-npc2-info">'
-          + '<div class="scc-npc2-badge-row">'
-            + '<div class="scc-npc2-rel-badge" style="background:' + relBg + ';color:' + relColor.text + '" onclick="event.stopPropagation();sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</div>'
-            + sccNpcCategoryBadgeHtml(c.category)
-            + (linkedQuests.length ? '<span class="scc-npc2-quest-icon" title="Quest-related' + (linkedQuests.length > 1 ? ' (' + linkedQuests.length + ' quests)' : ' (' + sccEsc(linkedQuests[0].name) + ')') + '">&#128220;</span>' : '')
-          + '</div>'
-          + '<div class="scc-npc2-name">' + sccEsc(c.name) + '</div>'
-          + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Role:</span> ' + sccEsc(c.role || c.category || '—') + '</div>'
-          + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Location:</span> ' + sccEsc(c.location || '—') + '</div>'
-        + '</div>'
-        + '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
-          + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'character\',\'' + sccEsc(c.id) + '\')">QUICK LOOK</button>'
-          + '<button class="scc-npc2-chevron" id="scc-npc2-chev-' + sccEsc(c.id) + '" onclick="event.stopPropagation();sccToggleNpc2(\'' + sccEsc(c.id) + '\')">▼</button>'
-        + '</div>'
+        + headerHtml
+        + '<button class="scc-npc2-chevron" id="scc-npc2-chev-' + sccEsc(c.id) + '" onclick="event.stopPropagation();sccToggleNpc2(\'' + sccEsc(c.id) + '\')">▼</button>'
       + '</div>'
       + (bodyHtml ? '<div class="scc-npc2-body" id="scc-npc2-body-' + sccEsc(c.id) + '" style="display:none">'
           + bodyHtml
@@ -13841,10 +14094,19 @@ function sccToggleNpc2(id) {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
+// Was hardcoded to only ever refresh the Live Session NPCs section --
+// clicking the relationship badge from the lookup drawer or the Field
+// Guide sidebar saved correctly but left THAT card visually stale until
+// closed/reopened, since only sccRenderNpcPanel() ran. Now that the same
+// badge markup (from the shared header) can be clicked from any of the 3
+// sites, it has to refresh whichever one is actually showing this NPC.
 function sccCycleRelationship2(npcId) {
   sccCycleRelationship(npcId);
-  // Re-render to update badge color without collapsing open cards
   sccRenderNpcPanel();
+  if (SCC_LOOKUP_TYPE === 'character' && SCC_LOOKUP_ID === npcId) {
+    sccOpenLookup('character', npcId);
+  }
+  if (typeof SCC_FG_DATA !== 'undefined' && SCC_FG_DATA) sccFgDraw();
 }
 
 // ── Location Panel ────────────────────────────────────────────────
@@ -13879,118 +14141,18 @@ function sccRenderLocationPanel() {
     el.innerHTML = '<div class="scc-empty-state">No locations match the current filters.</div>';
     return;
   }
-  function healthBadge(loc) {
-    var hc = sccRegionHealthColor(loc.color_health);
-    var label = hc.label || 'UNKNOWN';
-    return '<span class="scc-loc2-health-badge" style="background:' + hc.bg + ';color:' + hc.text + '">' + sccEsc(label) + '</span>';
-  }
+  // Phase 3b: header + body now come from the shared component used at all
+  // 3 real render sites -- see sccBuildLocationCardHeaderHtml/
+  // sccBuildLocationCardBodyHtml. loc._srcType (set just above, for this
+  // panel's own filter dropdown) is untouched; the shared functions
+  // deliberately don't rely on it, see their own comment.
   el.innerHTML = locs.map(function(loc) {
-    var typeLine = loc._srcType === 'poi' ? 'POI' : (loc.city_type || loc.type || loc._srcType || '').replace(/-/g,' ');
-    var bodyHtml = '';
-    if (loc.read_aloud) {
-      bodyHtml += '<div class="scc-npc2-section scc-npc2-quote">'
-        + '<span class="scc-npc2-quote-mark">“</span>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Visualization</div>'
-          + '<div class="scc-npc2-section-body">' + sccEsc(loc.read_aloud) + '</div>'
-        + '</div>'
-        + '<span class="scc-npc2-quote-mark">”</span>'
-      + '</div>';
-    }
-    if (loc.summary) {
-      bodyHtml += '<div class="scc-npc2-section">'
-        + '<div class="scc-npc2-icon">&#128214;</div>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Summary</div>'
-          + '<div class="scc-npc2-section-body">' + sccEsc(loc.summary) + '</div>'
-        + '</div>'
-      + '</div>';
-    }
-    if (loc.description) {
-      bodyHtml += '<div class="scc-npc2-section">'
-        + '<div class="scc-npc2-icon">&#128203;</div>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Description</div>'
-          + '<div class="scc-npc2-section-body">' + sccEsc(loc.description) + '</div>'
-        + '</div>'
-      + '</div>';
-    }
-    if (loc.landmarks && loc.landmarks.length) {
-      var allWorld = []
-        .concat(typeof CITIES  !== 'undefined' ? CITIES  : [])
-        .concat(typeof POIS    !== 'undefined' ? POIS    : []);
-      bodyHtml += '<div class="scc-npc2-section">'
-        + '<div class="scc-npc2-icon">&#127968;</div>'
-        + '<div class="scc-npc2-section-txt">'
-          + '<div class="scc-npc2-section-title">Landmarks</div>'
-          + '<div style="display:flex;flex-direction:column;gap:0;">'
-            + loc.landmarks.map(function(lm) {
-                var linked = lm.entry_id ? allWorld.find(function(x){ return x.id === lm.entry_id; }) : null;
-                var lmName = linked ? linked.name : lm.name;
-                var lmDesc = linked ? (linked.summary || linked.description || lm.description || '') : (lm.description || '');
-                var lmImg = linked && linked.image ? linked.image : null;
-                return '<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem 0;border-bottom:2px solid #2c3757;">'
-                  + (lmImg
-                    ? '<img src="' + sccEsc(lmImg) + '" style="width:40px;height:40px;border-radius:9999px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
-                    : '<div style="width:40px;height:40px;border-radius:9999px;background:var(--dm-surface-high);border:1px solid var(--dm-border-mid);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.9rem;color:var(--dm-gold);flex-shrink:0;">' + sccEsc((lmName || '?').charAt(0)) + '</div>')
-                  + '<div style="flex:1;min-width:0;">'
-                    + '<div style="font-family:var(--font-display);font-size:0.95rem;font-weight:700;color:var(--dm-text);margin-bottom:0.2rem;">'
-                      + sccEsc(lmName)
-                      + (linked ? ' <span style="font-family:var(--font-sans);font-size:0.68rem;font-weight:400;color:var(--dm-gold);opacity:0.7;margin-left:0.35rem;">&#128279;</span>' : '')
-                    + '</div>'
-                    + (lmDesc ? '<div style="font-family:var(--font-sans);font-size:0.85rem;color:var(--dm-text);font-weight:300;line-height:1.6;">' + sccEsc(lmDesc) + '</div>' : '')
-                  + '</div>'
-                + '</div>';
-              }).join('')
-          + '</div>'
-        + '</div>'
-      + '</div>';
-    }
-    if (loc.dm_notes || loc.vareth_presence) {
-      bodyHtml += '<div class="scc-npc2-dm-block">'
-        + '<div class="scc-npc2-dm-title"><span class="scc-npc2-dm-icon">&#9888;</span>DM Only — Do Not Read Aloud</div>'
-        + '<div class="scc-npc2-dm-rows">';
-      if (loc.vareth_presence) {
-        bodyHtml += '<div class="scc-npc2-dm-row">'
-          + '<div class="scc-npc2-icon scc-npc2-icon-red">&#9888;</div>'
-          + '<div class="scc-npc2-section-txt">'
-            + '<div class="scc-npc2-section-title scc-npc2-red">Vareth Presence</div>'
-            + '<div class="scc-npc2-section-body">The Vareth is active in this location.</div>'
-          + '</div>'
-        + '</div>';
-      }
-      if (loc.dm_notes) {
-        bodyHtml += '<div class="scc-npc2-dm-row">'
-          + '<div class="scc-npc2-icon scc-npc2-icon-red">&#128203;</div>'
-          + '<div class="scc-npc2-section-txt">'
-            + '<div class="scc-npc2-section-title scc-npc2-red">Notes</div>'
-            + '<div class="scc-npc2-section-body">' + sccEsc(loc.dm_notes) + '</div>'
-          + '</div>'
-        + '</div>';
-      }
-      bodyHtml += '</div></div>';
-    }
-    var portraitHtml = loc.image
-      ? '<img class="scc-npc2-portrait" src="' + sccEsc(loc.image) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
-        + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(loc.name.charAt(0)) + '</div>'
-      : '<div class="scc-npc2-portrait-fallback">' + sccEsc(loc.name.charAt(0)) + '</div>';
+    var headerHtml = sccBuildLocationCardHeaderHtml(loc, { showActions: true });
+    var bodyHtml   = sccBuildLocationCardBodyHtml(loc);
     return '<div class="scc-npc2-card" id="scc-loc2-' + sccEsc(loc.id) + '">'
       + '<div class="scc-npc2-header" onclick="sccToggleLoc(\'' + sccEsc(loc.id) + '\')">'
-        + '<div class="scc-npc2-portrait-wrap">' + portraitHtml + '</div>'
-        + '<div class="scc-npc2-info">'
-          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.2rem;">'
-            + (loc.color_health ? healthBadge(loc) : '')
-            + (loc.vareth_presence ? '<span class="scc-loc2-vareth-badge"><svg width="10" height="10" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0"><path d="M12.7097 1.96538L6.75122 11.4472L0.792603 1.96538L6.75122 0.514587L12.7097 1.96538ZM0.792603 1.96538L6.75122 3.05345M6.75122 11.4472V3.05345M12.7097 1.96538L6.75122 3.05345" stroke="#0B0E16" stroke-width="1.2"/></svg>VARETH</span>' : '')
-          + '</div>'
-          + '<div class="scc-npc2-name">' + sccEsc(loc.name) + '</div>'
-          + '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Type:</span> ' + sccEsc(typeLine) + '</div>'
-          + (loc.region ? '<div class="scc-npc2-meta"><span class="scc-npc2-meta-bold">Region:</span> ' + sccEsc(loc.region.charAt(0).toUpperCase() + loc.region.slice(1)) + (loc.nation ? '&nbsp;&nbsp;<span class="scc-npc2-meta-bold">Nation:</span> ' + sccEsc(loc.nation) : '') + '</div>' : '')
-        + '</div>'
-        + '<div class="scc-npc2-actions" onclick="event.stopPropagation()">'
-          + '<button class="scc-npc2-quicklook" onclick="sccOpenLookup(\'city\',\'' + sccEsc(loc.id) + '\')">QUICK LOOK</button>'
-          + (loc.id === 'gobblewump-crossing' ? '<a class="scc-npc2-quicklook" href="maps/gobblewump-crossing.html?dm=1" target="_blank" style="text-decoration:none;margin-left:0.5rem;">&#128506; MAP</a>' : '')
-          + '<button class="scc-npc2-chevron" id="scc-loc2-chev-' + sccEsc(loc.id) + '" onclick="event.stopPropagation();sccToggleLoc(\'' + sccEsc(loc.id) + '\')">&#9660;</button>'
-        + '</div>'
+        + headerHtml
+        + '<button class="scc-npc2-chevron" id="scc-loc2-chev-' + sccEsc(loc.id) + '" onclick="event.stopPropagation();sccToggleLoc(\'' + sccEsc(loc.id) + '\')">&#9660;</button>'
       + '</div>'
       + (bodyHtml ? '<div class="scc-npc2-body" id="scc-loc2-body-' + sccEsc(loc.id) + '" style="display:none">'
           + bodyHtml
@@ -15793,12 +15955,20 @@ document.addEventListener('click', function(e) {
 });
 
 // ── Quick Lookup Panel ────────────────────────────────────────────
+// Tracks what's currently shown in the lookup drawer, keyed by exactly what
+// sccOpenLookup() was called with -- lets shared-card interactions (e.g. the
+// relationship badge) know whether the drawer needs a live refresh too. Set
+// here, cleared in sccCloseLookup().
+var SCC_LOOKUP_TYPE = null;
+var SCC_LOOKUP_ID   = null;
 function sccOpenLookup(type, id) {
   var panel    = document.getElementById('scc-lookup-panel');
   var backdrop = document.getElementById('scc-lookup-backdrop');
   var content  = document.getElementById('scc-lookup-content');
   var newTabEl = document.getElementById('scc-lookup-newtab-link');
   if (!panel || !content) return;
+  SCC_LOOKUP_TYPE = type;
+  SCC_LOOKUP_ID   = id;
   content.innerHTML = '<div class="scc-lookup-loading">Loading…</div>';
   panel.classList.add('open');
   backdrop.classList.add('open');
@@ -15813,188 +15983,28 @@ function sccOpenLookup(type, id) {
     var c = chars.find(function(x){ return x.id === id; });
     if (!c) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
     newTabUrl = sccBuildManageEditUrl('character', c.id);
-
-    var rel      = SCC_NPC_RELATIONSHIPS[c.id] || 'neutral';
-    var relLabel = SCC_REL_LABELS[rel] || 'Neutral';
-    var relColor = sccRelColor(rel);
-    var relBg    = relColor.bg;
-
-    // Player facing badge
-    var pfVal   = c.player_facing;
-    var pfLabel = pfVal === true || pfVal === 'true' ? 'Visible to Players'
-                : pfVal === 'teaser' ? 'Teaser'
-                : '\uD83D\uDCA0 DM Only';
-    var pfColor = pfVal === true || pfVal === 'true' ? 'var(--green)'
-                : pfVal === 'teaser' ? 'var(--gold)'
-                : 'var(--dm-only)';
-
-    // World associations
-    var assocHtml = '';
-    if (c.associated && c.associated.length) {
-      var allWorld = []
-        .concat(typeof CHARACTERS    !== 'undefined' ? CHARACTERS    : [])
-        .concat(typeof CITIES        !== 'undefined' ? CITIES        : [])
-        .concat(typeof POIS          !== 'undefined' ? POIS          : [])
-        .concat(typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [])
-        .concat(typeof CREATURES     !== 'undefined' ? CREATURES     : [])
-        .concat(typeof REGIONS       !== 'undefined' ? REGIONS       : []);
-      assocHtml = c.associated.map(function(a) {
-        var entry = allWorld.find(function(x){ return x.id === a.id; });
-        var label = entry ? entry.name : a.id;
-        var cat   = a.collection.replace(/_/g,' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
-        return '<span class="scc-ql-tag">' + sccEsc(label) + ' <span class="scc-ql-tag-cat">(' + sccEsc(cat) + ')</span></span>';
-      }).join('');
-    }
-
-    // Tags
-    var tagsHtml = '';
-    if (c.tags && c.tags.length) {
-      tagsHtml = c.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
-    }
-
-    // Portrait
-    var portraitHtml = c.image
-      ? '<img class="scc-ql-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/' + sccEsc(c.id) + '.webp" onerror="this.style.display=\'none\'" alt="">'
-      : '<div class="scc-ql-portrait-fallback">' + sccEsc((c.name||'?').charAt(0)) + '</div>';
-
-    html = ''
-      // ── HEADER ──
-      + '<div class="scc-ql-header">'
-        + portraitHtml
-        + '<div class="scc-ql-header-info">'
-          + '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
-            + '<span class="scc-ql-rel-badge" style="background:' + relBg + ';color:' + relColor.text + '" onclick="sccCycleRelationship2(\'' + sccEsc(c.id) + '\')" title="Click to change">' + sccEsc(relLabel.toUpperCase()) + '</span>'
-            + sccNpcCategoryBadgeHtml(c.category)
-            + '<span class="scc-ql-pf-badge" style="color:' + pfColor + ';border-color:' + pfColor + '">' + sccEsc(pfLabel) + '</span>'
-          + '</div>'
-          + '<div class="scc-ql-name">' + sccEsc(c.name) + '</div>'
-          + '<div class="scc-ql-role">'
-            + (c.role ? '<span class="scc-ql-bold">Role:</span> ' + sccEsc(c.role) : '')
-            + (c.role && c.location ? ' &nbsp;·&nbsp; ' : '')
-            + (c.location ? '<span class="scc-ql-bold">Location:</span> ' + sccEsc(c.location) : '')
-          + '</div>'
-        + '</div>'
-      + '</div>'
-      // ── FIELDS ──
-      + '<div class="scc-ql-fields">'
-        + (c.category   ? '<div class="scc-ql-row"><span class="scc-ql-label">Category</span><span class="scc-ql-value">' + sccEsc(c.category) + '</span></div>' : '')
-        + (c.pronouns   ? '<div class="scc-ql-row"><span class="scc-ql-label">Pronouns</span><span class="scc-ql-value">' + sccEsc(c.pronouns) + '</span></div>' : '')
-        + (c.status     ? '<div class="scc-ql-row"><span class="scc-ql-label">Status</span><span class="scc-ql-value">' + sccEsc(c.status) + '</span></div>' : '')
-        + (c.affiliation ? '<div class="scc-ql-row"><span class="scc-ql-label">Affiliation</span><span class="scc-ql-value">' + sccEsc(c.affiliation) + '</span></div>' : '')
-      + '</div>'
-      // ── PROSE SECTIONS ──
-      + (c.motivation ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Motivation</div><div class="scc-ql-section-body">' + sccEsc(c.motivation) + '</div></div>' : '')
-      + (c.contradiction ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Contradiction</div><div class="scc-ql-section-body">' + sccEsc(c.contradiction) + '</div></div>' : '')
-      + (c.appearance ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Appearance</div><div class="scc-ql-section-body">' + sccEsc(c.appearance) + '</div></div>' : '')
-      + (c.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(c.gigglegloom_relationship) + '</div></div>' : '')
-      // ── TAGS & ASSOCIATIONS ──
-      + (assocHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">World Associations</div><div class="scc-ql-tags">' + assocHtml + '</div></div>' : '')
-      + (tagsHtml  ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + tagsHtml + '</div></div>' : '');
+    // Phase 3b: header + body from the shared component (see
+    // sccBuildNpcCardHeaderHtml/sccBuildNpcCardBodyHtml) -- .scc-ql-header
+    // is kept as the outer wrapper purely for its divider styling (border-
+    // bottom/margin, a real visual difference this drawer had that the Live
+    // Session card didn't need); its own flex-row layout is compatible with
+    // the shared header's flex-item classes, verified live.
+    html = '<div class="scc-ql-header">' + sccBuildNpcCardHeaderHtml(c, { showPfBadge: true }) + '</div>'
+      + sccBuildNpcCardBodyHtml(c);
   } else if (type === 'city') {
     var allLocs = (typeof CITIES!=='undefined'?CITIES:[]).concat(typeof POIS!=='undefined'?POIS:[]).concat(typeof NATIONS!=='undefined'?NATIONS:[]);
     var loc = allLocs.find(function(x){ return x.id===id; });
     if (!loc) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
-    // Health badge
-    var hc = sccRegionHealthColor(loc.color_health);
-    var healthBadgeHtml = loc.color_health
-      ? '<span class="scc-loc2-health-badge" style="background:' + hc.bg + ';color:' + hc.text + '">' + sccEsc(hc.label) + '</span>'
-      : '';
-    var varethBadgeHtml = loc.vareth_presence
-      ? '<span class="scc-loc2-vareth-badge"><svg width="10" height="10" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0"><path d="M12.7097 1.96538L6.75122 11.4472L0.792603 1.96538L6.75122 0.514587L12.7097 1.96538ZM0.792603 1.96538L6.75122 3.05345M6.75122 11.4472V3.05345M12.7097 1.96538L6.75122 3.05345" stroke="#0B0E16" stroke-width="1.2"/></svg>VARETH</span>'
-      : '';
-    // Portrait
-    var locPortraitHtml = loc.image
-      ? '<img class="scc-ql-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/cities/' + sccEsc(loc.id) + '.webp" onerror="this.style.display=\'none\'" alt="">'
-      : '<div class="scc-ql-portrait-fallback">' + sccEsc((loc.name||'?').charAt(0)) + '</div>';
-    // loc._srcType is never actually set on this inline-built array (a different,
-    // unrelated function tags its own separately-built array with it) — checking
-    // real array membership directly is the only reliable way to tell POI/Nation/
-    // City apart here, same fix already applied to the Vendor/Shop POI-scoping.
-    var isNationEntry = (typeof NATIONS !== 'undefined' ? NATIONS : []).some(function(n){ return n.id === loc.id; });
-    var isPoiEntry = (typeof POIS !== 'undefined' ? POIS : []).some(function(p){ return p.id === loc.id; });
-    var typeLine = isNationEntry ? 'Nation' : isPoiEntry ? 'POI' : (loc.city_type || 'City').replace(/-/g,' ');
+    var locInfo = sccLocationTypeInfo(loc);
     // Nations have no Content Manager edit form at all (confirmed: not in
-    // CM_ARRAYS) — no new-tab link for them, only for real cities/POIs.
-    if (!isNationEntry) newTabUrl = sccBuildManageEditUrl(isPoiEntry ? 'poi' : 'city', loc.id);
-    // Tags
-    var locTagsHtml = '';
-    if (loc.tags && loc.tags.length) {
-      locTagsHtml = loc.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
-    }
-    html = ''
-      // ── HEADER ──
-      + '<div class="scc-ql-header">'
-        + locPortraitHtml
-        + '<div class="scc-ql-header-info">'
-          + '<div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.35rem;">'
-            + healthBadgeHtml
-            + varethBadgeHtml
-          + '</div>'
-          + '<div class="scc-ql-name">' + sccEsc(loc.name) + '</div>'
-          + '<div style="display:flex;flex-direction:column;gap:0.2rem;margin-top:0.2rem;">'
-            + '<div style="font-family:var(--font-body);font-size:0.8rem;color:var(--text-muted);"><span style="font-weight:700;color:var(--text);">Type:</span> ' + sccEsc(typeLine) + '</div>'
-            + (loc.region ? '<div style="font-family:var(--font-body);font-size:0.8rem;color:var(--text-muted);"><span style="font-weight:700;color:var(--text);">Region:</span> ' + sccEsc(loc.region.charAt(0).toUpperCase() + loc.region.slice(1)) + '</div>' : '')
-            + (loc.nation ? '<div style="font-family:var(--font-body);font-size:0.8rem;color:var(--text-muted);"><span style="font-weight:700;color:var(--text);">Nation:</span> ' + sccEsc(loc.nation) + '</div>' : '')
-          + '</div>'
-        + '</div>'
-      + '</div>'
-      // ── FIELDS ──
-      + (loc.formery_present ? '<div class="scc-ql-fields"><div class="scc-ql-row"><span class="scc-ql-label">Formery</span><span class="scc-ql-value">Office present</span></div></div>' : '')
-      + ((isNationEntry && (loc.government || loc.capital_city)) ? '<div class="scc-ql-fields">'
-          + (loc.government ? '<div class="scc-ql-row"><span class="scc-ql-label">Government</span><span class="scc-ql-value">' + sccEsc(loc.government) + '</span></div>' : '')
-          + (loc.capital_city ? '<div class="scc-ql-row"><span class="scc-ql-label">Capital</span><span class="scc-ql-value">' + sccEsc(loc.capital_city) + '</span></div>' : '')
-        + '</div>' : '')
-      // ── PROSE — only fields NOT shown in the accordion ──
-      + (loc.strategic_importance ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Strategic Importance</div><div class="scc-ql-section-body">' + sccEsc(loc.strategic_importance) + '</div></div>' : '')
-      + (loc.tone ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tone</div><div class="scc-ql-section-body">' + sccEsc(loc.tone) + '</div></div>' : '')
-      + (loc.culture ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Culture</div><div class="scc-ql-section-body">' + sccEsc(loc.culture) + '</div></div>' : '')
-      + (loc.beliefs ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Beliefs</div><div class="scc-ql-section-body">' + sccEsc(loc.beliefs) + '</div></div>' : '')
-      + (loc.gigglegloom_notes ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom</div><div class="scc-ql-section-body">' + sccEsc(loc.gigglegloom_notes) + '</div></div>' : '')
-      + (loc.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(loc.gigglegloom_relationship) + '</div></div>' : '')
-      // ── POPULATION ──
-      + (function() {
-          var pd = loc.population_data;
-          if (!pd) return '';
-          var html2 = '<div class="scc-ql-section"><div class="scc-ql-section-label">Population</div>';
-          if (loc.population) html2 += '<div class="scc-ql-section-body" style="margin-bottom:0.4rem;">' + sccEsc(loc.population) + '</div>';
-          if (pd.breakdown && pd.breakdown.length) {
-            html2 += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.25rem;">';
-            pd.breakdown.forEach(function(b) {
-              html2 += '<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.15rem 0.55rem;background:var(--dm-surface-high);border:1px solid var(--scc-border-mid);border-radius:4px;font-family:var(--font-body);font-size:0.72rem;">'
-                + '<span style="font-weight:700;color:var(--dm-text);">' + sccEsc(b.species_id || '') + '</span>'
-                + '<span style="color:var(--dm-gold);">' + (b.percent || 0) + '%</span>'
-                + (b.count_est ? '<span style="color:var(--dm-text-muted);">~' + b.count_est + '</span>' : '')
-              + '</span>';
-            });
-            html2 += '</div>';
-          }
-          html2 += '</div>';
-          return html2;
-        })()
-      // ── STRUCTURES ──
-      + (function() {
-          var structs = loc.structures;
-          if (!structs || !structs.length) return '';
-          var html2 = '<div class="scc-ql-section"><div class="scc-ql-section-label">Structures (' + structs.length + ' categories)</div>';
-          structs.forEach(function(cat) {
-            html2 += '<div style="margin-bottom:0.5rem;">'
-              + '<div style="font-family:var(--font-body);font-size:0.72rem;font-weight:700;color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">' + sccEsc(cat.category) + '</div>';
-            (cat.entries || []).forEach(function(e) {
-              html2 += '<div style="padding:0.2rem 0;border-bottom:1px solid var(--scc-border);font-family:var(--font-body);font-size:0.8rem;">'
-                + '<span style="font-weight:700;color:var(--dm-text);">' + sccEsc(e.name) + '</span>'
-                + (e.entry_id ? ' <span style="font-size:0.68rem;color:var(--dm-gold);">&#128279;</span>' : '')
-                + (e.description ? '<div style="color:var(--dm-text-muted);font-size:0.76rem;line-height:1.4;margin-top:0.1rem;">' + sccEsc(e.description) + '</div>' : '')
-              + '</div>';
-            });
-            html2 += '</div>';
-          });
-          html2 += '</div>';
-          return html2;
-        })()
-      // ── TAGS ──
-      + (locTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>' : '')
-      // ── SHOP (POIs only) ──
-      + (isPoiEntry ? sccVendorShopSectionHtml('pois', loc.id) : '');
+    // CM_ARRAYS) -- no new-tab link for them, only for real cities/POIs.
+    if (!locInfo.isNationEntry) newTabUrl = sccBuildManageEditUrl(locInfo.isPoiEntry ? 'poi' : 'city', loc.id);
+    // Phase 3b: header + body from the shared component (see
+    // sccBuildLocationCardHeaderHtml/sccBuildLocationCardBodyHtml) --
+    // .scc-ql-header kept as the outer wrapper for its divider styling only,
+    // same reasoning as the character branch above.
+    html = '<div class="scc-ql-header">' + sccBuildLocationCardHeaderHtml(loc, {}) + '</div>'
+      + sccBuildLocationCardBodyHtml(loc);
   } else if (type === 'creature') {
     var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
     var cr = creatures.find(function(x){ return x.id===id; });
@@ -16264,6 +16274,8 @@ function sccCloseLookup() {
   var backdrop = document.getElementById('scc-lookup-backdrop');
   if (panel)    panel.classList.remove('open');
   if (backdrop) backdrop.classList.remove('open');
+  SCC_LOOKUP_TYPE = null;
+  SCC_LOOKUP_ID   = null;
 }
 
 // ── "Open in new tab" deep-link routing ─────────────────────────────
