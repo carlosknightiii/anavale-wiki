@@ -3267,6 +3267,7 @@
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
   var LANGUAGE_ROW = null; // languages table row for ch.language_extra, once fetchLanguageData() resolves
+  var DRUIDIC_LANGUAGE_ROW = null; // languages table row for id 'druidic', fetched only when ch.class_id === 'druid' — every Druid knows Druidic regardless of their language_extra pick
   // player_characters.appearance_data — cosmetic/portrait-description JSON
   // built at character creation (confirmed via real data + character.html's
   // appearance stage, NOT a mechanical equip system). Set once from ch in
@@ -4633,7 +4634,12 @@
     tbody.innerHTML = list.length ? list.map(function(s) {
       var isPrepared = prepared.indexOf(s.id) >= 0;
       var levelLabel = s.level === 0 ? 'Cantrip' : String(s.level);
-      var preparedCell = '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
+      // Cantrips don't need preparing (2024 rules) — a checkbox here would
+      // imply a daily choice that doesn't exist. Leveled spells (level >= 1)
+      // keep the interactive checkbox exactly as before.
+      var preparedCell = s.level === 0
+        ? '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>'
+        : '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
       return '<tr class="cs-inv-tr">'
         + '<td class="cs-inv-td cs-inv-td-select">' + preparedCell + '</td>'
         + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
@@ -5631,23 +5637,46 @@
     el.style.display = desc ? '' : 'none';
   }
   function fetchLanguageData(ch) {
-    if (!ch.language_extra) { renderSpeaksBlock(); return Promise.resolve(); }
-    return sb.from('languages').select('*').eq('id', ch.language_extra).maybeSingle()
-      .then(function(res) {
-        if (!res.error && res.data) LANGUAGE_ROW = res.data;
-        renderSpeaksBlock();
-      })
-      .catch(function() { renderSpeaksBlock(); });
+    var langPromise = ch.language_extra
+      ? sb.from('languages').select('*').eq('id', ch.language_extra).maybeSingle()
+          .then(function(res) { if (!res.error && res.data) LANGUAGE_ROW = res.data; })
+          .catch(function() {})
+      : Promise.resolve();
+    // Every Druid knows Druidic regardless of what they picked as their
+    // language_extra — a second, always-present Speaks row, not a choice.
+    var druidicPromise = ch.class_id === 'druid'
+      ? sb.from('languages').select('*').eq('id', 'druidic').maybeSingle()
+          .then(function(res) { if (!res.error && res.data) DRUIDIC_LANGUAGE_ROW = res.data; })
+          .catch(function() {})
+      : Promise.resolve();
+    return Promise.all([langPromise, druidicPromise]).then(renderSpeaksBlock);
   }
   function renderSpeaksBlock() {
     var el = document.getElementById('cs-mi-speaks');
     if (!el) return;
-    if (!LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
+    if (!LANGUAGE_ROW && !DRUIDIC_LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
     el.style.display = '';
-    var langColor = LANGUAGE_ROW.color || 'inherit';
-    el.innerHTML = '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + langColor + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
-      + '<span class="cs-mi-speaks-name" style="color:' + langColor + ';">' + escHtml(LANGUAGE_ROW.name || '') + '</span></div>'
-      + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '');
+    var html = '';
+    if (LANGUAGE_ROW) {
+      var langColor = LANGUAGE_ROW.color || 'inherit';
+      html += '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + langColor + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
+        + '<span class="cs-mi-speaks-name" style="color:' + langColor + ';">' + escHtml(LANGUAGE_ROW.name || '') + '</span></div>'
+        + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '');
+    }
+    if (DRUIDIC_LANGUAGE_ROW) {
+      var dColor = DRUIDIC_LANGUAGE_ROW.color || 'inherit';
+      // Only render the tip trigger when a real tip exists — older language
+      // rows predate the tip column and shouldn't show a dead "?" icon.
+      var dTip = DRUIDIC_LANGUAGE_ROW.tip ? '<span class="cs-ab-tip" data-tip="' + DRUIDIC_LANGUAGE_ROW.tip.replace(/"/g,'&quot;') + '">?</span>' : '';
+      html += '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + dColor + ';">' + (DRUIDIC_LANGUAGE_ROW.glyph || '') + '</span>'
+        + '<span class="cs-mi-speaks-name" style="color:' + dColor + ';">' + escHtml(DRUIDIC_LANGUAGE_ROW.name || '') + '</span>' + dTip + '</div>'
+        + (DRUIDIC_LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(DRUIDIC_LANGUAGE_ROW.spoken_where) + '</span>' : '');
+    }
+    el.innerHTML = html;
+    // This block can introduce its own [data-tip] element (Druidic's tip
+    // icon) — self-wire rather than rely on whichever caller happens to
+    // sweep afterward, same pattern renderInspiration()/renderHitDice() use.
+    wireAllTooltips();
   }
 
   // ── Background / Region (Your Story tab, new) ───────────────────────
