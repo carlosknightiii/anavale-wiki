@@ -11804,10 +11804,29 @@ function sccLiveToggleInspiration(playerId) {
 }
 // ── Scenarios ──
 var SCC_USED_SCENARIOS = {};
+// Resolves whichever session is actually being displayed right now, live or
+// historical -- #scc-session-number stays correct in both cases (kept so by
+// sccSetSessionDisplay(), called from both sccLoadLatestSession() and
+// sccLoadHistorySession()), unlike SCC_SESSION, which never repoints away
+// from the live session during audit view. Same pattern already established
+// by sccPreviousSessionRow()/sccCopyPostSessionSummary() for this exact
+// reason -- reused here rather than a 3rd/4th inline copy, since Scenarios
+// needed it in two places (render + filter). Safe for the live-editing case
+// too: sccSaveScenarios() mutates SCC_SESSION.session_scenarios in place,
+// and SCC_SESSION is always the literal same object reference as its own
+// entry inside SCC_ALL_SESSIONS (both assigned from the same fetch), so a
+// live edit is reflected here immediately, not stale.
+function sccResolveViewedSession() {
+  if (typeof SCC_ALL_SESSIONS === 'undefined' || !SCC_ALL_SESSIONS.length) return null;
+  var numEl = document.getElementById('scc-session-number');
+  var num = numEl ? parseInt(numEl.value, 10) : NaN;
+  if (isNaN(num)) return null;
+  return SCC_ALL_SESSIONS.find(function(s) { return s.session_number === num; }) || null;
+}
 function sccLiveRenderScenarios() {
   var el = document.getElementById('scc-live-scenarios');
   if (!el) return;
-  var session = SCC_SESSION;
+  var session = sccResolveViewedSession();
   var scenarios = session && session.session_scenarios ? session.session_scenarios : null;
   if (!scenarios || !scenarios.length) {
     el.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;padding:0.5rem 0;">No scenarios loaded for this session. Add them in Supabase session_notes.session_scenarios.</div>';
@@ -11861,7 +11880,7 @@ function sccFilterScenarios(query) {
   var clearBtn = document.getElementById('scc-scenario-filter-clear');
   if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
   var q = (query || '').toLowerCase().trim();
-  var session = SCC_SESSION;
+  var session = sccResolveViewedSession();
   var scenarios = session && session.session_scenarios ? session.session_scenarios : [];
   scenarios.forEach(function(group, gi) {
     var groupEl = document.getElementById('scc-scen-group-' + gi);
