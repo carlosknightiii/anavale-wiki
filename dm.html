@@ -3023,7 +3023,11 @@
               <div class="scc-combat-top-row">
                 <div class="scc-picker-group" id="scc-combat-search-group" style="flex:1">
                   <div class="scc-picker-search-wrap">
-                    <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccCombatantSearch(this.value)">
+                    <div style="display:flex;align-items:center;gap:0.35rem;">
+                      <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccCombatantSearch(this.value)" style="flex:1;">
+                      <span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);flex-shrink:0;">&times;</span>
+                      <input type="number" class="scc-shop-qty-input" id="scc-combat-add-qty" min="1" max="20" value="1" title="How many copies to add on the next click — applies to the search dropdown and the roster chips above, resets to 1 after adding">
+                    </div>
                     <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
                   </div>
                 </div>
@@ -13292,7 +13296,7 @@ function sccPickerSelect(type, id, name) {
   // 4 types' visible chip rows), so there's nothing to dedupe against anyway.
   if (type === 'combatant') {
     sccPickerClose(type);
-    sccAddToCombatStaging(id, name);
+    sccAddToCombatStaging(id, name, sccCombatReadAndResetQty());
     return;
   }
   if (SCC_SELECTED[type] && SCC_SELECTED[type].some(function(s) { return s.id === id; })) {
@@ -14351,8 +14355,20 @@ function sccRenderCombatSessionCreatures() {
 }
 
 function sccQuickAddCombatant(id, name) {
-  sccAddToCombatStaging(id, name);
+  sccAddToCombatStaging(id, name, sccCombatReadAndResetQty());
   sccRenderCombatSessionCreatures();
+}
+
+// Shared by the search-result click path and the roster quick-add chips --
+// one qty field in the search row covers both entry points rather than
+// cluttering each compact roster chip with its own input. Reads whatever
+// the DM typed, then resets to 1 immediately so it can't silently stick at
+// a large number and surprise the next single click.
+function sccCombatReadAndResetQty() {
+  var qtyEl = document.getElementById('scc-combat-add-qty');
+  var qty = qtyEl ? (parseInt(qtyEl.value) || 1) : 1;
+  if (qtyEl) qtyEl.value = 1;
+  return Math.max(1, qty);
 }
 
 // Distinct option values pulled live from the already-loaded CREATURES array each
@@ -14490,25 +14506,33 @@ function sccComputePcAC(pc, sheet) {
   return ac;
 }
 
-function sccAddToCombatStaging(id, name) {
+// qty is optional and defaults to 1 (unchanged single-add behavior) -- when
+// > 1, pushes that many genuinely separate combatant objects in one call
+// rather than relying on the caller to loop, so every entry point (search
+// results, roster quick-add chips) gets multi-add for free by just passing
+// the qty they read from #scc-combat-add-qty.
+function sccAddToCombatStaging(id, name, qty) {
+  var n = Math.max(1, parseInt(qty) || 1);
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = creatures.find(function(c) { return c.id === id; });
   var pc        = SCC_PLAYERS.find(function(p) { return p.id === id; });
-  var combatant = {
-    id: id, name: name, isPC: !!pc,
-    cr:    creature ? creature.challenge_rating : null,
-    ac:    creature ? creature.ac : (pc ? sccComputePcAC(pc, SCC_SHEETS[id]) : null),
-    hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
-    hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
-    dexMod: (function() {
-      var dex = creature ? creature.dex : (pc ? (pc.ability_scores || {}).dex : 10);
-      return dex ? Math.floor((dex - 10) / 2) : 0;
-    })(),
-    initiative: null,
-    conditions: [],
-    loot: { items: [], gp: 0, sp: 0, cp: 0 }
-  };
-  SCC_COMBATANTS.push(combatant);
+  for (var i = 0; i < n; i++) {
+    var combatant = {
+      id: id, name: name, isPC: !!pc,
+      cr:    creature ? creature.challenge_rating : null,
+      ac:    creature ? creature.ac : (pc ? sccComputePcAC(pc, SCC_SHEETS[id]) : null),
+      hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
+      hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
+      dexMod: (function() {
+        var dex = creature ? creature.dex : (pc ? (pc.ability_scores || {}).dex : 10);
+        return dex ? Math.floor((dex - 10) / 2) : 0;
+      })(),
+      initiative: null,
+      conditions: [],
+      loot: { items: [], gp: 0, sp: 0, cp: 0 }
+    };
+    SCC_COMBATANTS.push(combatant);
+  }
   sccRenderStagingList();
   sccUpdateDifficulty();
 }
