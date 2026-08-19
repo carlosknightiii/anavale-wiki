@@ -6050,6 +6050,21 @@ function showDMToast(msg, type) {
   text-align: center;
   flex-shrink: 0;
 }
+/* Manual up/down reorder -- for Ready actions or a narrative tie-break, where
+   the DM wants turn order to diverge from the rolled numbers rather than
+   overwrite them. Arrows only, per the audit's own recommendation -- full
+   drag-and-drop is more than this needs. */
+.scc-init-reorder { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+.scc-init-reorder-btn {
+  width: 18px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--scc-border-mid);
+  border-radius: 3px; color: var(--dm-text-muted);
+  font-size: 0.55rem; line-height: 1; padding: 0; cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-init-reorder-btn:hover:not(:disabled) { border-color: var(--dm-gold); color: var(--dm-gold); background: var(--dm-gold-dim); }
+.scc-init-reorder-btn:disabled { opacity: 0.25; cursor: default; }
 .scc-init-name { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; color: var(--dm-text); flex: 1; }
 /* Real uploaded portrait only -- no placeholder for a PC without one. */
 .scc-init-photo { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--scc-border-mid); }
@@ -14846,6 +14861,20 @@ function sccToggleInitStatBlock(idx) {
 }
 
 function sccRenderInitiativeList() {
+  // Both the condition dropdown and the Loot Award popup remember which
+  // combatant they're for by a plain array index baked into their onclick
+  // handlers at open time -- a render here can mean SCC_INITIATIVE was just
+  // reordered (new this round) or had an entry removed, either of which can
+  // make that index now point at a different combatant than the one the DM
+  // opened either panel for. Close both rather than risk a condition, coin
+  // award, or item award landing on the wrong row; re-opening either is one
+  // click. A render triggered by one of these panels' own actions already
+  // removes that panel itself first, so this is a no-op in that case, not a
+  // conflict with the panel's own cleanup.
+  var condPanel = document.getElementById('scc-cond-combat-panel');
+  if (condPanel) condPanel.remove();
+  var lootPanel = document.getElementById('scc-loot-award-panel');
+  if (lootPanel) lootPanel.remove();
   var counter = document.getElementById('scc-round-counter');
   if (counter) counter.textContent = SCC_ROUND;
   var el = document.getElementById('scc-initiative-list');
@@ -14906,7 +14935,7 @@ function sccRenderInitiativeList() {
       + '</div>'
       + '<div class="scc-init-conditions">'
         + condTags
-        + '<button class="scc-add-condition-btn" onclick="sccPromptCondition(' + idx + ')">+ Condition</button>'
+        + '<button class="scc-add-condition-btn" onclick="sccPromptCondition(' + idx + ',this)">+ Condition</button>'
       + '</div>'
       + statsBtn
       + lootBtn
@@ -14914,6 +14943,10 @@ function sccRenderInitiativeList() {
       // right" per the DM's own annotation, with Remove kept as the row's
       // final/rightmost control (this file's established convention for
       // destructive actions).
+      + '<div class="scc-init-reorder">'
+        + '<button class="scc-init-reorder-btn" onclick="sccMoveCombatant(' + idx + ',-1)" title="Move up in turn order"' + (idx === 0 ? ' disabled' : '') + '>&#9650;</button>'
+        + '<button class="scc-init-reorder-btn" onclick="sccMoveCombatant(' + idx + ',1)" title="Move down in turn order"' + (idx === SCC_INITIATIVE.length - 1 ? ' disabled' : '') + '>&#9660;</button>'
+      + '</div>'
       + '<div class="scc-init-num">' + c.initiative + '</div>'
       + '<button class="scc-init-remove-btn" onclick="sccRemoveFromCombat(' + idx + ')" title="Remove from combat">&#10005;</button>'
     + '</div>'
@@ -14932,6 +14965,34 @@ function sccRenderInitiativeList() {
 function sccNextTurn() {
   SCC_TURN_IDX++;
   if (SCC_TURN_IDX >= SCC_INITIATIVE.length) { SCC_TURN_IDX = 0; SCC_ROUND++; }
+  sccRenderInitiativeList();
+}
+
+// dir is -1 (up, earlier in the turn order) or +1 (down, later). Always a
+// plain adjacent swap -- arrows only, per the audit's own recommendation
+// that full drag-and-drop is more than this needs.
+//
+// SCC_TURN_IDX correctness, reasoned through rather than assumed: a swap of
+// two array slots only ever needs SCC_TURN_IDX updated if it currently
+// equals one of the two slots being swapped -- and if so, it becomes
+// whichever of the two it *wasn't*, since a swap is symmetric. This single
+// rule covers every real case: moving the active combatant itself (its own
+// tracked index must follow it to its new slot), moving some other
+// combatant past the active one (the active combatant gets pushed to the
+// mover's old slot, so its tracked index must follow *it*), and moving two
+// combatants that don't involve the active slot at all (nothing to update,
+// the active combatant's slot was never touched). Does not touch each
+// combatant's own rolled `initiative` number -- only the array order
+// changes, so a manual reorder can freely diverge from the rolled numbers
+// (that's the whole point) without silently overwriting anyone's roll.
+function sccMoveCombatant(idx, dir) {
+  var target = idx + dir;
+  if (target < 0 || target >= SCC_INITIATIVE.length) return;
+  var tmp = SCC_INITIATIVE[idx];
+  SCC_INITIATIVE[idx] = SCC_INITIATIVE[target];
+  SCC_INITIATIVE[target] = tmp;
+  if (SCC_TURN_IDX === idx) SCC_TURN_IDX = target;
+  else if (SCC_TURN_IDX === target) SCC_TURN_IDX = idx;
   sccRenderInitiativeList();
 }
 
@@ -15022,35 +15083,46 @@ function sccToggleDeathSaveFailure(idx, i) {
   sccRenderInitiativeList();
 }
 
-function sccPromptCondition(idx) {
+// Was a screen-centered modal (position:fixed, top/left:50%) -- replaced with
+// a lighter dropdown anchored directly under the clicked "+ Condition" button,
+// matching how every other picker in this file works (.scc-picker-dropdown/
+// .scc-picker-option styling reused verbatim for the same look; positioned via
+// a real getBoundingClientRect() read against the trigger button, the same
+// technique sccPositionGlobalResults() already established in this file for
+// a body-appended panel that isn't nested inside a position:relative parent).
+// Clicking the same row's own button again toggles it closed rather than
+// flicker-reopening, since the initiative list can re-render under it at any
+// time (HP/turn changes) and there's no persistent per-row DOM to toggle a
+// class on the way .scc-history-panel does.
+function sccPromptCondition(idx, btnEl) {
   var existing = document.getElementById('scc-cond-combat-panel');
+  var wasOpenForSameRow = existing && existing.dataset.forIdx === String(idx);
   if (existing) existing.remove();
-  // Pulled from the `conditions` Supabase table (window.SCC_CONDITIONS_DATA,
-  // fetched once in sccInit()) instead of a third local hardcoded copy — same
-  // fix as sccLiveRenderConditions() and sheet/index.html's Conditions picker.
+  if (wasOpenForSameRow) return;
   var rows = window.SCC_CONDITIONS_DATA || [];
   var panel = document.createElement('div');
   panel.id = 'scc-cond-combat-panel';
-  panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.25rem;z-index:9999;min-width:280px;max-width:340px;box-shadow:0 16px 48px rgba(0,0,0,0.7);';
-  var items = rows.map(function(row) {
+  panel.dataset.forIdx = idx;
+  // Same visual values as .scc-picker-dropdown -- not the class itself, since
+  // that class's own left:0;right:0 stretch-to-parent positioning doesn't fit
+  // a panel appended straight to <body> and fixed-positioned by coordinates.
+  panel.style.cssText = 'position:fixed;background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius-sm);z-index:9999;min-width:200px;max-width:260px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.4);';
+  panel.innerHTML = rows.map(function(row) {
     var cond = row.name;
     var already = (SCC_INITIATIVE[idx] && SCC_INITIATIVE[idx].conditions || []).indexOf(cond) >= 0;
-    return '<div onclick="' + (already ? '' : 'sccAddConditionFromModal(' + idx + ',\'' + cond + '\')') + '"'
-      + ' style="display:flex;align-items:center;gap:0.6rem;padding:0.35rem 0.5rem;border-radius:6px;cursor:' + (already ? 'default' : 'pointer') + ';opacity:' + (already ? '0.4' : '1') + ';transition:background 0.12s;"'
-      + ' title="' + sccEsc(row.tip || '') + '"'
-      + ' onmouseover="if(!' + already + ')this.style.background=\'var(--dm-gold-dim)\'"'
-      + ' onmouseout="this.style.background=\'\'">'
-      + '<span style="width:10px;height:10px;border-radius:50%;background:' + row.color_text + ';flex-shrink:0;display:inline-block;"></span>'
-      + '<span style="font-family:var(--font-sans);font-size:0.82rem;font-weight:700;color:var(--dm-text);flex:1;">' + sccEsc(cond) + '</span>'
-      + '<span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);max-width:140px;line-height:1.3;">' + sccEsc((row.tip || '').split('.')[0]) + '</span>'
+    return '<div class="scc-picker-option" style="display:flex;align-items:center;gap:0.5rem;'
+        + (already ? 'opacity:0.4;pointer-events:none;' : '') + '"'
+      + (already ? '' : ' onclick="sccAddConditionFromModal(' + idx + ',\'' + cond + '\')"')
+      + ' title="' + sccEsc(row.tip || '') + '">'
+      + '<span style="width:9px;height:9px;border-radius:50%;background:' + row.color_text + ';flex-shrink:0;display:inline-block;"></span>'
+      + '<span style="flex:1;">' + sccEsc(cond) + (already ? ' <span style="font-size:0.68rem;">(added)</span>' : '') + '</span>'
     + '</div>';
   }).join('');
-  panel.innerHTML = '<div style="font-family:var(--font-headers);font-size:0.85rem;color:var(--dm-gold);margin-bottom:0.75rem;font-weight:700;">Add Condition</div>'
-    + items
-    + '<div style="margin-top:0.75rem;text-align:right;">'
-      + '<button class="scc-btn-secondary" onclick="document.getElementById(\'scc-cond-combat-panel\').remove()" style="font-size:0.75rem;padding:0.25rem 0.75rem;">Close</button>'
-    + '</div>';
   document.body.appendChild(panel);
+  var rect = btnEl.getBoundingClientRect();
+  panel.style.top = (rect.bottom + 4) + 'px';
+  var left = Math.min(rect.left, window.innerWidth - panel.offsetWidth - 8);
+  panel.style.left = Math.max(8, left) + 'px';
 }
 function sccAddConditionFromModal(idx, cond) {
   if (!SCC_INITIATIVE[idx].conditions) SCC_INITIATIVE[idx].conditions = [];
@@ -15061,6 +15133,16 @@ function sccAddConditionFromModal(idx, cond) {
   var panel = document.getElementById('scc-cond-combat-panel');
   if (panel) panel.remove();
 }
+// Close the condition dropdown on any outside click -- same convention as
+// the Session History panel and the browse/picker dropdowns elsewhere in
+// this file, just a dedicated handler since this panel is create-on-click
+// rather than a static always-in-DOM element those toggle via a class.
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#scc-cond-combat-panel') && !e.target.closest('.scc-add-condition-btn')) {
+    var p = document.getElementById('scc-cond-combat-panel');
+    if (p) p.remove();
+  }
+});
 
 function sccRemoveCondition(idx, cond) {
   var c = SCC_INITIATIVE[idx];
