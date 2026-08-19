@@ -3000,12 +3000,19 @@
         <div class="scc-panel" id="scc-panel-combat">
           <div class="scc-panel-inner">
             <div class="scc-section-title">Combat Encounter Tracker</div>
+            <!-- Shown only while viewing a locked historical session (.scc-audit-mode) --
+                 combat state has never persisted per-session (see CLAUDE.md), so a past
+                 session has no real combat data to show here regardless. Replaces the
+                 whole live tracker rather than leaving a half-functional one visible. -->
+            <div class="scc-combat-audit-note" id="scc-combat-audit-note">
+              Combat isn't tracked per session — there's nothing to show for this historical session. Return to the current session (above) to use the encounter tracker.
+            </div>
             <!-- Encounter builder -->
             <div class="scc-combat-builder">
               <div class="scc-section-subtitle">Build Encounter</div>
               <!-- Creatures already assigned to this session in Setup — surfaced first so the
                    DM doesn't have to re-search from scratch for what's already been prepped. -->
-              <div class="scc-combat-session-label">From Session Roster</div>
+              <div class="scc-combat-session-label" id="scc-combat-roster-label">From Session Roster</div>
               <div class="scc-combat-session-creatures" id="scc-combat-session-creatures"></div>
               <div class="scc-combat-filters-bar" id="scc-combat-filters-bar">
                 <select id="scc-cf-tier" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Tier: All</option></select>
@@ -3014,7 +3021,7 @@
                 <button type="button" class="scc-combat-filters-reset" onclick="sccCombatResetFilters()">Reset</button>
               </div>
               <div class="scc-combat-top-row">
-                <div class="scc-picker-group" style="flex:1">
+                <div class="scc-picker-group" id="scc-combat-search-group" style="flex:1">
                   <div class="scc-picker-search-wrap">
                     <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccCombatantSearch(this.value)">
                     <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
@@ -7341,8 +7348,26 @@ function showDMToast(msg, type) {
 .scc-audit-mode .scc-input { display: none !important; }
 .scc-audit-mode .scc-textarea { display: none !important; }
 .scc-audit-mode .scc-picker-search { display: none !important; }
-.scc-audit-mode .scc-combat-filters-bar { display: none !important; }
 .scc-audit-mode .scc-browse-btn { display: none !important; }
+/* Combat state has never persisted per session (see CLAUDE.md) -- a locked
+   historical session has no real combat data to show, so the whole live
+   tracker (encounter builder + initiative list, including any fight that
+   happens to be active right now) is replaced with an explanatory note
+   rather than left half-functional. */
+.scc-audit-mode .scc-combat-builder { display: none !important; }
+.scc-audit-mode .scc-initiative-tracker { display: none !important; }
+.scc-combat-audit-note { display: none; }
+.scc-audit-mode .scc-combat-audit-note {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--dm-blue);
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.2);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  text-align: center;
+}
 .scc-audit-mode .scc-picker-controls { gap: 0; }
 .scc-audit-mode .scc-chip-remove { display: none !important; }
 .scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }
@@ -14773,6 +14798,20 @@ function sccStartCombat() {
   document.getElementById('scc-start-combat-btn').style.display  = 'none';
   var addAllBtn = document.getElementById('scc-add-all-players-btn');
   if (addAllBtn) addAllBtn.style.display = 'none';
+  // The rest of the encounter builder used to stay fully visible and clickable
+  // during an active fight — using it silently did nothing, since SCC_INITIATIVE
+  // is a one-time sorted copy of SCC_COMBATANTS taken right here and never
+  // resynced afterward. Hide it outright rather than leave a dead-end control.
+  var rosterLabel = document.getElementById('scc-combat-roster-label');
+  if (rosterLabel) rosterLabel.style.display = 'none';
+  var rosterChips = document.getElementById('scc-combat-session-creatures');
+  if (rosterChips) rosterChips.style.display = 'none';
+  var filtersBar = document.getElementById('scc-combat-filters-bar');
+  if (filtersBar) filtersBar.style.display = 'none';
+  var searchGroup = document.getElementById('scc-combat-search-group');
+  if (searchGroup) searchGroup.style.display = 'none';
+  var clearAllBtn = document.getElementById('scc-clear-all-btn');
+  if (clearAllBtn) clearAllBtn.style.display = 'none';
   document.getElementById('scc-initiative-tracker').style.display = '';
   sccRenderInitiativeList();
 }
@@ -15036,14 +15075,26 @@ function sccOpenLootAward(idx) {
     var splitGP = Math.floor(splitCP / 100);
     var splitSP = Math.floor((splitCP % 100) / 10);
     var splitCPR = splitCP % 10;
+    // sccAwardCoins()/sccAwardCoinsAll() were written and working but never
+    // wired to a button — coins could only ever reach a player via the
+    // automatic equal split at End Combat. Real per-enemy coin awarding now
+    // lives right here, matching the item-award row above it.
+    var coinAwardControls = SCC_PLAYERS.length
+      ? '<div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;">'
+          + '<select class="scc-input" id="scc-award-coins-player-' + idx + '" style="width:auto;padding:0.2rem 0.4rem;font-size:0.78rem;">' + players + '</select>'
+          + '<button class="scc-award-btn" onclick="sccAwardCoins(' + idx + ')">Award</button>'
+          + (SCC_PLAYERS.length > 1 ? '<button class="scc-award-btn" onclick="sccAwardCoinsAll(' + idx + ')">Split to All</button>' : '')
+        + '</div>'
+      : '';
     coinLine = '<div style="margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:6px;">'
-      + '<div style="font-family:var(--font-sans);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--dm-text-muted);margin-bottom:0.25rem;">Coins &#8212; will split at End Combat</div>'
+      + '<div style="font-family:var(--font-sans);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--dm-text-muted);margin-bottom:0.25rem;">Coins &#8212; award now, or leave unassigned to auto-split at End Combat</div>'
       + '<div style="font-family:var(--font-sans);font-size:0.88rem;color:var(--dm-gold);font-weight:700;">'
         + (c.loot.gp ? c.loot.gp + ' GP ' : '') + (c.loot.sp ? c.loot.sp + ' SP ' : '') + (c.loot.cp ? c.loot.cp + ' CP' : '')
       + '</div>'
       + '<div style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);margin-top:0.15rem;">'
-        + (splitGP ? splitGP + ' GP ' : '') + (splitSP ? splitSP + ' SP ' : '') + (splitCPR ? splitCPR + ' CP ' : '') + 'per player'
+        + (splitGP ? splitGP + ' GP ' : '') + (splitSP ? splitSP + ' SP ' : '') + (splitCPR ? splitCPR + ' CP ' : '') + 'per player if left to auto-split'
       + '</div>'
+      + coinAwardControls
     + '</div>';
   }
 
@@ -15261,7 +15312,13 @@ function sccAwardCoins(combatantIdx) {
     .then(function(r) {
       if (r.ok) {
         sheet.gold_cp = newTotal;
-        showDMToast('Coins awarded to ' + player.name + ' ✓', 'success');
+        // Zero out so End Combat's own loot sweep (which sums whatever's still
+        // on c.loot regardless of downed state) can't double-count coins
+        // already hand-awarded here.
+        c.loot.gp = 0; c.loot.sp = 0; c.loot.cp = 0;
+        showDMToast('Coins awarded to ' + player.name + ' &#10003;', 'success');
+        var panel = document.getElementById('scc-loot-award-panel');
+        if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
       } else { showDMToast('Coin award failed', 'error'); }
     });
 }
@@ -15279,17 +15336,29 @@ function sccAwardCoinsAll(combatantIdx) {
   var totalCP = (c.loot.gp * 100) + (c.loot.sp * 10) + c.loot.cp;
   var splitCP = Math.floor(totalCP / SCC_PLAYERS.length);
   if (!splitCP) { showDMToast('No coins to split', 'error'); return; }
-  var done = 0;
+  var done = 0, failed = 0;
   SCC_PLAYERS.forEach(function(player) {
     var sheet = SCC_SHEETS[player.id];
-    if (!sheet) return;
+    if (!sheet) { done++; return; }
     var newTotal = (sheet.gold_cp || 0) + splitCP;
-    sheet.gold_cp = newTotal;
+    // Local state only updates once the PATCH actually confirms (matches
+    // sccAwardCoins()'s own r.ok-gated pattern) -- the previous version here
+    // updated sheet.gold_cp optimistically before the request resolved and
+    // never checked r.ok at all, so a failed PATCH would have silently left
+    // the local total wrong with no error surfaced.
     sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(player.id), { gold_cp: newTotal })
       .then(function(r) {
         done++;
+        if (r.ok) { sheet.gold_cp = newTotal; } else { failed++; }
         if (done === SCC_PLAYERS.length) {
-          showDMToast('Coins split equally to all ' + SCC_PLAYERS.length + ' players &#10003;', 'success');
+          if (failed) {
+            showDMToast('Coin split failed for ' + failed + ' player' + (failed === 1 ? '' : 's'), 'error');
+          } else {
+            c.loot.gp = 0; c.loot.sp = 0; c.loot.cp = 0;
+            showDMToast('Coins split equally to all ' + SCC_PLAYERS.length + ' players &#10003;', 'success');
+            var panel = document.getElementById('scc-loot-award-panel');
+            if (panel) { panel.remove(); sccOpenLootAward(combatantIdx); }
+          }
         }
       });
   });
@@ -15389,6 +15458,17 @@ function sccEndCombat() {
   document.getElementById('scc-initiative-tracker').style.display = 'none';
   document.getElementById('scc-combatant-staging').style.display  = '';
   document.getElementById('scc-start-combat-btn').style.display   = 'none';
+  // Restore the encounter-builder controls hidden in sccStartCombat() —
+  // Clear All's own visibility is already re-derived below by
+  // sccRenderStagingList() (hidden again since SCC_COMBATANTS is now empty).
+  var rosterLabelEnd = document.getElementById('scc-combat-roster-label');
+  if (rosterLabelEnd) rosterLabelEnd.style.display = '';
+  var rosterChipsEnd = document.getElementById('scc-combat-session-creatures');
+  if (rosterChipsEnd) rosterChipsEnd.style.display = '';
+  var filtersBarEnd = document.getElementById('scc-combat-filters-bar');
+  if (filtersBarEnd) filtersBarEnd.style.display = '';
+  var searchGroupEnd = document.getElementById('scc-combat-search-group');
+  if (searchGroupEnd) searchGroupEnd.style.display = '';
   sccRenderStagingList(); sccUpdateDifficulty();
 }
 function sccSummaryAwardItem(iIdx) {
