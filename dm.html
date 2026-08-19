@@ -12122,7 +12122,18 @@ function sccSwitchPanel(name) {
     p.classList.toggle('active', p.id === 'scc-panel-' + name);
   });
   if (name === 'live') { sccRenderLivePanel(); }
-  if (name === 'notes') { sccRenderTaggedNotes(); }
+  if (name === 'notes') {
+    // A no-arg call here defaults to SCC_SESSION.session_number, which never
+    // repoints away from the live session during audit view (the same fact
+    // behind the Scenarios/Copy-Summary-header bugs fixed earlier). That made
+    // switching tabs while auditing a locked historical session silently swap
+    // in the *live* session's real Tagged Notes -- rendered with the correct
+    // readonly styling, so it looked right while showing the wrong session's
+    // data. Resolve whichever session is actually being viewed instead, same
+    // pattern sccLiveRenderScenarios()/sccFilterScenarios() already use.
+    var viewedSession = sccResolveViewedSession();
+    sccRenderTaggedNotes(viewedSession ? viewedSession.session_number : undefined);
+  }
   if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -15555,8 +15566,25 @@ function sccVendorSearchStock(collection, entityId, query) {
   drop.classList.add('open');
 }
 
+// Same "refresh whichever surface is actually showing this entity" pattern
+// sccCycleRelationship2() already established -- the Shop section (built by
+// sccVendorShopSectionHtml, part of the shared Phase 3b location card body)
+// is reachable from 3 sites: the lookup drawer, Live Session's Locations
+// accordion, and the Field Guide sidebar. This used to unconditionally call
+// sccOpenLookup(), which does two wrong things when a vendor action was
+// taken from Live Session or Field Guide instead: it force-opens the
+// lookup drawer over whatever the DM was actually looking at (a real,
+// confirmed UX bug -- an unrelated panel sliding in uninvited), and it
+// never refreshes the surface that WAS actually visible, which kept
+// showing stale pre-action stock (e.g. "Nothing in stock yet." right after
+// adding real stock) until manually collapsed and reopened.
 function sccVendorRefreshLookup(collection, entityId) {
-  sccOpenLookup(collection === 'pois' ? 'city' : 'organization', entityId);
+  var lookupType = collection === 'pois' ? 'city' : 'organization';
+  if (SCC_LOOKUP_TYPE === lookupType && SCC_LOOKUP_ID === entityId) {
+    sccOpenLookup(lookupType, entityId);
+  }
+  sccRenderLocationPanel();
+  if (typeof SCC_FG_DATA !== 'undefined' && SCC_FG_DATA) sccFgDraw();
 }
 
 function sccVendorAddStock(collection, entityId, itemId) {
