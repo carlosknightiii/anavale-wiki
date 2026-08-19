@@ -2839,10 +2839,12 @@
             <div class="scc-setup-card" style="margin-bottom:0.75rem;">
               <div class="scc-setup-card-label">Session Premise</div>
               <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
+              <div id="scc-session-premise-display" class="scc-audit-readonly-val" style="display:none;"></div>
             </div>
             <div class="scc-setup-card">
               <div class="scc-setup-card-label">Prep Notes</div>
               <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
+              <div id="scc-prep-notes-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
             </div>
           </div>
 
@@ -7415,7 +7417,14 @@ function showDMToast(msg, type) {
 }
 .scc-audit-mode .scc-picker-controls { gap: 0; }
 .scc-audit-mode .scc-chip-remove { display: none !important; }
-.scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }
+/* Removed: `.scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }`
+   -- this class is shared by Setup's own prep-notes toggle AND the Live
+   Session tab's 5 accordion toggles (NPCs/Locations/Quests/Scenarios/Field
+   Guide). Blocking it locked all 5 sections permanently closed in audit mode
+   (only Quests ever auto-opened), leaving the richest tab in the app showing
+   almost nothing. A toggle only ever expands/collapses -- it never writes --
+   so there's no correctness reason to disable it; the actual write actions
+   inside each section are individually gated by SCC_VIEWING_HISTORY now. */
 .scc-audit-mode .scc-picker-label { margin-bottom: 0.4rem; }
 .scc-audit-mode .scc-scenario-editor-group .scc-tagnote-del { display: none !important; }
 .scc-audit-readonly-val {
@@ -11325,7 +11334,20 @@ function sccEsc(str) {
 var _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
-  if (tab === 'session' || tab === 'setup') {
+  // Found during the urgent audit-mode write-path fix: this re-sync
+  // unconditionally called sccInit() -> sccLoadLatestSession(), which sets
+  // SCC_VIEWING_HISTORY = false and repoints SCC_SESSION at the live session
+  // -- but never removes .scc-audit-mode or restores the hidden inputs/
+  // readonly-display swap. Net effect: a DM auditing a locked session who
+  // clicked Setup or Session again (even just to look at something else)
+  // got silently kicked back into a fully live, fully writable session
+  // while the audit banner and every readonly display kept showing the
+  // stale historical view -- exactly the kind of state/UI desync that
+  // would have made every SCC_VIEWING_HISTORY guard added this round
+  // trivially bypassable. Skipping the re-sync while audit mode is active
+  // costs nothing real (a locked historical session has no live data that
+  // needs refreshing) and closes the gap.
+  if ((tab === 'session' || tab === 'setup') && !SCC_VIEWING_HISTORY) {
     setTimeout(sccInit, 0);
   }
 };
@@ -11571,6 +11593,7 @@ function sccLiveRenderParty() {
   }).join('');
 }
 function sccLiveAdjustHp(playerId, delta) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — HP is read-only here', 'error'); return; }
   var sheet = SCC_SHEETS[playerId];
   if (!sheet) return;
   var hpMax = sheet.hp_max || 0;
@@ -11586,6 +11609,7 @@ function sccLiveAdjustHp(playerId, delta) {
   sccRenderPlayerBar();
 }
 function sccLiveSetHp(playerId, rawVal) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — HP is read-only here', 'error'); return; }
   var sheet = SCC_SHEETS[playerId];
   if (!sheet) return;
   var hpMax = sheet.hp_max || 0;
@@ -11713,6 +11737,7 @@ function sccLiveRenderConditions() {
   }).join('');
 }
 function sccLiveAddCondition(playerId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — conditions are read-only here', 'error'); return; }
   var existingPanel = document.getElementById('scc-cond-panel');
   if (existingPanel) existingPanel.remove();
   var opts = SCC_CONDITIONS_LIST.map(function(c) { return '<option value="' + sccEsc(c) + '">' + sccEsc(c) + '</option>'; }).join('');
@@ -11728,6 +11753,7 @@ function sccLiveAddCondition(playerId) {
   document.body.appendChild(panel);
 }
 function sccLiveConfirmCondition(playerId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — conditions are read-only here', 'error'); return; }
   var pick = document.getElementById('scc-cond-pick');
   var v = pick ? pick.value : '';
   var panel = document.getElementById('scc-cond-panel');
@@ -11742,6 +11768,7 @@ function sccLiveConfirmCondition(playerId) {
   sccLiveRenderConditions();
 }
 function sccLiveRemoveCondition(playerId, cond) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — conditions are read-only here', 'error'); return; }
   var sheet = SCC_SHEETS[playerId];
   if (!sheet || !Array.isArray(sheet.conditions)) return;
   var conditions = sheet.conditions.filter(function(c) { return c !== cond; });
@@ -11766,6 +11793,7 @@ function sccLiveRenderInspiration() {
   }).join('');
 }
 function sccLiveToggleInspiration(playerId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — Inspiration is read-only here', 'error'); return; }
   var sheet = SCC_SHEETS[playerId];
   if (!sheet) return;
   var next = !sheet.has_inspiration;
@@ -12402,6 +12430,7 @@ function sccFgDrawDocument() {
 }
 
 function sccFgToggleEditMode() {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — the Field Guide document is read-only here', 'error'); return; }
   var row = SCC_FG_DOC_CACHE[SCC_FG_DOC_SESSION_NUM];
   SCC_FG_EDIT_BLOCKS = JSON.parse(JSON.stringify((row && row.blocks) || []));
   SCC_FG_EDIT_MODE = !SCC_FG_EDIT_MODE;
@@ -12709,6 +12738,11 @@ function sccFgCancelEdit() {
 }
 
 function sccFgSaveDocument() {
+  // Defense in depth alongside sccFgToggleEditMode()'s own guard -- SCC_FG_DOC_SESSION_NUM
+  // is Field Guide's own independent session selector, unrelated to which session
+  // SCC_VIEWING_HISTORY is auditing, so this can't be assumed unreachable just
+  // because entry into edit mode is already blocked.
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — the Field Guide document is read-only here', 'error'); return; }
   var num = SCC_FG_DOC_SESSION_NUM;
   var blocks = SCC_FG_EDIT_BLOCKS || [];
   var existing = SCC_FG_DOC_CACHE[num];
@@ -12951,6 +12985,28 @@ function sccLoadHistorySession(sessionNum) {
       display.className = 'scc-audit-readonly-val scc-audit-readonly-val--note' + (val ? '' : ' empty');
     }
   });
+  // Same readonly swap for Setup's own Premise + Prep Notes -- these sit in
+  // the same collapsible body as everything else Setup, and previously had
+  // no fallback at all (.scc-input/.scc-textarea just hid them outright), so
+  // a DM reviewing a past session couldn't read what they'd planned going
+  // in. sccPopulateSetupForm() above already loaded the real historical
+  // .value into both fields, same as the 5 note fields did.
+  var premiseInput   = document.getElementById('scc-session-premise');
+  var premiseDisplay = document.getElementById('scc-session-premise-display');
+  if (premiseInput) premiseInput.style.display = 'none';
+  if (premiseDisplay) {
+    premiseDisplay.textContent = session.premise || '(none recorded)';
+    premiseDisplay.style.display = '';
+    premiseDisplay.className = 'scc-audit-readonly-val' + (session.premise ? '' : ' empty');
+  }
+  var prepInput   = document.getElementById('scc-prep-notes');
+  var prepDisplay = document.getElementById('scc-prep-notes-display');
+  if (prepInput) prepInput.style.display = 'none';
+  if (prepDisplay) {
+    prepDisplay.textContent = session.prep_notes || '(none recorded)';
+    prepDisplay.style.display = '';
+    prepDisplay.className = 'scc-audit-readonly-val scc-audit-readonly-val--note' + (session.prep_notes ? '' : ' empty');
+  }
   SCC_LIVE_ACC_AUTO_APPLIED = false;
   sccLoadQuestProgress(session.quest_ids_active || []).then(function() {
     sccRenderQuestPanel();
@@ -12994,6 +13050,13 @@ function sccLoadCurrentSession() {
     var display  = document.getElementById(id + '-display');
     if (textarea) textarea.style.display = '';
     if (display)  display.style.display  = 'none';
+  });
+  // Same restore for Setup's own Premise + Prep Notes readonly swap.
+  ['scc-session-premise','scc-prep-notes'].forEach(function(id) {
+    var input   = document.getElementById(id);
+    var display = document.getElementById(id + '-display');
+    if (input)   input.style.display   = '';
+    if (display) display.style.display = 'none';
   });
   SCC_VIEWING_HISTORY = false;
   sccLoadLatestSession();
@@ -13939,6 +14002,7 @@ function sccBuildLocationCardBodyHtml(loc) {
 }
 
 function sccCycleRelationship(npcId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — relationships are read-only here', 'error'); return; }
   var cur = SCC_NPC_RELATIONSHIPS[npcId] || 'neutral';
   var idx = SCC_REL_CYCLE.indexOf(cur);
   var next = SCC_REL_CYCLE[(idx + 1) % SCC_REL_CYCLE.length];
@@ -14419,6 +14483,7 @@ function sccUpdateQuestSidebar(quest, beat) {
 // Shared save path for both the rail/compact-item click-to-cycle interaction
 // and the explicit dropdown below -- one PATCH, two ways to reach it.
 function sccSaveBeatStatus(questId, beatOrder, status) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quest progress is read-only here', 'error'); return; }
   if (!SCC_PROGRESS[questId]) SCC_PROGRESS[questId] = {};
   SCC_PROGRESS[questId][beatOrder] = status;
   var sessionNum = SCC_SESSION ? SCC_SESSION.session_number : null;
@@ -15421,6 +15486,7 @@ function sccVendorRefreshLookup(collection, entityId) {
 }
 
 function sccVendorAddStock(collection, entityId, itemId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — shop stock is read-only here', 'error'); return; }
   var body = {
     entity_collection: collection,
     entity_id: entityId,
@@ -15438,6 +15504,7 @@ function sccVendorAddStock(collection, entityId, itemId) {
 }
 
 function sccVendorSetField(stockId, field, value) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — shop stock is read-only here', 'error'); return; }
   var stock = (typeof VENDOR_STOCK !== 'undefined' ? VENDOR_STOCK : []).find(function(s) { return s.id === stockId; });
   if (!stock) return;
   stock[field] = value;
@@ -15450,6 +15517,7 @@ function sccVendorSetField(stockId, field, value) {
 }
 
 function sccVendorRemoveStock(stockId, collection, entityId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — shop stock is read-only here', 'error'); return; }
   fetch(SCC_URL + '/rest/v1/vendor_stock?id=eq.' + encodeURIComponent(stockId), {
     method: 'DELETE',
     headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
@@ -15462,6 +15530,7 @@ function sccVendorRemoveStock(stockId, collection, entityId) {
 }
 
 function sccVendorBuy(stockId, buyerSelId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — purchases are read-only here', 'error'); return; }
   var stock = (typeof VENDOR_STOCK !== 'undefined' ? VENDOR_STOCK : []).find(function(s) { return s.id === stockId; });
   if (!stock) return;
   var item = (typeof ITEMS !== 'undefined' ? ITEMS : []).find(function(x) { return x.id === stock.item_id; });
