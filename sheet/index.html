@@ -836,13 +836,75 @@
 
     /* ── Spells Learned (Class tab, full-width card). Round 2 Revisions —
        DM-assignment-only model: this table only ever displays
-       character_sheet.learned_spells, no self-serve add/browse UI (the
-       search/filter row from the old eligible-pool browser is gone
-       entirely, per DM decision). Table styling reuses .cs-inv-table
-       verbatim (same tr/td/th classes as the Inventory tab's item table). */
+       character_sheet.learned_spells, no self-serve add/browse UI. Its own
+       Search/Level/Favorites-only filter row (reintroduced, see
+       applySpellsLearnedFilter()) reuses .cs-inv-filter-row/-field/-input/
+       -select verbatim from the Inventory tab's own-inventory search — same
+       "search box + fixed enum, filter what you already have" idiom, not
+       the old Round 1 6-filter catalog browser. Table styling reuses
+       .cs-inv-table verbatim (same tr/td/th classes as the Inventory tab's
+       item table). */
     .cs-spells-learned-card { margin-top: var(--char-ov-gap-s); }
+    .cs-sl-fav-filter {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text);
+      cursor: pointer;
+      padding-bottom: 0.1rem; /* aligns its baseline with the labeled fields beside it (.cs-inv-filter-row is align-items:flex-end) */
+    }
+    .cs-sl-fav-filter input { cursor: pointer; }
     .cs-spell-thumb { width: 28px; height: 28px; object-fit: contain; display: block; margin: 0 auto; }
     .cs-spell-thumb-fallback { display: block; text-align: center; opacity: 0.5; font-size: 1rem; }
+    /* Favorite star lives inline with the spell name rather than as its own
+       column — adding a column would mean renumbering every nth-child width
+       rule below, for one small icon. */
+    .cs-sl-name-cell { display: inline-flex; align-items: center; gap: 0.45rem; }
+    .cs-sl-fav-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      color: rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+    .cs-sl-fav-btn:hover { color: var(--gold); }
+    .cs-sl-fav-btn.favorited { color: var(--gold); }
+    /* Row height matches actual content, not a fixed reservation — see the
+       comment in renderSpellsLearnedTable(). Collapsed to 3 lines by
+       default; applySpellDescClamp() only reveals the toggle when a row's
+       real content genuinely overflows that clamp. */
+    .cs-sl-desc-cell { vertical-align: top; }
+    .cs-sl-desc {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+    }
+    .cs-sl-desc.cs-sl-desc--expanded {
+      display: block;
+      -webkit-line-clamp: unset;
+      overflow: visible;
+    }
+    .cs-sl-desc-toggle {
+      display: none;
+      background: none;
+      border: none;
+      padding: 0.25rem 0 0 0;
+      margin: 0;
+      color: var(--gold);
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .cs-sl-desc-toggle:hover { text-decoration: underline; }
+    .cs-sl-desc-toggle.cs-sl-desc-toggle--visible { display: block; }
     /* Column widths (Round 2 Revisions 2c) — Level/Category/Casting Time/
        Range/Components/Duration all carried excess whitespace under
        table-layout:auto's default even-ish distribution of leftover
@@ -3274,6 +3336,15 @@
   var CONDITIONS_DATA = [];  // conditions table rows (id/name/color_bg/color_border/color_text/tip/sort_order), once fetchConditionsData() resolves
   var SPELLS_DATA = [];  // all 414 spells table rows, once fetchSpellsData() resolves — Handoff B (Spells Learned browser)
   var SPELLS_BY_ID = {}; // spells.id -> row, built alongside SPELLS_DATA for O(1) lookup (Prepared pills, spell picker)
+  // Spells Learned table's own search/filter state — scoped to
+  // character_sheet.learned_spells only (this is not a spell browser), same
+  // "search box + fixed-enum select, filter client-side" shape as
+  // INV_FILTER/applyInventoryFilter() on the Inventory tab. level is a
+  // string ('' = All, '0' = Cantrip, '1'-'9') since spell levels are a fixed
+  // domain regardless of what this specific character knows — same reason
+  // Inventory's own Category select is a static enum, not derived from the
+  // player's actual items.
+  var SL_FILTER = { q: '', level: '', favOnly: false };
   var CH = null;              // player_characters row, set once by renderCharacter() — lets async
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
@@ -3987,6 +4058,17 @@
   function setActiveTab(tabKey) {
     ACTIVE_TAB = tabKey;
     updateTabUI();
+    // Real root cause of the Spells Learned description-clamp toggle never
+    // showing (found via D2, not assumed): renderSpellsLearnedTable() runs
+    // at boot while the Class tab is still [hidden] (Your Story is the
+    // default active tab) — an element under display:none has
+    // scrollHeight===clientHeight===0, so applySpellDescClamp()'s overflow
+    // check is always false at that point, for every row, regardless of
+    // real content length. No deferred timer fixes this (the tab is still
+    // hidden a frame later too) — it only becomes measurable once the tab
+    // is actually visible, so re-run the sweep here, on the one action that
+    // makes it visible for the first time.
+    if (tabKey === 'class') applySpellDescClamp();
   }
   function updateTabUI() {
     document.querySelectorAll('.cs-tab-btn').forEach(function(btn) {
@@ -4436,14 +4518,40 @@
       // card. No standalone wrapper left behind.
       + '<div id="cs-class-features-acc-wrap"></div>'
       // Round 2 Revisions — DM decision: spells are DM-assigned only, no
-      // player self-serve. This card now just displays learned_spells (see
-      // renderSpellsLearnedTable()) — no eligible-pool browsing, so the
-      // search/filter row is gone entirely (DM's own recommendation,
-      // confirmed: filtering a short 5-15-item known list added UI weight
-      // without real benefit). Column headers unchanged; widths tightened
-      // via .cs-sl-table (Round 2 Revisions 2c).
+      // player self-serve — that's still true, this table has zero
+      // add-a-spell path. Round 2 also removed search/filter entirely on
+      // the reasoning that a short 5-15-item list didn't need it; DM
+      // reversed that call directly (search/filter/favorite ask below) once
+      // known lists started growing past level 1 — reintroduced scoped to
+      // the learned list only (Search text + a Level filter derived live
+      // from what this character actually knows, not a fixed 0-9 enum — see
+      // populateSpellsLearnedLevelOptions() — + a Favorites-only toggle),
+      // not the old Round 1 6-filter catalog browser. Search/select inputs
+      // live in the static template (built once) — applySpellsLearnedFilter()
+      // only ever rewrites <tbody>, so a typed search term survives a
+      // Prepared-checkbox click re-rendering the table underneath it, same
+      // reason Inventory's own filter row (applyInventoryFilter()/
+      // renderInventory()) is split the same way. The Level <select>'s own
+      // <option>s are the one exception — those ARE rebuilt on every
+      // renderSpellsLearnedTable() call (real data can change, e.g. a DM
+      // assigning a new spell mid-session), just carefully, preserving the
+      // current selection rather than wiping it (see
+      // populateSpellsLearnedLevelOptions()).
       + '<div class="cs-ov-class-card cs-spells-learned-card" id="cs-spells-learned-card" style="display:none;">'
         + '<div class="cs-limuse-group-label">Spells Learned</div>'
+        + '<div class="cs-inv-filter-row">'
+          + '<div class="cs-inv-filter-field">'
+            + '<label class="cs-inv-filter-label">Search</label>'
+            + '<input class="cs-inv-filter-input" id="cs-sl-search-input" placeholder="Search your spells&#8230;" oninput="applySpellsLearnedFilter()">'
+          + '</div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat">'
+            + '<label class="cs-inv-filter-label">Level</label>'
+            + '<select class="cs-inv-filter-select" id="cs-sl-level-select" onchange="applySpellsLearnedFilter()">'
+              + '<option value="">All Levels</option>'
+            + '</select>'
+          + '</div>'
+          + '<label class="cs-sl-fav-filter"><input type="checkbox" id="cs-sl-fav-filter-cb" onchange="applySpellsLearnedFilter()"> &#9733; Favorites only</label>'
+        + '</div>'
         + '<div class="cs-inv-table-wrap">'
           + '<table class="cs-inv-table cs-sl-table">'
             + '<thead><tr>'
@@ -4684,6 +4792,62 @@
   // search, DM-driven instead of player-driven; nothing here computes it
   // anymore. The "Prepared" checkbox is untouched — still toggles which
   // known spells are currently prepared, exactly as built.
+  // applySpellsLearnedFilter() reads the 3 static filter controls into
+  // SL_FILTER and re-renders — same split as applyInventoryFilter()/
+  // renderInventory(), so the inputs' own DOM values are never touched by
+  // renderSpellsLearnedTable() itself and survive a Prepared/Favorite click.
+  function applySpellsLearnedFilter() {
+    var searchEl = document.getElementById('cs-sl-search-input');
+    var levelEl = document.getElementById('cs-sl-level-select');
+    var favEl = document.getElementById('cs-sl-fav-filter-cb');
+    SL_FILTER.q = searchEl ? (searchEl.value || '').trim().toLowerCase() : '';
+    SL_FILTER.level = levelEl ? levelEl.value : '';
+    SL_FILTER.favOnly = favEl ? favEl.checked : false;
+    renderSpellsLearnedTable();
+  }
+  function spellsLearnedRowMatchesFilter(s, favSet) {
+    if (SL_FILTER.favOnly && favSet.indexOf(s.id) === -1) return false;
+    if (SL_FILTER.level !== '' && String(s.level) !== SL_FILTER.level) return false;
+    if (SL_FILTER.q) {
+      var haystack = (s.name + ' ' + (s.school || '') + ' ' + (s.spell_desc || '')).toLowerCase();
+      if (haystack.indexOf(SL_FILTER.q) === -1) return false;
+    }
+    return true;
+  }
+  // Level filter's own options are derived live from what this character
+  // actually knows (not a fixed Cantrip/1-9 enum) — a level with zero
+  // learned spells in it shouldn't be offered as a choice at all, and two
+  // characters with different known spells should see different lists
+  // (confirmed live on Hana/Kael — real difference, not just theoretical).
+  // Rebuilt on every renderSpellsLearnedTable() call since learned_spells
+  // can change mid-session (DM assignment), but preserves whichever level
+  // is currently selected rather than blindly resetting it on every
+  // unrelated re-render (e.g. a Prepared/Favorite click) — only actually
+  // resets SL_FILTER.level back to "All Levels" in the one real case where
+  // the previously-selected level genuinely isn't available anymore, so
+  // the filter can't end up silently pointed at a level with nothing in
+  // it and no visible cause.
+  function populateSpellsLearnedLevelOptions() {
+    var levelEl = document.getElementById('cs-sl-level-select');
+    if (!levelEl) return;
+    var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
+    var present = {};
+    learned.forEach(function(id) {
+      var sp = SPELLS_BY_ID[id];
+      if (sp) present[sp.level] = true;
+    });
+    var levels = Object.keys(present).map(Number).sort(function(a, b) { return a - b; });
+    var currentValue = levelEl.value;
+    levelEl.innerHTML = '<option value="">All Levels</option>'
+      + levels.map(function(lv) {
+          return '<option value="' + lv + '">' + (lv === 0 ? 'Cantrip' : 'Level ' + lv) + '</option>';
+        }).join('');
+    if (currentValue !== '' && levels.indexOf(parseInt(currentValue, 10)) === -1) {
+      currentValue = '';
+      SL_FILTER.level = '';
+    }
+    levelEl.value = currentValue;
+  }
   function renderSpellsLearnedTable() {
     var card = document.getElementById('cs-spells-learned-card');
     var tbody = document.getElementById('cs-spells-learned-tbody');
@@ -4693,15 +4857,29 @@
     var hasCasting = !!(CLASS_ROW && CLASS_ROW.spellcasting_ability);
     if (!hasCasting) { card.style.display = 'none'; return; }
     card.style.display = '';
+    populateSpellsLearnedLevelOptions();
     var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
+    var favSet = (SHEET && Array.isArray(SHEET.favorite_spells)) ? SHEET.favorite_spells : [];
     var maxPrepared = computePreparedMax();
-    var list = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
+    var full = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
       .sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
-    // A level-1 caster legitimately may have nothing assigned yet — an
-    // honest "not yet" message, not a blank void implying something broke.
-    tbody.innerHTML = list.length ? list.map(function(s) {
+    var list = full.filter(function(s) { return spellsLearnedRowMatchesFilter(s, favSet); });
+    // Two distinct empty states, matching Inventory's own convention
+    // (renderInventory()): a level-1 caster legitimately may have nothing
+    // assigned yet ("not yet", not a blank void implying something broke),
+    // vs. real spells that just don't match the current search/filter.
+    if (!full.length) {
+      tbody.innerHTML = '<tr><td class="cs-inv-empty-row" colspan="10">No spells learned yet.</td></tr>';
+      return;
+    }
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td class="cs-inv-empty-row" colspan="10">No spells match your search.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(function(s) {
       var isPrepared = prepared.indexOf(s.id) >= 0;
+      var isFav = favSet.indexOf(s.id) >= 0;
       var levelLabel = s.level === 0 ? 'Cantrip' : String(s.level);
       // Cantrips don't need preparing (2024 rules) — a checkbox here would
       // imply a daily choice that doesn't exist. Leveled spells (level >= 1)
@@ -4709,19 +4887,72 @@
       var preparedCell = s.level === 0
         ? '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>'
         : '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
+      // Row height matches actual content, not a fixed reservation — the
+      // long-description columns forced every row (short spells included)
+      // to inflate on narrower viewports, since table-layout:auto squeezes
+      // this one column's width the same amount for every row regardless of
+      // that row's own content length. Line-clamped to 3 lines by default;
+      // .cs-sl-desc-toggle only shows (see applySpellDescClamp(), run right
+      // after this innerHTML write) when a row's real content actually
+      // overflows that clamp, so a short description never grows a
+      // pointless "Show more" that reveals nothing new.
       return '<tr class="cs-inv-tr">'
         + '<td class="cs-inv-td cs-inv-td-select">' + preparedCell + '</td>'
         + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
-        + '<td class="cs-inv-td">' + escHtml(s.name) + '</td>'
+        + '<td class="cs-inv-td"><span class="cs-sl-name-cell">'
+          + '<button class="cs-sl-fav-btn' + (isFav ? ' favorited' : '') + '" onclick="toggleSpellFavorite(\'' + s.id + '\')" aria-label="' + (isFav ? 'Unfavorite' : 'Favorite') + ' ' + escHtml(s.name) + '" title="' + (isFav ? 'Unfavorite' : 'Favorite') + '">' + (isFav ? '&#9733;' : '&#9734;') + '</button>'
+          + escHtml(s.name)
+        + '</span></td>'
         + '<td class="cs-inv-td cs-inv-td-cat">' + levelLabel + '</td>'
         + '<td class="cs-inv-td">' + (s.school ? escHtml(s.school) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.casting_time ? escHtml(s.casting_time) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.range ? escHtml(s.range) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.components ? escHtml(s.components) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.duration ? escHtml(s.duration) : '&mdash;') + '</td>'
-        + '<td class="cs-inv-td">' + (s.spell_desc ? escHtml(s.spell_desc) : '') + '</td>'
+        + '<td class="cs-inv-td cs-sl-desc-cell">'
+          + '<div class="cs-sl-desc" id="cs-sl-desc-' + s.id + '">' + (s.spell_desc ? escHtml(s.spell_desc) : '') + '</div>'
+          + '<button class="cs-sl-desc-toggle" id="cs-sl-desc-toggle-' + s.id + '" onclick="toggleSpellDescExpand(\'' + s.id + '\', this)">Show more</button>'
+        + '</td>'
       + '</tr>';
-    }).join('') : '<tr><td class="cs-inv-empty-row" colspan="10">No spells learned yet.</td></tr>';
+    }).join('');
+    // Correct to call directly here (no deferral needed) whenever this ran
+    // while the Class tab was already visible — e.g. re-rendering after a
+    // Prepare/Favorite click while the player is looking at this table.
+    // Real overflow measurement only breaks while the tab is [hidden] (see
+    // setActiveTab()'s own re-check for that case), which this call can't
+    // fix from in here — nothing under display:none has a real
+    // scrollHeight to measure, on any delay.
+    applySpellDescClamp();
+  }
+  // Measures each row's real content height against its 3-line clamp and
+  // only reveals the "Show more" toggle where the clamp is actually cutting
+  // something off — a description that fits in 3 lines gets no toggle at
+  // all, matching "row height matches actual content" for the common,
+  // shorter-description case rather than always showing a control that
+  // would do nothing.
+  function applySpellDescClamp() {
+    document.querySelectorAll('.cs-sl-desc').forEach(function(el) {
+      var id = el.id.replace('cs-sl-desc-', '');
+      var toggle = document.getElementById('cs-sl-desc-toggle-' + id);
+      if (!toggle) return;
+      var overflowing = el.scrollHeight > el.clientHeight + 1;
+      toggle.classList.toggle('cs-sl-desc-toggle--visible', overflowing || el.classList.contains('cs-sl-desc--expanded'));
+    });
+  }
+  function toggleSpellDescExpand(id, btn) {
+    var el = document.getElementById('cs-sl-desc-' + id);
+    if (!el) return;
+    var expanded = el.classList.toggle('cs-sl-desc--expanded');
+    btn.textContent = expanded ? 'Show less' : 'Show more';
+  }
+  function toggleSpellFavorite(id) {
+    if (!SHEET) return;
+    var fav = (Array.isArray(SHEET.favorite_spells) ? SHEET.favorite_spells : []).slice();
+    var idx = fav.indexOf(id);
+    if (idx === -1) fav.push(id); else fav.splice(idx, 1);
+    SHEET.favorite_spells = fav;
+    saveSheet({ favorite_spells: fav });
+    renderSpellsLearnedTable();
   }
   function togglePreparedFromTable(id, checked) {
     if (!SHEET) return;
