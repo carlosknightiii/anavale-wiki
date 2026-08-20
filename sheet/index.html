@@ -735,6 +735,30 @@
        character's level hasn't reached the feature's first threshold. */
     .cs-limuse-locked { color: var(--char-text-faint); font-size: 0.82rem; font-style: italic; }
 
+    /* Point-pool variant (feature.track === 'pool') — Sorcery Points/Focus
+       Points/Lay on Hands can run into the dozens (Lay on Hands: level×5,
+       up to 100 at level 20), so a segmented bar of that many buttons isn't
+       usable — a direct-edit number input instead, same blur-to-save
+       interaction .cs-mi-hp-num-input already established for HP/Temp HP,
+       just restyled to sit inside this card's dark .cs-limuse-group
+       background instead of the header's light one. */
+    .cs-limuse-pool-row { display: flex; align-items: center; gap: var(--char-ov-gap-2xs); }
+    .cs-limuse-pool-input {
+      width: 3.4rem;
+      background: var(--blue-50);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.3rem;
+      text-align: center;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: var(--char-ov-pl);
+      color: var(--blue-800);
+    }
+    .cs-limuse-pool-input::-webkit-outer-spin-button,
+    .cs-limuse-pool-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .cs-limuse-pool-max { font-family: var(--font-body); font-size: var(--char-ov-pl); color: var(--text); opacity: 0.85; }
+
     /* ── Spell Slots (Features accordion, sibling group to Class-Specific —
        Handoff B, Figma 52:2705). Reuses .cs-limuse-* structure verbatim
        (group/card/header/name/count/bar), just with a --magic-blue segment
@@ -2192,7 +2216,16 @@
       font-family: var(--font-sans);
       font-size: 0.72rem;
       color: var(--char-text-muted);
-      white-space: nowrap;
+      /* Was white-space:nowrap with no width limit, so a long data-tip
+         string (e.g. Druidic's full rules explainer) just kept stretching
+         the bubble wider instead of wrapping — for a bubble anchored near
+         a viewport edge this could run past it despite wireTooltip()'s own
+         edge-clamp, since that clamp only repositions the bubble, it never
+         shrinks it. max-width + white-space:normal lets long text wrap
+         within a reasonable width instead; short text is unaffected since
+         a bubble narrower than max-width still sizes to its own content. */
+      max-width: 260px;
+      white-space: normal;
       z-index: 99999;
       pointer-events: none;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
@@ -5018,25 +5051,72 @@
   // same "don't cache what you can derive" principle hp-calc.js already
   // uses for HP — picking the highest level threshold <= current level, so
   // leveling up just reveals more segments with no migration needed.
+  //
+  // A second max source, max_formula, was added alongside max_at_level for
+  // the features flagged (but not built) in an earlier session as not
+  // fitting a flat per-level table: Bardic Inspiration's max is Charisma-
+  // modifier-derived, not level-derived; Sorcery Points/Focus Points/Lay on
+  // Hands are level-derived but via a formula (level, or level×5), not a
+  // hand-authored table of thresholds. Exactly one of max_at_level/
+  // max_formula is ever set per feature — computeFormulaMax() below is the
+  // formula half, kept as its own function so computeLimitedUseMax() stays
+  // a simple dispatch and a third formula type can be added later without
+  // touching the table-lookup branch at all.
+  function computeFormulaMax(formula, chLevel) {
+    if (!formula) return 0;
+    var minLevel = parseInt(formula.min_level, 10) || 1;
+    if (formula.type === 'level') {
+      return chLevel >= minLevel ? chLevel : 0;
+    }
+    if (formula.type === 'level_multiplier') {
+      var mult = parseInt(formula.multiplier, 10) || 1;
+      return chLevel >= minLevel ? chLevel * mult : 0;
+    }
+    if (formula.type === 'ability_mod') {
+      var raw = (ABILITY_SCORES && ABILITY_SCORES[formula.ability] != null) ? parseInt(ABILITY_SCORES[formula.ability], 10) : NaN;
+      var score = isNaN(raw) ? 10 : raw;
+      var mod = Math.floor((score - 10) / 2);
+      var min = (formula.min != null) ? parseInt(formula.min, 10) : 0;
+      return Math.max(min, mod);
+    }
+    return 0;
+  }
   function computeLimitedUseMax(feature, chLevel) {
-    if (!feature || !feature.max_at_level) return 0;
-    var thresholds = Object.keys(feature.max_at_level).map(Number).sort(function(a,b){return a-b;});
-    var applicable = thresholds.filter(function(t){ return t <= chLevel; });
-    if (!applicable.length) return 0;
-    var pick = applicable[applicable.length - 1];
-    return feature.max_at_level[pick];
+    if (!feature) return 0;
+    if (feature.max_at_level) {
+      var thresholds = Object.keys(feature.max_at_level).map(Number).sort(function(a,b){return a-b;});
+      var applicable = thresholds.filter(function(t){ return t <= chLevel; });
+      if (!applicable.length) return 0;
+      var pick = applicable[applicable.length - 1];
+      return feature.max_at_level[pick];
+    }
+    if (feature.max_formula) return computeFormulaMax(feature.max_formula, chLevel);
+    return 0;
   }
   // Round 2 QA — the lowest level threshold at which a feature has any
   // real uses at all (skips a threshold whose own value is 0, which some
   // feature tables use as an explicit "not yet" entry rather than just
   // omitting the level). Used only for the 0/0 "not unlocked yet" message
   // below — generalizes to any limited-use feature, not just Wild Shape.
+  // Extended for max_formula: 'level'/'level_multiplier' have a real
+  // min_level to report (e.g. Sorcery Points/Focus Points, both 0 uses at
+  // level 1). 'ability_mod' has no unlock level at all — with the 2024
+  // rule's own min:1 floor, an ability-mod feature's max is never 0, so
+  // this branch is never actually reached for Bardic Inspiration; returning
+  // null here is just the honest answer for a formula shape that has no
+  // level gate, not a guess.
   function firstUnlockLevel(feature) {
-    if (!feature || !feature.max_at_level) return null;
-    var thresholds = Object.keys(feature.max_at_level).map(Number)
-      .filter(function(t){ return (parseInt(feature.max_at_level[t]) || 0) > 0; })
-      .sort(function(a,b){ return a - b; });
-    return thresholds.length ? thresholds[0] : null;
+    if (!feature) return null;
+    if (feature.max_at_level) {
+      var thresholds = Object.keys(feature.max_at_level).map(Number)
+        .filter(function(t){ return (parseInt(feature.max_at_level[t]) || 0) > 0; })
+        .sort(function(a,b){ return a - b; });
+      return thresholds.length ? thresholds[0] : null;
+    }
+    if (feature.max_formula && (feature.max_formula.type === 'level' || feature.max_formula.type === 'level_multiplier')) {
+      return parseInt(feature.max_formula.min_level, 10) || 1;
+    }
+    return null;
   }
   // Segment fill direction confirmed against the real Figma node (94:1772),
   // not assumed: available segments render left-to-right first, spent
@@ -5044,6 +5124,15 @@
   // convention (spent-left/available-right) built in an earlier session.
   // Deliberately not made consistent with that — this matches what the
   // actual design shows for this specific component, not a generic pip.
+  //
+  // feature.track === 'pool' (Sorcery Points/Focus Points/Lay on Hands) is
+  // a second card shape, not a rewrite of this one — a segmented bar stops
+  // being usable once max runs into the dozens (Lay on Hands: level×5, up
+  // to 100 at level 20), so a pool renders a direct-edit "spent" number
+  // instead of one button per use. Missing/absent track is treated as the
+  // original 'segments' shape, so the 6 existing rows (Rage, Channel
+  // Divinity ×2, Wild Shape, Second Wind, Action Surge, Arcane Recovery)
+  // need no data migration to keep rendering exactly as before.
   function limitedUseCardHtml(feature, spent, max) {
     if (max <= 0) {
       var unlockLevel = firstUnlockLevel(feature);
@@ -5052,6 +5141,19 @@
           + '<span class="cs-limuse-name">' + escHtml(feature.name) + '</span>'
         + '</div>'
         + '<div class="cs-limuse-locked">' + (unlockLevel ? 'Unlocks at level ' + unlockLevel + '.' : 'Not available.') + '</div>'
+      + '</div>';
+    }
+    if (feature.track === 'pool') {
+      return '<div class="cs-limuse-card">'
+        + '<div class="cs-limuse-header">'
+          + '<span class="cs-limuse-name">' + escHtml(feature.name) + '</span>'
+        + '</div>'
+        + '<div class="cs-limuse-pool-row">'
+          + '<input class="cs-limuse-pool-input" type="number" min="0" max="' + max + '" value="' + spent + '"'
+          + ' onblur="setLimitedUsePool(\'' + escHtml(feature.name).replace(/'/g, "\\'") + '\', this)"'
+          + ' onkeydown="if(event.key===\'Enter\')this.blur()">'
+          + '<span class="cs-limuse-pool-max">used of ' + max + '</span>'
+        + '</div>'
       + '</div>';
     }
     var segments = [];
@@ -5107,6 +5209,28 @@
     var next = (cur === (max - segIdx)) ? (max - segIdx) - 1 : (max - segIdx);
     if (next < 0) next = 0;
     if (next > max) next = max;
+    spentMap[name] = next;
+    SHEET.limited_use_spent = spentMap;
+    saveSheet({ limited_use_spent: spentMap });
+    renderLimitedUseFeatures();
+  }
+  // Pool variant of the same write (feature.track === 'pool') — the input
+  // itself is the direct edit, so this just clamps and persists whatever
+  // the player typed, same shared limited_use_spent map/save call as
+  // toggleLimitedUse() above (both write into the same jsonb column, keyed
+  // by feature name — a class can't have a segments feature and a pool
+  // feature share one name, so there's no collision risk between the two).
+  function setLimitedUsePool(name, inputEl) {
+    if (!SHEET) return;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var feature = features.find(function(f){ return f.name === name; });
+    if (!feature) return;
+    var max = computeLimitedUseMax(feature, (CH && CH.level) || 1);
+    var next = parseInt(inputEl.value, 10);
+    if (isNaN(next) || next < 0) next = 0;
+    if (next > max) next = max;
+    inputEl.value = next;
+    var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
     spentMap[name] = next;
     SHEET.limited_use_spent = spentMap;
     saveSheet({ limited_use_spent: spentMap });
