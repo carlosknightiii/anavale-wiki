@@ -3163,10 +3163,6 @@
                 <div id="scc-live-conditions"></div>
               </div>
               <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Inspiration</div>
-                <div id="scc-live-inspiration" class="scc-live-inspiration-row"></div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Current Beat</div>
                 <div id="scc-live-current-beat"></div>
               </div>
@@ -3191,19 +3187,6 @@
                 <div class="scc-live-timer-row">
                   <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
                   <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
-                </div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item scc-live-quick-actions">
-                <div class="scc-live-section-label">Quick Actions</div>
-                <button class="scc-btn-primary" style="width:100%;margin-bottom:0.5rem;" onclick="sccSwitchPanel('combat')">&#9876; Go to Combat</button>
-                <button class="scc-btn-secondary" style="width:100%;" onclick="sccLiveAddNote()">&#128203; Quick Note</button>
-                <!-- Fixed: used to hijack session_notes.player_decisions via a
-                     different panel's own textarea -- now a real Tagged Note,
-                     defaulted to DM-Only so capturing something stays one click,
-                     re-categorizable later from the real Notes tab if needed. -->
-                <div class="scc-live-note-wrap" id="scc-live-note-wrap" style="display:none;">
-                  <textarea id="scc-live-note-input" class="scc-textarea" rows="2" placeholder="One sentence — what just happened&#8230;"></textarea>
-                  <button class="scc-btn-sm" style="margin-top:0.35rem;" onclick="sccLiveSaveNote()">Save as DM-Only Note</button>
                 </div>
               </div>
               <div class="scc-live-section scc-live-strip-item scc-live-safety-net">
@@ -3457,7 +3440,6 @@
                   <option value="item">⚔️ Items</option>
                   <option value="organization">🏛️ Organizations</option>
                   <option value="poi">📍 POIs</option>
-                  <option value="quest">📜 Quests</option>
                   <option value="region">🗺️ Regions</option>
                 </select>
                 <select id="cm-vis-filter" class="cm-select" onchange="cmApplyFilters()">
@@ -6322,19 +6304,6 @@ function showDMToast(msg, type) {
   text-align: left;
 }
 .scc-live-cond-tag:hover::before { opacity: 1; }
-/* Inspiration */
-.scc-live-inspiration-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.scc-live-inspiration-token {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 2px solid var(--scc-border-mid);
-  background: var(--dm-surface);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; color: var(--dm-text-muted);
-  transition: var(--dm-transition); flex-direction: column; gap: 0; line-height: 1.1;
-  text-align: center;
-}
-.scc-live-inspiration-token:hover { border-color: var(--dm-gold); }
-.scc-live-inspiration-token.active { background: var(--dm-gold); border-color: var(--dm-gold); color: #0b0e16; }
 /* Scenarios section */
 .scc-live-scenario-group { margin-bottom: 0.4rem; border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; }
 .scc-live-scenario-header {
@@ -6369,8 +6338,6 @@ function showDMToast(msg, type) {
 .scc-scenario-group-name { flex: 1; text-align: left; }
 .scc-scenario-used-badge { font-size: 0.65rem; font-weight: 700; color: #4ade80; background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.25); border-radius: 10px; padding: 0.1rem 0.45rem; margin-right: 0.4rem; flex-shrink: 0; }
 .scc-scenario-total-badge { font-size: 0.65rem; color: var(--dm-text-muted); background: var(--dm-surface); border: 1px solid var(--scc-border); border-radius: 10px; padding: 0.1rem 0.45rem; margin-right: 0.4rem; flex-shrink: 0; }
-/* Quick note */
-.scc-live-note-wrap { margin-top: 0.5rem; }
 /* NPC chips right col */
 .scc-live-npc-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .scc-live-npc-chip {
@@ -6409,21 +6376,50 @@ function showDMToast(msg, type) {
 /* Timer */
 .scc-live-timer-row { display: flex; align-items: center; gap: 0.75rem; }
 .scc-live-timer-display { font-family: var(--font-mono); font-size: 1.4rem; color: var(--dm-gold); letter-spacing: 0.05em; flex: 1; }
-/* Quick actions */
-.scc-live-quick-actions { display: flex; flex-direction: column; }
-/* ── Live Session: control strip + collapsible sections (Phase 3a) ──
-   The strip is a flex-wrap row of the same .scc-live-section cards the old
-   3-column layout already used -- just laid out in one row instead of 3
-   fixed columns, so no new card visual language was needed. */
-.scc-live-strip-wrap { padding: 1.5rem 2rem 3rem; max-width: none; box-sizing: border-box; }
-.scc-live-strip { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
-.scc-live-strip-item { flex: 1 1 220px; min-width: 220px; }
-.scc-live-accordion { display: flex; flex-direction: column; }
+/* ── Live Session: control strip + collapsible sections ──
+   Two real columns now, not a stack: the strip is a sticky left column (own
+   vertical card stack, stays on screen while the right column scrolls) and
+   the accordion is the right column -- same sticky-sidebar technique
+   .scc-quest-two-col/.scc-quest-col-sidebar already use two sections up for
+   the Quests panel, not a new pattern. Collapses to one column at the same
+   900px breakpoint that pattern already uses. */
+.scc-live-strip-wrap {
+  padding: 1.5rem 2rem 3rem; max-width: none; box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.scc-live-strip { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: 1rem; min-width: 0; }
+.scc-live-strip-item { flex: none; min-width: 0; }
+.scc-live-accordion { display: flex; flex-direction: column; min-width: 0; }
 .scc-live-acc-toggle { margin-top: 0; border-bottom: 1px solid var(--scc-border); padding-bottom: 0.6rem; }
 .scc-live-acc-toggle--guide { color: #6ee7b7; }
 .scc-live-acc-toggle--guide:hover { color: #a7f3d0; }
 .scc-live-acc-body { border-bottom: 1px solid var(--scc-border); }
 .scc-scenario-add-row { margin-top: 0.75rem; }
+/* position:sticky only sticks relative to the nearest ancestor with a
+   non-visible overflow -- #scc-panel-live/#form-session/.dm-forms-panel/
+   .dm-main all declare overflow:auto|hidden as part of an app-shell-with-
+   bounded-viewport layout that never actually engages in practice (.dm-app
+   only sets min-height:100vh, not height, so the moment this panel's real
+   content exceeds one viewport -- true here as soon as an accordion section
+   opens -- the whole chain just grows to fit content instead of clipping,
+   and the real document ends up scrolling). Left as-is, the sticky strip
+   would only ever "stick" within whichever of those boxes it lands on,
+   which never itself scrolls -- confirmed live, its scrollHeight already
+   equals its clientHeight today, so neutralizing it costs nothing real.
+   Scoped to exactly when Live Session is the active sub-panel (not the
+   broader #form-session.active), so Combat/Notes and every other tab keep
+   their original overflow contexts untouched. */
+#form-session:has(#scc-panel-live.active) { overflow: visible; }
+.dm-main:has(#scc-panel-live.active) { overflow: visible; }
+.dm-main:has(#scc-panel-live.active) .dm-forms-panel { overflow: visible; }
+#scc-panel-live.active { overflow: visible; }
+@media (max-width: 900px) {
+  .scc-live-strip-wrap { grid-template-columns: 1fr; }
+  .scc-live-strip { position: static; }
+}
 /* Field Guide's own internal layout (2 independently-scrolling panes) needs a
    real, definite height to size against -- it used to get that for free by
    being the sole full-height active panel; now that it's one collapsible
@@ -8218,6 +8214,16 @@ function switchTab(tab) {
   if (tab === 'quests') { questsResetFilters(); questsRefresh(); }
   if (tab === 'players') playersRefresh();
   if (tab === 'add') { FORM_DIRTY = false; sortAllDropdowns(); } // re-sort on open; reset dirty flag
+  sccUpdateQuickNoteFabVisibility();
+}
+// The global Quick Note FAB only makes sense on the Session Command Center
+// page itself (#form-session -- the tab whose own header literally reads
+// "Session Command Center", holding Live Session/Combat/Notes) -- showing it
+// over Manage/Quests/Players/Setup put a floating session-note button on
+// pages that have nothing to do with running a live session.
+function sccUpdateQuickNoteFabVisibility() {
+  var fab = document.getElementById('scc-quicknote-fab');
+  if (fab) fab.style.display = (CURRENT_TAB === 'session') ? 'flex' : 'none';
 }
 
 /* ── ADD TYPE SWITCHING ──────────────────────── */
@@ -9710,7 +9716,11 @@ function cmRefresh() {
   CM_SELECTED = {};
   CM_PENDING  = null;
 
-  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item', 'quest'];
+  // Quests deliberately excluded -- no dedicated edit form exists in Content
+  // Manager (cmEditEntry() on a quest row was a dead click, no #form-quest),
+  // so they were listed but couldn't actually be edited from here. Real quest
+  // editing lives on the top-level Quests tab (the Quest Dashboard) instead.
+  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item'];
   types.forEach(function(type) {
     var arr = CM_ARRAYS[type]();
     arr.forEach(function(e) {
@@ -10612,7 +10622,8 @@ function cmDeleteEntry(idx) {
 
 /* Re-sync CM_ALL from live arrays (after delete/bulk delete) */
 function cmRefreshFromArrays() {
-  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item', 'quest'];
+  // Same quest exclusion as cmRefresh() -- kept in sync deliberately.
+  var types = ['region', 'city', 'creature', 'poi', 'character', 'organization', 'item'];
   CM_ALL = [];
   types.forEach(function(type) {
     var arr = CM_ARRAYS[type]();
@@ -11502,7 +11513,6 @@ function sccLoadPlayers() {
       sccRenderPlayerBar();
       sccLiveRenderParty();
       sccLiveRenderConditions();
-      sccLiveRenderInspiration();
       // Phase 3b: the shared Location card's Shop section also reads
       // SCC_PLAYERS (for the "Buying as" list) -- same race as above, newly
       // exposed now that Locations renders at initial page load too. A
@@ -11576,21 +11586,23 @@ function sccMarkPendingItemAdded(playerId, index) {
 }
 
 // ── Live Session Tab ──────────────────────────────────────────────
-// Conditions and Inspiration deliberately have no local shadow state here —
-// they read/write character_sheet.conditions / .has_inspiration directly
-// (via SCC_SHEETS, the same cache Party HP already uses), the exact real
-// columns sheet/index.html's own MainInfo header reads and writes. A prior
-// version tracked these in a local object that was never persisted anywhere
-// — real data loss, confirmed via the Aug 18 Live Session audit that it
-// silently dropped on every reload despite looking identical to the real,
-// working HP tracker two rows above it.
+// Conditions deliberately have no local shadow state here — they read/
+// write character_sheet.conditions directly (via SCC_SHEETS, the same
+// cache Party HP already uses), the exact real column sheet/index.html's
+// own MainInfo header reads and writes. A prior version tracked this in a
+// local object that was never persisted anywhere — real data loss,
+// confirmed via the Aug 18 Live Session audit that it silently dropped on
+// every reload despite looking identical to the real, working HP tracker
+// one row above it. Inspiration had the same treatment here once too, but
+// was removed outright (not just fixed) since it's a genuine duplicate of
+// the player's own sheet control (renderInspiration() in sheet/index.html,
+// same character_sheet.has_inspiration column) — one real control, not two.
 var SCC_LIVE_TIMER_START = null;
 var SCC_LIVE_TIMER_INTERVAL = null;
 var SCC_LIVE_TIMER_ELAPSED = 0;
 function sccRenderLivePanel() {
   sccLiveRenderParty();
   sccLiveRenderConditions();
-  sccLiveRenderInspiration();
   sccRenderCurrentBeatWidget();
   sccLiveRenderScenarios();
 }
@@ -11832,31 +11844,6 @@ function sccLiveRemoveCondition(playerId, cond) {
     .then(function(r) { if (!r.ok) showDMToast('Condition save failed', 'error'); });
   sccLiveRenderConditions();
 }
-// Inspiration: same treatment — reads/writes character_sheet.has_inspiration
-// via SCC_SHEETS, the same real column the player's own sheet toggles.
-function sccLiveRenderInspiration() {
-  var el = document.getElementById('scc-live-inspiration');
-  if (!el) return;
-  el.innerHTML = SCC_PLAYERS.map(function(p) {
-    var sheet = SCC_SHEETS[p.id] || {};
-    var active = !!sheet.has_inspiration;
-    var initials = (p.name || '?').split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0,2);
-    return '<div class="scc-live-inspiration-token' + (active ? ' active' : '') + '" onclick="sccLiveToggleInspiration(\'' + sccEsc(p.id) + '\')" title="' + sccEsc(p.name || '') + '">'
-      + '<span>' + sccEsc(initials) + '</span>'
-      + '<span style="font-size:0.52rem;opacity:0.7;">insp</span>'
-    + '</div>';
-  }).join('');
-}
-function sccLiveToggleInspiration(playerId) {
-  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — Inspiration is read-only here', 'error'); return; }
-  var sheet = SCC_SHEETS[playerId];
-  if (!sheet) return;
-  var next = !sheet.has_inspiration;
-  sheet.has_inspiration = next;
-  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(playerId), { has_inspiration: next })
-    .then(function(r) { if (!r.ok) showDMToast('Inspiration save failed', 'error'); });
-  sccLiveRenderInspiration();
-}
 // ── Scenarios ──
 var SCC_USED_SCENARIOS = {};
 // Resolves whichever session is actually being displayed right now, live or
@@ -12016,47 +12003,11 @@ function sccLiveApplyAutoExpand() {
   SCC_LIVE_ACC_AUTO_APPLIED = true;
   if (sccComputeActiveBeat()) sccLiveOpenSection('quests');
 }
-// ── Quick Note ──
-function sccLiveAddNote() {
-  var wrap = document.getElementById('scc-live-note-wrap');
-  if (wrap) { wrap.style.display = wrap.style.display === 'none' ? '' : 'none'; }
-}
-// Used to hijack session_notes.player_decisions (a completely different
-// panel's own textarea) instead of creating a real note. Now a real
-// session_note_entries row, same table/shape the Notes tab's own Tagged
-// Notes already use -- defaulted to the "dm-only" category so capturing
-// something mid-session stays a single click, not a category picker every
-// time; the DM can re-categorize it later from the real Notes tab.
-function sccLiveSaveNote() {
-  // Same guard sccOpenQuickNoteModal() already has -- SCC_SESSION isn't
-  // repointed at the historical session while viewing it, so an ungated
-  // write here would land against whichever session was actually active
-  // before History was opened, not the locked one on screen. Confusing,
-  // not corrupting, but still a real write that shouldn't be reachable.
-  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quick notes are read-only here', 'error'); return; }
-  var input = document.getElementById('scc-live-note-input');
-  if (!input || !input.value.trim()) return;
-  var text = input.value.trim();
-  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
-  input.value = '';
-  var wrap = document.getElementById('scc-live-note-wrap');
-  if (wrap) wrap.style.display = 'none';
-  if (!num) { showDMToast('No active session to save to', 'error'); return; }
-  fetch(SCC_URL + '/rest/v1/session_note_entries', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SCC_ANON,
-      'Authorization': 'Bearer ' + SCC_ANON,
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({ session_number: num, category: 'dm-only', title: '', content: text })
-  }).then(function(r) {
-    if (!r.ok) { showDMToast('Note save failed', 'error'); return; }
-    showDMToast('Note added to Tagged Notes (DM-Only) \u2713', 'success');
-    if (typeof sccRenderTaggedNotes === 'function') sccRenderTaggedNotes();
-  }).catch(function() { showDMToast('Note save failed', 'error'); });
-}
+// Quick Note capture is now the single, global FAB (sccOpenQuickNoteModal(),
+// reachable from every tab) -- the Live Session strip's own local Quick Note
+// button/textarea (sccLiveAddNote()/sccLiveSaveNote()) was a second, narrower
+// entry point into the exact same session_note_entries table and was removed
+// outright rather than kept alongside the FAB.
 // ── Die Roller ──
 function sccRollDie(sides) {
   var modEl = document.getElementById('scc-live-die-mod');
