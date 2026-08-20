@@ -1700,6 +1700,9 @@
     }
     .cs-mi-hd-seg.active { background: var(--gold); color: var(--gold-text-on); }
     .cs-mi-hd-seg.spent { background: rgba(255,255,255,0.08); color: var(--char-text-faint); }
+    /* Rest buttons — reuse .cs-hp-apply (same gold pill already used for
+       Heal/Add) rather than inventing new button styling. */
+    .cs-mi-rest { display: flex; gap: 0.4rem; align-items: center; }
 
     @media (max-width: 900px) {
       .cs-ov-portrait { width: 100%; min-height: 340px; }
@@ -4894,6 +4897,7 @@
     var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
     var favSet = (SHEET && Array.isArray(SHEET.favorite_spells)) ? SHEET.favorite_spells : [];
+    var alwaysPrepared = (SHEET && Array.isArray(SHEET.always_prepared_spells)) ? SHEET.always_prepared_spells : [];
     var maxPrepared = computePreparedMax();
     var full = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
       .sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
@@ -4916,8 +4920,13 @@
       var levelLabel = s.level === 0 ? 'Cantrip' : String(s.level);
       // Cantrips don't need preparing (2024 rules) — a checkbox here would
       // imply a daily choice that doesn't exist. Leveled spells (level >= 1)
-      // keep the interactive checkbox exactly as before.
-      var preparedCell = s.level === 0
+      // keep the interactive checkbox exactly as before. Extended to cover
+      // character_sheet.always_prepared_spells too — species/background
+      // grants like Speak with Animals (Hana) that are always available
+      // regardless of the daily-prepared budget, same reasoning as
+      // cantrips: never counted, never checkbox-addable to prepared_spells.
+      var isAlwaysPrepared = s.level === 0 || alwaysPrepared.indexOf(s.id) !== -1;
+      var preparedCell = isAlwaysPrepared
         ? '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>'
         : '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
       // Row height matches actual content, not a fixed reservation — the
@@ -5411,6 +5420,10 @@
               + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
               + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
               + '<div id="cs-mi-hit-dice-slot"></div>'
+              + '<div class="cs-mi-rest">'
+                + '<button class="cs-hp-apply" onclick="doShortRest()">Short Rest</button>'
+                + '<button class="cs-hp-apply" onclick="doLongRest()">Long Rest</button>'
+              + '</div>'
             + '</div>'
             + blurbHtml
           + '</div>'
@@ -5832,10 +5845,10 @@
   // fills left, spent fills right; clicking a segment sets spent to
   // max-segIdx, clicking the current boundary segment un-spends it) instead
   // of the original spent-left/available-right pip convention this
-  // predates — see the .cs-mi-hit-dice CSS comment for why. No rest-flow to
-  // auto-restore spent dice exists anywhere on this sheet yet (same gap
-  // Death Saves and Spell Slots already have) — restoring is a manual
-  // click, deliberately out of scope here.
+  // predates — see the .cs-mi-hit-dice CSS comment for why. A Rest flow
+  // (doShortRest()/doLongRest(), below) now restores this and Spell Slots/
+  // limited-use features automatically — see that section for the real
+  // recovery rules used.
   // Uses character_sheet.hit_dice_used — a pre-existing column, populated
   // (1/0/0 for all 3 characters) but never referenced anywhere in the
   // codebase before this. The handoff assumed no tracking column existed;
@@ -5879,6 +5892,64 @@
     // it wires itself rather than relying on whichever caller happens to
     // run wireAllTooltips() afterward.
     wireAllTooltips();
+  }
+
+  // ── Rest (MainInfo header) — Short Rest / Long Rest buttons. Each reads
+  // classes.limited_use_features' own recharge field ("short_rest"/
+  // "long_rest") to decide what it resets rather than hardcoding anything
+  // per-class, so a future class/feature just works without touching this.
+  // Long Rest resets Spell Slots to full, applies the real 2024 Hit Dice
+  // recovery rule (NOT a full refill — see doLongRest()), and resets every
+  // long_rest-recharge limited-use feature. Short Rest resets only
+  // short_rest-recharge limited-use features. Neither touches
+  // prepared_spells/favorite_spells — those aren't rest-gated.
+  function doShortRest() {
+    if (!SHEET) return;
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
+    features.forEach(function(f) {
+      if (f.recharge === 'short_rest') spentMap[f.name] = 0;
+    });
+    SHEET.limited_use_spent = spentMap;
+    saveSheet({ limited_use_spent: spentMap });
+    renderLimitedUseFeatures();
+    showToast('Short Rest complete — short-rest features restored.');
+  }
+  function doLongRest() {
+    if (!SHEET) return;
+    var fields = {};
+
+    // Spell Slots — every level's spent count resets to 0 (full).
+    SHEET.spell_slots = {};
+    fields.spell_slots = {};
+
+    // Hit Dice — real 2024 recovery rule: regain a number of expended Hit
+    // Dice, minimum 1, equal to half the character's total (their level),
+    // rounded down. Not a full refill — e.g. a level-3 character with all
+    // 3 spent regains only 1 (floor(3/2)=1, still >= the min:1 floor).
+    var totalDice = (CH && CH.level) || 1;
+    var recover = Math.max(1, Math.floor(totalDice / 2));
+    var curSpent = parseInt(SHEET.hit_dice_used) || 0;
+    var nextSpent = Math.max(0, curSpent - recover);
+    SHEET.hit_dice_used = nextSpent;
+    fields.hit_dice_used = nextSpent;
+
+    // Limited-use features that recharge on a long rest only — a Long Rest
+    // does NOT also reset short_rest features here, per the recharge field
+    // being the sole source of truth for which bucket a feature is in.
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
+    features.forEach(function(f) {
+      if (f.recharge === 'long_rest') spentMap[f.name] = 0;
+    });
+    SHEET.limited_use_spent = spentMap;
+    fields.limited_use_spent = spentMap;
+
+    saveSheet(fields);
+    renderSpellSlotsGroup();
+    renderHitDice();
+    renderLimitedUseFeatures();
+    showToast('Long Rest complete — spell slots restored, Hit Dice and long-rest features recovered.');
   }
 
   function adjustHP(delta) {
@@ -7765,13 +7836,18 @@
     }
   }
 
+  // Replace flow: a single upsert:true upload, no separate remove() call
+  // first. The old remove()-then-upload() pattern was fragile — it hit
+  // "The resource already exists" for players replacing an existing photo
+  // whenever the remove() step failed or raced the upload (the missing
+  // storage permission behind that has since been fixed in Supabase, but
+  // upsert:true is also just the correct, simpler way to do a replace).
   function uploadPhoto(input) {
     var file = input.files && input.files[0];
     if (!file || !CHAR_ID) return;
     showToast('Uploading…');
     var path = 'characters/' + CHAR_ID;
-    sb.storage.from('character-photos').remove([path]).then(function() {
-      sb.storage.from('character-photos').upload(path, file, { cacheControl: '3600', contentType: file.type })
+    sb.storage.from('character-photos').upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type })
       .then(function(res) {
         if (res.error) { showToast('Upload failed — ' + res.error.message, true); return; }
         var url = SB_URL + '/storage/v1/object/public/character-photos/' + path;
@@ -7786,7 +7862,6 @@
             showToast('Photo uploaded ✦');
           });
       });
-    });
   }
 
   // ── Save sheet fields ─────────────────────────────────────────────
