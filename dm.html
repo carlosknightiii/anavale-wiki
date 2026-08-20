@@ -3138,9 +3138,12 @@
              4 separate top-level panels each requiring a full tab switch, are
              now collapsible sections inside this one panel -- their own render
              functions/DOM ids are untouched (sccRenderNpcPanel/sccRenderLocationPanel/
-             sccRenderQuestPanel/sccRenderFieldGuide all still target the exact
-             ids below, just relocated), so nothing about how they populate
-             changed, only where they live. The always-visible strip above them
+             sccRenderQuestPanel all still target the exact ids below, just
+             relocated), so nothing about how they populate changed, only
+             where they live. (Field Guide's own left-panel card list --
+             sccRenderFieldGuide/sccFgDraw and friends -- was removed entirely
+             in a later session; see CLAUDE.md Decision Log. The document/
+             editor half of Field Guide is unaffected.) The always-visible strip above them
              replaces the old 3-column layout's Party HP/Conditions/Inspiration/
              Quick Actions/Die Roller/Timer/Safety Net cards -- Quest Progress's
              own full beat list (scc-live-beats) is gone, superseded by the new
@@ -3210,13 +3213,17 @@
               </div>
             </div><!-- /scc-live-strip -->
 
-            <!-- ── COLLAPSIBLE SECTIONS ─────────────────── -->
-            <div class="scc-live-accordion">
-
-              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-npcs" onclick="sccLiveToggleSection('npcs')">
-                <span class="scc-toggle-arrow">▶</span><span>NPCs</span>
+            <!-- ── TABBED SECTIONS ─────────────────── -->
+            <div class="scc-live-tabs-wrap">
+              <div class="scc-live-tabs" role="tablist">
+                <button class="scc-live-tab-btn active" data-live="npcs" onclick="sccLiveSwitchSection('npcs')">NPCs</button>
+                <button class="scc-live-tab-btn" data-live="locations" onclick="sccLiveSwitchSection('locations')">Locations</button>
+                <button class="scc-live-tab-btn" data-live="quests" onclick="sccLiveSwitchSection('quests')">Quests</button>
+                <button class="scc-live-tab-btn" data-live="scenarios" onclick="sccLiveSwitchSection('scenarios')">Scenarios</button>
+                <button class="scc-live-tab-btn scc-live-tab-btn--guide" data-live="fieldguide" onclick="sccLiveSwitchSection('fieldguide')">&#128214; Field Guide</button>
               </div>
-              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-npcs">
+
+              <div class="scc-live-tab-panel open" id="scc-live-acc-body-npcs">
           <div class="scc-panel-inner scc-npc-panel-inner">
             <div class="scc-npc-page-header">
               <div class="scc-npc-page-label">SESSION</div>
@@ -3261,10 +3268,7 @@
           </div>
               </div>
 
-              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-locations" onclick="sccLiveToggleSection('locations')">
-                <span class="scc-toggle-arrow">▶</span><span>Locations</span>
-              </div>
-              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-locations">
+              <div class="scc-live-tab-panel" id="scc-live-acc-body-locations">
           <div class="scc-panel-inner scc-loc-panel-inner">
               <div class="scc-npc-page-header">
                 <div class="scc-npc-page-label">SESSION</div>
@@ -3301,10 +3305,7 @@
             </div>
               </div>
 
-              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-quests" onclick="sccLiveToggleSection('quests')">
-                <span class="scc-toggle-arrow">▶</span><span>Quests</span>
-              </div>
-              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-quests">
+              <div class="scc-live-tab-panel" id="scc-live-acc-body-quests">
           <div class="scc-panel-inner scc-quest-panel-inner">
             <div class="scc-quest-two-col">
               <!-- LEFT: quest cards -->
@@ -3331,10 +3332,7 @@
           </div>
               </div>
 
-              <div class="scc-collapsible-toggle scc-live-acc-toggle" id="scc-live-acc-toggle-scenarios" onclick="sccLiveToggleSection('scenarios')">
-                <span class="scc-toggle-arrow">▶</span><span>Scenarios</span>
-              </div>
-              <div class="scc-collapsible-body scc-live-acc-body" id="scc-live-acc-body-scenarios">
+              <div class="scc-live-tab-panel" id="scc-live-acc-body-scenarios">
                 <div class="scc-panel-inner">
                   <div class="scc-live-scenario-filter-wrap">
                     <input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">
@@ -3347,29 +3345,9 @@
                 </div>
               </div>
 
-              <div class="scc-collapsible-toggle scc-live-acc-toggle scc-live-acc-toggle--guide" id="scc-live-acc-toggle-fieldguide" onclick="sccLiveToggleSection('fieldguide')">
-                <span class="scc-toggle-arrow">▶</span><span>&#128214; Field Guide</span>
-              </div>
-              <div class="scc-collapsible-body scc-live-acc-body scc-live-acc-body--fieldguide" id="scc-live-acc-body-fieldguide">
+              <div class="scc-live-tab-panel scc-live-tab-panel--fieldguide" id="scc-live-acc-body-fieldguide">
           <div class="scc-fg-layout">
-            <div class="scc-fg-left">
-            <!-- search + filter bar -->
-            <div class="scc-fg-bar">
-              <input type="text" class="scc-input scc-fg-search" id="scc-fg-search" placeholder="Search Field Guide&#x2026;" oninput="sccFgFilter(this.value)" autocomplete="off">
-              <div class="scc-fg-filters" id="scc-fg-filters">
-                <button class="scc-fg-filter-btn active" data-fg="all"       onclick="sccFgSetFilter('all',this)">All</button>
-                <button class="scc-fg-filter-btn" data-fg="npcs"      onclick="sccFgSetFilter('npcs',this)">NPCs</button>
-                <button class="scc-fg-filter-btn" data-fg="creatures" onclick="sccFgSetFilter('creatures',this)">Creatures</button>
-                <button class="scc-fg-filter-btn" data-fg="locations" onclick="sccFgSetFilter('locations',this)">Locations</button>
-                <button class="scc-fg-filter-btn" data-fg="items"     onclick="sccFgSetFilter('items',this)">Items</button>
-                <button class="scc-fg-filter-btn" data-fg="dm"        onclick="sccFgSetFilter('dm',this)">DM Notes</button>
-              </div>
-            </div>
-            <div class="scc-fg-body" id="scc-fg-body">
-              <div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>
-            </div>
-            </div><!-- /scc-fg-left -->
-          <!-- RIGHT COLUMN: rendered guide doc -->
+          <!-- rendered guide doc, now the only column -->
           <div class="scc-fg-doc" id="scc-fg-doc">
             <div class="scc-fg-doc-toolbar" id="scc-fg-doc-toolbar">
               <select id="scc-fg-session-select" class="cm-select" onchange="sccFgSessionChanged()"></select>
@@ -3383,7 +3361,7 @@
 
               </div>
 
-            </div><!-- /scc-live-accordion -->
+            </div><!-- /scc-live-tabs-wrap -->
           </div><!-- /scc-live-strip-wrap -->
         </div><!-- /scc-panel-live -->
       </div><!-- /form-session -->
@@ -6392,19 +6370,52 @@ function showDMToast(msg, type) {
 }
 .scc-live-strip { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: 1rem; min-width: 0; }
 .scc-live-strip-item { flex: none; min-width: 0; }
-.scc-live-accordion { display: flex; flex-direction: column; min-width: 0; }
-.scc-live-acc-toggle { margin-top: 0; border-bottom: 1px solid var(--scc-border); padding-bottom: 0.6rem; }
-.scc-live-acc-toggle--guide { color: #6ee7b7; }
-.scc-live-acc-toggle--guide:hover { color: #a7f3d0; }
-.scc-live-acc-body { border-bottom: 1px solid var(--scc-border); }
+/* ── Live Session tabs (was a 5-section accordion, now horizontal tabs --
+   one panel visible at a time). Reuses the same pill-button visual language
+   as .scc-tab-btn (the top-level Live Session/Combat/Notes sub-nav one
+   level up), scoped to its own class so the two nav levels can't collide. */
+.scc-live-tabs-wrap { display: flex; flex-direction: column; min-width: 0; }
+.scc-live-tabs {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  margin-bottom: 1.1rem; padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-live-tab-btn {
+  padding: 0.4rem 0.95rem;
+  background: transparent;
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-live-tab-btn:hover {
+  color: var(--dm-text);
+  border-color: var(--dm-border-mid);
+  background: var(--scc-surface-high);
+}
+.scc-live-tab-btn.active {
+  background: var(--dm-gold-dim);
+  border-color: var(--scc-border-gold);
+  color: var(--dm-gold);
+}
+.scc-live-tab-btn--guide { color: #6ee7b7; border-color: rgba(110,231,183,0.3); }
+.scc-live-tab-btn--guide:hover { color: #a7f3d0; border-color: rgba(110,231,183,0.5); }
+.scc-live-tab-btn--guide.active { background: rgba(110,231,183,0.18); border-color: rgba(110,231,183,0.6); color: #a7f3d0; }
+.scc-live-tab-panel { display: none; min-width: 0; }
+.scc-live-tab-panel.open { display: block; }
 .scc-scenario-add-row { margin-top: 0.75rem; }
 /* position:sticky only sticks relative to the nearest ancestor with a
    non-visible overflow -- #scc-panel-live/#form-session/.dm-forms-panel/
    .dm-main all declare overflow:auto|hidden as part of an app-shell-with-
    bounded-viewport layout that never actually engages in practice (.dm-app
    only sets min-height:100vh, not height, so the moment this panel's real
-   content exceeds one viewport -- true here as soon as an accordion section
-   opens -- the whole chain just grows to fit content instead of clipping,
+   content exceeds one viewport -- true here as soon as the active tab's
+   content is tall enough -- the whole chain just grows to fit content instead of clipping,
    and the real document ends up scrolling). Left as-is, the sticky strip
    would only ever "stick" within whichever of those boxes it lands on,
    which never itself scrolls -- confirmed live, its scrollHeight already
@@ -6422,14 +6433,13 @@ function showDMToast(msg, type) {
 }
 /* Field Guide's own internal layout (2 independently-scrolling panes) needs a
    real, definite height to size against -- it used to get that for free by
-   being the sole full-height active panel; now that it's one collapsible
-   section among several inside a naturally-growing page, give its own
-   accordion body an explicit height when open so .scc-fg-layout's
-   height:100% still resolves exactly as before. Content/editor logic below
-   this line is completely unchanged, only its container's sizing model is. */
-.scc-collapsible-body.scc-live-acc-body--fieldguide.open { display: flex; flex-direction: column; height: 70vh; }
-.scc-fg-layout { display: grid; grid-template-columns: 44% 1fr; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
-.scc-fg-left { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--scc-border); }
+   being the sole full-height active panel; now that it's one tab among
+   several inside a naturally-growing page, give its own tab panel an
+   explicit height when active so .scc-fg-layout's height:100% still
+   resolves exactly as before. Content/editor logic below this line is
+   completely unchanged, only its container's sizing model is. */
+.scc-live-tab-panel--fieldguide.open { display: flex; flex-direction: column; height: 70vh; }
+.scc-fg-layout { display: grid; grid-template-columns: 1fr; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
 .scc-fg-doc { overflow-y: auto; background: var(--scc-surface); }
 .scc-fg-doc-toolbar {
   position: sticky; top: 0; z-index: 5;
@@ -6438,7 +6448,7 @@ function showDMToast(msg, type) {
   border-bottom: 1px solid var(--scc-border);
 }
 .scc-fg-doc-toolbar select { flex: 1; max-width: 260px; }
-.scc-fg-doc-inner { padding: 1.5rem 1.75rem 3rem; max-width: 680px; margin: 0 auto; }
+.scc-fg-doc-inner { padding: 1.5rem 1.75rem 3rem; margin: 0 auto; }
 .scc-fg-link {
   color: var(--dm-gold); cursor: pointer; text-decoration: underline;
   text-decoration-style: dotted; text-underline-offset: 2px;
@@ -6588,78 +6598,6 @@ function showDMToast(msg, type) {
 .scc-fg-box .scc-fg-table td:first-child { color: inherit !important; font-weight: 700; }
 .scc-tab-btn--guide { background: rgba(167,243,208,0.08); border-color: rgba(167,243,208,0.3); color: #6ee7b7; }
 .scc-tab-btn--guide.active { background: rgba(167,243,208,0.16); border-color: rgba(167,243,208,0.6); color: #a7f3d0; }
-.scc-fg-bar {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--scc-border);
-  flex-shrink: 0; flex-wrap: wrap;
-}
-.scc-fg-search { flex: 1; min-width: 200px; max-width: 340px; }
-.scc-fg-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.scc-fg-filter-btn {
-  padding: 0.25rem 0.7rem;
-  background: transparent;
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius-sm);
-  color: var(--dm-text-muted);
-  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600;
-  cursor: pointer; transition: var(--dm-transition); white-space: nowrap;
-}
-.scc-fg-filter-btn:hover { color: var(--dm-text); border-color: var(--dm-border-mid); }
-.scc-fg-filter-btn.active { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
-.scc-fg-body { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-.scc-fg-section { border: 1px solid var(--scc-border); border-radius: var(--dm-radius); overflow: hidden; }
-.scc-fg-section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.6rem 1rem; background: var(--scc-surface-mid);
-  cursor: pointer; user-select: none; gap: 0.5rem;
-}
-.scc-fg-section-header:hover { background: var(--scc-surface-high); }
-.scc-fg-section-title { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-gold); letter-spacing: 0.04em; }
-.scc-fg-section-count { font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text-muted); }
-.scc-fg-section-chevron { font-size: 0.7rem; color: var(--dm-text-muted); transition: transform 0.2s; }
-.scc-fg-section.open .scc-fg-section-chevron { transform: rotate(90deg); }
-.scc-fg-section-body { display: none; padding: 0.5rem 0; }
-.scc-fg-section.open .scc-fg-section-body { display: block; }
-.scc-fg-card {
-  display: flex; align-items: flex-start; gap: 0.75rem;
-  padding: 0.6rem 1rem; border-bottom: 1px solid var(--scc-border);
-  cursor: pointer; transition: background 0.15s;
-}
-.scc-fg-card:last-child { border-bottom: none; }
-.scc-fg-card:hover { background: var(--scc-surface-mid); }
-.scc-fg-card-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; width: 1.6rem; text-align: center; }
-.scc-fg-card-body { flex: 1; min-width: 0; }
-.scc-fg-card-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); line-height: 1.3; }
-.scc-fg-card-sub { font-family: var(--font-sans); font-size: 0.74rem; color: var(--dm-text-muted); margin-top: 0.15rem; line-height: 1.4; }
-.scc-fg-card-tag {
-  display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px;
-  font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.06em; margin-left: 0.4rem;
-  background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold);
-}
-.scc-fg-detail {
-  padding: 0.75rem 1rem; background: var(--scc-surface);
-  border-top: 1px solid var(--scc-border); display: none;
-}
-.scc-fg-detail.open { display: block; }
-.scc-fg-detail-section { margin-bottom: 0.75rem; }
-.scc-fg-detail-label { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dm-text-muted); margin-bottom: 0.2rem; }
-.scc-fg-detail-text { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.55; white-space: pre-wrap; }
-/* Was still amber (rgba(251,191,36,...)) — a separate render path from the
-   Field Guide document's own DM-Only boxes, which are correctly teal. Now
-   the same shared tokens, with the same full-border + left-accent shape
-   .scc-dm-block uses elsewhere. */
-.scc-fg-dm-block { background: var(--scc-dm-only-bg); border: 1px solid var(--scc-dm-only-border); border-left: 3px solid var(--scc-dm-only-border); border-radius: var(--dm-radius-sm); padding: 0.6rem 0.75rem; margin-top: 0.5rem; }
-.scc-fg-dm-label { font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--scc-dm-only-label); margin-bottom: 0.3rem; }
-.scc-fg-dm-text { font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text); line-height: 1.55; white-space: pre-wrap; }
-.scc-fg-read-aloud { background: var(--scc-read-aloud-bg); border-left: 3px solid var(--scc-read-aloud-border); padding: 0.6rem 0.75rem; margin-top: 0.5rem; border-radius: 0 var(--dm-radius-sm) var(--dm-radius-sm) 0; }
-.scc-fg-read-aloud-label { font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--scc-read-aloud-text); margin-bottom: 0.3rem; }
-.scc-fg-read-aloud-text { font-family: var(--font-sans); font-size: 0.8rem; font-style: italic; color: var(--dm-text); line-height: 1.6; white-space: pre-wrap; }
-.scc-fg-empty { font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text-muted); text-align: center; padding: 2rem; font-style: italic; }
-.scc-fg-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.4rem; margin: 0.5rem 0; }
-.scc-fg-stat-cell { text-align: center; padding: 0.3rem; background: var(--scc-surface-mid); border-radius: var(--dm-radius-sm); }
-.scc-fg-stat-val { font-family: var(--font-headers); font-size: 0.95rem; color: var(--dm-text); }
-.scc-fg-stat-label { font-family: var(--font-sans); font-size: 0.55rem; color: var(--dm-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 /* ── Notes Panel ── */
 .scc-notes-grid {
   display: grid;
@@ -7414,13 +7352,15 @@ function showDMToast(msg, type) {
 .scc-audit-mode .scc-picker-controls { gap: 0; }
 .scc-audit-mode .scc-chip-remove { display: none !important; }
 /* Removed: `.scc-audit-mode .scc-collapsible-toggle { pointer-events: none; }`
-   -- this class is shared by Setup's own prep-notes toggle AND the Live
-   Session tab's 5 accordion toggles (NPCs/Locations/Quests/Scenarios/Field
-   Guide). Blocking it locked all 5 sections permanently closed in audit mode
-   (only Quests ever auto-opened), leaving the richest tab in the app showing
-   almost nothing. A toggle only ever expands/collapses -- it never writes --
-   so there's no correctness reason to disable it; the actual write actions
-   inside each section are individually gated by SCC_VIEWING_HISTORY now. */
+   -- this class is Setup's own prep-notes toggle (the Live Session tab's
+   NPCs/Locations/Quests/Scenarios/Field Guide sections were an accordion
+   using this same class at the time this rule was removed; they've since
+   become horizontal tabs on .scc-live-tab-btn instead, a plain nav switch
+   with no write of its own -- same reasoning still applies to both). A
+   toggle/tab only ever expands/collapses or switches view -- it never
+   writes -- so there's no correctness reason to disable it; the actual
+   write actions inside each section are individually gated by
+   SCC_VIEWING_HISTORY. */
 .scc-audit-mode .scc-picker-label { margin-bottom: 0.4rem; }
 .scc-audit-mode .scc-scenario-editor-group .scc-tagnote-del { display: none !important; }
 .scc-audit-readonly-val {
@@ -12202,27 +12142,28 @@ function sccJumpToSetupScenarios() {
     setTimeout(function() { el.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
   }, 50);
 }
-// ── Live Session collapsible sections ──
+// ── Live Session tabs ──
+// Was a multi-open accordion (5 independently expand/collapse sections);
+// converted to horizontal tabs -- one section's content shows at a time,
+// switching via sccLiveSwitchSection(). Data-rendering (sccRenderNpcPanel(),
+// sccRenderLocationPanel(), sccRenderQuestPanel(), sccLiveRenderScenarios())
+// is completely unchanged and still runs regardless of which tab is
+// currently active, same as before when a body could be pre-rendered while
+// collapsed -- only the show/hide + navigation mechanism changed.
 var SCC_LIVE_ACC_AUTO_APPLIED = false;
-function sccLiveOpenSection(name) {
-  var toggle = document.getElementById('scc-live-acc-toggle-' + name);
-  var body   = document.getElementById('scc-live-acc-body-' + name);
-  if (!toggle || !body) return;
-  body.classList.add('open');
-  toggle.classList.add('open');
-  if (name === 'fieldguide') { sccRenderFieldGuide(); sccFgInitDocument(); }
+function sccLiveSwitchSection(name) {
+  document.querySelectorAll('.scc-live-tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.live === name);
+  });
+  document.querySelectorAll('.scc-live-tab-panel').forEach(function(p) {
+    p.classList.toggle('open', p.id === 'scc-live-acc-body-' + name);
+  });
+  if (name === 'fieldguide') { sccFgInitDocument(); }
 }
-function sccLiveToggleSection(name) {
-  var toggle = document.getElementById('scc-live-acc-toggle-' + name);
-  var body   = document.getElementById('scc-live-acc-body-' + name);
-  if (!toggle || !body) return;
-  var isOpen = body.classList.contains('open');
-  if (isOpen) { body.classList.remove('open'); toggle.classList.remove('open'); return; }
-  sccLiveOpenSection(name);
-}
-// Auto-expands Quests once per session load if any assigned quest has a real
-// in-progress beat -- guarded so it only applies once and doesn't keep
-// re-forcing the section open if the DM manually collapses it afterward.
+// Auto-switches to the Quests tab once per session load if any assigned
+// quest has a real in-progress beat -- guarded so it only applies once and
+// doesn't keep re-forcing the DM back to Quests if they've since navigated
+// to a different tab on purpose.
 // Deliberately NOT called from sccRenderQuestPanel() itself -- that function
 // runs from many places (chip add/remove, etc.) with no guarantee SCC_PROGRESS
 // has actually finished loading yet; calling this too early would latch it
@@ -12232,7 +12173,7 @@ function sccLiveToggleSection(name) {
 function sccLiveApplyAutoExpand() {
   if (SCC_LIVE_ACC_AUTO_APPLIED) return;
   SCC_LIVE_ACC_AUTO_APPLIED = true;
-  if (sccComputeActiveBeat()) sccLiveOpenSection('quests');
+  if (sccComputeActiveBeat()) sccLiveSwitchSection('quests');
 }
 // Quick Note capture is now the single, global FAB (sccOpenQuickNoteModal(),
 // reachable from every tab) -- the Live Session strip's own local Quick Note
@@ -12319,204 +12260,6 @@ function sccSwitchPanel(name) {
   if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-var SCC_FG_DATA    = null;   // cached on first load
-var SCC_FG_FILTER  = 'all';
-var SCC_FG_OPEN    = {};     // section open state keyed by section id
-var SCC_FG_CARD_OPEN = {};   // card detail open state keyed by card key
-function sccEscFg(s) { return sccEsc ? sccEsc(s) : String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function sccRenderFieldGuide() {
-  var body = document.getElementById('scc-fg-body');
-  if (!body) return;
-  if (SCC_FG_DATA) { sccFgDraw(); return; }
-  body.innerHTML = '<div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>';
-  // Fetch all needed tables in parallel
-  // Respects the Field Guide's own session selector when one has been chosen —
-  // otherwise falls back to whatever session is globally active, unchanged.
-  var sessionId = (typeof SCC_FG_DOC_SESSION_NUM === 'number' && SCC_FG_DOC_SESSION_NUM != null) ? SCC_FG_DOC_SESSION_NUM : (SCC_SESSION ? SCC_SESSION.session_number : 1);
-  Promise.all([
-    sccFetch('world_characters', '&player_facing=not.is.null&order=name.asc'),
-    sccFetch('creatures', '&challenge_rating=not.is.null&order=name.asc'),
-    sccFetch('pois', '&order=name.asc'),
-    sccFetch('items', '&player_facing=not.is.null&order=name.asc'),
-    sccFetch('session_notes', '?session_number=eq.' + sessionId)
-  ]).then(function(results) {
-    var chars    = Array.isArray(results[0]) ? results[0] : [];
-    var creatures = Array.isArray(results[1]) ? results[1] : [];
-    var pois     = Array.isArray(results[2]) ? results[2] : [];
-    var items    = Array.isArray(results[3]) ? results[3] : [];
-    var sessions = Array.isArray(results[4]) ? results[4] : [];
-    var sess     = sessions[0] || null;
-    // Filter to session IDs if session data loaded
-    var npcIds      = sess && sess.npc_ids      ? sess.npc_ids      : null;
-    var creatureIds = sess && sess.creature_ids ? sess.creature_ids : null;
-    var locationIds = sess && sess.location_ids ? sess.location_ids : null;
-    var itemIds     = sess && sess.item_ids_awarded ? sess.item_ids_awarded : null;
-    var filteredChars    = npcIds      ? chars.filter(function(c){ return npcIds.indexOf(c.id) >= 0; })      : chars;
-    var filteredCreatures= creatureIds ? creatures.filter(function(c){ return creatureIds.indexOf(c.id) >= 0; }) : creatures;
-    var filteredPois     = locationIds ? pois.filter(function(p){ return locationIds.indexOf(p.id) >= 0; })   : pois;
-    var filteredItems    = itemIds     ? items.filter(function(i){ return itemIds.indexOf(i.id) >= 0; })     : items;
-    // DM reference items (misc category, player_facing=false, named starts with "DM Reference")
-    var dmItems = items.filter(function(i){ return i.category === 'misc' && i.player_facing === false && i.name && i.name.indexOf('DM Reference') === 0; });
-    SCC_FG_DATA = {
-      npcs: filteredChars,
-      creatures: filteredCreatures,
-      locations: filteredPois,
-      items: filteredItems.filter(function(i){ return !(i.category === 'misc' && i.player_facing === false); }),
-      dm: dmItems
-    };
-    sccFgDraw();
-  }).catch(function(e) {
-    if (body) body.innerHTML = '<div class="scc-fg-empty">Could not load Field Guide data.</div>';
-  });
-}
-function sccFgSetFilter(f, btn) {
-  SCC_FG_FILTER = f;
-  document.querySelectorAll('.scc-fg-filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-  sccFgDraw();
-}
-function sccFgFilter(q) {
-  SCC_FG_DRAW_QUERY = q.toLowerCase().trim();
-  sccFgDraw();
-}
-var SCC_FG_DRAW_QUERY = '';
-function sccFgDraw() {
-  var body = document.getElementById('scc-fg-body');
-  if (!body || !SCC_FG_DATA) return;
-  var q = SCC_FG_DRAW_QUERY;
-  var sections = [
-    { id:'npcs',      label:'NPCs',          icon:'&#127922;', data: SCC_FG_DATA.npcs,      type:'npc'      },
-    { id:'creatures', label:'Creatures',      icon:'&#128062;', data: SCC_FG_DATA.creatures, type:'creature' },
-    { id:'locations', label:'Locations',      icon:'&#128205;', data: SCC_FG_DATA.locations, type:'location' },
-    { id:'items',     label:'Items &amp; Loot',   icon:'&#9876;',   data: SCC_FG_DATA.items,     type:'item'     },
-    { id:'dm',        label:'DM Notes',       icon:'&#9889;',   data: SCC_FG_DATA.dm,        type:'dm'       }
-  ];
-  var html = '';
-  var anyVisible = false;
-  sections.forEach(function(sec) {
-    if (SCC_FG_FILTER !== 'all' && SCC_FG_FILTER !== sec.id) return;
-    var entries = sec.data;
-    if (q) {
-      entries = entries.filter(function(e){
-        var blob = (e.name||'') + ' ' + (e.summary||'') + ' ' + (e.role||'') + ' ' + (e.category||'') + ' ' + (e.dm_notes||'') + ' ' + (e.description||'') + ' ' + (e.behavior||'') + ' ' + (e.personality||'');
-        return blob.toLowerCase().indexOf(q) >= 0;
-      });
-    }
-    if (!entries.length) return;
-    anyVisible = true;
-    var isOpen = SCC_FG_OPEN[sec.id] !== false; // open by default
-    html += '<div class="scc-fg-section' + (isOpen ? ' open' : '') + '" id="scc-fg-sec-' + sec.id + '">'
-      + '<div class="scc-fg-section-header" onclick="sccFgToggleSection(\'' + sec.id + '\')">'
-        + '<span class="scc-fg-section-title">' + sec.icon + ' ' + sccEscFg(sec.label) + '</span>'
-        + '<span style="display:flex;align-items:center;gap:0.5rem;">'
-          + '<span class="scc-fg-section-count">' + entries.length + '</span>'
-          + '<span class="scc-fg-section-chevron">&#9654;</span>'
-        + '</span>'
-      + '</div>'
-      + '<div class="scc-fg-section-body">';
-    entries.forEach(function(e) {
-      var key = sec.type + ':' + e.id;
-      var isCardOpen = SCC_FG_CARD_OPEN[key];
-      html += '<div class="scc-fg-card" id="scc-fg-card-' + key.replace(':','-') + '" onclick="sccFgToggleCard(\'' + sccEscFg(key) + '\')">'
-        + '<div class="scc-fg-card-icon">' + sec.icon + '</div>'
-        + '<div class="scc-fg-card-body">'
-          + '<div class="scc-fg-card-name">' + sccEscFg(e.name||'Unnamed');
-      // type tag
-      if (e.category) html += '<span class="scc-fg-card-tag">' + sccEscFg(e.category) + '</span>';
-      else if (e.challenge_rating != null) html += '<span class="scc-fg-card-tag">CR ' + sccEscFg(String(parseFloat(e.challenge_rating)||0)) + '</span>';
-      else if (e.poi_type) html += '<span class="scc-fg-card-tag">' + sccEscFg(e.poi_type) + '</span>';
-      html += '</div>';
-      // sub line
-      var sub = e.role || e.summary || e.habitat || e.description || '';
-      if (sub) html += '<div class="scc-fg-card-sub">' + sccEscFg(sub.length > 110 ? sub.slice(0,110) + '&#x2026;' : sub) + '</div>';
-      html += '</div></div>';
-      // expandable detail
-      html += '<div class="scc-fg-detail' + (isCardOpen ? ' open' : '') + '" id="scc-fg-detail-' + key.replace(':','-') + '">';
-      html += sccFgCardDetail(e, sec.type);
-      html += '</div>';
-    });
-    html += '</div></div>';
-  });
-  body.innerHTML = anyVisible ? html : '<div class="scc-fg-empty">No entries match your search.</div>';
-}
-function sccFgToggleSection(id) {
-  SCC_FG_OPEN[id] = SCC_FG_OPEN[id] === false ? true : false;
-  var el = document.getElementById('scc-fg-sec-' + id);
-  if (el) el.classList.toggle('open', SCC_FG_OPEN[id] !== false);
-}
-function sccFgToggleCard(key) {
-  SCC_FG_CARD_OPEN[key] = !SCC_FG_CARD_OPEN[key];
-  var safeKey = key.replace(':','-');
-  var detail = document.getElementById('scc-fg-detail-' + safeKey);
-  if (detail) detail.classList.toggle('open', !!SCC_FG_CARD_OPEN[key]);
-}
-function sccFgCardDetail(e, type) {
-  var h = '';
-  if (type === 'npc') {
-    // Phase 3b: full field union from the shared component (see
-    // sccBuildNpcCardBodyHtml) -- was a hand-picked subset (6 fields) that
-    // silently dropped read_aloud's real "Visualization" framing, summary,
-    // pronouns/status/affiliation, gigglegloom_relationship, world
-    // associations, tags, and linked quests. Only the compact list-row
-    // summary above (icon/name/tag/one-line sub) is untouched -- a
-    // different, deliberately-terse concept, not part of this merge.
-    h += sccBuildNpcCardBodyHtml(e);
-  }
-  else if (type === 'creature') {
-    if (e.read_aloud) {
-      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
-    }
-    // Stat block
-    if (e.ac || e.hp_max) {
-      h += '<div class="scc-fg-stat-grid">';
-      var stats = [['AC',e.ac],['HP',e.hp_max],['CR',e.challenge_rating],['STR',e.str],['DEX',e.dex],['CON',e.con]];
-      stats.forEach(function(s){ if(s[1]!=null) h += '<div class="scc-fg-stat-cell"><div class="scc-fg-stat-val">' + sccEscFg(String(s[1])) + '</div><div class="scc-fg-stat-label">' + sccEscFg(s[0]) + '</div></div>'; });
-      h += '</div>';
-    }
-    // Attacks
-    if (e.attacks && e.attacks.length) {
-      h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">Attacks</div>';
-      e.attacks.forEach(function(a){
-        h += '<div class="scc-fg-detail-text" style="margin-bottom:0.3rem;"><strong>' + sccEscFg(a.name||'') + '</strong> +' + sccEscFg(String(a.attack_bonus||0)) + ' to hit, ' + sccEscFg(a.damage_dice||'') + ' ' + sccEscFg(a.damage_type||'') + (a.notes ? ' &#x2014; ' + sccEscFg(a.notes) : '') + '</div>';
-      });
-      h += '</div>';
-    }
-    // Traits
-    if (e.traits && e.traits.length) {
-      h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">Traits</div>';
-      e.traits.forEach(function(t){ h += '<div class="scc-fg-detail-text" style="margin-bottom:0.3rem;"><strong>' + sccEscFg(t.name||'') + '.</strong> ' + sccEscFg(t.description||'') + '</div>'; });
-      h += '</div>';
-    }
-    var fields2 = [['Description', e.description], ['Behavior', e.behavior], ['Gigglegloom', e.gigglegloom_relationship]];
-    fields2.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
-    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
-  }
-  else if (type === 'location') {
-    // Phase 3b: full field union from the shared component (see
-    // sccBuildLocationCardBodyHtml) -- was 3 fields, silently dropping
-    // read_aloud's real framing, landmarks, structures, population,
-    // culture/strategic_importance/tone, formery/government/capital,
-    // gigglegloom_relationship, tags, vareth_presence, and (for POIs) the
-    // real Shop UI, none of which the sidebar ever showed before.
-    h += sccBuildLocationCardBodyHtml(e);
-  }
-  else if (type === 'item') {
-    if (e.read_aloud) {
-      h += '<div class="scc-fg-read-aloud"><div class="scc-fg-read-aloud-label">&#127922; Read Aloud</div><div class="scc-fg-read-aloud-text">' + sccEscFg(e.read_aloud) + '</div></div>';
-    }
-    var itemFields = [['Summary', e.summary], ['Description', e.description], ['Effect', e.effect_type ? e.effect_type + (e.effect_dice ? ' ' + e.effect_dice : '') + (e.effect_flat ? ' +' + e.effect_flat : '') : null], ['Story Note', e.story_note]];
-    itemFields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
-    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
-  }
-  else if (type === 'dm') {
-    // DM reference entries - show the full dm_notes which contain all the good stuff
-    var dmFields = [['Summary', e.summary], ['Description', e.description]];
-    dmFields.forEach(function(f){ if(f[1]) h += '<div class="scc-fg-detail-section"><div class="scc-fg-detail-label">' + sccEscFg(f[0]) + '</div><div class="scc-fg-detail-text">' + sccEscFg(f[1]) + '</div></div>'; });
-    if (e.dm_notes) h += '<div class="scc-fg-dm-block"><div class="scc-fg-dm-label">&#9888; DM Notes</div><div class="scc-fg-dm-text">' + sccEscFg(e.dm_notes) + '</div></div>';
-  }
-  return h || '<div class="scc-fg-detail-text" style="color:var(--dm-text-muted);font-style:italic;">No additional details.</div>';
-}
-
 // ── Field Guide document (multi-session, block-based storage) ──────
 // Each session's document lives in `field_guide_sessions` as one ordered
 // jsonb `blocks` array — see CLAUDE.md Decision Log (Aug 13/14 2026) for
@@ -12656,10 +12399,6 @@ function sccFgSessionChanged() {
   SCC_FG_EDIT_MODE = false;
   var toggle = document.getElementById('scc-fg-edit-toggle');
   if (toggle) toggle.textContent = 'Edit Document';
-  // The sidebar's own session-scoped fetch was previously cached forever with
-  // no way to invalidate it — force a refetch for the newly selected session.
-  SCC_FG_DATA = null;
-  sccRenderFieldGuide();
   sccFgLoadDocument(num);
 }
 
@@ -14564,18 +14303,18 @@ function sccToggleNpc2(id) {
 }
 
 // Was hardcoded to only ever refresh the Live Session NPCs section --
-// clicking the relationship badge from the lookup drawer or the Field
-// Guide sidebar saved correctly but left THAT card visually stale until
-// closed/reopened, since only sccRenderNpcPanel() ran. Now that the same
-// badge markup (from the shared header) can be clicked from any of the 3
-// sites, it has to refresh whichever one is actually showing this NPC.
+// clicking the relationship badge from the lookup drawer saved correctly but
+// left THAT card visually stale until closed/reopened, since only
+// sccRenderNpcPanel() ran. Now that the same badge markup (from the shared
+// header) can be clicked from either site, it has to refresh whichever one
+// is actually showing this NPC. (A third site, the Field Guide sidebar, was
+// removed entirely -- see CLAUDE.md Decision Log.)
 function sccCycleRelationship2(npcId) {
   sccCycleRelationship(npcId);
   sccRenderNpcPanel();
   if (SCC_LOOKUP_TYPE === 'character' && SCC_LOOKUP_ID === npcId) {
     sccOpenLookup('character', npcId);
   }
-  if (typeof SCC_FG_DATA !== 'undefined' && SCC_FG_DATA) sccFgDraw();
 }
 
 // ── Location Panel ────────────────────────────────────────────────
@@ -15751,22 +15490,22 @@ function sccVendorSearchStock(collection, entityId, query) {
 // Same "refresh whichever surface is actually showing this entity" pattern
 // sccCycleRelationship2() already established -- the Shop section (built by
 // sccVendorShopSectionHtml, part of the shared Phase 3b location card body)
-// is reachable from 3 sites: the lookup drawer, Live Session's Locations
-// accordion, and the Field Guide sidebar. This used to unconditionally call
+// is reachable from 2 sites: the lookup drawer and Live Session's Locations
+// tab. (A third site, the Field Guide sidebar, was removed entirely -- see
+// CLAUDE.md Decision Log.) This used to unconditionally call
 // sccOpenLookup(), which does two wrong things when a vendor action was
-// taken from Live Session or Field Guide instead: it force-opens the
-// lookup drawer over whatever the DM was actually looking at (a real,
-// confirmed UX bug -- an unrelated panel sliding in uninvited), and it
-// never refreshes the surface that WAS actually visible, which kept
-// showing stale pre-action stock (e.g. "Nothing in stock yet." right after
-// adding real stock) until manually collapsed and reopened.
+// taken from Live Session instead: it force-opens the lookup drawer over
+// whatever the DM was actually looking at (a real, confirmed UX bug -- an
+// unrelated panel sliding in uninvited), and it never refreshes the surface
+// that WAS actually visible, which kept showing stale pre-action stock
+// (e.g. "Nothing in stock yet." right after adding real stock) until
+// manually collapsed and reopened.
 function sccVendorRefreshLookup(collection, entityId) {
   var lookupType = collection === 'pois' ? 'city' : 'organization';
   if (SCC_LOOKUP_TYPE === lookupType && SCC_LOOKUP_ID === entityId) {
     sccOpenLookup(lookupType, entityId);
   }
   sccRenderLocationPanel();
-  if (typeof SCC_FG_DATA !== 'undefined' && SCC_FG_DATA) sccFgDraw();
 }
 
 function sccVendorAddStock(collection, entityId, itemId) {
