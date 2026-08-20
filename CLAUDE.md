@@ -12,7 +12,7 @@
 - Code state → read the actual file before every edit
 
 **Feature requests & bug reports:**
-The Supabase `requests` table (`title`, `description`, `area`, `status`, `source`, `notes`) is the single, live tracker for every DM feature request and bug report — real `status` values in use: `not-started` / `in-progress` / `partial` / `needs-decision` / `done`. This list must never be copied into CLAUDE.md, a chat, a handoff doc, or any other file as text — Supabase is the only copy. A duplicate anywhere else just goes stale the moment the real one changes.
+The Supabase `requests` table (`title`, `description`, `area`, `status`, `source`, `notes`) is the single, live tracker for every DM feature request and bug report — real `status` values in use: `not-started` / `in-progress` / `blocked` / `needs-decision` / `partial` / `done` / `declined` (the DM decided against building it — distinct from `not-started`, so it stops showing up as open work, and distinct from `done`, so it isn't misrepresented as built). This list must never be copied into CLAUDE.md, a chat, a handoff doc, or any other file as text — Supabase is the only copy. A duplicate anywhere else just goes stale the moment the real one changes.
 Every new row must also set `size` — `small` / `medium` / `large`, `unknown` if it genuinely needs investigation before it can be sized at all, or `n/a` for an item that's already finished.
 
 ---
@@ -34,6 +34,9 @@ Every new row must also set `size` — `small` / `medium` / `large`, `unknown` i
 4. If a new bug pattern was discovered, add it to the Decision Log.
 5. If a branch merged to `main` this session: check Section 3 (⚠ Pending / Blocked) — does anything there just become unblocked? If so, flag it to the DM in this session's summary and move it to Next Priorities.
 6. Whenever you finish and push work, do both of these without being asked: (a) if it corresponds to an item in the Supabase `requests` table, update that item's `status` yourself (same anon key/URL already used everywhere else in this codebase) as part of finishing the task — don't leave it for the DM to remember; (b) if it's something the DM would want to check themselves (a UI change, a fix, a new feature), end the report with the exact local link to view it — the real port number of whatever server is actually running, the exact path (e.g. `/sheet/index.html?token=...`), and which folder/branch it's serving from. Your own in-app browser verification is not a substitute for (b) — give the DM a real, clickable link every time.
+
+**Feature branches don't touch CLAUDE.md:**
+While working on a feature branch, skip End items 1–4 (Decision Log, Current Focus, self-correction edits, new-bug-pattern logging) entirely — write nothing to this file, not even a small entry. Every branch inserting at the same anchor point (the top of the Decision Log, the top of Current Focus) is what causes merge conflicts when several branches land close together, even when the actual code never overlaps. Instead, state clearly in the final report to the DM everything that would have gone into the Decision Log and Next Priorities — same content, same detail, just not committed to the file yet. Once a batch of parallel branches has finished merging into `main`, one follow-up consolidation pass — on the designated `Anavale-wiki-MAIN-3` worktree — adds that whole batch's entries to CLAUDE.md in a single commit, directly on `main`, where no merge conflict is possible since nothing else is touching the file at that point.
 
 ---
 
@@ -585,6 +588,11 @@ This is a standing rule, not a one-off decision — a future "is this spell legi
 ## 12. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-20 (new session, process addendum — feature branches stop touching CLAUDE.md, no code changed) — `CLAUDE.md`.**
+Several branches landed close together tonight and CLAUDE.md conflicted on the merge every single time — not because any two branches' real work overlapped, but because every branch was independently inserting a Decision Log entry at the top of the log and a Current Focus update at the top of that section, the same two anchor points, regardless of what file the actual feature touched. Added a new rule to §1: feature-branch sessions skip End items 1–4 entirely (no Decision Log entry, no Current Focus edit, no self-correction edits, no bug-pattern logging) — the session's final report to the DM carries that same content instead, just not committed to the file yet. A single consolidation pass, run afterward on the designated `Anavale-wiki-MAIN-3` worktree once a batch of parallel branches has finished merging into `main`, adds the whole batch's entries in one commit directly on `main` — nothing else is touching the file at that point, so there's nothing left to conflict with.
 
 ---
 
