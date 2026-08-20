@@ -7811,6 +7811,16 @@ function showDMToast(msg, type) {
   font-style: italic;
   padding: 0.4rem 0;
 }
+.scc-pd-spell-summary {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+}
+.scc-pd-spell-summary strong { color: var(--dm-text); font-weight: 700; }
 /* Death saves -- same pips/behavior as the character sheet's own MainInfo
    header (sheet/index.html .cs-mi-death-saves), laid out horizontally to
    fit under a combat row instead of the sheet's stacked header slot. */
@@ -11047,13 +11057,59 @@ function escQ(str) {
 }
 // ── PLAYERS PANEL ────────────────────────────
 var PLAYERS_DATA = [];
+// Anavale species names are in-world reskins of real 5e species — mirrored
+// verbatim from sheet/index.html's own SPECIES_PHB (the character sheet's
+// header blurb already shows this same parenthetical), reused rather than
+// reinvented so the two can't drift.
+var SPECIES_PHB = {
+  brightblood:'Aasimar', duskborn:'Tiefling', glimmerkin:'Gnome',
+  gloomtouched:'Warforged', hearthbound:'Halfling', rootwalker:'Orc',
+  scalegrace:'Dragonborn', solmeri:'Human', stonemarked:'Dwarf',
+  tallwalker:'Goliath', veilstepped:'Changeling', verdathi:'Elf'
+};
+// Ported verbatim from sheet/index.html's parseSummaryBlocks()/
+// extractSummarySection() -- player_characters.summary is generateSummary()'s
+// full six-section narrative ("LABEL\n\nparagraph" blocks joined by "\n\n\n"),
+// not a short summary on its own. Pulls just the "WHO ARE YOU" section's
+// clean paragraph text, same as the sheet's own Who You Are card, rather
+// than showing the raw six-section document verbatim.
+function parseSummaryBlocks(summaryText) {
+  if (!summaryText) return [];
+  return summaryText.split('\n\n\n').map(function(block) {
+    var idx = block.indexOf('\n\n');
+    if (idx === -1) return null;
+    return { label: block.slice(0, idx).trim(), text: block.slice(idx + 2).trim() };
+  }).filter(function(sec) { return sec && sec.label && sec.text; });
+}
+function extractSummarySection(summaryText, wantedLabel) {
+  var sections = parseSummaryBlocks(summaryText);
+  for (var i = 0; i < sections.length; i++) {
+    if (sections[i].label.toUpperCase() === wantedLabel.toUpperCase()) return sections[i].text;
+  }
+  return null;
+}
+// Collapses the real summary down to a single-line card subtitle, full text
+// on hover via title=. Tries the "WHO ARE YOU" section first (the real
+// six-section format); some characters still carry the old one-line
+// pre-rewrite format with no sections at all, so falls back to the raw text
+// for those -- same fallback shape sheet/index.html's own header appearance
+// paragraph already uses for this identical old-format-summary gap. Returns
+// text:'—' when there's nothing real to show either way.
+function sccPlayerSummaryPreview(summaryText, maxLen) {
+  var section = extractSummarySection(summaryText, 'WHO ARE YOU');
+  var t = String(section != null ? section : (summaryText || '')).replace(/\s+/g, ' ').trim();
+  if (!t) return { text: '—', truncated: false, full: '' };
+  if (t.length <= maxLen) return { text: t, truncated: false, full: t };
+  var cut = t.slice(0, maxLen).replace(/\s+\S*$/, '');
+  return { text: cut, truncated: true, full: t };
+}
 function playersRefresh() {
   var body = document.getElementById('players-body');
   if (!body) return;
   body.innerHTML = '<div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">Loading…</div>';
   var SB_URL = 'https://ebppsgaftzyvftemfeom.supabase.co';
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
-  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_email,class_id,species,home_region,level,token,created_at&order=created_at.asc', {
+  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_email,class_id,species,home_region,level,token,created_at,ability_scores,summary&order=created_at.asc', {
     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
   })
   .then(function(res) { return res.json(); })
@@ -11082,13 +11138,16 @@ function renderPlayers() {
     + PLAYERS_DATA.map(function(pc) {
         var sheetUrl = SHEET_BASE + pc.token;
         var cls = CLASS_LABELS[pc.class_id] || pc.class_id || '—';
+        var speciesKey = (pc.species || '').toLowerCase();
+        var speciesWithPhb = (pc.species || '—') + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : '');
+        var summaryPreview = sccPlayerSummaryPreview(pc.summary, 200);
         var submitted = pc.created_at ? new Date(pc.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
         return '<div style="background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:10px;padding:1.25rem 1.5rem;">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'
             + '<div>'
-              + '<div style="font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-text);margin-bottom:0.2rem;">' + escQ(pc.name || '—') + '</div>'
-              + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);">'
-                + escQ(pc.player_email || '—')
+              + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="display:block;font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;text-decoration:none;">' + escQ(pc.name || '—') + '</a>'
+              + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);max-width:32rem;"' + (summaryPreview.full ? ' title="' + escQ(summaryPreview.full) + '"' : '') + '>'
+                + escQ(summaryPreview.text) + (summaryPreview.truncated ? '&#8230;' : '')
               + '</div>'
             + '</div>'
             + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
@@ -11099,7 +11158,7 @@ function renderPlayers() {
           + '</div>'
           + '<div style="display:flex;gap:1.5rem;margin-top:0.85rem;flex-wrap:wrap;">'
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Class</span><br>' + escQ(cls) + '</div>'
-            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Species</span><br>' + escQ(pc.species || '—') + '</div>'
+            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Species</span><br>' + escQ(speciesWithPhb) + '</div>'
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Region</span><br>' + escQ(pc.home_region || '—') + '</div>'
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Level</span><br>' + escQ(String(pc.level || 1)) + '</div>'
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Submitted</span><br>' + submitted + '</div>'
@@ -11122,7 +11181,9 @@ function renderPlayers() {
 // .scc-loot-panel/.scc-statblock-panel (sccToggleLoot/sccToggleStatBlock),
 // not a modal, per the instruction to match existing DM Tools conventions.
 var PD_SHEETS = {};       // character_id -> character_sheet row, fetched on first Edit click, cached
+var PD_INVENTORY = {};    // character_id -> inventory rows array, fetched on first Edit click, cached
 var SPELLS_DATA_DM = null; // all spells rows, fetched once on first Edit click across any character, then reused
+var CLASSES_DATA_DM = null; // all classes rows, fetched once on first Edit click across any character, then reused
 
 function sccTogglePlayerDetail(charId) {
   var panel = document.getElementById('scc-pd-panel-' + charId);
@@ -11138,15 +11199,20 @@ function sccLoadPlayerDetail(charId) {
   var bodyEl = document.getElementById('scc-pd-body-' + charId);
   if (bodyEl) bodyEl.innerHTML = '<div class="scc-pd-empty">Loading&#8230;</div>';
   var needSpells = !SPELLS_DATA_DM;
+  var needClasses = !CLASSES_DATA_DM;
   Promise.all([
     sccFetch('character_sheet', '&character_id=eq.' + encodeURIComponent(charId)),
-    needSpells ? sccFetch('spells', '') : Promise.resolve(null)
+    needSpells ? sccFetch('spells', '') : Promise.resolve(null),
+    needClasses ? sccFetch('classes', '') : Promise.resolve(null),
+    sccFetch('inventory', '&character_id=eq.' + encodeURIComponent(charId) + '&order=sort_order.asc')
   ]).then(function(results) {
     var sheetRows = results[0];
     if (needSpells) SPELLS_DATA_DM = Array.isArray(results[1]) ? results[1] : [];
+    if (needClasses) CLASSES_DATA_DM = Array.isArray(results[2]) ? results[2] : [];
     PD_SHEETS[charId] = (Array.isArray(sheetRows) && sheetRows[0]) ? sheetRows[0] : {
       character_id: charId, learned_spells: [], prepared_spells: [], extra_learnable_spells: []
     };
+    PD_INVENTORY[charId] = Array.isArray(results[3]) ? results[3] : [];
     renderPlayerDetailBody(charId);
   }).catch(function() {
     if (bodyEl) bodyEl.innerHTML = '<div class="scc-pd-empty">Failed to load — try again.</div>';
@@ -11157,22 +11223,102 @@ function sccPlayerCharById(charId) {
   return PLAYERS_DATA.find(function(pc) { return pc.id === charId; });
 }
 
+function sccPlayerClassRow(charId) {
+  var pc = sccPlayerCharById(charId);
+  var classKey = (pc && pc.class_id || '').toLowerCase();
+  return (Array.isArray(CLASSES_DATA_DM) ? CLASSES_DATA_DM : []).find(function(c) { return c.id === classKey; }) || null;
+}
+
 function renderPlayerDetailBody(charId) {
   var bodyEl = document.getElementById('scc-pd-body-' + charId);
   if (!bodyEl) return;
   bodyEl.innerHTML = '<div class="scc-pd-section">'
     + '<div class="scc-pd-section-title">Spell Assignment</div>'
+    + renderPlayerSpellCountSummary(charId)
     + renderPlayerSpellSection(charId)
+  + '</div>'
+  // Third sibling .scc-pd-section, per the extensible-by-design note above —
+  // same search-and-assign shape as Spell Assignment (list of what's already
+  // there, then a search box that writes a new row via sccPost), reusing the
+  // same .scc-pd-spell-*/.scc-picker-* classes rather than a parallel set.
+  + '<div class="scc-pd-section">'
+    + '<div class="scc-pd-section-title">Inventory</div>'
+    + renderPlayerInventorySection(charId)
   + '</div>'
   // Round 3 Follow-up (sheet/index.html session) — currency is now DM-only:
   // players' Gold/Silver/Copper inputs on the sheet became read-only, this
-  // is the one real editor left for that value. Second sibling .scc-pd-
+  // is the one real editor left for that value. Sibling .scc-pd-
   // section, per the extensible-by-design note above — no restructuring of
   // Spell Assignment or the panel/toggle mechanism needed.
   + '<div class="scc-pd-section">'
     + '<div class="scc-pd-section-title">Currency</div>'
     + renderPlayerCurrencySection(charId)
   + '</div>';
+}
+
+// Reuses the exact prepared-count algorithm sheet/index.html's own
+// computePreparedMax() implements (classes.prepared_count_formula --
+// fixed_table for Bard/Sorcerer/Warlock, ability_mod_plus_level for the
+// other 5 casters) rather than recomputing it a different way here — same
+// two branches, just reading pc.ability_scores/pc.level (this file's own
+// data shape) instead of the sheet's ABILITY_SCORES/CH globals.
+function computePreparedMaxDM(pc, classRow) {
+  if (!classRow || !classRow.prepared_count_formula) return 0;
+  var f = classRow.prepared_count_formula;
+  var chLevel = (pc && pc.level) || 1;
+  var min = parseInt(f.min) || 1;
+  if (f.type === 'fixed_table') {
+    var n = f.values ? parseInt(f.values[String(chLevel)]) : 0;
+    return Math.max(min, n || 0);
+  }
+  if (f.type === 'ability_mod_plus_level') {
+    var castingAbility = classRow.spellcasting_ability;
+    var scores = (pc && pc.ability_scores) || {};
+    var abMod = castingAbility ? Math.floor(((parseInt(scores[castingAbility]) || 10) - 10) / 2) : 0;
+    var divisor = parseInt(f.level_divisor) || 1;
+    var levelPart = Math.floor(chLevel / divisor);
+    return Math.max(min, abMod + levelPart);
+  }
+  return 0;
+}
+
+// classes.cantrips_known_formula -- same {type:"fixed_table", values} shape
+// as prepared_count_formula's fixed_table variant, verified against the real
+// 2024 PHB Cantrips column per class. Null for non-casters and the two
+// half-casters (Paladin/Ranger get no cantrips at all in 2024 rules).
+function computeCantripsMaxDM(pc, classRow) {
+  if (!classRow || !classRow.cantrips_known_formula) return 0;
+  var f = classRow.cantrips_known_formula;
+  var chLevel = (pc && pc.level) || 1;
+  if (f.type === 'fixed_table') {
+    return (f.values ? parseInt(f.values[String(chLevel)]) : 0) || 0;
+  }
+  return 0;
+}
+
+function renderPlayerSpellCountSummary(charId) {
+  var classRow = sccPlayerClassRow(charId);
+  if (!classRow || !classRow.spellcasting_ability) return ''; // non-caster -- nothing to show
+  var pc = sccPlayerCharById(charId);
+  var sheet = PD_SHEETS[charId] || {};
+  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  var byId = {};
+  (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
+  var cantripsAssigned = 0, leveledAssigned = 0;
+  learned.forEach(function(id) {
+    var s = byId[id];
+    if (!s) return; // spell not resolved (e.g. removed from catalog) -- don't miscount either bucket
+    if (s.level === 0) cantripsAssigned++; else leveledAssigned++;
+  });
+  var parts = [];
+  // Half-casters (Paladin/Ranger) have no cantrips_known_formula -- correctly
+  // omit the line rather than show a confusing "0/0" for a class that never
+  // gets cantrips at all.
+  if (classRow.cantrips_known_formula) {
+    parts.push('Cantrips: <strong>' + cantripsAssigned + '</strong>/' + computeCantripsMaxDM(pc, classRow));
+  }
+  parts.push('Leveled: <strong>' + leveledAssigned + '</strong>/' + computePreparedMaxDM(pc, classRow));
+  return '<div class="scc-pd-spell-summary">' + parts.map(function(p) { return '<span>' + p + '</span>'; }).join('') + '</div>';
 }
 
 // Same eligibility rule as the sheet's own (now-retired) self-serve browser
@@ -11278,6 +11424,91 @@ function sccPlayerUnassignSpell(charId, spellId) {
     renderPlayerDetailBody(charId);
     showDMToast('Spell removed', 'success');
   }).catch(function() { showDMToast('Failed to remove spell', 'error'); });
+}
+
+// Inventory (same search-and-assign pattern as Spell Assignment above, just
+// writing a new `inventory` row instead of appending to learned_spells --
+// reuses .scc-pd-spell-list/-row/-row-name/-row-level/-remove and
+// .scc-picker-* verbatim rather than a parallel set of near-identical
+// classes, same reuse-over-duplication call this file already made for
+// Currency's coin inputs (.scc-loot-coin-row).
+function renderPlayerInventorySection(charId) {
+  var inv = PD_INVENTORY[charId] || [];
+  var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var byId = {};
+  itemsAll.forEach(function(i) { byId[i.id] = i; });
+  var listHtml = inv.length
+    ? '<div class="scc-pd-spell-list">' + inv.map(function(row) {
+        var item = row.item_id ? byId[row.item_id] : null;
+        var name = row.custom_name || (item ? item.name : row.item_id) || 'Unknown item';
+        var qty = row.quantity || 1;
+        return '<div class="scc-pd-spell-row">'
+          + '<span class="scc-pd-spell-row-name">' + sccEsc(name) + (qty > 1 ? '<span class="scc-pd-spell-row-level">&times;' + qty + '</span>' : '') + '</span>'
+          + '<button class="scc-pd-spell-remove" onclick="sccPlayerRemoveInventoryItem(\'' + escQ(charId) + '\',\'' + escQ(row.id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
+        + '</div>';
+      }).join('') + '</div>'
+    : '<div class="scc-pd-empty">No items in inventory yet.</div>';
+  return listHtml
+    + '<div class="scc-picker-search-wrap" style="position:relative;">'
+      + '<input type="text" class="scc-picker-search" id="scc-pd-itemsearch-' + escQ(charId) + '" placeholder="Search the item catalog&#8230;" oninput="sccPlayerItemSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
+      + '<div class="scc-picker-dropdown" id="scc-pd-itemdrop-' + escQ(charId) + '"></div>'
+    + '</div>';
+}
+
+function sccPlayerItemSearch(charId, query) {
+  var drop = document.getElementById('scc-pd-itemdrop-' + charId);
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var results = itemsAll.filter(function(i) {
+    return i.name && i.name.toLowerCase().indexOf(query) >= 0;
+  }).slice(0, 12);
+  if (!results.length) {
+    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+    drop.classList.add('open');
+    return;
+  }
+  drop.innerHTML = results.map(function(i) {
+    return '<div class="scc-picker-option" onclick="sccPlayerAssignItem(\'' + escQ(charId) + '\',\'' + escQ(i.id) + '\')">'
+      + sccEsc(i.name)
+      + '<div class="scc-picker-option-sub">' + sccEsc(i.category || '') + (i.cost_gp != null ? ' &middot; ' + i.cost_gp + ' gp' : '') + '</div>'
+    + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+
+function sccPlayerAssignItem(charId, itemId) {
+  var pc = sccPlayerCharById(charId);
+  if (!pc) return;
+  sccPost('inventory', {
+    character_id: charId, token: pc.token || '', item_id: itemId,
+    quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to add item', 'error'); return; }
+    return sccFetch('inventory', '&character_id=eq.' + encodeURIComponent(charId) + '&order=sort_order.asc');
+  }).then(function(rows) {
+    if (!rows) return; // the !r.ok branch above already returned
+    PD_INVENTORY[charId] = Array.isArray(rows) ? rows : PD_INVENTORY[charId];
+    var searchInput = document.getElementById('scc-pd-itemsearch-' + charId);
+    if (searchInput) searchInput.value = '';
+    var drop = document.getElementById('scc-pd-itemdrop-' + charId);
+    if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+    renderPlayerDetailBody(charId);
+    showDMToast('Item added', 'success');
+  }).catch(function() { showDMToast('Failed to add item', 'error'); });
+}
+
+function sccPlayerRemoveInventoryItem(charId, invId) {
+  fetch(SCC_URL + '/rest/v1/inventory?id=eq.' + encodeURIComponent(invId), {
+    method: 'DELETE',
+    headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to remove item', 'error'); return; }
+    PD_INVENTORY[charId] = (PD_INVENTORY[charId] || []).filter(function(row) { return row.id !== invId; });
+    renderPlayerDetailBody(charId);
+    showDMToast('Item removed', 'success');
+  }).catch(function() { showDMToast('Failed to remove item', 'error'); });
 }
 
 // Currency (Round 3 Follow-up, sheet/index.html session) — same 3-field
