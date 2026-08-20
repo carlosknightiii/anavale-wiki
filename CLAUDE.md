@@ -13,6 +13,7 @@
 
 **Feature requests & bug reports:**
 The Supabase `requests` table (`title`, `description`, `area`, `status`, `source`, `notes`) is the single, live tracker for every DM feature request and bug report — real `status` values in use: `not-started` / `in-progress` / `partial` / `needs-decision` / `done`. This list must never be copied into CLAUDE.md, a chat, a handoff doc, or any other file as text — Supabase is the only copy. A duplicate anywhere else just goes stale the moment the real one changes.
+Every new row must also set `size` — `small` / `medium` / `large`, `unknown` if it genuinely needs investigation before it can be sized at all, or `n/a` for an item that's already finished.
 
 ---
 
