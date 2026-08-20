@@ -2986,13 +2986,6 @@
             <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
           </div>
         </div>
-        <!-- ── PLAYER BAR (always visible) ─── -->
-        <div class="scc-player-bar" id="scc-player-bar">
-          <div class="scc-player-bar-label">Party</div>
-          <div id="scc-player-cards" class="scc-player-cards">
-            <div class="scc-player-loading">Loading player data…</div>
-          </div>
-        </div>
         <!-- ── READ-ONLY AUDIT BANNER ─────── -->
         <div class="scc-readonly-banner" id="scc-readonly-banner">
           📋 Viewing Session <span id="scc-readonly-session-num"></span> (read-only audit) —
@@ -4699,113 +4692,6 @@ function showDMToast(msg, type) {
   background: var(--dm-gold-dim);
   border-color: var(--scc-border-gold);
   color: var(--dm-gold);
-}
-/* ── Player Bar ── */
-.scc-player-bar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.6rem 1.5rem;
-  background: var(--scc-surface-mid);
-  border-bottom: 1px solid var(--scc-border);
-  flex-shrink: 0;
-  overflow-x: auto;
-}
-.scc-player-bar-label {
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--dm-text-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.scc-player-cards {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: nowrap;
-}
-.scc-player-loading {
-  color: var(--dm-text-muted);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-style: italic;
-}
-.scc-player-card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.85rem 0.4rem 0.6rem;
-  background: var(--scc-surface-high);
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius);
-  white-space: nowrap;
-  min-width: 180px;
-}
-.scc-player-pending-items {
-  flex-basis: 100%;
-  white-space: normal;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.35rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--scc-border-mid);
-}
-.scc-player-pending-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-family: var(--font-sans);
-  font-size: 0.68rem;
-  color: var(--dm-text-muted);
-}
-.scc-player-card-name {
-  font-family: var(--font-headers);
-  font-size: 0.9rem;
-  color: var(--dm-text);
-  font-weight: 600;
-}
-.scc-player-card-sub {
-  font-family: var(--font-sans);
-  font-size: 0.68rem;
-  color: var(--dm-text-muted);
-  margin-top: 0.1rem;
-}
-.scc-player-card-hp {
-  margin-left: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-.scc-player-hp-val {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--dm-green);
-}
-.scc-player-hp-label {
-  font-family: var(--font-sans);
-  font-size: 0.6rem;
-  color: var(--dm-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.scc-player-hp-val.warning { color: var(--dm-gold); }
-.scc-player-hp-val.danger  { color: var(--dm-red); }
-.scc-player-level-badge {
-  font-family: var(--font-sans);
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  background: var(--dm-gold-dim);
-  color: var(--dm-gold);
-  border: 1px solid var(--scc-border-gold);
-  white-space: nowrap;
 }
 /* ── SCC Panels ── */
 .scc-panel {
@@ -7734,6 +7620,27 @@ function showDMToast(msg, type) {
   display: none;
 }
 .scc-statblock-panel.open { display: block; }
+/* Pending DM-add items (e.g. "Wanderkeep Field Kit (DM adds)") -- relocated
+   here from the now-removed Session-tab Party bar, not deleted; same two
+   classes, same markup shape, just rendered on each Players-tab card
+   instead of a compact HP/Level strip. */
+.scc-player-pending-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--dm-border);
+}
+.scc-player-pending-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--dm-text-muted);
+}
 /* ── Players page — per-character detail panel (Round 2 Revisions).
    Same collapsible-panel-below-a-row convention as .scc-loot-panel/
    .scc-statblock-panel above, not a modal — toggled open by the card's own
@@ -7821,10 +7728,14 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
 }
 .scc-pd-spell-summary strong { color: var(--dm-text); font-weight: 700; }
-/* Search/filter/sort toolbar above the assigned-spells/inventory lists --
-   same .cm-search/.cm-select classes the Manage tab's own filter bar uses
-   (see .cm-filter-bar), just laid out for this narrower panel rather than a
-   full-width table toolbar. */
+/* Search/filter toolbar above the assigned-spells/inventory lists -- same
+   .cm-search class the Manage tab's own filter bar uses (see
+   .cm-filter-bar), just laid out for this narrower panel rather than a
+   full-width table toolbar. The per-field filters themselves (Level/Casting
+   Time/etc. for spells, Price/Category for inventory) no longer sit inline
+   here -- they live in .scc-pd-filters-bar below, opened via the Filter
+   button, same shape as the header's own .scc-global-filter-toggle/
+   -filters-bar. */
 .scc-pd-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -7834,6 +7745,75 @@ function showDMToast(msg, type) {
 }
 .scc-pd-toolbar .cm-search { flex: 1 1 140px; min-width: 120px; }
 .scc-pd-toolbar .cm-select { flex: 0 0 auto; }
+.scc-pd-filter-toggle {
+  flex-shrink: 0;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.42rem 0.75rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-pd-filter-toggle:hover,
+.scc-pd-filter-toggle.active { color: var(--dm-gold); border-color: var(--scc-border-gold); }
+.scc-pd-filters-bar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-pd-filters-bar.open { display: flex; }
+.scc-pd-filters-reset {
+  background: transparent;
+  border: none;
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+}
+.scc-pd-filters-reset:hover { color: var(--dm-gold); }
+.scc-pd-price-input {
+  width: 64px;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+}
+.scc-pd-price-sep { color: var(--dm-text-muted); font-family: var(--font-sans); font-size: 0.72rem; }
+/* Quantity-to-add input, next to the top add-item search box -- same small
+   numeric-field shape as .scc-coin-input (Currency section), a new class
+   rather than that one directly since this sits beside a search box, not a
+   coin-set label. */
+.scc-pd-additem-row { display: flex; align-items: flex-start; gap: 0.5rem; }
+.scc-pd-additem-row .scc-picker-search-wrap { flex: 1; min-width: 0; }
+.scc-pd-qty-input {
+  width: 52px;
+  flex-shrink: 0;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  padding: 0.42rem 0.4rem;
+  text-align: center;
+}
 /* Per-row/per-option thumbnail -- same real-image-with-fallback shape as
    .scc-shop-thumb/-fallback (the Vendor/Shop section), sized smaller (32px
    vs. 40px) to fit this panel's tighter rows. */
@@ -11156,6 +11136,46 @@ function extractSummarySection(summaryText, wantedLabel) {
 // for those -- same fallback shape sheet/index.html's own header appearance
 // paragraph already uses for this identical old-format-summary gap. Returns
 // text:'—' when there's nothing real to show either way.
+// Relocated from the now-removed Session-tab Party bar (sccRenderPlayerBar())
+// -- not deleted, just moved onto each Players-tab card, same markup shape
+// and same "confirms you've already added it, doesn't grant anything" rule.
+// Rendered into its own stable per-character container so a claim click
+// only ever touches that one card's pending-items block -- a full
+// renderPlayers() re-render would blow away any other character's
+// currently-open Edit panel (PD_DRAFT survives, but the panel's own "open"
+// class doesn't, since the whole card markup is rebuilt from scratch).
+function sccPlayerPendingItemsHtml(pc) {
+  var pending = Array.isArray(pc.dm_pending_items) ? pc.dm_pending_items : [];
+  if (!pending.length) return '';
+  return '<div class="scc-player-pending-items">'
+    + pending.map(function(item, i) {
+        return '<div class="scc-player-pending-item">'
+          + '<span>&#128230; ' + sccEsc(item.label || 'Item') + '</span>'
+          + '<button class="scc-btn-sm" title="Confirms you\'ve already added the item yourself — this only clears it from the list, it doesn\'t grant anything automatically." onclick="sccMarkPendingItemAdded(\'' + escQ(pc.id) + '\',' + i + ')">I Added This</button>'
+        + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+// A DM-add item promised by a past-question answer (e.g. "Wanderkeep Field
+// Kit (DM adds)") — never auto-granted, cleared here once the DM has
+// actually handed it to the player. Operates on PLAYERS_DATA (this tab's
+// own fetch) rather than the Session tab's SCC_PLAYERS, since the claiming
+// UI now lives here instead of the removed Party bar.
+function sccMarkPendingItemAdded(playerId, index) {
+  var player = sccPlayerCharById(playerId);
+  if (!player || !Array.isArray(player.dm_pending_items)) return;
+  var remaining = player.dm_pending_items.filter(function(_, i) { return i !== index; });
+  player.dm_pending_items = remaining;
+  var containerEl = document.getElementById('scc-player-pending-' + playerId);
+  if (containerEl) containerEl.innerHTML = sccPlayerPendingItemsHtml(player);
+  sccPatch('player_characters', '?id=eq.' + encodeURIComponent(playerId), { dm_pending_items: remaining })
+    .then(function(r) {
+      if (!r.ok) { showDMToast('Failed to update pending items', 'error'); return; }
+      showDMToast('Marked as added', 'success');
+    });
+}
+
 function sccPlayerSummaryPreview(summaryText, maxLen) {
   var section = extractSummarySection(summaryText, 'WHO ARE YOU');
   var t = String(section != null ? section : (summaryText || '')).replace(/\s+/g, ' ').trim();
@@ -11170,7 +11190,7 @@ function playersRefresh() {
   body.innerHTML = '<div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">Loading…</div>';
   var SB_URL = 'https://ebppsgaftzyvftemfeom.supabase.co';
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
-  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_email,class_id,species,home_region,level,token,created_at,ability_scores,summary&order=created_at.asc', {
+  fetch(SB_URL + '/rest/v1/player_characters?select=id,name,player_email,class_id,species,home_region,level,token,created_at,ability_scores,summary,dm_pending_items&order=created_at.asc', {
     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
   })
   .then(function(res) { return res.json(); })
@@ -11224,6 +11244,7 @@ function renderPlayers() {
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Level</span><br>' + escQ(String(pc.level || 1)) + '</div>'
             + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Submitted</span><br>' + submitted + '</div>'
           + '</div>'
+          + '<div id="scc-player-pending-' + escQ(pc.id) + '">' + sccPlayerPendingItemsHtml(pc) + '</div>'
           + '<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:var(--dm-bg);border-radius:6px;font-family:var(--font-mono);font-size:0.68rem;color:var(--dm-text-muted);word-break:break-all;">' + escQ(sheetUrl) + '</div>'
           + '<div class="scc-player-detail-panel" id="scc-pd-panel-' + escQ(pc.id) + '">'
             + '<div id="scc-pd-body-' + escQ(pc.id) + '"><div class="scc-pd-empty">Loading&#8230;</div></div>'
@@ -11493,43 +11514,90 @@ function sccPlayerSpellEligible(charId) {
   });
 }
 
-// Add-spell input (now at the TOP, per the discoverability ask) + a
-// search/filter/sort toolbar (reusing the Manage tab's own .cm-search/
-// .cm-select — same visual language, scoped down to just this one list —
-// Level and Sort, no Nation/Creature/etc. pulled in) + the list container
-// itself. The add box and toolbar are rebuilt together on every mutation
-// (so the Level dropdown's option list and the count summary always stay
-// accurate); the toolbar's own filter/sort controls only ever touch the
-// list container below them, so typing a filter never steals focus.
+// Add-spell input (at the TOP, per the discoverability ask) + a search box
+// plus a single Filter button that opens a panel of per-field filters below
+// (Level/Casting Time/Gigglegloom influence/Range/Components), plus Sort
+// (Name A-Z/Z-A/Level) -- replaces the old always-visible Level+Sort
+// dropdown pair with the same two controls relocated into the Filter panel
+// alongside the newer fields, per DM request to keep sorting rather than
+// drop it. Every filter/sort option list is derived live from this
+// character's own resolved learned spells (same "only offer what's
+// actually present" rule the old Level dropdown already followed), rebuilt
+// fresh on every mutation via the existing scoped refresh functions, so a
+// stale option can never linger after a spell is added or removed.
 function renderPlayerSpellBlockHtml(charId) {
   var draft = PD_DRAFT[charId] || {};
   var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var byId = {};
   (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
+  var resolved = learned.map(function(id) { return byId[id]; }).filter(Boolean);
+
+  function optionsHtml(getter) {
+    var seen = {}, out = [];
+    resolved.forEach(function(s) {
+      var v = getter(s);
+      (Array.isArray(v) ? v : [v]).forEach(function(x) { if (x && !seen[x]) { seen[x] = true; out.push(x); } });
+    });
+    out.sort();
+    return out.map(function(v) { return '<option value="' + escQ(v) + '">' + sccEsc(v) + '</option>'; }).join('');
+  }
+
   var levelsPresent = {};
-  learned.forEach(function(id) { var s = byId[id]; if (s) levelsPresent[s.level] = true; });
+  resolved.forEach(function(s) { levelsPresent[s.level] = true; });
   var levelOptions = Object.keys(levelsPresent).map(Number).sort(function(a, b) { return a - b; })
     .map(function(lv) { return '<option value="' + lv + '">' + (lv === 0 ? 'Cantrip' : 'Level ' + lv) + '</option>'; }).join('');
+  var castingOptions = optionsHtml(function(s) { return s.casting_time; });
+  var gigglegloomOptions = optionsHtml(function(s) { return s.types; });
+  var rangeOptions = optionsHtml(function(s) { return s.range; });
+  var componentsOptions = optionsHtml(function(s) { return s.components; });
+
   return '<div class="scc-picker-search-wrap" style="position:relative;">'
       + '<input type="text" class="scc-picker-search" id="scc-pd-spellsearch-' + escQ(charId) + '" placeholder="Search this character&#8217;s eligible spells&#8230;" oninput="sccPlayerSpellSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
       + '<div class="scc-picker-dropdown" id="scc-pd-spelldrop-' + escQ(charId) + '"></div>'
     + '</div>'
     + '<div class="scc-pd-toolbar">'
-      + '<input type="text" class="cm-search" id="scc-pd-spellfilter-' + escQ(charId) + '" placeholder="Filter learned spells&#8230;" oninput="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '<input type="text" class="cm-search" id="scc-pd-spellfilter-' + escQ(charId) + '" placeholder="Search learned spells&#8230;" oninput="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '<button type="button" class="scc-pd-filter-toggle" id="scc-pd-spellfiltertoggle-' + escQ(charId) + '" onclick="sccPlayerToggleSpellFilters(\'' + escQ(charId) + '\')">Filter</button>'
+    + '</div>'
+    + '<div class="scc-pd-filters-bar" id="scc-pd-spellfilters-' + escQ(charId) + '">'
       + '<select class="cm-select" id="scc-pd-spelllevelfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Level: All</option>' + levelOptions + '</select>'
+      + '<select class="cm-select" id="scc-pd-spellcastingfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Casting Time: All</option>' + castingOptions + '</select>'
+      + '<select class="cm-select" id="scc-pd-spellgigglefilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Gigglegloom: All</option>' + gigglegloomOptions + '</select>'
+      + '<select class="cm-select" id="scc-pd-spellrangefilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Range: All</option>' + rangeOptions + '</select>'
+      + '<select class="cm-select" id="scc-pd-spellcomponentsfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Components: All</option>' + componentsOptions + '</select>'
       + '<select class="cm-select" id="scc-pd-spellsort-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')">'
         + '<option value="name">Sort: Name A&ndash;Z</option>'
         + '<option value="name-desc">Sort: Name Z&ndash;A</option>'
         + '<option value="level">Sort: Level</option>'
       + '</select>'
+      + '<button type="button" class="scc-pd-filters-reset" onclick="sccPlayerResetSpellFilters(\'' + escQ(charId) + '\')">Reset</button>'
     + '</div>'
     + '<div id="scc-pd-spelllist-' + escQ(charId) + '">' + renderPlayerSpellListHtml(charId) + '</div>';
 }
 
-// Filters/sorts the current draft's learned spells for display only — reads
-// the toolbar's own live control values rather than a separately-tracked
-// state object, so there's exactly one source of truth for "what's the
-// current filter" and it can never drift from what's on screen.
+function sccPlayerToggleSpellFilters(charId) {
+  var bar = document.getElementById('scc-pd-spellfilters-' + charId);
+  var btn = document.getElementById('scc-pd-spellfiltertoggle-' + charId);
+  if (!bar) return;
+  var open = bar.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', open);
+}
+
+function sccPlayerResetSpellFilters(charId) {
+  ['scc-pd-spelllevelfilter-', 'scc-pd-spellcastingfilter-', 'scc-pd-spellgigglefilter-', 'scc-pd-spellrangefilter-', 'scc-pd-spellcomponentsfilter-'].forEach(function(prefix) {
+    var el = document.getElementById(prefix + charId);
+    if (el) el.value = '';
+  });
+  var sortEl = document.getElementById('scc-pd-spellsort-' + charId);
+  if (sortEl) sortEl.value = 'name'; // sort always has a real selection, unlike the filters -- reset to the default rather than blank
+  sccPlayerSpellFilterChanged(charId);
+}
+
+// Filters (and sorts) the current draft's learned spells for display only —
+// reads the toolbar/filter panel's own live control values rather than a
+// separately-tracked state object, so there's exactly one source of truth
+// for "what's the current filter/sort" and it can never drift from what's
+// on screen.
 function renderPlayerSpellListHtml(charId) {
   var draft = PD_DRAFT[charId];
   if (!draft) return '<div class="scc-pd-empty">Loading&#8230;</div>';
@@ -11537,6 +11605,10 @@ function renderPlayerSpellListHtml(charId) {
   (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
   var q = ((document.getElementById('scc-pd-spellfilter-' + charId) || {}).value || '').toLowerCase().trim();
   var levelF = (document.getElementById('scc-pd-spelllevelfilter-' + charId) || {}).value || '';
+  var castingF = (document.getElementById('scc-pd-spellcastingfilter-' + charId) || {}).value || '';
+  var giggleF = (document.getElementById('scc-pd-spellgigglefilter-' + charId) || {}).value || '';
+  var rangeF = (document.getElementById('scc-pd-spellrangefilter-' + charId) || {}).value || '';
+  var componentsF = (document.getElementById('scc-pd-spellcomponentsfilter-' + charId) || {}).value || '';
   var sortMode = (document.getElementById('scc-pd-spellsort-' + charId) || {}).value || 'name';
   var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var rows = learned.map(function(id) { return { id: id, s: byId[id] }; });
@@ -11544,11 +11616,14 @@ function renderPlayerSpellListHtml(charId) {
     var name = r.s ? r.s.name : r.id;
     if (q && name.toLowerCase().indexOf(q) === -1) return false;
     if (levelF !== '' && (!r.s || String(r.s.level) !== levelF)) return false;
+    if (castingF && (!r.s || r.s.casting_time !== castingF)) return false;
+    if (giggleF && (!r.s || !Array.isArray(r.s.types) || r.s.types.indexOf(giggleF) === -1)) return false;
+    if (rangeF && (!r.s || r.s.range !== rangeF)) return false;
+    if (componentsF && (!r.s || r.s.components !== componentsF)) return false;
     return true;
   });
-  // Sorted alphabetically by default (Sort: Name A–Z) -- Level mode still
-  // breaks ties alphabetically, never leaving same-level spells in an
-  // arbitrary order.
+  // Level mode still breaks ties alphabetically, never leaving same-level
+  // spells in an arbitrary order.
   rows.sort(function(a, b) {
     var an = a.s ? a.s.name : a.id, bn = b.s ? b.s.name : b.id;
     if (sortMode === 'level') {
@@ -11648,6 +11723,11 @@ function sccPlayerRefreshSpellBlock(charId) {
 // inputs (.scc-loot-coin-row). Category filter options are derived live from
 // whatever's actually in this character's own draft inventory, not the full
 // item catalog -- every option is guaranteed to actually match something.
+// A quantity input sits next to the add-item search box so a single click
+// can add e.g. "3 health potions" instead of clicking the same result 3
+// times -- inventory.quantity already existed as a column, this was purely
+// a UI gap. Category/Price/Sort (Name A-Z/Z-A/Category) live in the same
+// Filter-button panel as the spell list above, not inline.
 function renderPlayerInventoryBlockHtml(charId) {
   var draft = PD_DRAFT[charId] || {};
   var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
@@ -11661,20 +11741,49 @@ function renderPlayerInventoryBlockHtml(charId) {
   });
   var catOptions = Object.keys(catsPresent).sort()
     .map(function(c) { return '<option value="' + escQ(c) + '">' + sccEsc(c.charAt(0).toUpperCase() + c.slice(1)) + '</option>'; }).join('');
-  return '<div class="scc-picker-search-wrap" style="position:relative;">'
-      + '<input type="text" class="scc-picker-search" id="scc-pd-itemsearch-' + escQ(charId) + '" placeholder="Search the item catalog&#8230;" oninput="sccPlayerItemSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
-      + '<div class="scc-picker-dropdown" id="scc-pd-itemdrop-' + escQ(charId) + '"></div>'
+  return '<div class="scc-pd-additem-row">'
+      + '<div class="scc-picker-search-wrap" style="position:relative;">'
+        + '<input type="text" class="scc-picker-search" id="scc-pd-itemsearch-' + escQ(charId) + '" placeholder="Search the item catalog&#8230;" oninput="sccPlayerItemSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
+        + '<div class="scc-picker-dropdown" id="scc-pd-itemdrop-' + escQ(charId) + '"></div>'
+      + '</div>'
+      + '<input type="number" min="1" step="1" class="scc-pd-qty-input" id="scc-pd-itemqty-' + escQ(charId) + '" value="1" title="Quantity to add" aria-label="Quantity to add">'
     + '</div>'
     + '<div class="scc-pd-toolbar">'
-      + '<input type="text" class="cm-search" id="scc-pd-itemfilter-' + escQ(charId) + '" placeholder="Filter inventory&#8230;" oninput="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '<input type="text" class="cm-search" id="scc-pd-itemfilter-' + escQ(charId) + '" placeholder="Search inventory&#8230;" oninput="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '<button type="button" class="scc-pd-filter-toggle" id="scc-pd-itemfiltertoggle-' + escQ(charId) + '" onclick="sccPlayerToggleItemFilters(\'' + escQ(charId) + '\')">Filter</button>'
+    + '</div>'
+    + '<div class="scc-pd-filters-bar" id="scc-pd-itemfilters-' + escQ(charId) + '">'
+      + '<span class="scc-pd-price-sep">Price</span>'
+      + '<input type="number" min="0" step="any" class="scc-pd-price-input" id="scc-pd-itempricemin-' + escQ(charId) + '" placeholder="Min gp" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" aria-label="Minimum price in gp">'
+      + '<span class="scc-pd-price-sep">&ndash;</span>'
+      + '<input type="number" min="0" step="any" class="scc-pd-price-input" id="scc-pd-itempricemax-' + escQ(charId) + '" placeholder="Max gp" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" aria-label="Maximum price in gp">'
       + '<select class="cm-select" id="scc-pd-itemcatfilter-' + escQ(charId) + '" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')"><option value="">Category: All</option>' + catOptions + '</select>'
       + '<select class="cm-select" id="scc-pd-itemsort-' + escQ(charId) + '" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')">'
         + '<option value="name">Sort: Name A&ndash;Z</option>'
         + '<option value="name-desc">Sort: Name Z&ndash;A</option>'
         + '<option value="category">Sort: Category</option>'
       + '</select>'
+      + '<button type="button" class="scc-pd-filters-reset" onclick="sccPlayerResetItemFilters(\'' + escQ(charId) + '\')">Reset</button>'
     + '</div>'
     + '<div id="scc-pd-invlist-' + escQ(charId) + '">' + renderPlayerInventoryListHtml(charId) + '</div>';
+}
+
+function sccPlayerToggleItemFilters(charId) {
+  var bar = document.getElementById('scc-pd-itemfilters-' + charId);
+  var btn = document.getElementById('scc-pd-itemfiltertoggle-' + charId);
+  if (!bar) return;
+  var open = bar.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', open);
+}
+
+function sccPlayerResetItemFilters(charId) {
+  ['scc-pd-itempricemin-', 'scc-pd-itempricemax-', 'scc-pd-itemcatfilter-'].forEach(function(prefix) {
+    var el = document.getElementById(prefix + charId);
+    if (el) el.value = '';
+  });
+  var sortEl = document.getElementById('scc-pd-itemsort-' + charId);
+  if (sortEl) sortEl.value = 'name'; // sort always has a real selection, unlike the filters -- reset to the default rather than blank
+  sccPlayerItemFilterChanged(charId);
 }
 
 function renderPlayerInventoryListHtml(charId) {
@@ -11685,6 +11794,10 @@ function renderPlayerInventoryListHtml(charId) {
   itemsAll.forEach(function(i) { byId[i.id] = i; });
   var q = ((document.getElementById('scc-pd-itemfilter-' + charId) || {}).value || '').toLowerCase().trim();
   var catF = (document.getElementById('scc-pd-itemcatfilter-' + charId) || {}).value || '';
+  var priceMinEl = document.getElementById('scc-pd-itempricemin-' + charId);
+  var priceMaxEl = document.getElementById('scc-pd-itempricemax-' + charId);
+  var priceMin = priceMinEl && priceMinEl.value !== '' ? parseFloat(priceMinEl.value) : null;
+  var priceMax = priceMaxEl && priceMaxEl.value !== '' ? parseFloat(priceMaxEl.value) : null;
   var sortMode = (document.getElementById('scc-pd-itemsort-' + charId) || {}).value || 'name';
   var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
   var rows = inv.map(function(row) {
@@ -11695,10 +11808,11 @@ function renderPlayerInventoryListHtml(charId) {
   rows = rows.filter(function(r) {
     if (q && r.name.toLowerCase().indexOf(q) === -1) return false;
     if (catF && (!r.item || r.item.category !== catF)) return false;
+    if (priceMin != null && (!r.item || r.item.cost_gp == null || r.item.cost_gp < priceMin)) return false;
+    if (priceMax != null && (!r.item || r.item.cost_gp == null || r.item.cost_gp > priceMax)) return false;
     return true;
   });
-  // Sorted alphabetically by default (Sort: Name A–Z) -- Category mode still
-  // breaks ties alphabetically.
+  // Category mode still breaks ties alphabetically.
   rows.sort(function(a, b) {
     if (sortMode === 'category') {
       var ac = (a.item && a.item.category) || '', bc = (b.item && b.item.category) || '';
@@ -11753,16 +11867,22 @@ function sccPlayerItemSearch(charId, query) {
 
 // Draft-only mutation -- stages a new row with no real id yet (_tempId is a
 // purely local key, never sent to Supabase). sccPlayerSaveChanges() is the
-// one place this becomes a real inventory INSERT.
+// one place this becomes a real inventory INSERT. Quantity comes from the
+// add-item row's own qty input (default/fallback 1 for anything invalid or
+// blank) -- reset back to 1 after adding, matching the search box's own
+// clear-after-add behavior, so the next add doesn't silently inherit it.
 function sccPlayerAssignItem(charId, itemId) {
   var draft = PD_DRAFT[charId];
   if (!draft) return;
+  var qtyEl = document.getElementById('scc-pd-itemqty-' + charId);
+  var qty = qtyEl ? Math.max(1, parseInt(qtyEl.value, 10) || 1) : 1;
   draft.inventory.push({
     id: null, _tempId: 'new-' + (draft.invTempSeq++),
-    item_id: itemId, quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true
+    item_id: itemId, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true
   });
   var searchInput = document.getElementById('scc-pd-itemsearch-' + charId);
   if (searchInput) searchInput.value = '';
+  if (qtyEl) qtyEl.value = '1';
   var drop = document.getElementById('scc-pd-itemdrop-' + charId);
   if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
   sccPlayerRefreshInventoryBlock(charId);
@@ -12053,12 +12173,16 @@ var SCC_XP_THRESHOLDS = {
   10:[600,1200,1900,2800]
 };
 
-// ── Player bar ───────────────────────────────────────────────────
+// ── Player data (Session tab) ───────────────────────────────────────
+// The Party top bar this once fed (sccRenderPlayerBar()) is gone — this
+// fetch now exists purely for the Live Session panel's own Party HP/
+// Conditions widgets and the Location card's "Buying as" list, both read
+// straight off SCC_SHEETS/SCC_PLAYERS below.
 function sccLoadPlayers() {
   sccFetch('player_characters', '&pc=eq.true&order=name').then(function(rows) {
     SCC_PLAYERS = Array.isArray(rows) ? rows : [];
     var ids = SCC_PLAYERS.map(function(p) { return p.id; });
-    if (!ids.length) { sccRenderPlayerBar(); return; }
+    if (!ids.length) { return; }
     // Live Session's own Party HP/Conditions/Inspiration widgets read SCC_SHEETS
     // too -- previously harmless to leave unrefreshed here since sccRenderLivePanel()
     // only ever ran on a manual tab click (well after this had settled); now that
@@ -12084,7 +12208,7 @@ function sccLoadPlayers() {
         }
       });
       // HP always tracks the character's current CON/feats/level, same rule
-      // as sheet/index.html's fetchOrCreateSheet() — keeps this bar from
+      // as sheet/index.html's fetchOrCreateSheet() — keeps this cache from
       // drifting from the player's own sheet (AC has no such state to drift).
       SCC_PLAYERS.forEach(function(p) {
         var sheet = SCC_SHEETS[p.id];
@@ -12097,7 +12221,6 @@ function sccLoadPlayers() {
           sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(p.id), patch);
         }
       });
-      sccRenderPlayerBar();
       sccLiveRenderParty();
       sccLiveRenderConditions();
       // Phase 3b: the shared Location card's Shop section also reads
@@ -12107,69 +12230,7 @@ function sccLoadPlayers() {
       // "No players" until something else re-renders the panel.
       if (typeof sccRenderLocationPanel === 'function') sccRenderLocationPanel();
     });
-  }).catch(function() { sccRenderPlayerBar(); });
-}
-
-function sccRenderPlayerBar() {
-  var el = document.getElementById('scc-player-cards');
-  if (!el) return;
-  if (!SCC_PLAYERS.length) {
-    el.innerHTML = '<div class="scc-player-loading">No player characters found yet.</div>';
-    return;
-  }
-  el.innerHTML = SCC_PLAYERS.map(function(p) {
-    var sheet  = SCC_SHEETS[p.id] || {};
-    var hpCur  = sheet.hp_current != null ? sheet.hp_current : '—';
-    var hpMax  = sheet.hp_max     != null ? sheet.hp_max     : '—';
-    var level  = p.level || 1;
-    var scores = p.ability_scores || {};
-    var dexMod = scores.dex ? Math.floor((scores.dex - 10) / 2) : 0;
-    var modSign = dexMod >= 0 ? '+' : '';
-    var hpClass = '';
-    if (hpMax && hpCur !== '—') {
-      var pct = hpCur / hpMax;
-      if (pct <= 0.25) hpClass = 'danger';
-      else if (pct <= 0.5) hpClass = 'warning';
-    }
-    var pending = Array.isArray(p.dm_pending_items) ? p.dm_pending_items : [];
-    return '<div class="scc-player-card">'
-      + '<div>'
-        + '<div class="scc-player-card-name">' + sccEsc(p.name || 'Unknown') + '</div>'
-        + '<div class="scc-player-card-sub">' + sccEsc((p.class_id||'').replace(/-/g,' ')) + ' · DEX ' + modSign + dexMod + '</div>'
-      + '</div>'
-      + '<div class="scc-player-card-hp">'
-        + '<div class="scc-player-hp-val ' + hpClass + '">' + hpCur + '/' + hpMax + '</div>'
-        + '<div class="scc-player-hp-label">HP</div>'
-      + '</div>'
-      + '<div class="scc-player-level-badge">Lv ' + level + '</div>'
-      + (pending.length
-          ? '<div class="scc-player-pending-items">'
-            + pending.map(function(item, i) {
-                return '<div class="scc-player-pending-item">'
-                  + '<span>&#128230; ' + sccEsc(item.label || 'Item') + '</span>'
-                  + '<button class="scc-btn-sm" title="Confirms you\'ve already added the item yourself — this only clears it from the list, it doesn\'t grant anything automatically." onclick="sccMarkPendingItemAdded(\'' + sccEsc(p.id) + '\',' + i + ')">I Added This</button>'
-                + '</div>';
-              }).join('')
-            + '</div>'
-          : '')
-    + '</div>';
-  }).join('');
-}
-
-// A DM-add item promised by a past-question answer (e.g. "Wanderkeep Field
-// Kit (DM adds)") — never auto-granted, cleared here once the DM has
-// actually handed it to the player.
-function sccMarkPendingItemAdded(playerId, index) {
-  var player = SCC_PLAYERS.find(function(p) { return p.id === playerId; });
-  if (!player || !Array.isArray(player.dm_pending_items)) return;
-  var remaining = player.dm_pending_items.filter(function(_, i) { return i !== index; });
-  player.dm_pending_items = remaining;
-  sccPatch('player_characters', '?id=eq.' + encodeURIComponent(playerId), { dm_pending_items: remaining })
-    .then(function(r) {
-      if (!r.ok) { showDMToast('Failed to update pending items', 'error'); return; }
-      showDMToast('Marked as added', 'success');
-    });
-  sccRenderPlayerBar();
+  }).catch(function() { /* no player bar left to fall back to -- Live Session's own widgets just stay on whatever they last rendered */ });
 }
 
 // ── Live Session Tab ──────────────────────────────────────────────
@@ -12260,7 +12321,6 @@ function sccLiveAdjustHp(playerId, delta) {
       if (!r.ok) showDMToast('HP save failed', 'error');
     });
   sccLiveRenderParty();
-  sccRenderPlayerBar();
 }
 function sccLiveSetHp(playerId, rawVal) {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — HP is read-only here', 'error'); return; }
@@ -12274,7 +12334,6 @@ function sccLiveSetHp(playerId, rawVal) {
       if (!r.ok) showDMToast('HP save failed', 'error');
     });
   sccLiveRenderParty();
-  sccRenderPlayerBar();
 }
 // ── Conditions ──
 var SCC_CONDITIONS_LIST = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious','Fading Stage 1','Color-Drained','Muted'];
