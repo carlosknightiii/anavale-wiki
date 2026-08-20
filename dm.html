@@ -7821,6 +7821,67 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
 }
 .scc-pd-spell-summary strong { color: var(--dm-text); font-weight: 700; }
+/* Search/filter/sort toolbar above the assigned-spells/inventory lists --
+   same .cm-search/.cm-select classes the Manage tab's own filter bar uses
+   (see .cm-filter-bar), just laid out for this narrower panel rather than a
+   full-width table toolbar. */
+.scc-pd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.scc-pd-toolbar .cm-search { flex: 1 1 140px; min-width: 120px; }
+.scc-pd-toolbar .cm-select { flex: 0 0 auto; }
+/* Per-row/per-option thumbnail -- same real-image-with-fallback shape as
+   .scc-shop-thumb/-fallback (the Vendor/Shop section), sized smaller (32px
+   vs. 40px) to fit this panel's tighter rows. */
+.scc-pd-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--dm-radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--scc-border-mid);
+}
+.scc-pd-thumb-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--dm-radius-sm);
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-headers);
+  font-size: 0.85rem;
+  color: var(--dm-text-muted);
+  flex-shrink: 0;
+}
+/* Thumbnail variant of the generic .scc-picker-option row (used elsewhere in
+   this file with plain text only) -- scoped to this modifier class so the
+   other 4 picker types (location/npc/quest/item searches) are untouched. */
+.scc-picker-option--thumb { display: flex; align-items: center; gap: 0.6rem; }
+.scc-picker-option--thumb .scc-picker-option-text { flex: 1; min-width: 0; }
+/* Save/Cancel bar -- covers both the Spell Assignment and Inventory sections
+   above it (Currency, below, stays its own always-live blur-to-save field,
+   untouched by this). */
+.scc-pd-savebar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.25rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dm-border);
+}
+.scc-pd-savebar-status {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+}
 /* Death saves -- same pips/behavior as the character sheet's own MainInfo
    header (sheet/index.html .cs-mi-death-saves), laid out horizontally to
    fit under a combat row instead of the sheet's stacked header slot. */
@@ -11172,26 +11233,83 @@ function renderPlayers() {
     + '</div>';
 }
 
-// ── Players page — per-character detail panel (Round 2 Revisions) ──────
+// ── Players page — per-character detail panel ───────────────────────
 // Extensible by design: renderPlayerDetailBody() renders one .scc-pd-section
-// block per feature. Today only Spell Assignment exists — a future section
-// (HP overrides, equipment, notes) is just another block appended to the
-// same function's output, no restructuring of the panel/toggle mechanism
-// needed. Same collapsible-panel-below-a-row convention as the Combat tab's
+// block per feature — today Spell Assignment, Inventory, and Currency, a
+// future HP/equipment/notes section is just another block appended after
+// them, no restructuring of the panel/toggle mechanism needed. Same
+// collapsible-panel-below-a-row convention as the Combat tab's
 // .scc-loot-panel/.scc-statblock-panel (sccToggleLoot/sccToggleStatBlock),
-// not a modal, per the instruction to match existing DM Tools conventions.
+// not a modal, matching this file's existing DM Tools conventions.
+//
+// Spell Assignment and Inventory now run on an explicit Save/Cancel flow,
+// not autosave: opening the panel snapshots the character's real spell/
+// inventory state into PD_DRAFT[charId], every add/remove in either section
+// mutates only that in-memory draft, and nothing reaches Supabase until
+// "Save Changes" is clicked. "Cancel" (and closing the panel any other way —
+// the outer "Edit" toggle included, one mental model either way) discards
+// the draft. Currency is deliberately NOT part of this — see the comment
+// above renderPlayerCurrencySection() for why it stays its own always-live
+// blur-to-save column.
 var PD_SHEETS = {};       // character_id -> character_sheet row, fetched on first Edit click, cached
-var PD_INVENTORY = {};    // character_id -> inventory rows array, fetched on first Edit click, cached
+var PD_INVENTORY = {};    // character_id -> real inventory rows array (last-saved state), fetched on first Edit click, cached
+var PD_DRAFT = {};        // character_id -> { learned_spells, prepared_spells, inventory, invTempSeq } — the panel's working copy, built fresh every time it opens, discarded on close
 var SPELLS_DATA_DM = null; // all spells rows, fetched once on first Edit click across any character, then reused
 var CLASSES_DATA_DM = null; // all classes rows, fetched once on first Edit click across any character, then reused
+
+// Per-spell thumbnail — same Gigglegloom-type-icon convention sheet/index.html's
+// own spellThumbHtml() already established (SPELL_TYPE_ICON_SRC keyed by
+// spells.types[0], a sparkle-glyph fallback for anything without a matching
+// icon) — mirrored here rather than reinvented, since it's the one real
+// per-spell asset convention anywhere in this codebase. dm.html sits at the
+// repo root (not sheet/), so these paths have no leading ../.
+var SPELL_TYPE_ICON_SRC_DM = {
+  Bubbleseed: 'assets/icons/icon-bubbleseed.svg',
+  Featherflow: 'assets/icons/icon-featherflow.svg',
+  Steelfist: 'assets/icons/icon-steelfist.svg',
+  Flamerage: 'assets/icons/icon-flamerage.svg'
+};
+function sccPlayerSpellThumb(spell) {
+  var t = spell && spell.types && spell.types[0];
+  var src = t ? SPELL_TYPE_ICON_SRC_DM[t] : null;
+  return src
+    ? '<img class="scc-pd-thumb" src="' + escQ(src) + '" alt="" onerror="this.style.display=\'none\'">'
+    : '<div class="scc-pd-thumb-fallback">&#10022;</div>';
+}
+// Per-item thumbnail — same real-image-with-initial-letter-fallback convention
+// already used for the Vendor/Shop section's item rows (sccVendorShopSectionHtml,
+// .scc-shop-thumb/-fallback) — reused pattern, new (smaller) class names since
+// this list sits in a narrower panel than the Shop section does.
+function sccPlayerItemThumb(item, name) {
+  return (item && item.image)
+    ? '<img class="scc-pd-thumb" src="' + escQ(item.image) + '" alt="" onerror="this.style.display=\'none\'">'
+    : '<div class="scc-pd-thumb-fallback">' + sccEsc((name || '?').charAt(0).toUpperCase()) + '</div>';
+}
+
+function sccPlayerCharById(charId) {
+  return PLAYERS_DATA.find(function(pc) { return pc.id === charId; });
+}
+
+function sccPlayerClassRow(charId) {
+  var pc = sccPlayerCharById(charId);
+  var classKey = (pc && pc.class_id || '').toLowerCase();
+  return (Array.isArray(CLASSES_DATA_DM) ? CLASSES_DATA_DM : []).find(function(c) { return c.id === classKey; }) || null;
+}
 
 function sccTogglePlayerDetail(charId) {
   var panel = document.getElementById('scc-pd-panel-' + charId);
   if (!panel) return;
-  var opening = !panel.classList.contains('open');
-  panel.classList.toggle('open');
-  if (opening && !PD_SHEETS[charId]) {
-    sccLoadPlayerDetail(charId);
+  var isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    sccPlayerClosePanel(charId); // discards the draft and removes 'open'
+    return;
+  }
+  panel.classList.add('open');
+  if (!PD_SHEETS[charId]) {
+    sccLoadPlayerDetail(charId); // builds the draft itself once the fetch resolves
+  } else {
+    sccPlayerBuildDraft(charId);
+    renderPlayerDetailBody(charId);
   }
 }
 
@@ -11213,20 +11331,51 @@ function sccLoadPlayerDetail(charId) {
       character_id: charId, learned_spells: [], prepared_spells: [], extra_learnable_spells: []
     };
     PD_INVENTORY[charId] = Array.isArray(results[3]) ? results[3] : [];
+    sccPlayerBuildDraft(charId);
     renderPlayerDetailBody(charId);
   }).catch(function() {
     if (bodyEl) bodyEl.innerHTML = '<div class="scc-pd-empty">Failed to load — try again.</div>';
   });
 }
 
-function sccPlayerCharById(charId) {
-  return PLAYERS_DATA.find(function(pc) { return pc.id === charId; });
+// Snapshots the real, last-saved PD_SHEETS/PD_INVENTORY state into a fresh
+// working copy every time the panel opens — every subsequent add/remove in
+// either section mutates this object only, never Supabase directly.
+function sccPlayerBuildDraft(charId) {
+  var sheet = PD_SHEETS[charId] || {};
+  var inv = PD_INVENTORY[charId] || [];
+  PD_DRAFT[charId] = {
+    learned_spells: (Array.isArray(sheet.learned_spells) ? sheet.learned_spells : []).slice(),
+    prepared_spells: (Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : []).slice(),
+    inventory: inv.map(function(row) {
+      var clone = {};
+      for (var k in row) { if (row.hasOwnProperty(k)) clone[k] = row[k]; }
+      return clone;
+    }),
+    invTempSeq: 1
+  };
 }
 
-function sccPlayerClassRow(charId) {
-  var pc = sccPlayerCharById(charId);
-  var classKey = (pc && pc.class_id || '').toLowerCase();
-  return (Array.isArray(CLASSES_DATA_DM) ? CLASSES_DATA_DM : []).find(function(c) { return c.id === classKey; }) || null;
+function sccPlayerArraysEqual(a, b) {
+  a = a || []; b = b || [];
+  if (a.length !== b.length) return false;
+  for (var i = 0; i < a.length; i++) { if (a[i] !== b[i]) return false; }
+  return true;
+}
+
+// Closing without Save always discards, unconditionally, matching this
+// panel's own literal ask — no confirm() prompt, since a native dialog is
+// exactly the kind of thing that gets silently auto-dismissed by some
+// embeds/automation contexts, which would make Cancel randomly do nothing
+// instead of randomly nagging.
+function sccPlayerClosePanel(charId) {
+  delete PD_DRAFT[charId];
+  var panel = document.getElementById('scc-pd-panel-' + charId);
+  if (panel) panel.classList.remove('open');
+}
+
+function sccPlayerCancelChanges(charId) {
+  sccPlayerClosePanel(charId);
 }
 
 function renderPlayerDetailBody(charId) {
@@ -11234,22 +11383,27 @@ function renderPlayerDetailBody(charId) {
   if (!bodyEl) return;
   bodyEl.innerHTML = '<div class="scc-pd-section">'
     + '<div class="scc-pd-section-title">Spell Assignment</div>'
-    + renderPlayerSpellCountSummary(charId)
-    + renderPlayerSpellSection(charId)
+    + '<div id="scc-pd-spellsummary-' + escQ(charId) + '">' + renderPlayerSpellCountSummary(charId) + '</div>'
+    + '<div id="scc-pd-spellblock-' + escQ(charId) + '">' + renderPlayerSpellBlockHtml(charId) + '</div>'
   + '</div>'
-  // Third sibling .scc-pd-section, per the extensible-by-design note above —
+  // Second sibling .scc-pd-section, per the extensible-by-design note above —
   // same search-and-assign shape as Spell Assignment (list of what's already
-  // there, then a search box that writes a new row via sccPost), reusing the
-  // same .scc-pd-spell-*/.scc-picker-* classes rather than a parallel set.
+  // there, then a search box that stages a new draft row), reusing the same
+  // .scc-pd-spell-*/.scc-picker-* classes rather than a parallel set.
   + '<div class="scc-pd-section">'
     + '<div class="scc-pd-section-title">Inventory</div>'
-    + renderPlayerInventorySection(charId)
+    + '<div id="scc-pd-invblock-' + escQ(charId) + '">' + renderPlayerInventoryBlockHtml(charId) + '</div>'
+  + '</div>'
+  + '<div class="scc-pd-savebar">'
+    + '<button class="scc-btn-primary" id="scc-pd-savebtn-' + escQ(charId) + '" onclick="sccPlayerSaveChanges(\'' + escQ(charId) + '\')">Save Changes</button>'
+    + '<button class="scc-btn-secondary" onclick="sccPlayerCancelChanges(\'' + escQ(charId) + '\')" title="Discard spell and inventory changes and close">Cancel</button>'
+    + '<span class="scc-pd-savebar-status">Spell and inventory changes are staged locally until you click Save.</span>'
   + '</div>'
   // Round 3 Follow-up (sheet/index.html session) — currency is now DM-only:
   // players' Gold/Silver/Copper inputs on the sheet became read-only, this
   // is the one real editor left for that value. Sibling .scc-pd-
   // section, per the extensible-by-design note above — no restructuring of
-  // Spell Assignment or the panel/toggle mechanism needed.
+  // Spell Assignment/Inventory or the panel/toggle mechanism needed.
   + '<div class="scc-pd-section">'
     + '<div class="scc-pd-section-title">Currency</div>'
     + renderPlayerCurrencySection(charId)
@@ -11259,8 +11413,7 @@ function renderPlayerDetailBody(charId) {
 // Reuses the exact prepared-count algorithm sheet/index.html's own
 // computePreparedMax() implements (classes.prepared_count_formula --
 // fixed_table for Bard/Sorcerer/Warlock, ability_mod_plus_level for the
-// other 5 casters) rather than recomputing it a different way here — same
-// two branches, just reading pc.ability_scores/pc.level (this file's own
+// other 5 casters), just reading pc.ability_scores/pc.level (this file's own
 // data shape) instead of the sheet's ABILITY_SCORES/CH globals.
 function computePreparedMaxDM(pc, classRow) {
   if (!classRow || !classRow.prepared_count_formula) return 0;
@@ -11296,12 +11449,14 @@ function computeCantripsMaxDM(pc, classRow) {
   return 0;
 }
 
+// Reads the draft (not PD_SHEETS) so the count reflects unsaved edits live,
+// same as the list below it.
 function renderPlayerSpellCountSummary(charId) {
   var classRow = sccPlayerClassRow(charId);
   if (!classRow || !classRow.spellcasting_ability) return ''; // non-caster -- nothing to show
   var pc = sccPlayerCharById(charId);
-  var sheet = PD_SHEETS[charId] || {};
-  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  var draft = PD_DRAFT[charId] || {};
+  var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var byId = {};
   (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
   var cantripsAssigned = 0, leveledAssigned = 0;
@@ -11325,12 +11480,8 @@ function renderPlayerSpellCountSummary(charId) {
 // — spells.classes includes the character's class, UNION this character's
 // own extra_learnable_spells (DM-granted story-reason exceptions, e.g.
 // "Hana learned Cure Wounds from her grandmother") — just DM-driven now
-// instead of player-driven, per the Round 2 Revisions instruction to keep
-// "the same eligibility logic as before." extra_learnable_spells itself
-// isn't given its own editor here — a spell assigned outside the class
-// list still just goes straight into learned_spells like any other pick;
-// the field stays real but is DM-SQL-managed, matching the existing §3
-// precedent for it.
+// instead of player-driven. extras itself isn't editable from this panel —
+// still real, still DM-SQL-managed, matching the existing §3 precedent.
 function sccPlayerSpellEligible(charId) {
   var pc = sccPlayerCharById(charId);
   var sheet = PD_SHEETS[charId] || {};
@@ -11342,30 +11493,91 @@ function sccPlayerSpellEligible(charId) {
   });
 }
 
-function renderPlayerSpellSection(charId) {
-  var sheet = PD_SHEETS[charId] || {};
-  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
-  var prepared = Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : [];
+// Add-spell input (now at the TOP, per the discoverability ask) + a
+// search/filter/sort toolbar (reusing the Manage tab's own .cm-search/
+// .cm-select — same visual language, scoped down to just this one list —
+// Level and Sort, no Nation/Creature/etc. pulled in) + the list container
+// itself. The add box and toolbar are rebuilt together on every mutation
+// (so the Level dropdown's option list and the count summary always stay
+// accurate); the toolbar's own filter/sort controls only ever touch the
+// list container below them, so typing a filter never steals focus.
+function renderPlayerSpellBlockHtml(charId) {
+  var draft = PD_DRAFT[charId] || {};
+  var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var byId = {};
   (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
-  var listHtml = learned.length
-    ? '<div class="scc-pd-spell-list">' + learned.map(function(id) {
-        var s = byId[id];
-        var name = s ? s.name : id;
-        var levelLabel = s ? (s.level === 0 ? 'Cantrip' : 'Level ' + s.level) : '';
-        var isPrepared = prepared.indexOf(id) >= 0;
-        return '<div class="scc-pd-spell-row">'
-          + '<span class="scc-pd-spell-row-name">' + sccEsc(name) + (levelLabel ? '<span class="scc-pd-spell-row-level">' + sccEsc(levelLabel) + '</span>' : '') + '</span>'
-          + (isPrepared ? '<span class="scc-pd-spell-row-prepared">Prepared</span>' : '')
-          + '<button class="scc-pd-spell-remove" onclick="sccPlayerUnassignSpell(\'' + escQ(charId) + '\',\'' + escQ(id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
-        + '</div>';
-      }).join('') + '</div>'
-    : '<div class="scc-pd-empty">No spells learned yet.</div>';
-  return listHtml
-    + '<div class="scc-picker-search-wrap" style="position:relative;">'
+  var levelsPresent = {};
+  learned.forEach(function(id) { var s = byId[id]; if (s) levelsPresent[s.level] = true; });
+  var levelOptions = Object.keys(levelsPresent).map(Number).sort(function(a, b) { return a - b; })
+    .map(function(lv) { return '<option value="' + lv + '">' + (lv === 0 ? 'Cantrip' : 'Level ' + lv) + '</option>'; }).join('');
+  return '<div class="scc-picker-search-wrap" style="position:relative;">'
       + '<input type="text" class="scc-picker-search" id="scc-pd-spellsearch-' + escQ(charId) + '" placeholder="Search this character&#8217;s eligible spells&#8230;" oninput="sccPlayerSpellSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
       + '<div class="scc-picker-dropdown" id="scc-pd-spelldrop-' + escQ(charId) + '"></div>'
+    + '</div>'
+    + '<div class="scc-pd-toolbar">'
+      + '<input type="text" class="cm-search" id="scc-pd-spellfilter-' + escQ(charId) + '" placeholder="Filter learned spells&#8230;" oninput="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '<select class="cm-select" id="scc-pd-spelllevelfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Level: All</option>' + levelOptions + '</select>'
+      + '<select class="cm-select" id="scc-pd-spellsort-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')">'
+        + '<option value="name">Sort: Name A&ndash;Z</option>'
+        + '<option value="name-desc">Sort: Name Z&ndash;A</option>'
+        + '<option value="level">Sort: Level</option>'
+      + '</select>'
+    + '</div>'
+    + '<div id="scc-pd-spelllist-' + escQ(charId) + '">' + renderPlayerSpellListHtml(charId) + '</div>';
+}
+
+// Filters/sorts the current draft's learned spells for display only — reads
+// the toolbar's own live control values rather than a separately-tracked
+// state object, so there's exactly one source of truth for "what's the
+// current filter" and it can never drift from what's on screen.
+function renderPlayerSpellListHtml(charId) {
+  var draft = PD_DRAFT[charId];
+  if (!draft) return '<div class="scc-pd-empty">Loading&#8230;</div>';
+  var byId = {};
+  (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
+  var q = ((document.getElementById('scc-pd-spellfilter-' + charId) || {}).value || '').toLowerCase().trim();
+  var levelF = (document.getElementById('scc-pd-spelllevelfilter-' + charId) || {}).value || '';
+  var sortMode = (document.getElementById('scc-pd-spellsort-' + charId) || {}).value || 'name';
+  var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
+  var rows = learned.map(function(id) { return { id: id, s: byId[id] }; });
+  rows = rows.filter(function(r) {
+    var name = r.s ? r.s.name : r.id;
+    if (q && name.toLowerCase().indexOf(q) === -1) return false;
+    if (levelF !== '' && (!r.s || String(r.s.level) !== levelF)) return false;
+    return true;
+  });
+  // Sorted alphabetically by default (Sort: Name A–Z) -- Level mode still
+  // breaks ties alphabetically, never leaving same-level spells in an
+  // arbitrary order.
+  rows.sort(function(a, b) {
+    var an = a.s ? a.s.name : a.id, bn = b.s ? b.s.name : b.id;
+    if (sortMode === 'level') {
+      var al = a.s ? a.s.level : 0, bl = b.s ? b.s.level : 0;
+      return (al - bl) || an.localeCompare(bn);
+    }
+    var cmp = an.localeCompare(bn);
+    return sortMode === 'name-desc' ? -cmp : cmp;
+  });
+  if (!rows.length) {
+    return '<div class="scc-pd-empty">' + (learned.length ? 'No spells match this filter.' : 'No spells learned yet.') + '</div>';
+  }
+  var prepared = Array.isArray(draft.prepared_spells) ? draft.prepared_spells : [];
+  return '<div class="scc-pd-spell-list">' + rows.map(function(r) {
+    var s = r.s, name = s ? s.name : r.id;
+    var levelLabel = s ? (s.level === 0 ? 'Cantrip' : 'Level ' + s.level) : '';
+    var isPrepared = prepared.indexOf(r.id) >= 0;
+    return '<div class="scc-pd-spell-row">'
+      + sccPlayerSpellThumb(s || {})
+      + '<span class="scc-pd-spell-row-name">' + sccEsc(name) + (levelLabel ? '<span class="scc-pd-spell-row-level">' + sccEsc(levelLabel) + '</span>' : '') + '</span>'
+      + (isPrepared ? '<span class="scc-pd-spell-row-prepared">Prepared</span>' : '')
+      + '<button class="scc-pd-spell-remove" onclick="sccPlayerUnassignSpell(\'' + escQ(charId) + '\',\'' + escQ(r.id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
     + '</div>';
+  }).join('') + '</div>';
+}
+
+function sccPlayerSpellFilterChanged(charId) {
+  var listEl = document.getElementById('scc-pd-spelllist-' + charId);
+  if (listEl) listEl.innerHTML = renderPlayerSpellListHtml(charId);
 }
 
 function sccPlayerSpellSearch(charId, query) {
@@ -11373,8 +11585,8 @@ function sccPlayerSpellSearch(charId, query) {
   if (!drop) return;
   query = (query || '').toLowerCase().trim();
   if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
-  var sheet = PD_SHEETS[charId] || {};
-  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  var draft = PD_DRAFT[charId] || {};
+  var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var results = sccPlayerSpellEligible(charId).filter(function(s) {
     return s.name.toLowerCase().indexOf(query) >= 0 && learned.indexOf(s.id) === -1;
   }).slice(0, 12);
@@ -11385,74 +11597,132 @@ function sccPlayerSpellSearch(charId, query) {
   }
   drop.innerHTML = results.map(function(s) {
     var levelLabel = s.level === 0 ? 'Cantrip' : 'Level ' + s.level;
-    return '<div class="scc-picker-option" onclick="sccPlayerAssignSpell(\'' + escQ(charId) + '\',\'' + escQ(s.id) + '\')">'
-      + sccEsc(s.name)
-      + '<div class="scc-picker-option-sub">' + sccEsc(levelLabel) + (s.school ? ' &middot; ' + sccEsc(s.school) : '') + '</div>'
+    return '<div class="scc-picker-option scc-picker-option--thumb" onclick="sccPlayerAssignSpell(\'' + escQ(charId) + '\',\'' + escQ(s.id) + '\')">'
+      + sccPlayerSpellThumb(s)
+      + '<div class="scc-picker-option-text">'
+        + sccEsc(s.name)
+        + '<div class="scc-picker-option-sub">' + sccEsc(levelLabel) + (s.school ? ' &middot; ' + sccEsc(s.school) : '') + '</div>'
+      + '</div>'
     + '</div>';
   }).join('');
   drop.classList.add('open');
 }
 
+// Draft-only mutation -- no Supabase write here. sccPlayerSaveChanges() is
+// the one place learned_spells/prepared_spells reach Supabase now.
 function sccPlayerAssignSpell(charId, spellId) {
-  var sheet = PD_SHEETS[charId] || {};
-  var learned = (Array.isArray(sheet.learned_spells) ? sheet.learned_spells : []).slice();
-  if (learned.indexOf(spellId) === -1) learned.push(spellId);
-  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(charId), { learned_spells: learned }).then(function(r) {
-    if (!r.ok) { showDMToast('Failed to assign spell', 'error'); return; }
-    sheet.learned_spells = learned;
-    PD_SHEETS[charId] = sheet;
-    var searchInput = document.getElementById('scc-pd-spellsearch-' + charId);
-    if (searchInput) searchInput.value = '';
-    var drop = document.getElementById('scc-pd-spelldrop-' + charId);
-    if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
-    renderPlayerDetailBody(charId);
-    showDMToast('Spell assigned', 'success');
-  }).catch(function() { showDMToast('Failed to assign spell', 'error'); });
+  var draft = PD_DRAFT[charId];
+  if (!draft) return;
+  if (draft.learned_spells.indexOf(spellId) === -1) draft.learned_spells.push(spellId);
+  var searchInput = document.getElementById('scc-pd-spellsearch-' + charId);
+  if (searchInput) searchInput.value = '';
+  var drop = document.getElementById('scc-pd-spelldrop-' + charId);
+  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  sccPlayerRefreshSpellBlock(charId);
 }
 
+// Draft-only mutation. Unlearning a currently-prepared spell un-prepares it
+// too -- a spell that's no longer known can't stay in the daily prepared
+// list -- same rule the old direct-write version enforced, just against the
+// draft instead of Supabase directly.
 function sccPlayerUnassignSpell(charId, spellId) {
-  var sheet = PD_SHEETS[charId] || {};
-  var learned = (Array.isArray(sheet.learned_spells) ? sheet.learned_spells : []).filter(function(id) { return id !== spellId; });
-  // Unlearning a currently-prepared spell un-prepares it too — a spell that's
-  // no longer known can't stay in the daily prepared list.
-  var prepared = (Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : []).filter(function(id) { return id !== spellId; });
-  sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(charId), { learned_spells: learned, prepared_spells: prepared }).then(function(r) {
-    if (!r.ok) { showDMToast('Failed to remove spell', 'error'); return; }
-    sheet.learned_spells = learned;
-    sheet.prepared_spells = prepared;
-    PD_SHEETS[charId] = sheet;
-    renderPlayerDetailBody(charId);
-    showDMToast('Spell removed', 'success');
-  }).catch(function() { showDMToast('Failed to remove spell', 'error'); });
+  var draft = PD_DRAFT[charId];
+  if (!draft) return;
+  draft.learned_spells = draft.learned_spells.filter(function(id) { return id !== spellId; });
+  draft.prepared_spells = draft.prepared_spells.filter(function(id) { return id !== spellId; });
+  sccPlayerRefreshSpellBlock(charId);
+}
+
+function sccPlayerRefreshSpellBlock(charId) {
+  var summaryEl = document.getElementById('scc-pd-spellsummary-' + charId);
+  if (summaryEl) summaryEl.innerHTML = renderPlayerSpellCountSummary(charId);
+  var blockEl = document.getElementById('scc-pd-spellblock-' + charId);
+  if (blockEl) blockEl.innerHTML = renderPlayerSpellBlockHtml(charId);
 }
 
 // Inventory (same search-and-assign pattern as Spell Assignment above, just
-// writing a new `inventory` row instead of appending to learned_spells --
-// reuses .scc-pd-spell-list/-row/-row-name/-row-level/-remove and
-// .scc-picker-* verbatim rather than a parallel set of near-identical
-// classes, same reuse-over-duplication call this file already made for
-// Currency's coin inputs (.scc-loot-coin-row).
-function renderPlayerInventorySection(charId) {
-  var inv = PD_INVENTORY[charId] || [];
+// staging a new draft row instead of appending to learned_spells -- reuses
+// .scc-pd-spell-list/-row/-row-name/-row-level/-remove and .scc-picker-*
+// verbatim rather than a parallel set of near-identical classes, same
+// reuse-over-duplication call this file already made for Currency's coin
+// inputs (.scc-loot-coin-row). Category filter options are derived live from
+// whatever's actually in this character's own draft inventory, not the full
+// item catalog -- every option is guaranteed to actually match something.
+function renderPlayerInventoryBlockHtml(charId) {
+  var draft = PD_DRAFT[charId] || {};
+  var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
   var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
   var byId = {};
   itemsAll.forEach(function(i) { byId[i.id] = i; });
-  var listHtml = inv.length
-    ? '<div class="scc-pd-spell-list">' + inv.map(function(row) {
-        var item = row.item_id ? byId[row.item_id] : null;
-        var name = row.custom_name || (item ? item.name : row.item_id) || 'Unknown item';
-        var qty = row.quantity || 1;
-        return '<div class="scc-pd-spell-row">'
-          + '<span class="scc-pd-spell-row-name">' + sccEsc(name) + (qty > 1 ? '<span class="scc-pd-spell-row-level">&times;' + qty + '</span>' : '') + '</span>'
-          + '<button class="scc-pd-spell-remove" onclick="sccPlayerRemoveInventoryItem(\'' + escQ(charId) + '\',\'' + escQ(row.id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
-        + '</div>';
-      }).join('') + '</div>'
-    : '<div class="scc-pd-empty">No items in inventory yet.</div>';
-  return listHtml
-    + '<div class="scc-picker-search-wrap" style="position:relative;">'
+  var catsPresent = {};
+  inv.forEach(function(row) {
+    var item = row.item_id ? byId[row.item_id] : null;
+    if (item && item.category) catsPresent[item.category] = true;
+  });
+  var catOptions = Object.keys(catsPresent).sort()
+    .map(function(c) { return '<option value="' + escQ(c) + '">' + sccEsc(c.charAt(0).toUpperCase() + c.slice(1)) + '</option>'; }).join('');
+  return '<div class="scc-picker-search-wrap" style="position:relative;">'
       + '<input type="text" class="scc-picker-search" id="scc-pd-itemsearch-' + escQ(charId) + '" placeholder="Search the item catalog&#8230;" oninput="sccPlayerItemSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
       + '<div class="scc-picker-dropdown" id="scc-pd-itemdrop-' + escQ(charId) + '"></div>'
+    + '</div>'
+    + '<div class="scc-pd-toolbar">'
+      + '<input type="text" class="cm-search" id="scc-pd-itemfilter-' + escQ(charId) + '" placeholder="Filter inventory&#8230;" oninput="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '<select class="cm-select" id="scc-pd-itemcatfilter-' + escQ(charId) + '" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')"><option value="">Category: All</option>' + catOptions + '</select>'
+      + '<select class="cm-select" id="scc-pd-itemsort-' + escQ(charId) + '" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')">'
+        + '<option value="name">Sort: Name A&ndash;Z</option>'
+        + '<option value="name-desc">Sort: Name Z&ndash;A</option>'
+        + '<option value="category">Sort: Category</option>'
+      + '</select>'
+    + '</div>'
+    + '<div id="scc-pd-invlist-' + escQ(charId) + '">' + renderPlayerInventoryListHtml(charId) + '</div>';
+}
+
+function renderPlayerInventoryListHtml(charId) {
+  var draft = PD_DRAFT[charId];
+  if (!draft) return '<div class="scc-pd-empty">Loading&#8230;</div>';
+  var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var byId = {};
+  itemsAll.forEach(function(i) { byId[i.id] = i; });
+  var q = ((document.getElementById('scc-pd-itemfilter-' + charId) || {}).value || '').toLowerCase().trim();
+  var catF = (document.getElementById('scc-pd-itemcatfilter-' + charId) || {}).value || '';
+  var sortMode = (document.getElementById('scc-pd-itemsort-' + charId) || {}).value || 'name';
+  var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
+  var rows = inv.map(function(row) {
+    var item = row.item_id ? byId[row.item_id] : null;
+    var name = row.custom_name || (item ? item.name : row.item_id) || 'Unknown item';
+    return { row: row, item: item, name: name, key: row.id || row._tempId };
+  });
+  rows = rows.filter(function(r) {
+    if (q && r.name.toLowerCase().indexOf(q) === -1) return false;
+    if (catF && (!r.item || r.item.category !== catF)) return false;
+    return true;
+  });
+  // Sorted alphabetically by default (Sort: Name A–Z) -- Category mode still
+  // breaks ties alphabetically.
+  rows.sort(function(a, b) {
+    if (sortMode === 'category') {
+      var ac = (a.item && a.item.category) || '', bc = (b.item && b.item.category) || '';
+      return ac.localeCompare(bc) || a.name.localeCompare(b.name);
+    }
+    var cmp = a.name.localeCompare(b.name);
+    return sortMode === 'name-desc' ? -cmp : cmp;
+  });
+  if (!rows.length) {
+    return '<div class="scc-pd-empty">' + (inv.length ? 'No items match this filter.' : 'No items in inventory yet.') + '</div>';
+  }
+  return '<div class="scc-pd-spell-list">' + rows.map(function(r) {
+    var qty = r.row.quantity || 1;
+    return '<div class="scc-pd-spell-row">'
+      + sccPlayerItemThumb(r.item, r.name)
+      + '<span class="scc-pd-spell-row-name">' + sccEsc(r.name) + (qty > 1 ? '<span class="scc-pd-spell-row-level">&times;' + qty + '</span>' : '') + '</span>'
+      + '<button class="scc-pd-spell-remove" onclick="sccPlayerRemoveInventoryItem(\'' + escQ(charId) + '\',\'' + escQ(String(r.key)) + '\')" aria-label="Remove ' + escQ(r.name) + '" title="Remove">&#10005;</button>'
     + '</div>';
+  }).join('') + '</div>';
+}
+
+function sccPlayerItemFilterChanged(charId) {
+  var listEl = document.getElementById('scc-pd-invlist-' + charId);
+  if (listEl) listEl.innerHTML = renderPlayerInventoryListHtml(charId);
 }
 
 function sccPlayerItemSearch(charId, query) {
@@ -11470,45 +11740,128 @@ function sccPlayerItemSearch(charId, query) {
     return;
   }
   drop.innerHTML = results.map(function(i) {
-    return '<div class="scc-picker-option" onclick="sccPlayerAssignItem(\'' + escQ(charId) + '\',\'' + escQ(i.id) + '\')">'
-      + sccEsc(i.name)
-      + '<div class="scc-picker-option-sub">' + sccEsc(i.category || '') + (i.cost_gp != null ? ' &middot; ' + i.cost_gp + ' gp' : '') + '</div>'
+    return '<div class="scc-picker-option scc-picker-option--thumb" onclick="sccPlayerAssignItem(\'' + escQ(charId) + '\',\'' + escQ(i.id) + '\')">'
+      + sccPlayerItemThumb(i, i.name)
+      + '<div class="scc-picker-option-text">'
+        + sccEsc(i.name)
+        + '<div class="scc-picker-option-sub">' + sccEsc(i.category || '') + (i.cost_gp != null ? ' &middot; ' + i.cost_gp + ' gp' : '') + '</div>'
+      + '</div>'
     + '</div>';
   }).join('');
   drop.classList.add('open');
 }
 
+// Draft-only mutation -- stages a new row with no real id yet (_tempId is a
+// purely local key, never sent to Supabase). sccPlayerSaveChanges() is the
+// one place this becomes a real inventory INSERT.
 function sccPlayerAssignItem(charId, itemId) {
-  var pc = sccPlayerCharById(charId);
-  if (!pc) return;
-  sccPost('inventory', {
-    character_id: charId, token: pc.token || '', item_id: itemId,
-    quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true
-  }).then(function(r) {
-    if (!r.ok) { showDMToast('Failed to add item', 'error'); return; }
-    return sccFetch('inventory', '&character_id=eq.' + encodeURIComponent(charId) + '&order=sort_order.asc');
-  }).then(function(rows) {
-    if (!rows) return; // the !r.ok branch above already returned
-    PD_INVENTORY[charId] = Array.isArray(rows) ? rows : PD_INVENTORY[charId];
-    var searchInput = document.getElementById('scc-pd-itemsearch-' + charId);
-    if (searchInput) searchInput.value = '';
-    var drop = document.getElementById('scc-pd-itemdrop-' + charId);
-    if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
-    renderPlayerDetailBody(charId);
-    showDMToast('Item added', 'success');
-  }).catch(function() { showDMToast('Failed to add item', 'error'); });
+  var draft = PD_DRAFT[charId];
+  if (!draft) return;
+  draft.inventory.push({
+    id: null, _tempId: 'new-' + (draft.invTempSeq++),
+    item_id: itemId, quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true
+  });
+  var searchInput = document.getElementById('scc-pd-itemsearch-' + charId);
+  if (searchInput) searchInput.value = '';
+  var drop = document.getElementById('scc-pd-itemdrop-' + charId);
+  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  sccPlayerRefreshInventoryBlock(charId);
 }
 
-function sccPlayerRemoveInventoryItem(charId, invId) {
-  fetch(SCC_URL + '/rest/v1/inventory?id=eq.' + encodeURIComponent(invId), {
-    method: 'DELETE',
-    headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
-  }).then(function(r) {
-    if (!r.ok) { showDMToast('Failed to remove item', 'error'); return; }
-    PD_INVENTORY[charId] = (PD_INVENTORY[charId] || []).filter(function(row) { return row.id !== invId; });
+// Draft-only mutation -- rowKey is either a real inventory row id or one of
+// this draft's own _tempId values; either way, just drops it from the
+// working copy. sccPlayerSaveChanges() diffs against the original snapshot
+// to know which real rows actually need a Supabase DELETE.
+function sccPlayerRemoveInventoryItem(charId, rowKey) {
+  var draft = PD_DRAFT[charId];
+  if (!draft) return;
+  draft.inventory = draft.inventory.filter(function(row) {
+    return String(row.id || row._tempId) !== rowKey;
+  });
+  sccPlayerRefreshInventoryBlock(charId);
+}
+
+function sccPlayerRefreshInventoryBlock(charId) {
+  var blockEl = document.getElementById('scc-pd-invblock-' + charId);
+  if (blockEl) blockEl.innerHTML = renderPlayerInventoryBlockHtml(charId);
+}
+
+// The one place Spell Assignment/Inventory draft edits actually reach
+// Supabase. Diffs the draft against the original snapshot (PD_SHEETS/
+// PD_INVENTORY as they were when the panel opened) so an untouched section
+// costs zero writes -- same "no real change -- skip the write" convention
+// this file's own currency blur handler already follows. Panel stays open
+// afterward, refreshed from the freshly-saved state (matches this file's
+// established re-render-in-place convention for other mutating actions,
+// e.g. Vendor buy/Loot award), so Cancel is the only path that closes+
+// discards.
+function sccPlayerSaveChanges(charId) {
+  var draft = PD_DRAFT[charId];
+  if (!draft) return;
+  var sheet = PD_SHEETS[charId] || {};
+  var origLearned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  var origPrepared = Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : [];
+  var spellsChanged = !sccPlayerArraysEqual(origLearned, draft.learned_spells) || !sccPlayerArraysEqual(origPrepared, draft.prepared_spells);
+
+  var origInv = PD_INVENTORY[charId] || [];
+  var origIds = {};
+  origInv.forEach(function(r) { if (r.id) origIds[r.id] = true; });
+  var draftIds = {};
+  draft.inventory.forEach(function(r) { if (r.id) draftIds[r.id] = true; });
+  var toDelete = Object.keys(origIds).filter(function(id) { return !draftIds[id]; });
+  var toInsert = draft.inventory.filter(function(r) { return !r.id; });
+
+  if (!spellsChanged && !toDelete.length && !toInsert.length) {
+    showDMToast('No changes to save', 'success');
+    return;
+  }
+
+  var btn = document.getElementById('scc-pd-savebtn-' + charId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  var pc = sccPlayerCharById(charId);
+  var ops = [];
+  if (spellsChanged) {
+    ops.push(sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(charId), {
+      learned_spells: draft.learned_spells, prepared_spells: draft.prepared_spells
+    }));
+  }
+  toDelete.forEach(function(id) {
+    ops.push(fetch(SCC_URL + '/rest/v1/inventory?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+    }));
+  });
+  toInsert.forEach(function(row) {
+    ops.push(sccPost('inventory', {
+      character_id: charId, token: (pc && pc.token) || '', item_id: row.item_id,
+      quantity: row.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true
+    }));
+  });
+
+  Promise.all(ops).then(function(results) {
+    var failed = results.some(function(r) { return r && r.ok === false; });
+    if (failed) {
+      showDMToast('Some changes failed to save', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+      return null;
+    }
+    return Promise.all([
+      sccFetch('character_sheet', '&character_id=eq.' + encodeURIComponent(charId)),
+      sccFetch('inventory', '&character_id=eq.' + encodeURIComponent(charId) + '&order=sort_order.asc')
+    ]);
+  }).then(function(res) {
+    if (!res) return; // the failure branch above already reported and reset the button
+    var sheetRows = res[0];
+    PD_SHEETS[charId] = (Array.isArray(sheetRows) && sheetRows[0]) ? sheetRows[0] : sheet;
+    PD_INVENTORY[charId] = Array.isArray(res[1]) ? res[1] : [];
+    sccPlayerBuildDraft(charId);
     renderPlayerDetailBody(charId);
-    showDMToast('Item removed', 'success');
-  }).catch(function() { showDMToast('Failed to remove item', 'error'); });
+    showDMToast('Changes saved', 'success');
+  }).catch(function() {
+    showDMToast('Failed to save changes', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+  });
 }
 
 // Currency (Round 3 Follow-up, sheet/index.html session) — same 3-field
@@ -11519,7 +11872,10 @@ function sccPlayerRemoveInventoryItem(charId, invId) {
 // current values. Reuses .scc-loot-coin-row/.scc-coin-input-wrap/
 // .scc-coin-input/.scc-coin-label verbatim (the Combat tab's existing
 // coin-award UI, gp/sp/cp color-coded already) rather than inventing new
-// input styling for the same 3-coin-field shape.
+// input styling for the same 3-coin-field shape. Deliberately NOT part of
+// the Spell Assignment/Inventory Save/Cancel flow added later — this reads
+// PD_SHEETS (the last-saved state) directly, not the draft, and every blur
+// still writes straight to Supabase immediately, same as before.
 function renderPlayerCurrencySection(charId) {
   var sheet = PD_SHEETS[charId] || {};
   var cp = sheet.gold_cp || 0;
