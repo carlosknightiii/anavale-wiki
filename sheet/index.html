@@ -582,7 +582,6 @@
       color: var(--text);
       min-width: 0;
     }
-
     /* ── Class tab — Overview accordion two-column layout (Figma 52:2705,
        node 94:1560 "details", pulled fresh 2026-08-14) — Class details
        left, Key Features right. gap-42px and min-w-171px are exact Figma
@@ -1178,11 +1177,14 @@
       font-size: 0.8rem;
     }
     /* Fixed-width marker slot so the name column lines up whether the row
-       shows the "Prof." text label or is empty (flat-bonus/neither). */
+       shows the "Prof." text label, the Expertise brain+tooltip pair, or is
+       empty (flat-bonus/neither). Widened from 26px to fit the two-icon
+       Expertise state without the tighter states looking mis-centered. */
     .cs-ab-skill-marker {
-      flex: 0 0 26px;
+      flex: 0 0 34px;
       display: flex;
       align-items: center;
+      gap: 2px;
     }
     .cs-ab-skill-prof-label {
       font-family: var(--font-body);
@@ -1192,10 +1194,19 @@
       letter-spacing: 0.02em;
       color: var(--gold);
     }
-    /* Three distinct states — proficient ("Prof." text label), flat +1 from
-       an imagined-past bonus (no marker — its amount is called out in parens
-       next to the total instead; a dot here read as a second, unexplained
-       state per DM feedback), neither (no marker, muted name). */
+    /* Expertise marker — brain icon + the shared .cs-ab-tip "?" circle
+       (its own data-tip, wired via the usual wireAllTooltips() sweep).
+       Fully replaces "Prof." for this state, not layered alongside it. */
+    .cs-ab-skill-expertise-icon {
+      font-size: 0.8rem;
+      line-height: 1;
+    }
+    /* Four distinct states — Expertise (brain+tooltip icon), proficient
+       ("Prof." text label), flat +1 from an imagined-past bonus (no marker
+       — its amount is called out in parens next to the total instead; a dot
+       here read as a second, unexplained state per DM feedback), neither
+       (no marker, muted name). */
+    .cs-ab-skill--expertise .cs-ab-skill-name { color: var(--text); font-weight: 700; }
     .cs-ab-skill--proficient .cs-ab-skill-name { color: var(--text); font-weight: 700; }
     .cs-ab-skill--flat .cs-ab-skill-name { color: var(--text); font-weight: 400; }
     .cs-ab-skill--none .cs-ab-skill-name { color: var(--char-text-faint); font-weight: 400; }
@@ -3267,6 +3278,7 @@
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
   var LANGUAGE_ROW = null; // languages table row for ch.language_extra, once fetchLanguageData() resolves
+  var LANGUAGE_ROW_2 = null; // languages table row for ch.language_extra_2 — currently only ever set for Rangers (2024 rules: 2 languages), but rendered purely off whether it's set, no class check needed
   var DRUIDIC_LANGUAGE_ROW = null; // languages table row for id 'druidic', fetched only when ch.class_id === 'druid' — every Druid knows Druidic regardless of their language_extra pick
   // player_characters.appearance_data — cosmetic/portrait-description JSON
   // built at character creation (confirmed via real data + character.html's
@@ -3558,6 +3570,24 @@
     int: 'Measures reasoning and memory. Used for recalling lore, investigating clues, and understanding magical theory. Wizards rely on this.',
     wis: 'Measures perception and intuition. Used for noticing hidden things, reading people, surviving in the wild, and healing. Clerics, Druids, and Rangers rely on this.',
     cha: 'Measures force of personality. Used for persuading, deceiving, performing, and intimidating. Bards, Sorcerers, and Paladins rely on this.'
+  };
+  // Druid level-1 "Primal Order" choice (2024 PHB) — the character's own
+  // chosen path (Magician or Warden), not a computed value. Rendered as a
+  // Key Features row (primalOrderFeatureRowHtml()), same icon+name+description
+  // shape as every other feature there — icons reuse the existing FEAT_ICONS
+  // glyphs (sparkles for a caster-flavored feature, crossed swords for a
+  // martial one) rather than inventing new ones. Keyed lowercase so the
+  // lookup is resilient to whatever casing was stored; the character's real
+  // stored value (CH.primal_order) is what's actually displayed as the name.
+  var PRIMAL_ORDER = {
+    magician: {
+      icon: '&#10024;',
+      desc: 'You learn one extra Druid cantrip, and you add your Wisdom modifier (minimum +1) to Intelligence checks using Arcana or Nature.'
+    },
+    warden: {
+      icon: '&#9876;',
+      desc: 'You gain proficiency with martial weapons and medium armor.'
+    }
   };
   var ALIGNMENT_PHB = {
     brightward:'Lawful Good', colorful:'Chaotic Good', greywarden:'True Neutral',
@@ -3986,15 +4016,21 @@
   // each skill row below and the Passive Perception badge, so the two can't
   // drift on the same "is proficiency superseding a flat +1" math.
   function computeSkillTotal(name, modNum, profBonus, ch) {
-    var skillsArr  = Array.isArray(ch && ch.skills) ? ch.skills : [];
-    var bonusesArr = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
+    var skillsArr     = Array.isArray(ch && ch.skills) ? ch.skills : [];
+    var expertiseArr  = Array.isArray(ch && ch.expertise_skills) ? ch.expertise_skills : [];
+    var bonusesArr    = Array.isArray(ch && ch.skill_bonuses) ? ch.skill_bonuses : [];
     var isProficient = skillsArr.indexOf(name) !== -1;
+    // Expertise doubles profBonus for this skill — only meaningful when
+    // already proficient (a skill should only ever be in expertise_skills
+    // if it's also in skills; expertise requires proficiency first).
+    var isExpertise = isProficient && expertiseArr.indexOf(name) !== -1;
     var flatBonusObj = !isProficient ? bonusesArr.find(function(b) { return b && b.skill === name; }) : null;
     var flatAmount = flatBonusObj ? (parseInt(flatBonusObj.amount) || 1) : 0;
     var hasFlatBonus = !!flatBonusObj;
     return {
-      total: modNum + (isProficient ? profBonus : hasFlatBonus ? flatAmount : 0),
+      total: modNum + (isProficient ? (isExpertise ? profBonus * 2 : profBonus) : hasFlatBonus ? flatAmount : 0),
       isProficient: isProficient,
+      isExpertise: isExpertise,
       hasFlatBonus: hasFlatBonus,
       flatAmount: flatAmount
     };
@@ -4009,11 +4045,19 @@
       var totalStr = (s.total >= 0 ? '+' : '') + s.total
         + (s.hasFlatBonus ? ' (+' + s.flatAmount + ')' : '');
       var totalCls = s.total > 0 ? 'positive' : s.total < 0 ? 'negative' : '';
-      var stateCls = s.isProficient ? 'cs-ab-skill--proficient' : s.hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
+      var stateCls = s.isExpertise ? 'cs-ab-skill--expertise' : s.isProficient ? 'cs-ab-skill--proficient' : s.hasFlatBonus ? 'cs-ab-skill--flat' : 'cs-ab-skill--none';
       var tip = SKILL_TIPS[name];
-      var markerHtml = s.isProficient
-        ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
-        : '<span class="cs-ab-skill-marker"></span>';
+      // Expertise fully replaces the "Prof." label — a skill in
+      // expertise_skills never also shows Prof. separately, since Expertise
+      // implies proficiency already. The Expertise explainer lives on the
+      // marker's own "?" circle, not the skill name (that's already carrying
+      // its own, unrelated SKILL_TIPS tooltip below) — putting it there read
+      // like it was explaining the skill, not the icon.
+      var markerHtml = s.isExpertise
+        ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-expertise-icon">&#129504;</span><span class="cs-ab-tip" data-tip="Expertise doubles your proficiency bonus for this skill.">?</span></span>'
+        : s.isProficient
+          ? '<span class="cs-ab-skill-marker"><span class="cs-ab-skill-prof-label">Prof.</span></span>'
+          : '<span class="cs-ab-skill-marker"></span>';
       return '<div class="cs-ab-skill ' + stateCls + '">'
         + markerHtml
         + '<span class="cs-ab-skill-name">' + escHtml(name)
@@ -4268,20 +4312,45 @@
     }
     return { name: name, description: description, level: level };
   }
+  // Druid's Primal Order (Magician/Warden) as a Key Features row — same
+  // icon+name+description shape as a real classes.features row, built from
+  // player_characters.primal_order (a per-character choice) rather than
+  // classes.features (per-class, shared by every Druid), so it can't live in
+  // that array. Reads CH directly, same convention as elsewhere on this tab.
+  function primalOrderFeatureRowHtml() {
+    if (!CH || !CH.primal_order) return '';
+    var info = PRIMAL_ORDER[String(CH.primal_order).toLowerCase()];
+    var icon = info ? info.icon : '&#10022;';
+    var desc = info ? info.desc : '';
+    return '<div class="cs-class-feature-row">'
+      + '<span class="cs-class-feature-icon">' + icon + '</span>'
+      + '<div class="cs-class-feature-txt">'
+        + '<span class="cs-class-feature-name">Primal Order: ' + escHtml(CH.primal_order) + '</span>'
+        + (desc ? '<span class="cs-class-feature-desc">' + escHtml(desc) + '</span>' : '')
+      + '</div>'
+    + '</div>';
+  }
   function buildClassFeaturesHtml(features) {
-    if (!Array.isArray(features) || !features.length) return '';
-    var rows = features.map(function(raw) {
-      var icon = classFeatureIcon(raw);
-      var parsed = parseClassFeature(raw);
-      return '<div class="cs-class-feature-row">'
-        + '<span class="cs-class-feature-icon">' + icon + '</span>'
-        + '<div class="cs-class-feature-txt">'
-          + '<span class="cs-class-feature-name">' + escHtml(parsed.name) + '</span>'
-          + (parsed.level ? '<span class="cs-class-feature-level">Level ' + parsed.level + '</span>' : '')
-          + (parsed.description ? '<span class="cs-class-feature-desc">' + escHtml(parsed.description) + '</span>' : '')
-        + '</div>'
-      + '</div>';
-    }).join('');
+    // Primal Order goes first, independent of whether classes.features has
+    // loaded yet — CH.primal_order is already known on the very first,
+    // synchronous render, so it doesn't need to wait for CLASS_ROW the way
+    // the rows below do.
+    var rows = primalOrderFeatureRowHtml();
+    if (Array.isArray(features) && features.length) {
+      rows += features.map(function(raw) {
+        var icon = classFeatureIcon(raw);
+        var parsed = parseClassFeature(raw);
+        return '<div class="cs-class-feature-row">'
+          + '<span class="cs-class-feature-icon">' + icon + '</span>'
+          + '<div class="cs-class-feature-txt">'
+            + '<span class="cs-class-feature-name">' + escHtml(parsed.name) + '</span>'
+            + (parsed.level ? '<span class="cs-class-feature-level">Level ' + parsed.level + '</span>' : '')
+            + (parsed.description ? '<span class="cs-class-feature-desc">' + escHtml(parsed.description) + '</span>' : '')
+          + '</div>'
+        + '</div>';
+      }).join('');
+    }
+    if (!rows) return '';
     // No leading "Key Features" label here (dropped 2026-08-14) — the new
     // Overview-accordion column heading (.cs-class-col-heading) provides it
     // now. .cs-class-features-label itself is untouched and still used
@@ -5642,6 +5711,14 @@
           .then(function(res) { if (!res.error && res.data) LANGUAGE_ROW = res.data; })
           .catch(function() {})
       : Promise.resolve();
+    // Second language — currently only ever populated for Rangers (2024
+    // rules: 2 languages, not 1), chosen at creation. Rendered purely off
+    // whether it's set, same as the primary pick — no class check needed.
+    var lang2Promise = ch.language_extra_2
+      ? sb.from('languages').select('*').eq('id', ch.language_extra_2).maybeSingle()
+          .then(function(res) { if (!res.error && res.data) LANGUAGE_ROW_2 = res.data; })
+          .catch(function() {})
+      : Promise.resolve();
     // Every Druid knows Druidic regardless of what they picked as their
     // language_extra — a second, always-present Speaks row, not a choice.
     var druidicPromise = ch.class_id === 'druid'
@@ -5649,12 +5726,12 @@
           .then(function(res) { if (!res.error && res.data) DRUIDIC_LANGUAGE_ROW = res.data; })
           .catch(function() {})
       : Promise.resolve();
-    return Promise.all([langPromise, druidicPromise]).then(renderSpeaksBlock);
+    return Promise.all([langPromise, lang2Promise, druidicPromise]).then(renderSpeaksBlock);
   }
   function renderSpeaksBlock() {
     var el = document.getElementById('cs-mi-speaks');
     if (!el) return;
-    if (!LANGUAGE_ROW && !DRUIDIC_LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
+    if (!LANGUAGE_ROW && !LANGUAGE_ROW_2 && !DRUIDIC_LANGUAGE_ROW) { el.innerHTML = ''; el.style.display = 'none'; return; }
     el.style.display = '';
     var html = '';
     if (LANGUAGE_ROW) {
@@ -5662,6 +5739,12 @@
       html += '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + langColor + ';">' + (LANGUAGE_ROW.glyph || '') + '</span>'
         + '<span class="cs-mi-speaks-name" style="color:' + langColor + ';">' + escHtml(LANGUAGE_ROW.name || '') + '</span></div>'
         + (LANGUAGE_ROW.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW.spoken_where) + '</span>' : '');
+    }
+    if (LANGUAGE_ROW_2) {
+      var lang2Color = LANGUAGE_ROW_2.color || 'inherit';
+      html += '<div class="cs-mi-speaks-row"><span class="cs-mi-speaks-glyph" style="color:' + lang2Color + ';">' + (LANGUAGE_ROW_2.glyph || '') + '</span>'
+        + '<span class="cs-mi-speaks-name" style="color:' + lang2Color + ';">' + escHtml(LANGUAGE_ROW_2.name || '') + '</span></div>'
+        + (LANGUAGE_ROW_2.spoken_where ? '<span class="cs-mi-speaks-sub">' + escHtml(LANGUAGE_ROW_2.spoken_where) + '</span>' : '');
     }
     if (DRUIDIC_LANGUAGE_ROW) {
       var dColor = DRUIDIC_LANGUAGE_ROW.color || 'inherit';

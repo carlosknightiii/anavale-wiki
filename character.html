@@ -548,6 +548,60 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           </div>
         </div>
+        <!-- Rangers know two languages, not one (2024 rules) — hidden by
+             default, shown only once Stage 2's class picker sets class_id
+             to "ranger" (see updateSecondLanguageVisibility(), which fires
+             both from selectClass() and every time Stage 1 is (re-)entered,
+             since class is chosen in Stage 2, after this section). -->
+        <div class="char-field-group" id="char-language-section-2" style="display:none;">
+          <label class="char-field-label">Second Language <span class="char-field-tooltip" data-tip="Rangers know two languages, not one. Choose a second additional language.">What's this?</span></label>
+          <span class="char-field-help">As a Ranger, choose a second additional language.</span>
+          <input type="hidden" id="char-language-2">
+          <div class="char-option-cards char-lang-cards" data-field="char-language-2" data-save="language_2">
+            <div class="char-lang-card" data-value="caparian-deep" data-color="#2a7a3a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">᛫ᚠᚢ</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Caparian Deep</div>
+                <div class="char-lang-sub">Spoken in the Opu Forest and Dingu territories</div>
+              </div>
+            </div>
+            <div class="char-lang-card" data-value="conclave-script" data-color="#6a3aaa" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">⟁⌬⎊</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Conclave Script</div>
+                <div class="char-lang-sub">The Gigglegloom Conclave's written technical language</div>
+              </div>
+            </div>
+            <div class="char-lang-card" data-value="jugabi-canopy" data-color="#4a9a3a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">꩜ꩻ꧁</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Jugabi Canopy</div>
+                <div class="char-lang-sub">Spoken by the Greenvast Tribes and Verdathi</div>
+              </div>
+            </div>
+            <div class="char-lang-card" data-value="nombi-frost" data-color="#2266b8" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">ᚱᚢᚾ</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Nombi Frost</div>
+                <div class="char-lang-sub">Spoken across the northern fjords and forests</div>
+              </div>
+            </div>
+            <div class="char-lang-card" data-value="pre-partition" data-color="#8a6a2a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">𐤀𐤁𐤂</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Pre-Partition Script</div>
+                <div class="char-lang-sub">Ancient, mostly unreadable, occasionally useful</div>
+              </div>
+            </div>
+            <div class="char-lang-card" data-value="sohot-old" data-color="#c8882a" onclick="selectOptionCard(this)">
+              <div class="char-lang-glyph">𐡀𐡁𐡂</div>
+              <div class="char-lang-content">
+                <div class="char-lang-name">Sohot Old Tongue</div>
+                <div class="char-lang-sub">Ceremonial language of the southern kingdoms</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

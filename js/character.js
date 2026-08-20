@@ -1399,6 +1399,19 @@ function selectClass(classId) {
   CHAR_STATE.draft.gigglegloom_type = typeId;
   saveDraftToStorage();
   updateStage2SkillAlert();
+  updateSecondLanguageVisibility();
+}
+
+// Rangers know two languages, not one (2024 rules) — the second-language
+// picker (Stage 1, right after the first) only shows once class_id is
+// "ranger". Class is chosen in Stage 2, after the language section, so this
+// has to be re-checked both here (fires the moment the player picks a class)
+// and from restoreStage2Selections() (fires every time Stage 1 is entered,
+// covering "picked Ranger in Stage 2, then went back to Stage 1").
+function updateSecondLanguageVisibility() {
+  var section = document.getElementById('char-language-section-2');
+  if (!section) return;
+  section.style.display = CHAR_STATE.draft.class_id === 'ranger' ? '' : 'none';
 }
 
 function updateStage2SkillAlert() {
@@ -1756,10 +1769,20 @@ function restoreStage2Selections() {
     var langVal = CHAR_STATE.draft.language;
     var langHidden = document.getElementById('char-language');
     if (langHidden) langHidden.value = langVal;
-    document.querySelectorAll('.char-lang-card').forEach(function(card) {
+    document.querySelectorAll('#char-language-section .char-lang-card').forEach(function(card) {
       card.classList.toggle('selected', (card.dataset.value || '').toLowerCase() === langVal.toLowerCase());
     });
   }
+  // Restore second-language cards (Ranger only — see updateSecondLanguageVisibility())
+  if (CHAR_STATE.draft.language_2) {
+    var lang2Val = CHAR_STATE.draft.language_2;
+    var lang2Hidden = document.getElementById('char-language-2');
+    if (lang2Hidden) lang2Hidden.value = lang2Val;
+    document.querySelectorAll('#char-language-section-2 .char-lang-card').forEach(function(card) {
+      card.classList.toggle('selected', (card.dataset.value || '').toLowerCase() === lang2Val.toLowerCase());
+    });
+  }
+  updateSecondLanguageVisibility();
 
   // Restore past question cards
   var pastFields = [
@@ -3551,6 +3574,11 @@ function buildCharacterEntry(d, token) {
     dm_pending_items: computeDmPendingItems(d),
     feats: computeFeats(d),
     language_extra: d.language,
+    // Second language, Ranger-only (2024 rules: Rangers know two languages).
+    // Gated on class_id here too, not just the picker's own visibility — a
+    // player who picked a second language then switched off Ranger before
+    // submitting shouldn't have a stale pick persist.
+    language_extra_2: (d.class_id === 'ranger' && d.language_2) ? d.language_2 : null,
     summary: d.summary || '',
     appearance_prompt: d.appearance_prompt || '',
     appearance_data: d.appearance_data || {},
