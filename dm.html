@@ -2355,6 +2355,16 @@
               <input class="field-input" type="number" id="item-weight-lb" min="0" step="0.01" placeholder="e.g. 1">
             </div>
           </div>
+          <div class="field-group">
+            <label class="field-label">Requires Attunement</label>
+            <span class="field-help">Player can attune to at most 3 items at once (enforced on the character sheet)</span>
+            <div class="field-toggle">
+              <input type="radio" name="item-attunement" id="item-attunement-false" value="false" checked>
+              <label for="item-attunement-false">No</label>
+              <input type="radio" name="item-attunement" id="item-attunement-true" value="true">
+              <label for="item-attunement-true">Yes</label>
+            </div>
+          </div>
         </div>
 
         <!-- IMAGE -->
@@ -3523,8 +3533,6 @@
             </div>
 
           </div><!-- /cm-left -->
-
-
 
         </div><!-- /cm-body -->
 
@@ -9449,6 +9457,7 @@ function generateItem() {
     tags:                     tagsArr('item-tags'),
     player_facing:            triRadio('item-pf'),
     player_addable:           radioVal('item-addable') === 'true',
+    requires_attunement:      radioVal('item-attunement') === 'true',
     named:                    false,
 
     // All mechanical fields default to null / empty
@@ -10602,6 +10611,7 @@ function cmPopulateForm(entry, type) {
     }
     setRadioVal('item-pf', entry.player_facing);
     setRadioVal('item-addable', entry.player_addable === false ? 'false' : 'true');
+    setRadioVal('item-attunement', entry.requires_attunement ? 'true' : 'false');
     resetImagePreview('item');
     showExistingImage('item-img-preview', 'item-img-path');
   }
