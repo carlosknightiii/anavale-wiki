@@ -11056,12 +11056,37 @@ var SPECIES_PHB = {
   scalegrace:'Dragonborn', solmeri:'Human', stonemarked:'Dwarf',
   tallwalker:'Goliath', veilstepped:'Changeling', verdathi:'Elf'
 };
-// Collapses real multi-paragraph summary text (player_characters.summary --
-// some characters still carry the old one-line pre-rewrite format, others
-// the full six-section narrative) down to a single-line card subtitle, full
-// text on hover via title=. Returns text:'—' when there's nothing real to show.
-function sccPlayerSummaryPreview(text, maxLen) {
-  var t = String(text || '').replace(/\s+/g, ' ').trim();
+// Ported verbatim from sheet/index.html's parseSummaryBlocks()/
+// extractSummarySection() -- player_characters.summary is generateSummary()'s
+// full six-section narrative ("LABEL\n\nparagraph" blocks joined by "\n\n\n"),
+// not a short summary on its own. Pulls just the "WHO ARE YOU" section's
+// clean paragraph text, same as the sheet's own Who You Are card, rather
+// than showing the raw six-section document verbatim.
+function parseSummaryBlocks(summaryText) {
+  if (!summaryText) return [];
+  return summaryText.split('\n\n\n').map(function(block) {
+    var idx = block.indexOf('\n\n');
+    if (idx === -1) return null;
+    return { label: block.slice(0, idx).trim(), text: block.slice(idx + 2).trim() };
+  }).filter(function(sec) { return sec && sec.label && sec.text; });
+}
+function extractSummarySection(summaryText, wantedLabel) {
+  var sections = parseSummaryBlocks(summaryText);
+  for (var i = 0; i < sections.length; i++) {
+    if (sections[i].label.toUpperCase() === wantedLabel.toUpperCase()) return sections[i].text;
+  }
+  return null;
+}
+// Collapses the real summary down to a single-line card subtitle, full text
+// on hover via title=. Tries the "WHO ARE YOU" section first (the real
+// six-section format); some characters still carry the old one-line
+// pre-rewrite format with no sections at all, so falls back to the raw text
+// for those -- same fallback shape sheet/index.html's own header appearance
+// paragraph already uses for this identical old-format-summary gap. Returns
+// text:'—' when there's nothing real to show either way.
+function sccPlayerSummaryPreview(summaryText, maxLen) {
+  var section = extractSummarySection(summaryText, 'WHO ARE YOU');
+  var t = String(section != null ? section : (summaryText || '')).replace(/\s+/g, ' ').trim();
   if (!t) return { text: '—', truncated: false, full: '' };
   if (t.length <= maxLen) return { text: t, truncated: false, full: t };
   var cut = t.slice(0, maxLen).replace(/\s+\S*$/, '');
@@ -11109,7 +11134,7 @@ function renderPlayers() {
         return '<div style="background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:10px;padding:1.25rem 1.5rem;">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'
             + '<div>'
-              + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="display:block;font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-text);margin-bottom:0.2rem;text-decoration:none;">' + escQ(pc.name || '—') + '</a>'
+              + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="display:block;font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;text-decoration:none;">' + escQ(pc.name || '—') + '</a>'
               + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);max-width:32rem;"' + (summaryPreview.full ? ' title="' + escQ(summaryPreview.full) + '"' : '') + '>'
                 + escQ(summaryPreview.text) + (summaryPreview.truncated ? '&#8230;' : '')
               + '</div>'
