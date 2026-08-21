@@ -5738,6 +5738,37 @@ function showDMToast(msg, type) {
   line-height: 1.6;
   font-weight: 400;
 }
+/* A [Voice: ...] note authored directly inside read_aloud -- see
+   sccNpcReadAloudHtml(). Pulled out of the flowing narration and rendered
+   as its own block, right where it sat in the source text (immediately
+   before whatever quoted line it's meant to apply to), not blended into
+   the paragraph around it. Plain outline, no fill color, deliberately:
+   this file's own color palette is already claimed many times over (see
+   the Decision Log's color-collision history). */
+.scc-npc2-voice-note {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--dm-border-mid);
+  border-left: 2px solid var(--dm-gold);
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--dm-text-muted);
+  line-height: 1.4;
+}
+.scc-npc2-voice-note-label {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dm-gold);
+}
 /* DM Only block — was still hardcoded red (#d62b2b), untouched by either
    earlier DM-Only recolor pass since this is a third, separate rendering
    surface (NPC/location panel expanded-card view, not the lookup drawer's
@@ -16000,6 +16031,27 @@ function sccBuildNpcCardHeaderHtml(c, opts) {
     + '</div>'
     + actionsHtml;
 }
+// A DM-authored "[Voice: ...]" note can be embedded directly inside
+// read_aloud, immediately before whatever line it's meant to inform (real
+// examples: forres-brothers, mira-pont) -- pulled out here and rendered as
+// its own callout at the exact point it sat in the source text, instead of
+// staying inline in the narration. Most NPCs don't have one yet; when none
+// is found, this is a no-op and read_aloud renders exactly as before.
+function sccNpcReadAloudHtml(readAloud) {
+  var parts = String(readAloud || '').split(/\[Voice:([^\]]*)\]/);
+  var html = '';
+  for (var i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) {
+      html += '<div class="scc-npc2-voice-note"><span class="scc-npc2-voice-note-label">Voice</span>' + sccEsc(parts[i].trim()) + '</div>';
+    } else {
+      var text = parts[i];
+      if (i > 0) text = text.replace(/^\s+/, '');
+      if (i < parts.length - 1) text = text.replace(/\s+$/, '');
+      if (text) html += sccEsc(text);
+    }
+  }
+  return html;
+}
 function sccBuildNpcCardBodyHtml(c) {
   var body = '';
   if (c.read_aloud) {
@@ -16007,7 +16059,7 @@ function sccBuildNpcCardBodyHtml(c) {
       + '<span class="scc-npc2-quote-mark">“</span>'
       + '<div class="scc-npc2-section-txt">'
         + '<div class="scc-npc2-section-title">Visualization</div>'
-        + '<div class="scc-npc2-section-body">' + sccEsc(c.read_aloud) + '</div>'
+        + '<div class="scc-npc2-section-body">' + sccNpcReadAloudHtml(c.read_aloud) + '</div>'
       + '</div>'
       + '<span class="scc-npc2-quote-mark">”</span>'
     + '</div>';
