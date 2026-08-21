@@ -1390,6 +1390,50 @@
       </div>
     </div>
 
+    <!-- Players page — "+ Add Item" popup (search, set quantity, confirm),
+         replacing the old inline search+qty row on the per-character detail
+         panel. Same centered-fixed-modal convention as the two modals above;
+         opened for whichever character last called sccPlayerOpenAddItemModal(),
+         tracked in PD_ADDITEM_CHARID since this one modal is shared across
+         every player card rather than built per-character. -->
+    <div id="scc-pd-additem-backdrop" class="scc-lookup-backdrop" onclick="sccPlayerCloseAddItemModal()"></div>
+    <div id="scc-pd-additem-modal" class="scc-pd-additem-modal" aria-hidden="true">
+      <div class="scc-quicknote-modal-inner">
+        <div class="scc-quicknote-modal-title">Add Item</div>
+        <div class="scc-picker-search-wrap" style="position:relative;">
+          <input type="text" class="scc-picker-search" id="scc-pd-additem-search" placeholder="Search the item catalog&#8230;" oninput="sccPlayerAddItemModalSearch(this.value)" autocomplete="off">
+        </div>
+        <div class="scc-pd-additem-results" id="scc-pd-additem-results"></div>
+        <div class="scc-quicknote-modal-actions">
+          <button class="scc-btn-secondary" onclick="sccPlayerCloseAddItemModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Players page — "+ Add Spell" popup, same search/confirm shape as the
+         "+ Add Item" popup directly above (ported per the Round 3 ask),
+         reusing its CSS classes verbatim (.scc-pd-additem-modal/-results/
+         -result/etc. are generic layout, not item-specific) rather than a
+         parallel set of near-identical rules. No quantity field — spells
+         aren't stacked the way inventory rows are, so each result row is
+         just thumb + name/sub + a single Add button. Replaces the old
+         inline "Add a Spell" search box that used to sit at the top of the
+         Spell Assignment tab (pre-Figma-redesign leftover, not in the
+         120:2094 mockup). -->
+    <div id="scc-pd-addspell-backdrop" class="scc-lookup-backdrop" onclick="sccPlayerCloseAddSpellModal()"></div>
+    <div id="scc-pd-addspell-modal" class="scc-pd-additem-modal" aria-hidden="true">
+      <div class="scc-quicknote-modal-inner">
+        <div class="scc-quicknote-modal-title">Add Spell</div>
+        <div class="scc-picker-search-wrap" style="position:relative;">
+          <input type="text" class="scc-picker-search" id="scc-pd-addspell-search" placeholder="Search this character&#8217;s eligible spells&#8230;" oninput="sccPlayerAddSpellModalSearch(this.value)" autocomplete="off">
+        </div>
+        <div class="scc-pd-additem-results" id="scc-pd-addspell-results"></div>
+        <div class="scc-quicknote-modal-actions">
+          <button class="scc-btn-secondary" onclick="sccPlayerCloseAddSpellModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ════════════════════════════════════════
          FORMS PANEL
          ════════════════════════════════════════ -->
@@ -8053,86 +8097,270 @@ function showDMToast(msg, type) {
   display: none;
 }
 .scc-statblock-panel.open { display: block; }
-/* Pending DM-add items (e.g. "Wanderkeep Field Kit (DM adds)") -- relocated
-   here from the now-removed Session-tab Party bar, not deleted; same two
-   classes, same markup shape, just rendered on each Players-tab card
-   instead of a compact HP/Level strip. */
-.scc-player-pending-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.85rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--dm-border);
+/* ══════════════════════════════════════════════════════════════════
+   Players page — real Figma redesign (P0tcVgf02XeI13Tz0TtRaX,
+   120:2094 "Expanded/Spells" + 120:2455 "Expanded/Inventory", pulled
+   fresh this session). Each character is now its own accordion —
+   .scc-pd-acc-label toggles .scc-pd-acc-content open/closed inline on
+   the page, no separate Edit trigger/panel. Draft state (PD_DRAFT) and
+   which accordion/tab is open (PD_OPEN_CHARS/PD_ACTIVE_TAB) live in JS,
+   untouched by collapsing — only a real page reload resets them, per
+   the confirmed design. Figma's page/spacing/* and page/fonts/h3/h4
+   tokens map directly onto this project's own --char-ov-gap-*/-h3/-h4
+   tokens (css/tokens.css, already shared with sheet/index.html) —
+   reused rather than re-derived. Figma's Roboto Black/ExtraBold (900/
+   800) aren't in this project's loaded font weights (300/400/700 only,
+   same gap already worked around throughout this file's own gold
+   buttons) — falls back to 700 (Bold), matching every other gold
+   button in this file already. ── */
+.scc-pd-list { display: flex; flex-direction: column; }
+.scc-pd-accordion {
+  border-bottom: 1px solid var(--dm-border);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
 }
-.scc-player-pending-item {
+.scc-pd-accordion:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.scc-pd-acc-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  color: var(--dm-text-muted);
+  gap: var(--char-ov-gap-2xs);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.4rem 0;
+  cursor: pointer;
+  text-align: left;
 }
-/* ── Players page — per-character detail panel (Round 2 Revisions).
-   Same collapsible-panel-below-a-row convention as .scc-loot-panel/
-   .scc-statblock-panel above, not a modal — toggled open by the card's own
-   "Edit" button. Built extensibly: .scc-pd-section is one self-contained
-   block: today only Spell Assignment renders one, a future HP/equipment/
-   notes section is just another block appended after it, no restructuring
-   of the panel itself needed. ── */
-.scc-player-detail-panel {
-  margin-top: 0.85rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--dm-border);
-  display: none;
-}
-.scc-player-detail-panel.open { display: block; }
-.scc-pd-section { margin-bottom: 1.25rem; }
-.scc-pd-section:last-child { margin-bottom: 0; }
-.scc-pd-section-title {
+.scc-pd-acc-name {
+  flex: 1 0 0;
   font-family: var(--font-headers);
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: var(--char-ov-h3);
   color: var(--dm-gold);
-  margin-bottom: 0.6rem;
 }
-.scc-pd-spell-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
-}
-.scc-pd-spell-row {
+.scc-pd-acc-toggle {
+  flex: 1 0 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.45rem 0.7rem;
-  background: var(--scc-surface);
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius-sm);
+  justify-content: flex-end;
+  gap: var(--char-ov-gap-2xs);
+  min-width: 0;
+}
+.scc-pd-acc-toggle-text {
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--dm-text);
 }
-.scc-pd-spell-row-name { flex: 1; min-width: 0; }
-.scc-pd-spell-row-level {
-  color: var(--dm-text-muted);
-  font-size: 0.72rem;
-  margin-left: 0.4rem;
-}
-.scc-pd-spell-row-prepared {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--dm-gold);
-  background: var(--dm-gold-dim);
-  border: 1px solid var(--dm-border-gold);
-  border-radius: 100px;
-  padding: 0.1rem 0.5rem;
-  margin-left: 0.5rem;
+.scc-pd-acc-chevron {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--white);
+  color: var(--blue-800);
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+}
+.scc-pd-acc-chevron.open { transform: rotate(180deg); }
+.scc-pd-acc-content { display: none; padding-bottom: var(--char-ov-gap-2xs); }
+.scc-pd-acc-content.open { display: block; }
+/* Top row — portrait + summary/Read More + Open Sheet/Copy Link. */
+.scc-pd-toprow { display: flex; gap: 10px; align-items: flex-start; margin-top: var(--char-ov-gap-xs); }
+.scc-pd-portrait {
+  width: 100px;
+  height: 98px;
+  object-fit: cover;
+  border-radius: var(--dm-radius-sm);
+  flex-shrink: 0;
+}
+.scc-pd-portrait-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  color: var(--dm-text-muted);
+  font-family: var(--font-headers);
+  font-size: 2rem;
+}
+.scc-pd-summary-col { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: var(--char-ov-gap-m); }
+.scc-pd-summary-text { font-family: var(--font-sans); font-size: 1rem; color: var(--dm-text); line-height: 1.5; }
+.scc-pd-readmore { color: var(--dm-gold); text-decoration: underline; cursor: pointer; }
+.scc-pd-toprow-btns { display: flex; align-items: center; gap: var(--char-ov-gap-xs); flex-wrap: wrap; }
+.scc-pd-link-gold {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.scc-pd-link-gold:hover { opacity: 0.8; }
+/* Class/Species/Region/Level/Submitted row. */
+.scc-pd-details-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--char-ov-gap-m);
+  border-top: 2px solid var(--blue-500);
+  border-bottom: 2px solid var(--blue-500);
+  padding: var(--char-ov-gap-xs) 0;
+  margin-top: var(--char-ov-gap-m);
+}
+.scc-pd-detail { display: flex; flex-direction: column; }
+.scc-pd-detail-label {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  color: var(--dm-text-muted);
+}
+.scc-pd-detail-value { font-family: var(--font-sans); font-size: 1rem; color: var(--dm-text); }
+/* DM Tasks — the pending-item claim checklist (relocated here from the
+   removed Session-tab Party bar in an earlier session), restyled into
+   this bordered card with real checkboxes. sccMarkPendingItemAdded()
+   itself is unchanged -- reused verbatim, only the markup calling it
+   changed shape (a checkbox instead of a text row + "I Added This"
+   button). */
+.scc-pd-tasks {
+  margin-top: var(--char-ov-gap-m);
+  border: 1px solid var(--blue-500);
+  border-radius: var(--radius-lg);
+  padding: var(--char-ov-gap-s);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.scc-pd-tasks-title { font-family: var(--font-headers); font-weight: 700; font-size: var(--char-ov-h4); color: var(--dm-text); margin: 0; }
+.scc-pd-tasks-desc { font-family: var(--font-sans); font-size: 1rem; color: var(--dm-text); margin: 0; }
+.scc-pd-tasks-list { display: flex; flex-direction: column; gap: var(--char-ov-gap-xs); }
+.scc-pd-tasks-item { display: flex; align-items: center; gap: var(--char-ov-gap-2xs); cursor: pointer; }
+.scc-pd-tasks-checkbox {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: var(--blue-700);
+  border: 1px solid #393944;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.scc-pd-tasks-item-label { font-family: var(--font-sans); font-weight: 500; font-size: 0.875rem; color: var(--dm-text); }
+/* Spell Assignment / Inventory tab bar. */
+.scc-pd-tabbar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 4px solid var(--blue-400);
+  margin-top: var(--char-ov-gap-m);
+}
+.scc-pd-tab {
+  background: var(--blue-600);
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 10px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--dm-text);
+  opacity: 0.5;
+  cursor: pointer;
+}
+.scc-pd-tab.active { background: var(--blue-400); opacity: 1; }
+/* Tab panel header — title+count left, gold Add button right. */
+.scc-pd-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--char-ov-gap-xs);
+  margin-top: var(--char-ov-gap-s);
+  margin-bottom: var(--char-ov-gap-s);
+}
+.scc-pd-panel-title { font-family: var(--font-headers); font-weight: 700; font-size: var(--char-ov-h4); color: var(--dm-text); margin: 0; }
+.scc-pd-savebtn { margin-top: var(--char-ov-gap-s); }
+/* Labeled toolbar fields (Search/Level) — Figma's blue-700 bordered-box
+   look, distinct from the plain dark .cm-search/.cm-select used
+   elsewhere in this file (e.g. Content Manager), matching this
+   redesign's own visual language instead. */
+.scc-pd-field { display: flex; flex-direction: column; gap: var(--char-ov-gap-2xs); }
+.scc-pd-field--grow { flex: 1 0 0; min-width: 160px; }
+.scc-pd-field-label { font-family: var(--font-sans); font-weight: 500; font-size: 0.875rem; color: var(--dm-text); }
+.scc-pd-input, .scc-pd-select {
+  background: var(--blue-700);
+  border: 1px solid var(--blue-300);
+  border-radius: 8px;
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  height: 40px;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+.scc-pd-select { border-color: #393944; }
+.scc-pd-input::placeholder { color: var(--dm-text-faint); }
+.scc-pd-input:focus, .scc-pd-select:focus { outline: none; border-color: var(--dm-gold); }
+/* Gold-outlined pill "Filters" toggle (Figma-specified for Inventory) --
+   Spell Assignment's own filter toggle now reuses this class verbatim too
+   (was a plain secondary .scc-pd-filter-toggle button, now removed) so both
+   tabs' filter buttons look identical. */
+.scc-pd-filters-pill {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--dm-gold);
+  border-radius: 9999px;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-pd-filters-pill:hover, .scc-pd-filters-pill.open { background: var(--dm-gold); color: var(--dm-gold-text-on); }
+.scc-pd-inv-toolbar-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--char-ov-gap-xs); flex-wrap: wrap; margin-bottom: var(--char-ov-gap-xs); }
+.scc-pd-inv-toolbar-left { display: flex; align-items: flex-end; gap: var(--char-ov-gap-xs); flex: 1 1 auto; min-width: 240px; }
+.scc-pd-inv-toolbar-left .scc-pd-field { flex: 1 1 220px; min-width: 180px; }
+/* Currency — three colored badges (gold/silver/copper backgrounds, a
+   white input box for the value) replacing the old plain-text-input
+   trio, per the DM's own complaint that the three fields were hard to
+   tell apart. sccPlayerCurrencyBlur() is completely unchanged -- same
+   element ids, same real-time-write-on-blur behavior (currency was
+   never part of the Spell/Inventory draft-then-Save flow and still
+   isn't; this is a pure visual redesign + relocation into the
+   Inventory toolbar). */
+.scc-pd-currency-row { display: flex; align-items: flex-end; gap: var(--char-ov-gap-xs); flex-shrink: 0; }
+.scc-pd-currency-badge {
+  width: 100px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
+  border-radius: var(--radius-sm);
+}
+.scc-pd-currency-badge--gold { background: var(--currency-gold-coin); }
+.scc-pd-currency-badge--silver { background: var(--currency-silver); }
+.scc-pd-currency-badge--copper { background: var(--currency-copper); }
+.scc-pd-currency-label { font-family: var(--font-sans); font-weight: 700; font-size: 1.125rem; color: var(--blue-800); }
+.scc-pd-currency-badge--copper .scc-pd-currency-label { color: var(--text); }
+.scc-pd-currency-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 0;
+  color: var(--blue-800);
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  text-align: center;
+  padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
 }
 .scc-pd-spell-remove {
   background: none;
@@ -8161,6 +8389,22 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
 }
 .scc-pd-spell-summary strong { color: var(--dm-text); font-weight: 700; }
+/* "Class Ability" tag -- sits directly above a spell's name in the Name
+   cell (see renderPlayerSpellListHtml), flagging a spell granted by a real
+   2024 class feature (Druidic, Favored Enemy, etc.) rather than chosen or
+   DM-assigned. Small/all-caps/muted-gold so it reads as a quiet label, not
+   competing with the spell name itself for attention. */
+.scc-pd-class-ability-tag {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dm-gold);
+  opacity: 0.85;
+  line-height: 1.3;
+}
 /* Search/filter toolbar above the assigned-spells/inventory lists -- same
    .cm-search class the Manage tab's own filter bar uses (see
    .cm-filter-bar), just laid out for this narrower panel rather than a
@@ -8178,22 +8422,6 @@ function showDMToast(msg, type) {
 }
 .scc-pd-toolbar .cm-search { flex: 1 1 140px; min-width: 120px; }
 .scc-pd-toolbar .cm-select { flex: 0 0 auto; }
-.scc-pd-filter-toggle {
-  flex-shrink: 0;
-  background: var(--dm-surface-high);
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius-sm);
-  color: var(--dm-text-muted);
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-  padding: 0.42rem 0.75rem;
-  cursor: pointer;
-  transition: var(--dm-transition);
-}
-.scc-pd-filter-toggle:hover,
-.scc-pd-filter-toggle.active { color: var(--dm-gold); border-color: var(--scc-border-gold); }
 .scc-pd-filters-bar {
   display: none;
   flex-wrap: wrap;
@@ -8229,12 +8457,8 @@ function showDMToast(msg, type) {
   text-align: center;
 }
 .scc-pd-price-sep { color: var(--dm-text-muted); font-family: var(--font-sans); font-size: 0.72rem; }
-/* Quantity-to-add input, next to the top add-item search box -- same small
-   numeric-field shape as .scc-coin-input (Currency section), a new class
-   rather than that one directly since this sits beside a search box, not a
-   coin-set label. */
-.scc-pd-additem-row { display: flex; align-items: flex-start; gap: 0.5rem; }
-.scc-pd-additem-row .scc-picker-search-wrap { flex: 1; min-width: 0; }
+/* Quantity input -- same small numeric-field shape used both in the Add Item
+   popup's per-result rows and the inventory table's own Actions column. */
 .scc-pd-qty-input {
   width: 52px;
   flex-shrink: 0;
@@ -8277,24 +8501,115 @@ function showDMToast(msg, type) {
    other 4 picker types (location/npc/quest/item searches) are untouched. */
 .scc-picker-option--thumb { display: flex; align-items: center; gap: 0.6rem; }
 .scc-picker-option--thumb .scc-picker-option-text { flex: 1; min-width: 0; }
-/* Save/Cancel bar -- covers both the Spell Assignment and Inventory sections
-   above it (Currency, below, stays its own always-live blur-to-save field,
-   untouched by this). */
-.scc-pd-savebar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin: 1.25rem 0;
-  padding-top: 1rem;
-  border-top: 1px solid var(--dm-border);
+/* .scc-pd-add-block/.scc-pd-add-search (the old inline "Add a Spell" search
+   box's own gold-tinted styling) removed -- superseded by the "+ Add Spell"
+   popup, which reuses .scc-pd-additem-modal's CSS verbatim instead of a
+   third near-duplicate set of rules. */
+.scc-pd-browse-block { margin-top: 0.2rem; }
+/* Spell/inventory list tables -- reuse the Content Manager's own .cm-table
+   look (dark surface, gold header rule) rather than porting sheet/index.html's
+   blue card-styled .cs-inv-table verbatim, which would look out of place next
+   to the rest of this dark DM Tools theme. Same columns/behavior as the
+   sheet's tables (thumbnails, clamped description with Show more/less on the
+   spells table; Select/thumb/qty/remove on the inventory table), just themed
+   to match this file. */
+.scc-pd-table-wrap { width: 100%; overflow-x: auto; margin-top: 0.4rem; }
+.scc-pd-sl-table { min-width: 760px; }
+.scc-pd-sl-table th:nth-child(1), .scc-pd-sl-table td:nth-child(1) { width: 44px; }
+.scc-pd-sl-table th:nth-child(3), .scc-pd-sl-table td:nth-child(3) { width: 54px; }
+.scc-pd-sl-table th:nth-child(4) { width: 100px; }
+.scc-pd-sl-table th:nth-child(5) { width: 110px; }
+.scc-pd-sl-table th:nth-child(6) { width: 90px; }
+.scc-pd-sl-table th:nth-child(7) { width: 90px; }
+.scc-pd-sl-table th:nth-child(8) { width: 110px; }
+.scc-pd-sl-table th:last-child, .scc-pd-sl-table td:last-child { width: 40px; text-align: center; }
+.scc-pd-sl-desc-cell { vertical-align: top; }
+.scc-pd-sl-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
-.scc-pd-savebar-status {
+.scc-pd-sl-desc.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.scc-pd-sl-desc-toggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 0.25rem 0 0 0;
+  margin: 0;
+  color: var(--dm-gold);
   font-family: var(--font-sans);
   font-size: 0.72rem;
-  color: var(--dm-text-muted);
-  font-style: italic;
+  font-weight: 700;
+  cursor: pointer;
 }
+.scc-pd-sl-desc-toggle:hover { text-decoration: underline; }
+.scc-pd-sl-desc-toggle.visible { display: block; }
+.scc-pd-inv-table { min-width: 700px; }
+.scc-pd-inv-table th:nth-child(1), .scc-pd-inv-table td:nth-child(1) { width: 34px; text-align: center; }
+.scc-pd-inv-table th:nth-child(2), .scc-pd-inv-table td:nth-child(2) { width: 44px; }
+.scc-pd-inv-table td:nth-child(1) input { width: 16px; height: 16px; cursor: pointer; }
+.scc-pd-inv-row-actions { display: flex; align-items: center; justify-content: center; gap: 0.35rem; }
+.scc-pd-inv-bulkbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--dm-gold-dim);
+  border: 1px solid var(--dm-border-gold);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-text);
+}
+/* "+ Add Item" trigger -- gold, matching this file's .scc-btn-primary
+   convention, replacing the old inline search+qty row entirely (see
+   sccPlayerOpenAddItemModal()). */
+.scc-pd-additem-btn { margin-bottom: 0.75rem; }
+/* Add Item popup -- same centered-fixed-modal shape as .scc-quicknote-modal/
+   .scc-addsession-modal (own class since its body is wider, to fit a
+   search-results list rather than a couple of form fields). */
+.scc-pd-additem-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.96);
+  width: 460px;
+  max-width: 90vw;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 999;
+  padding: 1.25rem;
+  display: none;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: var(--dm-shadow-lg);
+  opacity: 0;
+  transition: var(--dm-transition);
+}
+.scc-pd-additem-modal.open { display: flex; opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.scc-pd-additem-results {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.scc-pd-additem-result {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-pd-additem-result-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.scc-pd-additem-result-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text); }
+.scc-pd-additem-result-sub { font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text-muted); margin-top: 0.1rem; }
+.scc-pd-additem-confirm-btn { flex-shrink: 0; padding: 0.35rem 0.8rem; font-size: 0.75rem; }
 /* Death saves -- same pips/behavior as the character sheet's own MainInfo
    header (sheet/index.html .cs-mi-death-saves), laid out horizontally to
    fit under a combat row instead of the sheet's stacked header slot. */
@@ -11640,22 +11955,30 @@ function extractSummarySection(summaryText, wantedLabel) {
 // Relocated from the now-removed Session-tab Party bar (sccRenderPlayerBar())
 // -- not deleted, just moved onto each Players-tab card, same markup shape
 // and same "confirms you've already added it, doesn't grant anything" rule.
-// Rendered into its own stable per-character container so a claim click
-// only ever touches that one card's pending-items block -- a full
-// renderPlayers() re-render would blow away any other character's
-// currently-open Edit panel (PD_DRAFT survives, but the panel's own "open"
-// class doesn't, since the whole card markup is rebuilt from scratch).
+// "DM Tasks" card (real Figma design, 120:2094/120:2455) -- the same claim
+// checklist as before, restyled from a text-row-plus-button into a bordered
+// card with real checkboxes. sccMarkPendingItemAdded() itself is completely
+// unchanged, reused verbatim -- checking a task IS the claim action (no
+// unchecking; matches the existing one-way "remove once claimed" behavior
+// and Figma's own "when complete, check it off" copy). Hidden entirely
+// (not an empty card) when there's nothing pending, same judgment call as
+// before. Rendered into its own stable per-character container so a claim
+// click only ever touches that one accordion's tasks block.
 function sccPlayerPendingItemsHtml(pc) {
   var pending = Array.isArray(pc.dm_pending_items) ? pc.dm_pending_items : [];
   if (!pending.length) return '';
-  return '<div class="scc-player-pending-items">'
-    + pending.map(function(item, i) {
-        return '<div class="scc-player-pending-item">'
-          + '<span>&#128230; ' + sccEsc(item.label || 'Item') + '</span>'
-          + '<button class="scc-btn-sm" title="Confirms you\'ve already added the item yourself — this only clears it from the list, it doesn\'t grant anything automatically." onclick="sccMarkPendingItemAdded(\'' + escQ(pc.id) + '\',' + i + ')">I Added This</button>'
-        + '</div>';
-      }).join('')
-    + '</div>';
+  return '<div class="scc-pd-tasks">'
+    + '<p class="scc-pd-tasks-title">DM Tasks</p>'
+    + '<p class="scc-pd-tasks-desc">Outstanding tasks for the DM to take care of. When complete, check it off.</p>'
+    + '<div class="scc-pd-tasks-list">'
+      + pending.map(function(item, i) {
+          return '<label class="scc-pd-tasks-item">'
+            + '<input type="checkbox" class="scc-pd-tasks-checkbox" title="Confirms you\'ve already added the item yourself — this only clears it from the list, it doesn\'t grant anything automatically." onchange="sccMarkPendingItemAdded(\'' + escQ(pc.id) + '\',' + i + ')">'
+            + '<span class="scc-pd-tasks-item-label">&#128230; ' + sccEsc(item.label || 'Item') + '</span>'
+          + '</label>';
+        }).join('')
+    + '</div>'
+  + '</div>';
 }
 
 // A DM-add item promised by a past-question answer (e.g. "Wanderkeep Field
@@ -11697,12 +12020,43 @@ function playersRefresh() {
   .then(function(res) { return res.json(); })
   .then(function(data) {
     PLAYERS_DATA = data || [];
-    renderPlayers();
+    var ids = PLAYERS_DATA.map(function(pc) { return pc.id; });
+    if (!ids.length) { renderPlayers(); return; }
+    // Portrait for the accordion's top row (Figma 120:2094/120:2455) --
+    // same real character_photo table + public storage URL pattern
+    // sccLoadPlayers() already uses for the Session tab's own Party bar, but
+    // fetched independently here rather than depending on that tab having
+    // loaded first (this page can be opened on its own).
+    return sccFetch('character_photo', '&character_id=in.(' + ids.join(',') + ')').then(function(photos) {
+      PD_PLAYER_PHOTOS = {};
+      (Array.isArray(photos) ? photos : []).forEach(function(row) {
+        if (row.storage_path) {
+          PD_PLAYER_PHOTOS[row.character_id] = SB_URL + '/storage/v1/object/public/character-photos/' + row.storage_path;
+        }
+      });
+      renderPlayers();
+    });
   })
   .catch(function(err) {
-    body.innerHTML = '<div style="color:var(--dm-red);padding:2rem;">Failed to load characters — ' + err.message + '</div>';
+    body.innerHTML = '<div style="color:var(--dm-red);padding:2rem;">Failed to load characters — ' + (err && err.message || 'unknown error') + '</div>';
   });
 }
+var SHEET_BASE_URL = 'https://carlosknightiii.github.io/anavale-wiki/sheet/?token=';
+var CLASS_LABELS_DM = {
+  barbarian:'Barbarian', bard:'Bard', cleric:'Cleric', druid:'Druid',
+  fighter:'Fighter', monk:'Monk', paladin:'Paladin', ranger:'Ranger',
+  rogue:'Rogue', sorcerer:'Sorcerer', warlock:'Warlock', wizard:'Wizard'
+};
+function sccPlayerSheetUrl(pc) { return SHEET_BASE_URL + pc.token; }
+
+// Rebuilds the accordion list from scratch (e.g. on initial load or a
+// manual Refresh click). This wipes every character's DOM back to its
+// collapsed shell -- PD_OPEN_CHARS/PD_DRAFT/PD_ACTIVE_TAB are separate JS
+// state untouched by that, so anything that was open (with unsaved edits)
+// gets explicitly re-expanded and re-rendered from that surviving state
+// right after, rather than silently reverting to collapsed-and-empty. This
+// is what makes "only actually lost on a full page reload" true even
+// across a Refresh click, not just an accordion collapse/re-expand.
 function renderPlayers() {
   var body = document.getElementById('players-body');
   if (!body) return;
@@ -11710,74 +12064,65 @@ function renderPlayers() {
     body.innerHTML = '<div style="text-align:center;color:var(--dm-text-muted);padding:2rem;font-style:italic;">No characters submitted yet.</div>';
     return;
   }
-  var SHEET_BASE = 'https://carlosknightiii.github.io/anavale-wiki/sheet/?token=';
-  var CLASS_LABELS = {
-    barbarian:'Barbarian', bard:'Bard', cleric:'Cleric', druid:'Druid',
-    fighter:'Fighter', monk:'Monk', paladin:'Paladin', ranger:'Ranger',
-    rogue:'Rogue', sorcerer:'Sorcerer', warlock:'Warlock', wizard:'Wizard'
-  };
-  body.innerHTML = '<div style="display:flex;flex-direction:column;gap:1rem;">'
-    + PLAYERS_DATA.map(function(pc) {
-        var sheetUrl = SHEET_BASE + pc.token;
-        var cls = CLASS_LABELS[pc.class_id] || pc.class_id || '—';
-        var speciesKey = (pc.species || '').toLowerCase();
-        var speciesWithPhb = (pc.species || '—') + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : '');
-        var summaryPreview = sccPlayerSummaryPreview(pc.summary, 200);
-        var submitted = pc.created_at ? new Date(pc.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
-        return '<div style="background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:10px;padding:1.25rem 1.5rem;">'
-          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'
-            + '<div>'
-              + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="display:block;font-family:var(--font-headers);font-size:1.3rem;color:var(--dm-gold);margin-bottom:0.2rem;text-decoration:none;">' + escQ(pc.name || '—') + '</a>'
-              + '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);max-width:32rem;"' + (summaryPreview.full ? ' title="' + escQ(summaryPreview.full) + '"' : '') + '>'
-                + escQ(summaryPreview.text) + (summaryPreview.truncated ? '&#8230;' : '')
-              + '</div>'
-            + '</div>'
-            + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
-              + '<a href="' + escQ(sheetUrl) + '" target="_blank" style="padding:0.4rem 1rem;background:var(--dm-gold-dim);border:1px solid var(--dm-border-gold);border-radius:6px;color:var(--dm-gold);font-family:var(--font-sans);font-size:0.75rem;font-weight:600;text-decoration:none;white-space:nowrap;">Open Sheet ↗</a>'
-              + '<button onclick="navigator.clipboard.writeText(\'' + escQ(sheetUrl) + '\').then(function(){showDMToast(\'Link copied\',\'success\')})" style="padding:0.4rem 1rem;background:var(--dm-surface);border:1px solid var(--dm-border);border-radius:6px;color:var(--dm-text-muted);font-family:var(--font-sans);font-size:0.75rem;cursor:pointer;white-space:nowrap;">Copy Link</button>'
-              + '<button id="scc-pd-editbtn-' + escQ(pc.id) + '" onclick="sccTogglePlayerDetail(\'' + escQ(pc.id) + '\')" style="padding:0.4rem 1rem;background:var(--dm-surface);border:1px solid var(--dm-border-blue);border-radius:6px;color:var(--dm-blue);font-family:var(--font-sans);font-size:0.75rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#9998; Edit</button>'
-            + '</div>'
-          + '</div>'
-          + '<div style="display:flex;gap:1.5rem;margin-top:0.85rem;flex-wrap:wrap;">'
-            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Class</span><br>' + escQ(cls) + '</div>'
-            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Species</span><br>' + escQ(speciesWithPhb) + '</div>'
-            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Region</span><br>' + escQ(pc.home_region || '—') + '</div>'
-            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Level</span><br>' + escQ(String(pc.level || 1)) + '</div>'
-            + '<div style="font-family:var(--font-sans);font-size:0.75rem;"><span style="color:var(--dm-text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.65rem;">Submitted</span><br>' + submitted + '</div>'
-          + '</div>'
-          + '<div id="scc-player-pending-' + escQ(pc.id) + '">' + sccPlayerPendingItemsHtml(pc) + '</div>'
-          + '<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:var(--dm-bg);border-radius:6px;font-family:var(--font-mono);font-size:0.68rem;color:var(--dm-text-muted);word-break:break-all;">' + escQ(sheetUrl) + '</div>'
-          + '<div class="scc-player-detail-panel" id="scc-pd-panel-' + escQ(pc.id) + '">'
-            + '<div id="scc-pd-body-' + escQ(pc.id) + '"><div class="scc-pd-empty">Loading&#8230;</div></div>'
-          + '</div>'
-        + '</div>';
-      }).join('')
-    + '</div>';
+  body.innerHTML = '<div class="scc-pd-list">'
+    + PLAYERS_DATA.map(sccPlayerAccordionShellHtml).join('')
+  + '</div>';
+  Object.keys(PD_OPEN_CHARS).forEach(function(charId) {
+    if (!sccPlayerCharById(charId)) { delete PD_OPEN_CHARS[charId]; return; }
+    sccPlayerSetAccordionUi(charId, true);
+    if (PD_SHEETS[charId]) {
+      renderPlayerDetailBody(charId); // draft/sheet already in memory from before the refresh -- rebuild straight from it, no re-fetch
+    } else {
+      sccLoadPlayerDetail(charId);
+    }
+  });
+}
+function sccPlayerAccordionShellHtml(pc) {
+  return '<div class="scc-pd-accordion" id="scc-pd-accordion-' + escQ(pc.id) + '">'
+    + '<button type="button" class="scc-pd-acc-label" onclick="sccTogglePlayerDetail(\'' + escQ(pc.id) + '\')">'
+      + '<span class="scc-pd-acc-name">' + sccEsc(pc.name || '—') + '</span>'
+      + '<span class="scc-pd-acc-toggle">'
+        + '<span class="scc-pd-acc-toggle-text" id="scc-pd-toggletext-' + escQ(pc.id) + '">Expand</span>'
+        + '<span class="scc-pd-acc-chevron" id="scc-pd-chevron-' + escQ(pc.id) + '">&#9660;</span>'
+      + '</span>'
+    + '</button>'
+    + '<div class="scc-pd-acc-content" id="scc-pd-panel-' + escQ(pc.id) + '">'
+      + '<div id="scc-pd-body-' + escQ(pc.id) + '"><div class="scc-pd-empty">Loading&#8230;</div></div>'
+    + '</div>'
+  + '</div>';
 }
 
-// ── Players page — per-character detail panel ───────────────────────
-// Extensible by design: renderPlayerDetailBody() renders one .scc-pd-section
-// block per feature — today Spell Assignment, Inventory, and Currency, a
-// future HP/equipment/notes section is just another block appended after
-// them, no restructuring of the panel/toggle mechanism needed. Same
-// collapsible-panel-below-a-row convention as the Combat tab's
-// .scc-loot-panel/.scc-statblock-panel (sccToggleLoot/sccToggleStatBlock),
-// not a modal, matching this file's existing DM Tools conventions.
+// ── Players page — per-character accordion (real Figma redesign,
+// P0tcVgf02XeI13Tz0TtRaX 120:2094/120:2455, pulled fresh this session) ──
+// Click the name to expand/collapse inline on the page -- multiple can be
+// open at once, standard accordion behavior. No separate Edit trigger or
+// side panel anymore.
 //
-// Spell Assignment and Inventory now run on an explicit Save/Cancel flow,
-// not autosave: opening the panel snapshots the character's real spell/
-// inventory state into PD_DRAFT[charId], every add/remove in either section
-// mutates only that in-memory draft, and nothing reaches Supabase until
-// "Save Changes" is clicked. "Cancel" (and closing the panel any other way —
-// the outer "Edit" toggle included, one mental model either way) discards
-// the draft. Currency is deliberately NOT part of this — see the comment
-// above renderPlayerCurrencySection() for why it stays its own always-live
-// blur-to-save column.
-var PD_SHEETS = {};       // character_id -> character_sheet row, fetched on first Edit click, cached
-var PD_INVENTORY = {};    // character_id -> real inventory rows array (last-saved state), fetched on first Edit click, cached
-var PD_DRAFT = {};        // character_id -> { learned_spells, prepared_spells, inventory, invTempSeq } — the panel's working copy, built fresh every time it opens, discarded on close
-var SPELLS_DATA_DM = null; // all spells rows, fetched once on first Edit click across any character, then reused
-var CLASSES_DATA_DM = null; // all classes rows, fetched once on first Edit click across any character, then reused
+// Draft behavior: collapsing an accordion is a pure CSS show/hide
+// (sccPlayerSetAccordionUi) -- it does NOT touch PD_DRAFT or the DOM, so
+// every unsaved spell/inventory edit is still exactly where it was when
+// re-expanded. Only a real page reload resets PD_DRAFT/PD_SHEETS (both
+// plain page-level JS vars), matching the confirmed design. There is no
+// separate Cancel button anymore -- Save is the only action that reaches
+// Supabase, everything else is just staged in memory until then.
+//
+// Currency stays deliberately outside this draft -- see the comment above
+// renderPlayerCurrencySection() for why.
+var PD_SHEETS = {};       // character_id -> character_sheet row, fetched on first expand, cached
+var PD_INVENTORY = {};    // character_id -> real inventory rows array (last-saved state), fetched on first expand, cached
+var PD_DRAFT = {};        // character_id -> { learned_spells, prepared_spells, inventory, invTempSeq } — the working copy every add/remove mutates; survives collapse/re-expand and a Refresh click, only reset by Save (rebuilt from the fresh saved state) or a real page reload
+var PD_INV_SELECTED = {}; // character_id -> { rowKey: true } — inventory table's own Select-checkbox state, mirrors sheet/index.html's SELECTED_INV_IDS, reset whenever the draft is rebuilt
+var PD_ADDITEM_CHARID = null; // which character the shared "+ Add Item" modal is currently open for
+var PD_ADDSPELL_CHARID = null; // which character the shared "+ Add Spell" modal is currently open for
+var PD_INV_SORT = {}; // character_id -> { col, dir } — Inventory table's column-sort state, mirrors this file's own cmSortByColumn()/CM_SORT_COL convention, just per-character since several detail panels can be open at once
+var PD_SPELL_SORT = {}; // character_id -> { col, dir } — Spells Learned table's own column-sort state, same shape as PD_INV_SORT but tracked separately since the two tables sort independently
+var PD_OPEN_CHARS = {};   // character_id -> true, which accordions are currently expanded -- survives renderPlayers() rebuilds (e.g. clicking Refresh)
+var PD_ACTIVE_TAB = {};   // character_id -> 'spells' | 'inventory', which tab is showing -- same survives-refresh behavior
+var PD_SUMMARY_FULL = {}; // character_id -> full untruncated "WHO ARE YOU" summary text, cached so Read More/Less can toggle without re-deriving it
+var PD_SUMMARY_EXPANDED = {}; // character_id -> true if the summary is currently showing full text
+var PD_PLAYER_PHOTOS = {}; // character_id -> public portrait URL, fetched once in playersRefresh()
+var SPELLS_DATA_DM = null; // all spells rows, fetched once on first expand across any character, then reused
+var CLASSES_DATA_DM = null; // all classes rows, fetched once on first expand across any character, then reused
 
 // Per-spell thumbnail — same Gigglegloom-type-icon convention sheet/index.html's
 // own spellThumbHtml() already established (SPELL_TYPE_ICON_SRC keyed by
@@ -11817,22 +12162,57 @@ function sccPlayerClassRow(charId) {
   var classKey = (pc && pc.class_id || '').toLowerCase();
   return (Array.isArray(CLASSES_DATA_DM) ? CLASSES_DATA_DM : []).find(function(c) { return c.id === classKey; }) || null;
 }
+// classes.class_ability_spells -- real 2024 PHB baseline class features
+// (Druid's Druidic → Speak with Animals, Ranger's Favored Enemy → Hunter's
+// Mark, Paladin's Faithful Steed → Find Steed, Bard's Words of Creation →
+// Power Word Heal/Kill) that grant a specific spell always prepared, not
+// chosen, not counting against the class's normal cap -- verified against
+// 2+ sources per class, see the column comment for detail. Gated on the
+// character's real level (min_level) since two of the four only unlock well
+// above level 1 (Paladin at 5, Bard at 20). spell_id can be null when the
+// spell doesn't exist in the catalog yet (Find Steed, Power Word Heal) --
+// those entries can't match a learned-spell row and are correctly inert
+// here, not a bug, just a real catalog gap flagged separately.
+function sccPlayerClassAbilitySpellEntries(charId) {
+  var pc = sccPlayerCharById(charId);
+  var classRow = sccPlayerClassRow(charId);
+  var level = (pc && pc.level) || 1;
+  var entries = (classRow && Array.isArray(classRow.class_ability_spells)) ? classRow.class_ability_spells : [];
+  return entries.filter(function(e) { return level >= (e.min_level || 1); });
+}
+// Just the spell_id set (skipping null-spell_id entries, which have no
+// catalog row to match against) -- the fast membership check both the count
+// exclusion and the per-row label use.
+function sccPlayerClassAbilitySpellIds(charId) {
+  return sccPlayerClassAbilitySpellEntries(charId).filter(function(e) { return e.spell_id; }).map(function(e) { return e.spell_id; });
+}
 
+// Collapsing is a pure CSS hide -- never touches PD_DRAFT or the DOM, so
+// re-expanding shows exactly what was there before (any unsaved spell/
+// inventory edits, whichever tab was active, any Read More expansion).
 function sccTogglePlayerDetail(charId) {
-  var panel = document.getElementById('scc-pd-panel-' + charId);
-  if (!panel) return;
-  var isOpen = panel.classList.contains('open');
+  var isOpen = !!PD_OPEN_CHARS[charId];
   if (isOpen) {
-    sccPlayerClosePanel(charId); // discards the draft and removes 'open'
+    delete PD_OPEN_CHARS[charId];
+    sccPlayerSetAccordionUi(charId, false);
     return;
   }
-  panel.classList.add('open');
+  PD_OPEN_CHARS[charId] = true;
+  sccPlayerSetAccordionUi(charId, true);
   if (!PD_SHEETS[charId]) {
-    sccLoadPlayerDetail(charId); // builds the draft itself once the fetch resolves
-  } else {
-    sccPlayerBuildDraft(charId);
-    renderPlayerDetailBody(charId);
+    sccLoadPlayerDetail(charId); // first-ever expand this page load -- fetch, build the draft, render
   }
+  // else: already loaded (this page load, or restored by renderPlayers()
+  // after a Refresh) -- the panel's DOM already has real content, nothing
+  // more to do.
+}
+function sccPlayerSetAccordionUi(charId, open) {
+  var panel = document.getElementById('scc-pd-panel-' + charId);
+  var toggleText = document.getElementById('scc-pd-toggletext-' + charId);
+  var chevron = document.getElementById('scc-pd-chevron-' + charId);
+  if (panel) panel.classList.toggle('open', open);
+  if (toggleText) toggleText.textContent = open ? 'Collapse' : 'Expand';
+  if (chevron) chevron.classList.toggle('open', open);
 }
 
 function sccLoadPlayerDetail(charId) {
@@ -11876,6 +12256,7 @@ function sccPlayerBuildDraft(charId) {
     }),
     invTempSeq: 1
   };
+  PD_INV_SELECTED[charId] = {};
 }
 
 function sccPlayerArraysEqual(a, b) {
@@ -11885,51 +12266,152 @@ function sccPlayerArraysEqual(a, b) {
   return true;
 }
 
-// Closing without Save always discards, unconditionally, matching this
-// panel's own literal ask — no confirm() prompt, since a native dialog is
-// exactly the kind of thing that gets silently auto-dismissed by some
-// embeds/automation contexts, which would make Cancel randomly do nothing
-// instead of randomly nagging.
-function sccPlayerClosePanel(charId) {
-  delete PD_DRAFT[charId];
-  var panel = document.getElementById('scc-pd-panel-' + charId);
-  if (panel) panel.classList.remove('open');
-}
-
-function sccPlayerCancelChanges(charId) {
-  sccPlayerClosePanel(charId);
-}
-
+// Builds the whole accordion body -- top row (portrait/summary/buttons),
+// details row, DM Tasks, tab bar, and the active tab's panel -- from
+// PD_DRAFT/PD_SHEETS already in memory. Called on first expand
+// (sccLoadPlayerDetail, after its fetch resolves), on Refresh-driven
+// re-open (renderPlayers()), and that's it -- Save itself only re-renders
+// the active tab panel (sccPlayerRenderTabPanel), not this whole body, so
+// a Save doesn't reset Read More state or which tab was showing.
 function renderPlayerDetailBody(charId) {
   var bodyEl = document.getElementById('scc-pd-body-' + charId);
-  if (!bodyEl) return;
-  bodyEl.innerHTML = '<div class="scc-pd-section">'
-    + '<div class="scc-pd-section-title">Spell Assignment</div>'
+  var pc = sccPlayerCharById(charId);
+  if (!bodyEl || !pc) return;
+  if (!PD_ACTIVE_TAB[charId]) PD_ACTIVE_TAB[charId] = 'spells';
+  bodyEl.innerHTML = sccPlayerAccordionTopHtml(pc)
+    + '<div class="scc-pd-tabbar">'
+      + sccPlayerTabBtnHtml(charId, 'spells', 'Spell Assignment')
+      + sccPlayerTabBtnHtml(charId, 'inventory', 'Inventory')
+    + '</div>'
+    + '<div id="scc-pd-tabpanel-' + escQ(charId) + '"></div>'
+    + '<button type="button" class="scc-btn-primary scc-pd-savebtn" id="scc-pd-savebtn-' + escQ(charId) + '" onclick="sccPlayerSaveChanges(\'' + escQ(charId) + '\')" title="Spell and inventory changes are staged locally until you click Save.">Save</button>';
+  sccPlayerRenderTabPanel(charId);
+}
+// Portrait + summary/Read More + Open Sheet/Copy Link + the Class/Species/
+// Region/Level/Submitted row + DM Tasks -- everything above the tab bar.
+// Pure display (aside from the Tasks checklist, which reuses the existing
+// claim mechanism directly), not draft data, so it's fine to rebuild this
+// on a Refresh-driven re-open without worrying about losing anything a DM
+// was mid-edit on.
+function sccPlayerAccordionTopHtml(pc) {
+  var charId = pc.id;
+  var sheetUrl = sccPlayerSheetUrl(pc);
+  var cls = CLASS_LABELS_DM[pc.class_id] || pc.class_id || '—';
+  var speciesKey = (pc.species || '').toLowerCase();
+  var speciesWithPhb = (pc.species || '—') + (SPECIES_PHB[speciesKey] ? ' (' + SPECIES_PHB[speciesKey] + ')' : '');
+  var submitted = pc.created_at ? new Date(pc.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+  var photoUrl = PD_PLAYER_PHOTOS[pc.id];
+  var fullSummary = sccPlayerSummaryPreview(pc.summary, Infinity).text;
+  PD_SUMMARY_FULL[charId] = fullSummary;
+  return '<div class="scc-pd-toprow">'
+      + (photoUrl
+          ? '<img class="scc-pd-portrait" src="' + escQ(photoUrl) + '" alt="">'
+          : '<div class="scc-pd-portrait scc-pd-portrait-fallback">' + sccEsc((pc.name || '?').charAt(0).toUpperCase()) + '</div>')
+      + '<div class="scc-pd-summary-col">'
+        + '<p class="scc-pd-summary-text" id="scc-pd-summary-' + escQ(charId) + '">' + sccPlayerSummaryInnerHtml(charId) + '</p>'
+        + '<div class="scc-pd-toprow-btns">'
+          + '<a class="scc-btn-primary" href="' + escQ(sheetUrl) + '" target="_blank">Open Sheet</a>'
+          + '<button type="button" class="scc-pd-link-gold" onclick="navigator.clipboard.writeText(\'' + escQ(sheetUrl) + '\').then(function(){showDMToast(\'Link copied\',\'success\')})">Copy Link</button>'
+        + '</div>'
+      + '</div>'
+    + '</div>'
+    + '<div class="scc-pd-details-row">'
+      + sccPlayerDetailFieldHtml('Class', cls)
+      + sccPlayerDetailFieldHtml('Species', speciesWithPhb)
+      + sccPlayerDetailFieldHtml('Region', pc.home_region || '—')
+      + sccPlayerDetailFieldHtml('Level', String(pc.level || 1))
+      + sccPlayerDetailFieldHtml('Submitted', submitted)
+    + '</div>'
+    + '<div id="scc-player-pending-' + escQ(charId) + '">' + sccPlayerPendingItemsHtml(pc) + '</div>';
+}
+function sccPlayerDetailFieldHtml(label, value) {
+  return '<div class="scc-pd-detail"><span class="scc-pd-detail-label">' + sccEsc(label.toUpperCase()) + '</span><span class="scc-pd-detail-value">' + sccEsc(value) + '</span></div>';
+}
+// Truncated (220 chars, matching the old collapsed-card preview length) +
+// a "Read More" toggle -- only shown when the text is actually long enough
+// to truncate, same "don't show a control that would do nothing" rule as
+// the spell-description clamp elsewhere in this panel.
+function sccPlayerSummaryInnerHtml(charId) {
+  var full = PD_SUMMARY_FULL[charId] || '';
+  if (PD_SUMMARY_EXPANDED[charId]) {
+    return sccEsc(full) + ' <a href="#" class="scc-pd-readmore" onclick="event.preventDefault();sccPlayerToggleReadMore(\'' + escQ(charId) + '\')">Read Less</a>';
+  }
+  var preview = sccPlayerSummaryPreview(full, 220);
+  if (!preview.truncated) return sccEsc(preview.text);
+  return sccEsc(preview.text) + '&#8230; <a href="#" class="scc-pd-readmore" onclick="event.preventDefault();sccPlayerToggleReadMore(\'' + escQ(charId) + '\')">Read More</a>';
+}
+function sccPlayerToggleReadMore(charId) {
+  PD_SUMMARY_EXPANDED[charId] = !PD_SUMMARY_EXPANDED[charId];
+  var el = document.getElementById('scc-pd-summary-' + charId);
+  if (el) el.innerHTML = sccPlayerSummaryInnerHtml(charId);
+}
+function sccPlayerTabBtnHtml(charId, key, label) {
+  var active = (PD_ACTIVE_TAB[charId] || 'spells') === key;
+  return '<button type="button" class="scc-pd-tab' + (active ? ' active' : '') + '" id="scc-pd-tab-' + key + '-' + escQ(charId) + '" onclick="sccPlayerSwitchTab(\'' + escQ(charId) + '\',\'' + key + '\')">' + sccEsc(label) + '</button>';
+}
+function sccPlayerSwitchTab(charId, tab) {
+  PD_ACTIVE_TAB[charId] = tab;
+  ['spells', 'inventory'].forEach(function(k) {
+    var btn = document.getElementById('scc-pd-tab-' + k + '-' + charId);
+    if (btn) btn.classList.toggle('active', k === tab);
+  });
+  sccPlayerRenderTabPanel(charId);
+}
+// The one place Spell Assignment/Inventory's own content actually renders --
+// called on initial body build, on tab switch, and after a successful Save
+// (so the header counts/table reflect what just got saved without
+// rebuilding the whole accordion body above it).
+function sccPlayerRenderTabPanel(charId) {
+  var el = document.getElementById('scc-pd-tabpanel-' + charId);
+  if (!el) return;
+  var tab = PD_ACTIVE_TAB[charId] || 'spells';
+  el.innerHTML = tab === 'inventory' ? renderPlayerInventoryTabHtml(charId) : renderPlayerSpellTabHtml(charId);
+  if (tab === 'spells') sccPlayerApplySpellDescClamp(charId);
+}
+// Header (title+live count, "+ Add Spell") + the existing toolbar/table
+// body (renderPlayerSpellBlockHtml, unchanged logic).
+function renderPlayerSpellTabHtml(charId) {
+  return '<div class="scc-pd-panel-header">'
+      + '<h3 class="scc-pd-panel-title" id="scc-pd-spelltitle-' + escQ(charId) + '">' + sccEsc(renderPlayerSpellHeaderTitle(charId)) + '</h3>'
+      + '<button type="button" class="scc-btn-primary" onclick="sccPlayerOpenAddSpellModal(\'' + escQ(charId) + '\')">+ Add Spell</button>'
+    + '</div>'
     + '<div id="scc-pd-spellsummary-' + escQ(charId) + '">' + renderPlayerSpellCountSummary(charId) + '</div>'
-    + '<div id="scc-pd-spellblock-' + escQ(charId) + '">' + renderPlayerSpellBlockHtml(charId) + '</div>'
-  + '</div>'
-  // Second sibling .scc-pd-section, per the extensible-by-design note above —
-  // same search-and-assign shape as Spell Assignment (list of what's already
-  // there, then a search box that stages a new draft row), reusing the same
-  // .scc-pd-spell-*/.scc-picker-* classes rather than a parallel set.
-  + '<div class="scc-pd-section">'
-    + '<div class="scc-pd-section-title">Inventory</div>'
-    + '<div id="scc-pd-invblock-' + escQ(charId) + '">' + renderPlayerInventoryBlockHtml(charId) + '</div>'
-  + '</div>'
-  + '<div class="scc-pd-savebar">'
-    + '<button class="scc-btn-primary" id="scc-pd-savebtn-' + escQ(charId) + '" onclick="sccPlayerSaveChanges(\'' + escQ(charId) + '\')">Save Changes</button>'
-    + '<button class="scc-btn-secondary" onclick="sccPlayerCancelChanges(\'' + escQ(charId) + '\')" title="Discard spell and inventory changes and close">Cancel</button>'
-    + '<span class="scc-pd-savebar-status">Spell and inventory changes are staged locally until you click Save.</span>'
-  + '</div>'
-  // Round 3 Follow-up (sheet/index.html session) — currency is now DM-only:
-  // players' Gold/Silver/Copper inputs on the sheet became read-only, this
-  // is the one real editor left for that value. Sibling .scc-pd-
-  // section, per the extensible-by-design note above — no restructuring of
-  // Spell Assignment/Inventory or the panel/toggle mechanism needed.
-  + '<div class="scc-pd-section">'
-    + '<div class="scc-pd-section-title">Currency</div>'
-    + renderPlayerCurrencySection(charId)
-  + '</div>';
+    + '<div id="scc-pd-spellblock-' + escQ(charId) + '">' + renderPlayerSpellBlockHtml(charId) + '</div>';
+}
+// Header (title+live weight count, "+ Add Item") + the existing toolbar/
+// table body (renderPlayerInventoryBlockHtml, unchanged table logic).
+// Title and block both carry stable ids so sccPlayerRefreshInventoryBlock()
+// can update just this tab's own weight count + table after an add/
+// remove/qty edit, same targeted-refresh pattern as the spell side.
+function renderPlayerInventoryTabHtml(charId) {
+  return '<div class="scc-pd-panel-header">'
+      + '<h3 class="scc-pd-panel-title" id="scc-pd-invtitle-' + escQ(charId) + '">' + sccEsc(renderPlayerInvHeaderTitle(charId)) + '</h3>'
+      + '<button type="button" class="scc-btn-primary" onclick="sccPlayerOpenAddItemModal(\'' + escQ(charId) + '\')">+ Add Item</button>'
+    + '</div>'
+    + '<div id="scc-pd-invblock-' + escQ(charId) + '">' + renderPlayerInventoryBlockHtml(charId) + '</div>';
+}
+// Same weight formula sheet/index.html's own computeCarriedWeight() uses
+// (item_id ? catalog weight_lb : the row's own weight_lb, times quantity),
+// just reading this panel's own draft/ITEMS globals instead of sheet's
+// INVENTORY/CATALOG_CACHE. Reads the draft, not the last-saved inventory,
+// so the count reflects unsaved add/remove edits live.
+function sccPlayerCarriedWeight(charId) {
+  var draft = PD_DRAFT[charId] || {};
+  var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
+  var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var byId = {};
+  itemsAll.forEach(function(i) { byId[i.id] = i; });
+  return inv.reduce(function(sum, row) {
+    var w = row.item_id ? ((byId[row.item_id] || {}).weight_lb || 0) : (parseFloat(row.weight_lb) || 0);
+    return sum + (w * (parseInt(row.quantity, 10) || 0));
+  }, 0);
+}
+function renderPlayerInvHeaderTitle(charId) {
+  var pc = sccPlayerCharById(charId);
+  var scores = (pc && pc.ability_scores) || {};
+  var capacity = (parseInt(scores.str, 10) || 10) * 15;
+  var current = Math.round(sccPlayerCarriedWeight(charId) * 10) / 10;
+  return 'Inventory (' + current + '/' + capacity + ' lbs)';
 }
 
 // Reuses the exact prepared-count algorithm sheet/index.html's own
@@ -11971,31 +12453,85 @@ function computeCantripsMaxDM(pc, classRow) {
   return 0;
 }
 
-// Reads the draft (not PD_SHEETS) so the count reflects unsaved edits live,
-// same as the list below it.
-function renderPlayerSpellCountSummary(charId) {
+// Reads the draft (not PD_SHEETS) so both counts reflect unsaved edits
+// live. Shared by the tab header title (leveled) and the summary line
+// below it (cantrips) so the one learned-spells scan isn't duplicated.
+//
+// A learned spell in EITHER character_sheet.always_prepared_spells
+// (personal/story-driven, e.g. a DM-granted freebie unrelated to core class
+// rules) OR this character's real classes.class_ability_spells (systemic,
+// e.g. every Druid's Speak with Animals via Druidic) is excluded from the
+// leveled count entirely -- same treatment as a cantrip, per the real rule
+// sheet/index.html already implements for the always_prepared_spells half
+// (renderSpellsLearnedTable(): "s.level === 0 || alwaysPrepared.indexOf(
+// s.id) !== -1" is never counted against the daily prepared cap, never
+// checkbox-addable). Before this fix, this panel's header counted these as
+// ordinary leveled spells, which is why a character with one could show
+// e.g. "(5/4)" even though they're correctly at their real cap of 4 -- not
+// a data bug, this function just didn't know about the exception yet.
+// Tracked as its own bucket, NOT folded into cantrips -- neither kind of
+// always-prepared leveled spell is a cantrip, and must never count against
+// cantripsMax either. The two sources are unioned (a spell in both, as
+// Hana's currently is, is only ever counted once, never double-subtracted).
+function sccPlayerSpellCounts(charId) {
   var classRow = sccPlayerClassRow(charId);
-  if (!classRow || !classRow.spellcasting_ability) return ''; // non-caster -- nothing to show
   var pc = sccPlayerCharById(charId);
+  var sheet = PD_SHEETS[charId] || {};
+  var alwaysPrepared = Array.isArray(sheet.always_prepared_spells) ? sheet.always_prepared_spells : [];
+  var classAbilityIds = sccPlayerClassAbilitySpellIds(charId);
   var draft = PD_DRAFT[charId] || {};
   var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var byId = {};
   (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).forEach(function(s) { byId[s.id] = s; });
-  var cantripsAssigned = 0, leveledAssigned = 0;
+  var cantrips = 0, leveled = 0, classAbility = 0, personalAlwaysPrepared = 0;
   learned.forEach(function(id) {
     var s = byId[id];
-    if (!s) return; // spell not resolved (e.g. removed from catalog) -- don't miscount either bucket
-    if (s.level === 0) cantripsAssigned++; else leveledAssigned++;
+    if (!s) return; // spell not resolved (e.g. removed from catalog) -- don't miscount any bucket
+    if (s.level === 0) cantrips++;
+    else if (classAbilityIds.indexOf(id) !== -1) classAbility++; // a real, sourced 2024 class feature -- gets the row-level "Class Ability" tag
+    else if (alwaysPrepared.indexOf(id) !== -1) personalAlwaysPrepared++; // personal/story grant that isn't a verified class feature -- no tag, just excluded from the cap
+    else leveled++;
   });
-  var parts = [];
-  // Half-casters (Paladin/Ranger) have no cantrips_known_formula -- correctly
-  // omit the line rather than show a confusing "0/0" for a class that never
-  // gets cantrips at all.
-  if (classRow.cantrips_known_formula) {
-    parts.push('Cantrips: <strong>' + cantripsAssigned + '</strong>/' + computeCantripsMaxDM(pc, classRow));
-  }
-  parts.push('Leveled: <strong>' + leveledAssigned + '</strong>/' + computePreparedMaxDM(pc, classRow));
-  return '<div class="scc-pd-spell-summary">' + parts.map(function(p) { return '<span>' + p + '</span>'; }).join('') + '</div>';
+  return {
+    cantrips: cantrips,
+    cantripsMax: classRow ? computeCantripsMaxDM(pc, classRow) : 0,
+    hasCantrips: !!(classRow && classRow.cantrips_known_formula),
+    classAbility: classAbility,
+    personalAlwaysPrepared: personalAlwaysPrepared,
+    leveled: leveled,
+    leveledMax: classRow ? computePreparedMaxDM(pc, classRow) : 0,
+    totalLearned: learned.length
+  };
+}
+// Total learned spell count -- always matches the number of rows actually
+// visible in the table below, including any unresolved id (a row still
+// renders for those, just with dashes). Previously showed leveled/leveledMax
+// here instead, which looked wrong at a glance the moment a class-ability
+// spell was in the mix (e.g. "(2/3)" next to 3 visible rows) -- the
+// leveled/max breakdown moved into the summary line below, alongside the
+// other categories, so the one prominent number in the page title never
+// needs reconciling against what's on screen.
+function renderPlayerSpellHeaderTitle(charId) {
+  var c = sccPlayerSpellCounts(charId);
+  return 'Spell Assignment (' + c.totalLearned + ')';
+}
+// Every category that makes up the total above, each labeled and each with
+// its own real meaning: Leveled (always shown -- the number that actually
+// gates whether a DM can add more), Cantrips (only for classes with a
+// cantrips_known_formula, so a non-caster or half-caster never shows a
+// confusing "0/0"), Class Ability (a spell granted by a real, sourced 2024
+// class feature -- Speak with Animals via Druidic, Hunter's Mark via
+// Favored Enemy -- same spells the table tags individually), and Always
+// Prepared (any remaining personal/story grant that isn't a verified class
+// feature -- kept separate from Class Ability so that label never overclaims
+// a spell as a real rule when it's actually a one-off DM grant).
+function renderPlayerSpellCountSummary(charId) {
+  var c = sccPlayerSpellCounts(charId);
+  var parts = ['Leveled: <strong>' + c.leveled + '</strong>/' + c.leveledMax];
+  if (c.hasCantrips) parts.push('Cantrips: <strong>' + c.cantrips + '</strong>/' + c.cantripsMax);
+  if (c.classAbility) parts.push('Class Ability: <strong>' + c.classAbility + '</strong>');
+  if (c.personalAlwaysPrepared) parts.push('Always Prepared: <strong>' + c.personalAlwaysPrepared + '</strong>');
+  return '<div class="scc-pd-spell-summary"><span>' + parts.join('</span><span>') + '</span></div>';
 }
 
 // Same eligibility rule as the sheet's own (now-retired) self-serve browser
@@ -12052,28 +12588,36 @@ function renderPlayerSpellBlockHtml(charId) {
   var rangeOptions = optionsHtml(function(s) { return s.range; });
   var componentsOptions = optionsHtml(function(s) { return s.components; });
 
-  return '<div class="scc-picker-search-wrap" style="position:relative;">'
-      + '<input type="text" class="scc-picker-search" id="scc-pd-spellsearch-' + escQ(charId) + '" placeholder="Search this character&#8217;s eligible spells&#8230;" oninput="sccPlayerSpellSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
-      + '<div class="scc-picker-dropdown" id="scc-pd-spelldrop-' + escQ(charId) + '"></div>'
-    + '</div>'
+  // The old inline "Add a Spell" search box is gone -- adding now works via
+  // the "+ Add Spell" popup (sccPlayerOpenAddSpellModal, tab header), same
+  // pattern as Add Item. This block is just the browse/filter/remove list
+  // of what's already known.
+  return '<div class="scc-pd-browse-block">'
+    // Toolbar simplified to Search + a single always-visible Level dropdown
+    // (real Figma toolbar, 120:2094) -- the fuller filter set (Casting
+    // Time/Gigglegloom/Range/Components/Sort) still exists, just tucked
+    // behind the "More Filters" toggle instead of shown by default. Level
+    // itself lives ONLY here now, not duplicated into the filters-bar below.
     + '<div class="scc-pd-toolbar">'
-      + '<input type="text" class="cm-search" id="scc-pd-spellfilter-' + escQ(charId) + '" placeholder="Search learned spells&#8230;" oninput="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
-      + '<button type="button" class="scc-pd-filter-toggle" id="scc-pd-spellfiltertoggle-' + escQ(charId) + '" onclick="sccPlayerToggleSpellFilters(\'' + escQ(charId) + '\')">Filter</button>'
+      + '<div class="scc-pd-field scc-pd-field--grow">'
+        + '<label class="scc-pd-field-label">Search</label>'
+        + '<input type="text" class="scc-pd-input" id="scc-pd-spellfilter-' + escQ(charId) + '" placeholder="Search&#8230;" oninput="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+      + '</div>'
+      + '<div class="scc-pd-field">'
+        + '<label class="scc-pd-field-label">Level</label>'
+        + '<select class="scc-pd-select" id="scc-pd-spelllevelfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">All Levels</option>' + levelOptions + '</select>'
+      + '</div>'
+      + '<button type="button" class="scc-pd-filters-pill" id="scc-pd-spellfiltertoggle-' + escQ(charId) + '" onclick="sccPlayerToggleSpellFilters(\'' + escQ(charId) + '\')">Filters</button>'
     + '</div>'
     + '<div class="scc-pd-filters-bar" id="scc-pd-spellfilters-' + escQ(charId) + '">'
-      + '<select class="cm-select" id="scc-pd-spelllevelfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Level: All</option>' + levelOptions + '</select>'
       + '<select class="cm-select" id="scc-pd-spellcastingfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Casting Time: All</option>' + castingOptions + '</select>'
       + '<select class="cm-select" id="scc-pd-spellgigglefilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Gigglegloom: All</option>' + gigglegloomOptions + '</select>'
       + '<select class="cm-select" id="scc-pd-spellrangefilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Range: All</option>' + rangeOptions + '</select>'
       + '<select class="cm-select" id="scc-pd-spellcomponentsfilter-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')"><option value="">Components: All</option>' + componentsOptions + '</select>'
-      + '<select class="cm-select" id="scc-pd-spellsort-' + escQ(charId) + '" onchange="sccPlayerSpellFilterChanged(\'' + escQ(charId) + '\')">'
-        + '<option value="name">Sort: Name A&ndash;Z</option>'
-        + '<option value="name-desc">Sort: Name Z&ndash;A</option>'
-        + '<option value="level">Sort: Level</option>'
-      + '</select>'
       + '<button type="button" class="scc-pd-filters-reset" onclick="sccPlayerResetSpellFilters(\'' + escQ(charId) + '\')">Reset</button>'
     + '</div>'
-    + '<div id="scc-pd-spelllist-' + escQ(charId) + '">' + renderPlayerSpellListHtml(charId) + '</div>';
+    + '<div id="scc-pd-spelllist-' + escQ(charId) + '">' + renderPlayerSpellListHtml(charId) + '</div>'
+  + '</div>';
 }
 
 function sccPlayerToggleSpellFilters(charId) {
@@ -12081,7 +12625,7 @@ function sccPlayerToggleSpellFilters(charId) {
   var btn = document.getElementById('scc-pd-spellfiltertoggle-' + charId);
   if (!bar) return;
   var open = bar.classList.toggle('open');
-  if (btn) btn.classList.toggle('active', open);
+  if (btn) btn.classList.toggle('open', open);
 }
 
 function sccPlayerResetSpellFilters(charId) {
@@ -12089,8 +12633,14 @@ function sccPlayerResetSpellFilters(charId) {
     var el = document.getElementById(prefix + charId);
     if (el) el.value = '';
   });
-  var sortEl = document.getElementById('scc-pd-spellsort-' + charId);
-  if (sortEl) sortEl.value = 'name'; // sort always has a real selection, unlike the filters -- reset to the default rather than blank
+  PD_SPELL_SORT[charId] = { col: 'name', dir: 'asc' }; // sort always has a real selection, unlike the filters -- reset to the default rather than blank
+  sccPlayerSpellFilterChanged(charId);
+}
+// Same click-to-sort/click-again-to-reverse convention as sccPlayerInvSortByColumn.
+function sccPlayerSpellSortByColumn(charId, col) {
+  var cur = PD_SPELL_SORT[charId] || (PD_SPELL_SORT[charId] = { col: 'name', dir: 'asc' });
+  if (cur.col === col) cur.dir = cur.dir === 'asc' ? 'desc' : 'asc';
+  else { cur.col = col; cur.dir = 'asc'; }
   sccPlayerSpellFilterChanged(charId);
 }
 
@@ -12110,7 +12660,8 @@ function renderPlayerSpellListHtml(charId) {
   var giggleF = (document.getElementById('scc-pd-spellgigglefilter-' + charId) || {}).value || '';
   var rangeF = (document.getElementById('scc-pd-spellrangefilter-' + charId) || {}).value || '';
   var componentsF = (document.getElementById('scc-pd-spellcomponentsfilter-' + charId) || {}).value || '';
-  var sortMode = (document.getElementById('scc-pd-spellsort-' + charId) || {}).value || 'name';
+  var sortState = PD_SPELL_SORT[charId] || (PD_SPELL_SORT[charId] = { col: 'name', dir: 'asc' });
+  var classAbilityIds = sccPlayerClassAbilitySpellIds(charId);
   var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
   var rows = learned.map(function(id) { return { id: id, s: byId[id] }; });
   rows = rows.filter(function(r) {
@@ -12123,112 +12674,210 @@ function renderPlayerSpellListHtml(charId) {
     if (componentsF && (!r.s || r.s.components !== componentsF)) return false;
     return true;
   });
-  // Level mode still breaks ties alphabetically, never leaving same-level
-  // spells in an arbitrary order.
+  // Column-header sort (see sccPlayerSpellSortByColumn/sccPlayerSortThHtml)
+  // -- replaces the old separate Sort dropdown, same as Inventory's own
+  // header-click convention. Every non-name column ties back to name so
+  // results stay stable and predictable; "Category" here sorts by the same
+  // field the column displays (spell school), not the separate Gigglegloom
+  // filter field.
   rows.sort(function(a, b) {
     var an = a.s ? a.s.name : a.id, bn = b.s ? b.s.name : b.id;
-    if (sortMode === 'level') {
-      var al = a.s ? a.s.level : 0, bl = b.s ? b.s.level : 0;
-      return (al - bl) || an.localeCompare(bn);
+    var cmp;
+    if (sortState.col === 'level') {
+      cmp = ((a.s ? a.s.level : 0) - (b.s ? b.s.level : 0)) || an.localeCompare(bn);
+    } else if (sortState.col === 'category') {
+      cmp = ((a.s && a.s.school) || '').localeCompare((b.s && b.s.school) || '') || an.localeCompare(bn);
+    } else if (sortState.col === 'castingTime') {
+      cmp = ((a.s && a.s.casting_time) || '').localeCompare((b.s && b.s.casting_time) || '') || an.localeCompare(bn);
+    } else if (sortState.col === 'range') {
+      cmp = ((a.s && a.s.range) || '').localeCompare((b.s && b.s.range) || '') || an.localeCompare(bn);
+    } else if (sortState.col === 'components') {
+      cmp = ((a.s && a.s.components) || '').localeCompare((b.s && b.s.components) || '') || an.localeCompare(bn);
+    } else if (sortState.col === 'duration') {
+      cmp = ((a.s && a.s.duration) || '').localeCompare((b.s && b.s.duration) || '') || an.localeCompare(bn);
+    } else {
+      cmp = an.localeCompare(bn);
     }
-    var cmp = an.localeCompare(bn);
-    return sortMode === 'name-desc' ? -cmp : cmp;
+    return sortState.dir === 'desc' ? -cmp : cmp;
   });
   if (!rows.length) {
     return '<div class="scc-pd-empty">' + (learned.length ? 'No spells match this filter.' : 'No spells learned yet.') + '</div>';
   }
-  var prepared = Array.isArray(draft.prepared_spells) ? draft.prepared_spells : [];
-  return '<div class="scc-pd-spell-list">' + rows.map(function(r) {
-    var s = r.s, name = s ? s.name : r.id;
-    var levelLabel = s ? (s.level === 0 ? 'Cantrip' : 'Level ' + s.level) : '';
-    var isPrepared = prepared.indexOf(r.id) >= 0;
-    return '<div class="scc-pd-spell-row">'
-      + sccPlayerSpellThumb(s || {})
-      + '<span class="scc-pd-spell-row-name">' + sccEsc(name) + (levelLabel ? '<span class="scc-pd-spell-row-level">' + sccEsc(levelLabel) + '</span>' : '') + '</span>'
-      + (isPrepared ? '<span class="scc-pd-spell-row-prepared">Prepared</span>' : '')
-      + '<button class="scc-pd-spell-remove" onclick="sccPlayerUnassignSpell(\'' + escQ(charId) + '\',\'' + escQ(r.id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
-    + '</div>';
-  }).join('') + '</div>';
+  // Same table sheet/index.html's own Class tab uses for Spells Learned
+  // (thumbnails, clamped description with Show more/less) -- minus the
+  // Prepared checkbox and favorite star, both player-only concepts (what's
+  // prepared today, what a player has starred as a favorite) that don't
+  // belong in a DM assignment tool. The column that held the checkbox is
+  // replaced with a plain Remove action, matching this panel's own existing
+  // unassign convention. Every column but Description is click-to-sort
+  // (see sccPlayerSortThHtml) -- Description is long free text with no
+  // natural order, same reasoning as Inventory leaving its own Specs/
+  // Description columns plain.
+  return '<div class="scc-pd-table-wrap"><table class="cm-table scc-pd-sl-table"><thead><tr>'
+      + '<th class="cm-th-img"></th>'
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'name', 'Name', sortState)
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'level', 'Level', sortState)
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'category', 'Category', sortState)
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'castingTime', 'Casting Time', sortState)
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'range', 'Range', sortState)
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'components', 'Components', sortState)
+      + sccPlayerSortThHtml('sccPlayerSpellSortByColumn', charId, 'duration', 'Duration', sortState)
+      + '<th>Description</th>'
+      + '<th></th>'
+    + '</tr></thead><tbody>'
+    + rows.map(function(r) {
+      var s = r.s, name = s ? s.name : r.id;
+      var levelLabel = s ? (s.level === 0 ? 'Cantrip' : String(s.level)) : '&mdash;';
+      var descId = 'scc-pd-sl-desc-' + escQ(charId) + '-' + escQ(r.id);
+      // Real 2024 class feature (Druidic/Favored Enemy/etc.), not a player
+      // pick -- see sccPlayerClassAbilitySpellEntries(). Small all-caps tag
+      // directly above the spell's own name, not a separate column, so it
+      // reads as "this is what X is" rather than one more fact in the row.
+      var isClassAbility = classAbilityIds.indexOf(r.id) !== -1;
+      var nameCell = (isClassAbility ? '<div class="scc-pd-class-ability-tag">Class Ability</div>' : '') + sccEsc(name);
+      return '<tr>'
+        + '<td class="cm-td-img">' + sccPlayerSpellThumb(s || {}) + '</td>'
+        + '<td>' + nameCell + '</td>'
+        + '<td>' + levelLabel + '</td>'
+        + '<td>' + (s && s.school ? sccEsc(s.school) : '&mdash;') + '</td>'
+        + '<td>' + (s && s.casting_time ? sccEsc(s.casting_time) : '&mdash;') + '</td>'
+        + '<td>' + (s && s.range ? sccEsc(s.range) : '&mdash;') + '</td>'
+        + '<td>' + (s && s.components ? sccEsc(s.components) : '&mdash;') + '</td>'
+        + '<td>' + (s && s.duration ? sccEsc(s.duration) : '&mdash;') + '</td>'
+        + '<td class="scc-pd-sl-desc-cell">'
+          + '<div class="scc-pd-sl-desc" id="' + descId + '">' + (s && s.spell_desc ? sccEsc(s.spell_desc) : '') + '</div>'
+          + '<button class="scc-pd-sl-desc-toggle" id="' + descId + '-toggle" onclick="sccPlayerToggleSpellDescExpand(\'' + escQ(charId) + '\',\'' + escQ(r.id) + '\', this)">Show more</button>'
+        + '</td>'
+        + '<td><button class="scc-pd-spell-remove" onclick="sccPlayerUnassignSpell(\'' + escQ(charId) + '\',\'' + escQ(r.id) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button></td>'
+      + '</tr>';
+    }).join('')
+    + '</tbody></table></div>';
+}
+
+// Same "measure real overflow, only show the toggle where the clamp is
+// actually cutting something off" behavior as sheet/index.html's
+// applySpellDescClamp() -- called right after this panel's spell table is
+// ever written to the DOM (the panel is already .open, i.e. display:block,
+// by the time that happens, so there's no sheet-style hidden-tab timing gap
+// to work around here). Scoped to this one character's rows via the
+// charId-prefixed element ids, so two players' panels open at once can't
+// clash.
+function sccPlayerApplySpellDescClamp(charId) {
+  document.querySelectorAll('[id^="scc-pd-sl-desc-' + charId + '-"]:not([id$="-toggle"])').forEach(function(el) {
+    var toggle = document.getElementById(el.id + '-toggle');
+    if (!toggle) return;
+    var overflowing = el.scrollHeight > el.clientHeight + 1;
+    toggle.classList.toggle('visible', overflowing || el.classList.contains('expanded'));
+  });
+}
+function sccPlayerToggleSpellDescExpand(charId, spellId, btn) {
+  var el = document.getElementById('scc-pd-sl-desc-' + charId + '-' + spellId);
+  if (!el) return;
+  var expanded = el.classList.toggle('expanded');
+  btn.textContent = expanded ? 'Show less' : 'Show more';
 }
 
 function sccPlayerSpellFilterChanged(charId) {
   var listEl = document.getElementById('scc-pd-spelllist-' + charId);
   if (listEl) listEl.innerHTML = renderPlayerSpellListHtml(charId);
+  sccPlayerApplySpellDescClamp(charId);
 }
 
-function sccPlayerSpellSearch(charId, query) {
-  var drop = document.getElementById('scc-pd-spelldrop-' + charId);
-  if (!drop) return;
+// ── "+ Add Spell" popup (search, confirm) — same shared-modal pattern as
+// "+ Add Item" (sccPlayerOpenAddItemModal and friends), just no quantity
+// field since spells aren't stacked. Tracked via PD_ADDSPELL_CHARID rather
+// than built per-character, same reasoning as PD_ADDITEM_CHARID.
+function sccPlayerOpenAddSpellModal(charId) {
+  PD_ADDSPELL_CHARID = charId;
+  var searchEl = document.getElementById('scc-pd-addspell-search');
+  var resultsEl = document.getElementById('scc-pd-addspell-results');
+  if (searchEl) searchEl.value = '';
+  if (resultsEl) resultsEl.innerHTML = '';
+  var modal = document.getElementById('scc-pd-addspell-modal');
+  var backdrop = document.getElementById('scc-pd-addspell-backdrop');
+  if (modal) modal.classList.add('open');
+  if (backdrop) backdrop.classList.add('open');
+  if (searchEl) searchEl.focus();
+}
+function sccPlayerCloseAddSpellModal() {
+  var modal = document.getElementById('scc-pd-addspell-modal');
+  var backdrop = document.getElementById('scc-pd-addspell-backdrop');
+  if (modal) modal.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+  PD_ADDSPELL_CHARID = null;
+}
+function sccPlayerAddSpellModalSearch(query) {
+  var resultsEl = document.getElementById('scc-pd-addspell-results');
+  if (!resultsEl) return;
   query = (query || '').toLowerCase().trim();
-  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
-  var draft = PD_DRAFT[charId] || {};
-  var learned = Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
-  var results = sccPlayerSpellEligible(charId).filter(function(s) {
+  if (!query) { resultsEl.innerHTML = ''; return; }
+  var charId = PD_ADDSPELL_CHARID;
+  var draft = charId ? PD_DRAFT[charId] : null;
+  var learned = draft && Array.isArray(draft.learned_spells) ? draft.learned_spells : [];
+  var results = charId ? sccPlayerSpellEligible(charId).filter(function(s) {
     return s.name.toLowerCase().indexOf(query) >= 0 && learned.indexOf(s.id) === -1;
-  }).slice(0, 12);
+  }).slice(0, 20) : [];
   if (!results.length) {
-    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
-    drop.classList.add('open');
+    resultsEl.innerHTML = '<div class="scc-pd-empty">No matches.</div>';
     return;
   }
-  drop.innerHTML = results.map(function(s) {
+  resultsEl.innerHTML = results.map(function(s) {
     var levelLabel = s.level === 0 ? 'Cantrip' : 'Level ' + s.level;
-    return '<div class="scc-picker-option scc-picker-option--thumb" onclick="sccPlayerAssignSpell(\'' + escQ(charId) + '\',\'' + escQ(s.id) + '\')">'
+    return '<div class="scc-pd-additem-result">'
       + sccPlayerSpellThumb(s)
-      + '<div class="scc-picker-option-text">'
-        + sccEsc(s.name)
-        + '<div class="scc-picker-option-sub">' + sccEsc(levelLabel) + (s.school ? ' &middot; ' + sccEsc(s.school) : '') + '</div>'
+      + '<div class="scc-pd-additem-result-info">'
+        + '<span class="scc-pd-additem-result-name">' + sccEsc(s.name) + '</span>'
+        + '<span class="scc-pd-additem-result-sub">' + sccEsc(levelLabel) + (s.school ? ' &middot; ' + sccEsc(s.school) : '') + '</span>'
       + '</div>'
+      + '<button type="button" class="scc-btn-primary scc-pd-additem-confirm-btn" onclick="sccPlayerConfirmAddSpell(\'' + escQ(s.id) + '\')">Add</button>'
     + '</div>';
   }).join('');
-  drop.classList.add('open');
 }
-
 // Draft-only mutation -- no Supabase write here. sccPlayerSaveChanges() is
 // the one place learned_spells/prepared_spells reach Supabase now.
-function sccPlayerAssignSpell(charId, spellId) {
-  var draft = PD_DRAFT[charId];
+function sccPlayerConfirmAddSpell(spellId) {
+  var charId = PD_ADDSPELL_CHARID;
+  var draft = charId ? PD_DRAFT[charId] : null;
   if (!draft) return;
   if (draft.learned_spells.indexOf(spellId) === -1) draft.learned_spells.push(spellId);
-  var searchInput = document.getElementById('scc-pd-spellsearch-' + charId);
-  if (searchInput) searchInput.value = '';
-  var drop = document.getElementById('scc-pd-spelldrop-' + charId);
-  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  sccPlayerCloseAddSpellModal();
   sccPlayerRefreshSpellBlock(charId);
 }
 
 // Draft-only mutation. Unlearning a currently-prepared spell un-prepares it
 // too -- a spell that's no longer known can't stay in the daily prepared
 // list -- same rule the old direct-write version enforced, just against the
-// draft instead of Supabase directly.
+// draft instead of Supabase directly. Gated behind a plain confirm(), same
+// pattern just added to inventory removal (sccPlayerRemoveInventoryItem)
+// and this file's own sccArchiveSession().
 function sccPlayerUnassignSpell(charId, spellId) {
   var draft = PD_DRAFT[charId];
   if (!draft) return;
+  var spell = (Array.isArray(SPELLS_DATA_DM) ? SPELLS_DATA_DM : []).find(function(s) { return s.id === spellId; });
+  var name = spell ? spell.name : spellId;
+  if (!confirm('Remove "' + name + '" from this character’s known spells?')) return;
   draft.learned_spells = draft.learned_spells.filter(function(id) { return id !== spellId; });
   draft.prepared_spells = draft.prepared_spells.filter(function(id) { return id !== spellId; });
   sccPlayerRefreshSpellBlock(charId);
 }
 
 function sccPlayerRefreshSpellBlock(charId) {
+  var titleEl = document.getElementById('scc-pd-spelltitle-' + charId);
+  if (titleEl) titleEl.textContent = renderPlayerSpellHeaderTitle(charId);
   var summaryEl = document.getElementById('scc-pd-spellsummary-' + charId);
   if (summaryEl) summaryEl.innerHTML = renderPlayerSpellCountSummary(charId);
   var blockEl = document.getElementById('scc-pd-spellblock-' + charId);
   if (blockEl) blockEl.innerHTML = renderPlayerSpellBlockHtml(charId);
+  sccPlayerApplySpellDescClamp(charId);
 }
 
-// Inventory (same search-and-assign pattern as Spell Assignment above, just
-// staging a new draft row instead of appending to learned_spells -- reuses
-// .scc-pd-spell-list/-row/-row-name/-row-level/-remove and .scc-picker-*
-// verbatim rather than a parallel set of near-identical classes, same
-// reuse-over-duplication call this file already made for Currency's coin
-// inputs (.scc-loot-coin-row). Category filter options are derived live from
-// whatever's actually in this character's own draft inventory, not the full
-// item catalog -- every option is guaranteed to actually match something.
-// A quantity input sits next to the add-item search box so a single click
-// can add e.g. "3 health potions" instead of clicking the same result 3
-// times -- inventory.quantity already existed as a column, this was purely
-// a UI gap. Category/Price/Sort (Name A-Z/Z-A/Category) live in the same
-// Filter-button panel as the spell list above, not inline.
+// Inventory. The "+ Add Item" trigger now lives in the tab's own header
+// row (renderPlayerInventoryTabHtml), not here. Everything below is a
+// draft-only working copy of this character's real inventory, staged the
+// same way Spell Assignment already is -- nothing here reaches Supabase
+// until "Save". Category filter options are derived live from whatever's
+// actually in this character's own draft inventory, not the full item
+// catalog -- every option is guaranteed to actually match something.
 function renderPlayerInventoryBlockHtml(charId) {
   var draft = PD_DRAFT[charId] || {};
   var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
@@ -12242,16 +12891,19 @@ function renderPlayerInventoryBlockHtml(charId) {
   });
   var catOptions = Object.keys(catsPresent).sort()
     .map(function(c) { return '<option value="' + escQ(c) + '">' + sccEsc(c.charAt(0).toUpperCase() + c.slice(1)) + '</option>'; }).join('');
-  return '<div class="scc-pd-additem-row">'
-      + '<div class="scc-picker-search-wrap" style="position:relative;">'
-        + '<input type="text" class="scc-picker-search" id="scc-pd-itemsearch-' + escQ(charId) + '" placeholder="Search the item catalog&#8230;" oninput="sccPlayerItemSearch(\'' + escQ(charId) + '\', this.value)" autocomplete="off">'
-        + '<div class="scc-picker-dropdown" id="scc-pd-itemdrop-' + escQ(charId) + '"></div>'
+  // Search + gold-outlined "Filters" pill on the left, the three currency
+  // badges on the right (real Figma toolbar, 120:2455) -- currency lives
+  // here now, not its own separate section (see renderPlayerCurrencySection()
+  // for why its save behavior is unchanged despite the relocation).
+  return '<div class="scc-pd-inv-toolbar-row">'
+      + '<div class="scc-pd-inv-toolbar-left">'
+        + '<div class="scc-pd-field">'
+          + '<label class="scc-pd-field-label">Search</label>'
+          + '<input type="text" class="scc-pd-input" id="scc-pd-itemfilter-' + escQ(charId) + '" placeholder="Search&#8230;" oninput="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
+        + '</div>'
+        + '<button type="button" class="scc-pd-filters-pill" id="scc-pd-itemfiltertoggle-' + escQ(charId) + '" onclick="sccPlayerToggleItemFilters(\'' + escQ(charId) + '\')">Filters</button>'
       + '</div>'
-      + '<input type="number" min="1" step="1" class="scc-pd-qty-input" id="scc-pd-itemqty-' + escQ(charId) + '" value="1" title="Quantity to add" aria-label="Quantity to add">'
-    + '</div>'
-    + '<div class="scc-pd-toolbar">'
-      + '<input type="text" class="cm-search" id="scc-pd-itemfilter-' + escQ(charId) + '" placeholder="Search inventory&#8230;" oninput="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" autocomplete="off">'
-      + '<button type="button" class="scc-pd-filter-toggle" id="scc-pd-itemfiltertoggle-' + escQ(charId) + '" onclick="sccPlayerToggleItemFilters(\'' + escQ(charId) + '\')">Filter</button>'
+      + renderPlayerCurrencySection(charId)
     + '</div>'
     + '<div class="scc-pd-filters-bar" id="scc-pd-itemfilters-' + escQ(charId) + '">'
       + '<span class="scc-pd-price-sep">Price</span>'
@@ -12259,13 +12911,9 @@ function renderPlayerInventoryBlockHtml(charId) {
       + '<span class="scc-pd-price-sep">&ndash;</span>'
       + '<input type="number" min="0" step="any" class="scc-pd-price-input" id="scc-pd-itempricemax-' + escQ(charId) + '" placeholder="Max gp" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')" aria-label="Maximum price in gp">'
       + '<select class="cm-select" id="scc-pd-itemcatfilter-' + escQ(charId) + '" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')"><option value="">Category: All</option>' + catOptions + '</select>'
-      + '<select class="cm-select" id="scc-pd-itemsort-' + escQ(charId) + '" onchange="sccPlayerItemFilterChanged(\'' + escQ(charId) + '\')">'
-        + '<option value="name">Sort: Name A&ndash;Z</option>'
-        + '<option value="name-desc">Sort: Name Z&ndash;A</option>'
-        + '<option value="category">Sort: Category</option>'
-      + '</select>'
       + '<button type="button" class="scc-pd-filters-reset" onclick="sccPlayerResetItemFilters(\'' + escQ(charId) + '\')">Reset</button>'
     + '</div>'
+    + '<div class="scc-pd-inv-bulkbar" id="scc-pd-invbulkbar-' + escQ(charId) + '"></div>'
     + '<div id="scc-pd-invlist-' + escQ(charId) + '">' + renderPlayerInventoryListHtml(charId) + '</div>';
 }
 
@@ -12274,7 +12922,7 @@ function sccPlayerToggleItemFilters(charId) {
   var btn = document.getElementById('scc-pd-itemfiltertoggle-' + charId);
   if (!bar) return;
   var open = bar.classList.toggle('open');
-  if (btn) btn.classList.toggle('active', open);
+  if (btn) btn.classList.toggle('open', open);
 }
 
 function sccPlayerResetItemFilters(charId) {
@@ -12282,9 +12930,33 @@ function sccPlayerResetItemFilters(charId) {
     var el = document.getElementById(prefix + charId);
     if (el) el.value = '';
   });
-  var sortEl = document.getElementById('scc-pd-itemsort-' + charId);
-  if (sortEl) sortEl.value = 'name'; // sort always has a real selection, unlike the filters -- reset to the default rather than blank
+  PD_INV_SORT[charId] = { col: 'name', dir: 'asc' }; // sort always has a real selection, unlike the filters -- reset to the default rather than blank
   sccPlayerItemFilterChanged(charId);
+}
+// Column-header click-to-sort, same toggle rule this file's own
+// cmSortByColumn() (Content Manager) and sccSessionsSortByColumn() (Sessions
+// List) already establish: same column clicked again reverses direction, a
+// different column resets to ascending. Per-character state (PD_INV_SORT)
+// since several detail panels can be open at once, unlike those two tables'
+// single shared CM_SORT_COL/CM_SORT_DIR globals.
+function sccPlayerInvSortByColumn(charId, col) {
+  var cur = PD_INV_SORT[charId] || (PD_INV_SORT[charId] = { col: 'name', dir: 'asc' });
+  if (cur.col === col) cur.dir = cur.dir === 'asc' ? 'desc' : 'asc';
+  else { cur.col = col; cur.dir = 'asc'; }
+  sccPlayerItemFilterChanged(charId);
+}
+// One sortable <th> — same ↑/↓/↕ arrow convention as .cm-sort-arrow, just
+// baked directly into the markup from current sort state on each render
+// rather than a separate DOM-walk update pass (cmUpdateSortArrows()'s own
+// approach) -- both lists this feeds (Inventory, Spells) already fully
+// rebuild their <thead> on every filter/sort change, so there's no separate
+// "just update the arrows" case to optimize for here. sortFn is the name of
+// the per-table onclick handler (sccPlayerInvSortByColumn/
+// sccPlayerSpellSortByColumn) since each table has its own sort state.
+function sccPlayerSortThHtml(sortFn, charId, col, label, sortState) {
+  var active = sortState.col === col;
+  var arrow = active ? (sortState.dir === 'asc' ? '&uarr;' : '&darr;') : '&#8597;';
+  return '<th class="cm-th-sortable" onclick="' + sortFn + '(\'' + escQ(charId) + '\',\'' + col + '\')">' + sccEsc(label) + ' <span class="cm-sort-arrow"' + (active ? ' style="opacity:1;"' : '') + '>' + arrow + '</span></th>';
 }
 
 function renderPlayerInventoryListHtml(charId) {
@@ -12299,12 +12971,20 @@ function renderPlayerInventoryListHtml(charId) {
   var priceMaxEl = document.getElementById('scc-pd-itempricemax-' + charId);
   var priceMin = priceMinEl && priceMinEl.value !== '' ? parseFloat(priceMinEl.value) : null;
   var priceMax = priceMaxEl && priceMaxEl.value !== '' ? parseFloat(priceMaxEl.value) : null;
-  var sortMode = (document.getElementById('scc-pd-itemsort-' + charId) || {}).value || 'name';
+  var sortState = PD_INV_SORT[charId] || (PD_INV_SORT[charId] = { col: 'name', dir: 'asc' });
   var inv = Array.isArray(draft.inventory) ? draft.inventory : [];
   var rows = inv.map(function(row) {
     var item = row.item_id ? byId[row.item_id] : null;
     var name = row.custom_name || (item ? item.name : row.item_id) || 'Unknown item';
-    return { row: row, item: item, name: name, key: row.id || row._tempId };
+    var costGp = item ? (item.cost_gp || 0) : (row.cost_gp || 0);
+    var costSp = row.item_id ? 0 : (row.cost_sp || 0);
+    var costCp = row.item_id ? 0 : (row.cost_cp || 0);
+    var weight = item ? (item.weight_lb || 0) : (row.weight_lb || 0);
+    return {
+      row: row, item: item, name: name, key: row.id || row._tempId,
+      costGp: costGp, costSp: costSp, costCp: costCp, weight: weight,
+      priceSort: (costGp * 100) + (costSp * 10) + costCp // one comparable value spanning all 3 coin denominations, so e.g. a custom row priced only in sp/cp still sorts correctly against a catalog item's cost_gp
+    };
   });
   rows = rows.filter(function(r) {
     if (q && r.name.toLowerCase().indexOf(q) === -1) return false;
@@ -12313,26 +12993,75 @@ function renderPlayerInventoryListHtml(charId) {
     if (priceMax != null && (!r.item || r.item.cost_gp == null || r.item.cost_gp > priceMax)) return false;
     return true;
   });
-  // Category mode still breaks ties alphabetically.
+  // Column-header sort (see sccPlayerInvSortByColumn/sccPlayerInvSortThHtml)
+  // -- replaces the old separate Sort dropdown entirely, matching this
+  // file's own Content Manager/Sessions List convention of sorting via the
+  // header itself rather than a redundant second control. Every non-name
+  // column ties back to name so results stay stable and predictable.
   rows.sort(function(a, b) {
-    if (sortMode === 'category') {
+    var cmp;
+    if (sortState.col === 'category') {
       var ac = (a.item && a.item.category) || '', bc = (b.item && b.item.category) || '';
-      return ac.localeCompare(bc) || a.name.localeCompare(b.name);
+      cmp = ac.localeCompare(bc) || a.name.localeCompare(b.name);
+    } else if (sortState.col === 'price') {
+      cmp = (a.priceSort - b.priceSort) || a.name.localeCompare(b.name);
+    } else if (sortState.col === 'weight') {
+      cmp = (a.weight - b.weight) || a.name.localeCompare(b.name);
+    } else {
+      cmp = a.name.localeCompare(b.name);
     }
-    var cmp = a.name.localeCompare(b.name);
-    return sortMode === 'name-desc' ? -cmp : cmp;
+    return sortState.dir === 'desc' ? -cmp : cmp;
   });
   if (!rows.length) {
     return '<div class="scc-pd-empty">' + (inv.length ? 'No items match this filter.' : 'No items in inventory yet.') + '</div>';
   }
-  return '<div class="scc-pd-spell-list">' + rows.map(function(r) {
-    var qty = r.row.quantity || 1;
-    return '<div class="scc-pd-spell-row">'
-      + sccPlayerItemThumb(r.item, r.name)
-      + '<span class="scc-pd-spell-row-name">' + sccEsc(r.name) + (qty > 1 ? '<span class="scc-pd-spell-row-level">&times;' + qty + '</span>' : '') + '</span>'
-      + '<button class="scc-pd-spell-remove" onclick="sccPlayerRemoveInventoryItem(\'' + escQ(charId) + '\',\'' + escQ(String(r.key)) + '\')" aria-label="Remove ' + escQ(r.name) + '" title="Remove">&#10005;</button>'
-    + '</div>';
-  }).join('') + '</div>';
+  // Same table/column shape as sheet/index.html's own Inventory tab (Select,
+  // thumb, Name, Category, Price, Weight, Specs, Description, Actions) --
+  // themed to this file's own dark surfaces rather than the sheet's blue
+  // card styling (see the CSS comment above .scc-pd-table-wrap). Select
+  // feeds the bulk-remove bar above the table (sccPlayerRenderInvBulkBar());
+  // Actions carries a live quantity input (draft-only, same as everything
+  // else in this panel until Save) plus the existing per-row remove button.
+  // Name/Category/Price/Weight headers are click-to-sort (see
+  // sccPlayerSortThHtml); Specs/Description have no natural sort order and
+  // stay plain, same as this file's own Content Manager table leaving
+  // non-orderable columns unsortable too.
+  var sel = PD_INV_SELECTED[charId] || (PD_INV_SELECTED[charId] = {});
+  return '<div class="scc-pd-table-wrap"><table class="cm-table scc-pd-inv-table"><thead><tr>'
+      + '<th></th>'
+      + '<th class="cm-th-img"></th>'
+      + sccPlayerSortThHtml('sccPlayerInvSortByColumn', charId, 'name', 'Name', sortState)
+      + sccPlayerSortThHtml('sccPlayerInvSortByColumn', charId, 'category', 'Category', sortState)
+      + sccPlayerSortThHtml('sccPlayerInvSortByColumn', charId, 'price', 'Price (G, S, C)', sortState)
+      + sccPlayerSortThHtml('sccPlayerInvSortByColumn', charId, 'weight', 'Weight (lbs)', sortState)
+      + '<th>Specs</th>'
+      + '<th>Description</th>'
+      + '<th></th>'
+    + '</tr></thead><tbody>'
+    + rows.map(function(r) {
+      var item = r.item, name = r.name, key = String(r.key);
+      var costGp = r.costGp, costSp = r.costSp, costCp = r.costCp, weight = r.weight;
+      var desc = (item ? item.summary : r.row.custom_desc) || '';
+      var category = item ? (item.category || '') : (r.row.item_type || '');
+      var specs = sccPlayerInvRowSpecs(category, item || r.row);
+      var qty = r.row.quantity || 1;
+      var checked = !!sel[key];
+      return '<tr>'
+        + '<td><input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="sccPlayerToggleInvSelect(\'' + escQ(charId) + '\',\'' + escQ(key) + '\', this.checked)" aria-label="Select ' + escQ(name) + '"></td>'
+        + '<td class="cm-td-img">' + sccPlayerItemThumb(item, name) + '</td>'
+        + '<td>' + sccEsc(name) + '</td>'
+        + '<td>' + (category ? sccEsc(category.charAt(0).toUpperCase() + category.slice(1)) : '&mdash;') + '</td>'
+        + '<td>' + costGp + ', ' + costSp + ', ' + costCp + '</td>'
+        + '<td>' + weight + '</td>'
+        + '<td>' + specs + '</td>'
+        + '<td>' + (desc ? sccEsc(desc) : '&mdash;') + '</td>'
+        + '<td><div class="scc-pd-inv-row-actions">'
+            + '<input type="number" min="1" step="1" class="scc-pd-qty-input" value="' + qty + '" onchange="sccPlayerUpdateInvQty(\'' + escQ(charId) + '\',\'' + escQ(key) + '\', this.value)" title="Quantity" aria-label="Quantity">'
+            + '<button class="scc-pd-spell-remove" onclick="sccPlayerRemoveInventoryItem(\'' + escQ(charId) + '\',\'' + escQ(key) + '\')" aria-label="Remove ' + escQ(name) + '" title="Remove">&#10005;</button>'
+          + '</div></td>'
+      + '</tr>';
+    }).join('')
+    + '</tbody></table></div>';
 }
 
 function sccPlayerItemFilterChanged(charId) {
@@ -12340,71 +13069,162 @@ function sccPlayerItemFilterChanged(charId) {
   if (listEl) listEl.innerHTML = renderPlayerInventoryListHtml(charId);
 }
 
-function sccPlayerItemSearch(charId, query) {
-  var drop = document.getElementById('scc-pd-itemdrop-' + charId);
-  if (!drop) return;
+// Category-dependent one-line mechanical summary -- same fields/shape as
+// sheet/index.html's own invRowSpecs().
+function sccPlayerInvRowSpecs(category, src) {
+  src = src || {};
+  if (category === 'armor')  return src.base_ac  != null ? 'AC ' + src.base_ac : '&mdash;';
+  if (category === 'shield') return src.ac_bonus != null ? 'AC +' + src.ac_bonus : '&mdash;';
+  if (category === 'weapon') return src.damage_dice ? sccEsc(src.damage_dice) + (src.damage_type ? ' (' + sccEsc(src.damage_type) + ')' : '') : '&mdash;';
+  return '&mdash;';
+}
+
+// Draft-only mutation -- rowKey is either a real inventory row id or one of
+// this draft's own _tempId values. Re-renders just the list (not the whole
+// block), same as a filter change, since the set of available categories
+// can't change from a quantity edit -- but the header's live weight count
+// DOES change with quantity, so that gets a targeted update too.
+function sccPlayerUpdateInvQty(charId, rowKey, value) {
+  var draft = PD_DRAFT[charId];
+  if (!draft) return;
+  var row = draft.inventory.filter(function(r) { return String(r.id || r._tempId) === rowKey; })[0];
+  if (!row) return;
+  row.quantity = Math.max(1, parseInt(value, 10) || 1);
+  sccPlayerItemFilterChanged(charId);
+  var titleEl = document.getElementById('scc-pd-invtitle-' + charId);
+  if (titleEl) titleEl.textContent = renderPlayerInvHeaderTitle(charId);
+}
+
+// Select-column state for the bulk-remove bar -- mirrors sheet/index.html's
+// own SELECTED_INV_IDS, just keyed per character since several detail panels
+// can be open at once.
+function sccPlayerToggleInvSelect(charId, key, checked) {
+  var sel = PD_INV_SELECTED[charId] || (PD_INV_SELECTED[charId] = {});
+  if (checked) sel[key] = true; else delete sel[key];
+  sccPlayerRenderInvBulkBar(charId);
+}
+function sccPlayerRenderInvBulkBar(charId) {
+  var bar = document.getElementById('scc-pd-invbulkbar-' + charId);
+  if (!bar) return;
+  var n = Object.keys(PD_INV_SELECTED[charId] || {}).length;
+  if (!n) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = '<span>' + n + ' selected</span>'
+    + '<button type="button" class="scc-btn-sm" style="color:var(--dm-red);border-color:var(--dm-red);" onclick="sccPlayerRemoveSelectedInv(\'' + escQ(charId) + '\')">Remove selected</button>';
+}
+// Draft-only mutation -- removes every currently-selected row from the
+// working copy in one action, same "nothing reaches Supabase until Save"
+// rule as every other inventory edit in this panel.
+function sccPlayerRemoveSelectedInv(charId) {
+  var draft = PD_DRAFT[charId];
+  var sel = PD_INV_SELECTED[charId] || {};
+  var keys = Object.keys(sel);
+  if (!draft || !keys.length) return;
+  draft.inventory = draft.inventory.filter(function(row) {
+    return keys.indexOf(String(row.id || row._tempId)) === -1;
+  });
+  PD_INV_SELECTED[charId] = {};
+  sccPlayerRefreshInventoryBlock(charId);
+}
+
+// ── "+ Add Item" popup (search, set quantity, confirm) — replaces the old
+// inline search+qty row entirely. Shared across every player card (only one
+// can be open at a time), tracked via PD_ADDITEM_CHARID rather than built
+// per-character. Each result row carries its own quantity input and Add
+// button -- "search, set quantity, confirm" in one step per item, same shape
+// as sheet/index.html's own catalog search (one qty input + Add button per
+// result row), not a separate select-then-confirm flow.
+function sccPlayerOpenAddItemModal(charId) {
+  PD_ADDITEM_CHARID = charId;
+  var searchEl = document.getElementById('scc-pd-additem-search');
+  var resultsEl = document.getElementById('scc-pd-additem-results');
+  if (searchEl) searchEl.value = '';
+  if (resultsEl) resultsEl.innerHTML = '';
+  var modal = document.getElementById('scc-pd-additem-modal');
+  var backdrop = document.getElementById('scc-pd-additem-backdrop');
+  if (modal) modal.classList.add('open');
+  if (backdrop) backdrop.classList.add('open');
+  if (searchEl) searchEl.focus();
+}
+function sccPlayerCloseAddItemModal() {
+  var modal = document.getElementById('scc-pd-additem-modal');
+  var backdrop = document.getElementById('scc-pd-additem-backdrop');
+  if (modal) modal.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+  PD_ADDITEM_CHARID = null;
+}
+function sccPlayerAddItemModalSearch(query) {
+  var resultsEl = document.getElementById('scc-pd-additem-results');
+  if (!resultsEl) return;
   query = (query || '').toLowerCase().trim();
-  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  if (!query) { resultsEl.innerHTML = ''; return; }
   var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
   var results = itemsAll.filter(function(i) {
     return i.name && i.name.toLowerCase().indexOf(query) >= 0;
-  }).slice(0, 12);
+  }).slice(0, 20);
   if (!results.length) {
-    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
-    drop.classList.add('open');
+    resultsEl.innerHTML = '<div class="scc-pd-empty">No matches.</div>';
     return;
   }
-  drop.innerHTML = results.map(function(i) {
-    return '<div class="scc-picker-option scc-picker-option--thumb" onclick="sccPlayerAssignItem(\'' + escQ(charId) + '\',\'' + escQ(i.id) + '\')">'
+  resultsEl.innerHTML = results.map(function(i) {
+    return '<div class="scc-pd-additem-result">'
       + sccPlayerItemThumb(i, i.name)
-      + '<div class="scc-picker-option-text">'
-        + sccEsc(i.name)
-        + '<div class="scc-picker-option-sub">' + sccEsc(i.category || '') + (i.cost_gp != null ? ' &middot; ' + i.cost_gp + ' gp' : '') + '</div>'
+      + '<div class="scc-pd-additem-result-info">'
+        + '<span class="scc-pd-additem-result-name">' + sccEsc(i.name) + '</span>'
+        + '<span class="scc-pd-additem-result-sub">' + sccEsc(i.category || '') + (i.cost_gp != null ? ' &middot; ' + i.cost_gp + ' gp' : '') + '</span>'
       + '</div>'
+      + '<input type="number" min="1" step="1" class="scc-pd-qty-input" id="scc-pd-additem-qty-' + escQ(i.id) + '" value="1" aria-label="Quantity">'
+      + '<button type="button" class="scc-btn-primary scc-pd-additem-confirm-btn" onclick="sccPlayerConfirmAddItem(\'' + escQ(i.id) + '\')">Add</button>'
     + '</div>';
   }).join('');
-  drop.classList.add('open');
 }
-
 // Draft-only mutation -- stages a new row with no real id yet (_tempId is a
 // purely local key, never sent to Supabase). sccPlayerSaveChanges() is the
-// one place this becomes a real inventory INSERT. Quantity comes from the
-// add-item row's own qty input (default/fallback 1 for anything invalid or
-// blank) -- reset back to 1 after adding, matching the search box's own
-// clear-after-add behavior, so the next add doesn't silently inherit it.
-function sccPlayerAssignItem(charId, itemId) {
-  var draft = PD_DRAFT[charId];
+// one place this becomes a real inventory INSERT.
+function sccPlayerConfirmAddItem(itemId) {
+  var charId = PD_ADDITEM_CHARID;
+  var draft = charId ? PD_DRAFT[charId] : null;
   if (!draft) return;
-  var qtyEl = document.getElementById('scc-pd-itemqty-' + charId);
+  var qtyEl = document.getElementById('scc-pd-additem-qty-' + itemId);
   var qty = qtyEl ? Math.max(1, parseInt(qtyEl.value, 10) || 1) : 1;
   draft.inventory.push({
     id: null, _tempId: 'new-' + (draft.invTempSeq++),
     item_id: itemId, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true
   });
-  var searchInput = document.getElementById('scc-pd-itemsearch-' + charId);
-  if (searchInput) searchInput.value = '';
-  if (qtyEl) qtyEl.value = '1';
-  var drop = document.getElementById('scc-pd-itemdrop-' + charId);
-  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  sccPlayerCloseAddItemModal();
   sccPlayerRefreshInventoryBlock(charId);
 }
 
 // Draft-only mutation -- rowKey is either a real inventory row id or one of
 // this draft's own _tempId values; either way, just drops it from the
 // working copy. sccPlayerSaveChanges() diffs against the original snapshot
-// to know which real rows actually need a Supabase DELETE.
+// to know which real rows actually need a Supabase DELETE. Gated behind a
+// plain confirm(), same pattern this file's own sccArchiveSession() already
+// uses for a state-changing action -- this is still draft-only (nothing
+// leaves the browser until Save), but "are you sure" belongs at the point a
+// DM commits to losing the row, not just at Save time for every edit at once.
 function sccPlayerRemoveInventoryItem(charId, rowKey) {
   var draft = PD_DRAFT[charId];
   if (!draft) return;
-  draft.inventory = draft.inventory.filter(function(row) {
-    return String(row.id || row._tempId) !== rowKey;
+  var row = draft.inventory.filter(function(r) { return String(r.id || r._tempId) === rowKey; })[0];
+  if (!row) return;
+  var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var item = row.item_id ? itemsAll.find(function(i) { return i.id === row.item_id; }) : null;
+  var name = row.custom_name || (item ? item.name : row.item_id) || 'this item';
+  if (!confirm('Remove "' + name + '" from inventory?')) return;
+  draft.inventory = draft.inventory.filter(function(r) {
+    return String(r.id || r._tempId) !== rowKey;
   });
+  if (PD_INV_SELECTED[charId]) delete PD_INV_SELECTED[charId][rowKey];
   sccPlayerRefreshInventoryBlock(charId);
 }
 
 function sccPlayerRefreshInventoryBlock(charId) {
+  var titleEl = document.getElementById('scc-pd-invtitle-' + charId);
+  if (titleEl) titleEl.textContent = renderPlayerInvHeaderTitle(charId);
   var blockEl = document.getElementById('scc-pd-invblock-' + charId);
   if (blockEl) blockEl.innerHTML = renderPlayerInventoryBlockHtml(charId);
+  sccPlayerRenderInvBulkBar(charId);
 }
 
 // The one place Spell Assignment/Inventory draft edits actually reach
@@ -12464,7 +13284,7 @@ function sccPlayerSaveChanges(charId) {
     var failed = results.some(function(r) { return r && r.ok === false; });
     if (failed) {
       showDMToast('Some changes failed to save', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
       return null;
     }
     return Promise.all([
@@ -12477,40 +13297,45 @@ function sccPlayerSaveChanges(charId) {
     PD_SHEETS[charId] = (Array.isArray(sheetRows) && sheetRows[0]) ? sheetRows[0] : sheet;
     PD_INVENTORY[charId] = Array.isArray(res[1]) ? res[1] : [];
     sccPlayerBuildDraft(charId);
-    renderPlayerDetailBody(charId);
+    // Only the active tab panel, not the whole accordion body -- Save
+    // doesn't touch portrait/summary/details/tasks, so there's no reason to
+    // rebuild them and reset Read More state in the process.
+    sccPlayerRenderTabPanel(charId);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
     showDMToast('Changes saved', 'success');
   }).catch(function() {
     showDMToast('Failed to save changes', 'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
   });
 }
 
-// Currency (Round 3 Follow-up, sheet/index.html session) — same 3-field
-// GP/SP/CP editor shape as the sheet's own now-retired renderGold(): the
-// only real column is character_sheet.gold_cp, each field is a plain
-// display/edit surface over it, not an independent value — blurring any of
-// the three recomputes and PATCHes the whole total from all three fields'
-// current values. Reuses .scc-loot-coin-row/.scc-coin-input-wrap/
-// .scc-coin-input/.scc-coin-label verbatim (the Combat tab's existing
-// coin-award UI, gp/sp/cp color-coded already) rather than inventing new
-// input styling for the same 3-coin-field shape. Deliberately NOT part of
-// the Spell Assignment/Inventory Save/Cancel flow added later — this reads
-// PD_SHEETS (the last-saved state) directly, not the draft, and every blur
-// still writes straight to Supabase immediately, same as before.
+// Currency -- same 3-field GP/SP/CP editor as before (character_sheet.
+// gold_cp is the only real column; blurring any of the three recomputes
+// and PATCHes the whole total from all three fields' current values), now
+// redesigned into three colored badges (real Figma 120:2455 -- gold/
+// silver/copper backgrounds, a white input box for the value) instead of
+// the old plain-text-input trio, per the DM's own complaint that the three
+// fields were hard to tell apart at a glance. sccPlayerCurrencyBlur() is
+// completely unchanged -- same element ids, same real-time-write-on-blur
+// behavior. Deliberately still NOT part of the Spell Assignment/Inventory
+// draft-then-Save flow -- Figma's own toolbar groups it visually with
+// Search/Filters as a toolbar control, not a draft field, and nothing in
+// this redesign asked for its save semantics to change, only its look and
+// which tab it lives in.
 function renderPlayerCurrencySection(charId) {
   var sheet = PD_SHEETS[charId] || {};
   var cp = sheet.gold_cp || 0;
   var gp    = Math.floor(cp / 100);
   var spRem = Math.floor((cp % 100) / 10);
   var cpRem = cp % 10;
-  return '<div class="scc-loot-coin-row">' + [
-    { key: 'gp', label: 'GP', val: gp },
-    { key: 'sp', label: 'SP', val: spRem },
-    { key: 'cp', label: 'CP', val: cpRem }
+  return '<div class="scc-pd-currency-row">' + [
+    { key: 'gp', cls: 'gold', label: 'Gold', val: gp },
+    { key: 'sp', cls: 'silver', label: 'Silver', val: spRem },
+    { key: 'cp', cls: 'copper', label: 'Copper', val: cpRem }
   ].map(function(c) {
-    return '<div class="scc-coin-input-wrap">'
-      + '<span class="scc-coin-label ' + c.key + '">' + c.label + '</span>'
-      + '<input type="number" min="0" class="scc-coin-input" id="scc-pd-currency-' + c.key + '-' + escQ(charId) + '" value="' + c.val + '" onblur="sccPlayerCurrencyBlur(\'' + escQ(charId) + '\')" onkeydown="if(event.key===\'Enter\')this.blur()">'
+    return '<div class="scc-pd-currency-badge scc-pd-currency-badge--' + c.cls + '">'
+      + '<span class="scc-pd-currency-label">' + c.label + '</span>'
+      + '<input type="number" min="0" class="scc-pd-currency-input" id="scc-pd-currency-' + c.key + '-' + escQ(charId) + '" value="' + c.val + '" onblur="sccPlayerCurrencyBlur(\'' + escQ(charId) + '\')" onkeydown="if(event.key===\'Enter\')this.blur()" aria-label="' + c.label + '">'
     + '</div>';
   }).join('') + '</div>';
 }
