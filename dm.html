@@ -116,60 +116,103 @@
   color: var(--dm-text);
 }
 
-/* ── HEADER ────────────────────────────────── */
-.dm-header {
-  background: var(--dm-surface);
-  border-bottom: 1px solid var(--dm-border);
-  padding: 1rem 2rem;
-  display: flex; align-items: center; gap: 1.25rem;
+/* ── SHARED HEADER/NAV (Figma 7:150, "header-and-nav-dm") ────────────
+   Two rows: a top row (logo+page-title, plus the 3-way site switcher —
+   DM Manager/Wiki/Character Sheets, the app's 3 real top-level
+   destinations) and a secondary row (this page's own tabs + the
+   always-present global search). Figma's secondary row uses 140px side
+   margins (page/margins-sides) — deliberately NOT matched here: at
+   real laptop widths (1366px and below, common for DM use) that would
+   crush the tabs+search into a narrow center strip. Kept at the same
+   32px horizontal padding as the top row instead. */
+.dm-shell-header {
+  background: var(--blue-900);
   flex-shrink: 0;
 }
-.dm-header-title {
-  font-family: var(--font-headers);
-  font-size: var(--text-xl);
-  color: var(--dm-gold);
-  letter-spacing: 0.01em;
+.dm-shell-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 32px 0;
+  flex-wrap: wrap;
 }
-.dm-header-sub {
-  color: var(--dm-text-faint);
-  font-size: var(--text-sm);
-  font-family: var(--font-sans);
+.dm-shell-pagetitle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1 0 auto;
+  min-width: 0;
+  padding-bottom: 26px;
+  gap: 2px;
+}
+.dm-shell-logo { height: 23px; width: auto; display: block; }
+.dm-shell-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--text);
+  white-space: nowrap;
+  margin: 0;
+}
+.dm-shell-sitenav {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-bottom: 26px;
+}
+.dm-shell-sitelink {
+  display: flex; align-items: flex-end; justify-content: center;
+  height: 26px; min-width: 100px; box-sizing: border-box;
+  font-family: var(--font-body); font-weight: 700; font-size: 16px;
+  color: #fff; text-decoration: none; text-align: center;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.dm-shell-sitelink:hover { color: var(--gold); }
+.dm-shell-sitelink.active { color: var(--text); border-bottom-color: var(--gold); }
+
+.dm-shell-secondary {
+  background: var(--blue-700);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem;
+  padding: 8px 32px;
+  flex-wrap: wrap;
 }
 
-/* ── TABS ──────────────────────────────────── */
+/* ── TABS (this page's own sub-nav, inside .dm-shell-secondary) ──── */
 .dm-tabs {
   display: flex;
-  background: var(--dm-surface);
-  padding: 0 2rem;
-  border-bottom: 1px solid var(--dm-border);
-  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1 0 auto;
 }
 .dm-tab {
-  padding: 0.7rem 1.25rem;
+  display: flex; align-items: flex-end; justify-content: center;
+  height: 26px; min-width: 100px; box-sizing: border-box;
+  padding: 0;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--dm-text-muted);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--dm-transition);
-  letter-spacing: 0.01em;
-  margin-bottom: -1px;
 }
 .dm-tab:hover {
   color: var(--dm-text);
   border-bottom-color: var(--dm-border-mid);
 }
 .dm-tab.active {
-  color: var(--dm-gold);
+  color: var(--dm-text);
   border-bottom-color: var(--dm-gold);
-  font-weight: 600;
 }
 /* ── +New Entry action button in tab bar ── */
 .dm-btn-add-entry {
-  margin-left: auto;
   padding: 0.5rem 1.1rem;
   background: var(--dm-gold);
   color: var(--dm-gold-text-on);
@@ -182,6 +225,7 @@
   transition: var(--dm-transition);
   align-self: center;
   letter-spacing: 0.02em;
+  flex-shrink: 0;
 }
 .dm-btn-add-entry:hover {
   background: var(--dm-gold-bright);
@@ -1191,15 +1235,30 @@
      ══════════════════════════════════════════ -->
 <div id="dm-app" class="dm-app" style="display:none">
 
-  <div class="dm-header" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
-    <div>
-      <div class="dm-header-title">Anavale DM Tools</div>
-      <div class="dm-header-sub">Content Management System — all changes save to Supabase automatically</div>
+  <div class="dm-shell-header">
+    <div class="dm-shell-top">
+      <div class="dm-shell-pagetitle">
+        <img class="dm-shell-logo" src="assets/logo-Anavale.svg" alt="Anavale">
+        <div class="dm-shell-title">DM Manager</div>
+      </div>
+      <nav class="dm-shell-sitenav">
+        <a class="dm-shell-sitelink active" href="dm.html">DM Manager</a>
+        <a class="dm-shell-sitelink" href="index.html">Wiki</a>
+      </nav>
     </div>
-    <div class="scc-global-search-wrap">
-      <span class="scc-global-search-icon">🔍</span>
-      <input type="text" class="scc-global-search" id="scc-global-search" placeholder="Search all world entries…" oninput="sccGlobalSearch(this.value)" autocomplete="off">
-      <button type="button" class="scc-global-filter-toggle" id="scc-global-filter-toggle" onclick="sccGlobalToggleFilters()" title="Filters">&#9881;</button>
+    <div class="dm-shell-secondary">
+      <div class="dm-tabs">
+        <button class="dm-tab active" data-tab="manage"   onclick="switchTab('manage')">Entries</button>
+        <button class="dm-tab"        data-tab="quests"   onclick="switchTab('quests')">Quests</button>
+        <button class="dm-tab"        data-tab="players"  onclick="switchTab('players')">Players</button>
+        <button class="dm-tab"        data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
+        <button class="dm-btn-add-entry" onclick="switchTab('add')" title="Add a new world entry">＋ New Entry</button>
+      </div>
+      <div class="scc-global-search-wrap">
+        <span class="scc-global-search-icon">🔍</span>
+        <input type="text" class="scc-global-search" id="scc-global-search" placeholder="Global search..." oninput="sccGlobalSearch(this.value)" autocomplete="off">
+        <button type="button" class="scc-global-filter-toggle" id="scc-global-filter-toggle" onclick="sccGlobalToggleFilters()" title="Filters">&#9881;</button>
+      </div>
     </div>
   </div>
   <div class="scc-global-filters-bar" id="scc-global-filters-bar">
@@ -1253,15 +1312,6 @@
     <button type="button" class="scc-global-filters-reset" onclick="sccGlobalResetFilters()">Reset</button>
   </div>
   <div class="scc-global-results" id="scc-global-results"></div>
-
-  <div class="dm-tabs">
-    <button class="dm-tab active" data-tab="manage"  onclick="switchTab('manage')">📋 Manage</button>
-    <button class="dm-tab"        data-tab="quests"  onclick="switchTab('quests')">⚔️ Quests</button>
-    <button class="dm-tab"        data-tab="players" onclick="switchTab('players')">👥 Players</button>
-    <button class="dm-tab"        data-tab="setup"   onclick="switchTab('setup')">🧭 Setup</button>
-    <button class="dm-tab" data-tab="session" onclick="switchTab('session')">🎲 Session</button>
-    <button class="dm-btn-add-entry" onclick="switchTab('add')" title="Add a new world entry">＋ New Entry</button>
-  </div>
 
   <div class="dm-main">
 
@@ -1318,6 +1368,24 @@
         <div class="scc-quicknote-modal-actions">
           <button class="scc-btn-secondary" onclick="sccCloseQuickNoteModal()">Cancel</button>
           <button class="scc-btn-primary" onclick="sccSubmitQuickNote()">+ Add Note</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- "+ Add Session" — real creation, not just opening whatever's already
+         active. Session number is DM-entered (not silently auto-incremented,
+         see sccOpenAddSessionModal()'s pre-fill vs. what's actually submitted),
+         validated against SCC_ALL_SESSIONS before anything is created. -->
+    <div id="scc-addsession-backdrop" class="scc-lookup-backdrop" onclick="sccCloseAddSessionModal()"></div>
+    <div id="scc-addsession-modal" class="scc-addsession-modal" aria-hidden="true">
+      <div class="scc-quicknote-modal-inner">
+        <div class="scc-quicknote-modal-title">New Session</div>
+        <label class="cm-filter-label" for="scc-addsession-number">Session Number</label>
+        <input type="number" id="scc-addsession-number" class="scc-input" min="1" step="1" autocomplete="off">
+        <div class="scc-addsession-error" id="scc-addsession-error"></div>
+        <div class="scc-quicknote-modal-actions">
+          <button class="scc-btn-secondary" onclick="sccCloseAddSessionModal()">Cancel</button>
+          <button class="scc-btn-primary" id="scc-addsession-confirm" onclick="sccConfirmAddSession()">Create Session</button>
         </div>
       </div>
     </div>
@@ -2765,37 +2833,59 @@
 
         <div class="quests-body">
 
-          <!-- Filter bar -->
+          <!-- Filter bar (Figma 108:2355, "lighter" than Entries -- a
+               flat labeled row, no grouping boxes, reusing the
+               .cm-filter-field/.cm-filter-label pattern built for
+               Entries' own filter panel). -->
           <div class="quests-filter-bar">
-            <input type="text" id="q-search" class="cm-search" placeholder="Search quests…" oninput="questsFilter()">
-            <select id="q-status-filter" class="cm-select" onchange="questsFilter()">
-              <option value="">All Statuses</option>
-              <option value="active">🔥 Active</option>
-              <option value="available">✦ Available</option>
-              <option value="blocked">🚧 Blocked</option>
-              <option value="completed">✓ Completed</option>
-            </select>
-            <select id="q-stakes-filter" class="cm-select" onchange="questsFilter()">
-              <option value="">All Stakes</option>
-              <option value="low">Low</option>
-              <option value="mid">Mid</option>
-              <option value="high">High</option>
-            </select>
-            <select id="q-session-filter" class="cm-select" onchange="questsFilter()">
-              <option value="">All Sessions</option>
-              <option value="session-1">Session 1</option>
-              <option value="session-2">Session 2</option>
-              <option value="session-3">Session 3</option>
-            </select>
-            <select id="q-sort-filter" class="cm-select" onchange="questsFilter()">
-              <option value="name-asc">A → Z</option>
-              <option value="name-desc">Z → A</option>
-              <option value="session">Session</option>
-              <option value="stakes">Stakes</option>
-              <option value="status">Status</option>
-            </select>
-            <button class="cm-btn" onclick="questsResetFilters()">Reset</button>
-            <span class="cm-count" id="q-count"></span>
+            <div class="quests-filter-bar-left">
+              <div class="cm-filter-field">
+                <label class="cm-filter-label" for="q-search">Search</label>
+                <input type="text" id="q-search" class="cm-search" placeholder="Search quests…" oninput="questsFilter()">
+              </div>
+              <div class="cm-filter-field">
+                <label class="cm-filter-label" for="q-status-filter">Status</label>
+                <select id="q-status-filter" class="cm-select" onchange="questsFilter()">
+                  <option value="">All</option>
+                  <option value="active">🔥 Active</option>
+                  <option value="available">✦ Available</option>
+                  <option value="blocked">🚧 Blocked</option>
+                  <option value="completed">✓ Completed</option>
+                </select>
+              </div>
+              <div class="cm-filter-field">
+                <label class="cm-filter-label" for="q-stakes-filter">Stakes</label>
+                <select id="q-stakes-filter" class="cm-select" onchange="questsFilter()">
+                  <option value="">All</option>
+                  <option value="low">Low</option>
+                  <option value="mid">Mid</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div class="cm-filter-field">
+                <label class="cm-filter-label" for="q-session-filter">Session</label>
+                <select id="q-session-filter" class="cm-select" onchange="questsFilter()">
+                  <option value="">All</option>
+                  <option value="session-1">Session 1</option>
+                  <option value="session-2">Session 2</option>
+                  <option value="session-3">Session 3</option>
+                </select>
+              </div>
+            </div>
+            <div class="quests-filter-bar-right">
+              <div class="cm-filter-field">
+                <label class="cm-filter-label" for="q-sort-filter">Sort</label>
+                <select id="q-sort-filter" class="cm-select" onchange="questsFilter()">
+                  <option value="name-asc">A → Z</option>
+                  <option value="name-desc">Z → A</option>
+                  <option value="session">Session</option>
+                  <option value="stakes">Stakes</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+              <button class="cm-btn" onclick="questsResetFilters()">Reset</button>
+              <span class="cm-count" id="q-count"></span>
+            </div>
           </div>
 
           <!-- Quest list + detail two-column -->
@@ -2820,152 +2910,60 @@
       </div><!-- /form-quests -->
 
       <!-- ══════════════════════════════════════
-           SESSION SETUP (top-level tab — moved out of
-           the Session Command Center's sub-nav so it's
-           reachable independently of a running session)
+           SESSIONS LIST (Figma 108:2507) — top-level "Sessions" nav
+           destination. All real sessions, name + date, click a row to
+           open Session Details for it (current session goes live/
+           editable; a completed one opens read-only via
+           sccLoadHistorySession(), same audit-mode lockdown Session
+           History already used). "+ Add Session" opens Session Details
+           on whatever sccLoadLatestSession() already computes as the
+           next session (no active session -> next number after the
+           latest completed one), landing on its Setup tab.
            ══════════════════════════════════════ -->
-      <div id="form-setup" class="dm-form">
-        <div class="scc-panel-inner">
-          <div class="scc-section-title">Session Setup</div>
-          <div class="scc-setup-grid">
-            <div class="scc-setup-card">
-              <div class="scc-setup-card-label">Session Number</div>
-              <div id="scc-session-number-display" style="font-family:var(--font-sans);font-size:1.8rem;color:var(--dm-gold);font-weight:700;padding:0.25rem 0;line-height:1;">—</div>
-              <input type="hidden" id="scc-session-number" value="">
-            </div>
-            <div class="scc-setup-card">
-              <div class="scc-setup-card-label">Session Date</div>
-              <input type="date" id="scc-session-date" class="scc-input">
-              <div id="scc-session-date-display" class="scc-audit-readonly-val" style="display:none;">—</div>
-            </div>
-          </div>
-
-          <!-- Collapsible prep notes -->
-          <div class="scc-collapsible-toggle" id="scc-prep-toggle" onclick="sccTogglePrep()">
-            <span class="scc-toggle-arrow">▶</span>
-            <span>Prep Notes (optional)</span>
-          </div>
-          <div class="scc-collapsible-body" id="scc-prep-body">
-            <div class="scc-setup-card" style="margin-bottom:0.75rem;">
-              <div class="scc-setup-card-label">Session Premise</div>
-              <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
-              <div id="scc-session-premise-display" class="scc-audit-readonly-val" style="display:none;"></div>
-            </div>
-            <div class="scc-setup-card">
-              <div class="scc-setup-card-label">Prep Notes</div>
-              <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
-              <div id="scc-prep-notes-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
-            </div>
-          </div>
-
-          <!-- Entity pickers -->
-          <div class="scc-section-title" style="margin-top:1.5rem">Assign Session Entities</div>
-          <div class="scc-entity-pickers">
-
-            <div class="scc-picker-group">
-              <div class="scc-picker-label">📍 Locations</div>
-              <!-- Carryover suggestions from the previous session's own Setup picks —
-                   hidden entirely (not an empty state) when no previous session exists
-                   or it assigned nothing here. See sccRenderSuggestedRow(). -->
-              <div class="scc-combat-session-label" id="scc-suggested-label-location" style="display:none;"></div>
-              <div class="scc-combat-session-creatures" id="scc-suggested-location" style="display:none;"></div>
-              <div class="scc-picker-controls">
-                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                  <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities, POIs, nations…" oninput="sccPickerSearch('location', this.value)" autocomplete="off">
-                  <div class="scc-picker-dropdown" id="scc-drop-location"></div>
-                </div>
-                <button class="scc-browse-btn" onclick="sccToggleBrowse('location')">Browse All ▾</button>
-              </div>
-              <div class="scc-browse-panel" id="scc-browse-location"></div>
-              <div class="scc-picker-chips" id="scc-chips-location"></div>
-            </div>
-
-            <div class="scc-picker-group">
-              <div class="scc-picker-label">🧙 NPCs</div>
-              <div class="scc-combat-session-label" id="scc-suggested-label-npc" style="display:none;"></div>
-              <div class="scc-combat-session-creatures" id="scc-suggested-npc" style="display:none;"></div>
-              <div class="scc-picker-controls">
-                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                  <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)" autocomplete="off">
-                  <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
-                </div>
-                <button class="scc-browse-btn" onclick="sccToggleBrowse('npc')">Browse All ▾</button>
-              </div>
-              <div class="scc-browse-panel" id="scc-browse-npc"></div>
-              <div class="scc-picker-chips" id="scc-chips-npc"></div>
-            </div>
-
-            <div class="scc-picker-group">
-              <div class="scc-picker-label">🐾 Creatures</div>
-              <div class="scc-combat-session-label" id="scc-suggested-label-creature" style="display:none;"></div>
-              <div class="scc-combat-session-creatures" id="scc-suggested-creature" style="display:none;"></div>
-              <div class="scc-picker-controls">
-                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                  <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)" autocomplete="off">
-                  <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
-                </div>
-                <button class="scc-browse-btn" onclick="sccToggleBrowse('creature')">Browse All ▾</button>
-              </div>
-              <div class="scc-browse-panel" id="scc-browse-creature"></div>
-              <div class="scc-picker-chips" id="scc-chips-creature"></div>
-            </div>
-
-            <div class="scc-picker-group">
-              <div class="scc-picker-label">📜 Quests</div>
-              <div class="scc-combat-session-label" id="scc-suggested-label-quest" style="display:none;"></div>
-              <div class="scc-combat-session-creatures" id="scc-suggested-quest" style="display:none;"></div>
-              <div class="scc-picker-controls">
-                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                  <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)" autocomplete="off">
-                  <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
-                </div>
-                <button class="scc-browse-btn" onclick="sccToggleBrowse('quest')">Browse All ▾</button>
-              </div>
-              <div class="scc-browse-panel" id="scc-browse-quest"></div>
-              <div class="scc-picker-chips" id="scc-chips-quest"></div>
-            </div>
-
-            <div class="scc-picker-group">
-              <div class="scc-picker-label">⚔️ Items</div>
-              <div class="scc-combat-session-label" id="scc-suggested-label-item" style="display:none;"></div>
-              <div class="scc-combat-session-creatures" id="scc-suggested-item" style="display:none;"></div>
-              <div class="scc-picker-controls">
-                <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
-                  <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)" autocomplete="off">
-                  <div class="scc-picker-dropdown" id="scc-drop-item"></div>
-                </div>
-                <button class="scc-browse-btn" onclick="sccToggleBrowse('item')">Browse All ▾</button>
-              </div>
-              <div class="scc-browse-panel" id="scc-browse-item"></div>
-              <div class="scc-picker-chips" id="scc-chips-item"></div>
-            </div>
-
-          </div>
-          <div class="scc-setup-actions">
-            <button class="scc-btn-primary" onclick="sccSaveSetup()">✦ Save Session Setup</button>
-            <span class="scc-save-status" id="scc-setup-status"></span>
-          </div>
-          <div class="scc-session-complete-bar" style="margin-top:1.5rem;">
-            <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks it for audit and opens the next one.</div>
-            <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
-          </div>
-
-          <!-- ── SESSION SCENARIOS EDITOR — session_notes.session_scenarios,
-               read by the Field Guide's off-script table and the Live
-               Session panel's Scenarios search. Previously Supabase-only. ── -->
-          <div class="scc-section-title" style="margin-top:2rem">Session Scenarios</div>
-          <div class="scc-scenario-editor-hint">Player-action / DM-response pairs, grouped by location or topic. Shown in the Live Session panel's Scenarios search and read by the Field Guide.</div>
-          <div id="scc-scenario-editor-groups"></div>
-          <div class="scc-setup-actions" style="margin-top:0.75rem;">
-            <button class="scc-btn-secondary" onclick="sccAddScenarioGroup()">+ Add Group</button>
-            <button class="scc-btn-primary" onclick="sccSaveScenarios()">✦ Save Scenarios</button>
-            <span class="scc-save-status" id="scc-scenarios-status"></span>
+      <div id="form-sessions" class="dm-form">
+        <div class="cm-header">
+          <div>
+            <div class="dm-form-title" style="margin-bottom:0">Sessions</div>
+            <div class="dm-form-subtitle" style="margin-bottom:0">Every session, past and upcoming — click one to open it.</div>
           </div>
         </div>
-      </div><!-- /form-setup -->
+        <div class="scc-sessions-list-wrap">
+          <div class="scc-sessions-list-actions">
+            <label class="scc-sessions-archive-toggle">
+              <input type="checkbox" id="scc-sessions-show-archived" onchange="sccToggleShowArchived()">
+              Show archived
+            </label>
+            <button class="scc-btn-primary" onclick="sccOpenAddSessionModal()">+ Add Session</button>
+          </div>
+          <!-- Was a "Sort by" <select> -- replaced with real clickable column
+               headers, same click-to-sort/click-again-to-reverse pattern as
+               any normal sortable table. id="scc-sessions-list-header" so
+               sccRenderSessionsList() can update each header's arrow
+               indicator to reflect the current sort column/direction. -->
+          <div class="scc-sessions-list-header" id="scc-sessions-list-header">
+            <button type="button" class="scc-sessions-sort-th" data-sort="session_number" onclick="sccSessionsSortByColumn('session_number')">Session<span class="scc-sessions-sort-arrow"></span></button>
+            <button type="button" class="scc-sessions-sort-th" data-sort="date" onclick="sccSessionsSortByColumn('date')">Date<span class="scc-sessions-sort-arrow"></span></button>
+            <button type="button" class="scc-sessions-sort-th" data-sort="status" onclick="sccSessionsSortByColumn('status')">Status<span class="scc-sessions-sort-arrow"></span></button>
+            <button type="button" class="scc-sessions-sort-th" data-sort="archived" onclick="sccSessionsSortByColumn('archived')">Archived<span class="scc-sessions-sort-arrow"></span></button>
+          </div>
+          <div class="scc-sessions-list" id="scc-sessions-list">
+            <div style="text-align:center;color:var(--dm-text-faint);padding:2rem;font-style:italic;">Loading sessions…</div>
+          </div>
+        </div>
+      </div><!-- /form-sessions -->
 
       <!-- ══════════════════════════════════════
-           SESSION COMMAND CENTER
+           SESSION DETAILS (Figma 108:2593) — reached only by clicking a
+           row on the new Sessions list page (#form-sessions), never a
+           direct top-level nav destination itself. Setup used to be its
+           own top-level tab (#form-setup) -- folded back into this
+           page's own sub-tab row as the 4th tab, per the new IA: Setup /
+           Live Session / Combat / Notes, all switched by the same
+           sccSwitchPanel() the other 3 already used. For a session
+           that's already happened, sccLoadHistorySession() both locks
+           every field read-only (.scc-audit-mode, pre-existing) AND
+           hides the Setup tab entirely (.scc-tab-btn--setup, see CSS) --
+           there's nothing left to set up once the session is over.
            ══════════════════════════════════════ -->
       <div id="form-session" class="dm-form scc-form">
         <!-- ── HEADER ──────────────────────── -->
@@ -2975,22 +2973,18 @@
             <div class="scc-header-sub" id="scc-header-sub">No active session — set up a session below</div>
           </div>
           <div class="scc-header-right">
-            <div class="scc-history-wrap">
-              <button class="scc-browse-btn" id="scc-history-btn" onclick="sccToggleHistory()">📋 Session History ▾</button>
-              <div class="scc-history-panel" id="scc-history-panel">
-                <div class="scc-browse-group-header">Previous Sessions</div>
-                <div id="scc-history-list"><div class="scc-lookup-loading">Loading…</div></div>
-                <div class="scc-browse-done" id="scc-history-done-row">
-                  <span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">Click a session to view it</span>
-                </div>
-              </div>
-            </div>
+            <!-- Session History dropdown removed -- the Sessions List page
+                 (#form-sessions) is now the one way to reach any session,
+                 past or upcoming; this was the same job, duplicated. -->
             <!-- Phase 3a restructure: NPCs/Locations/Quests/Field Guide are no
                  longer separate panels -- their content now lives as
                  collapsible sections inside Live Session itself (see
                  #scc-panel-live), so Live Session is the default landing
                  view. Combat and Notes are untouched, still real separate
-                 panels with their own distinct jobs. -->
+                 panels with their own distinct jobs. Setup re-added here
+                 (see the file-level comment above #form-session) as the
+                 first tab -- hidden in audit mode via .scc-tab-btn--setup. -->
+            <button class="scc-tab-btn scc-tab-btn--setup" data-scc="setup" onclick="sccSwitchPanel('setup')">Setup</button>
             <button class="scc-tab-btn scc-tab-btn--live active" data-scc="live" onclick="sccSwitchPanel('live')">&#9654; Live Session</button>
             <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
             <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
@@ -3001,6 +2995,146 @@
           📋 Viewing Session <span id="scc-readonly-session-num"></span> (read-only audit) —
           <button class="scc-btn-sm" onclick="sccLoadCurrentSession()" style="margin-left:0.5rem;">↩ Back to Current Session</button>
         </div>
+        <!-- ══ PANEL: SETUP ═══════════════════ -->
+        <div class="scc-panel" id="scc-panel-setup">
+          <div class="scc-panel-inner">
+            <div class="scc-section-title">Session Setup</div>
+            <div class="scc-setup-grid">
+              <div class="scc-setup-card">
+                <div class="scc-setup-card-label">Session Number</div>
+                <div id="scc-session-number-display" style="font-family:var(--font-sans);font-size:1.8rem;color:var(--dm-gold);font-weight:700;padding:0.25rem 0;line-height:1;">—</div>
+                <input type="hidden" id="scc-session-number" value="">
+              </div>
+              <div class="scc-setup-card">
+                <div class="scc-setup-card-label">Session Date</div>
+                <input type="date" id="scc-session-date" class="scc-input">
+                <div id="scc-session-date-display" class="scc-audit-readonly-val" style="display:none;">—</div>
+              </div>
+            </div>
+
+            <!-- Collapsible prep notes -->
+            <div class="scc-collapsible-toggle" id="scc-prep-toggle" onclick="sccTogglePrep()">
+              <span class="scc-toggle-arrow">▶</span>
+              <span>Prep Notes (optional)</span>
+            </div>
+            <div class="scc-collapsible-body" id="scc-prep-body">
+              <div class="scc-setup-card" style="margin-bottom:0.75rem;">
+                <div class="scc-setup-card-label">Session Premise</div>
+                <input type="text" id="scc-session-premise" class="scc-input" placeholder="One sentence — what this session is about">
+                <div id="scc-session-premise-display" class="scc-audit-readonly-val" style="display:none;"></div>
+              </div>
+              <div class="scc-setup-card">
+                <div class="scc-setup-card-label">Prep Notes</div>
+                <textarea id="scc-prep-notes" class="scc-textarea" rows="3" placeholder="What you planned, what you expect, anything to remember before the session starts…"></textarea>
+                <div id="scc-prep-notes-display" class="scc-audit-readonly-val scc-audit-readonly-val--note" style="display:none;"></div>
+              </div>
+            </div>
+
+            <!-- Entity pickers -->
+            <div class="scc-section-title" style="margin-top:1.5rem">Assign Session Entities</div>
+            <div class="scc-entity-pickers">
+
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">📍 Locations</div>
+                <!-- Carryover suggestions from the previous session's own Setup picks —
+                     hidden entirely (not an empty state) when no previous session exists
+                     or it assigned nothing here. See sccRenderSuggestedRow(). -->
+                <div class="scc-combat-session-label" id="scc-suggested-label-location" style="display:none;"></div>
+                <div class="scc-combat-session-creatures" id="scc-suggested-location" style="display:none;"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-location" placeholder="Search cities, POIs, nations…" oninput="sccPickerSearch('location', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-location"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('location')">Browse All ▾</button>
+                </div>
+                <div class="scc-browse-panel" id="scc-browse-location"></div>
+                <div class="scc-picker-chips" id="scc-chips-location"></div>
+              </div>
+
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">🧙 NPCs</div>
+                <div class="scc-combat-session-label" id="scc-suggested-label-npc" style="display:none;"></div>
+                <div class="scc-combat-session-creatures" id="scc-suggested-npc" style="display:none;"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-npc" placeholder="Search characters…" oninput="sccPickerSearch('npc', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-npc"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('npc')">Browse All ▾</button>
+                </div>
+                <div class="scc-browse-panel" id="scc-browse-npc"></div>
+                <div class="scc-picker-chips" id="scc-chips-npc"></div>
+              </div>
+
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">🐾 Creatures</div>
+                <div class="scc-combat-session-label" id="scc-suggested-label-creature" style="display:none;"></div>
+                <div class="scc-combat-session-creatures" id="scc-suggested-creature" style="display:none;"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-creature" placeholder="Search creatures…" oninput="sccPickerSearch('creature', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-creature"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('creature')">Browse All ▾</button>
+                </div>
+                <div class="scc-browse-panel" id="scc-browse-creature"></div>
+                <div class="scc-picker-chips" id="scc-chips-creature"></div>
+              </div>
+
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">📜 Quests</div>
+                <div class="scc-combat-session-label" id="scc-suggested-label-quest" style="display:none;"></div>
+                <div class="scc-combat-session-creatures" id="scc-suggested-quest" style="display:none;"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-quest" placeholder="Search quests…" oninput="sccPickerSearch('quest', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-quest"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('quest')">Browse All ▾</button>
+                </div>
+                <div class="scc-browse-panel" id="scc-browse-quest"></div>
+                <div class="scc-picker-chips" id="scc-chips-quest"></div>
+              </div>
+
+              <div class="scc-picker-group">
+                <div class="scc-picker-label">⚔️ Items</div>
+                <div class="scc-combat-session-label" id="scc-suggested-label-item" style="display:none;"></div>
+                <div class="scc-combat-session-creatures" id="scc-suggested-item" style="display:none;"></div>
+                <div class="scc-picker-controls">
+                  <div class="scc-picker-search-wrap" style="flex:1;position:relative;">
+                    <input type="text" class="scc-picker-search" id="scc-pick-item" placeholder="Search items…" oninput="sccPickerSearch('item', this.value)" autocomplete="off">
+                    <div class="scc-picker-dropdown" id="scc-drop-item"></div>
+                  </div>
+                  <button class="scc-browse-btn" onclick="sccToggleBrowse('item')">Browse All ▾</button>
+                </div>
+                <div class="scc-browse-panel" id="scc-browse-item"></div>
+                <div class="scc-picker-chips" id="scc-chips-item"></div>
+              </div>
+
+            </div>
+            <div class="scc-setup-actions">
+              <button class="scc-btn-primary" onclick="sccSaveSetup()">✦ Save Session Setup</button>
+              <span class="scc-save-status" id="scc-setup-status"></span>
+            </div>
+            <div class="scc-session-complete-bar" style="margin-top:1.5rem;">
+              <div class="scc-session-complete-desc">When the session is fully over and notes are saved, mark it complete. This locks it for audit and opens the next one.</div>
+              <button class="scc-btn-complete" onclick="sccCompleteSession()">✦ Session Completed</button>
+            </div>
+
+            <!-- ── SESSION SCENARIOS EDITOR — session_notes.session_scenarios,
+                 read by the Field Guide's off-script table and the Live
+                 Session panel's Scenarios search. Previously Supabase-only. ── -->
+            <div class="scc-section-title" style="margin-top:2rem">Session Scenarios</div>
+            <div class="scc-scenario-editor-hint">Player-action / DM-response pairs, grouped by location or topic. Shown in the Live Session panel's Scenarios search and read by the Field Guide.</div>
+            <div id="scc-scenario-editor-groups"></div>
+            <div class="scc-setup-actions" style="margin-top:0.75rem;">
+              <button class="scc-btn-secondary" onclick="sccAddScenarioGroup()">+ Add Group</button>
+              <button class="scc-btn-primary" onclick="sccSaveScenarios()">✦ Save Scenarios</button>
+              <span class="scc-save-status" id="scc-scenarios-status"></span>
+            </div>
+          </div>
+        </div><!-- /scc-panel-setup -->
         <!-- ══ PANEL: COMBAT ══════════════════ -->
         <div class="scc-panel" id="scc-panel-combat">
           <div class="scc-panel-inner">
@@ -3219,14 +3353,14 @@
             <!-- ── TABBED SECTIONS ─────────────────── -->
             <div class="scc-live-tabs-wrap">
               <div class="scc-live-tabs" role="tablist">
-                <button class="scc-live-tab-btn active" data-live="npcs" onclick="sccLiveSwitchSection('npcs')">NPCs</button>
+                <button class="scc-live-tab-btn" data-live="npcs" onclick="sccLiveSwitchSection('npcs')">NPCs</button>
                 <button class="scc-live-tab-btn" data-live="locations" onclick="sccLiveSwitchSection('locations')">Locations</button>
                 <button class="scc-live-tab-btn" data-live="quests" onclick="sccLiveSwitchSection('quests')">Quests</button>
                 <button class="scc-live-tab-btn" data-live="scenarios" onclick="sccLiveSwitchSection('scenarios')">Scenarios</button>
-                <button class="scc-live-tab-btn scc-live-tab-btn--guide" data-live="fieldguide" onclick="sccLiveSwitchSection('fieldguide')">&#128214; Field Guide</button>
+                <button class="scc-live-tab-btn scc-live-tab-btn--guide active" data-live="fieldguide" onclick="sccLiveSwitchSection('fieldguide')">&#128214; Field Guide</button>
               </div>
 
-              <div class="scc-live-tab-panel open" id="scc-live-acc-body-npcs">
+              <div class="scc-live-tab-panel" id="scc-live-acc-body-npcs">
           <div class="scc-panel-inner scc-npc-panel-inner">
             <div class="scc-npc-page-header">
               <div class="scc-npc-page-label">SESSION</div>
@@ -3348,7 +3482,7 @@
                 </div>
               </div>
 
-              <div class="scc-live-tab-panel scc-live-tab-panel--fieldguide" id="scc-live-acc-body-fieldguide">
+              <div class="scc-live-tab-panel scc-live-tab-panel--fieldguide open" id="scc-live-acc-body-fieldguide">
           <div class="scc-fg-layout">
           <!-- rendered guide doc, now the only column -->
           <div class="scc-fg-doc" id="scc-fg-doc">
@@ -3412,89 +3546,160 @@
             <!-- Collapsible filter drawer -->
             <div class="cm-filter-drawer" id="cm-filter-drawer" style="display:none">
               <div class="cm-filter-chips" id="cm-filter-chips"></div>
+              <!-- Dynamic filter panel (Figma 51:2107 "controls"). Types +
+                   Visibility always show; everything else is grouped into
+                   one of 3 conditional boxes (data-fgroup), shown/hidden by
+                   cmTypeFilterChanged() based on the selected Type -- built
+                   as a reusable pattern (group boxes keyed by a data
+                   attribute, one small JS function deciding which groups a
+                   type maps to) so a later page can reuse the same shape,
+                   even though nothing else is wired to it yet. -->
               <div class="cm-filter-grid">
-                <select id="cm-type-filter" class="cm-select" onchange="cmTypeFilterChanged()">
-                  <option value="">All Types</option>
-                  <option value="character">🧙 Characters</option>
-                  <option value="city">🏙️ Cities</option>
-                  <option value="creature">🐾 Creatures</option>
-                  <option value="item">⚔️ Items</option>
-                  <option value="organization">🏛️ Organizations</option>
-                  <option value="poi">📍 POIs</option>
-                  <option value="region">🗺️ Regions</option>
-                </select>
-                <select id="cm-vis-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Visibility</option>
-                  <option value="hidden">🔒 Hidden</option>
-                  <option value="teaser">✨ Teaser</option>
-                  <option value="visible">👁 Visible</option>
-                </select>
-                <select id="cm-region-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Regions</option>
-                  <option value="caparia">Caparia</option>
-                  <option value="jugabi">Jugabi</option>
-                  <option value="nombi">Nombi</option>
-                  <option value="sohot">Sohot</option>
-                </select>
-                <select id="cm-nation-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Nations</option>
-                </select>
-                <select id="cm-continent-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Continents</option>
-                  <option value="pogglewog">Pogglewog</option>
-                </select>
-                <select id="cm-settlement-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Settlement Types</option>
-                  <option value="capital">Capital</option>
-                  <option value="city">City</option>
-                  <option value="city-state">City-state</option>
-                  <option value="desert-town">Desert Town</option>
-                  <option value="hidden-settlement">Hidden Settlement</option>
-                  <option value="major-port">Major Port</option>
-                  <option value="major-settlement">Major Settlement</option>
-                  <option value="outpost">Outpost</option>
-                  <option value="outpost-town">Outpost Town</option>
-                  <option value="port">Port</option>
-                  <option value="ruin">Ruin</option>
-                  <option value="town">Town</option>
-                  <option value="village">Village</option>
-                </select>
-                <select id="cm-vareth-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Vareth</option>
-                  <option value="none">No Vareth</option>
-                  <option value="present">Vareth Present</option>
-                </select>
-                <select id="cm-colorhealth-filter" class="cm-select" onchange="cmApplyFilters()">
-                  <option value="">All Color Health</option>
-                  <option value="vivid">Vivid</option>
-                  <option value="muted">Muted</option>
-                  <option value="faded">Faded</option>
-                  <option value="dimmed">Dimmed</option>
-                  <option value="unknown">Unknown</option>
-                </select>
-                <select id="cm-item-category-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
-                  <option value="">All Categories</option>
-                  <option value="accessory">💍 Accessory</option>
-                  <option value="armor">🛡 Armor</option>
-                  <option value="consumable">⚗️ Consumable</option>
-                  <option value="quest_item">📜 Quest Item</option>
-                  <option value="shield">🔰 Shield</option>
-                  <option value="tool">🔧 Tool</option>
-                  <option value="weapon">⚔️ Weapon</option>
-                </select>
-                <select id="cm-item-rarity-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
-                  <option value="">All Rarities</option>
-                  <option value="common">Common</option>
-                  <option value="legendary">Legendary</option>
-                  <option value="rare">Rare</option>
-                  <option value="uncommon">Uncommon</option>
-                  <option value="unique">Unique</option>
-                </select>
-                <select id="cm-item-addable-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
-                  <option value="">All Addability</option>
-                  <option value="false">🔒 DM Only</option>
-                  <option value="true">✅ Player Addable</option>
-                </select>
+                <div class="cm-filter-field">
+                  <label class="cm-filter-label" for="cm-type-filter">Types</label>
+                  <select id="cm-type-filter" class="cm-select" onchange="cmTypeFilterChanged()">
+                    <option value="">All Types</option>
+                    <option value="character">🧙 Characters</option>
+                    <option value="city">🏙️ Cities</option>
+                    <option value="creature">🐾 Creatures</option>
+                    <option value="item">⚔️ Items</option>
+                    <option value="organization">🏛️ Organizations</option>
+                    <option value="poi">📍 POIs</option>
+                    <option value="region">🗺️ Regions</option>
+                  </select>
+                </div>
+                <div class="cm-filter-field">
+                  <label class="cm-filter-label" for="cm-vis-filter">Visibility</label>
+                  <select id="cm-vis-filter" class="cm-select" onchange="cmApplyFilters()">
+                    <option value="">All Visibility</option>
+                    <option value="hidden">🔒 Hidden</option>
+                    <option value="teaser">✨ Teaser</option>
+                    <option value="visible">👁 Visible</option>
+                  </select>
+                </div>
+
+                <div class="cm-filter-group" id="cm-fgroup-location" data-fgroup="location" style="display:none">
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-continent-filter">Continent</label>
+                    <select id="cm-continent-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Continents</option>
+                      <option value="pogglewog">Pogglewog</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-region-filter">Region</label>
+                    <select id="cm-region-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Regions</option>
+                      <option value="caparia">Caparia</option>
+                      <option value="jugabi">Jugabi</option>
+                      <option value="nombi">Nombi</option>
+                      <option value="sohot">Sohot</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-nation-filter">Nation</label>
+                    <select id="cm-nation-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Nations</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-settlement-filter">Settlement Type</label>
+                    <select id="cm-settlement-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Settlement Types</option>
+                      <option value="capital">Capital</option>
+                      <option value="city">City</option>
+                      <option value="city-state">City-state</option>
+                      <option value="desert-town">Desert Town</option>
+                      <option value="hidden-settlement">Hidden Settlement</option>
+                      <option value="major-port">Major Port</option>
+                      <option value="major-settlement">Major Settlement</option>
+                      <option value="outpost">Outpost</option>
+                      <option value="outpost-town">Outpost Town</option>
+                      <option value="port">Port</option>
+                      <option value="ruin">Ruin</option>
+                      <option value="town">Town</option>
+                      <option value="village">Village</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="cm-filter-group" id="cm-fgroup-vareth" data-fgroup="vareth" style="display:none">
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-vareth-filter">Vareth Present</label>
+                    <select id="cm-vareth-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All</option>
+                      <option value="none">No</option>
+                      <option value="present">Yes</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label">Color Health</label>
+                    <div class="cm-colorhealth-bar" id="cm-colorhealth-bar">
+                      <button type="button" class="cm-ch-seg cm-ch-seg--vivid"   data-val="vivid"   onclick="cmColorHealthPick('vivid')">Vivid</button>
+                      <button type="button" class="cm-ch-seg cm-ch-seg--muted"   data-val="muted"   onclick="cmColorHealthPick('muted')">Muted</button>
+                      <button type="button" class="cm-ch-seg cm-ch-seg--faded"   data-val="faded"   onclick="cmColorHealthPick('faded')">Faded</button>
+                      <button type="button" class="cm-ch-seg cm-ch-seg--dimmed"  data-val="dimmed"  onclick="cmColorHealthPick('dimmed')">Dimmed</button>
+                      <button type="button" class="cm-ch-seg cm-ch-seg--unknown" data-val="unknown" onclick="cmColorHealthPick('unknown')">Unknown</button>
+                    </div>
+                    <!-- Real filter state lives here, same id cmApplyFilters()/
+                         cmRenderFilterChips()/cmResetFilters() already read --
+                         the segmented bar above is just a nicer picker for it. -->
+                    <select id="cm-colorhealth-filter" class="cm-select" onchange="cmApplyFilters()" style="display:none">
+                      <option value="">All Color Health</option>
+                      <option value="vivid">Vivid</option>
+                      <option value="muted">Muted</option>
+                      <option value="faded">Faded</option>
+                      <option value="dimmed">Dimmed</option>
+                      <option value="unknown">Unknown</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="cm-filter-group" id="cm-fgroup-item" data-fgroup="item" style="display:none">
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-item-category-filter">Sub-type</label>
+                    <select id="cm-item-category-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Sub-types</option>
+                      <option value="accessory">💍 Accessory</option>
+                      <option value="armor">🛡 Armor</option>
+                      <option value="consumable">⚗️ Consumable</option>
+                      <option value="quest_item">📜 Quest Item</option>
+                      <option value="shield">🔰 Shield</option>
+                      <option value="tool">🔧 Tool</option>
+                      <option value="weapon">⚔️ Weapon</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-item-price-filter">Price</label>
+                    <select id="cm-item-price-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Prices</option>
+                      <option value="0-1">Under 1 gp</option>
+                      <option value="1-10">1&ndash;10 gp</option>
+                      <option value="10-50">10&ndash;50 gp</option>
+                      <option value="50-200">50&ndash;200 gp</option>
+                      <option value="200+">200+ gp</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-item-rarity-filter">Rarity</label>
+                    <select id="cm-item-rarity-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Rarities</option>
+                      <option value="common">Common</option>
+                      <option value="legendary">Legendary</option>
+                      <option value="rare">Rare</option>
+                      <option value="uncommon">Uncommon</option>
+                      <option value="unique">Unique</option>
+                    </select>
+                  </div>
+                  <div class="cm-filter-field">
+                    <label class="cm-filter-label" for="cm-item-addable-filter">Addability</label>
+                    <select id="cm-item-addable-filter" class="cm-select" onchange="cmApplyFilters()">
+                      <option value="">All Addability</option>
+                      <option value="false">🔒 DM Only</option>
+                      <option value="true">✅ Player Addable</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -3865,12 +4070,20 @@ function showDMToast(msg, type) {
 .quests-filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 18px;
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--dm-border);
   background: var(--dm-surface);
   flex-shrink: 0;
-  align-items: center;
+  align-items: flex-end;
+}
+.quests-filter-bar-left,
+.quests-filter-bar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
 }
 
 .quests-columns {
@@ -4456,9 +4669,63 @@ function showDMToast(msg, type) {
 .cm-filter-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: flex-end;
+  gap: 18px;
   margin-top: 0.5rem;
 }
+/* ── Labeled field + conditional group boxes (Figma 51:2107) ──────── */
+.cm-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.cm-filter-label {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--dm-text);
+  white-space: nowrap;
+}
+.cm-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
+  background: var(--blue-600);
+  border: 1px solid var(--blue-500);
+  border-radius: var(--radius-md);
+  padding: 8px;
+}
+.cm-colorhealth-bar {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 999px;
+  width: 335px;
+  height: 34px;
+}
+.cm-ch-seg {
+  flex: 1 0 0;
+  min-width: 0;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.72rem;
+  line-height: 1.15;
+  text-align: center;
+  padding: 0 2px;
+  opacity: 0.55;
+  transition: var(--dm-transition);
+}
+.cm-ch-seg:hover { opacity: 0.8; }
+.cm-ch-seg.active { opacity: 1; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.6); }
+.cm-ch-seg--vivid   { background: #4effe1; color: #06070b; }
+.cm-ch-seg--muted   { background: #35ab97; color: #06070b; }
+.cm-ch-seg--faded   { background: #206a5e; color: var(--text); }
+.cm-ch-seg--dimmed  { background: #334340; color: var(--text); }
+.cm-ch-seg--unknown { background: #666666; color: var(--text); }
 .cm-filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -4725,6 +4992,142 @@ function showDMToast(msg, type) {
   padding: 2rem;
   text-align: center;
 }
+/* ── Sessions list page (Figma 108:2507) ── */
+.scc-sessions-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin-top: 1.5rem;
+}
+.scc-sessions-list-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+/* Column header row -- same grid-template-columns as .scc-sessions-list-row
+   below, so header labels line up with their real column regardless of
+   variable-width content (status select, archive button) in the rows
+   underneath. Each header is a real <button>, not just a styled span --
+   click to sort by that column, click the same one again to reverse
+   direction, same pattern as any normal sortable table. */
+.scc-sessions-list-header {
+  display: grid;
+  grid-template-columns: 1fr 90px 200px 150px;
+  gap: 10px;
+  padding: 0 18px;
+}
+.scc-sessions-sort-th {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  padding: 0.3rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dm-text-faint);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--dm-transition);
+}
+.scc-sessions-sort-th:hover { color: var(--dm-text-muted); }
+.scc-sessions-sort-th.scc-sessions-sort-th--active { color: var(--dm-gold); }
+.scc-sessions-sort-arrow { font-size: 0.7rem; line-height: 1; }
+.scc-sessions-archive-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--dm-text-muted);
+  cursor: pointer;
+}
+.scc-sessions-archive-toggle input { cursor: pointer; }
+.scc-sessions-list-row-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.scc-sessions-list-archive-btn {
+  background: transparent;
+  border: 1px solid var(--dm-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-sessions-list-archive-btn:hover { color: var(--dm-gold); border-color: var(--scc-border-gold); }
+.scc-sessions-list-row--archived { opacity: 0.6; }
+.scc-sessions-list-archived-tag {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dm-text-faint);
+  border: 1px solid var(--dm-border-mid);
+  border-radius: 8px;
+  padding: 0.1rem 0.4rem;
+  flex-shrink: 0;
+}
+/* Session lifecycle badge -- deliberately distinct in shape/color from the
+   Archived tag right next to it (different concept: this is where a
+   session sits in its own run, archived is just visibility). */
+.scc-session-status-badge {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.scc-session-status-badge--next_session   { background: rgba(96,165,250,0.15); color: var(--dm-blue); }
+.scc-session-status-badge--in_progress    { background: rgba(34,197,94,0.15); color: var(--dm-green); }
+.scc-session-status-badge--completed      { background: rgba(255,255,255,0.08); color: var(--dm-text-muted); }
+.scc-session-status-badge--future_session { background: rgba(251,146,60,0.15); color: var(--orange-vivid); }
+.scc-session-status-select {
+  flex-shrink: 0;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--dm-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+}
+.scc-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Same grid-template-columns as .scc-sessions-list-header above, so every
+   row's 4 real columns (name/date/status/archived) line up under their
+   header regardless of variable-width content within each. */
+.scc-sessions-list-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 200px 150px;
+  align-items: center;
+  gap: 10px;
+  background: var(--blue-700);
+  border-radius: var(--radius);
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-sessions-list-row:hover { background: var(--blue-600); }
+.scc-sessions-list-name {
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--dm-gold);
+  text-decoration: underline;
+}
+.scc-sessions-list-date {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  color: var(--dm-text);
+  text-align: right;
+}
+.scc-sessions-list-status-cell { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
 /* ── Setup Grid ── */
 .scc-setup-grid {
   display: grid;
@@ -5774,6 +6177,46 @@ function showDMToast(msg, type) {
   color: var(--dm-text-faint);
 }
 .scc-combat-session-chip.added:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
+/* Setup's "Suggested from Session N" quick-add chips -- a real, deliberately
+   distinct look from .scc-chip (the actual assigned-list pills, solid
+   dim-gold fill), not just a different +/✓ prefix symbol: hollow/outlined,
+   AND a different hue (blue, not gold), so a suggestion can never be
+   mistaken for a real selection even at a glance -- gold is reserved for
+   "this is actually assigned," full stop. Its own class, not a reuse of
+   .scc-combat-session-chip above -- that one is Combat's own roster
+   quick-add chip, whose "added" state stays solidly gold-filled and
+   clickable on purpose (adding a 2nd/3rd copy of the same creature to an
+   encounter). Untouched by this. Reuses --dm-blue/--dm-blue-dim/
+   --dm-border-blue -- the same real, already-established token family
+   this file already uses for "Next Session" status and the active Live
+   Session tab, not a new hue invented for this one spot. */
+.scc-suggested-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  border: 1px solid var(--dm-border-blue);
+  border-radius: 20px;
+  color: var(--dm-blue);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: var(--dm-transition);
+}
+.scc-suggested-chip:hover { background: var(--dm-blue-dim); }
+/* Already-added: muted, not just a color swap -- genuinely non-interactive
+   (pointer-events:none, no onclick attribute at all on the element itself),
+   matching how it's actually always behaved: sccAddChipById() has always
+   silently no-op'd on an id already in SCC_SELECTED, so this was never a
+   real "re-add" action, just something that looked clickable. */
+.scc-suggested-chip--added {
+  border-color: var(--scc-border-mid);
+  color: var(--dm-text-faint);
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
 /* Setup's "Suggested from Session N" quest chips only — flags a quest that has
    a real in-progress beat (started, not finished last time), not just one that
    was merely assigned. Reuses the same beat-status tokens the rest of the app
@@ -6051,6 +6494,11 @@ function showDMToast(msg, type) {
 #scc-panel-live { overflow-y: auto; }
 .scc-tab-btn--live { background: rgba(96,165,250,0.08); border-color: rgba(96,165,250,0.3); color: var(--dm-blue); }
 .scc-tab-btn--live.active { background: rgba(96,165,250,0.18); border-color: rgba(96,165,250,0.6); color: #93c5fd; }
+/* Setup has nothing left to do once a session is over -- hidden entirely
+   (not just locked) while viewing a completed/historical session. Bounced
+   off Live Session automatically if it was the active panel, in
+   sccLoadHistorySession(). */
+.scc-audit-mode .scc-tab-btn--setup { display: none; }
 .scc-live-layout {
   display: grid;
   grid-template-columns: 28% 1fr 26%;
@@ -6814,6 +7262,33 @@ function showDMToast(msg, type) {
 .scc-quicknote-modal-title { font-family: var(--font-headers); font-size: 1.1rem; color: var(--dm-gold); margin-bottom: 0.2rem; }
 .scc-quicknote-modal #scc-quicknote-body { min-height: 90px; }
 .scc-quicknote-modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.4rem; }
+/* "+ Add Session" modal -- same centered-panel shape as .scc-quicknote-modal
+   (own class since it's a genuinely different concept, not another note). */
+.scc-addsession-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.96);
+  width: 340px;
+  max-width: 90vw;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 999;
+  padding: 1.25rem;
+  display: none;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: var(--dm-shadow-lg);
+  opacity: 0;
+  transition: var(--dm-transition);
+}
+.scc-addsession-modal.open { display: flex; opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.scc-addsession-error {
+  color: var(--dm-red);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  min-height: 1.1em;
+}
 .scc-lookup-inner {
   display: flex;
   flex-direction: column;
@@ -7079,84 +7554,6 @@ function showDMToast(msg, type) {
   font-style: italic;
   padding: 2rem;
   text-align: center;
-}
-/* ── Session History Panel ── */
-.scc-history-wrap {
-  position: relative;
-}
-.scc-history-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: 340px;
-  max-height: 400px;
-  background: var(--dm-surface-high);
-  border: 1px solid var(--scc-border-gold);
-  border-radius: var(--dm-radius);
-  z-index: 500;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-}
-.scc-history-panel.open {
-  display: flex;
-}
-#scc-history-list {
-  flex: 1;
-  overflow-y: auto;
-}
-.scc-history-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--scc-border);
-  cursor: pointer;
-  transition: var(--dm-transition);
-  gap: 0.5rem;
-}
-.scc-history-item:last-child { border-bottom: none; }
-.scc-history-item:hover { background: var(--dm-gold-dim); }
-.scc-history-item-left {}
-.scc-history-session-num {
-  font-family: var(--font-headers);
-  font-size: 0.95rem;
-  color: var(--dm-gold);
-  font-weight: 600;
-}
-.scc-history-session-date {
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  color: var(--dm-text-muted);
-  margin-top: 0.1rem;
-}
-.scc-history-session-premise {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  color: var(--dm-text);
-  margin-top: 0.15rem;
-  font-style: italic;
-}
-.scc-history-status {
-  padding: 0.1rem 0.45rem;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  flex-shrink: 0;
-}
-.scc-history-status.completed {
-  background: rgba(34,197,94,0.1);
-  color: var(--dm-green);
-  border: 1px solid rgba(34,197,94,0.25);
-}
-.scc-history-status.active {
-  background: var(--dm-gold-dim);
-  color: var(--dm-gold);
-  border: 1px solid var(--scc-border-gold);
 }
 .scc-viewing-badge {
   display: inline-block;
@@ -8212,14 +8609,15 @@ function switchTab(tab) {
   if (tab === 'manage' && CM_ALL.length === 0) cmRefresh();
   if (tab === 'quests') { questsResetFilters(); questsRefresh(); }
   if (tab === 'players') playersRefresh();
+  if (tab === 'sessions') sccRefreshSessionsList();
   if (tab === 'add') { FORM_DIRTY = false; sortAllDropdowns(); } // re-sort on open; reset dirty flag
   sccUpdateQuickNoteFabVisibility();
 }
-// The global Quick Note FAB only makes sense on the Session Command Center
-// page itself (#form-session -- the tab whose own header literally reads
-// "Session Command Center", holding Live Session/Combat/Notes) -- showing it
-// over Manage/Quests/Players/Setup put a floating session-note button on
-// pages that have nothing to do with running a live session.
+// The global Quick Note FAB only makes sense on the Session Details page
+// itself (#form-session -- the tab whose own header literally reads
+// "Session Command Center", holding Setup/Live Session/Combat/Notes) --
+// showing it over Manage/Quests/Players/Sessions put a floating session-note
+// button on pages that have nothing to do with running a live session.
 function sccUpdateQuickNoteFabVisibility() {
   var fab = document.getElementById('scc-quicknote-fab');
   if (fab) fab.style.display = (CURRENT_TAB === 'session') ? 'flex' : 'none';
@@ -9782,20 +10180,49 @@ function cmToggleFilters() {
 /* ── FILTER ──────────────────────────────────── */
 function cmFilter() { CM_PAGE = 1; cmApplyFilters(); }
 
+/* Which conditional filter-group boxes a given Type relies on. Reusable
+   shape by design (a plain type -> group-keys map + one function that
+   shows/hides <div data-fgroup> boxes off it) -- a later page's own
+   filter panel can define its own map and call the same toggle helper,
+   though nothing else calls it yet.
+   NOTE on 'vareth': the task described this group as showing for
+   "creatures/NPCs relevant to the Vareth" -- checked against the real
+   schema before wiring it that way, and vareth_presence/color_health
+   only exist on cities/pois/regions/nations (confirmed via
+   information_schema), never on creatures or world_characters. Keyed
+   this group to the same types as 'location' instead, matching where
+   the data actually lives -- keying it to character/creature as
+   literally described would have shipped a filter that always returns
+   zero results for those types. */
+var CM_FGROUP_TYPES = {
+  location: ['city', 'poi', 'region'],
+  vareth:   ['city', 'poi', 'region'],
+  item:     ['item']
+};
+function cmFgroupsForType(typeF) {
+  var groups = [];
+  Object.keys(CM_FGROUP_TYPES).forEach(function(g) {
+    if (CM_FGROUP_TYPES[g].indexOf(typeF) !== -1) groups.push(g);
+  });
+  return groups;
+}
+function cmApplyFilterGroupVisibility(typeF) {
+  var active = cmFgroupsForType(typeF);
+  Object.keys(CM_FGROUP_TYPES).forEach(function(g) {
+    var box = document.getElementById('cm-fgroup-' + g);
+    if (!box) return;
+    var show = active.indexOf(g) !== -1;
+    box.style.display = show ? '' : 'none';
+    if (!show) {
+      box.querySelectorAll('select').forEach(function(sel) { sel.value = ''; });
+    }
+  });
+  cmSyncColorHealthBar();
+}
+
 function cmTypeFilterChanged() {
-  var typeF     = (document.getElementById('cm-type-filter') || {}).value || '';
-  var isItem    = typeF === 'item';
-  var catFilter = document.getElementById('cm-item-category-filter');
-  var rarFilter = document.getElementById('cm-item-rarity-filter');
-  var addFilter = document.getElementById('cm-item-addable-filter');
-  if (catFilter) catFilter.style.display = isItem ? '' : 'none';
-  if (rarFilter) rarFilter.style.display = isItem ? '' : 'none';
-  if (addFilter) addFilter.style.display = isItem ? '' : 'none';
-  if (!isItem) {
-    if (catFilter) catFilter.value = '';
-    if (rarFilter) rarFilter.value = '';
-    if (addFilter) addFilter.value = '';
-  }
+  var typeF = (document.getElementById('cm-type-filter') || {}).value || '';
+  cmApplyFilterGroupVisibility(typeF);
   CM_PAGE = 1;
   cmApplyFilters();
 }
@@ -9805,7 +10232,8 @@ function cmResetFilters() {
     'cm-type-filter', 'cm-vis-filter', 'cm-continent-filter',
     'cm-region-filter', 'cm-nation-filter', 'cm-settlement-filter',
     'cm-vareth-filter', 'cm-colorhealth-filter',
-    'cm-item-category-filter', 'cm-item-rarity-filter', 'cm-item-addable-filter'
+    'cm-item-category-filter', 'cm-item-rarity-filter', 'cm-item-addable-filter',
+    'cm-item-price-filter'
   ];
   filterIds.forEach(function(id) {
     var el = document.getElementById(id);
@@ -9813,12 +10241,29 @@ function cmResetFilters() {
   });
   var searchEl = document.getElementById('cm-search');
   if (searchEl) searchEl.value = '';
-  // Hide item-specific filters (same as before)
-  ['cm-item-category-filter','cm-item-rarity-filter','cm-item-addable-filter'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
+  cmApplyFilterGroupVisibility('');
   cmApplyFilters();
+}
+
+/* ── COLOR HEALTH SEGMENTED PICKER ───────────────
+   A nicer picker for the same #cm-colorhealth-filter <select> everything
+   else already reads -- clicking a segment sets that select's value
+   (click again to clear), so cmApplyFilters()/cmRenderFilterChips() need
+   no changes at all to pick it up. */
+function cmColorHealthPick(val) {
+  var sel = document.getElementById('cm-colorhealth-filter');
+  if (!sel) return;
+  sel.value = (sel.value === val) ? '' : val;
+  cmSyncColorHealthBar();
+  CM_PAGE = 1;
+  cmApplyFilters();
+}
+function cmSyncColorHealthBar() {
+  var sel = document.getElementById('cm-colorhealth-filter');
+  var cur = sel ? sel.value : '';
+  document.querySelectorAll('.cm-ch-seg').forEach(function(btn) {
+    btn.classList.toggle('active', !!cur && btn.dataset.val === cur);
+  });
 }
 
 /* ── ACTIVE FILTER CHIPS ─────────────────────── */
@@ -9835,9 +10280,10 @@ function cmRenderFilterChips() {
     { id: 'cm-nation-filter',        label: 'Nation' },
     { id: 'cm-continent-filter',     label: 'Continent' },
     { id: 'cm-settlement-filter',    label: 'Settlement' },
-    { id: 'cm-vareth-filter',        label: 'Vareth' },
+    { id: 'cm-vareth-filter',        label: 'Vareth Present' },
     { id: 'cm-colorhealth-filter',   label: 'Color Health' },
-    { id: 'cm-item-category-filter', label: 'Category' },
+    { id: 'cm-item-category-filter', label: 'Sub-type' },
+    { id: 'cm-item-price-filter',    label: 'Price' },
     { id: 'cm-item-rarity-filter',   label: 'Rarity' },
     { id: 'cm-item-addable-filter',  label: 'Addable' }
   ];
@@ -9910,6 +10356,7 @@ function cmApplyFilters() {
   var itemCatF = (document.getElementById('cm-item-category-filter') || {}).value || '';
   var itemRarF = (document.getElementById('cm-item-rarity-filter')   || {}).value || '';
   var itemAddF = (document.getElementById('cm-item-addable-filter')  || {}).value || '';
+  var itemPriceF = (document.getElementById('cm-item-price-filter')  || {}).value || '';
   var q = searchQ.toLowerCase().trim();
 
   var filtered = CM_ALL.filter(function(item) {
@@ -9921,6 +10368,15 @@ function cmApplyFilters() {
     if (itemAddF && item._type === 'item') {
       var addable = e.player_addable === false ? 'false' : 'true';
       if (addable !== itemAddF) return false;
+    }
+    if (itemPriceF && item._type === 'item') {
+      var cost = typeof e.cost_gp === 'number' ? e.cost_gp : null;
+      if (cost === null) return false;
+      if (itemPriceF === '0-1'    && !(cost < 1))                return false;
+      if (itemPriceF === '1-10'   && !(cost >= 1  && cost < 10)) return false;
+      if (itemPriceF === '10-50'  && !(cost >= 10 && cost < 50)) return false;
+      if (itemPriceF === '50-200' && !(cost >= 50 && cost < 200)) return false;
+      if (itemPriceF === '200+'   && !(cost >= 200))             return false;
     }
     if (contF   && (e.continent||'') !== contF)  return false;
     if (regionF && (e.region   ||'') !== regionF) return false;
@@ -9985,6 +10441,7 @@ function cmApplyFilters() {
 
   CM_FILTERED = filtered;
   cmRenderFilterChips();
+  cmSyncColorHealthBar();
   cmUpdateSortArrows();
   renderCMTable();
 
@@ -12054,6 +12511,7 @@ function sccEsc(str) {
 }
 
 // ── Tab hook ─────────────────────────────────────────────────────
+var SCC_SKIP_NEXT_SESSION_RESYNC = false;
 var _origSwitchTab = switchTab;
 switchTab = function(tab) {
   _origSwitchTab(tab);
@@ -12070,13 +12528,35 @@ switchTab = function(tab) {
   // trivially bypassable. Skipping the re-sync while audit mode is active
   // costs nothing real (a locked historical session has no live data that
   // needs refreshing) and closes the gap.
-  if ((tab === 'session' || tab === 'setup') && !SCC_VIEWING_HISTORY) {
-    setTimeout(sccInit, 0);
+  // 'setup' dropped from this check -- it's no longer a standalone
+  // top-level tab, it's a scc-panel inside 'session' (Session Details) now.
+  // SCC_SKIP_NEXT_SESSION_RESYNC: a real bug, confirmed live -- this re-sync
+  // used to always re-derive "the" session via sccLoadLatestSession(),
+  // which picks whichever is in_progress/next_session GLOBALLY, not
+  // necessarily the one the caller actually wants shown.
+  // sccConfirmAddSession() and sccOpenSessionDetails() both already know
+  // exactly which session they want and load it directly/synchronously
+  // (avoiding a redundant full sccInit() world-data refetch) -- the flag
+  // just stops this resync from firing a moment later on top of that.
+  // For every OTHER path that can re-trigger switchTab('session') while
+  // already viewing a specific session (sccJumpToSetupScenarios(), or any
+  // future one) -- confirmed live as a real, separate way to hit the same
+  // bug: this resync now stays "sticky" to whichever session is currently
+  // loaded (SCC_SESSION) instead of blindly re-deriving by priority, so
+  // "click it, see it" holds regardless of what re-triggers this. Only
+  // falls through to the priority default when nothing's loaded yet
+  // (SCC_SESSION is null -- e.g. the very first navigation into Session
+  // Details this page load).
+  if (SCC_SKIP_NEXT_SESSION_RESYNC) {
+    SCC_SKIP_NEXT_SESSION_RESYNC = false;
+  } else if (tab === 'session' && !SCC_VIEWING_HISTORY) {
+    var stickySessionNum = SCC_SESSION ? SCC_SESSION.session_number : null;
+    setTimeout(function() { sccInit(stickySessionNum); }, 0);
   }
 };
 
 // ── Init ─────────────────────────────────────────────────────────
-function sccInit() {
+function sccInit(forceSessionNum) {
   // Fetch all world data fresh from Supabase so newly-added entries appear immediately
   Promise.all([
     sccFetch('world_characters').then(function(rows) { if (Array.isArray(rows) && rows.length) window.CHARACTERS = rows; }),
@@ -12090,11 +12570,11 @@ function sccInit() {
     sccFetch('conditions', '&order=sort_order.asc').then(function(rows) { window.SCC_CONDITIONS_DATA = Array.isArray(rows) ? rows : []; }),
     sccFetch('vendor_stock', '&order=sort_order.asc').then(function(rows) { window.VENDOR_STOCK = Array.isArray(rows) ? rows : []; })
   ]).then(function() {
-    sccLoadPlayers();
-    sccLoadLatestSession();
+    // sccLoadLatestSession() now loads players itself (see its own comment) --
+    // no need to also do it here, that would just be a redundant fetch.
+    sccLoadLatestSession(forceSessionNum);
   }).catch(function() {
-    sccLoadPlayers();
-    sccLoadLatestSession();
+    sccLoadLatestSession(forceSessionNum);
   });
 }
 
@@ -12557,8 +13037,11 @@ function sccScenarioClearFilter() {
 }
 // Exposes the existing Setup scenario editor rather than building a second
 // one -- navigates to Setup and lands on/highlights the real editor there.
+// Setup is now a scc-panel inside Session Details, not its own top-level
+// tab -- switchTab('session') first, then sccSwitchPanel('setup').
 function sccJumpToSetupScenarios() {
-  switchTab('setup');
+  switchTab('session');
+  sccSwitchPanel('setup');
   setTimeout(function() {
     var el = document.getElementById('scc-scenario-editor-groups');
     if (!el) return;
@@ -12585,10 +13068,13 @@ function sccLiveSwitchSection(name) {
   });
   if (name === 'fieldguide') { sccFgInitDocument(); }
 }
-// Auto-switches to the Quests tab once per session load if any assigned
-// quest has a real in-progress beat -- guarded so it only applies once and
-// doesn't keep re-forcing the DM back to Quests if they've since navigated
-// to a different tab on purpose.
+// Decides which Live Session inner-tab a DM actually lands on, once per
+// session load -- guarded so it only applies once and doesn't keep
+// re-forcing the DM back to a specific tab if they've since navigated to a
+// different one on purpose. Field Guide is the real default landing view
+// (it's the actual read-aloud script for the session), with one deliberate
+// override: an assigned quest with a genuine in-progress beat is a more
+// actionable "come look at this" signal, so Quests wins instead.
 // Deliberately NOT called from sccRenderQuestPanel() itself -- that function
 // runs from many places (chip add/remove, etc.) with no guarantee SCC_PROGRESS
 // has actually finished loading yet; calling this too early would latch it
@@ -12598,7 +13084,7 @@ function sccLiveSwitchSection(name) {
 function sccLiveApplyAutoExpand() {
   if (SCC_LIVE_ACC_AUTO_APPLIED) return;
   SCC_LIVE_ACC_AUTO_APPLIED = true;
-  if (sccComputeActiveBeat()) sccLiveSwitchSection('quests');
+  sccLiveSwitchSection(sccComputeActiveBeat() ? 'quests' : 'fieldguide');
 }
 // Quick Note capture is now the single, global FAB (sccOpenQuickNoteModal(),
 // reachable from every tab) -- the Live Session strip's own local Quick Note
@@ -13260,14 +13746,443 @@ function sccTogglePrep() {
 // All sessions cache — loaded once per tab open
 var SCC_ALL_SESSIONS = [];
 var SCC_VIEWING_HISTORY = false;
-function sccLoadLatestSession() {
+
+/* ── SESSIONS LIST PAGE (Figma 108:2507) ─────────────────────────
+   A lightweight session_notes-only fetch, deliberately not the full
+   sccInit() world-data refresh -- this page only ever needs session
+   number/date/status, and should populate the instant a DM navigates to
+   it even if they've never opened Session Details this visit. */
+function sccRefreshSessionsList() {
   sccFetch('session_notes', '&order=session_number.desc').then(function(rows) {
     SCC_ALL_SESSIONS = Array.isArray(rows) ? rows : [];
-    // Find the active (in-progress) session — most recent with status 'active' or null
-    var activeSession = SCC_ALL_SESSIONS.find(function(s) {
-      return !s.session_status || s.session_status === 'active';
+    sccRenderSessionsList();
+  }).catch(function() {
+    var el = document.getElementById('scc-sessions-list');
+    if (el) el.innerHTML = '<div class="scc-empty-state">Could not load sessions.</div>';
+  });
+}
+// "Show archived" defaults off (a fresh page load/tab visit always starts
+// hidden, matching the ask) -- this is pure client-side filter state, not
+// persisted, since it's a view preference for this browsing session, not
+// data.
+var SCC_SHOW_ARCHIVED = false;
+function sccToggleShowArchived() {
+  var box = document.getElementById('scc-sessions-show-archived');
+  SCC_SHOW_ARCHIVED = !!(box && box.checked);
+  sccRenderSessionsList();
+}
+/* Sort control -- was a "Sort by" <select>, now real clickable column
+   headers (see the .scc-sessions-list-header markup): click a header to
+   sort by that column, click the SAME header again to reverse direction,
+   same pattern as any normal sortable table. Same client-side-only
+   view-preference treatment as SCC_SHOW_ARCHIVED above (not persisted,
+   defaults to the list's natural session_number.desc order on every fresh
+   load). 'status' uses a display priority, not the enum's own declaration
+   order (SCC_SESSION_STATUSES is ordered for the per-row <select>'s option
+   list, not for "what a DM most wants to see first") -- in_progress is the
+   most actionable thing to surface, completed the least; that's the
+   column's own default (dir=1) direction, reversible like any other.
+   'date' puts undated sessions (still-being-planned ones with no
+   session_date set yet) at the end regardless of direction, since a
+   missing date carries no real ordering signal either way. Every branch
+   falls back to session_number desc as a stable secondary sort, so ties
+   (e.g. two sessions sharing a status) don't reorder unpredictably between
+   renders -- that tiebreak is intentionally NOT direction-reversed, so
+   reversing the primary column doesn't also scramble how ties resolve. */
+var SCC_SESSIONS_SORT = 'session_number';
+var SCC_SESSIONS_SORT_DIR = 1; // 1 = this column's own default direction, -1 = reversed
+var SCC_SESSIONS_STATUS_SORT_RANK = { in_progress: 0, next_session: 1, future_session: 2, completed: 3 };
+function sccSessionsSortByColumn(col) {
+  if (SCC_SESSIONS_SORT === col) {
+    SCC_SESSIONS_SORT_DIR = -SCC_SESSIONS_SORT_DIR;
+  } else {
+    SCC_SESSIONS_SORT = col;
+    SCC_SESSIONS_SORT_DIR = 1;
+  }
+  sccRenderSessionsList();
+}
+function sccSortSessions(list) {
+  var sorted = list.slice();
+  var dir = SCC_SESSIONS_SORT_DIR;
+  if (SCC_SESSIONS_SORT === 'status') {
+    sorted.sort(function(a, b) {
+      var ra = SCC_SESSIONS_STATUS_SORT_RANK.hasOwnProperty(a.session_status) ? SCC_SESSIONS_STATUS_SORT_RANK[a.session_status] : 99;
+      var rb = SCC_SESSIONS_STATUS_SORT_RANK.hasOwnProperty(b.session_status) ? SCC_SESSIONS_STATUS_SORT_RANK[b.session_status] : 99;
+      return ra !== rb ? dir * (ra - rb) : b.session_number - a.session_number;
     });
-    // If no active session exists, calculate next number from completed sessions
+  } else if (SCC_SESSIONS_SORT === 'date') {
+    sorted.sort(function(a, b) {
+      if (!a.session_date && !b.session_date) return b.session_number - a.session_number;
+      if (!a.session_date) return 1;
+      if (!b.session_date) return -1;
+      if (a.session_date === b.session_date) return b.session_number - a.session_number;
+      return dir * (a.session_date < b.session_date ? 1 : -1);
+    });
+  } else if (SCC_SESSIONS_SORT === 'archived') {
+    sorted.sort(function(a, b) {
+      var aa = a.archived ? 1 : 0, bb = b.archived ? 1 : 0;
+      return aa !== bb ? dir * (aa - bb) : b.session_number - a.session_number;
+    });
+  } else {
+    sorted.sort(function(a, b) { return dir * (b.session_number - a.session_number); });
+  }
+  return sorted;
+}
+/* The session lifecycle -- distinct from `archived`, which is a separate,
+   orthogonal flag (a session can be e.g. completed AND archived, or
+   in_progress and not archived; the two never interact). Single source
+   for both the per-row <select> options and the badge label/color, so
+   they can't drift apart. */
+var SCC_SESSION_STATUSES = [
+  { id: 'next_session',   label: 'Next Session' },
+  { id: 'in_progress',    label: 'In Progress' },
+  { id: 'completed',      label: 'Completed' },
+  { id: 'future_session', label: 'Future Session' }
+];
+function sccSessionStatusLabel(status) {
+  var found = SCC_SESSION_STATUSES.filter(function(s) { return s.id === status; })[0];
+  return found ? found.label : status;
+}
+// Reflects the current sort column/direction onto the real header buttons --
+// active column gets the gold treatment + an arrow, every other column stays
+// plain with no arrow. Direction is per-column state, not a single global
+// "ascending/descending" flag, so switching columns doesn't carry a
+// confusing leftover arrow from whichever column was active before.
+function sccUpdateSessionsSortHeader() {
+  document.querySelectorAll('.scc-sessions-sort-th').forEach(function(btn) {
+    var isActive = btn.dataset.sort === SCC_SESSIONS_SORT;
+    btn.classList.toggle('scc-sessions-sort-th--active', isActive);
+    var arrow = btn.querySelector('.scc-sessions-sort-arrow');
+    if (arrow) arrow.textContent = isActive ? (SCC_SESSIONS_SORT_DIR === 1 ? '\u25BC' : '\u25B2') : '';
+  });
+}
+function sccRenderSessionsList() {
+  var el = document.getElementById('scc-sessions-list');
+  if (!el) return;
+  sccUpdateSessionsSortHeader();
+  var visible = sccSortSessions(SCC_ALL_SESSIONS.filter(function(s) { return SCC_SHOW_ARCHIVED || !s.archived; }));
+  if (!visible.length) {
+    el.innerHTML = '<div class="scc-empty-state">'
+      + (SCC_ALL_SESSIONS.length ? 'No sessions match — try Show archived.' : 'No sessions yet — click + Add Session to start one.')
+    + '</div>';
+    return;
+  }
+  el.innerHTML = visible.map(function(s) {
+    var dateVal = s.session_date ? String(s.session_date).slice(0,10) : null;
+    var dateDisp = dateVal
+      ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'2-digit' })
+      : '—';
+    var archiveBtn = s.archived
+      ? '<button class="scc-sessions-list-archive-btn" onclick="event.stopPropagation(); sccUnarchiveSession(' + s.session_number + ')">Unarchive</button>'
+      : '<button class="scc-sessions-list-archive-btn" onclick="event.stopPropagation(); sccArchiveSession(' + s.session_number + ')">Archive</button>';
+    var statusBadge = '<span class="scc-session-status-badge scc-session-status-badge--' + sccEsc(s.session_status) + '">'
+      + sccEsc(sccSessionStatusLabel(s.session_status)) + '</span>';
+    var statusSelect = '<select class="scc-session-status-select" onclick="event.stopPropagation()" onchange="event.stopPropagation(); sccChangeSessionStatus(' + s.session_number + ', this.value)">'
+      + SCC_SESSION_STATUSES.map(function(st) {
+          return '<option value="' + st.id + '"' + (st.id === s.session_status ? ' selected' : '') + '>' + sccEsc(st.label) + '</option>';
+        }).join('')
+    + '</select>';
+    return '<div class="scc-sessions-list-row' + (s.archived ? ' scc-sessions-list-row--archived' : '') + '" onclick="sccOpenSessionDetails(' + s.session_number + ')">'
+      + '<span class="scc-sessions-list-name">Session ' + s.session_number + '</span>'
+      + '<span class="scc-sessions-list-date">' + sccEsc(dateDisp) + '</span>'
+      + '<span class="scc-sessions-list-status-cell">' + statusBadge + statusSelect + '</span>'
+      + '<span class="scc-sessions-list-row-actions">'
+        + (s.archived ? '<span class="scc-sessions-list-archived-tag">Archived</span>' : '')
+        + archiveBtn
+      + '</span>'
+    + '</div>';
+  }).join('');
+}
+/* Explicit, DM-driven status change -- same "no automatic trigger, don't
+   infer it from navigation" precedent as Archive. No confirm() gate here
+   (unlike Archive): this is meant to be a routine, frequent action as a
+   session moves through its real lifecycle, not a one-off. */
+function sccChangeSessionStatus(num, newStatus) {
+  var s = SCC_ALL_SESSIONS.find(function(x) { return x.session_number === num; });
+  var prevStatus = s ? s.session_status : null;
+  if (s) s.session_status = newStatus; // optimistic, matches sccArchiveSession()'s own pattern
+  sccRenderSessionsList();
+  sccPatch('session_notes', '?session_number=eq.' + num, { session_status: newStatus }).then(function(r) {
+    if (!r.ok) {
+      if (s) s.session_status = prevStatus;
+      sccRenderSessionsList();
+      showDMToast('Could not update Session ' + num + ' — try again', 'error');
+      return;
+    }
+    if (SCC_SESSION && SCC_SESSION.session_number === num) {
+      SCC_SESSION.session_status = newStatus;
+      sccUpdateHeaderSub();
+    }
+    showDMToast('Session ' + num + ' set to ' + sccSessionStatusLabel(newStatus), 'success');
+  }).catch(function() {
+    if (s) s.session_status = prevStatus;
+    sccRenderSessionsList();
+    showDMToast('Could not update Session ' + num + ' — try again', 'error');
+  });
+}
+/* Marks a session archived/unarchived -- never deletes the row. Archiving
+   is a real, if low-stakes, state change (it hides the session by default
+   from here on), so it's gated behind the same confirm() pattern this file
+   already uses for session-lifecycle actions like sccCompleteSession().
+   Unarchiving needs no confirmation -- it's purely restorative. */
+function sccArchiveSession(num) {
+  if (!confirm('Archive Session ' + num + '? It will be hidden from the Sessions List unless "Show archived" is on. This does not delete anything.')) return;
+  sccPatch('session_notes', '?session_number=eq.' + num, { archived: true }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not archive Session ' + num, 'error'); return; }
+    var s = SCC_ALL_SESSIONS.find(function(x) { return x.session_number === num; });
+    if (s) s.archived = true;
+    sccRenderSessionsList();
+    showDMToast('Session ' + num + ' archived', 'success');
+  }).catch(function() { showDMToast('Could not archive Session ' + num, 'error'); });
+}
+function sccUnarchiveSession(num) {
+  sccPatch('session_notes', '?session_number=eq.' + num, { archived: false }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not unarchive Session ' + num, 'error'); return; }
+    var s = SCC_ALL_SESSIONS.find(function(x) { return x.session_number === num; });
+    if (s) s.archived = false;
+    sccRenderSessionsList();
+    showDMToast('Session ' + num + ' unarchived', 'success');
+  }).catch(function() { showDMToast('Could not unarchive Session ' + num, 'error'); });
+}
+/* Shared by sccConfirmAddSession(), sccOpenSessionDetails(), and
+   sccLoadLatestSession() itself -- the one real render sequence for "make
+   the DOM reflect whichever session SCC_SESSION now points at." Extracted
+   after finding the identical block duplicated (by hand) in
+   sccConfirmAddSession() last round and now needed a second time in
+   sccOpenSessionDetails(), below, for the same underlying reason: don't wait
+   on an async fetch to show correct data when the caller already has it.
+   Does NOT set SCC_SESSION itself -- callers do that first, since the two
+   "no session found" branches (sccLoadLatestSession()'s own empty-state
+   case) don't have a session object to render around at all. */
+function sccApplySessionRenderState(progressPromise) {
+  SCC_VIEWING_HISTORY = false;
+  SCC_LIVE_ACC_AUTO_APPLIED = false;
+  sccRenderNpcPanel();
+  sccRenderLocationPanel();
+  sccRenderQuestPanel();
+  sccRenderCombatSessionCreatures();
+  sccRenderSuggestedRows();
+  sccUpdateHeaderSub();
+  sccRenderLivePanel();
+  sccRenderTaggedNotes();
+  (progressPromise || Promise.resolve()).then(function() {
+    sccRenderQuestPanel();
+    sccLiveApplyAutoExpand();
+  });
+}
+/* Routing from the Sessions List into Session Details -- real addressability
+   fix, confirmed live: clicking a row now always opens THAT exact session,
+   never whichever one happens to be globally in_progress/next_session.
+   Viewing a session is never itself a status change -- session_status stays
+   a separate, deliberate action via the per-row dropdown, untouched here.
+   Completed sessions go through sccLoadHistorySession(sessionNum), which
+   MUST run (and set SCC_VIEWING_HISTORY=true) before switchTab('session') --
+   the tab-switch wrapper only skips its own re-sync fetch when
+   SCC_VIEWING_HISTORY is already true at the moment it runs, otherwise its
+   scheduled sccInit() would clobber the historical view right back to
+   whichever session is live a moment later.
+   Every other status: a second real bug, found investigating a fresh DM
+   report that Live Session kept showing the PREVIOUS session's NPCs/
+   Locations/Quests/Scenarios/Current-Beat after clicking into this one, even
+   after a hard refresh. Root cause -- sccRenderNpcPanel()/sccRenderLocationPanel()/
+   sccRenderQuestPanel()/sccLiveRenderScenarios()/sccRenderCurrentBeatWidget()
+   are ONLY ever (re-)rendered inside sccLoadLatestSession()'s async fetch
+   .then() below; until that real network round-trip against Supabase
+   resolves, every one of those panels just keeps showing whatever was
+   already painted from the session viewed before this click -- not a
+   loading/empty state, the actual stale content. Invisible on a fast local
+   connection (sub-100ms), real and observable against the live production
+   Supabase instance -- and a hard refresh doesn't change the fetch latency,
+   so the same gap reproduces on every single click, exactly matching "still
+   wrong, even after a hard refresh." Fixed the same way sccConfirmAddSession()
+   already fixed the identical shape of bug for session creation: SCC_ALL_SESSIONS
+   already holds this session's real row (that's how `target` above was
+   found), so there's no need to wait on a fresh fetch just to render
+   correctly -- populate and render synchronously, right now, from data
+   already in hand, via the shared sccApplySessionRenderState() above.
+   sccLoadLatestSession(sessionNum) below still runs and re-renders with
+   genuinely fresh data a moment later -- redundant in the common case, a
+   real refresh if anything changed server-side since this list was last
+   fetched. SCC_SKIP_NEXT_SESSION_RESYNC still guards against the wrapper's
+   own resync firing a redundant full sccInit() on top of both of these. */
+function sccOpenSessionDetails(sessionNum) {
+  var target = SCC_ALL_SESSIONS.find(function(s) { return s.session_number === sessionNum; });
+  var isHistorical = !!(target && target.session_status === 'completed');
+  if (isHistorical) {
+    sccLoadHistorySession(sessionNum);
+    switchTab('session');
+  } else {
+    sccClearAuditMode();
+    SCC_VIEWING_HISTORY = false;
+    if (target) {
+      SCC_SESSION = target;
+      sccPopulateSetupForm(target);
+      sccSetSessionDisplay(target.session_number);
+      sccApplySessionRenderState(sccLoadQuestProgress(target.quest_ids_active || []));
+    }
+    SCC_SKIP_NEXT_SESSION_RESYNC = true;
+    switchTab('session');
+    sccSwitchPanel('live');
+    sccLoadLatestSession(sessionNum);
+  }
+}
+
+/* ── "+ Add Session" — real creation, not a shortcut into whatever's
+   already active. session_number is prompted for and confirmed rather
+   than silently computed, so a DM can deliberately start session 3 while
+   session 2 was never created; the field is pre-filled with the obvious
+   next number purely as a convenience default (nothing is created until
+   "Create Session" is clicked, so this isn't a silent auto-increment).
+   NPCs/Locations/Creatures/Items/Scenarios all start genuinely empty --
+   only quest_ids_active carries over, from the most recent session's own
+   assignments, filtered to drop anything already completed. */
+function sccOpenAddSessionModal() {
+  var nextNum = SCC_ALL_SESSIONS.length
+    ? Math.max.apply(null, SCC_ALL_SESSIONS.map(function(s) { return s.session_number; })) + 1
+    : 1;
+  var input = document.getElementById('scc-addsession-number');
+  var errEl = document.getElementById('scc-addsession-error');
+  if (errEl) errEl.textContent = '';
+  if (input) input.value = nextNum;
+  var modal = document.getElementById('scc-addsession-modal');
+  var backdrop = document.getElementById('scc-addsession-backdrop');
+  if (modal) modal.classList.add('open');
+  if (backdrop) backdrop.classList.add('open');
+  if (input) { input.focus(); input.select(); }
+}
+function sccCloseAddSessionModal() {
+  var modal = document.getElementById('scc-addsession-modal');
+  var backdrop = document.getElementById('scc-addsession-backdrop');
+  if (modal) modal.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+}
+function sccConfirmAddSession() {
+  var input = document.getElementById('scc-addsession-number');
+  var errEl = document.getElementById('scc-addsession-error');
+  var btn   = document.getElementById('scc-addsession-confirm');
+  if (errEl) errEl.textContent = '';
+  var num = parseInt((input || {}).value, 10);
+  if (!num || num < 1) {
+    if (errEl) errEl.textContent = 'Enter a valid session number.';
+    return;
+  }
+  var exists = SCC_ALL_SESSIONS.some(function(s) { return s.session_number === num; });
+  if (exists) {
+    if (errEl) errEl.textContent = 'Session number already exists.';
+    return;
+  }
+  // Quest carryover only, from the most recent session's own quest_ids_active
+  // (SCC_ALL_SESSIONS is sorted session_number.desc, so [0] is it) -- dropped
+  // if that quest's real current status is now 'completed'. NPCs/Locations/
+  // Creatures/Items/Scenarios are never read from the previous session at all.
+  var mostRecent = SCC_ALL_SESSIONS[0];
+  var carriedQuests = [];
+  if (mostRecent && Array.isArray(mostRecent.quest_ids_active)) {
+    carriedQuests = mostRecent.quest_ids_active.filter(function(qid) {
+      var q = (window.QUESTS || []).find(function(x) { return x.id === qid; });
+      return !q || q.status !== 'completed';
+    });
+  }
+  // Default status: next_session if nothing already holds that slot,
+  // otherwise future_session -- there should only ever be one "next up"
+  // session at a time, so a second creation doesn't silently steal it.
+  var hasNextSession = SCC_ALL_SESSIONS.some(function(s) { return s.session_status === 'next_session'; });
+  var defaultStatus = hasNextSession ? 'future_session' : 'next_session';
+  var body = {
+    session_number:    num,
+    session_status:    defaultStatus,
+    archived:          false,
+    location_ids:      [],
+    npc_ids:           [],
+    creature_ids:      [],
+    quest_ids_active:  carriedQuests,
+    item_ids_awarded:  [],
+    session_scenarios: [],
+    npc_relationships: '{}'
+  };
+  if (btn) btn.disabled = true;
+  sccPost('session_notes', body).then(function(r) {
+    if (btn) btn.disabled = false;
+    if (!r.ok) { if (errEl) errEl.textContent = 'Could not create session — try again.'; return; }
+    SCC_ALL_SESSIONS.push(body);
+    SCC_ALL_SESSIONS.sort(function(a, b) { return b.session_number - a.session_number; });
+    sccRenderSessionsList();
+    sccCloseAddSessionModal();
+    SCC_VIEWING_HISTORY = false;
+    SCC_SESSION = body;
+    // See the comment on SCC_SKIP_NEXT_SESSION_RESYNC itself (declared
+    // above the switchTab wrapper) -- without this, the wrapper's own
+    // re-sync would race this synchronous population and silently show a
+    // *different* real session instead, whenever one is genuinely
+    // in_progress/next_session.
+    SCC_SKIP_NEXT_SESSION_RESYNC = true;
+    switchTab('session');
+    sccSwitchPanel('setup');
+    sccPopulateSetupForm(body);
+    sccUpdateHeaderSub();
+    // sccApplySessionRenderState() does everything from here down -- see its
+    // own comment for the regression this closes (skipping the resync above
+    // also skipped the only other place these render calls used to happen).
+    sccApplySessionRenderState(sccLoadQuestProgress(body.quest_ids_active || []));
+    showDMToast('Session ' + num + ' created \u2713', 'success');
+  }).catch(function() {
+    if (btn) btn.disabled = false;
+    if (errEl) errEl.textContent = 'Could not create session — try again.';
+  });
+}
+
+function sccLoadLatestSession(forceNum) {
+  // Real regression, caught while verifying the addressability fix: this
+  // used to be reachable only via sccInit()'s own resync, which always
+  // called sccLoadPlayers() (Party HP/Conditions on the Live Session panel)
+  // right alongside it -- once sccOpenSessionDetails() started calling this
+  // function directly, bypassing sccInit() entirely to avoid a redundant
+  // full world-data refetch, that happy-accident player load stopped
+  // happening on every normal "click a session row" navigation. Calling it
+  // here instead, at the one real choke point every entry path already
+  // funnels through, closes the gap for good rather than patching each
+  // call site individually.
+  sccLoadPlayers();
+  sccFetch('session_notes', '&order=session_number.desc').then(function(rows) {
+    SCC_ALL_SESSIONS = Array.isArray(rows) ? rows : [];
+    // "The" session to land on: whichever is actually in_progress wins (a
+    // DM running a session right now takes priority over anything queued),
+    // otherwise fall back to whichever is next_session. No more null
+    // fallback -- every session now has an explicit status (enforced by
+    // the column's NOT NULL + the migration that renamed the old
+    // active/completed 2-value enum), so there's nothing left to guess at.
+    // Archived sessions are excluded outright -- confirmed live as a real
+    // bug, not a hypothetical: two leftover archived rows both carried
+    // in_progress status after the rename migration (they'd been 'active'
+    // before, same as any other not-yet-completed session), and the
+    // highest-numbered one was winning this .find() over the real,
+    // unarchived one -- an archived session has been explicitly set aside
+    // by the DM and shouldn't be able to hijack "the current session."
+    var eligible = SCC_ALL_SESSIONS.filter(function(s) { return !s.archived; });
+    // forceNum: real fix for session addressability, confirmed live -- every
+    // caller that means "open THIS specific session" (sccOpenSessionDetails(),
+    // and the switchTab wrapper's own resync below, which reads whichever
+    // session is currently loaded rather than assuming a fresh derivation is
+    // wanted) passes the session_number it actually wants shown, bypassing
+    // the in_progress/next_session priority derivation entirely -- including
+    // archived sessions, searched against the full list not `eligible`,
+    // since clicking an archived row (with "Show archived" on) should still
+    // open it. Falls through to the normal priority derivation only if the
+    // target genuinely doesn't exist anymore (e.g. deleted from under an
+    // already-open tab) or no forceNum was given at all (every pre-existing
+    // no-arg call site -- sccLoadCurrentSession()'s "Back to Current
+    // Session", and the very first sccInit() before anything is loaded).
+    var activeSession = (forceNum != null)
+      ? SCC_ALL_SESSIONS.find(function(s) { return s.session_number === forceNum; })
+      : null;
+    if (!activeSession) {
+      activeSession = eligible.find(function(s) {
+        return s.session_status === 'in_progress';
+      }) || eligible.find(function(s) {
+        return s.session_status === 'next_session';
+      });
+    }
+    // If neither exists, calculate next number from completed sessions
     var completedSessions = SCC_ALL_SESSIONS.filter(function(s) {
       return s.session_status === 'completed';
     });
@@ -13284,7 +14199,7 @@ function sccLoadLatestSession() {
       progressPromise = sccLoadQuestProgress(SCC_SESSION.quest_ids_active || []);
       sccSetSessionDisplay(SCC_SESSION.session_number);
     } else {
-      // No active session — show next number ready for new session
+      // No in_progress or next_session session — show next number ready for new session
       var nextNum = completedSessions.length
         ? Math.max.apply(null, completedSessions.map(function(s){ return s.session_number; })) + 1
         : 1;
@@ -13294,35 +14209,13 @@ function sccLoadLatestSession() {
       var numEl = document.getElementById('scc-session-number');
       if (numEl) numEl.value = nextNum;
     }
-    SCC_VIEWING_HISTORY = false;
-    SCC_LIVE_ACC_AUTO_APPLIED = false;
-    sccRenderNpcPanel();
-    sccRenderLocationPanel();
-    sccRenderQuestPanel();
-    sccRenderCombatSessionCreatures();
-    sccRenderSuggestedRows();
-    sccUpdateHeaderSub();
-    // Live Session is now the default landing view (Phase 3a) -- its own
-    // widgets (HP/Conditions/Inspiration/Current Beat/Scenarios) need this
-    // same load to populate them too, not just a manual tab click.
-    sccRenderLivePanel();
-    // Without this, returning from a history view via sccLoadCurrentSession()
-    // while sitting on the Notes tab would leave the just-viewed historical
-    // session's read-only Tagged Notes on screen instead of the real,
-    // editable current session's -- SCC_SESSION is only correctly set to the
-    // active session a few lines above this, so no override needed here.
-    sccRenderTaggedNotes();
-    progressPromise.then(function() { sccRenderQuestPanel(); sccLiveApplyAutoExpand(); });
+    // sccApplySessionRenderState() does everything from here down -- see its
+    // own comment. Note it does NOT double sccLoadQuestProgress(); the
+    // promise it awaits is the one already kicked off above.
+    sccApplySessionRenderState(progressPromise);
   }).catch(function() {
     sccSetSessionDisplay(1);
-    SCC_LIVE_ACC_AUTO_APPLIED = false;
-    sccRenderNpcPanel();
-    sccRenderLocationPanel();
-    sccRenderQuestPanel();
-    sccRenderCombatSessionCreatures();
-    sccRenderSuggestedRows();
-    sccRenderLivePanel();
-    sccRenderTaggedNotes();
+    sccApplySessionRenderState();
   });
 }
 function sccSetSessionDisplay(num) {
@@ -13331,48 +14224,32 @@ function sccSetSessionDisplay(num) {
   if (dispEl) dispEl.textContent = num;
   if (numEl)  numEl.value = num;
 }
-function sccToggleHistory() {
-  var panel = document.getElementById('scc-history-panel');
-  if (!panel) return;
-  var isOpen = panel.classList.contains('open');
-  if (isOpen) { panel.classList.remove('open'); return; }
-  // Populate history list
-  sccRenderHistoryList();
-  panel.classList.add('open');
-}
-function sccRenderHistoryList() {
-  var listEl = document.getElementById('scc-history-list');
-  if (!listEl) return;
-  if (!SCC_ALL_SESSIONS.length) {
-    listEl.innerHTML = '<div class="scc-empty-state">No previous sessions found.</div>';
-    return;
-  }
-  listEl.innerHTML = SCC_ALL_SESSIONS.map(function(s) {
-    var status    = s.session_status || 'active';
-    var statusLabel = status === 'completed' ? 'Completed' : 'Active';
-    return '<div class="scc-history-item" onclick="sccLoadHistorySession(' + s.session_number + ')">'
-      + '<div class="scc-history-item-left">'
-        + '<div class="scc-history-session-num">Session ' + s.session_number + '</div>'
-        + (s.session_date ? '<div class="scc-history-session-date">' + s.session_date + '</div>' : '')
-        + (s.premise ? '<div class="scc-history-session-premise">' + sccEsc(s.premise) + '</div>' : '')
-      + '</div>'
-      + '<span class="scc-history-status ' + status + '">' + statusLabel + '</span>'
-    + '</div>';
-  }).join('');
-}
+// sccToggleHistory()/sccRenderHistoryList() removed -- the Session History
+// dropdown they drove is gone (see the markup comment above #form-session),
+// superseded by the Sessions List page, which does the identical job:
+// list every session, click one to open it via sccLoadHistorySession()/
+// sccOpenSessionDetails(). That function itself is unrelated to the
+// dropdown UI and is still very much alive -- kept as-is below.
 function sccLoadHistorySession(sessionNum) {
   var session = SCC_ALL_SESSIONS.find(function(s) { return s.session_number === sessionNum; });
   if (!session) return;
-  var panel = document.getElementById('scc-history-panel');
-  if (panel) panel.classList.remove('open');
+  // A pre-existing gap adjacent to the one just fixed in sccLoadLatestSession()
+  // -- this path never called it either, so a DM's very first visit to a
+  // completed session (before anything else happened to trigger sccInit())
+  // would show "No players loaded" on Party HP here too. Same fix, same reason.
+  sccLoadPlayers();
   SCC_VIEWING_HISTORY = true;
-  // Apply audit mode to the SCC form — Setup is a separate top-level form since
-  // the nav restructure, so it needs the same read-only lockdown independently
-  // or a completed session's setup/scenarios would stay live-editable there.
+  // Apply audit mode to the SCC form -- Setup lives inside #form-session as
+  // its own scc-panel now (folded back in for the Session Details restructure),
+  // so this one class covers it too; a completed session's setup/scenarios
+  // can't stay live-editable underneath it. .scc-tab-btn--setup itself is
+  // hidden in audit mode by CSS -- there's nothing left to set up once a
+  // session is over -- so bounce off it to Live Session if it's the panel
+  // currently showing, same as a DM would land on the moment the tab vanishes.
   var form = document.getElementById('form-session');
   if (form) form.classList.add('scc-audit-mode');
-  var setupForm = document.getElementById('form-setup');
-  if (setupForm) setupForm.classList.add('scc-audit-mode');
+  var setupBtn = document.querySelector('.scc-tab-btn--setup');
+  if (setupBtn && setupBtn.classList.contains('active')) sccSwitchPanel('live');
   // Show read-only banner
   var banner = document.getElementById('scc-readonly-banner');
   var bannerNum = document.getElementById('scc-readonly-session-num');
@@ -13460,16 +14337,18 @@ function sccUpdateHeaderSubHistory(num, session) {
     + (session.premise ? ' — ' + sccEsc(session.premise) : '')
     + ' <span class="scc-viewing-badge">Audit View</span>';
 }
-function sccLoadCurrentSession() {
-  var panel = document.getElementById('scc-history-panel');
-  if (panel) panel.classList.remove('open');
+// Shared by sccLoadCurrentSession() (below) and sccOpenSessionDetails()
+// (which needs the identical cleanup whenever a DM clicks from a locked
+// historical session into a live/upcoming one) -- was duplicated inline in
+// sccLoadCurrentSession() only, extracted rather than copy-pasted a second
+// time.
+function sccClearAuditMode() {
   var banner = document.getElementById('scc-readonly-banner');
   if (banner) banner.classList.remove('visible');
-  // Remove audit mode from form
+  // Remove audit mode from form -- Setup lives inside #form-session as its
+  // own scc-panel now, so this one class covers it too.
   var form = document.getElementById('form-session');
   if (form) form.classList.remove('scc-audit-mode');
-  var setupForm = document.getElementById('form-setup');
-  if (setupForm) setupForm.classList.remove('scc-audit-mode');
   // Restore date input, hide static display
   var dateInput   = document.getElementById('scc-session-date');
   var dateDisplay = document.getElementById('scc-session-date-display');
@@ -13489,6 +14368,9 @@ function sccLoadCurrentSession() {
     if (input)   input.style.display   = '';
     if (display) display.style.display = 'none';
   });
+}
+function sccLoadCurrentSession() {
+  sccClearAuditMode();
   SCC_VIEWING_HISTORY = false;
   sccLoadLatestSession();
 }
@@ -13545,6 +14427,10 @@ function sccCompleteSession() {
       if (s.session_number === completedNum) s.session_status = 'completed';
       return s;
     });
+    // Wasn't called here before -- a DM who completed a session and then
+    // checked the Sessions List would still see its old status/badge until
+    // some unrelated action happened to re-render it.
+    sccRenderSessionsList();
     sccUpdateHeaderSub();
     sccRenderNpcPanel();
     sccRenderLocationPanel();
@@ -13553,14 +14439,6 @@ function sccCompleteSession() {
     sccLiveApplyAutoExpand();
   }).catch(function() { showDMToast('Could not complete session', 'error'); });
 }
-// Close history panel on outside click
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.scc-history-wrap')) {
-    var p = document.getElementById('scc-history-panel');
-    if (p) p.classList.remove('open');
-  }
-});
-
 function sccUpdateHeaderSub() {
   var el = document.getElementById('scc-header-sub');
   if (!el) return;
@@ -13575,10 +14453,16 @@ function sccPopulateSetupForm(s) {
   setV('scc-session-number',  s.session_number);
   var dispEl = document.getElementById('scc-session-number-display');
   if (dispEl) dispEl.textContent = s.session_number || '—';
-  // Date input requires YYYY-MM-DD format — ensure no time component
+  // Date input requires YYYY-MM-DD format -- ensure no time component.
+  // Same bug shape as the chip-restore fix above: the old version only
+  // ever set .value when s.session_date was truthy, so a new session with
+  // no date left the input showing whatever date was last displayed
+  // instead of clearing it. Every other field here goes through setV(),
+  // which already falls back to '' -- this one needs its own explicit
+  // else because of the YYYY-MM-DD slicing.
   var dateEl = document.getElementById('scc-session-date');
-  if (dateEl && s.session_date) {
-    dateEl.value = String(s.session_date).slice(0, 10);
+  if (dateEl) {
+    dateEl.value = s.session_date ? String(s.session_date).slice(0, 10) : '';
   }
   setV('scc-session-premise', s.premise);
   setV('scc-prep-notes',      s.prep_notes);
@@ -13588,14 +14472,31 @@ function sccPopulateSetupForm(s) {
   setV('scc-note-followup',   s.follow_up_needed);
   setV('scc-note-milestone',  s.milestone_notes);
 
-  // Restore NPC relationships from session extra data
+  // Restore NPC relationships from session extra data -- same stale-state
+  // risk as the date field above, hardened the same way: a session with no
+  // npc_relationships value now resets to {} instead of silently keeping
+  // whatever the previously-viewed session had.
   if (s.npc_relationships) {
     try { SCC_NPC_RELATIONSHIPS = JSON.parse(s.npc_relationships); } catch(e) { SCC_NPC_RELATIONSHIPS = {}; }
+  } else {
+    SCC_NPC_RELATIONSHIPS = {};
   }
 
+  // Real bug, confirmed live: sccAddChipById() is what actually calls
+  // sccRenderChips() to redraw the #scc-chips-{type} DOM -- but restore()
+  // only ever called it per-id, inside the forEach below. Restoring a
+  // genuinely empty array (a brand-new session) meant the forEach body
+  // never ran even once, so SCC_SELECTED[type] was correctly reset to []
+  // in memory but the DOM chips from whatever session was last viewed were
+  // never told to clear -- a real state/DOM desync, not a database bug
+  // (the DM had already confirmed the row itself was empty via SQL).
+  // sccRenderChips() unconditionally at the end closes this for the
+  // zero-items case without changing anything for the populated case,
+  // since sccAddChipById()'s own calls already redraw it correctly there.
   var restore = function(type, ids) {
     SCC_SELECTED[type] = [];
     (ids || []).forEach(function(id) { sccAddChipById(type, id); });
+    sccRenderChips(type);
   };
   restore('location', s.location_ids);
   restore('npc',      s.npc_ids);
@@ -14056,7 +14957,20 @@ function sccRenderSuggestedRow(type) {
     var already = currentIds.indexOf(r.id) >= 0;
     var badge = (type === 'quest' && sccQuestHasInProgressBeat(r.id)) ? '<span class="scc-suggested-badge">In Progress</span>' : '';
     var labelHtml = (already ? '&#10003; ' : '+ ') + sccEsc(r.entry.name) + badge;
-    return '<button type="button" class="scc-combat-session-chip' + (already ? ' added' : '') + '" title="' + (already ? 'Already added' : 'Add from last session') + '" onclick="sccAddChipById(\'' + type + '\',\'' + sccEsc(r.id) + '\')">' + labelHtml + '</button>';
+    // .scc-suggested-chip, not .scc-combat-session-chip -- a real, deliberately
+    // distinct look, not just a different prefix symbol. That shared class is
+    // still used verbatim by Combat's own roster quick-add chips, whose
+    // "added" state stays intentionally clickable (adding a 2nd/3rd copy of
+    // the same creature to an encounter is a real, wanted action there) --
+    // untouched. A suggestion's "added" state has no such repeat-click
+    // meaning (sccAddChipById() has always silently no-op'd on an id already
+    // in SCC_SELECTED), so it's made genuinely non-interactive here to match
+    // how it actually behaves, not just muted-looking -- same real-disabled
+    // pattern (no onclick attribute at all, not pointer-events alone) this
+    // file already uses for the combat condition picker's own "(added)" rows.
+    return '<button type="button" class="scc-suggested-chip' + (already ? ' scc-suggested-chip--added' : '') + '" title="' + (already ? 'Already added' : 'Add from last session') + '"'
+      + (already ? '' : ' onclick="sccAddChipById(\'' + type + '\',\'' + sccEsc(r.id) + '\')"')
+      + '>' + labelHtml + '</button>';
   }).join('');
 }
 
@@ -15682,8 +16596,8 @@ function sccToggleDeathSaveFailure(idx, i) {
 // a body-appended panel that isn't nested inside a position:relative parent).
 // Clicking the same row's own button again toggles it closed rather than
 // flicker-reopening, since the initiative list can re-render under it at any
-// time (HP/turn changes) and there's no persistent per-row DOM to toggle a
-// class on the way .scc-history-panel does.
+// time (HP/turn changes) and there's no persistent per-row DOM to toggle an
+// .open class on the way a static dropdown panel elsewhere in this file does.
 function sccPromptCondition(idx, btnEl) {
   var existing = document.getElementById('scc-cond-combat-panel');
   var wasOpenForSameRow = existing && existing.dataset.forIdx === String(idx);
