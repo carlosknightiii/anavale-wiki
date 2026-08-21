@@ -948,6 +948,14 @@
     .cs-sl-table th:nth-child(7), .cs-sl-table td:nth-child(7) { width: 90px; }
     .cs-sl-table th:nth-child(8), .cs-sl-table td:nth-child(8) { width: 90px; }
     .cs-sl-table th:nth-child(9), .cs-sl-table td:nth-child(9) { width: 135px; }
+    /* Sortable headers — Name/Level/Category/Casting Time/Range/Components/
+       Duration only (thumb/Prepared/Description stay plain .cs-inv-th).
+       Scoped to .cs-sl-table so this doesn't turn the Inventory tab's own
+       (unsortable) headers into fake buttons via the shared .cs-inv-th
+       base class. */
+    .cs-sl-table .cs-sl-th-sortable { cursor: pointer; user-select: none; }
+    .cs-sl-table .cs-sl-th-sortable:hover { background: var(--blue-500); }
+    .cs-sl-sort-arrow { font-size: 0.7rem; }
 
     /* ── Your Story cards (Who You Are / Your Background / Your Past) ──
        Figma 51:1103/51:1218. Wider description cards, not small pills —
@@ -2289,8 +2297,7 @@
     }
     /* "Currently equipped" line (this slot) + "Also equipped: X" flag
        (other-hand conflict) — reuse the same gold-tinted badge language
-       already used elsewhere (e.g. .cs-inv-custom-btn/.cs-tooltip), not a
-       new visual pattern. */
+       already used elsewhere, not a new visual pattern. */
     .cs-equip-current {
       font-family: var(--font-sans);
       font-size: 0.78rem;
@@ -2389,22 +2396,6 @@
       padding: 0.75rem 0;
       text-align: center;
     }
-    .cs-inv-search-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.4rem;
-    }
-    .cs-inv-cat-select {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 6px;
-      color: var(--white);
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
-      height: var(--char-field-height);
-      padding: 0 0.6rem;
-      flex: none;
-    }
     /* Shared with the Notes tab's Pinned/Notes group labels — do not remove
        even though Inventory's own favorites grouping (which used to use
        this class too) is gone. */
@@ -2417,8 +2408,14 @@
       margin: 0.6rem 0 0.35rem;
       font-weight: 700;
     }
-    .cs-inv-qty-input {
-      width: 54px;
+    /* Plain view-only badge, not an <input> — quantity is no longer
+       player-editable (same DM-assignment-only model as the rest of the
+       row). Kept the original .cs-inv-qty-input box look (width/padding/
+       border/font) so the Actions column's layout doesn't shift, just
+       nothing about it implies it can be clicked into. */
+    .cs-inv-qty-display {
+      display: inline-block;
+      min-width: 54px;
       box-sizing: border-box;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.12);
@@ -2429,69 +2426,6 @@
       text-align: center;
       padding: 0.2rem 0.3rem;
     }
-    .cs-inv-search-wrap { position: relative; }
-    /* Normal-flow, not absolute — this lives inside the +Add Item modal,
-       which already scrolls (.cs-modal has its own max-height/overflow-y).
-       An absolutely-positioned dropdown gets clipped by that ancestor's
-       overflow box once the modal's own visible content is short (search
-       input + category + button), cutting results off mid-list. In-flow
-       lets the modal grow to contain it (up to its own 85vh cap, then the
-       modal's own scrollbar takes over), while this list's own max-height
-       + overflow-y keeps a long result set from making the modal huge. */
-    .cs-inv-search-dropdown {
-      display: none;
-      background: rgba(12,16,28,0.98);
-      border: 1px solid rgba(200,148,10,0.3);
-      border-radius: 8px;
-      margin-top: 0.3rem;
-      max-height: 320px;
-      overflow-y: auto;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    }
-    .cs-inv-search-dropdown.visible { display: block; }
-    .cs-inv-result-row {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.55rem 0.75rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .cs-inv-result-row:last-child { border-bottom: none; }
-    .cs-inv-result-row:hover { background: rgba(255,255,255,0.04); }
-    .cs-inv-result-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; cursor: default; }
-    .cs-inv-result-name { font-family: var(--font-sans); font-size: 0.85rem; color: var(--white); }
-    .cs-inv-result-meta { font-family: var(--font-sans); font-size: 0.7rem; color: var(--char-text-faint); }
-    .cs-inv-result-add { display: flex; align-items: center; gap: 0.4rem; flex: none; }
-    .cs-inv-result-add-btn {
-      padding: 0.3rem 0.7rem;
-      background: rgba(200,148,10,0.2);
-      border: 1px solid rgba(200,148,10,0.4);
-      border-radius: 6px;
-      color: var(--gold-light);
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .cs-inv-result-add-btn:hover { background: rgba(200,148,10,0.35); }
-    .cs-inv-custom-btn {
-      display: inline-block;
-      width: auto;
-      padding: 0.55rem 1.1rem;
-      margin-top: 0.75rem;
-      background: rgba(200,148,10,0.85);
-      border: 1px solid rgba(200,148,10,1);
-      border-radius: 8px;
-      color: #1a1408;
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .cs-inv-custom-btn:hover { background: rgba(220,165,20,1); }
     .cs-inv-thumb {
       width: 32px;
       height: 32px;
@@ -2506,18 +2440,7 @@
       justify-content: center;
       font-size: 1rem;
     }
-    .cs-inv-edit {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.25);
-      cursor: pointer;
-      font-size: 0.85rem;
-      padding: 0 0.25rem;
-      flex: none;
-    }
-    .cs-inv-edit:hover { color: var(--gold-light); }
-
-    /* ── Inventory tab header, +Add Item, Equipped/Currency row (Figma 51:2260) ── */
+    /* ── Inventory tab header, Equipped/Currency row (Figma 51:2260) ── */
     .cs-inv-header-row {
       display: flex;
       align-items: center;
@@ -2526,25 +2449,6 @@
       margin-bottom: var(--char-ov-gap-s);
       flex-wrap: wrap;
     }
-    .cs-inv-additem-btn {
-      background: var(--gold);
-      border: none;
-      border-radius: 9999px;
-      padding: var(--char-ov-gap-xs) var(--char-ov-gap-s);
-      color: var(--blue-800);
-      font-family: var(--font-body);
-      font-weight: 700;
-      font-size: 1.2rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .cs-inv-additem-btn:hover { background: var(--gold-bright); }
-    /* Round 3 Follow-up: sits inline in .cs-inv-filter-row now (Search,
-       Category, +Add Item) instead of the tab's title row — flex:0 0 auto
-       so it doesn't stretch/shrink like the two .cs-inv-filter-fields
-       beside it, margin-left:auto to pin it to the row's right edge. */
-    .cs-inv-additem-btn--row { flex: 0 0 auto; margin-left: auto; }
     .cs-inv-top-row {
       display: flex;
       flex-wrap: wrap;
@@ -2886,48 +2790,6 @@
       color: var(--gold-light);
       margin-bottom: 1rem;
     }
-    /* Round 3 Follow-up: Add Item modal only ever had click-outside to
-       dismiss (no Escape handler exists anywhere in this file, confirmed
-       via grep — a real gap, not something this modal alone was missing).
-       Scoped this fix to Add Item specifically, per the ask, rather than
-       retrofitting every modal in the file with a close icon. Title row
-       becomes flex (title left, × button right) only where this class is
-       added — every other modal's plain-block .cs-modal-title is untouched. */
-    .cs-modal-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-    .cs-modal-title-row .cs-modal-title { margin-bottom: 0; }
-    .cs-modal-close-btn {
-      background: none;
-      border: none;
-      color: var(--char-text-faint);
-      opacity: 0.7;
-      cursor: pointer;
-      padding: 0.2rem 0.4rem;
-      font-size: 1.3rem;
-      line-height: 1;
-      font-family: var(--font-body);
-    }
-    .cs-modal-close-btn:hover { opacity: 1; color: var(--text); }
-    .cs-field-group { margin-bottom: 0.7rem; }
-    .cs-field-label {
-      display: block;
-      font-family: var(--font-sans);
-      font-size: 0.68rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--char-text-faint);
-      margin-bottom: 0.3rem;
-      font-weight: 600;
-    }
-    .cs-field-row-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0.5rem; }
-    .cs-field-row-4 .cs-inv-input { flex: none; min-width: 0; width: 100%; box-sizing: border-box; }
-    .cs-checkbox-label {
-      font-family: var(--font-sans);
-      font-size: 0.8rem;
-      color: var(--char-text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
     .cs-modal-btn-primary {
       padding: 0.5rem 1.1rem;
       background: rgba(200,148,10,0.25);
@@ -3258,7 +3120,7 @@
       color: var(--char-text-faint);
       opacity: 0.6;
     }
-    /* New note button — matches .cs-inv-custom-btn style */
+    /* New note button — solid gold-tinted action button */
     .cs-notes-add-btn {
       display: inline-block;
       width: auto;
@@ -3381,6 +3243,12 @@
   // Inventory's own Category select is a static enum, not derived from the
   // player's actual items.
   var SL_FILTER = { q: '', level: '', favOnly: false };
+  // Column sort, additive to the search/level/favorites filters above —
+  // col is null (falls back to the table's own default level-then-name
+  // order) until a sortable header is clicked; dir is 1 (ascending) or -1
+  // (descending), flipped by a second click on the same column. Reset per
+  // page load only, same lifetime as SL_FILTER.
+  var SL_SORT = { col: null, dir: 1 };
   var CH = null;              // player_characters row, set once by renderCharacter() — lets async
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
@@ -3932,12 +3800,14 @@
 
     // "Inventory" tab content — real Figma pass (51:2260 desktop / 51:2265
     // mobile), 2026-08-09. Own title row here instead of the shared
-    // pageTitleHtml() helper every other tab uses. Round 3 Follow-up:
-    // "+Add Item" moved off this row entirely, down onto the Search/
-    // Category filter row above the item table (see .cs-inv-filter-row
-    // below) — QA's own placement ask ("above the inventory table"). Left
-    // this wrapper's flex/space-between as-is with only the title inside —
-    // harmless with a single child, not worth a separate cleanup pass.
+    // pageTitleHtml() helper every other tab uses. Items are now fully
+    // DM-assignment-only (same model as Spells Learned) — the player's own
+    // "+Add Item" flow (catalog search + custom-item creation), the
+    // row-level Edit pencil, and quantity adjustment are all gone entirely,
+    // see the removal note above confirmDeleteItem(). Viewing, equipping,
+    // and delete are unchanged. Left this wrapper's flex/space-between
+    // as-is with only the title inside — harmless with a single child,
+    // not worth a separate cleanup pass.
     var inventoryTabHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-inv-header-row">'
         + '<h2 class="cs-page-title">Inventory</h2>'
@@ -3994,8 +3864,7 @@
       + '</div>'
 
       // Search / Category — filters the player's own inventory table below
-      // (client-side); distinct from the catalog search that lives behind
-      // +Add Item. Live-filters as you type/select. The "Search" button
+      // (client-side). Live-filters as you type/select. The "Search" button
       // that used to sit here was investigated (4-fixes QA round,
       // 2026-08-17) and confirmed fully redundant, not just probably —
       // applyInventoryFilter() reads both this input's and this select's
@@ -4025,17 +3894,6 @@
             + '<option value="weapon">Weapon</option>'
           + '</select>'
         + '</div>'
-        // Round 3 Follow-up: relocated from the tab's title row (above the
-        // Equipped Gear doll) down here, onto the same row as Search/
-        // Category and directly above the table — per the QA placement ask.
-        // .cs-inv-filter-row is align-items:flex-end (fields have a label
-        // row above their input), so this button — no label — needs its
-        // own modifier to sit flush with the fields' own bottom edge
-        // instead of the row's cross-start; margin-left:auto pushes it to
-        // the row's far right, matching the tab's own established "primary
-        // action on the right" convention (e.g. the header row this button
-        // used to occupy, or the bulk-delete bar).
-        + '<button class="cs-inv-additem-btn cs-inv-additem-btn--row" onclick="openAddItemModal()">+Add Item</button>'
       + '</div>'
 
       + '<div class="cs-inv-bulk-bar" id="cs-inv-bulk-bar"></div>'
@@ -4593,13 +4451,13 @@
             + '<thead><tr>'
               + '<th class="cs-inv-th cs-inv-th-select">Prepared</th>'
               + '<th class="cs-inv-th cs-inv-th-thumb"></th>'
-              + '<th class="cs-inv-th">Name</th>'
-              + '<th class="cs-inv-th">Level</th>'
-              + '<th class="cs-inv-th">Category</th>'
-              + '<th class="cs-inv-th">Casting Time</th>'
-              + '<th class="cs-inv-th">Range</th>'
-              + '<th class="cs-inv-th">Components</th>'
-              + '<th class="cs-inv-th">Duration</th>'
+              + spellsLearnedSortableTh('name', 'Name')
+              + spellsLearnedSortableTh('level', 'Level')
+              + spellsLearnedSortableTh('category', 'Category')
+              + spellsLearnedSortableTh('casting_time', 'Casting Time')
+              + spellsLearnedSortableTh('range', 'Range')
+              + spellsLearnedSortableTh('components', 'Components')
+              + spellsLearnedSortableTh('duration', 'Duration')
               + '<th class="cs-inv-th">Description</th>'
             + '</tr></thead>'
             + '<tbody id="cs-spells-learned-tbody"><tr><td class="cs-inv-empty-row" colspan="10">Loading spells&#8230;</td></tr></tbody>'
@@ -4828,6 +4686,58 @@
   // search, DM-driven instead of player-driven; nothing here computes it
   // anymore. The "Prepared" checkbox is untouched — still toggles which
   // known spells are currently prepared, exactly as built.
+  // Sortable column headers, additive to the search/level/favorites filter
+  // above — one shared handler per header rather than a per-column
+  // function, keyed by the same field names spellsLearnedSortValue() reads
+  // off a spell row. Clicking the already-active column flips direction;
+  // clicking a different one starts it ascending, matching the standard
+  // spreadsheet-header convention.
+  function spellsLearnedSortableTh(col, label) {
+    return '<th class="cs-inv-th cs-sl-th-sortable" onclick="sortSpellsLearnedBy(\'' + col + '\')">'
+      + label + '<span class="cs-sl-sort-arrow" id="cs-sl-sort-arrow-' + col + '"></span>'
+      + '</th>';
+  }
+  function sortSpellsLearnedBy(col) {
+    if (SL_SORT.col === col) { SL_SORT.dir = -SL_SORT.dir; }
+    else { SL_SORT.col = col; SL_SORT.dir = 1; }
+    renderSpellsLearnedTable();
+  }
+  function spellsLearnedSortValue(s, col) {
+    if (col === 'level') return s.level;
+    if (col === 'category') return s.school || '';
+    return s[col] || '';
+  }
+  // Default order (no column sorted) stays level-then-name, exactly as
+  // before this feature existed. A sorted column always falls back to name
+  // as its own tie-break, so equal values (e.g. every Level 1 spell, or
+  // every spell sharing "Action" casting time) don't jump around between
+  // re-renders in an order that looks arbitrary.
+  function spellsLearnedComparator() {
+    if (!SL_SORT.col) {
+      return function(a, b) { return (a.level - b.level) || a.name.localeCompare(b.name); };
+    }
+    var col = SL_SORT.col, dir = SL_SORT.dir;
+    return function(a, b) {
+      var av = spellsLearnedSortValue(a, col), bv = spellsLearnedSortValue(b, col);
+      var cmp = (typeof av === 'number' && typeof bv === 'number')
+        ? (av - bv)
+        : String(av).localeCompare(String(bv));
+      if (cmp === 0) cmp = a.name.localeCompare(b.name);
+      return cmp * dir;
+    };
+  }
+  // Re-reads SL_SORT after every render (a sort click re-renders the whole
+  // table, same as a filter change) so exactly one header shows an arrow,
+  // pointing the right way — cheap per-element update rather than
+  // rebuilding <thead> itself, which would also mean re-attaching onclick
+  // handlers for no reason.
+  function updateSpellsLearnedSortArrows() {
+    ['name','level','category','casting_time','range','components','duration'].forEach(function(col) {
+      var el = document.getElementById('cs-sl-sort-arrow-' + col);
+      if (!el) return;
+      el.textContent = (SL_SORT.col === col) ? (SL_SORT.dir === 1 ? ' \u25B2' : ' \u25BC') : '';
+    });
+  }
   // applySpellsLearnedFilter() reads the 3 static filter controls into
   // SL_FILTER and re-renders — same split as applyInventoryFilter()/
   // renderInventory(), so the inputs' own DOM values are never touched by
@@ -4894,13 +4804,14 @@
     if (!hasCasting) { card.style.display = 'none'; return; }
     card.style.display = '';
     populateSpellsLearnedLevelOptions();
+    updateSpellsLearnedSortArrows();
     var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
     var favSet = (SHEET && Array.isArray(SHEET.favorite_spells)) ? SHEET.favorite_spells : [];
     var alwaysPrepared = (SHEET && Array.isArray(SHEET.always_prepared_spells)) ? SHEET.always_prepared_spells : [];
     var maxPrepared = computePreparedMax();
     var full = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
-      .sort(function(a,b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+      .sort(spellsLearnedComparator());
     var list = full.filter(function(s) { return spellsLearnedRowMatchesFilter(s, favSet); });
     // Two distinct empty states, matching Inventory's own convention
     // (renderInventory()): a level-1 caster legitimately may have nothing
@@ -6744,17 +6655,6 @@
     renderPopoverCurrent();
     renderEquipResults((document.getElementById('cs-equip-search-input').value || ''));
   }
-  // ── +Add Item modal (Figma 51:2260) — wraps the existing catalog search,
-  // opened from the new header button instead of an always-visible inline bar.
-  function openAddItemModal() {
-    document.getElementById('cs-inv-search-input').value = '';
-    document.getElementById('cs-inv-search-results').innerHTML = '';
-    document.getElementById('cs-inv-search-results').classList.remove('visible');
-    document.getElementById('cs-additem-modal-overlay').style.display = 'flex';
-  }
-  function closeAddItemModal() {
-    document.getElementById('cs-additem-modal-overlay').style.display = 'none';
-  }
   function onEquipSearchInput() {
     var q = (document.getElementById('cs-equip-search-input').value || '').trim();
     renderEquipResults(q);
@@ -7022,10 +6922,8 @@
       + '<div class="cs-inv-weight-label">&#9878; ' + current + ' / ' + capacity + ' LBS</div>';
   }
 
-  // ── Own-inventory search/category filter (Figma 51:2260) — client-side
-  // over the already-loaded INVENTORY array, click-to-search (not
-  // live-as-you-type — that stays on the separate catalog search in the
-  // +Add Item modal, unchanged old behavior). ──
+  // ── Own-inventory search/category filter (Figma 51:2260) — click-to-
+  // search over the already-loaded INVENTORY array. ──
   var INV_FILTER = { q:'', category:'' };
   function applyInventoryFilter() {
     INV_FILTER.q = (document.getElementById('cs-my-inv-search-input').value || '').trim().toLowerCase();
@@ -7057,7 +6955,7 @@
     var rows = INVENTORY.filter(invRowMatchesFilter).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
     if (!rows.length) {
       tbody.innerHTML = '<tr><td class="cs-inv-empty-row" colspan="9">'
-        + (INVENTORY.length ? 'No items match your search.' : 'No items yet — use +Add Item above.')
+        + (INVENTORY.length ? 'No items match your search.' : 'No items yet — your DM assigns items to your inventory.')
         + '</td></tr>';
     } else {
       tbody.innerHTML = rows.map(renderInvRow).join('');
@@ -7089,13 +6987,13 @@
     var thumb  = (catalogItem && catalogItem.image)
       ? '<img class="cs-inv-thumb" src="' + catalogItem.image + '" alt="">'
       : '<div class="cs-inv-thumb cs-inv-thumb-icon">' + (TYPE_ICONS[category] || '📦') + '</div>';
-    // Quantity/edit/delete controls aren't part of Figma's 8 columns, but
-    // the functionality still needs a home. DM correction: a 9th Actions
+    // Quantity/delete controls aren't part of Figma's 8 columns, but the
+    // functionality still needs a home. DM correction: a 9th Actions
     // column, not squeezed into Description (which stays flavor-text only
-    // per the confirmed decision at the top of the build spec).
-    var editBtn = !item.item_id
-      ? '<button class="cs-inv-edit" onclick="openCustomItemModal(\'' + item.id + '\')" title="Edit">&#9998;</button>'
-      : '';
+    // per the confirmed decision at the top of the build spec). Quantity
+    // is view-only (.cs-inv-qty-display, a plain span) and the row-level
+    // Edit pencil is gone entirely — see the removal note above
+    // updateInvQuantity(). Delete is the one remaining mutation here.
     return '<tr class="cs-inv-tr' + (SELECTED_INV_IDS[item.id] ? ' selected' : '') + '" id="inv-row-' + item.id + '">'
       + '<td class="cs-inv-td cs-inv-td-select"><input type="checkbox" ' + (SELECTED_INV_IDS[item.id] ? 'checked' : '') + ' onchange="toggleInvSelect(\'' + item.id + '\', this.checked)"></td>'
       + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
@@ -7107,8 +7005,7 @@
       + '<td class="cs-inv-td cs-inv-td-desc">' + desc + '</td>'
       + '<td class="cs-inv-td cs-inv-td-actions">'
         + '<div class="cs-inv-row-actions">'
-          + '<input class="cs-inv-qty-input" type="number" min="0" value="' + (item.quantity||0) + '" onchange="updateInvQuantity(\'' + item.id + '\', this.value)" title="Quantity">'
-          + editBtn
+          + '<span class="cs-inv-qty-display" title="Quantity">' + (item.quantity||0) + '</span>'
           + '<button class="cs-inv-del" onclick="confirmDeleteItem(\'' + item.id + '\', \'' + name.replace(/'/g,"\\'") + '\')" title="Remove">&#10005;</button>'
         + '</div>'
       + '</td>'
@@ -7148,213 +7045,21 @@
     });
   }
   var CATALOG_CACHE = {};
-  var SEARCH_DEBOUNCE = null;
-  var EDITING_ITEM_ID = null;
   function catalogWeightFor(itemId) {
     return CATALOG_CACHE[itemId] ? CATALOG_CACHE[itemId].weight_lb : 0;
   }
-  function onInventorySearchInput() {
-    clearTimeout(SEARCH_DEBOUNCE);
-    var q = (document.getElementById('cs-inv-search-input').value || '').trim();
-    var resultsEl = document.getElementById('cs-inv-search-results');
-    if (q.length < 2) { resultsEl.innerHTML = ''; resultsEl.classList.remove('visible'); return; }
-    SEARCH_DEBOUNCE = setTimeout(function() { runInventorySearch(q); }, 250);
-  }
-  function runInventorySearch(q) {
-    var cat = document.getElementById('cs-inv-cat-select').value;
-    var query = sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,base_ac,damage_dice,damage_type,image')
-      .eq('player_facing', true)
-      .ilike('name', '%' + q + '%')
-      .order('name')
-      .limit(8);
-    if (cat) query = query.eq('category', cat);
-    query.then(function(res) {
-      var resultsEl = document.getElementById('cs-inv-search-results');
-      resultsEl.classList.add('visible');
-      if (res.error || !res.data || !res.data.length) {
-        resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>';
-        return;
-      }
-      res.data.forEach(function(it) { CATALOG_CACHE[it.id] = it; });
-      resultsEl.innerHTML = res.data.map(function(it) {
-        var thumb = it.image ? '<img class="cs-inv-thumb" src="' + it.image + '" alt="">' : '<div class="cs-inv-thumb cs-inv-thumb-icon">' + (TYPE_ICONS[it.category] || '📦') + '</div>';
-        return '<div class="cs-inv-result-row">'
-          + thumb
-          + '<div class="cs-inv-result-info" onclick="event.stopPropagation()">'
-            + '<span class="cs-inv-result-name">' + it.name + '</span>'
-            + '<span class="cs-inv-result-meta">' + (it.category||'') + ' · ' + (it.cost_gp||0) + 'gp · ' + (it.weight_lb||0) + ' lb</span>'
-          + '</div>'
-          + '<div class="cs-inv-result-add">'
-            + '<input class="cs-inv-qty-input" type="number" min="1" value="1" id="qty-' + it.id + '" onclick="event.stopPropagation()">'
-            + '<button class="cs-inv-result-add-btn" onclick="selectCatalogItem(\'' + it.id + '\')">Add</button>'
-          + '</div>'
-        + '</div>';
-      }).join('');
-    });
-  }
-  function selectCatalogItem(itemId) {
-    var it = CATALOG_CACHE[itemId];
-    if (!it) return;
-    var qtyInput = document.getElementById('qty-' + itemId);
-    var qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
-    var maxSort = Math.max(0, ...INVENTORY.map(function(i){return i.sort_order||0;}));
-    var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
-    sb.from('inventory').insert(row).select().then(function(res) {
-      if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
-      INVENTORY.push(res.data[0]);
-      closeAddItemModal();
-      renderInventory();
-      showToast(it.name + ' added');
-    });
-  }
-  var ITEM_TYPE_LIST = ['accessory','armor','consumable','food','other','resource','shield','spell','tool','treasure','weapon'];
-  function openCustomItemModal(editId) {
-    EDITING_ITEM_ID = editId || null;
-    var existing = editId ? INVENTORY.find(function(i){ return i.id === editId; }) : null;
-    var prefillName = existing ? existing.custom_name : (document.getElementById('cs-inv-search-input').value || '').trim();
-    document.getElementById('cs-item-modal-title').textContent = existing ? 'Edit Item' : 'Create New Item';
-    var body = document.getElementById('cs-item-modal-body');
-    body.innerHTML =
-      '<div class="cs-field-group"><label class="cs-field-label">Item Name</label>'
-        + '<input class="cs-inv-input" id="ci-name" value="' + (prefillName||'').replace(/"/g,'&quot;') + '"></div>'
-      + '<div class="cs-field-group"><label class="cs-field-label">Item Type</label>'
-        + '<select class="cs-inv-cat-select" id="ci-type" style="width:100%;">'
-          + '<option value="">Select</option>'
-          + ITEM_TYPE_LIST.map(function(t){
-              var sel = existing && existing.item_type === t ? ' selected' : '';
-              return '<option value="' + t + '"' + sel + '>' + t.charAt(0).toUpperCase()+t.slice(1) + '</option>';
-            }).join('')
-        + '</select></div>'
-      + '<div class="cs-field-group"><label class="cs-field-label">Description</label>'
-        + '<textarea class="cs-inv-input" id="ci-desc" style="width:100%;min-height:70px;">' + (existing && existing.custom_desc ? existing.custom_desc : '') + '</textarea></div>'
-      + '<div class="cs-field-row-4">'
-        + '<div class="cs-field-group"><label class="cs-field-label">Qty</label><input class="cs-inv-input" id="ci-qty" type="number" min="0" value="' + (existing ? existing.quantity : 1) + '"></div>'
-        + '<div class="cs-field-group"><label class="cs-field-label">GP</label><input class="cs-inv-input" id="ci-gp" type="number" min="0" value="' + (existing ? (existing.cost_gp||0) : 0) + '"></div>'
-        + '<div class="cs-field-group"><label class="cs-field-label">SP</label><input class="cs-inv-input" id="ci-sp" type="number" min="0" value="' + (existing ? (existing.cost_sp||0) : 0) + '"></div>'
-        + '<div class="cs-field-group"><label class="cs-field-label">CP</label><input class="cs-inv-input" id="ci-cp" type="number" min="0" value="' + (existing ? (existing.cost_cp||0) : 0) + '"></div>'
-      + '</div>'
-      + '<div class="cs-field-group"><label class="cs-field-label">Weight (lb)</label>'
-        + '<input class="cs-inv-input" id="ci-weight" type="number" min="0" step="0.1" value="' + (existing ? (existing.weight_lb||0) : 0) + '"></div>'
-      + '<div style="margin-top:0.5rem;">'
-        + '<label class="cs-checkbox-label"><input type="checkbox" id="ci-magical"' + (existing && existing.is_magical ? ' checked' : '') + '> Magical</label>'
-        + '<label class="cs-checkbox-label" style="margin-left:1.2rem;"><input type="checkbox" id="ci-consumable"' + (existing && existing.is_consumable ? ' checked' : '') + '> Consumable</label>'
-      + '</div>'
-      + '<div id="ci-warning" style="display:none;margin-top:0.75rem;padding:0.6rem;background:rgba(200,148,10,0.12);border:1px solid rgba(200,148,10,0.4);border-radius:6px;font-size:0.82rem;"></div>'
-      + '<div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:1rem;">'
-        + '<button class="cs-modal-btn-secondary" onclick="closeCustomItemModal()">Cancel</button>'
-        + '<button class="cs-modal-btn-primary" onclick="submitCustomItem()">' + (existing ? 'Save Changes' : 'Save and Add') + '</button>'
-      + '</div>';
-    document.getElementById('cs-item-modal-overlay').style.display = 'flex';
-  }
-  function closeCustomItemModal() {
-    document.getElementById('cs-item-modal-overlay').style.display = 'none';
-    EDITING_ITEM_ID = null;
-  }
-  function levenshteinSimilarity(a, b) {
-    a = a.toLowerCase(); b = b.toLowerCase();
-    var m = a.length, n = b.length;
-    if (!m) return n ? 0 : 1;
-    if (!n) return 0;
-    var d = [];
-    for (var i = 0; i <= m; i++) d[i] = [i];
-    for (var j = 0; j <= n; j++) d[0][j] = j;
-    for (i = 1; i <= m; i++) {
-      for (j = 1; j <= n; j++) {
-        var cost = a[i-1] === b[j-1] ? 0 : 1;
-        d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost);
-      }
-    }
-    var dist = d[m][n];
-    var maxLen = Math.max(m, n);
-    return 1 - (dist / maxLen);
-  }
-  function checkCatalogForMatch(name) {
-    return sb.from('items').select('id,name').eq('player_facing', true).limit(200).then(function(res) {
-      if (res.error || !res.data) return null;
-      var best = null, bestScore = 0;
-      res.data.forEach(function(it) {
-        var score = levenshteinSimilarity(name, it.name);
-        if (score > bestScore) { bestScore = score; best = it; }
-      });
-      return bestScore >= 0.7 ? best : null;
-    });
-  }
-  function submitCustomItem() {
-    var name = (document.getElementById('ci-name').value || '').trim();
-    if (!name) { showToast('Item name required', true); return; }
-    var warningEl = document.getElementById('ci-warning');
-    checkCatalogForMatch(name).then(function(match) {
-      if (match && !EDITING_ITEM_ID) {
-        warningEl.style.display = 'block';
-        warningEl.innerHTML = 'This looks like <strong>' + match.name + '</strong> — did you mean to search for that instead? '
-          + '<button class="cs-modal-btn-secondary" style="margin-top:0.5rem;" onclick="useMatchInstead(\'' + match.id + '\')">Use ' + match.name + '</button>';
-        return;
-      }
-      warningEl.style.display = 'none';
-      var fields = {
-        custom_name: name,
-        item_type: document.getElementById('ci-type').value || 'other',
-        custom_desc: (document.getElementById('ci-desc').value || '').trim() || null,
-        quantity: parseInt(document.getElementById('ci-qty').value) || 0,
-        cost_gp: parseFloat(document.getElementById('ci-gp').value) || 0,
-        cost_sp: parseFloat(document.getElementById('ci-sp').value) || 0,
-        cost_cp: parseFloat(document.getElementById('ci-cp').value) || 0,
-        weight_lb: parseFloat(document.getElementById('ci-weight').value) || 0,
-        is_magical: document.getElementById('ci-magical').checked,
-        is_consumable: document.getElementById('ci-consumable').checked
-      };
-      if (EDITING_ITEM_ID) {
-        sb.from('inventory').update(fields).eq('id', EDITING_ITEM_ID).select().then(function(res) {
-          if (res.error) { showToast('Could not save changes — ' + res.error.message, true); return; }
-          var idx = INVENTORY.findIndex(function(i){ return i.id === EDITING_ITEM_ID; });
-          if (idx >= 0) INVENTORY[idx] = res.data[0];
-          closeCustomItemModal();
-          renderInventory();
-          showToast('Item updated');
-        });
-      } else {
-        var maxSort = Math.max(0, ...INVENTORY.map(function(i){return i.sort_order||0;}));
-        fields.character_id = CHAR_ID;
-        fields.token = TOKEN;
-        fields.sort_order = maxSort + 1;
-        sb.from('inventory').insert(fields).select().then(function(res) {
-          if (res.error) { showToast('Could not add item — ' + res.error.message, true); return; }
-          INVENTORY.push(res.data[0]);
-          closeCustomItemModal();
-          closeAddItemModal();
-          renderInventory();
-          showToast(name + ' added');
-        });
-      }
-    });
-  }
-  function useMatchInstead(itemId) {
-    closeCustomItemModal();
-    sb.from('items').select('id,name,category,cost_gp,weight_lb,summary,image').eq('id', itemId).single().then(function(res) {
-      if (res.error || !res.data) { showToast('Could not find that item', true); return; }
-      CATALOG_CACHE[itemId] = res.data;
-      var qty = parseInt(document.getElementById('ci-qty') ? document.getElementById('ci-qty').value : 1) || 1;
-      var maxSort = Math.max(0, ...INVENTORY.map(function(i){return i.sort_order||0;}));
-      var row = { character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty, sort_order: maxSort + 1 };
-      sb.from('inventory').insert(row).select().then(function(insertRes) {
-        if (insertRes.error) { showToast('Could not add item — ' + insertRes.error.message, true); return; }
-        INVENTORY.push(insertRes.data[0]);
-        closeAddItemModal();
-        renderInventory();
-        showToast(res.data.name + ' added');
-      });
-    });
-  }
-  function updateInvQuantity(id, val) {
-    var qty = parseInt(val);
-    if (isNaN(qty) || qty < 0) return;
-    var item = INVENTORY.find(function(i) { return i.id === id; });
-    if (item) item.quantity = qty;
-    sb.from('inventory').update({ quantity: qty }).eq('id', id).then(function(res) {
-      if (res.error) { showToast('Could not update quantity', true); return; }
-      renderInventory();
-    });
-  }
+  // Items are fully DM-assignment-only now (same model as Spells Learned,
+  // see the note above renderSpellsLearnedTable()) — the player's own
+  // "+Add Item" flow was removed first (catalog search-and-add, custom-
+  // item creation), then this round removed the two remaining player
+  // mutations on an owned row: the Edit pencil (openCustomItemModal()/
+  // closeCustomItemModal()/submitCustomItem(), plus EDITING_ITEM_ID/
+  // ITEM_TYPE_LIST and the #cs-item-modal-overlay markup — all deleted
+  // outright, not left as unreachable dead code, since nothing else
+  // referenced any of them once the pencil's onclick was gone) and
+  // updateInvQuantity() (the qty stepper — the Actions column's quantity
+  // cell is now a plain view-only .cs-inv-qty-display span). Viewing,
+  // equipping, and delete are all untouched.
   function confirmDeleteItem(id, name) {
     document.getElementById('cs-delete-confirm-text').textContent = 'Remove "' + name + '" from your inventory? This cannot be undone.';
     var btn = document.getElementById('cs-delete-confirm-btn');
@@ -8056,47 +7761,6 @@
                 + '<button class="cs-modal-btn-secondary" onclick="closeSpellPickerModal()">Close</button>'
               + '</div>'
             + '</div>'
-          + '</div>'
-        + '</div>'
-        // +Add Item modal (Figma 51:2260) — the *existing* catalog search
-        // (onInventorySearchInput/cs-inv-search-results/openCustomItemModal)
-        // relocated here behind a trigger button, unchanged logic, same ids.
-        + '<div class="cs-modal-overlay" id="cs-additem-modal-overlay" style="display:none" onclick="if(event.target===this)closeAddItemModal()">'
-          + '<div class="cs-modal">'
-            + '<div class="cs-modal-title-row">'
-              + '<div class="cs-modal-title">Add Item</div>'
-              + '<button class="cs-modal-close-btn" onclick="closeAddItemModal()" aria-label="Close">&#10005;</button>'
-            + '</div>'
-            + '<div class="cs-modal-body">'
-              + '<div class="cs-inv-search-wrap">'
-                + '<div class="cs-inv-search-row">'
-                  + '<input class="cs-inv-input" id="cs-inv-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onInventorySearchInput()">'
-                  + '<select class="cs-inv-cat-select" id="cs-inv-cat-select" onchange="onInventorySearchInput()">'
-                    + '<option value="">All</option>'
-                    + '<option value="accessory">Accessory</option>'
-                    + '<option value="armor">Armor</option>'
-                    + '<option value="consumable">Consumable</option>'
-                    + '<option value="misc">Misc</option>'
-                    + '<option value="shield">Shield</option>'
-                    + '<option value="tool">Tool</option>'
-                    + '<option value="weapon">Weapon</option>'
-                  + '</select>'
-                + '</div>'
-                + '<div class="cs-inv-search-dropdown" id="cs-inv-search-results"></div>'
-              + '</div>'
-              + '<button class="cs-inv-custom-btn" onclick="openCustomItemModal()">+ Can\'t find it? Add a custom item</button>'
-            + '</div>'
-          + '</div>'
-        + '</div>'
-        // Create New/Edit Item modal — rendered LAST so it wins the
-        // same-z-index (200) DOM-order tie-break over +Add Item, which
-        // opens it via "Can't find it?" and must render on top of it, not
-        // behind it. useMatchInstead()/submitCustomItem() rely on +Add
-        // Item still being open underneath while this one is up.
-        + '<div class="cs-modal-overlay" id="cs-item-modal-overlay" style="display:none" onclick="if(event.target===this)closeCustomItemModal()">'
-          + '<div class="cs-modal">'
-            + '<div class="cs-modal-title" id="cs-item-modal-title">Create New Item</div>'
-            + '<div class="cs-modal-body" id="cs-item-modal-body"></div>'
           + '</div>'
         + '</div>';
     }
