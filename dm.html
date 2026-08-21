@@ -3146,6 +3146,20 @@
             <div class="scc-combat-audit-note" id="scc-combat-audit-note">
               Combat isn't tracked per session — there's nothing to show for this historical session. Return to the current session (above) to use the encounter tracker.
             </div>
+            <!-- Saved Encounters — pre-staged fights built ahead of time, stored in
+                 combat_encounters (name + combatant list w/ quantities). Deliberately
+                 separate from live combat state (SCC_INITIATIVE) -- these are templates
+                 to load INTO staging, not something combat itself reads from. Hidden
+                 alongside the rest of the builder once a fight actually starts (see
+                 sccStartCombat()/sccEndCombat()), since there's nothing to load mid-fight. -->
+            <div class="scc-saved-encounters-block" id="scc-saved-encounters-block">
+              <div class="scc-section-subtitle">Saved Encounters</div>
+              <div class="scc-saved-encounters-save-row">
+                <input type="text" class="scc-input" id="scc-encounter-save-name" placeholder="Name this encounter to save it…" maxlength="120">
+                <button class="scc-btn-primary" onclick="sccSaveCurrentAsEncounter()">&#128190; Save Current as Encounter</button>
+              </div>
+              <div class="scc-saved-encounters-list" id="scc-saved-encounters-list"><div class="scc-empty-state">Loading&#8230;</div></div>
+            </div>
             <!-- Encounter builder -->
             <div class="scc-combat-builder">
               <div class="scc-section-subtitle">Build Encounter</div>
@@ -3157,6 +3171,9 @@
                 <select id="scc-cf-tier" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Tier: All</option></select>
                 <select id="scc-cf-category" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Category: All</option></select>
                 <select id="scc-cf-region" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Region: All</option></select>
+                <select id="scc-cf-type" class="cm-select" onchange="sccCombatFilterChanged()" title="Creature type (race) — only populated on a few creatures today"><option value="">Type: All</option></select>
+                <select id="scc-cf-cr" class="cm-select" onchange="sccCombatFilterChanged()" title="Challenge Rating — only populated on a few creatures today"><option value="">CR: All</option></select>
+                <select id="scc-cf-faction" class="cm-select" onchange="sccCombatFilterChanged()" title="Matched from each creature's own tags against real organizations/nations — not every creature has a tag that resolves to one"><option value="">Faction: All</option></select>
                 <button type="button" class="scc-combat-filters-reset" onclick="sccCombatResetFilters()">Reset</button>
               </div>
               <div class="scc-combat-top-row">
@@ -5356,6 +5373,27 @@ function showDMToast(msg, type) {
 .scc-btn-sm:hover { color: var(--dm-text); border-color: var(--dm-text-muted); }
 .scc-btn-danger { color: var(--dm-red); border-color: var(--dm-red); }
 .scc-btn-danger:hover { background: var(--dm-red-dim); }
+/* Same gold fill/hover as .scc-btn-primary (the app's real CTA color), just at
+   .scc-btn-sm's compact sizing -- for small inline action buttons (Loot/Stats
+   toggles, the currency Set button) that were using a plain outlined/muted
+   class and read as inert input-adjacent controls rather than real actions. */
+.scc-gold-btn-sm {
+  padding: 0.28rem 0.7rem;
+  background: var(--dm-gold);
+  color: var(--dm-gold-text-on);
+  border: none;
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--dm-transition);
+  white-space: nowrap;
+}
+.scc-gold-btn-sm:hover {
+  background: var(--dm-gold-bright);
+  box-shadow: var(--dm-gold-btn-shadow);
+}
 .scc-setup-actions {
   display: flex;
   align-items: center;
@@ -6253,6 +6291,52 @@ function showDMToast(msg, type) {
   padding: 0.15rem 0.3rem;
 }
 .scc-combat-filters-reset:hover { color: var(--dm-gold); }
+.scc-saved-encounters-block {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-saved-encounters-save-row {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.scc-saved-encounters-save-row .scc-input { flex: 1; }
+.scc-saved-encounters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.scc-saved-encounter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--scc-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-saved-encounter-info { flex: 1; min-width: 0; }
+.scc-saved-encounter-name {
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--dm-text);
+}
+.scc-saved-encounter-summary {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scc-saved-encounter-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
 .scc-combat-top-row {
   display: flex;
   gap: 1rem;
@@ -7628,6 +7712,10 @@ function showDMToast(msg, type) {
    rather than left half-functional. */
 .scc-audit-mode .scc-combat-builder { display: none !important; }
 .scc-audit-mode .scc-initiative-tracker { display: none !important; }
+/* Saved Encounters sits above the builder, not inside it (it's a template
+   library, not part of the live in-progress build) -- needs its own rule
+   rather than inheriting the builder's, same reasoning as the audit note. */
+.scc-audit-mode .scc-saved-encounters-block { display: none !important; }
 .scc-combat-audit-note { display: none; }
 .scc-audit-mode .scc-combat-audit-note {
   display: block;
@@ -8296,7 +8384,13 @@ function showDMToast(msg, type) {
 }
 .scc-loot-coin-row {
   display: flex;
-  gap: 0.5rem;
+  /* Was 0.5rem -- with each field's own label sitting right up against its
+     input (0.25rem below), the previous gap between one field's label and
+     the next field's input was barely distinguishable from the gap between
+     an input and its own label, making it hard to tell which label belongs
+     to which value at a glance. Widened so each GP/SP/CP group reads as its
+     own clearly separated unit. */
+  gap: 1.1rem;
   align-items: center;
   margin-bottom: 0.5rem;
   flex-wrap: wrap;
@@ -12461,6 +12555,11 @@ var SCC_ROUND      = 1;
 var SCC_TURN_IDX   = 0;
 var SCC_IN_COMBAT  = false;
 var SCC_END_COMBAT_ITEMS = [];
+// Pre-staged encounters (combat_encounters table) -- built ahead of time, kept
+// entirely separate from SCC_COMBATANTS/SCC_INITIATIVE. "Load" copies a saved
+// encounter INTO staging via the normal sccAddToCombatStaging() path; nothing
+// about live combat ever reads this list directly.
+var SCC_SAVED_ENCOUNTERS = [];
 
 // NPC relationship labels stored per session (npc_id → relationship string)
 var SCC_NPC_RELATIONSHIPS = {};
@@ -13168,7 +13267,7 @@ function sccSwitchPanel(name) {
     var viewedSession = sccResolveViewedSession();
     sccRenderTaggedNotes(viewedSession ? viewedSession.session_number : undefined);
   }
-  if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); }
+  if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); sccLoadSavedEncounters(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 // ── Field Guide document (multi-session, block-based storage) ──────
@@ -15927,6 +16026,58 @@ function sccCombatPopulateFilterOptions() {
   fillSelect('scc-cf-tier', 'Tier', distinct('tier'));
   fillSelect('scc-cf-category', 'Category', distinct('category'));
   fillSelect('scc-cf-region', 'Region', regionList, regionName);
+  // Type (creature_type — the closest real column to "race") and CR are both
+  // genuinely sparse in the live data (4/52 creatures today) — real columns,
+  // not invented ones, so still worth a dropdown; they'll just naturally show
+  // few options until more stat-block data is entered.
+  fillSelect('scc-cf-type', 'Type', distinct('creature_type'));
+  // Not distinct('challenge_rating') -- that helper's `if (v && ...)` check
+  // treats CR 0 as absent (0 is falsy in JS), which would silently drop two
+  // of the only four creatures that actually have a CR at all. CR is a real
+  // value here, so the check has to be v != null, not truthy.
+  var crSeen = {}, crList = [];
+  creatures.forEach(function(c) {
+    var v = c.challenge_rating;
+    if (v != null && !crSeen[v]) { crSeen[v] = true; crList.push(v); }
+  });
+  crList.sort(function(a, b) { return a - b; });
+  // sccEsc()'s `String(str || '')` treats numeric 0 as falsy and collapses it
+  // to an empty string -- which would render CR 0's <option value=""> the
+  // same as the "All" option. Stringify before it ever reaches sccEsc/fillSelect.
+  crList = crList.map(function(v) { return String(v); });
+  fillSelect('scc-cf-cr', 'CR', crList, function(v) { return 'CR ' + v; });
+  // Faction/org affiliation has no real column on creatures at all — derived
+  // live by matching each creature's own tags against real organizations.id /
+  // nations.id (exact or prefix match, e.g. tag "sorvathi" -> nation id
+  // "sorvathi-conclave"). This is reusing existing data (tags + the real
+  // org/nation tables), not inventing a new field — but it's an inferred
+  // match, not a stored affiliation, so coverage is real but partial.
+  var factions = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS.slice() : [];
+  if (typeof NATIONS !== 'undefined') factions = factions.concat(NATIONS);
+  var factionMatches = {};
+  creatures.forEach(function(c) {
+    (c.tags || []).forEach(function(tag) {
+      factions.forEach(function(f) {
+        if (f.id === tag || f.id.indexOf(tag + '-') === 0 || tag.indexOf(f.id + '-') === 0) factionMatches[f.id] = true;
+      });
+    });
+  });
+  var factionIds = Object.keys(factionMatches).sort();
+  function factionName(id) {
+    var f = factions.find(function(x) { return x.id === id; });
+    return f ? f.name : id;
+  }
+  fillSelect('scc-cf-faction', 'Faction', factionIds, factionName);
+}
+
+// Real tag-to-faction match for one creature — same rule sccCombatPopulateFilterOptions()
+// uses to build the dropdown, kept in one place so the filter and the dropdown options
+// can't disagree on what counts as a match.
+function sccCreatureFactionMatch(creature, factionId) {
+  if (!creature || !factionId) return false;
+  return (creature.tags || []).some(function(tag) {
+    return factionId === tag || factionId.indexOf(tag + '-') === 0 || tag.indexOf(factionId + '-') === 0;
+  });
 }
 
 function sccCombatFilterChanged() {
@@ -15934,7 +16085,7 @@ function sccCombatFilterChanged() {
 }
 
 function sccCombatResetFilters() {
-  ['scc-cf-tier', 'scc-cf-category', 'scc-cf-region'].forEach(function(id) {
+  ['scc-cf-tier', 'scc-cf-category', 'scc-cf-region', 'scc-cf-type', 'scc-cf-cr', 'scc-cf-faction'].forEach(function(id) {
     var sel = document.getElementById(id);
     if (sel) sel.value = '';
   });
@@ -15952,10 +16103,13 @@ function sccCombatantSearch(query) {
   if (!drop) return;
   query = (query || '').toLowerCase().trim();
 
-  var tierVal = (document.getElementById('scc-cf-tier') || {}).value || '';
-  var catVal  = (document.getElementById('scc-cf-category') || {}).value || '';
-  var regVal  = (document.getElementById('scc-cf-region') || {}).value || '';
-  var filtersActive = !!(tierVal || catVal || regVal);
+  var tierVal    = (document.getElementById('scc-cf-tier') || {}).value || '';
+  var catVal     = (document.getElementById('scc-cf-category') || {}).value || '';
+  var regVal     = (document.getElementById('scc-cf-region') || {}).value || '';
+  var typeVal    = (document.getElementById('scc-cf-type') || {}).value || '';
+  var crVal      = (document.getElementById('scc-cf-cr') || {}).value || '';
+  var factionVal = (document.getElementById('scc-cf-faction') || {}).value || '';
+  var filtersActive = !!(tierVal || catVal || regVal || typeVal || crVal || factionVal);
 
   if (!query && !filtersActive) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
 
@@ -15963,6 +16117,9 @@ function sccCombatantSearch(query) {
     if (tierVal && c.tier !== tierVal) return false;
     if (catVal && c.category !== catVal) return false;
     if (regVal && (c.regions || []).indexOf(regVal) < 0) return false;
+    if (typeVal && c.creature_type !== typeVal) return false;
+    if (crVal && String(c.challenge_rating) !== crVal) return false;
+    if (factionVal && !sccCreatureFactionMatch(c, factionVal)) return false;
     if (query) {
       var haystack = (c.name + ' ' + (c.habitat || '') + ' ' + (c.description || '') + ' ' + (c.tags || []).join(' ')).toLowerCase();
       if (haystack.indexOf(query) < 0) return false;
@@ -16171,8 +16328,8 @@ function sccRenderStagingList() {
       + (c.ac != null ? '<span class="scc-staging-ac">AC ' + c.ac + '</span>' : '')
       + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
       + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
-      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleStatBlock(' + idx + ')">Stats</button>' : '')
-      + (!c.isPC ? '<button class="scc-browse-btn" onclick="sccToggleLoot(' + idx + ')">Loot</button>' : '')
+      + (!c.isPC ? '<button class="scc-gold-btn-sm" onclick="sccToggleStatBlock(' + idx + ')">Stats</button>' : '')
+      + (!c.isPC ? '<button class="scc-gold-btn-sm" onclick="sccToggleLoot(' + idx + ')">Loot</button>' : '')
       + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
       + '</div>'
       + (!c.isPC
@@ -16211,6 +16368,140 @@ function sccClearAllCombatants() {
   sccUpdateDifficulty();
 }
 
+// ── Saved Encounters (combat_encounters table) ──────────────────────
+// Pre-staging, not live combat: a saved encounter is just {name, combatants:
+// [{id,name,isPC,loot}]}, one entry per staged instance (not grouped/qty'd --
+// see sccSaveCurrentAsEncounter()'s own comment for why). Loading re-derives
+// every mechanical stat (HP/AC/CR) fresh via the normal sccAddToCombatStaging()
+// path -- nothing about a combatant's real stats is ever frozen at save time,
+// so a saved encounter stays correct even if a creature's own data changes
+// later. Loot (coins + items) IS frozen at save time, deliberately -- that's
+// DM-assigned per encounter, not derived from anything, so there's nothing
+// live to re-derive it from.
+function sccLoadSavedEncounters() {
+  return sccFetch('combat_encounters', '&order=updated_at.desc').then(function(rows) {
+    SCC_SAVED_ENCOUNTERS = Array.isArray(rows) ? rows : [];
+    sccRenderSavedEncounters();
+  }).catch(function() {
+    SCC_SAVED_ENCOUNTERS = [];
+    sccRenderSavedEncounters();
+  });
+}
+
+function sccRenderSavedEncounters() {
+  var el = document.getElementById('scc-saved-encounters-list');
+  if (!el) return;
+  if (!SCC_SAVED_ENCOUNTERS.length) {
+    el.innerHTML = '<div class="scc-empty-state">No saved encounters yet — build one below and save it above.</div>';
+    return;
+  }
+  el.innerHTML = SCC_SAVED_ENCOUNTERS.map(function(enc) {
+    var combatants = enc.combatants || [];
+    // Storage is flat -- one array entry per instance (see sccSaveCurrentAsEncounter()) --
+    // so N copies of the same creature are N separate entries, each carrying its
+    // own loot. Grouped back into a "Name x N" display line purely for this
+    // summary text; the underlying combatants array itself stays ungrouped.
+    var byName = {}, order = [];
+    combatants.forEach(function(c) {
+      var n = c.qty || 1; // honors a legacy grouped-save row if one still exists
+      if (!byName[c.name]) { byName[c.name] = 0; order.push(c.name); }
+      byName[c.name] += n;
+    });
+    var totalQty = order.reduce(function(s, name) { return s + byName[name]; }, 0);
+    var summary = order.map(function(name) { return sccEsc(name) + (byName[name] > 1 ? ' &times;' + byName[name] : ''); }).join(', ') || 'Empty';
+    return '<div class="scc-saved-encounter-row">'
+      + '<div class="scc-saved-encounter-info">'
+        + '<div class="scc-saved-encounter-name">' + sccEsc(enc.name) + '</div>'
+        + '<div class="scc-saved-encounter-summary" title="' + sccEsc(order.map(function(name){return name + ' x' + byName[name];}).join(', ')) + '">'
+          + summary + ' &#8212; ' + totalQty + ' combatant' + (totalQty === 1 ? '' : 's')
+          + (enc.session_number ? ' &middot; Session ' + sccEsc(enc.session_number) : '')
+        + '</div>'
+      + '</div>'
+      + '<div class="scc-saved-encounter-actions">'
+        + '<button class="scc-btn-sm" onclick="sccLoadSavedEncounter(\'' + sccEsc(enc.id) + '\')">Load</button>'
+        + '<button class="scc-btn-sm scc-btn-danger" onclick="sccDeleteSavedEncounter(\'' + sccEsc(enc.id) + '\')">Delete</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function sccSaveCurrentAsEncounter() {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
+  if (!SCC_COMBATANTS.length) { showDMToast('Add combatants to the encounter before saving', 'error'); return; }
+  var nameInput = document.getElementById('scc-encounter-save-name');
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) { showDMToast('Name the encounter before saving', 'error'); return; }
+  // One entry per staged instance, NOT grouped by id -- an earlier version of
+  // this grouped same-id combatants into {id,qty}, which silently discarded
+  // each instance's own c.loot (coins + items) the moment two copies of the
+  // same creature existed, since there's no single "the" loot to keep for a
+  // group of 2+. Real bug, DM-reported. A flat per-instance array has no such
+  // ambiguity -- N copies just means N array entries, each with its own loot.
+  var combatants = SCC_COMBATANTS.map(function(c) {
+    return { id: c.id, name: c.name, isPC: !!c.isPC, loot: c.loot || { items: [], gp: 0, sp: 0, cp: 0 } };
+  });
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  fetch(SCC_URL + '/rest/v1/combat_encounters', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ name: name, combatants: combatants, session_number: num })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not save encounter', 'error'); return; }
+    if (nameInput) nameInput.value = '';
+    showDMToast('Encounter saved: ' + name, 'success');
+    sccLoadSavedEncounters();
+  }).catch(function() { showDMToast('Could not save encounter', 'error'); });
+}
+
+function sccLoadSavedEncounter(id) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
+  var enc = SCC_SAVED_ENCOUNTERS.find(function(e) { return e.id === id; });
+  if (!enc) return;
+  var combatants = enc.combatants || [];
+  if (!combatants.length) { showDMToast('This saved encounter has no combatants recorded', 'error'); return; }
+  if (SCC_COMBATANTS.length && !confirm('Loading "' + enc.name + '" will clear the ' + SCC_COMBATANTS.length + ' combatant' + (SCC_COMBATANTS.length === 1 ? '' : 's') + ' currently staged. Continue?')) return;
+  SCC_COMBATANTS = [];
+  combatants.forEach(function(c) {
+    // qty is a legacy field from an earlier, buggy save shape (grouped by id,
+    // lost per-instance loot) -- honor it if an old saved row still has it,
+    // so nothing already in the DB breaks, but current saves are always 1
+    // array entry per instance and never set it.
+    var n = c.qty || 1;
+    for (var i = 0; i < n; i++) {
+      sccAddToCombatStaging(c.id, c.name, 1);
+      // sccAddToCombatStaging() always builds a fresh default (empty) loot
+      // object -- restore the real saved loot onto the combatant it just
+      // pushed. Deep-cloned (same JSON.parse(JSON.stringify()) pattern used
+      // elsewhere in this file for working copies) so editing it later via
+      // sccSaveLootCoins()/sccAddLootItem() can't mutate the cached
+      // SCC_SAVED_ENCOUNTERS entry this same encounter would reload from.
+      var added = SCC_COMBATANTS[SCC_COMBATANTS.length - 1];
+      if (added && c.loot) added.loot = JSON.parse(JSON.stringify(c.loot));
+    }
+  });
+  // The loop above sets each combatant's real loot AFTER the render its own
+  // sccAddToCombatStaging() call triggered, so the very last one added would
+  // otherwise show its default (empty) loot until something else re-renders.
+  sccRenderStagingList();
+  showDMToast('Loaded "' + enc.name + '"', 'success');
+}
+
+function sccDeleteSavedEncounter(id) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
+  var enc = SCC_SAVED_ENCOUNTERS.find(function(e) { return e.id === id; });
+  if (!enc) return;
+  if (!confirm('Delete the saved encounter "' + enc.name + '"? This can\'t be undone.')) return;
+  fetch(SCC_URL + '/rest/v1/combat_encounters?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Delete failed', 'error'); return; }
+    SCC_SAVED_ENCOUNTERS = SCC_SAVED_ENCOUNTERS.filter(function(e) { return e.id !== id; });
+    sccRenderSavedEncounters();
+    showDMToast('Encounter deleted', 'success');
+  }).catch(function() { showDMToast('Delete failed', 'error'); });
+}
+
 function sccToggleLoot(idx) {
   var panel = document.getElementById('scc-loot-' + idx);
   if (panel) panel.classList.toggle('open');
@@ -16221,7 +16512,7 @@ function sccRenderCoinRow(idx, c, editing) {
     return '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-gp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.gp||0) + '"><span class="scc-coin-label gp">GP</span></div>'
       + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-sp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.sp||0) + '"><span class="scc-coin-label sp">SP</span></div>'
       + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-cp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.cp||0) + '"><span class="scc-coin-label cp">CP</span></div>'
-      + '<button class="scc-btn-sm" onclick="sccSaveLootCoins(' + idx + ')">Set</button>';
+      + '<button class="scc-gold-btn-sm" onclick="sccSaveLootCoins(' + idx + ')">Set</button>';
   } else {
     var hasCoins = c.loot.gp || c.loot.sp || c.loot.cp;
     var display = hasCoins
@@ -16355,6 +16646,10 @@ function sccStartCombat() {
   if (searchGroup) searchGroup.style.display = 'none';
   var clearAllBtn = document.getElementById('scc-clear-all-btn');
   if (clearAllBtn) clearAllBtn.style.display = 'none';
+  // Saved Encounters is a staging-time tool -- nothing to load into a fight
+  // that's already running.
+  var savedEncBlock = document.getElementById('scc-saved-encounters-block');
+  if (savedEncBlock) savedEncBlock.style.display = 'none';
   document.getElementById('scc-initiative-tracker').style.display = '';
   sccRenderInitiativeList();
 }
@@ -16408,7 +16703,7 @@ function sccRenderInitiativeList() {
     var lootBtn = (!c.isPC && isDowned && c.loot && (c.loot.items.length || c.loot.gp || c.loot.sp || c.loot.cp))
       ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">Award Loot</button>' : '';
     var downedBadge = isDowned ? '<span class="scc-downed-badge">&#9760; Downed</span>' : '';
-    var statsBtn = !c.isPC ? '<button class="scc-browse-btn scc-init-stats-btn" onclick="sccToggleInitStatBlock(' + idx + ')">Stats</button>' : '';
+    var statsBtn = !c.isPC ? '<button class="scc-gold-btn-sm scc-init-stats-btn" onclick="sccToggleInitStatBlock(' + idx + ')">Stats</button>' : '';
     // Only renders for a PC with a real uploaded portrait (character_photo,
     // fetched in sccLoadPlayers()) -- no placeholder/initial for anyone who
     // hasn't uploaded one, matching this file's own no-invented-content rule.
@@ -17100,6 +17395,8 @@ function sccEndCombat() {
   if (filtersBarEnd) filtersBarEnd.style.display = '';
   var searchGroupEnd = document.getElementById('scc-combat-search-group');
   if (searchGroupEnd) searchGroupEnd.style.display = '';
+  var savedEncBlockEnd = document.getElementById('scc-saved-encounters-block');
+  if (savedEncBlockEnd) savedEncBlockEnd.style.display = '';
   sccRenderStagingList(); sccUpdateDifficulty();
 }
 function sccSummaryAwardItem(iIdx) {
