@@ -41,6 +41,9 @@ While working on a feature branch, skip End items 1–4 (Decision Log, Current F
 **A removed worktree's session is gone — route follow-ups to `Anavale-wiki-MAIN-3`, not back to it:**
 Once a Code session removes its own worktree, that session is done — its folder no longer exists, so it cannot receive any further prompts, no matter how small the follow-up. Any work that comes up after a worktree removal (deleting the now-unused remote branch, any other cleanup) always goes to the designated `Anavale-wiki-MAIN-3` worktree instead, never back to the session that just removed itself.
 
+**Check for an existing service before reaching for a new one:**
+Before creating or suggesting any new third-party account, service, or external dependency, check whether an existing one already used by this project (Supabase, GitHub, ElevenLabs) can do the job instead. Never default to a new service without checking first. If it's genuinely unclear whether an existing service covers it, say so and ask, rather than defaulting to something new.
+
 ---
 
 ## 2. Current Focus
