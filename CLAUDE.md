@@ -38,6 +38,9 @@ Every new row must also set `size` — `small` / `medium` / `large`, `unknown` i
 **Feature branches don't touch CLAUDE.md:**
 While working on a feature branch, skip End items 1–4 (Decision Log, Current Focus, self-correction edits, new-bug-pattern logging) entirely — write nothing to this file, not even a small entry. Every branch inserting at the same anchor point (the top of the Decision Log, the top of Current Focus) is what causes merge conflicts when several branches land close together, even when the actual code never overlaps. Instead, state clearly in the final report to the DM everything that would have gone into the Decision Log and Next Priorities — same content, same detail, just not committed to the file yet. Once a batch of parallel branches has finished merging into `main`, one follow-up consolidation pass — on the designated `Anavale-wiki-MAIN-3` worktree — adds that whole batch's entries to CLAUDE.md in a single commit, directly on `main`, where no merge conflict is possible since nothing else is touching the file at that point.
 
+**A removed worktree's session is gone — route follow-ups to `Anavale-wiki-MAIN-3`, not back to it:**
+Once a Code session removes its own worktree, that session is done — its folder no longer exists, so it cannot receive any further prompts, no matter how small the follow-up. Any work that comes up after a worktree removal (deleting the now-unused remote branch, any other cleanup) always goes to the designated `Anavale-wiki-MAIN-3` worktree instead, never back to the session that just removed itself.
+
 ---
 
 ## 2. Current Focus
@@ -588,6 +591,16 @@ This is a standing rule, not a one-off decision — a future "is this spell legi
 ## 12. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
+
+---
+
+**2026-08-21 (new session, process note — two "how an NPC should sound" systems, not a naming collision) — `CLAUDE.md`.**
+Confirmed with the DM: `[Voice: ...]` bracketed text inside `read_aloud` is pre-existing DM performance direction — how to act the line out loud at the table, nothing to do with audio. The new `elevenlabs_voice_id`/`voice_notes` columns (built on the still-uncommitted `npc-voices` branch, confirmed via a read-only investigation of that worktree's diff — not modified, per explicit instruction not to touch active work in progress) pick an actual synthesized voice for TTS playback, a different concept entirely. The branch's own Preview Voice feature (`sccStripVoiceDirection()`) already strips `[Voice: ...]` text before sending it to ElevenLabs, so the two never actually overlap. Both stay — genuinely different purposes, not something that needs reconciling.
+
+---
+
+**2026-08-20 (continuing the same session — process addendum, a removed worktree's session can't take further prompts, no code changed) — `CLAUDE.md`.**
+Repeated mistake tonight: suggesting a follow-up prompt go back to a session whose worktree had already been removed — the folder was gone, so there was nowhere for that prompt to land. Added a rule right after the "Feature branches don't touch CLAUDE.md" one, since it's the same underlying shape of mistake (routing work to the wrong place): once a Code session removes its own worktree, that session is done and cannot receive any further prompts, no matter how small the follow-up. Anything that comes up afterward — deleting the now-unused remote branch, any other cleanup — goes to the designated `Anavale-wiki-MAIN-3` worktree instead, never back to the session that just removed itself.
 
 ---
 
