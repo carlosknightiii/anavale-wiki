@@ -3010,13 +3010,32 @@
            there's nothing left to set up once the session is over.
            ══════════════════════════════════════ -->
       <div id="form-session" class="dm-form scc-form">
-        <!-- ── HEADER ──────────────────────── -->
+        <!-- ── HEADER (Figma 108:2593 -- gold "< Back" link, a large
+             "Session N" / date row, then Setup/Live Session/Combat/Notes as
+             an underlined nav row matching the top-level Entries/Quests/
+             Players/Sessions nav's own .dm-tab treatment, not pill buttons.
+             "< Back" returns to the Sessions List (#form-sessions) -- the
+             one way this page is ever reached (see the file-level comment
+             above), so that's the only sensible target; same switchTab()
+             call the top-level "Sessions" nav button itself already uses. ── -->
         <div class="scc-header">
-          <div class="scc-header-left">
-            <div class="scc-header-title">🎲 Session Command Center</div>
-            <div class="scc-header-sub" id="scc-header-sub">No active session — set up a session below</div>
+          <a class="scc-session-back-link" onclick="switchTab('sessions')">&lt; Back</a>
+          <div class="scc-header-title-row">
+            <div class="scc-header-title-group">
+              <span class="scc-header-title" id="scc-header-session-num">Session —</span>
+              <!-- Shown only while auditing a locked historical session --
+                   toggled by sccUpdateHeaderSub()/sccUpdateHeaderSubHistory(),
+                   same two functions every real "session changed" code path
+                   already funnels through (session load, session creation,
+                   status change, Save Setup). The separate #scc-readonly-banner
+                   below is still the primary audit-mode signal -- this badge is
+                   the header's own smaller echo of it, preserved from the old
+                   single-line subtitle rather than dropped. -->
+              <span class="scc-viewing-badge" id="scc-header-audit-badge" style="display:none;">Audit View</span>
+            </div>
+            <div class="scc-header-date" id="scc-header-session-date"></div>
           </div>
-          <div class="scc-header-right">
+          <div class="scc-header-nav">
             <!-- Session History dropdown removed -- the Sessions List page
                  (#form-sessions) is now the one way to reach any session,
                  past or upcoming; this was the same job, duplicated. -->
@@ -3029,7 +3048,7 @@
                  (see the file-level comment above #form-session) as the
                  first tab -- hidden in audit mode via .scc-tab-btn--setup. -->
             <button class="scc-tab-btn scc-tab-btn--setup" data-scc="setup" onclick="sccSwitchPanel('setup')">Setup</button>
-            <button class="scc-tab-btn scc-tab-btn--live active" data-scc="live" onclick="sccSwitchPanel('live')">&#9654; Live Session</button>
+            <button class="scc-tab-btn active" data-scc="live" onclick="sccSwitchPanel('live')">Live Session</button>
             <button class="scc-tab-btn"        data-scc="combat"    onclick="sccSwitchPanel('combat')">Combat</button>
             <button class="scc-tab-btn"        data-scc="notes"     onclick="sccSwitchPanel('notes')">Notes</button>
           </div>
@@ -4953,59 +4972,92 @@ function showDMToast(msg, type) {
   height: 100%;
   overflow: hidden;
 }
-/* ── SCC Header ── */
+/* ── SCC Header (Figma 108:2593) ──
+   Vertical stack -- back link, then a "Session N" / date row, then the
+   Setup/Live Session/Combat/Notes nav row -- sitting directly on the page
+   background (no card/border treatment; that belonged to the old pill-tab
+   header this replaces). Left/right inset (2rem) matches .scc-panel-inner's
+   own padding below it, so this header's content lines up with everything
+   in the panels underneath it. */
 .scc-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid var(--scc-border);
-  background: var(--scc-surface);
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 2rem 1rem;
   flex-shrink: 0;
 }
-.scc-header-left {}
+.scc-session-back-link {
+  align-self: flex-start;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dm-gold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.scc-session-back-link:hover { opacity: 0.8; }
+.scc-header-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.scc-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .scc-header-title {
   font-family: var(--font-headers);
-  font-size: 1.1rem;
-  color: var(--dm-gold);
+  font-size: var(--text-2xl);
+  color: var(--dm-text);
   font-weight: 700;
   line-height: 1.2;
 }
-.scc-header-sub {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  color: var(--dm-text-muted);
-  margin-top: 0.1rem;
+.scc-header-date {
+  font-family: var(--font-headers);
+  font-size: var(--text-2xl);
+  color: var(--dm-text);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
-.scc-header-right {
+.scc-header-nav {
   display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
+/* Same treatment as the top-level Entries/Quests/Players/Sessions nav
+   (.dm-tab / .dm-tab.active) -- plain text, gold underline on the active
+   tab, no per-tab background/border pills. */
 .scc-tab-btn {
-  padding: 0.35rem 0.85rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 26px;
+  min-width: 100px;
+  box-sizing: border-box;
+  padding: 0;
   background: transparent;
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius-sm);
+  border: none;
+  border-bottom: 2px solid transparent;
   color: var(--dm-text-muted);
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--dm-transition);
   white-space: nowrap;
 }
 .scc-tab-btn:hover {
   color: var(--dm-text);
-  border-color: var(--dm-border-mid);
-  background: var(--scc-surface-high);
+  border-bottom-color: var(--dm-border-mid);
 }
 .scc-tab-btn.active {
-  background: var(--dm-gold-dim);
-  border-color: var(--scc-border-gold);
-  color: var(--dm-gold);
+  color: var(--dm-text);
+  border-bottom-color: var(--dm-gold);
 }
 /* ── SCC Panels ── */
 .scc-panel {
@@ -6651,8 +6703,6 @@ function showDMToast(msg, type) {
 .scc-add-condition-btn:hover { border-color: var(--dm-gold); color: var(--dm-gold); }
 /* ── Live Session Panel ── */
 #scc-panel-live { overflow-y: auto; }
-.scc-tab-btn--live { background: rgba(96,165,250,0.08); border-color: rgba(96,165,250,0.3); color: var(--dm-blue); }
-.scc-tab-btn--live.active { background: rgba(96,165,250,0.18); border-color: rgba(96,165,250,0.6); color: #93c5fd; }
 /* Setup has nothing left to do once a session is over -- hidden entirely
    (not just locked) while viewing a completed/historical session. Bounced
    off Live Session automatically if it was the active panel, in
@@ -9054,10 +9104,10 @@ function switchTab(tab) {
   sccUpdateQuickNoteFabVisibility();
 }
 // The global Quick Note FAB only makes sense on the Session Details page
-// itself (#form-session -- the tab whose own header literally reads
-// "Session Command Center", holding Setup/Live Session/Combat/Notes) --
-// showing it over Manage/Quests/Players/Sessions put a floating session-note
-// button on pages that have nothing to do with running a live session.
+// itself (#form-session -- reached by opening a session from the Sessions
+// List, holding Setup/Live Session/Combat/Notes) -- showing it over Manage/
+// Quests/Players/Sessions put a floating session-note button on pages that
+// have nothing to do with running a live session.
 function sccUpdateQuickNoteFabVisibility() {
   var fab = document.getElementById('scc-quicknote-fab');
   if (fab) fab.style.display = (CURRENT_TAB === 'session') ? 'flex' : 'none';
@@ -15176,8 +15226,25 @@ function sccLoadLatestSession(forceNum) {
 function sccSetSessionDisplay(num) {
   var dispEl = document.getElementById('scc-session-number-display');
   var numEl  = document.getElementById('scc-session-number');
+  var headerNumEl = document.getElementById('scc-header-session-num');
   if (dispEl) dispEl.textContent = num;
   if (numEl)  numEl.value = num;
+  // The header's own big "Session N" (Figma 108:2593) -- this function is
+  // the one real chokepoint every code path already funnels through with a
+  // concrete, correct number (live session, next/upcoming session, a
+  // freshly-created one, a historical one), so it belongs here rather than
+  // threaded through sccUpdateHeaderSub()/sccUpdateHeaderSubHistory(), which
+  // only ever run *after* this and don't always have SCC_SESSION set (the
+  // "no active session yet" case still has a real next number to show).
+  if (headerNumEl) headerNumEl.textContent = 'Session ' + num;
+}
+// Same short MM/DD/YY format the Sessions List rows already use
+// (sccRenderSessionsList()) -- kept as its own small helper here rather than
+// extracted into a shared one, since this is the only other consumer.
+function sccFormatDateShort(dateVal) {
+  if (!dateVal) return '';
+  var d = String(dateVal).slice(0, 10);
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'2-digit' });
 }
 // sccToggleHistory()/sccRenderHistoryList() removed -- the Session History
 // dropdown they drove is gone (see the markup comment above #form-session),
@@ -15285,12 +15352,16 @@ function sccLoadHistorySession(sessionNum) {
   sccRenderTaggedNotes(sessionNum);
 }
 function sccUpdateHeaderSubHistory(num, session) {
-  var el = document.getElementById('scc-header-sub');
-  if (!el) return;
-  el.innerHTML = 'Session ' + num
-    + (session.session_date ? ' · ' + session.session_date : '')
-    + (session.premise ? ' — ' + sccEsc(session.premise) : '')
-    + ' <span class="scc-viewing-badge">Audit View</span>';
+  // sccSetSessionDisplay(num) (already called by the time this runs, in
+  // every real caller) already set "Session N" in the header -- this just
+  // fills in the date and flags the header as viewing a locked/historical
+  // session. Premise isn't echoed here (it never fit the new "Session N" /
+  // date row shape) -- it's still real, visible data, just down in the
+  // Setup panel's own Session Premise field, same as it's always been.
+  var dateEl = document.getElementById('scc-header-session-date');
+  var badge  = document.getElementById('scc-header-audit-badge');
+  if (dateEl) dateEl.textContent = sccFormatDateShort(session.session_date);
+  if (badge)  badge.style.display = 'inline-block';
 }
 // Shared by sccLoadCurrentSession() (below) and sccOpenSessionDetails()
 // (which needs the identical cleanup whenever a DM clicks from a locked
@@ -15395,12 +15466,14 @@ function sccCompleteSession() {
   }).catch(function() { showDMToast('Could not complete session', 'error'); });
 }
 function sccUpdateHeaderSub() {
-  var el = document.getElementById('scc-header-sub');
-  if (!el) return;
-  if (!SCC_SESSION) { el.textContent = 'No active session — set up a session below'; return; }
-  el.textContent = 'Session ' + SCC_SESSION.session_number
-    + (SCC_SESSION.session_date ? ' · ' + SCC_SESSION.session_date : '')
-    + (SCC_SESSION.premise ? ' — ' + SCC_SESSION.premise : '');
+  // The number itself is already handled by sccSetSessionDisplay(), always
+  // called before this in every real path -- this fills in the date and
+  // makes sure the audit badge is off (a session becoming live/current again
+  // always routes back through here, e.g. sccLoadCurrentSession()).
+  var dateEl = document.getElementById('scc-header-session-date');
+  var badge  = document.getElementById('scc-header-audit-badge');
+  if (badge) badge.style.display = 'none';
+  if (dateEl) dateEl.textContent = SCC_SESSION ? sccFormatDateShort(SCC_SESSION.session_date) : '';
 }
 
 function sccPopulateSetupForm(s) {
