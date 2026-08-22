@@ -1363,8 +1363,8 @@
       <div class="scc-quicknote-modal-inner">
         <div class="scc-quicknote-modal-title">Quick Note</div>
         <select id="scc-quicknote-cat" class="cm-select"></select>
-        <input type="text" id="scc-quicknote-title" class="scc-input" placeholder="What happened?" autocomplete="off">
-        <textarea id="scc-quicknote-body" class="scc-textarea" placeholder="Details (optional)&#8230;"></textarea>
+        <input type="text" id="scc-quicknote-title" class="scc-input" placeholder="What happened?" autocomplete="off" oninput="sccMentionInput(this)">
+        <textarea id="scc-quicknote-body" class="scc-textarea" placeholder="Details (optional)&#8230;" oninput="sccMentionInput(this)"></textarea>
         <div class="scc-quicknote-modal-actions">
           <button class="scc-btn-secondary" onclick="sccCloseQuickNoteModal()">Cancel</button>
           <button class="scc-btn-primary" onclick="sccSubmitQuickNote()">+ Add Note</button>
@@ -3844,11 +3844,28 @@
     { table: 'pois',             global: 'POIS' },
     { table: 'religions',        global: 'RELIGIONS' },
     { table: 'items',            global: 'ITEMS' },
-    { table: 'quests',           global: 'QUESTS' }
+    { table: 'quests',           global: 'QUESTS' },
+    // vendor_stock was added here to fix a real bug: sccVendorShopSectionHtml()
+    // (the Shop section woven into the POI/org Quick Lookup card) reads
+    // window.VENDOR_STOCK, which was previously ONLY ever populated inside
+    // sccInit() -- and sccInit() only ever runs once the DM visits the
+    // Session tab (switchTab('session')). A DM opening a shop's lookup card
+    // straight from a fresh tab's default Entries/Manage landing page (via
+    // the global search bar, which is reachable from every tab and never
+    // required visiting Session first) got VENDOR_STOCK still undefined,
+    // so the Shop section's own `typeof VENDOR_STOCK !== 'undefined' ? ... : []`
+    // fallback silently rendered "Nothing in stock yet" even with real rows
+    // in Supabase -- a fetch-timing bug, not missing or wrong data. Adding it
+    // here means it's populated by the same unconditional, tab-independent
+    // boot fetch every other world table the lookup drawer depends on
+    // already uses. sccInit()'s own vendor_stock fetch is untouched and
+    // still needed -- it's what keeps stock fresh after a DM edits it while
+    // actually on the Session tab, same as every other table listed here.
+    { table: 'vendor_stock',     global: 'VENDOR_STOCK', params: '&order=sort_order.asc' }
   ];
 
-  function sbFetch(table) {
-    return fetch(SB_URL + '/rest/v1/' + table + '?select=*&limit=1000', {
+  function sbFetch(table, extraParams) {
+    return fetch(SB_URL + '/rest/v1/' + table + '?select=*&limit=1000' + (extraParams || ''), {
       headers: {
         'apikey': SB_ANON,
         'Authorization': 'Bearer ' + SB_ANON
@@ -3858,7 +3875,7 @@
 
   function syncFromSupabase() {
     Promise.all(TABLES.map(function(t) {
-      return sbFetch(t.table).then(function(rows) {
+      return sbFetch(t.table, t.params).then(function(rows) {
         return { global: t.global, rows: rows };
       });
     })).then(function(results) {
@@ -7239,6 +7256,26 @@ function showDMToast(msg, type) {
 }
 .scc-tagnote-body:focus { outline: none; }
 .scc-tagnote-body::placeholder { color: var(--dm-text-faint); }
+/* Display-mode variant of .scc-tagnote-title/.scc-tagnote-body — a plain div
+   showing linkified content (real name, clickable, via sccFgLinkify's own
+   .scc-fg-link styling) instead of the raw editable field. Swapped for the
+   real input/textarea on click; see sccTagNoteEnterEdit()/sccTagNoteBlurField(). */
+.scc-tagnote-title--display, .scc-tagnote-body--display {
+  cursor: text;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.scc-tagnote-title--display:hover, .scc-tagnote-body--display:hover {
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+}
+/* Readonly (audit-mode) cards render the same display div but with no
+   onclick at all (sccTagNoteFieldDisplayHtml's readonly branch) -- drop the
+   hover affordance there too, so a locked note doesn't look editable. */
+.scc-audit-mode .scc-tagnote-title--display:hover,
+.scc-audit-mode .scc-tagnote-body--display:hover { background: none; }
+.scc-tagnote-placeholder { color: var(--dm-text-faint); }
+.scc-tagnote-title--display .scc-tagnote-placeholder { font-weight: 400; }
 /* Used to hide the whole Tagged Notes section in audit mode -- confirmed via
    the Notes panel audit that this left a completed session's real notes with
    no read path anywhere in the app. Section itself now stays visible and
@@ -7350,7 +7387,15 @@ function showDMToast(msg, type) {
   right: 1.5rem;
   bottom: 1.5rem;
   z-index: 500;
-  display: flex;
+  /* Hidden by default -- sccUpdateQuickNoteFabVisibility() is the only thing
+     that ever shows it (when CURRENT_TAB === 'session'). Defaulting to
+     display:none here (rather than flex, relying solely on that function
+     having already run) closes a real gap that default left open: fresh
+     password entry never called switchTab() at all, so on that boot path
+     specifically, this button sat visible over the Manage/Entries landing
+     page from the moment the gate faded out until the DM's first manual tab
+     click. */
+  display: none;
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1.1rem;
@@ -7624,8 +7669,8 @@ function showDMToast(msg, type) {
   font-style: italic; padding: 0.5rem 0;
 }
 .scc-shop-row {
-  display: flex; align-items: center; gap: 0.65rem;
-  padding: 0.55rem 0; border-bottom: 1px solid var(--border-mid);
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.6rem 0; border-bottom: 1px solid var(--border-mid);
 }
 .scc-shop-row:last-of-type { border-bottom: none; }
 .scc-shop-thumb {
@@ -7642,21 +7687,65 @@ function showDMToast(msg, type) {
 .scc-shop-row-name {
   font-family: var(--font-body); font-size: 0.88rem; font-weight: 600; color: var(--text);
 }
-.scc-shop-catalog-price {
-  font-weight: 400; color: var(--text-muted); font-size: 0.75rem;
+/* Real catalog copy (items.summary) -- one real sentence, not the longer
+   .description prose -- clamped to 2 lines so a verbose summary can't blow
+   out row height in a long, browsable list. */
+.scc-shop-row-desc {
+  font-family: var(--font-body); font-size: 0.76rem; color: var(--text-muted);
+  line-height: 1.4; margin-top: 0.15rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.scc-shop-row-edit {
-  display: flex; align-items: center; gap: 0.35rem; margin-top: 0.3rem;
+.scc-shop-row-stats {
+  display: flex; align-items: center; gap: 0.85rem; margin-top: 0.4rem; flex-wrap: wrap;
 }
-.scc-shop-row-edit label {
-  font-family: var(--font-body); font-size: 0.68rem; color: var(--text-muted);
+.scc-shop-stat {
+  display: flex; align-items: center; gap: 0.3rem;
+  font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted);
 }
+.scc-shop-catalog-hint {
+  font-size: 0.64rem; color: var(--text-muted); opacity: 0.7;
+}
+/* Price, gp/sp/cp — same gold/silver/copper badge treatment
+   renderPlayerCurrencySection() already uses on the Players tab
+   (.scc-pd-currency-badge/-label/-input, same --currency-gold-coin/
+   --currency-silver/--currency-copper tokens), just sized down to fit
+   inline in a shop row instead of a standalone 100px-wide badge stack. */
+.scc-shop-price-group { display: flex; flex-direction: column; gap: 0.2rem; }
+.scc-shop-price-caption {
+  display: flex; align-items: center; gap: 0.3rem;
+  font-family: var(--font-body); font-size: 0.72rem; color: var(--text-muted);
+}
+.scc-shop-price-badges { display: flex; gap: 0.25rem; }
+.scc-shop-price-badge {
+  width: 38px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 0.15rem 0.25rem;
+  border-radius: var(--dm-radius-sm);
+}
+.scc-shop-price-badge--gold { background: var(--currency-gold-coin); }
+.scc-shop-price-badge--silver { background: var(--currency-silver); }
+.scc-shop-price-badge--copper { background: var(--currency-copper); }
+.scc-shop-price-input {
+  width: 100%; box-sizing: border-box;
+  background: #fff; border: 1px solid #000; border-radius: 0;
+  color: var(--blue-800); font-family: var(--font-sans); font-size: 0.7rem;
+  text-align: center; padding: 0.05rem 0.1rem;
+}
+.scc-shop-price-label {
+  font-family: var(--font-sans); font-weight: 700; font-size: 0.58rem;
+  letter-spacing: 0.02em; color: var(--blue-800);
+}
+.scc-shop-price-badge--copper .scc-shop-price-label { color: var(--text); }
 .scc-shop-mini-input {
-  width: 60px; padding: 0.15rem 0.35rem;
+  width: 56px; padding: 0.15rem 0.35rem;
   background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
   border-radius: var(--dm-radius-sm); color: var(--dm-text);
   font-family: var(--font-sans); font-size: 0.75rem;
 }
+.scc-shop-row-actions {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex-shrink: 0;
+}
+.scc-shop-buy-controls { display: flex; align-items: center; gap: 0.35rem; }
 .scc-shop-qty-input {
   width: 48px; padding: 0.25rem 0.4rem;
   background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
@@ -7673,7 +7762,17 @@ function showDMToast(msg, type) {
   transition: var(--dm-transition);
 }
 .scc-shop-del:hover { color: var(--dm-red); }
-.scc-shop-add-row { margin-top: 0.7rem; }
+/* Add-to-stock is a secondary action, collapsed behind this toggle by
+   default -- the stock list above it is the primary, always-visible content
+   now, not a search box competing with it for top billing. */
+.scc-shop-add-toggle {
+  display: block; background: transparent; border: none;
+  color: var(--dm-gold); font-family: var(--font-body); font-size: 0.78rem;
+  cursor: pointer; padding: 0.4rem 0 0.2rem; margin-top: 0.3rem;
+  text-align: left;
+}
+.scc-shop-add-toggle:hover { text-decoration: underline; }
+.scc-shop-add-row { margin-top: 0.4rem; }
 
 .scc-lookup-loading {
   color: var(--dm-text-muted);
@@ -8913,6 +9012,11 @@ function checkPassword() {
       document.getElementById('dm-app').style.display = 'flex';
       renderRecent();
       updateFileTarget();
+      // Fresh password entry never calls switchTab() (the DOMContentLoaded
+      // already-authenticated boot path does, via switchTab('manage')) --
+      // without this, the Quick Note FAB's visibility was never actually
+      // set on this boot path, only ever fixed once the DM clicked a tab.
+      sccUpdateQuickNoteFabVisibility();
     }, 500);
   } else {
     card.classList.remove('shake');
@@ -16151,6 +16255,17 @@ function sccBuildLocationCardHeaderHtml(loc, opts) {
 function sccBuildLocationCardBodyHtml(loc) {
   var info = sccLocationTypeInfo(loc);
   var body = '';
+  // Shop moved to the very top of the body (POIs only, immediately under the
+  // header) -- was dead last, after every prose section and the DM-only
+  // block, which on a location with real lore (or Mira Pont's genuinely long
+  // DM Notes) meant it never fit on screen without scrolling past everything
+  // else first. It's the one section here a DM actually clicks buttons in
+  // mid-session; the read-aloud/lore content below it is still first in the
+  // reading order for players, just no longer first for the DM opening this
+  // card to make a sale.
+  if (info.isPoiEntry) {
+    body += sccVendorShopSectionHtml('pois', loc.id);
+  }
   if (loc.read_aloud) {
     body += '<div class="scc-npc2-section scc-npc2-quote">'
       + '<span class="scc-npc2-quote-mark">“</span>'
@@ -16262,10 +16377,6 @@ function sccBuildLocationCardBodyHtml(loc) {
       body += '<div class="scc-npc2-dm-row"><div class="scc-npc2-icon scc-npc2-icon-red">&#128203;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title scc-npc2-red">Notes</div><div class="scc-npc2-section-body">' + sccEsc(loc.dm_notes) + '</div></div></div>';
     }
     body += '</div></div>';
-  }
-  // Shop -- POIs only, the real buy UI, must survive intact
-  if (info.isPoiEntry) {
-    body += sccVendorShopSectionHtml('pois', loc.id);
   }
   return body;
 }
@@ -17873,6 +17984,21 @@ function sccVendorStockFor(collection, entityId) {
   return all.filter(function(s) { return s.entity_collection === collection && s.entity_id === entityId; });
 }
 
+// Whether the "add item to stock" search is expanded, per entity -- kept
+// across re-renders (sccVendorRefreshLookup() rebuilds this whole section's
+// HTML after every add/remove/edit) so adding several items in a row doesn't
+// mean re-clicking "+ Add item to stock" after each one.
+var SCC_SHOP_ADD_OPEN = {};
+
+// Real, browsable list by default -- every row already in stock renders
+// unconditionally (never gated behind typing a search), each showing the 5
+// things a DM actually needs at a glance: thumbnail, name, a short
+// description (items.summary — one real sentence, not the longer .description
+// prose), purchase price, and how many are left to buy. The "add a NEW item
+// to this shop's stock" search is a separate, secondary action — collapsed
+// behind a toggle below the list rather than sharing top billing with it, so
+// the list of what's actually for sale is what a DM sees first, not an empty
+// state with a search box as the only affordance.
 function sccVendorShopSectionHtml(collection, entityId) {
   var stock = sccVendorStockFor(collection, entityId);
   var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
@@ -17880,10 +18006,13 @@ function sccVendorShopSectionHtml(collection, entityId) {
   var buyerSelId = 'scc-shop-buyer-' + collection + '-' + entityId;
   var buyerOptions = players.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
   var dropId = 'scc-shop-search-drop-' + collection + '-' + entityId;
+  var addRowId = 'scc-shop-add-row-' + collection + '-' + entityId;
+  var addOpen = !!SCC_SHOP_ADD_OPEN[collection + ':' + entityId];
 
   var rowsHtml = stock.map(function(s) {
     var item = itemsAll.find(function(x) { return x.id === s.item_id; });
     var name = item ? item.name : s.item_id;
+    var desc = item && item.summary ? item.summary : '';
     var catalogPrice = item && item.cost_gp != null ? item.cost_gp : null;
     var effectivePrice = (s.price_gp_override != null) ? s.price_gp_override : catalogPrice;
     var outOfStock = s.quantity != null && s.quantity <= 0;
@@ -17891,34 +18020,76 @@ function sccVendorShopSectionHtml(collection, entityId) {
     var thumb = (item && item.image)
       ? '<img class="scc-shop-thumb" src="' + sccEsc(item.image) + '" onerror="this.style.display=\'none\'" alt="">'
       : '<div class="scc-shop-thumb-fallback">' + sccEsc((name || '?').charAt(0)) + '</div>';
+    // Price, gp/sp/cp -- same decimal-gp-to-copper conversion
+    // renderPlayerCurrencySection() already uses for a character's own
+    // gold_cp, just applied to this item's own price instead. effectivePrice
+    // is a decimal gp number (catalog cost_gp or an explicit override);
+    // rounding to whole copper before the floor/mod split avoids float
+    // drift on a value like 0.1 + 0.2 that a naive floor() could land a
+    // cent off on.
+    var priceCpTotal = effectivePrice != null ? Math.round(effectivePrice * 100) : 0;
+    var priceGp = Math.floor(priceCpTotal / 100);
+    var priceSp = Math.floor((priceCpTotal % 100) / 10);
+    var priceCp = priceCpTotal % 10;
+    var catalogCpLiteral = catalogPrice != null ? Math.round(catalogPrice * 100) : 'null';
+    var isCatalogDefault = catalogPrice != null && s.price_gp_override == null;
+    var priceBadges = [
+      { key: 'gp', cls: 'gold',   label: 'GP', val: priceGp },
+      { key: 'sp', cls: 'silver', label: 'SP', val: priceSp },
+      { key: 'cp', cls: 'copper', label: 'CP', val: priceCp }
+    ].map(function(c) {
+      return '<div class="scc-shop-price-badge scc-shop-price-badge--' + c.cls + '">'
+        + '<input type="number" min="0" class="scc-shop-price-input" id="scc-shop-price-' + c.key + '-' + s.id + '" value="' + c.val + '" onblur="sccVendorPriceBlur(\'' + escQ(s.id) + '\',' + catalogCpLiteral + ')" aria-label="' + c.label + '">'
+        + '<span class="scc-shop-price-label">' + c.label + '</span>'
+      + '</div>';
+    }).join('');
     return '<div class="scc-shop-row">'
       + thumb
       + '<div class="scc-shop-row-info">'
-        + '<div class="scc-shop-row-name">' + sccEsc(name) + (catalogPrice != null ? '<span class="scc-shop-catalog-price"> (catalog: ' + catalogPrice + ' gp)</span>' : '') + '</div>'
-        + '<div class="scc-shop-row-edit">'
-          + '<label>Price (gp)</label>'
-          + '<input type="number" step="0.01" min="0" class="scc-shop-mini-input" placeholder="' + (catalogPrice != null ? catalogPrice : '—') + '" value="' + (s.price_gp_override != null ? s.price_gp_override : '') + '" onblur="sccVendorSetField(\'' + escQ(s.id) + '\',\'price_gp_override\',this.value===\'\'?null:parseFloat(this.value))">'
-          + '<label>Qty</label>'
-          + '<input type="number" step="1" min="0" class="scc-shop-mini-input" placeholder="&#8734;" value="' + (s.quantity != null ? s.quantity : '') + '" onblur="sccVendorSetField(\'' + escQ(s.id) + '\',\'quantity\',this.value===\'\'?null:parseInt(this.value))">'
+        + '<div class="scc-shop-row-name">' + sccEsc(name) + '</div>'
+        + (desc ? '<div class="scc-shop-row-desc">' + sccEsc(desc) + '</div>' : '')
+        + '<div class="scc-shop-row-stats">'
+          + '<div class="scc-shop-price-group">'
+            + '<span class="scc-shop-price-caption">Price' + (isCatalogDefault ? '<span class="scc-shop-catalog-hint">catalog</span>' : '') + '</span>'
+            + '<div class="scc-shop-price-badges">' + priceBadges + '</div>'
+          + '</div>'
+          + '<span class="scc-shop-stat">Available <input type="number" step="1" min="0" class="scc-shop-mini-input" placeholder="&#8734;" value="' + (s.quantity != null ? s.quantity : '') + '" onblur="sccVendorSetField(\'' + escQ(s.id) + '\',\'quantity\',this.value===\'\'?null:parseInt(this.value))"></span>'
         + '</div>'
       + '</div>'
-      + (canBuy
-        ? '<input type="number" min="1" value="1" class="scc-shop-qty-input" id="scc-shop-buyqty-' + s.id + '">'
-          + '<button class="scc-btn-sm" onclick="sccVendorBuy(\'' + escQ(s.id) + '\',\'' + escQ(buyerSelId) + '\')">Buy</button>'
-        : '<span class="scc-shop-unavailable">' + (outOfStock ? 'Out of stock' : (!players.length ? 'No players' : 'No price set')) + '</span>')
-      + '<button class="scc-shop-del" title="Remove from stock" onclick="sccVendorRemoveStock(\'' + escQ(s.id) + '\',\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\')">&#10005;</button>'
+      + '<div class="scc-shop-row-actions">'
+        + (canBuy
+          ? '<div class="scc-shop-buy-controls"><input type="number" min="1" value="1" class="scc-shop-qty-input" id="scc-shop-buyqty-' + s.id + '"><button class="scc-btn-sm" onclick="sccVendorBuy(\'' + escQ(s.id) + '\',\'' + escQ(buyerSelId) + '\')">Buy</button></div>'
+          : '<span class="scc-shop-unavailable">' + (outOfStock ? 'Out of stock' : (!players.length ? 'No players' : 'No price set')) + '</span>')
+        + '<button class="scc-shop-del" title="Remove from stock" onclick="sccVendorRemoveStock(\'' + escQ(s.id) + '\',\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\')">&#10005;</button>'
+      + '</div>'
     + '</div>';
   }).join('');
 
   return '<div class="scc-ql-section scc-shop-section">'
     + '<div class="scc-ql-section-label">Shop</div>'
     + (players.length ? '<div class="scc-shop-buyer-row"><span class="scc-shop-buyer-label">Buying as</span><select class="scc-input" id="' + buyerSelId + '">' + buyerOptions + '</select></div>' : '')
-    + (rowsHtml || '<div class="scc-shop-empty">Nothing in stock yet.</div>')
-    + '<div class="scc-picker-search-wrap scc-shop-add-row">'
+    + (rowsHtml || '<div class="scc-shop-empty">Nothing in stock yet — add an item below.</div>')
+    + '<button type="button" class="scc-shop-add-toggle" onclick="sccVendorToggleAddRow(\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\')">' + (addOpen ? '&#8722; Hide' : '+ Add item to stock') + '</button>'
+    + '<div class="scc-picker-search-wrap scc-shop-add-row" id="' + addRowId + '" style="display:' + (addOpen ? 'block' : 'none') + ';">'
       + '<input type="text" class="scc-picker-search" placeholder="Search items to add to stock&#8230;" oninput="sccVendorSearchStock(\'' + escQ(collection) + '\',\'' + escQ(entityId) + '\',this.value)" autocomplete="off">'
       + '<div class="scc-picker-dropdown" id="' + dropId + '"></div>'
     + '</div>'
   + '</div>';
+}
+
+function sccVendorToggleAddRow(collection, entityId) {
+  var key = collection + ':' + entityId;
+  SCC_SHOP_ADD_OPEN[key] = !SCC_SHOP_ADD_OPEN[key];
+  var wrap = document.getElementById('scc-shop-add-row-' + collection + '-' + entityId);
+  var btn = wrap ? wrap.previousElementSibling : null;
+  if (!wrap) return;
+  var open = SCC_SHOP_ADD_OPEN[key];
+  wrap.style.display = open ? 'block' : 'none';
+  if (btn && btn.classList.contains('scc-shop-add-toggle')) btn.innerHTML = open ? '&#8722; Hide' : '+ Add item to stock';
+  if (open) {
+    var input = wrap.querySelector('.scc-picker-search');
+    if (input) input.focus();
+  }
 }
 
 function sccVendorSearchStock(collection, entityId, query) {
@@ -17996,6 +18167,32 @@ function sccVendorSetField(stockId, field, value) {
     if (!r.ok) { showDMToast('Save failed', 'error'); return; }
     sccVendorRefreshLookup(stock.entity_collection, stock.entity_id);
   });
+}
+
+// Price is edited as 3 separate gp/sp/cp integer inputs, same shape as
+// renderPlayerCurrencySection()/sccPlayerCurrencyBlur() already use for a
+// character's own gold_cp -- whichever of the 3 fields just blurred is
+// combined with its two (possibly-just-typed) siblings into one total,
+// converted back to the decimal-gp shape price_gp_override already stores.
+// catalogCp is passed in as a real JS literal baked in at render time
+// (not re-derived from the DOM) since there's no reliable way to tell "the
+// field still shows the untouched catalog default" from "the DM retyped
+// the exact same number" by inspecting the inputs alone -- comparing
+// against it means retyping the catalog price reverts to null (so the row
+// keeps tracking a future catalog price change live) instead of freezing
+// it as a redundant explicit override the instant a DM blurs the field.
+function sccVendorPriceBlur(stockId, catalogCp) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — shop stock is read-only here', 'error'); return; }
+  var gpEl = document.getElementById('scc-shop-price-gp-' + stockId);
+  var spEl = document.getElementById('scc-shop-price-sp-' + stockId);
+  var cpEl = document.getElementById('scc-shop-price-cp-' + stockId);
+  if (!gpEl || !spEl || !cpEl) return;
+  var gp = Math.max(0, parseInt(gpEl.value) || 0);
+  var sp = Math.max(0, parseInt(spEl.value) || 0);
+  var cp = Math.max(0, parseInt(cpEl.value) || 0);
+  var totalCp = gp * 100 + sp * 10 + cp;
+  var override = (catalogCp != null && totalCp === catalogCp) ? null : (totalCp / 100);
+  sccVendorSetField(stockId, 'price_gp_override', override);
 }
 
 function sccVendorRemoveStock(stockId, collection, entityId) {
@@ -18445,6 +18642,11 @@ function sccNoteSearchInput(v) {
 function sccFilterTagNotes() {
   var listEl = document.getElementById('scc-tagnote-list');
   if (!listEl) return;
+  // Rebuilding the list via innerHTML below can detach whichever field an
+  // open @mention panel is anchored to (sccMentionInput()'s stored element
+  // reference) — close it defensively rather than leave a dropdown pointed
+  // at a node that's no longer in the DOM.
+  sccMentionClose();
   var q = SCC_NOTE_FILTER_Q;
   var filtered = SCC_NOTE_ENTRIES.filter(function(n) {
     if (SCC_NOTE_FILTER_CAT && n.category !== SCC_NOTE_FILTER_CAT) return false;
@@ -18499,14 +18701,22 @@ function sccNoteTimeAgo(iso) {
 }
 
 // readonly (true while viewing a locked historical session) keeps the note
-// genuinely readable and copyable -- real HTML `readonly` on the title/body
-// (not `disabled`, which also blocks focus/text-selection; not a CSS
-// pointer-events hide, which would block selecting text to copy by hand
-// too) so a DM can still click in and select/copy manually alongside the
-// Copy button, which stays enabled either way since it never writes
-// anything. Only Delete is dropped entirely, matching "add/edit/delete
-// disabled" -- there's nothing to be gained by rendering a delete button
-// that can't do anything, unlike Copy which is a real read action.
+// genuinely readable and copyable -- a plain display div (not `disabled`,
+// which blocks text-selection; not a CSS pointer-events hide, which would
+// block selecting text to copy by hand too) so a DM can still click in and
+// select/copy manually alongside the Copy button, which stays enabled
+// either way since it never writes anything. Only Delete is dropped
+// entirely, matching "add/edit/delete disabled" -- there's nothing to be
+// gained by rendering a delete button that can't do anything, unlike Copy
+// which is a real read action.
+//
+// Title/body render as linkified display text by default (sccTagNoteFieldDisplayHtml)
+// -- a DM should only ever see a mention's real name as a clickable link, never
+// the raw [[type:id|Label]] markup -- and swap to a raw, editable input/textarea
+// (sccTagNoteFieldEditHtml) on click, matching the "see raw syntax while editing,
+// rendered otherwise" split every other markup editor in this app already uses
+// (Field Guide's own Edit Document toggle, just scoped per-field here since a
+// full document-level edit mode would be overkill for a quick note).
 function sccBuildTagNoteCard(n, readonly) {
   var catClass = n.category === 'dm-only' ? ' scc-tagnote-badge--dmonly' : n.category === 'quest' ? ' scc-tagnote-badge--quest' : '';
   var delBtn = readonly ? '' : '<button class="scc-tagnote-del" title="Delete note" onclick="sccDeleteTagNote(\'' + sccEsc(n.id) + '\')">&#10005;</button>';
@@ -18517,9 +18727,90 @@ function sccBuildTagNoteCard(n, readonly) {
       + '<button class="scc-tagnote-copy" title="Copy note" onclick="sccCopyTagNote(\'' + sccEsc(n.id) + '\')">&#128203;</button>'
       + delBtn
     + '</div>'
-    + '<input type="text" class="scc-tagnote-title" value="' + sccEsc(n.title || '') + '" placeholder="Untitled note"' + (readonly ? ' readonly' : ' onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'title\',this.value)"') + '>'
-    + '<textarea class="scc-tagnote-body" placeholder="Write a note&#8230;"' + (readonly ? ' readonly' : ' onchange="sccSaveTagNoteField(\'' + sccEsc(n.id) + '\',\'content\',this.value)"') + '>' + sccEsc(n.content || '') + '</textarea>'
+    + sccTagNoteFieldDisplayHtml(n.id, 'title', n.title, true, readonly)
+    + sccTagNoteFieldDisplayHtml(n.id, 'content', n.content, false, readonly)
   + '</div>';
+}
+
+// Escaped first (note content is plain DM-typed text, not trusted HTML --
+// a literal "<" typed into a note must render as "<", not break the page),
+// then run through sccLinkifyEscaped() -- the sibling of sccFgLinkify() this
+// codebase already built for exactly this "already-escaped, not raw HTML"
+// case (see its own comment: quest text has the identical shape). Same
+// [[type:id|Label]] convention, same .scc-fg-link clickable-span output
+// Field Guide's document view already uses -- reusing sccFgLinkify() itself
+// directly here would skip escaping the surrounding text, which is safe for
+// Field Guide's trusted, DM-authored-as-raw-HTML content but not for a
+// plain-text note field.
+function sccTagNoteRenderText(value) {
+  return sccLinkifyEscaped(sccEsc(value || ''));
+}
+
+function sccTagNoteFieldDisplayHtml(id, field, value, isTitle, readonly) {
+  var cls = isTitle ? 'scc-tagnote-title' : 'scc-tagnote-body';
+  var placeholder = isTitle ? 'Untitled note' : 'Write a note&#8230;';
+  var inner = value ? sccTagNoteRenderText(value) : '<span class="scc-tagnote-placeholder">' + placeholder + '</span>';
+  var onclick = readonly ? '' : ' onclick="sccTagNoteEnterEdit(event,\'' + sccEsc(id) + '\',\'' + field + '\')"';
+  return '<div class="' + cls + ' ' + cls + '--display"' + onclick + '>' + inner + '</div>';
+}
+
+// Edit-mode field starts empty -- sccTagNoteEnterEdit() sets the real plain-
+// text value (and attaches _mentionSpans tracking) directly on the element
+// once it's created, rather than baking raw [[type:id|Label]] markup into
+// the initial HTML the way this used to.
+function sccTagNoteFieldEditHtml(id, field) {
+  var isTitle = field === 'title';
+  var cls = isTitle ? 'scc-tagnote-title' : 'scc-tagnote-body';
+  var blur = ' onblur="sccTagNoteBlurField(this,\'' + sccEsc(id) + '\',\'' + field + '\')"';
+  if (isTitle) {
+    return '<input type="text" class="' + cls + '" placeholder="Untitled note" oninput="sccMentionInput(this)"' + blur + '>';
+  }
+  return '<textarea class="' + cls + '" placeholder="Write a note&#8230;" oninput="sccMentionInput(this)"' + blur + '></textarea>';
+}
+
+// evt is a real click event when triggered by clicking a display field, or a
+// synthetic {currentTarget: el} when sccAddTagNote() enters edit mode
+// programmatically on a freshly created note's title -- the evt.target check
+// below is skipped for the synthetic case (no evt.target at all), which is
+// correct since that path never originates from clicking an inline link.
+//
+// The stored value is still real [[type:id|Label]] markup (sccSaveTagNoteField
+// writes that, unchanged) -- parsed here into plain text + a _mentionSpans
+// tracking array (position/length/type/id/name per mention) attached directly
+// to the edit element, so the DM only ever sees real names while typing, never
+// brackets. sccMentionInput()/sccMentionSelect() keep that array in sync as
+// they type/insert; sccTagNoteBlurField() reconstructs the real markup from it
+// on the way back out.
+function sccTagNoteEnterEdit(evt, id, field) {
+  if (SCC_VIEWING_HISTORY) return;
+  if (evt && evt.target && evt.target.closest && evt.target.closest('.scc-fg-link')) return;
+  var entry = SCC_NOTE_ENTRIES.find(function(n) { return n.id === id; });
+  if (!entry) return;
+  var displayEl = evt.currentTarget;
+  if (!displayEl) return;
+  var rawValue = field === 'title' ? entry.title : entry.content;
+  var parsed = sccMentionParseMarkup(rawValue);
+  var wrap = document.createElement('div');
+  wrap.innerHTML = sccTagNoteFieldEditHtml(id, field);
+  var editEl = wrap.firstChild;
+  editEl.value = parsed.plainText;
+  editEl._mentionSpans = parsed.spans;
+  editEl._mentionPrevValue = parsed.plainText;
+  displayEl.replaceWith(editEl);
+  editEl.focus();
+  var len = editEl.value.length;
+  if (editEl.setSelectionRange) editEl.setSelectionRange(len, len);
+}
+
+function sccTagNoteBlurField(el, id, field) {
+  sccMentionClose();
+  var rawValue = sccMentionReconstructMarkup(el.value, el._mentionSpans);
+  var entry = SCC_NOTE_ENTRIES.find(function(n) { return n.id === id; });
+  if (entry) entry[field === 'title' ? 'title' : 'content'] = rawValue;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = sccTagNoteFieldDisplayHtml(id, field, rawValue, field === 'title', false);
+  el.replaceWith(wrap.firstChild);
+  sccSaveTagNoteField(id, field, rawValue);
 }
 
 // Global Quick Note modal — a second, always-reachable entry point into the
@@ -18538,11 +18829,24 @@ function sccOpenQuickNoteModal() {
       return '<option value="' + c.id + '">' + sccEsc(c.label) + '</option>';
     }).join('');
   }
-  document.getElementById('scc-quicknote-title').value = '';
-  document.getElementById('scc-quicknote-body').value = '';
+  var titleEl = document.getElementById('scc-quicknote-title');
+  var bodyEl  = document.getElementById('scc-quicknote-body');
+  titleEl.value = '';
+  bodyEl.value = '';
+  // Same tracked-mention approach as Tagged Notes (sccTagNoteEnterEdit) —
+  // plain name shown while typing, position/type/id tracked here, real
+  // [[type:id|Label]] markup only reconstructed at submit. Simpler than the
+  // Tagged Notes version: this modal always starts from a genuinely blank
+  // note, so there's no existing markup to parse via sccMentionParseMarkup()
+  // first — just reset both trackers to empty, same shape sccMentionInput()/
+  // sccMentionSelect() already expect.
+  titleEl._mentionSpans = [];
+  titleEl._mentionPrevValue = '';
+  bodyEl._mentionSpans = [];
+  bodyEl._mentionPrevValue = '';
   document.getElementById('scc-quicknote-modal').classList.add('open');
   document.getElementById('scc-quicknote-backdrop').classList.add('open');
-  document.getElementById('scc-quicknote-title').focus();
+  titleEl.focus();
 }
 
 function sccCloseQuickNoteModal() {
@@ -18555,8 +18859,13 @@ function sccSubmitQuickNote() {
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
   var catSel   = document.getElementById('scc-quicknote-cat');
   var category = catSel && catSel.value ? catSel.value : SCC_NOTE_CATEGORIES[0].id;
-  var title    = document.getElementById('scc-quicknote-title').value.trim();
-  var content  = document.getElementById('scc-quicknote-body').value.trim();
+  var titleEl  = document.getElementById('scc-quicknote-title');
+  var bodyEl   = document.getElementById('scc-quicknote-body');
+  // Supabase always gets real [[type:id|Label]] markup, never the plain-text
+  // composing view — same reconstruct-from-tracked-spans call Tagged Notes'
+  // own save path uses.
+  var title    = sccMentionReconstructMarkup(titleEl.value, titleEl._mentionSpans).trim();
+  var content  = sccMentionReconstructMarkup(bodyEl.value, bodyEl._mentionSpans).trim();
   if (!title && !content) { showDMToast('Write something first', 'error'); return; }
   fetch(SCC_URL + '/rest/v1/session_note_entries', {
     method: 'POST',
@@ -18618,8 +18927,12 @@ function sccAddTagNote() {
         }
         if (card) {
           card.scrollIntoView({ block: 'center' });
-          var titleInput = card.querySelector('.scc-tagnote-title');
-          if (titleInput) titleInput.focus();
+          // Title now renders as a linkified display div, not a bare input
+          // (see sccBuildTagNoteCard()) -- .focus() on that div wouldn't open
+          // an editable field, so enter edit mode the same way a real click
+          // on it would, via a synthetic event carrying just currentTarget.
+          var titleDisplay = card.querySelector('.scc-tagnote-title');
+          if (titleDisplay) sccTagNoteEnterEdit({ currentTarget: titleDisplay }, newId, 'title');
         }
         showDMToast('Note added \u2713', 'success');
       });
@@ -18668,6 +18981,251 @@ function sccCopyTagNote(id) {
     prompt('Copy this note:', text);
   }
 }
+
+// ── @mention live suggestions (Tagged Notes card title/body + the global
+// Quick Note modal's own title/body) ──────────────────────────────────
+// Reuses SCC_FG_LINK_TYPES — the same name→entity index the Field Guide's
+// own "+ Insert Link" picker already searches — rather than a second lookup,
+// and inserts the identical [[type:id|Label]] markup those links already
+// use elsewhere (Field Guide, quest text) via sccFgLinkify()/sccLinkifyEscaped()
+// — a mention dropped into a note reads as the same convention a DM already
+// recognizes from those surfaces, not a third one invented for this.
+//
+// Positioned relative to the source field itself (same technique
+// sccPromptCondition()'s combat condition panel uses for a body-appended,
+// non-relative-parent panel), not the literal caret pixel — a real caret
+// coordinate inside a <textarea> needs a mirror-div measurement this file
+// has no existing precedent for, and anchoring under the field is more than
+// enough for a note that's rarely more than a few lines.
+//
+// While composing, a Tagged Notes field never shows raw [[type:id|Label]]
+// markup -- only the real name. sccTagNoteEnterEdit() parses the stored
+// markup into plain text + a _mentionSpans tracking array (attached directly
+// to the <input>/<textarea> element: {start, length, type, id, name} per
+// mention) before the DM ever sees it. sccMentionSelect() inserts just the
+// plain name and records a span the same way; sccMentionSyncSpans() (called
+// from every keystroke via sccMentionInput()) keeps span positions correct
+// as the DM types elsewhere in the field, and drops a span the instant the
+// DM edits inside its own tracked range -- at that point it's just plain
+// text again, not something this file tries to cleverly re-match back into
+// a mention. sccTagNoteBlurField() reconstructs the real markup from
+// whatever's left in the array right before saving.
+//
+// The global Quick Note modal's title/body track mentions the same way, just
+// simpler: they have no prior saved markup to parse and no per-field
+// edit/display split to round-trip through, so sccOpenQuickNoteModal() just
+// resets both fields' _mentionSpans to an empty array on every open (a
+// genuinely blank note has nothing to parse) and sccSubmitQuickNote()
+// reconstructs the real markup from whatever's left in it, same call
+// sccTagNoteBlurField() makes. A field with no _mentionSpans array at all
+// (none exist elsewhere in this file today) is the one case that still falls
+// back to the pre-tracking behavior -- sccMentionSelect() inserting raw
+// markup directly.
+var SCC_MENTION_ACTIVE_EL = null;
+var SCC_MENTION_ACTIVE_START = 0;
+var SCC_MENTION_ACTIVE_LEN = 0;
+
+// Finds the "@query" token touching the caret, if any. Must start at the
+// very beginning of the field or right after whitespace (so "gerald@site.com"
+// never triggers), and the query itself must contain no whitespace (so an
+// already-finished "@word " earlier in the text doesn't re-trigger once the
+// caret has moved past it).
+function sccMentionActiveToken(text, caret) {
+  var upto = text.slice(0, caret);
+  var at = upto.lastIndexOf('@');
+  if (at < 0) return null;
+  var query = upto.slice(at + 1);
+  if (/\s/.test(query)) return null;
+  var before = at > 0 ? upto.charAt(at - 1) : '';
+  if (before && !/\s/.test(before)) return null;
+  return { start: at, query: query };
+}
+
+// Same [[type:id|Label]] regex sccFgLinkify()/sccLinkifyEscaped() already
+// match on -- kept as one shared pattern definition rather than copy-pasted
+// a third time.
+var SCC_MENTION_MARKUP_RE = /\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g;
+
+// Markup -> {plainText, spans}. Walks every [[type:id|Label]] match,
+// replacing it with just the label (or the id, if the match had no |Label)
+// in the plain-text output, and records where that label landed so it can
+// be turned back into markup later.
+function sccMentionParseMarkup(raw) {
+  raw = raw || '';
+  var plainText = '';
+  var spans = [];
+  var lastIndex = 0;
+  var m;
+  SCC_MENTION_MARKUP_RE.lastIndex = 0;
+  while ((m = SCC_MENTION_MARKUP_RE.exec(raw))) {
+    plainText += raw.slice(lastIndex, m.index);
+    var type = m[1], id = m[2], label = m[3] != null ? m[3] : id;
+    spans.push({ start: plainText.length, length: label.length, type: type, id: id, name: label });
+    plainText += label;
+    lastIndex = m.index + m[0].length;
+  }
+  plainText += raw.slice(lastIndex);
+  return { plainText: plainText, spans: spans };
+}
+
+// Plain text + spans -> markup. Sorted defensively (insertion order isn't
+// guaranteed to stay left-to-right -- a DM can place a new mention before an
+// existing one). A span only becomes real [[type:id|Label]] markup again if
+// the text still sitting at its tracked position exactly matches the name
+// that was recorded there -- if the DM edited or deleted part of it, that
+// no longer holds, and the span is skipped (its current text is emitted
+// as-is, i.e. treated as plain text, per the explicit "don't be clever"
+// instruction this was built to).
+function sccMentionReconstructMarkup(plainText, spans) {
+  plainText = plainText || '';
+  if (!spans || !spans.length) return plainText;
+  var sorted = spans.slice().sort(function(a, b) { return a.start - b.start; });
+  var out = '';
+  var cursor = 0;
+  sorted.forEach(function(sp) {
+    if (sp.start < cursor || sp.start + sp.length > plainText.length) return; // stale/invalid, skip
+    out += plainText.slice(cursor, sp.start);
+    var actualText = plainText.slice(sp.start, sp.start + sp.length);
+    out += (actualText === sp.name) ? ('[[' + sp.type + ':' + sp.id + '|' + sp.name + ']]') : actualText;
+    cursor = sp.start + sp.length;
+  });
+  out += plainText.slice(cursor);
+  return out;
+}
+
+// Keeps el._mentionSpans in sync with real typing -- runs on every
+// sccMentionInput() call for a tracked field. Finds the single edited region
+// via common-prefix/common-suffix diffing against el._mentionPrevValue (the
+// standard trick for "where did this text change" on a plain text input,
+// robust for ordinary typing/backspace/paste/cut), then for each tracked
+// span: unaffected and left alone if it's entirely before the edit, shifted
+// by the length delta if it's entirely after, or dropped entirely if the
+// edit falls anywhere inside its own range -- the same "no longer exactly
+// the tracked name, so it's just plain text now" rule sccMentionReconstructMarkup()
+// enforces on save, applied live as the DM types instead of only at the end.
+function sccMentionSyncSpans(el) {
+  var oldValue = el._mentionPrevValue != null ? el._mentionPrevValue : '';
+  var newValue = el.value;
+  if (oldValue === newValue) return;
+  var maxCommon = Math.min(oldValue.length, newValue.length);
+  var prefixLen = 0;
+  while (prefixLen < maxCommon && oldValue.charAt(prefixLen) === newValue.charAt(prefixLen)) prefixLen++;
+  var maxSuffix = maxCommon - prefixLen;
+  var suffixLen = 0;
+  while (suffixLen < maxSuffix && oldValue.charAt(oldValue.length - 1 - suffixLen) === newValue.charAt(newValue.length - 1 - suffixLen)) suffixLen++;
+  var oldStart = prefixLen;
+  var oldEnd = oldValue.length - suffixLen;
+  var newStart = prefixLen;
+  var newEnd = newValue.length - suffixLen;
+  var delta = (newEnd - newStart) - (oldEnd - oldStart);
+  el._mentionSpans = (el._mentionSpans || []).filter(function(sp) {
+    var spEnd = sp.start + sp.length;
+    if (spEnd <= oldStart) return true;
+    if (sp.start >= oldEnd) { sp.start += delta; return true; }
+    return false;
+  });
+  el._mentionPrevValue = newValue;
+}
+
+function sccMentionInput(el) {
+  if (Array.isArray(el._mentionSpans)) sccMentionSyncSpans(el);
+  var token = sccMentionActiveToken(el.value, el.selectionStart);
+  if (!token || !token.query.length) { sccMentionClose(); return; }
+  var q = token.query.toLowerCase();
+  var results = [];
+  Object.keys(SCC_FG_LINK_TYPES).forEach(function(typeKey) {
+    var def = SCC_FG_LINK_TYPES[typeKey];
+    def.arr().forEach(function(e) {
+      if (e.name && e.name.toLowerCase().indexOf(q) >= 0) {
+        results.push({ type: typeKey, id: e.id, name: e.name, typeLabel: def.label });
+      }
+    });
+  });
+  results = results.slice(0, 8);
+  SCC_MENTION_ACTIVE_EL = el;
+  SCC_MENTION_ACTIVE_START = token.start;
+  SCC_MENTION_ACTIVE_LEN = 1 + token.query.length;
+  var panel = document.getElementById('scc-mention-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'scc-mention-panel';
+    // Same visual values as .scc-picker-dropdown, not the class itself —
+    // that class's left:0;right:0 stretch-to-parent positioning assumes a
+    // position:relative ancestor, which a body-appended panel doesn't have.
+    panel.style.cssText = 'position:fixed;background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius-sm);z-index:9999;min-width:200px;max-width:280px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.4);';
+    document.body.appendChild(panel);
+  }
+  panel.innerHTML = results.length
+    ? results.map(function(r) {
+        return '<div class="scc-picker-option" onclick="sccMentionSelect(\'' + r.type + '\',\'' + escQ(r.id) + '\',\'' + escQ(r.name) + '\')">'
+          + sccEsc(r.name)
+          + '<div class="scc-picker-option-sub">' + sccEsc(r.typeLabel) + '</div>'
+        + '</div>';
+      }).join('')
+    : '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+  var rect = el.getBoundingClientRect();
+  panel.style.top = (rect.bottom + 4) + 'px';
+  var left = Math.min(rect.left, window.innerWidth - 280 - 8);
+  panel.style.left = Math.max(8, left) + 'px';
+}
+
+function sccMentionSelect(type, id, name) {
+  var el = SCC_MENTION_ACTIVE_EL;
+  if (!el) return;
+  var tracked = Array.isArray(el._mentionSpans);
+  var insertText = tracked ? name : ('[[' + type + ':' + id + '|' + name + ']]');
+  var snippet = insertText + ' ';
+  var value = el.value;
+  var before = value.slice(0, SCC_MENTION_ACTIVE_START);
+  var after = value.slice(SCC_MENTION_ACTIVE_START + SCC_MENTION_ACTIVE_LEN);
+  el.value = before + snippet + after;
+  var newPos = before.length + snippet.length;
+  el.focus();
+  el.setSelectionRange(newPos, newPos);
+  if (tracked) {
+    // This direct .value mutation doesn't fire a real input event, so
+    // sccMentionSyncSpans() never sees it -- shift the existing spans for
+    // this one edit by hand (any span that could have overlapped the
+    // replaced "@query" text was already dropped by sccMentionSyncSpans()
+    // during the keystrokes that typed it), then record the new mention.
+    var delta = snippet.length - SCC_MENTION_ACTIVE_LEN;
+    el._mentionSpans.forEach(function(sp) {
+      if (sp.start >= SCC_MENTION_ACTIVE_START) sp.start += delta;
+    });
+    el._mentionSpans.push({ start: before.length, length: name.length, type: type, id: id, name: name });
+    el._mentionPrevValue = el.value;
+  }
+  // Programmatically setting .value doesn't fire a real change event, so a
+  // Tagged Notes field's own onchange-triggered save never runs on its own —
+  // trigger it directly here, same as sccFgInsertLink() already does for its
+  // own textarea insert. Saved value is always real markup, reconstructed
+  // from the tracked spans when tracking is active -- Supabase never stores
+  // the plain-text composing view.
+  var card = el.closest('.scc-tagnote-card');
+  if (card) {
+    var noteId = card.getAttribute('data-note-id');
+    var field = el.classList.contains('scc-tagnote-title') ? 'title' : 'content';
+    var toSave = tracked ? sccMentionReconstructMarkup(el.value, el._mentionSpans) : el.value;
+    sccSaveTagNoteField(noteId, field, toSave);
+  }
+  sccMentionClose();
+}
+
+function sccMentionClose() {
+  var panel = document.getElementById('scc-mention-panel');
+  if (panel) panel.remove();
+  SCC_MENTION_ACTIVE_EL = null;
+}
+
+// Close on any click outside the panel or the field that opened it — same
+// outside-click convention sccPromptCondition()'s combat condition panel
+// already established for a create-on-click, body-appended picker.
+document.addEventListener('click', function(e) {
+  if (e.target.closest('#scc-mention-panel')) return;
+  if (e.target.closest('.scc-tagnote-title') || e.target.closest('.scc-tagnote-body')) return;
+  if (e.target.id === 'scc-quicknote-title' || e.target.id === 'scc-quicknote-body') return;
+  sccMentionClose();
+});
 
 // ── Global Search ─────────────────────────────────────────────────
 // ── Global Search Filters ──────────────────────────────────────────
@@ -19003,6 +19561,10 @@ function sccOpenLookup(type, id) {
         + (org.org_type   ? '<div class="scc-ql-row"><span class="scc-ql-label">Type</span><span class="scc-ql-value">' + sccEsc(org.org_type) + '</span></div>' : '')
         + (org.leadership ? '<div class="scc-ql-row"><span class="scc-ql-label">Leadership</span><span class="scc-ql-value">' + sccEsc(org.leadership) + '</span></div>' : '')
       + '</div>'
+      // ── SHOP ── (moved up from dead last, same reasoning as the location
+      // card body -- the DM-facing buy UI shouldn't be buried under Secret/DM
+      // Notes/every prose section just to reach it)
+      + sccVendorShopSectionHtml('organizations', org.id)
       // ── PROSE SECTIONS ──
       + (org.summary                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(org.summary) + '</div></div>' : '')
       + (org.purpose                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Purpose</div><div class="scc-ql-section-body">' + sccEsc(org.purpose) + '</div></div>' : '')
@@ -19015,9 +19577,7 @@ function sccOpenLookup(type, id) {
       + (org.secret    ? '<div class="scc-dm-block"><div class="scc-dm-label">&#9888; Secret</div><div class="scc-dm-text">' + sccEsc(org.secret) + '</div></div>' : '')
       + (org.dm_notes  ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(org.dm_notes) + '</div></div>' : '')
       // ── TAGS ──
-      + (orgTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + orgTagsHtml + '</div></div>' : '')
-      // ── SHOP ──
-      + sccVendorShopSectionHtml('organizations', org.id);
+      + (orgTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + orgTagsHtml + '</div></div>' : '');
   } else if (type === 'item') {
     var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
     var it = itemsAll.find(function(x){ return x.id === id; });
