@@ -20963,9 +20963,21 @@ function sccGlobalSearch(query) {
     if (gfType && gfType !== type) return;
     (arr || []).forEach(function(e) {
       if (!e.name) return;
-      if (query && e.name.toLowerCase().indexOf(query) < 0 && (e.summary||'').toLowerCase().indexOf(query) < 0) return;
+      var nameLower = e.name.toLowerCase();
+      var nameIdx = query ? nameLower.indexOf(query) : 0;
+      var summaryIdx = query ? (e.summary||'').toLowerCase().indexOf(query) : -1;
+      if (query && nameIdx < 0 && summaryIdx < 0) return;
       if (matchExtra && !matchExtra(e)) return;
-      allEntries.push({ type: typeLabel, typeKey: type, id: e.id, name: e.name, summary: (e.summary||e.description||'').slice(0,80) });
+      // Rank name matches above summary-only matches (and a name-prefix match
+      // above a mid-name match) before the alphabetical sort below. Without
+      // this, a short/common query like "Vel" pulls in dozens of unrelated
+      // entries that merely contain it in prose ("travelers", "Revel",
+      // "Javelin") -- once sorted purely alphabetically and capped to 20,
+      // those can bury a real, exact name match (e.g. the NPC "Vel" herself,
+      // confirmed landing at index 24 of 26 matches before this fix) well
+      // past the cutoff. Real name hits must never lose to prose noise.
+      var rank = !query ? 0 : (nameIdx === 0 ? 0 : nameIdx > 0 ? 1 : 2);
+      allEntries.push({ type: typeLabel, typeKey: type, id: e.id, name: e.name, summary: (e.summary||e.description||'').slice(0,80), rank: rank });
     });
   };
 
@@ -20981,7 +20993,7 @@ function sccGlobalSearch(query) {
   addCollection(typeof RELIGIONS     !== 'undefined' ? RELIGIONS     : [], 'religion',     'Religion');
   addCollection(typeof SPECIES       !== 'undefined' ? SPECIES       : [], 'species',      'Species');
 
-  allEntries.sort(function(a,b){ return a.name.localeCompare(b.name); });
+  allEntries.sort(function(a,b){ return a.rank - b.rank || a.name.localeCompare(b.name); });
   allEntries = allEntries.slice(0, 20);
 
   if (!allEntries.length) {
