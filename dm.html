@@ -3201,7 +3201,7 @@
         <!-- ══ PANEL: COMBAT ══════════════════ -->
         <div class="scc-panel" id="scc-panel-combat">
           <div class="scc-panel-inner">
-            <div class="scc-section-title">Combat Encounter Tracker</div>
+            <div class="scc-section-title">Combat</div>
             <!-- Shown only while viewing a locked historical session (.scc-audit-mode) --
                  combat state has never persisted per-session (see CLAUDE.md), so a past
                  session has no real combat data to show here regardless. Replaces the
@@ -3209,59 +3209,138 @@
             <div class="scc-combat-audit-note" id="scc-combat-audit-note">
               Combat isn't tracked per session — there's nothing to show for this historical session. Return to the current session (above) to use the encounter tracker.
             </div>
-            <!-- Saved Encounters — pre-staged fights built ahead of time, stored in
-                 combat_encounters (name + combatant list w/ quantities). Deliberately
-                 separate from live combat state (SCC_INITIATIVE) -- these are templates
-                 to load INTO staging, not something combat itself reads from. Hidden
-                 alongside the rest of the builder once a fight actually starts (see
-                 sccStartCombat()/sccEndCombat()), since there's nothing to load mid-fight. -->
-            <div class="scc-saved-encounters-block" id="scc-saved-encounters-block">
-              <div class="scc-section-subtitle">Saved Encounters</div>
-              <div class="scc-saved-encounters-save-row">
-                <input type="text" class="scc-input" id="scc-encounter-save-name" placeholder="Name this encounter to save it…" maxlength="120">
-                <button class="scc-btn-primary" onclick="sccSaveCurrentAsEncounter()">&#128190; Save Current as Encounter</button>
+            <!-- Redesigned per the DM's own Figma layout (P0tcVgf02XeI13Tz0TtRaX,
+                 node 122:483) -- a fixed-width Saved Encounters column of cards
+                 (add/edit/close in place) beside a wider Build Encounter panel
+                 (Details/Session Roster/Combatants/Total Loot), all under the
+                 .scc-cb2- class prefix so this whole redesign's CSS lives in one
+                 clearly-scoped block rather than reusing/overloading the pre-
+                 redesign class names. -->
+            <div class="scc-cb2-row" id="scc-cb2-row">
+              <!-- Saved Encounters — pre-staged fights built ahead of time, stored in
+                   combat_encounters (name + combatant list w/ per-row quantities,
+                   location, quest_ids). Deliberately separate from live combat state
+                   (SCC_INITIATIVE) -- these are templates to load INTO staging, not
+                   something combat itself reads from. Hidden alongside the rest of
+                   the builder once a fight actually starts, since there's nothing to
+                   load mid-fight. -->
+              <div class="scc-cb2-saved-col scc-saved-encounters-block" id="scc-saved-encounters-block">
+                <div class="scc-cb2-col-title">Saved Encounters</div>
+                <button type="button" class="scc-cb2-add-card" onclick="sccStartNewEncounter()">+ ADD</button>
+                <div class="scc-saved-encounters-list" id="scc-saved-encounters-list"><div class="scc-empty-state">Loading&#8230;</div></div>
               </div>
-              <div class="scc-saved-encounters-list" id="scc-saved-encounters-list"><div class="scc-empty-state">Loading&#8230;</div></div>
-            </div>
-            <!-- Encounter builder -->
-            <div class="scc-combat-builder">
-              <div class="scc-section-subtitle">Build Encounter</div>
-              <!-- Creatures already assigned to this session in Setup — surfaced first so the
-                   DM doesn't have to re-search from scratch for what's already been prepped. -->
-              <div class="scc-combat-session-label" id="scc-combat-roster-label">From Session Roster</div>
-              <div class="scc-combat-session-creatures" id="scc-combat-session-creatures"></div>
-              <div class="scc-combat-filters-bar" id="scc-combat-filters-bar">
-                <select id="scc-cf-tier" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Tier: All</option></select>
-                <select id="scc-cf-category" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Category: All</option></select>
-                <select id="scc-cf-region" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Region: All</option></select>
-                <select id="scc-cf-type" class="cm-select" onchange="sccCombatFilterChanged()" title="Creature type (race) — only populated on a few creatures today"><option value="">Type: All</option></select>
-                <select id="scc-cf-cr" class="cm-select" onchange="sccCombatFilterChanged()" title="Challenge Rating — only populated on a few creatures today"><option value="">CR: All</option></select>
-                <select id="scc-cf-faction" class="cm-select" onchange="sccCombatFilterChanged()" title="Matched from each creature's own tags against real organizations/nations — not every creature has a tag that resolves to one"><option value="">Faction: All</option></select>
-                <button type="button" class="scc-combat-filters-reset" onclick="sccCombatResetFilters()">Reset</button>
-              </div>
-              <div class="scc-combat-top-row">
-                <div class="scc-picker-group" id="scc-combat-search-group" style="flex:1">
-                  <div class="scc-picker-search-wrap">
-                    <div style="display:flex;align-items:center;gap:0.35rem;">
-                      <input type="text" class="scc-picker-search" id="scc-pick-combatant" placeholder="Add creature or player to encounter…" oninput="sccCombatantSearch(this.value)" style="flex:1;">
-                      <span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);flex-shrink:0;">&times;</span>
-                      <input type="number" class="scc-shop-qty-input" id="scc-combat-add-qty" min="1" max="20" value="1" title="How many copies to add on the next click — applies to the search dropdown and the roster chips above, resets to 1 after adding">
+              <!-- Encounter builder -->
+              <div class="scc-cb2-build-col">
+                <div class="scc-combat-builder scc-cb2-build-panel">
+                  <div class="scc-cb2-build-header">
+                    <div class="scc-cb2-build-title">Build Encounter</div>
+                    <!-- Relocated here (top-right of the panel) and simplified to just
+                         "Start Combat" per direct DM ask -- was buried at the bottom of
+                         the Combatants section reading "⚔ Start Combat — Sort by
+                         Initiative". Same id/onclick/title/show-hide logic untouched,
+                         only its position and label changed. -->
+                    <button class="scc-btn-primary scc-cb2-start-combat-btn" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none" title="Uses any initiative you've already typed as-is; rolls a d20+DEX for anyone left blank, then sorts the full list.">Start Combat</button>
+                  </div>
+
+                  <div class="scc-cb2-details">
+                    <div class="scc-cb2-section-label">Details</div>
+                    <div class="scc-cb2-details-row">
+                      <div class="scc-cb2-field">
+                        <label for="scc-encounter-save-name">Name</label>
+                        <input type="text" class="scc-cb2-input" id="scc-encounter-save-name" placeholder="Name this encounter…" maxlength="120">
+                      </div>
+                      <!-- Real search-and-pick, reusing the exact component Session
+                           Setup's own Assign Session Entities uses for its Locations
+                           picker (SCC_PICKER_SOURCES.location as the data source, the
+                           same .scc-picker-search/.scc-picker-dropdown/.scc-picker-option
+                           markup+CSS, the same .scc-browse-btn "Browse All" affordance)
+                           in place of free text. #scc-encounter-location stays the exact
+                           same plain <input> every save/edit/reset path already reads
+                           .value from -- only how its value gets set changed, so none of
+                           that code needed touching. Kept genuinely typeable (not
+                           readonly) rather than locked to a picked id, since the column
+                           itself has always been free text and a DM typing a name that
+                           happens to match nothing should still be able to save it, same
+                           as before this fix. -->
+                      <!-- Browse All lives directly under the Location input now, inside
+                           this same field -- it was previously a separate full-width row
+                           below the whole Name/Location/Difficulty line, which put it
+                           visually under Name (the first field, sharing that same left
+                           edge) instead of the field it actually controls. Direct DM
+                           correction. -->
+                      <div class="scc-cb2-field scc-picker-group">
+                        <label for="scc-encounter-location">Location</label>
+                        <div class="scc-picker-search-wrap" style="position:relative;">
+                          <input type="text" class="scc-cb2-input scc-picker-search" id="scc-encounter-location" placeholder="Search cities, POIs, nations…" maxlength="120" oninput="sccEncounterLocationSearch(this.value)" autocomplete="off">
+                          <div class="scc-picker-dropdown" id="scc-encounter-location-drop"></div>
+                        </div>
+                        <button type="button" class="scc-browse-btn scc-cb2-location-browse-btn" onclick="sccToggleEncounterLocationBrowse()">Browse All Locations ▾</button>
+                        <div class="scc-browse-panel" id="scc-browse-encounter-location"></div>
+                      </div>
+                      <!-- Same row as Location, not its own line below Quests -- a direct
+                           DM ask, deliberately deviating from the Figma reference (122:483
+                           has Difficulty full-width below the Quests field). -->
+                      <div class="scc-cb2-difficulty">
+                        <span class="scc-cb2-diff-label">Difficulty</span>
+                        <span class="scc-diff-value" id="scc-diff-value">—</span>
+                      </div>
                     </div>
-                    <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
+                    <div class="scc-cb2-field scc-picker-group">
+                      <label>Quests</label>
+                      <div class="scc-cb2-select-input" id="scc-encounter-quests-toggle" onclick="sccToggleQuestPicker()">
+                        <span id="scc-encounter-quests-display">None</span>
+                        <span class="scc-cb2-chevron" aria-hidden="true">&#9662;</span>
+                      </div>
+                      <div class="scc-picker-dropdown" id="scc-encounter-quest-drop"></div>
+                    </div>
+                  </div>
+
+                  <div class="scc-cb2-section">
+                    <div class="scc-cb2-section-label">Session Roster</div>
+                    <button type="button" class="scc-cb2-pill-btn" id="scc-add-all-players-btn" onclick="sccAddAllPlayers()">+ Add Players</button>
+                    <div class="scc-combat-session-creatures" id="scc-combat-session-creatures"></div>
+                  </div>
+
+                  <div class="scc-cb2-section">
+                    <div class="scc-cb2-section-label">Combatants</div>
+                    <div class="scc-cb2-search-row">
+                      <div class="scc-picker-group" id="scc-combat-search-group" style="flex:1">
+                        <div class="scc-picker-search-wrap">
+                          <input type="text" class="scc-picker-search scc-cb2-search-input" id="scc-pick-combatant" placeholder="Search…" oninput="sccCombatantSearch(this.value)">
+                          <div class="scc-picker-dropdown" id="scc-drop-combatant"></div>
+                        </div>
+                      </div>
+                      <button type="button" class="scc-cb2-pill-btn" id="scc-cb2-filters-toggle-btn" onclick="sccToggleCombatFiltersBar()">FILTERS</button>
+                    </div>
+                    <div class="scc-combat-filters-bar scc-cb2-filters-bar" id="scc-combat-filters-bar" style="display:none">
+                      <select id="scc-cf-tier" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Tier: All</option></select>
+                      <select id="scc-cf-category" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Category: All</option></select>
+                      <select id="scc-cf-region" class="cm-select" onchange="sccCombatFilterChanged()"><option value="">Region: All</option></select>
+                      <select id="scc-cf-type" class="cm-select" onchange="sccCombatFilterChanged()" title="Creature type (race) — only populated on a few creatures today"><option value="">Type: All</option></select>
+                      <select id="scc-cf-cr" class="cm-select" onchange="sccCombatFilterChanged()" title="Challenge Rating — only populated on a few creatures today"><option value="">CR: All</option></select>
+                      <select id="scc-cf-faction" class="cm-select" onchange="sccCombatFilterChanged()" title="Matched from each creature's own tags against real organizations/nations — not every creature has a tag that resolves to one"><option value="">Faction: All</option></select>
+                      <button type="button" class="scc-combat-filters-reset" onclick="sccCombatResetFilters()">Reset</button>
+                    </div>
+                    <div id="scc-combatant-staging" class="scc-combatant-staging">
+                      <div class="scc-empty-state">Add creatures and players above to build the encounter.</div>
+                    </div>
+                    <!-- Start Combat itself moved to the panel's top-right header, see
+                         .scc-cb2-build-header above -- this row is Clear All only now. -->
+                    <div class="scc-cb2-staging-actions">
+                      <button class="scc-btn-sm scc-btn-danger" id="scc-clear-all-btn" onclick="sccClearAllCombatants()" style="display:none">Clear All</button>
+                    </div>
+                  </div>
+
+                  <div class="scc-cb2-section" id="scc-cb2-total-loot-section">
+                    <div class="scc-cb2-section-label">Total Loot</div>
+                    <div class="scc-loot-totals-bar" id="scc-loot-totals"></div>
+                  </div>
+
+                  <div class="scc-cb2-bottom-row">
+                    <button type="button" class="scc-cb2-delete-btn" id="scc-cb2-delete-encounter-btn" onclick="sccDeleteEditingEncounter()" style="display:none">DELETE</button>
+                    <button type="button" class="scc-btn-primary scc-cb2-save-btn" id="scc-encounter-save-primary-btn" onclick="sccSaveEncounterPrimary()">Save</button>
                   </div>
                 </div>
-                <button class="scc-btn-secondary" id="scc-add-all-players-btn" onclick="sccAddAllPlayers()">+ Add All Players</button>
-                <div class="scc-difficulty-badge" id="scc-difficulty-badge">
-                  <span class="scc-diff-label">Difficulty</span>
-                  <span class="scc-diff-value" id="scc-diff-value">—</span>
-                </div>
-              </div>
-              <div id="scc-combatant-staging" class="scc-combatant-staging" style="margin-top:0.75rem;">
-                <div class="scc-empty-state">Add creatures and players above to build the encounter.</div>
-              </div>
-              <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;">
-                <button class="scc-btn-sm scc-btn-danger" id="scc-clear-all-btn" onclick="sccClearAllCombatants()" style="display:none">Clear All</button>
-                <button class="scc-btn-primary" id="scc-start-combat-btn" onclick="sccStartCombat()" style="display:none;margin-left:auto;" title="Uses any initiative you've already typed as-is; rolls a d20+DEX for anyone left blank, then sorts the full list.">&#9876; Start Combat &#8212; Sort by Initiative</button>
               </div>
             </div>
             <!-- Initiative tracker (hidden until combat starts) -->
@@ -5084,9 +5163,17 @@ function showDMToast(msg, type) {
   min-height: 0;
 }
 .scc-panel.active { display: block; }
+/* Was flush against the left edge with no margin -- on a wide monitor, the
+   1100px cap left every SCC panel (NPCs/Locations/Quests/Combat/Notes/Live
+   Session, all share this class) with a large dead black area on the right,
+   all the slack dumped on one side instead of split evenly. DM-reported,
+   confirmed not Combat-specific -- every SCC tab has this same wrapper.
+   Centered instead of removing the cap outright, since the cap itself
+   (readable line/row lengths on a very wide screen) is still worth keeping. */
 .scc-panel-inner {
   padding: 1.5rem 2rem 3rem;
   max-width: 1100px;
+  margin: 0 auto;
   overflow: visible;
 }
 .scc-section-title {
@@ -6319,6 +6406,419 @@ function showDMToast(msg, type) {
 .scc-beat-status-badge--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-border); }
 .scc-beat-status-badge--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(160,160,160,0.3); }
 /* ── Combat Tracker ── */
+/* ══════════════════ Combat: Figma redesign ══════════════════════════════
+   P0tcVgf02XeI13Tz0TtRaX, node 122:483, .scc-cb2-* prefix. Layered over the
+   older .scc-combat-* rules below/around this block, not a full replacement
+   of every rule in this section -- .scc-combat-builder is kept as the outer
+   shell's class (its own bg/border/radius/margin overridden below), and
+   several older classes (.scc-staging-*, .scc-loot-subsection*, .scc-loot-
+   totals-item-*, .scc-saved-encounter-row, .scc-encounter-save-sticky) are
+   now dead *within this Combat panel*, superseded by what follows -- left in
+   place rather than hunted down and removed rule-by-rule. .scc-combat-
+   session-label/-catalog-label are NOT dead -- still real, used by the
+   unrelated Setup-tab "Suggested from Session N" chip labels elsewhere in
+   this file. */
+.scc-cb2-row { display: flex; gap: var(--char-ov-gap-m); align-items: flex-start; }
+/* Sticky, independently-scrolling sidebar -- the same technique Live
+   Session's own control strip already established (.scc-live-strip:
+   position:sticky, align-items:flex-start on the row parent so the column
+   keeps its own intrinsic height instead of being stretched to match its
+   taller sibling, which is what makes sticky actually work). max-height +
+   its own overflow-y so a long saved-encounters list scrolls on its own
+   rather than pushing the sidebar off-screen or growing the whole row. */
+/* Sticky whole-column, matching Live Session's own .scc-live-strip exactly
+   -- no overflow/max-height here at all now. Putting overflow-y:auto
+   directly on this element (the prior fix) genuinely made independent
+   scroll work, but it came with a real, confirmed-live side effect: per
+   spec, setting overflow-y to anything but visible forces overflow-x to
+   compute as auto too, even though it was never declared -- and that
+   silently clipped the gold connector triangle (position:absolute,
+   right:-10px, deliberately poking past the card's own right edge) into
+   invisibility. Confirmed via getComputedStyle: overflowX read "auto" here
+   despite this rule never mentioning the x-axis. Moved the scroll/max-height
+   onto #scc-saved-encounters-list below instead, which has its own fix for
+   the same clipping risk. */
+/* max-height back on the column (matches the sticky offset, 1rem top + 1rem
+   assumed bottom breathing room), but WITHOUT overflow -- a bare max-height
+   doesn't clip anything by itself, it just caps how tall this flex
+   container is allowed to resolve to. That's what lets the flex algorithm
+   correctly give #saved-encounters-list (flex:1 1 auto, its own real
+   overflow-y:auto) whatever vertical space is actually left after the
+   title and "+ ADD" button take their own natural height, instead of the
+   flat 60vh guess this used to be capped at regardless of real available
+   room -- direct DM correction, real screenshot showed most of the
+   viewport sitting empty below a list that had stopped scrolling early. */
+.scc-cb2-saved-col {
+  flex: 0 0 21.5rem; display: flex; flex-direction: column; gap: 0.625rem;
+  position: sticky; top: 1rem; align-self: flex-start;
+  max-height: calc(100vh - 2rem);
+}
+.scc-cb2-col-title { font-family: var(--font-display); font-size: 1.125rem; color: var(--text); }
+.scc-cb2-add-card {
+  background: var(--blue-700); border: 1px dashed var(--blue-100);
+  border-radius: var(--radius-lg); padding: var(--char-ov-gap-xs); text-align: center;
+  font-family: var(--font-sans); font-weight: 600; font-size: 1.125rem; color: var(--text);
+  cursor: pointer; transition: var(--transition);
+}
+.scc-cb2-add-card:hover { border-color: var(--gold); color: var(--gold); }
+.scc-cb2-encounter-card {
+  background: var(--blue-600); border-radius: var(--radius-lg); padding: var(--char-ov-gap-xs);
+  display: flex; flex-direction: row; align-items: center; gap: 0.625rem; border: 2px solid transparent;
+  position: relative;
+}
+.scc-cb2-card-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.625rem; }
+.scc-cb2-encounter-card--editing { border-color: var(--gold); }
+/* Gold connector triangle -- Figma's imgPolygon3, a small rotated triangle
+   protruding past the card's right edge, vertically centered, only shown on
+   the currently-editing card (matches Figma's own imgPolygon3 which only
+   ever appears on the one "encounter" node with the gold border). Built as
+   a plain CSS border-triangle rather than fetching the transient Figma
+   asset URL (expires in 7 days) -- same gold as the card's own border, so
+   it reads as a genuine visual continuation of it into the panel beside it. */
+.scc-cb2-card-connector { display: none; }
+.scc-cb2-encounter-card--editing .scc-cb2-card-connector {
+  display: block; position: absolute; top: 50%; right: -0.625rem;
+  width: 0; height: 0; transform: translateY(-50%);
+  border-top: 7px solid transparent; border-bottom: 7px solid transparent;
+  border-left: 9px solid var(--gold);
+}
+.scc-cb2-card-name { font-family: var(--font-sans); font-weight: 600; font-size: 1.125rem; color: var(--text); }
+.scc-cb2-card-details { display: flex; flex-direction: column; gap: 0.625rem; font-family: var(--font-sans); font-size: 0.875rem; }
+/* Location + Difficulty share this row (Figma's own "row" node, gap-18) --
+   Quests stays outside it as its own full-width field, unchanged. */
+.scc-cb2-card-row { display: flex; gap: var(--char-ov-gap-xs); }
+.scc-cb2-card-row .scc-cb2-card-field { flex: 1 1 0; min-width: 0; }
+.scc-cb2-card-field { display: flex; flex-direction: column; }
+.scc-cb2-card-label { font-weight: 600; color: var(--blue-100); }
+.scc-cb2-card-value { color: var(--text); }
+/* Real gap between 2+ quests (was 0, every quest link ran flush against
+   the next with nothing to visually separate them) plus a real bullet
+   marker per entry -- direct DM correction, matches the bulleted list
+   Figma's own card shows. */
+.scc-cb2-card-quest-list { display: flex; flex-direction: column; gap: 0.2rem; }
+.scc-cb2-card-quest-link { color: var(--gold); text-decoration: underline; cursor: pointer; padding-left: 0.9rem; position: relative; }
+.scc-cb2-card-quest-link::before { content: '•'; position: absolute; left: 0; text-decoration: none; }
+.scc-cb2-card-quest-link:hover { color: var(--gold-bright); }
+.scc-cb2-card-quests-none { color: var(--text-muted); }
+.scc-cb2-card-action { align-self: flex-start; }
+
+/* Combat's own panel wants (per direct DM ask) to actually use the page's
+   width instead of sharing the shared 1100px .scc-panel-inner cap every
+   other SCC tab (NPCs/Locations/Quests/Notes/Live Session) still keeps --
+   scoped to this one panel only, same override shape Live Session already
+   uses for its own wrap (.scc-live-strip-wrap, max-width:none) rather than
+   touching the shared rule everyone else still relies on. The existing
+   1.5rem/2rem/3rem padding on .scc-panel-inner already gives a real 32px
+   right edge -- this only removes the artificial centered cap creating dead
+   space beyond it on anything wider than ~1164px. */
+#scc-panel-combat .scc-panel-inner { max-width: none; margin: 0; }
+.scc-cb2-build-col { flex: 1 1 0; min-width: 0; }
+.scc-cb2-build-panel {
+  background: var(--blue-600) !important; border: none !important; border-radius: var(--radius-lg) !important;
+  padding: var(--char-ov-gap-s) !important; margin-bottom: 0 !important;
+  display: flex; flex-direction: column; gap: var(--char-ov-gap-m);
+}
+.scc-cb2-build-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; width: 100%; }
+.scc-cb2-build-title { font-family: var(--font-display); font-size: 1.125rem; color: var(--text); }
+.scc-cb2-start-combat-btn { flex-shrink: 0; }
+/* Browse All now lives inside the Location .scc-cb2-field itself (see that
+   markup's own comment) -- .scc-cb2-field is flex-column with no
+   align-items set (default stretch), so the button needs its own
+   align-self or it'd stretch to the field's full width like a block
+   element. */
+.scc-cb2-location-browse-btn { align-self: flex-start; margin-top: 0.1rem; }
+.scc-cb2-section-label { font-family: var(--font-sans); font-weight: 600; font-size: 1rem; color: var(--text); margin-bottom: 0.5rem; }
+
+.scc-cb2-details { display: flex; flex-direction: column; gap: 0.5rem; }
+.scc-cb2-details-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.scc-cb2-field { display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 12rem; min-width: 0; position: relative; }
+/* Real bug, found via live DOM measurement, not guessed: the Quests field
+   is a DIRECT child of .scc-cb2-details, which is flex-direction:column --
+   in a column flex container the MAIN axis is vertical, so .scc-cb2-field's
+   own flex:1 1 12rem (written for its row-sibling use inside
+   .scc-cb2-details-row) was being read as a 192px HEIGHT basis here, not a
+   width, inflating the Quests field into a ~192px-tall mostly-empty box.
+   Confirmed live: getBoundingClientRect() showed the field itself at
+   192px tall while its only 3 children (label/select/closed dropdown)
+   summed to ~60px -- this, not the dropdown's own open/closed state (which
+   was already correctly display:none), is what actually read as "a large
+   empty gap above Combatants" / "a permanently-open list". Scoped narrowly
+   to just this direct-child case so Name/Location (children of
+   .scc-cb2-details-row, a real row context) keep their normal sizing. */
+.scc-cb2-details > .scc-cb2-field { flex: none; }
+.scc-cb2-field label { font-family: var(--font-sans); font-weight: 600; font-size: 0.875rem; color: var(--text); }
+.scc-cb2-input {
+  background: var(--blue-700); border: 1px solid #393944; border-radius: 8px;
+  height: 2.5rem; padding: 0 0.625rem; color: var(--text); font-family: var(--font-sans); font-size: 1rem;
+}
+.scc-cb2-input::placeholder { color: rgba(232,232,240,0.35); }
+.scc-cb2-select-input {
+  background: var(--blue-700); border: 1px solid #393944; border-radius: 8px;
+  height: 2.5rem; padding: 0 0.625rem; display: flex; align-items: center; justify-content: space-between;
+  color: var(--text); font-family: var(--font-sans); font-size: 1rem; cursor: pointer;
+}
+.scc-cb2-select-input span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scc-cb2-chevron { color: var(--blue-100); flex-shrink: 0; margin-left: 0.5rem; }
+.scc-cb2-quest-option.selected { color: var(--gold); }
+/* Now sits inline in .scc-cb2-details-row beside Location (direct DM ask,
+   see the row markup's own comment) instead of full-width below Quests --
+   sized like its row siblings (.scc-cb2-field) rather than as a standalone
+   block, so it doesn't visually mismatch Name/Location's own column width. */
+.scc-cb2-difficulty { display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 12rem; min-width: 0; justify-content: center; }
+.scc-cb2-diff-label { font-family: var(--font-sans); font-weight: 600; font-size: 0.875rem; color: var(--blue-100); }
+
+.scc-cb2-section { display: flex; flex-direction: column; gap: var(--char-ov-gap-xs); }
+.scc-cb2-pill-btn {
+  align-self: flex-start;
+  border: 1px solid var(--gold); border-radius: 100px; background: transparent;
+  color: var(--gold); font-family: var(--font-sans); font-weight: 800; font-size: 0.85rem;
+  text-transform: uppercase; padding: 0.5rem 1rem; cursor: pointer; transition: var(--transition);
+}
+.scc-cb2-pill-btn:hover { background: var(--gold-dim); }
+
+.scc-cb2-search-row { display: flex; gap: 0.625rem; align-items: flex-end; }
+.scc-cb2-search-input { width: 100%; }
+.scc-cb2-staging-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+/* Combatant row -- collapsed/expanded shell (Figma 123:2921 / 123:2779).
+   Row-to-row gap lives on the parent list (#scc-combatant-staging) alone now
+   -- this used to also carry its own margin-top, doubling the real spacing
+   (8px flex-gap + 8px margin = 16px) instead of matching the 10px the rest
+   of this design uses for a stacked-card list (Saved Encounters' own
+   .scc-cb2-saved-col gap). */
+.scc-cb2-combatant { background: var(--blue-700); border-radius: var(--radius-lg); padding: 0.5rem 1.125rem; position: relative; }
+.scc-cb2-combatant-info { display: flex; align-items: center; gap: var(--char-ov-gap-2xs); min-height: 3rem; flex-wrap: wrap; padding-right: 1.25rem; }
+/* Single-combatant removal, re-added per direct DM ask -- Clear-All-only was
+   a real usability problem at the table, confirmed by actual play. A
+   deliberate deviation from the Figma reference (122:483's Combatant
+   component has no per-row remove control at all), scoped to stay out of
+   the way of everything the last pass just decluttered: a small corner
+   glyph outside the row's own flex flow (so it can't wrap/crowd the
+   Initiative/QTY/name/details/Expand row the way the old inline "×" button
+   did), low-opacity by default, full opacity + red only on hover/focus.
+   Anchored to the outer .scc-cb2-combatant (position:relative above) so it
+   sits in the same top-right corner whether the row is collapsed or
+   expanded, not just one state. */
+.scc-cb2-combatant-remove {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.15rem;
+  transition: var(--transition);
+}
+.scc-cb2-combatant-remove:hover, .scc-cb2-combatant-remove:focus-visible { opacity: 1; color: var(--red); }
+/* Initiative/QTY -- Figma's real column is 65px wide at 14px labels
+   (page/fonts/pxs). The old 4rem/0.78rem pairing looked close on paper, but
+   flex-shrink:0 means an unbreakable word wider than its box's declared
+   width forces the box wider to fit it -- confirmed live via
+   getBoundingClientRect() that "Initiative" was rendering ~30% past the
+   4rem it was told to be. Fixed at the actual cause (let the label wrap,
+   matching Figma's own w-[min-content] treatment of this exact string,
+   which visibly breaks to 2 lines in the source frame at this width)
+   instead of just declaring a narrower number that flex-shrink:0 would
+   have ignored the same way. */
+/* Direct DM correction, real screenshot evidence: the exact Figma 65px/40px
+   split (previous round) rendered with a real clipping bug -- QTY's "23"
+   was visibly cut off. Root cause found while fixing this: neither input
+   ever had its native number-spinner (up/down arrows) removed, and those
+   arrows eat real horizontal space a browser reserves regardless of the
+   box's own declared width -- in a 40px box there was barely anything left
+   for 2 digits once the spinner claimed its share. Fixed both the actual
+   cause (spinners removed, same established pattern as
+   .scc-cb2-coin-val-input elsewhere in this file) and the sizes themselves
+   per direct instruction: Initiative narrower, QTY wider than the tightest
+   possible fit. Direct follow-up correction: giving the whole field wrapper
+   that same narrow width made the label itself the thing that broke --
+   "Initiative" doesn't fit 52px at 14px font, so it wrapped mid-word
+   ("Initiativ"/"e"). Decoupled the two: the wrapper is no longer width-
+   constrained at all (align-items:flex-start so it doesn't stretch to match
+   a sibling, and the label gets white-space:nowrap instead of the wrap-
+   permitting rule it had before) -- its real width is now just whatever the
+   unbroken label needs. The <input> itself keeps its own small, explicit
+   width completely independent of that, so the field reads its full label
+   while the box you actually type into stays exactly as narrow as asked. */
+.scc-cb2-num-field { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; flex-shrink: 0; }
+.scc-cb2-num-field--hidden { visibility: hidden; }
+.scc-cb2-num-field label { font-family: var(--font-sans); font-weight: 600; font-size: 0.875rem; line-height: 1.15; color: var(--text); white-space: nowrap; }
+.scc-cb2-num-field input {
+  background: var(--blue-700); border: 1px solid #393944; border-radius: 8px; height: 1.75rem;
+  padding: 0 0.4rem; color: var(--text); font-family: var(--font-sans); font-size: 0.875rem; min-width: 0;
+  text-align: center; width: 2.75rem;
+}
+.scc-cb2-num-field input::-webkit-outer-spin-button, .scc-cb2-num-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.scc-cb2-num-field input[type="number"] { -moz-appearance: textfield; }
+.scc-cb2-num-field--qty input { padding: 0 0.3rem; width: 3.25rem; }
+/* Real root cause of the whole Type/CR/AC block drifting left/right row to
+   row, found via live measurement, not the internal Type/CR widths I'd
+   already fixed (those ARE correctly identical, 77px, on every row --
+   confirmed via getBoundingClientRect() -- the problem was one level up).
+   flex:1 1 8rem here and on .scc-cb2-combatant-details are both flex-grow:1
+   siblings sharing the SAME leftover space -- with a fixed total row
+   width, a row whose name text is shorter (fewer PC rows' names vs. longer
+   creature names, in the real data that surfaced this) leaves more
+   leftover space to redistribute, and an even 1:1 split of THAT still
+   lands the boundary between them at a different absolute X per row.
+   flex-grow:0 here stops this column from ever growing past its own
+   content/basis, so .scc-cb2-combatant-details always starts at the exact
+   same X regardless of how long any given row's name is -- name text still
+   truncates via .scc-cb2-combatant-name's existing ellipsis rule if it's
+   genuinely too long for the fixed column, rather than pushing everything
+   after it sideways. */
+.scc-cb2-combatant-thumbname { display: flex; align-items: center; gap: 0.4rem; flex: 0 1 8rem; min-width: 0; }
+.scc-cb2-thumb-img, .scc-cb2-thumb-fallback { width: 2.1rem; height: 2.1rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.scc-cb2-thumb-fallback {
+  display: flex; align-items: center; justify-content: center; background: var(--blue-500);
+  color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
+}
+/* Wraps to a 2nd line instead of ellipsis-truncating -- keeping the name
+   column's width fixed is what makes Type/CR/AC line up across every row
+   (see .scc-cb2-combatant-thumbname's own comment), but the DM needs the
+   full name readable, not cut off. Same "wrap, never truncate" rule this
+   session already applied to the loot table for the same reason. */
+.scc-cb2-combatant-name { font-family: var(--font-sans); font-weight: 600; font-size: 0.9rem; color: var(--text); overflow-wrap: break-word; white-space: normal; }
+/* Type and CR both get Figma's real fixed 76.5px column width now, instead
+   of sizing to their own text -- a PC's CR span renders genuinely empty
+   (PCs have no CR), and with no fixed width that collapsed to ~0px and
+   dragged everything after it (the AC badge) leftward compared to a
+   creature row with real "CR 0.5" text -- confirmed via a real screenshot,
+   AC badges visibly zig-zagging between rows instead of lining up in one
+   column. Fixed widths mean every row reserves the identical space for
+   both slots regardless of what text (or no text) is actually in them. */
+.scc-cb2-combatant-details { display: flex; align-items: center; gap: 0.6rem; flex: 1 1 8rem; }
+.scc-cb2-combatant-type { font-family: var(--font-sans); font-size: 0.85rem; color: var(--text); width: 4.78125rem; flex-shrink: 0; }
+.scc-cb2-combatant-cr { font-family: var(--font-sans); font-size: 0.85rem; color: var(--red); width: 4.78125rem; flex-shrink: 0; text-align: center; }
+.scc-cb2-ac-badge {
+  background: var(--blue-100); color: var(--blue-800); border-radius: 0 0 14px 14px;
+  padding: 0.1rem 0.5rem; display: flex; flex-direction: column; align-items: center; line-height: 1.05;
+}
+.scc-cb2-ac-badge-label { font-family: var(--font-sans); font-weight: 700; font-size: 0.55rem; }
+.scc-cb2-ac-badge-num { font-family: var(--font-display); font-size: 0.8rem; }
+.scc-cb2-loot-assigned { font-family: var(--font-sans); font-size: 0.85rem; color: var(--green); font-weight: 600; min-width: 6rem; text-align: center; margin-right: 0.75rem; }
+/* Expand/Collapse -- Figma's BtnAccordion is a real 18px white circular
+   button with a chevron icon inside (bg-white, rounded-[9999px], size-18px),
+   not bare text -- .scc-cb2-expand-btn had no button chrome at all before.
+   Text label kept exactly as-is; the circle is new. */
+.scc-cb2-expand-btn {
+  display: flex; align-items: center; gap: var(--char-ov-gap-2xs); background: none; border: none; cursor: pointer;
+  color: var(--text); font-family: var(--font-sans); font-weight: 600; font-size: 0.85rem;
+}
+.scc-cb2-expand-circle {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 18px; height: 18px; border-radius: 9999px; background: #fff; color: var(--blue-800);
+}
+/* Circle itself was already the right 18px size -- the glyph inside it was
+   too small at 0.6rem, per direct DM correction. Bumped to fill the circle
+   properly, bold for legibility at this size. */
+.scc-cb2-expand-chevron { font-size: 0.95rem; font-weight: 700; line-height: 1; transition: transform 0.15s ease; }
+.scc-cb2-expand-chevron.open { transform: rotate(180deg); }
+
+/* Gap between the info row and the expanded Stats/Loot body -- Figma's real
+   value is a flat 10px on the expanded state's own outer flex-col, with no
+   divider border between them at all. The old 8px-margin + 18px-padding
+   stack (26px combined, plus a hairline this design doesn't have) was never
+   sourced from a real value -- replaced with the one real number. */
+.scc-cb2-combatant-body { display: none; flex-direction: column; gap: var(--char-ov-gap-m); margin-top: 0.625rem; }
+.scc-cb2-combatant-body.open { display: flex; }
+.scc-cb2-subsection { display: flex; flex-direction: column; gap: 0.625rem; }
+/* Loot's own subheader-to-content gap is 8px in Figma (the "inventory"
+   container), a real, distinct value from Stats' 10px -- not the same
+   number rounded differently. */
+.scc-cb2-subsection--loot { gap: var(--char-ov-gap-2xs); }
+.scc-cb2-subsection-title { font-family: var(--font-sans); font-weight: 600; font-size: 0.875rem; color: var(--text); border-bottom: 1px solid var(--blue-200); padding-bottom: 0.5rem; }
+.scc-cb2-stats { font-family: var(--font-sans); font-size: 0.82rem; color: var(--text); }
+/* Loot's real Figma structure: a "toolbar" group (currency pills + the
+   search/filters/add-item row, 18px gap between the two) sits inside a
+   "table" wrapper with its own separate 26px gap before the actual item
+   rows below it -- two distinct values, not the one flat 10px every child
+   of this subsection used to share. */
+.scc-cb2-loot-toolbar-group { display: flex; flex-direction: column; gap: var(--char-ov-gap-xs); }
+.scc-cb2-loot-table-wrap { display: flex; flex-direction: column; gap: var(--char-ov-gap-s); }
+.scc-cb2-loot-toolbar { display: flex; gap: var(--char-ov-gap-xs); align-items: flex-end; }
+.scc-cb2-add-item-btn { flex-shrink: 0; white-space: nowrap; }
+
+/* Real loot data table -- shared by per-combatant Assigned and Total Loot.
+   Figma's real coins-to-table gap is 18px (page/spacing/xs), not the 8px
+   this used to hardcode -- kept as the pills' own margin-bottom so Total
+   Loot (which renders this unwrapped) still gets it for free; the
+   per-combatant version below wraps the pills in .scc-cb2-loot-toolbar-group
+   (its own 18px flex gap), so that specific case zeroes this margin out
+   rather than stacking two 18px gaps into one 36px one. */
+.scc-cb2-loot-coins { display: flex; gap: var(--char-ov-gap-xs); margin-bottom: var(--char-ov-gap-xs); }
+.scc-cb2-loot-toolbar-group .scc-cb2-loot-coins { margin-bottom: 0; }
+.scc-cb2-coin-pill { display: flex; align-items: center; gap: 0.25rem; border-radius: var(--radius-sm); padding: 0.25rem 0.5rem; font-family: var(--font-sans); font-weight: 600; font-size: 0.85rem; }
+.scc-cb2-coin-pill.gold   { background: var(--currency-gold-coin); color: var(--blue-800); }
+.scc-cb2-coin-pill.silver { background: var(--currency-silver);    color: var(--blue-800); }
+.scc-cb2-coin-pill.copper { background: var(--currency-copper);    color: var(--text); }
+/* Total Loot's own totals are read-only (see the usage note above -- this
+   class is exclusively the read-only span, .scc-cb2-coin-val-input below is
+   the real editable one for per-combatant loot) -- the white-box/black-
+   border treatment matched Figma's own literal mockup, but on a value
+   nothing can actually click into, it reads as a broken/dead input field
+   rather than a display number. Direct DM correction: plain bold text,
+   inheriting the pill's own text color, no box at all. */
+.scc-cb2-coin-val { font-weight: 700; font-size: 0.95rem; margin-left: 0.15rem; }
+/* Real editable variant of the same white/black-bordered value box, used by
+   the per-combatant Loot section's Gold/Silver/Copper -- same visual box as
+   .scc-cb2-coin-val above (Total Loot's read-only span), just a real input. */
+.scc-cb2-coin-val-input {
+  background: #fff; color: var(--blue-800); border: 1px solid #000; border-radius: 3px;
+  padding: 0.05rem 0.4rem; font-weight: 400; font-family: var(--font-sans); font-size: 0.85rem;
+  width: 3.2rem; text-align: center;
+}
+.scc-cb2-coin-val-input::-webkit-outer-spin-button, .scc-cb2-coin-val-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.scc-cb2-coin-val-input[type="number"] { -moz-appearance: textfield; }
+
+/* Real DM ask: no text truncation anywhere in this table -- names/specs/
+   descriptions need to actually be readable, not ellipsis-cut. Rows now
+   wrap instead of clipping (align-items:start since wrapped cells vary in
+   height, thumb/qty get their own centering so they don't look stranded at
+   the top of a tall wrapped row), and Name/Specs/Description each got a
+   bigger relative share of the row so wrapping is the exception rather than
+   the rule. min-width plus the parent's own overflow-x:auto is the fallback
+   for genuinely narrow viewports, matching this file's established table
+   pattern elsewhere, rather than ever squeezing columns unreadably. */
+.scc-cb2-loot-table { display: flex; flex-direction: column; gap: 0.25rem; overflow-x: auto; min-width: 0; }
+.scc-cb2-loot-row {
+  display: grid;
+  grid-template-columns: 2.2rem 1.6fr 0.7fr 0.85fr 0.55fr 1.1fr 2fr 3.2rem;
+  min-width: 46rem;
+  gap: 0.6rem; align-items: start; padding: 0.4rem 0; border-bottom: 1px solid var(--scc-border);
+  font-family: var(--font-sans); font-size: 0.78rem; color: var(--text);
+}
+.scc-cb2-loot-table .scc-cb2-loot-row:has(.scc-cb2-loot-remove) { grid-template-columns: 2.2rem 1.6fr 0.7fr 0.85fr 0.55fr 1.1fr 2fr 3.2rem 1.5rem; min-width: 49rem; }
+.scc-cb2-loot-head { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--blue-100); font-size: 0.68rem; border-bottom: 1px solid var(--blue-200); align-items: center; }
+.scc-cb2-loot-thumb-img, .scc-cb2-loot-thumb-fallback { width: 1.8rem; height: 1.8rem; border-radius: 6px; object-fit: cover; align-self: center; }
+.scc-cb2-loot-thumb-fallback { display: flex; align-items: center; justify-content: center; background: var(--blue-500); color: var(--gold); font-family: var(--font-display); font-size: 0.75rem; }
+.scc-cb2-loot-name, .scc-cb2-loot-desc, .scc-cb2-loot-specs, .scc-cb2-loot-cat { overflow-wrap: break-word; white-space: normal; }
+.scc-cb2-loot-qty-input { width: 3.5rem; background: var(--blue-700); border: 1px solid #393944; border-radius: 6px; color: var(--text); font-family: var(--font-sans); font-size: 0.78rem; padding: 0.15rem 0.3rem; align-self: center; }
+.scc-cb2-loot-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; align-self: center; }
+.scc-cb2-loot-remove:hover { color: var(--red); }
+.scc-loot-item-list-empty, .scc-loot-totals-empty { font-family: var(--font-sans); font-size: 0.82rem; color: var(--text-muted); font-style: italic; padding: 0.35rem 0; }
+
+.scc-cb2-bottom-row { display: flex; align-items: center; justify-content: space-between; }
+.scc-cb2-delete-btn {
+  border: 1px solid var(--red); border-radius: 100px; background: transparent; color: var(--red);
+  font-family: var(--font-sans); font-weight: 800; font-size: 0.85rem; text-transform: uppercase;
+  padding: 0.5rem 1rem; cursor: pointer; transition: var(--transition);
+}
+.scc-cb2-delete-btn:hover { background: var(--red-dim); }
+.scc-cb2-save-btn { margin-left: auto; }
+
+@media (max-width: 900px) {
+  .scc-cb2-row { flex-direction: column; }
+  .scc-cb2-saved-col { flex: 1 1 auto; width: 100%; position: static; }
+  .scc-saved-encounters-list { max-height: none; overflow-y: visible; }
+  .scc-cb2-loot-row { grid-template-columns: 1.8rem 1fr 1fr; min-width: 0; }
+  .scc-cb2-loot-cat, .scc-cb2-loot-price, .scc-cb2-loot-weight, .scc-cb2-loot-specs, .scc-cb2-loot-desc { display: none; }
+}
+
 .scc-combat-builder {
   background: var(--scc-surface-high);
   border: 1px solid var(--scc-border);
@@ -6335,30 +6835,51 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
   margin-bottom: 0.4rem;
 }
+/* Divider before the catalog-search label -- separates "quick-add from what's
+   already prepped" (the roster chips above) from "browse/search everything"
+   (filters + search box below) as two distinct tools, not one continuous list. */
+.scc-combat-catalog-label {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--scc-border-mid);
+}
 .scc-combat-session-creatures {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
   margin-bottom: 1rem;
 }
+/* Corrected per direct DM feedback -- this was backwards (default state
+   solid-gold, "already added" state faded to hollow/grey), the exact
+   confusion the Suggested-chip system elsewhere in this file was already
+   fixed to avoid. Now combines this file's own two already-correct
+   conventions instead of inventing a third: not-yet-added uses
+   .scc-suggested-chip's own hollow/blue-outline treatment (a real
+   candidate, not yet a real selection), added uses .scc-chip's own
+   solid-gold-fill treatment (gold is reserved everywhere else in this app
+   for "this is actually, really selected"). Stays clickable in both states
+   on purpose -- clicking an already-added chip still adds another copy
+   (SCC_COMBATANTS is index-keyed, not deduped by id; see
+   sccAddToCombatStaging()'s own comment) -- only the color/fill changed,
+   not the interaction. */
 .scc-combat-session-chip {
-  background: var(--dm-gold-dim);
-  border: 1px solid var(--scc-border-gold);
+  background: transparent;
+  border: 1px solid var(--dm-border-blue);
   border-radius: 20px;
-  color: var(--dm-gold);
+  color: var(--dm-blue);
   font-family: var(--font-sans);
   font-size: 0.78rem;
   padding: 0.25rem 0.75rem;
   cursor: pointer;
   transition: var(--dm-transition);
 }
-.scc-combat-session-chip:hover { background: var(--dm-gold-dim-hover); }
+.scc-combat-session-chip:hover { background: var(--dm-blue-dim); }
 .scc-combat-session-chip.added {
-  background: transparent;
-  border-color: var(--scc-border-mid);
-  color: var(--dm-text-faint);
+  background: var(--dm-gold-dim);
+  border-color: var(--scc-border-gold);
+  color: var(--dm-gold);
 }
-.scc-combat-session-chip.added:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
+.scc-combat-session-chip.added:hover { background: var(--dm-gold-dim-hover); }
 /* Setup's "Suggested from Session N" quick-add chips -- a real, deliberately
    distinct look from .scc-chip (the actual assigned-list pills, solid
    dim-gold fill), not just a different +/✓ prefix symbol: hollow/outlined,
@@ -6446,10 +6967,49 @@ function showDMToast(msg, type) {
   margin: 0.4rem 0 0.6rem;
 }
 .scc-saved-encounters-save-row .scc-input { flex: 1; }
+/* Sticks to the top of the scrolling Combat panel once you scroll past it --
+   the save action stays reachable while you're working deep in the
+   combatant/loot list below, without needing a second copy of the button
+   down there (that was tried first; having "Save Changes" visible in two
+   places at once read as redundant, not helpful). Own background + border +
+   shadow so it reads as floating above the content scrolling underneath it,
+   not just stuck in place looking like part of the normal flow. */
+.scc-encounter-save-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.6rem 0.75rem 0.7rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.scc-encounter-save-hint {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+  margin-top: 0.35rem;
+}
+/* Independent scroll lives here now, not on the outer sticky column (see
+   .scc-cb2-saved-col's own comment) -- and since overflow-y:auto still
+   forces overflow-x to auto too (the same CSS quirk, unavoidable via the
+   overflow properties themselves), the fix is to make sure nothing actually
+   needs to cross this box's own padding-box edge: padding-right reserves
+   real room for the connector triangle to sit fully inside the clip
+   boundary instead of past it, and the matching negative margin-right
+   cancels that padding back out for the column's own outer width so cards
+   don't visually narrow relative to the "+ ADD" button/title above them. */
 .scc-saved-encounters-list {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.75rem;
+  margin-right: -0.75rem;
 }
 .scc-saved-encounter-row {
   display: flex;
@@ -6507,20 +7067,34 @@ function showDMToast(msg, type) {
   color: var(--dm-text-muted);
   margin-bottom: 0.2rem;
 }
+/* Real root cause of the "all caps" report, per the Figma reference
+   (122:483) -- the difficulty value was set in var(--font-headers), i.e.
+   Cinzel Decorative, a display font whose lowercase glyphs are drawn as
+   small caps. The DOM text was already correct Title Case ("Trivial",
+   "Deadly") -- sccUpdateDifficulty()/sccComputeDifficultyForEnemies()
+   never uppercased anything -- the font itself just visually rendered it
+   that way. Figma's own difficulty value uses Font/Body (Roboto), not
+   Font/Display, both in the Details panel and on the saved-encounter
+   cards -- switched to match, which is what actually shows true
+   lowercase letters. */
 .scc-diff-value {
-  font-family: var(--font-headers);
+  font-family: var(--font-sans);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--dm-text-muted);
 }
 .scc-diff-value.low      { color: var(--scc-diff-low); }
 .scc-diff-value.moderate { color: var(--scc-diff-moderate); }
 .scc-diff-value.high     { color: var(--scc-diff-high); }
 .scc-diff-value.deadly   { color: var(--scc-diff-deadly); }
+/* 10px between rows -- the same stacked-card-list gap Saved Encounters'
+   own column already uses (.scc-cb2-saved-col), not a separate value. The
+   old 8px here plus .scc-cb2-combatant's own now-removed margin-top were
+   double-counting to a real 16px; this is the single, only source now. */
 .scc-combatant-staging {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 .scc-staging-row {
   display: flex;
@@ -6539,6 +7113,10 @@ function showDMToast(msg, type) {
    stats (skills, saves, resistances, etc.) stay behind Stats since that's still
    a lot of info not always needed instantly. */
 .scc-staging-ac { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text); font-weight: 700; }
+/* Separates "what this is" (thumbnail/name/type/CR/AC/DEX) from "what you
+   can do to it" (Init/Stats/Loot/remove) -- the row previously ran all of
+   these together with no visual boundary between info and actions. */
+.scc-staging-divider { width: 1px; align-self: stretch; background: var(--scc-border-mid); flex-shrink: 0; }
 .scc-staging-init {
   width: 60px;
   background: var(--dm-surface);
@@ -6560,6 +7138,92 @@ function showDMToast(msg, type) {
   transition: color 0.15s;
 }
 .scc-staging-remove:hover { color: var(--dm-red); }
+/* Thumbnail -- real art (players: uploaded photo, creatures: catalog image)
+   or, for creatures only, a plain letter-avatar fallback. Same 28px circle
+   either way so the row stays aligned regardless of which renders. */
+.scc-staging-thumb, .scc-staging-thumb-fallback {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+}
+.scc-staging-thumb { object-fit: cover; border: 1px solid var(--scc-border-mid); }
+.scc-staging-thumb-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--scc-surface-high); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-headers); font-size: 0.8rem; color: var(--dm-gold);
+}
+/* Coin-count badge on the Loot button's corner once real loot (coins or
+   items) has been assigned -- a real number of "loot lines," not just a
+   presence dot, so a glance says how much is there, not merely that
+   something is. Perched as an overlapping corner badge (classic
+   notification-count pattern), not inline text, to stay small.
+   Deliberately NOT --dm-gold on --dm-gold (the button's own fill) -- that
+   combination was the earlier dot's real, DM-reported bug (loot was set,
+   nothing showed). Uses the button's inverse instead: a dark pill
+   (--dm-gold-text-on) with a gold coin+number and a gold border -- still
+   the same treasure/gold theme as the button itself, guaranteed to
+   contrast against it, and doesn't borrow a hue (green/blue/etc.) that
+   already means something else elsewhere in this app. */
+.scc-staging-loot-btn { position: relative; overflow: visible; }
+.scc-staging-loot-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--dm-gold-text-on);
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  border: 1.5px solid var(--dm-gold);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+/* Running total across every staged combatant's loot -- recomputed fresh
+   from SCC_COMBATANTS on every render, never a separately-tracked number
+   that could drift from what's actually assigned. Coins stay one inline row
+   at the top; items render as a real list below (one row per distinct item,
+   each with its own thumbnail + quantity), not a comma-joined text run. */
+.scc-loot-totals-bar {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--scc-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  font-family: var(--font-sans);
+}
+.scc-loot-totals-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.scc-loot-totals-label { font-size: 0.78rem; font-weight: 700; color: var(--dm-text); text-transform: uppercase; letter-spacing: 0.04em; }
+.scc-loot-totals-empty { font-size: 0.8rem; color: var(--dm-text-muted); font-style: italic; }
+.scc-loot-totals-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--scc-border-mid);
+}
+.scc-loot-totals-item-row { display: flex; align-items: center; gap: 0.55rem; }
+.scc-loot-totals-item-thumb, .scc-loot-totals-item-thumb-fallback {
+  width: 24px; height: 24px; border-radius: var(--dm-radius-sm); flex-shrink: 0;
+}
+.scc-loot-totals-item-thumb { object-fit: cover; border: 1px solid var(--scc-border-mid); }
+.scc-loot-totals-item-thumb-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--scc-surface); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-headers); font-size: 0.68rem; color: var(--dm-gold);
+}
+.scc-loot-totals-item-name { font-size: 0.82rem; color: var(--dm-text); flex: 1; }
+.scc-loot-totals-item-qty { font-size: 0.78rem; color: var(--dm-text-muted); font-weight: 700; flex-shrink: 0; }
 /* Initiative list */
 .scc-combat-header-row {
   display: flex;
@@ -6995,6 +7659,18 @@ function showDMToast(msg, type) {
 .dm-main:has(#scc-panel-live.active) { overflow: visible; }
 .dm-main:has(#scc-panel-live.active) .dm-forms-panel { overflow: visible; }
 #scc-panel-live.active { overflow: visible; }
+/* Same fix, now also needed for Combat -- it grew its own position:sticky
+   element (the encounter save bar) and hit the identical dead-end: .scc-panel
+   is sticky's designated containing block (real overflow-y:auto), but never
+   actually scrolls internally itself for the same ancestor-chain reason
+   described above, so nothing ever "stuck" -- confirmed live, its own
+   scrollHeight already equalled its clientHeight, same as Live Session's did
+   before this exact fix. Notes and every other tab still keep their
+   original overflow contexts untouched. */
+#form-session:has(#scc-panel-combat.active) { overflow: visible; }
+.dm-main:has(#scc-panel-combat.active) { overflow: visible; }
+.dm-main:has(#scc-panel-combat.active) .dm-forms-panel { overflow: visible; }
+#scc-panel-combat.active { overflow: visible; }
 @media (max-width: 900px) {
   .scc-live-strip-wrap { grid-template-columns: 1fr; }
   .scc-live-strip { position: static; }
@@ -8265,6 +8941,30 @@ function showDMToast(msg, type) {
   display: none;
 }
 .scc-loot-panel.open { display: block; }
+/* Coins / Add Item / Assigned used to run together with only a small gap
+   between them (no label, no divider) -- easy to misread as one
+   undifferentiated block. Each subsection now gets its own small caption,
+   matching the same all-caps muted-label language already used elsewhere
+   in this panel (.scc-combat-session-label, .scc-loot-totals-label), plus a
+   top divider on every subsection after the first so the eye has a real
+   boundary to land on. */
+.scc-loot-subsection { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--scc-border-mid); }
+.scc-loot-subsection:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.scc-loot-subsection-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dm-text-muted);
+  margin-bottom: 0.4rem;
+}
+.scc-loot-item-list-empty {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--dm-text-muted);
+  font-style: italic;
+}
 /* ── Per-creature stat-block panel on staging rows. Shows whatever fields are
    real for that creature and omits the rest — no placeholders implying data
    that doesn't exist. ── */
@@ -8870,6 +9570,21 @@ function showDMToast(msg, type) {
 .scc-statblock-entry { font-family: var(--font-sans); font-size: 0.76rem; margin-bottom: 0.3rem; }
 .scc-statblock-entry-name { font-weight: 700; color: var(--dm-text); }
 .scc-statblock-entry-desc { color: var(--dm-text-muted); display: block; }
+/* On wide screens, AC/HP/Speed/etc. (.scc-statblock-rows) sits beside
+   Attacks/Traits/Actions instead of everything stacking in one long column
+   -- direct DM ask, real vertical-space saving on the Build Encounter
+   panel's now-much-wider layout (see the earlier full-width panel fix).
+   Reactions/Legendary Actions stay full-width below this row, unchanged --
+   not named in the ask, and rare enough on real creatures that a 3rd
+   column wasn't worth the complexity. Collapses back to a single stacked
+   column under 700px, since that's genuinely too narrow for 2 real columns
+   of stat-block text to stay readable. */
+.scc-statblock-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+.scc-statblock-two-col .scc-statblock-rows { margin-bottom: 0; }
+.scc-statblock-two-col .scc-statblock-section:first-child { margin-top: 0; }
+@media (max-width: 700px) {
+  .scc-statblock-two-col { grid-template-columns: 1fr; gap: 0; }
+}
 .scc-loot-row {
   display: flex;
   gap: 0.5rem;
@@ -8918,26 +9633,47 @@ function showDMToast(msg, type) {
 .scc-coin-label.gp { color: #f0c040; }
 .scc-coin-label.sp { color: #c8d4e0; }
 .scc-coin-label.cp { color: #d4845a; }
-.scc-loot-item-chip {
-  display: inline-flex;
+/* Assign-Loot item list -- a real list row per item (was a comma-run of
+   pill chips with no way to set quantity beyond adding the same item
+   again). Thumbnail reuses the same .scc-loot-totals-item-thumb classes as
+   the read-only Total Loot list below it, so both lists read as one visual
+   language. */
+.scc-loot-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.scc-loot-item-row {
+  display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.15rem 0.5rem 0.15rem 0.65rem;
-  background: rgba(96,165,250,0.08);
-  border: 1px solid rgba(96,165,250,0.2);
-  border-radius: 12px;
+  gap: 0.55rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(96,165,250,0.06);
+  border: 1px solid rgba(96,165,250,0.18);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-loot-item-row-name { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-blue); flex: 1; min-width: 0; }
+.scc-loot-item-qty-input {
+  width: 48px;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
   font-family: var(--font-sans);
-  font-size: 0.72rem;
-  color: var(--dm-blue);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.3rem;
+  text-align: center;
+  flex-shrink: 0;
 }
 .scc-loot-item-remove {
   background: none;
   border: none;
   color: var(--dm-text-muted);
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   padding: 0;
   line-height: 1;
+  flex-shrink: 0;
 }
 .scc-award-btn {
   padding: 0.25rem 0.65rem;
@@ -13570,6 +14306,16 @@ var SCC_END_COMBAT_ITEMS = [];
 // encounter INTO staging via the normal sccAddToCombatStaging() path; nothing
 // about live combat ever reads this list directly.
 var SCC_SAVED_ENCOUNTERS = [];
+// Id of the saved encounter currently loaded for editing (null = "next save
+// creates a new encounter"). Set by sccLoadSavedEncounter(), cleared by
+// sccCancelEditEncounter()/sccClearAllCombatants()/sccEndCombat() -- see
+// sccSetEditingEncounter()'s own comment for the full reasoning.
+var SCC_EDITING_ENCOUNTER_ID = null;
+// Quest ids currently attached to the encounter being built -- separate from
+// SCC_SELECTED (that array's picker convention is chip-list-per-type, and
+// Quests here needs its own display-text-joined-by-commas treatment per the
+// Details panel field), reset by the same 4 paths as SCC_EDITING_ENCOUNTER_ID.
+var SCC_ENCOUNTER_QUEST_IDS = [];
 
 // NPC relationship labels stored per session (npc_id → relationship string)
 var SCC_NPC_RELATIONSHIPS = {};
@@ -14277,7 +15023,13 @@ function sccSwitchPanel(name) {
     var viewedSession = sccResolveViewedSession();
     sccRenderTaggedNotes(viewedSession ? viewedSession.session_number : undefined);
   }
-  if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); sccLoadSavedEncounters(); }
+  // sccRenderStagingList() call added here (not just reactively after an
+  // add/remove) so the persistent #scc-loot-totals bar shows its real
+  // "Nothing assigned yet" state on first arrival at this tab -- previously
+  // that bar didn't exist in the DOM at all until the first reactive
+  // render, since the old design only ever appended it as part of a
+  // non-empty combatant list.
+  if (name === 'combat') { sccRenderCombatSessionCreatures(); sccCombatPopulateFilterOptions(); sccLoadSavedEncounters(); sccRenderStagingList(); sccUpdateDifficulty(); }
 }
 // &#9552;&#9552; Field Guide &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 // ── Field Guide document (multi-session, block-based storage) ──────
@@ -15903,6 +16655,98 @@ var SCC_PICKER_SOURCES = {
   }
 };
 
+// ── Combat's own Location field: search-and-pick reusing Setup's picker
+// component (SCC_PICKER_SOURCES.location / sccBrowseGroups('location') as
+// the data, .scc-picker-search/.scc-picker-dropdown/.scc-browse-btn/
+// .scc-browse-panel as the markup+CSS) without literally reusing
+// sccPickerSelect()/sccBrowseSelect() -- those two write into
+// SCC_SELECTED['location'] and its chip list, Setup's own multi-select
+// state for which locations are assigned to the whole session. Combat's
+// Location is a single free-text value on one combat_encounters row, a
+// genuinely different target; routing it through Setup's functions would
+// have meant a pick here silently adding a chip to Setup's own picker too.
+// #scc-encounter-location itself stays a plain <input> the whole time --
+// picking a result here just sets its .value, so every existing
+// save/edit/reset code path (sccSaveEncounterAsNew/sccUpdateSavedEncounter/
+// sccSetEditingEncounter, all of which just read locInput.value) needed
+// zero changes.
+function sccEncounterLocationSearch(query) {
+  var drop = document.getElementById('scc-encounter-location-drop');
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var results = SCC_PICKER_SOURCES.location().filter(function(item) {
+    return item.name.toLowerCase().indexOf(query) >= 0;
+  }).slice(0, 12);
+  if (!results.length) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  drop.innerHTML = results.map(function(item) {
+    return '<div class="scc-picker-option" onclick="sccEncounterLocationSelect(\'' + sccEsc(item.name) + '\')">'
+      + sccEsc(item.name)
+      + (item.sub ? '<div class="scc-picker-option-sub">' + sccEsc(item.sub) + '</div>' : '')
+      + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+
+function sccEncounterLocationSelect(name) {
+  var input = document.getElementById('scc-encounter-location');
+  if (input) input.value = name;
+  var drop = document.getElementById('scc-encounter-location-drop');
+  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  var panel = document.getElementById('scc-browse-encounter-location');
+  if (panel) panel.classList.remove('open');
+}
+
+function sccToggleEncounterLocationBrowse() {
+  var panel = document.getElementById('scc-browse-encounter-location');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.scc-browse-panel.open').forEach(function(p) { p.classList.remove('open'); });
+  if (isOpen) return;
+  sccRenderEncounterLocationBrowsePanel(panel);
+  var btn = document.querySelector('[onclick="sccToggleEncounterLocationBrowse()"]');
+  if (btn) {
+    var rect   = btn.getBoundingClientRect();
+    var panelW = 420;
+    var top    = rect.bottom + 4;
+    var left   = rect.left;
+    if (left + panelW > window.innerWidth - 12) left = window.innerWidth - panelW - 12;
+    if (left < 8) left = 8;
+    panel.style.top  = top  + 'px';
+    panel.style.left = left + 'px';
+  }
+  panel.classList.add('open');
+}
+
+// A single-select variant of sccRenderBrowsePanel/sccBrowseSelect for the
+// same reason sccEncounterLocationSelect above exists -- reuses
+// sccBrowseGroups('location') directly (pure data grouping, nothing
+// SCC_SELECTED-specific about it) but picks-and-closes immediately rather
+// than toggling a persistent "selected" set with its own Done button, since
+// this field only ever holds one value at a time.
+function sccRenderEncounterLocationBrowsePanel(panel) {
+  var groups = sccBrowseGroups('location');
+  var html = '';
+  Object.keys(groups).sort().forEach(function(region) {
+    html += '<div class="scc-browse-group-header">' + sccEsc(region) + '</div>';
+    Object.keys(groups[region]).sort().forEach(function(nation) {
+      html += '<div class="scc-browse-subheader">' + sccEsc(nation) + '</div>';
+      groups[region][nation].sort(function(a,b){return a.name.localeCompare(b.name);}).forEach(function(item) {
+        html += '<div class="scc-browse-option" onclick="sccEncounterLocationSelect(\'' + sccEsc(item.name) + '\');sccCloseEncounterLocationBrowse();">'
+          + sccEsc(item.name)
+          + '<span class="scc-browse-option-cat">(' + sccEsc(item.cat) + ')</span>'
+        + '</div>';
+      });
+    });
+  });
+  panel.innerHTML = '<div class="scc-browse-panel-scroll">' + html + '</div>';
+}
+
+function sccCloseEncounterLocationBrowse() {
+  var panel = document.getElementById('scc-browse-encounter-location');
+  if (panel) panel.classList.remove('open');
+}
+
 function sccPickerSearch(type, query) {
   var dropId = 'scc-drop-' + type;
   var drop   = document.getElementById(dropId);
@@ -15932,7 +16776,11 @@ function sccPickerSelect(type, id, name) {
   // 4 types' visible chip rows), so there's nothing to dedupe against anyway.
   if (type === 'combatant') {
     sccPickerClose(type);
-    sccAddToCombatStaging(id, name, sccCombatReadAndResetQty());
+    // Quantity is no longer set before adding -- it's now a real, editable
+    // field on the staged row itself (QTY, matching Figma's Combatant
+    // component), bumped up there after the row exists rather than
+    // pre-selected here.
+    sccAddToCombatStaging(id, name, 1);
     return;
   }
   if (SCC_SELECTED[type] && SCC_SELECTED[type].some(function(s) { return s.id === id; })) {
@@ -17034,20 +17882,11 @@ function sccRenderCombatSessionCreatures() {
 }
 
 function sccQuickAddCombatant(id, name) {
-  sccAddToCombatStaging(id, name, sccCombatReadAndResetQty());
+  // Always adds one row at qty 1 -- the DM bumps QTY on the row itself
+  // afterward for multiples (see sccSetCombatantQty()), matching the search
+  // path above.
+  sccAddToCombatStaging(id, name, 1);
   sccRenderCombatSessionCreatures();
-}
-
-// Shared by the search-result click path and the roster quick-add chips --
-// one qty field in the search row covers both entry points rather than
-// cluttering each compact roster chip with its own input. Reads whatever
-// the DM typed, then resets to 1 immediately so it can't silently stick at
-// a large number and surprise the next single click.
-function sccCombatReadAndResetQty() {
-  var qtyEl = document.getElementById('scc-combat-add-qty');
-  var qty = qtyEl ? (parseInt(qtyEl.value) || 1) : 1;
-  if (qtyEl) qtyEl.value = 1;
-  return Math.max(1, qty);
 }
 
 // Distinct option values pulled live from the already-loaded CREATURES array each
@@ -17153,6 +17992,17 @@ function sccCombatResetFilters() {
   sccCombatFilterChanged();
 }
 
+// Show/hide the filter bar itself -- Figma's "FILTERS" pill toggles between
+// closed (bar hidden) and open (bar visible, label reads "FILTERS ✕").
+function sccToggleCombatFiltersBar() {
+  var bar = document.getElementById('scc-combat-filters-bar');
+  var btn = document.getElementById('scc-cb2-filters-toggle-btn');
+  if (!bar) return;
+  var open = bar.style.display === 'none';
+  bar.style.display = open ? '' : 'none';
+  if (btn) btn.textContent = open ? 'FILTERS ✕' : 'FILTERS';
+}
+
 // Dedicated search for the combat-add box — separate from the generic
 // sccPickerSearch() so the other 4 picker types (location/npc/quest/item)
 // stay untouched. Matches name AND habitat/description/tags (creatures only —
@@ -17243,33 +18093,71 @@ function sccComputePcAC(pc, sheet) {
   return ac;
 }
 
-// qty is optional and defaults to 1 (unchanged single-add behavior) -- when
-// > 1, pushes that many genuinely separate combatant objects in one call
-// rather than relying on the caller to loop, so every entry point (search
-// results, roster quick-add chips) gets multi-add for free by just passing
-// the qty they read from #scc-combat-add-qty.
+// qty is optional and defaults to 1. Per the Figma redesign, a creature row
+// now carries its own QTY field directly (a single staged row can represent
+// N identical creatures sharing one Initiative roll and one shared loot
+// pool) rather than pushing N separate row objects -- edited live afterward
+// via sccSetCombatantQty(). PCs never stack (a player is always exactly one
+// person), so qty is forced to 1 for a PC regardless of what's passed.
+// sccStartCombat() is what actually expands a qty>1 row into N separate,
+// individually-trackable live combatants -- staging itself stays one row.
 function sccAddToCombatStaging(id, name, qty) {
-  var n = Math.max(1, parseInt(qty) || 1);
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   var creature  = creatures.find(function(c) { return c.id === id; });
   var pc        = SCC_PLAYERS.find(function(p) { return p.id === id; });
-  for (var i = 0; i < n; i++) {
-    var combatant = {
-      id: id, name: name, isPC: !!pc,
-      cr:    creature ? creature.challenge_rating : null,
-      ac:    creature ? creature.ac : (pc ? sccComputePcAC(pc, SCC_SHEETS[id]) : null),
-      hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
-      hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
-      dexMod: (function() {
-        var dex = creature ? creature.dex : (pc ? (pc.ability_scores || {}).dex : 10);
-        return dex ? Math.floor((dex - 10) / 2) : 0;
-      })(),
-      initiative: null,
-      conditions: [],
-      loot: { items: [], gp: 0, sp: 0, cp: 0 }
-    };
-    SCC_COMBATANTS.push(combatant);
-  }
+  var n = pc ? 1 : Math.max(1, parseInt(qty) || 1);
+  var combatant = {
+    id: id, name: name, isPC: !!pc, qty: n,
+    cr:    creature ? creature.challenge_rating : null,
+    ac:    creature ? creature.ac : (pc ? sccComputePcAC(pc, SCC_SHEETS[id]) : null),
+    hpMax: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_max     : 20),
+    hpCur: creature ? (creature.hp_max || 10)   : (SCC_SHEETS[id] ? SCC_SHEETS[id].hp_current : 20),
+    dexMod: (function() {
+      var dex = creature ? creature.dex : (pc ? (pc.ability_scores || {}).dex : 10);
+      return dex ? Math.floor((dex - 10) / 2) : 0;
+    })(),
+    initiative: null,
+    conditions: [],
+    loot: { items: [], gp: 0, sp: 0, cp: 0 }
+  };
+  SCC_COMBATANTS.push(combatant);
+  sccRenderStagingList();
+  sccUpdateDifficulty();
+}
+
+// Live edit of a staged row's QTY -- clamped to >=1, PCs excluded entirely
+// (their input isn't rendered). Rebuilds only the difficulty badge, not the
+// whole list -- changing a count shouldn't collapse every other open row.
+function sccSetCombatantQty(idx, val) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c || c.isPC) return;
+  c.qty = Math.max(1, parseInt(val) || 1);
+  sccUpdateDifficulty();
+}
+
+// Direct DM ask: typing an initiative value into the staging list re-sorts
+// the whole list live, highest first, instead of just holding the number
+// until Start Combat rolls/sorts it. Stored on c.initiative (a real field,
+// not previously used before combat started) so the value both survives
+// re-renders and is exactly what sccStartCombat() already reads at fight
+// time -- one source of truth, not a second copy that could disagree with
+// it. Array.sort is stable (ES2019+, every browser this app targets), so
+// combatants that are still blank/tied keep their current relative order
+// rather than jumping around unpredictably; blank/invalid values sort last
+// (a DM who hasn't set one yet shouldn't have it silently outrank someone
+// who has).
+function sccSetCombatantInitiative(idx, val) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c) return;
+  var parsed = parseInt(val);
+  c.initiative = isNaN(parsed) ? null : parsed;
+  SCC_COMBATANTS.sort(function(a, b) {
+    var av = a.initiative, bv = b.initiative;
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return bv - av;
+  });
   sccRenderStagingList();
   sccUpdateDifficulty();
 }
@@ -17350,15 +18238,34 @@ function sccBuildCreatureStatBlockHtml(creature) {
   if (!headerBits && !abilities && !rows && !attacks && !traits && !actions && !reactions && !legendary) {
     return '<div class="scc-empty-state">No stat-block data recorded for this creature yet.</div>';
   }
+  // rows + Attacks/Traits/Actions share one 2-column row on wide screens
+  // (see .scc-statblock-two-col) -- only built when there's real content on
+  // both sides worth putting side by side; a creature with only rows (no
+  // attacks/traits/actions at all) just renders rows plain, same as before,
+  // rather than wrapping a single column in a 2-column grid for no reason.
+  var leftRight = attacks + traits + actions;
+  var rowsBlock = rows ? '<div class="scc-statblock-rows">' + rows + '</div>' : '';
+  var twoColBlock = (rowsBlock && leftRight)
+    ? '<div class="scc-statblock-two-col">' + rowsBlock + '<div>' + leftRight + '</div></div>'
+    : rowsBlock + leftRight;
   return (headerBits ? '<div class="scc-statblock-header">' + sccEsc(headerBits) + '</div>' : '')
     + abilities
-    + (rows ? '<div class="scc-statblock-rows">' + rows + '</div>' : '')
-    + attacks + traits + actions + reactions + legendary;
+    + twoColBlock
+    + reactions + legendary;
 }
 
-function sccToggleStatBlock(idx) {
-  var panel = document.getElementById('scc-statblock-' + idx);
-  if (panel) panel.classList.toggle('open');
+// One toggle now shows/hides BOTH Stats and Loot together (Figma's single
+// Expand/Collapse per Combatant row), replacing the old two-separate-buttons
+// design -- .scc-cb2-combatant-body wraps both subsections as one panel.
+function sccToggleCombatantExpand(idx) {
+  var row  = document.getElementById('scc-cb2-combatant-' + idx);
+  var body = document.getElementById('scc-cb2-combatant-body-' + idx);
+  if (!row || !body) return;
+  var open = body.classList.toggle('open');
+  var label = row.querySelector('.scc-cb2-expand-label');
+  if (label) label.textContent = open ? 'Collapse' : 'Expand';
+  var chevron = row.querySelector('.scc-cb2-expand-chevron');
+  if (chevron) chevron.classList.toggle('open', open);
 }
 
 function sccRenderStagingList() {
@@ -17368,57 +18275,267 @@ function sccRenderStagingList() {
   if (!SCC_COMBATANTS.length) {
     el.innerHTML = '<div class="scc-empty-state">Add creatures and players above to build the encounter.</div>';
     document.getElementById('scc-start-combat-btn').style.display = 'none';
-    var addAllBtn = document.getElementById('scc-add-all-players-btn');
-    if (addAllBtn) addAllBtn.style.display = 'none';
-    var clearAllBtn = document.getElementById('scc-clear-all-btn');
-    if (clearAllBtn) clearAllBtn.style.display = 'none';
+    var addAllBtn0 = document.getElementById('scc-add-all-players-btn');
+    if (addAllBtn0) addAllBtn0.style.display = 'none';
+    var clearAllBtn0 = document.getElementById('scc-clear-all-btn');
+    if (clearAllBtn0) clearAllBtn0.style.display = 'none';
+    sccUpdateLootTotals();
     return;
   }
   var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
   el.innerHTML = SCC_COMBATANTS.map(function(c, idx) {
-    var modSign = c.dexMod >= 0 ? '+' : '';
-    var lootChips = c.loot.items.map(function(item, iIdx) {
-      return '<span class="scc-loot-item-chip">' + sccEsc(item.name)
-        + '<button class="scc-loot-item-remove" onclick="sccRemoveLootItem(' + idx + ',' + iIdx + ')">✕</button>'
-      + '</span>';
-    }).join('');
-    return '<div class="scc-staging-row">'
-      + '<span class="scc-staging-name">' + sccEsc(c.name) + '</span>'
-      + '<span class="scc-staging-type">' + (c.isPC ? 'PC' : 'Creature') + '</span>'
-      + (c.cr != null ? '<span class="scc-staging-cr">CR ' + c.cr + '</span>' : '')
-      + (c.ac != null ? '<span class="scc-staging-ac">AC ' + c.ac + '</span>' : '')
-      + '<span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">DEX ' + modSign + c.dexMod + '</span>'
-      + '<input type="number" class="scc-staging-init" placeholder="Init" id="scc-init-input-' + idx + '" min="1" max="30">'
-      + (!c.isPC ? '<button class="scc-gold-btn-sm" onclick="sccToggleStatBlock(' + idx + ')">Stats</button>' : '')
-      + (!c.isPC ? '<button class="scc-gold-btn-sm" onclick="sccToggleLoot(' + idx + ')">Loot</button>' : '')
-      + '<button class="scc-staging-remove" onclick="sccRemoveCombatant(' + idx + ')">✕</button>'
+    var cr = !c.isPC ? creatures.find(function(x) { return x.id === c.id; }) : null;
+    var lootRows = sccStagingLootLineCount(c);
+    // Thumbnail -- real uploaded art only, no invented placeholder for a PC
+    // without a photo (matches the initiative tracker's own established rule,
+    // .scc-init-photo). Creatures fall back to a plain letter avatar instead,
+    // same pattern already used for NPC/location cards elsewhere in this file
+    // -- there's no privacy reasoning against a placeholder for a creature
+    // the way there is for a real person's photo.
+    var thumbHtml;
+    if (c.isPC) {
+      var photoUrl = SCC_PLAYER_PHOTOS[c.id];
+      thumbHtml = photoUrl
+        ? '<img class="scc-cb2-thumb-img" src="' + sccEsc(photoUrl) + '" alt="">'
+        : '<div class="scc-cb2-thumb-fallback">' + sccEsc((c.name||'?').charAt(0)) + '</div>';
+    } else {
+      thumbHtml = (cr && cr.image)
+        ? '<img class="scc-cb2-thumb-img" src="' + sccEsc(cr.image) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+          + '<div class="scc-cb2-thumb-fallback" style="display:none">' + sccEsc((c.name||'?').charAt(0)) + '</div>'
+        : '<div class="scc-cb2-thumb-fallback">' + sccEsc((c.name||'?').charAt(0)) + '</div>';
+    }
+    var acBadge = c.ac != null
+      ? '<span class="scc-cb2-ac-badge"><span class="scc-cb2-ac-badge-label">AC</span><span class="scc-cb2-ac-badge-num">' + c.ac + '</span></span>'
+      : '';
+    // QTY -- creatures only (a PC is always exactly one person). Rendered
+    // for both, but visually hidden (not removed) for a PC so every row's
+    // columns stay aligned, matching the Figma component's own opacity-0
+    // treatment of this field on player rows.
+    var qtyHtml = '<div class="scc-cb2-num-field scc-cb2-num-field--qty' + (c.isPC ? ' scc-cb2-num-field--hidden' : '') + '">'
+      + '<label>QTY</label>'
+      + '<input type="number" min="1" max="50" value="' + (c.qty || 1) + '" onchange="sccSetCombatantQty(' + idx + ',this.value)">'
+    + '</div>';
+    var lootAssignedHtml = lootRows > 0 ? '<span class="scc-cb2-loot-assigned">&#10003; Loot Assigned</span>' : '<span class="scc-cb2-loot-assigned scc-cb2-loot-assigned--none"></span>';
+    // PCs never get a .scc-cb2-combatant-body (see the ternary below -- only
+    // !c.isPC gets one) -- an Expand button on a PC row was a real dead
+    // control, clicking it called sccToggleCombatantExpand() which found no
+    // matching body element and silently no-opped. Omitted entirely for a
+    // PC rather than left clickable-but-broken; direct DM ask, confirmed via
+    // the actual bug it was clicking on.
+    var expandHtml = c.isPC ? '<span></span>' : (
+      '<button type="button" class="scc-cb2-expand-btn" onclick="sccToggleCombatantExpand(' + idx + ')">'
+        + '<span class="scc-cb2-expand-label">Expand</span>'
+        + '<span class="scc-cb2-expand-circle"><span class="scc-cb2-expand-chevron" aria-hidden="true">&#9662;</span></span>'
+      + '</button>'
+    );
+    return '<div class="scc-cb2-combatant" id="scc-cb2-combatant-' + idx + '">'
+      + '<button type="button" class="scc-cb2-combatant-remove" onclick="sccRemoveCombatant(' + idx + ')" title="Remove ' + sccEsc(c.name) + ' from the encounter">&#10005;</button>'
+      + '<div class="scc-cb2-combatant-info">'
+        + '<div class="scc-cb2-num-field">'
+          + '<label>Initiative</label>'
+          // Real value now, not a bare placeholder-only input -- backed by
+          // c.initiative so it survives every full re-render (adding another
+          // combatant, toggling loot, etc. all rebuild this row's HTML from
+          // scratch; before this it had no value= binding at all, so a typed
+          // number was silently lost the moment anything else changed).
+          // onchange (not oninput) fires on blur, matching sccSetCombatantQty's
+          // own reasoning -- rebuilding the list mid-keystroke would yank focus.
+          + '<input type="number" placeholder="—" id="scc-init-input-' + idx + '" min="1" max="30" value="' + (c.initiative != null ? c.initiative : '') + '" onchange="sccSetCombatantInitiative(' + idx + ',this.value)">'
+        + '</div>'
+        + '<div class="scc-cb2-combatant-thumbname">' + thumbHtml + '<span class="scc-cb2-combatant-name">' + sccEsc(c.name) + '</span></div>'
+        + '<div class="scc-cb2-combatant-details">'
+          + '<span class="scc-cb2-combatant-type">' + (c.isPC ? 'Player' : 'Creature') + '</span>'
+          + '<span class="scc-cb2-combatant-cr">' + (c.cr != null ? 'CR ' + c.cr : '') + '</span>'
+          + acBadge
+        + '</div>'
+        + lootAssignedHtml
+        // One slot left of the Expand/Collapse accordion control -- direct
+        // DM follow-up correcting the previous round's "move QTY to the
+        // very end" ask. Still the rightmost real field before Expand, just
+        // not past it.
+        + qtyHtml
+        + expandHtml
       + '</div>'
       + (!c.isPC
-        ? '<div class="scc-statblock-panel" id="scc-statblock-' + idx + '">'
-            + sccBuildCreatureStatBlockHtml(creatures.find(function(x) { return x.id === c.id; }))
-          + '</div>'
-        : '')
-      + (!c.isPC
-        ? '<div class="scc-loot-panel" id="scc-loot-' + idx + '">'
-            + '<div class="scc-section-subtitle" style="margin-bottom:0.5rem;">Assign Loot for ' + sccEsc(c.name) + '</div>'
-            + '<div class="scc-loot-coin-row" id="scc-loot-coin-row-' + idx + '">'
-              + sccRenderCoinRow(idx, c, false)
+        ? '<div class="scc-cb2-combatant-body" id="scc-cb2-combatant-body-' + idx + '">'
+            + '<div class="scc-cb2-subsection">'
+              + '<div class="scc-cb2-subsection-title">Stats</div>'
+              + '<div class="scc-cb2-stats">' + sccBuildCreatureStatBlockHtml(cr) + '</div>'
             + '</div>'
-            + '<div class="scc-loot-row">'
-              + '<div style="position:relative;flex:1;">'
-                + '<input type="text" class="scc-picker-search" id="scc-loot-item-search-' + idx + '" placeholder="Search items to add…" oninput="sccLootItemSearch(' + idx + ',this.value)" autocomplete="off">'
-                + '<div class="scc-picker-dropdown" id="scc-loot-item-drop-' + idx + '"></div>'
+            + '<div class="scc-cb2-subsection scc-cb2-subsection--loot">'
+              + '<div class="scc-cb2-subsection-title">Loot</div>'
+              + '<div class="scc-cb2-loot-table-wrap">'
+                + '<div class="scc-cb2-loot-toolbar-group">'
+                  + '<div class="scc-cb2-loot-coins" id="scc-loot-coin-row-' + idx + '">' + sccRenderCoinRow(idx, c) + '</div>'
+                  + '<div class="scc-cb2-loot-toolbar">'
+                    + '<div style="position:relative;flex:1;">'
+                      + '<input type="text" class="scc-picker-search scc-cb2-search-input" id="scc-loot-item-search-' + idx + '" placeholder="Search…" oninput="sccLootItemSearch(' + idx + ',this.value)" autocomplete="off">'
+                      + '<div class="scc-picker-dropdown" id="scc-loot-item-drop-' + idx + '"></div>'
+                    + '</div>'
+                    // Same FILTERS capability the main Combatants search has
+                    // (Category/Rarity here, matching what ITEMS actually
+                    // carries), for consistency -- direct DM ask, same
+                    // toggle-pill/filter-bar pattern reused verbatim
+                    // (.scc-cb2-pill-btn, .scc-combat-filters-bar.scc-cb2-filters-bar,
+                    // .cm-select), just scoped per combatant row by idx since
+                    // each row has its own independent loot search.
+                    + '<button type="button" class="scc-cb2-pill-btn" id="scc-loot-filters-toggle-' + idx + '" onclick="sccToggleLootFiltersBar(' + idx + ')">FILTERS</button>'
+                    + '<button type="button" class="scc-btn-primary scc-cb2-add-item-btn" onclick="document.getElementById(\'scc-loot-item-search-' + idx + '\').focus()">+ Add Item</button>'
+                  + '</div>'
+                  + '<div class="scc-combat-filters-bar scc-cb2-filters-bar" id="scc-loot-filters-bar-' + idx + '" style="display:none">'
+                    + '<select id="scc-lf-category-' + idx + '" class="cm-select" onchange="sccLootItemSearch(' + idx + ',document.getElementById(\'scc-loot-item-search-' + idx + '\').value)"><option value="">Category: All</option></select>'
+                    + '<select id="scc-lf-rarity-' + idx + '" class="cm-select" onchange="sccLootItemSearch(' + idx + ',document.getElementById(\'scc-loot-item-search-' + idx + '\').value)"><option value="">Rarity: All</option></select>'
+                    + '<button type="button" class="scc-combat-filters-reset" onclick="sccLootFiltersReset(' + idx + ')">Reset</button>'
+                  + '</div>'
+                + '</div>'
+                + '<div class="scc-loot-item-list" id="scc-loot-chips-' + idx + '">' + sccBuildLootItemListHtml(idx, c.loot.items) + '</div>'
               + '</div>'
             + '</div>'
-            + '<div id="scc-loot-chips-' + idx + '">' + lootChips + '</div>'
           + '</div>'
-        : '');
+        : '')
+      // Real bug, not a spacing/CSS issue -- this outer .scc-cb2-combatant
+      // wrapper (opened at the top of this return) was never closed in
+      // either branch above (the ternary's own closing '</div>' only ever
+      // closed .scc-cb2-combatant-body, for a creature; a PC row closed
+      // nothing at all). Browsers recover from an unclosed tag by keeping
+      // it open until something forces it shut -- confirmed live via
+      // getBoundingClientRect()/parentElement that every subsequent
+      // combatant row was nesting INSIDE the previous one instead of
+      // stacking as a sibling, which is what actually produced the
+      // "cramped/overlapping" report, not a margin/gap value.
+      + '</div>';
   }).join('');
   document.getElementById('scc-start-combat-btn').style.display = '';
   var addAllBtn = document.getElementById('scc-add-all-players-btn');
   if (addAllBtn) addAllBtn.style.display = '';
   var clearAllBtn = document.getElementById('scc-clear-all-btn');
   if (clearAllBtn) clearAllBtn.style.display = '';
+  sccUpdateLootTotals();
+}
+
+// ── Running loot summary, across every staged combatant ─────────────
+// Purely a read of SCC_COMBATANTS' own c.loot objects -- no separate total
+// tracked anywhere, so it can never drift from what's actually assigned.
+function sccComputeLootTotals() {
+  var gp = 0, sp = 0, cp = 0, itemMap = {}, itemOrder = [];
+  SCC_COMBATANTS.forEach(function(c) {
+    if (!c.loot) return;
+    gp += c.loot.gp || 0;
+    sp += c.loot.sp || 0;
+    cp += c.loot.cp || 0;
+    // Keyed by item id, not name -- the real dedup key everywhere else in
+    // this file (sccAddLootItem's own same-item stacking), and the only
+    // reliable way to look the item back up in the ITEMS catalog for a
+    // thumbnail below. Sums each entry's own quantity (defaulting to 1 for
+    // legacy saved encounters with no quantity field) rather than counting
+    // array entries -- one combatant can now carry N of the same item in a
+    // single entry, not just via N separate combatants each holding one.
+    (c.loot.items || []).forEach(function(item) {
+      if (!itemMap[item.id]) { itemMap[item.id] = { id: item.id, name: item.name, count: 0 }; itemOrder.push(item.id); }
+      itemMap[item.id].count += item.quantity || 1;
+    });
+  });
+  return { gp: gp, sp: sp, cp: cp, itemMap: itemMap, itemOrder: itemOrder };
+}
+
+// item.cost_gp is stored as a single decimal gp value -- broken into the
+// G/S/C column trio the Figma redesign's data table shows (a real per-item
+// price, not an editable input here -- this is catalog data, not something
+// a DM sets per encounter).
+function sccGpParts(costGp) {
+  var totalCp = Math.round((parseFloat(costGp) || 0) * 100);
+  return { g: Math.floor(totalCp / 100), s: Math.floor((totalCp % 100) / 10), c: totalCp % 10 };
+}
+
+// Real mechanical spec line for the loot table's "Specs" column -- weapon
+// damage, armor AC, shield AC bonus, magic bonus, whichever of these the
+// item actually has. Empty for anything with none (most misc loot).
+function sccItemSpecsText(item) {
+  if (!item) return '';
+  var parts = [];
+  if (item.damage_dice) parts.push(item.damage_dice + (item.damage_type ? ' ' + item.damage_type : ''));
+  if (item.base_ac != null && item.base_ac !== '') parts.push('AC ' + item.base_ac);
+  if (item.ac_bonus != null && item.ac_bonus !== '') parts.push('+' + item.ac_bonus + ' AC');
+  if (item.magic_bonus) parts.push('+' + item.magic_bonus);
+  return parts.join(', ');
+}
+
+// Shared real data-table shell for loot, per the Figma redesign -- one shape
+// (thumb/Name/Category/Price/Weight/Specs/Description/Qty[/remove]) used
+// both for a combatant's own editable Assigned list and the read-only Total
+// Loot rollup, so the two can't visually drift apart. `editable` toggles the
+// trailing remove column and switches Qty between a live input and plain
+// text. No selection checkbox -- Figma's own mock shows one, but nothing in
+// the design ties it to an action, and this file's whole reason for this
+// pass is fixing "unclear functionality" complaints, not adding a new one;
+// per-row remove (already real and working) is the one removal path.
+function sccLootTableHeaderHtml(editable) {
+  return '<div class="scc-cb2-loot-row scc-cb2-loot-head">'
+    + '<span class="scc-cb2-loot-thumb"></span>'
+    + '<span class="scc-cb2-loot-name">Name</span>'
+    + '<span class="scc-cb2-loot-cat">Category</span>'
+    + '<span class="scc-cb2-loot-price">Price (G, S, C)</span>'
+    + '<span class="scc-cb2-loot-weight">Weight (lbs)</span>'
+    + '<span class="scc-cb2-loot-specs">Specs</span>'
+    + '<span class="scc-cb2-loot-desc">Description</span>'
+    + '<span class="scc-cb2-loot-qty">Qty</span>'
+    + (editable ? '<span class="scc-cb2-loot-remove"></span>' : '')
+  + '</div>';
+}
+function sccLootTableRowHtml(entry, opts) {
+  var catalog = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  var cat = catalog.find(function(x) { return x.id === entry.id; });
+  var thumb = (cat && cat.image)
+    ? '<img class="scc-cb2-loot-thumb-img" src="' + sccEsc(cat.image) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+      + '<div class="scc-cb2-loot-thumb-fallback" style="display:none">' + sccEsc((entry.name||'?').charAt(0)) + '</div>'
+    : '<div class="scc-cb2-loot-thumb-fallback">' + sccEsc((entry.name||'?').charAt(0)) + '</div>';
+  var price = sccGpParts(cat ? cat.cost_gp : null);
+  var qty   = entry.quantity || entry.count || 1;
+  var specs = sccItemSpecsText(cat);
+  var desc  = entry.summary || (cat ? cat.summary : '') || '';
+  return '<div class="scc-cb2-loot-row">'
+    + '<span class="scc-cb2-loot-thumb">' + thumb + '</span>'
+    + '<span class="scc-cb2-loot-name" title="' + sccEsc(entry.name) + '">' + sccEsc(entry.name) + '</span>'
+    + '<span class="scc-cb2-loot-cat">' + sccEsc(cat && cat.category ? cat.category : '—') + '</span>'
+    + '<span class="scc-cb2-loot-price">' + price.g + ', ' + price.s + ', ' + price.c + '</span>'
+    + '<span class="scc-cb2-loot-weight">' + (cat && cat.weight_lb != null ? cat.weight_lb : '—') + '</span>'
+    + '<span class="scc-cb2-loot-specs" title="' + sccEsc(specs) + '">' + sccEsc(specs || '—') + '</span>'
+    + '<span class="scc-cb2-loot-desc" title="' + sccEsc(desc) + '">' + sccEsc(desc || '—') + '</span>'
+    + '<span class="scc-cb2-loot-qty">' + (opts.editable
+        ? '<input type="number" class="scc-cb2-loot-qty-input" min="1" value="' + qty + '" onchange="sccSetLootItemQuantity(' + opts.cIdx + ',' + opts.iIdx + ',this)">'
+        : '&times;' + qty)
+      + '</span>'
+    + (opts.editable ? '<span class="scc-cb2-loot-remove"><button class="scc-loot-item-remove" onclick="sccRemoveLootItem(' + opts.cIdx + ',' + opts.iIdx + ')" title="Remove">&#10005;</button></span>' : '')
+  + '</div>';
+}
+
+function sccBuildLootTotalsHtml() {
+  var t = sccComputeLootTotals();
+  var hasCoins = t.gp || t.sp || t.cp;
+  var hasItems = t.itemOrder.length > 0;
+  var coinsHtml = '<div class="scc-cb2-loot-coins">'
+    + '<div class="scc-cb2-coin-pill gold"><span>Gold</span><span class="scc-cb2-coin-val">' + (t.gp || 0) + '</span></div>'
+    + '<div class="scc-cb2-coin-pill silver"><span>Silver</span><span class="scc-cb2-coin-val">' + (t.sp || 0) + '</span></div>'
+    + '<div class="scc-cb2-coin-pill copper"><span>Copper</span><span class="scc-cb2-coin-val">' + (t.cp || 0) + '</span></div>'
+  + '</div>';
+  var itemsHtml = hasItems
+    ? '<div class="scc-cb2-loot-table">' + sccLootTableHeaderHtml(false)
+        + t.itemOrder.map(function(id) { return sccLootTableRowHtml(t.itemMap[id], { editable: false, cIdx: -1, iIdx: -1 }); }).join('')
+      + '</div>'
+    : '<div class="scc-loot-item-list-empty">Nothing assigned yet.</div>';
+  if (!hasCoins && !hasItems) return '<div class="scc-loot-totals-empty">Nothing assigned yet.</div>';
+  return coinsHtml + itemsHtml;
+}
+
+// Re-renders just the totals bar in place -- called from the two loot-edit
+// paths (sccSaveLootCoins/sccAddLootItem) that intentionally update their own
+// row surgically instead of a full sccRenderStagingList() (to avoid
+// collapsing every other combatant's open panels). sccRemoveLootItem() and
+// every combatant add/remove path already call the full render, which
+// rebuilds this bar as part of the normal flow.
+function sccUpdateLootTotals() {
+  var el = document.getElementById('scc-loot-totals');
+  if (el) el.innerHTML = sccBuildLootTotalsHtml();
 }
 
 function sccClearAllCombatants() {
@@ -17427,13 +18544,110 @@ function sccClearAllCombatants() {
   SCC_COMBATANTS = [];
   sccRenderStagingList();
   sccUpdateDifficulty();
+  sccSetEditingEncounter(null);
+}
+
+// ── Encounter Details: Location + Quests (combat_encounters.location text,
+// .quest_ids text[]) ────────────────────────────────────────────────────
+// Location is free text, matching the Figma field exactly (not a picker) --
+// resolved to a real Region / Nation / City breadcrumb for display wherever
+// it happens to match a real cities/pois row by name, and shown as-typed
+// otherwise (a DM jotting "the old mill" isn't wrong, just unresolved).
+function sccResolveLocationBreadcrumb(location) {
+  if (!location) return null;
+  var cities = typeof CITIES !== 'undefined' ? CITIES : [];
+  var pois   = typeof POIS   !== 'undefined' ? POIS   : [];
+  var loc = cities.concat(pois).find(function(x) { return (x.name || '').toLowerCase() === location.toLowerCase(); });
+  if (!loc) return sccEsc(location);
+  var regionsAll = typeof REGIONS !== 'undefined' ? REGIONS : [];
+  var nationsAll  = typeof NATIONS !== 'undefined' ? NATIONS : [];
+  var region = regionsAll.find(function(r) { return r.id === loc.region; });
+  var nation = nationsAll.find(function(n) { return n.id === loc.nation; });
+  var parts = [region ? region.name : null, nation ? nation.name : null, loc.name].filter(Boolean);
+  return sccEsc(parts.join(' / '));
+}
+
+// Quests -- a real searchable multi-select (matching every other picker's
+// .scc-picker-dropdown/.scc-picker-option convention in this file), storing
+// ids in SCC_ENCOUNTER_QUEST_IDS while building, saved as quest_ids.
+function sccUpdateEncounterQuestsDisplay() {
+  var el = document.getElementById('scc-encounter-quests-display');
+  if (!el) return;
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var names = SCC_ENCOUNTER_QUEST_IDS.map(function(id) {
+    var q = quests.find(function(x) { return x.id === id; });
+    return q ? q.name : id;
+  });
+  el.textContent = names.length ? names.join(', ') : 'None';
+}
+function sccRenderQuestPickerOptions() {
+  var drop = document.getElementById('scc-encounter-quest-drop');
+  if (!drop) return;
+  var quests = (typeof QUESTS !== 'undefined' ? QUESTS : []).slice().sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
+  drop.innerHTML = quests.length ? quests.map(function(q) {
+    var checked = SCC_ENCOUNTER_QUEST_IDS.indexOf(q.id) >= 0;
+    return '<div class="scc-picker-option scc-cb2-quest-option' + (checked ? ' selected' : '') + '" onclick="sccToggleEncounterQuest(\'' + escQ(q.id) + '\')">'
+      + (checked ? '&#10003; ' : '') + sccEsc(q.name)
+    + '</div>';
+  }).join('') : '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No quests exist yet.</div>';
+}
+function sccToggleQuestPicker() {
+  var drop = document.getElementById('scc-encounter-quest-drop');
+  if (!drop) return;
+  if (drop.classList.contains('open')) { drop.classList.remove('open'); return; }
+  sccRenderQuestPickerOptions();
+  drop.classList.add('open');
+}
+function sccToggleEncounterQuest(id) {
+  var i = SCC_ENCOUNTER_QUEST_IDS.indexOf(id);
+  if (i >= 0) SCC_ENCOUNTER_QUEST_IDS.splice(i, 1); else SCC_ENCOUNTER_QUEST_IDS.push(id);
+  sccUpdateEncounterQuestsDisplay();
+  // Deferred: rebuilding the dropdown's innerHTML synchronously here, still
+  // inside this same click's own bubble phase, detaches the clicked option
+  // element right before the generic outside-click listener (document-level,
+  // closes any .scc-picker-dropdown when a click lands outside
+  // .scc-picker-group) gets to check it -- a detached node's closest() can't
+  // find its old ancestors, so that check wrongly concludes the click was
+  // "outside" and closes the dropdown after every single pick. Deferring the
+  // rebuild past this event's bubble phase (confirmed via a real reproduction:
+  // the picker closed on every pick, multi-select was unusable, until this
+  // fix) lets the outside-click check run against the real, still-attached
+  // DOM first.
+  setTimeout(sccRenderQuestPickerOptions, 0);
+}
+
+// Difficulty for a SAVED encounter (Saved Encounters card list) -- re-derives
+// each combatant's CR fresh from the live CREATURES catalog by id, same
+// "never freeze mechanical stats at save time" principle sccLoadSavedEncounter()
+// already applies, so this can't go stale relative to real creature data.
+function sccSavedEncounterDifficulty(enc) {
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  var enemies = (enc.combatants || []).filter(function(c) { return !c.isPC; }).map(function(c) {
+    var cr = creatures.find(function(x) { return x.id === c.id; });
+    return { cr: cr ? cr.challenge_rating : null, qty: c.qty || 1 };
+  });
+  return sccComputeDifficultyForEnemies(enemies);
+}
+
+// "+ ADD" card -- clears staging and any editing state to start a genuinely
+// fresh encounter, per the Figma redesign's dashed add-card.
+function sccStartNewEncounter() {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
+  if (SCC_COMBATANTS.length && !confirm('Start a new encounter? This clears the ' + SCC_COMBATANTS.length + ' combatant' + (SCC_COMBATANTS.length === 1 ? '' : 's') + ' currently staged.')) return;
+  SCC_COMBATANTS = [];
+  sccRenderStagingList();
+  sccUpdateDifficulty();
+  sccSetEditingEncounter(null);
+  var nameInput = document.getElementById('scc-encounter-save-name');
+  if (nameInput) { nameInput.value = ''; nameInput.focus(); }
 }
 
 // ── Saved Encounters (combat_encounters table) ──────────────────────
-// Pre-staging, not live combat: a saved encounter is just {name, combatants:
-// [{id,name,isPC,loot}]}, one entry per staged instance (not grouped/qty'd --
-// see sccSaveCurrentAsEncounter()'s own comment for why). Loading re-derives
-// every mechanical stat (HP/AC/CR) fresh via the normal sccAddToCombatStaging()
+// Pre-staging, not live combat: a saved encounter is {name, location,
+// quest_ids, combatants: [{id,name,isPC,qty,loot}]}, one entry per staged
+// row (a row already represents qty identical copies as of this redesign --
+// see sccAddToCombatStaging()'s own comment). Loading re-derives every
+// mechanical stat (HP/AC/CR) fresh via the normal sccAddToCombatStaging()
 // path -- nothing about a combatant's real stats is ever frozen at save time,
 // so a saved encounter stays correct even if a creature's own data changes
 // later. Loot (coins + items) IS frozen at save time, deliberately -- that's
@@ -17449,69 +18663,181 @@ function sccLoadSavedEncounters() {
   });
 }
 
+// Card list, per the Figma redesign -- the encounter currently loaded for
+// editing (SCC_EDITING_ENCOUNTER_ID) renders in the highlighted/gold-bordered
+// state with a "Close" action; every other encounter renders plain with an
+// "Edit" action. Location/Difficulty/Quests are a real preview, not just a
+// name, so a DM can tell encounters apart without loading each one.
 function sccRenderSavedEncounters() {
   var el = document.getElementById('scc-saved-encounters-list');
   if (!el) return;
   if (!SCC_SAVED_ENCOUNTERS.length) {
-    el.innerHTML = '<div class="scc-empty-state">No saved encounters yet — build one below and save it above.</div>';
+    el.innerHTML = '<div class="scc-empty-state">No saved encounters yet — build one and save it below.</div>';
     return;
   }
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
   el.innerHTML = SCC_SAVED_ENCOUNTERS.map(function(enc) {
-    var combatants = enc.combatants || [];
-    // Storage is flat -- one array entry per instance (see sccSaveCurrentAsEncounter()) --
-    // so N copies of the same creature are N separate entries, each carrying its
-    // own loot. Grouped back into a "Name x N" display line purely for this
-    // summary text; the underlying combatants array itself stays ungrouped.
-    var byName = {}, order = [];
-    combatants.forEach(function(c) {
-      var n = c.qty || 1; // honors a legacy grouped-save row if one still exists
-      if (!byName[c.name]) { byName[c.name] = 0; order.push(c.name); }
-      byName[c.name] += n;
-    });
-    var totalQty = order.reduce(function(s, name) { return s + byName[name]; }, 0);
-    var summary = order.map(function(name) { return sccEsc(name) + (byName[name] > 1 ? ' &times;' + byName[name] : ''); }).join(', ') || 'Empty';
-    return '<div class="scc-saved-encounter-row">'
-      + '<div class="scc-saved-encounter-info">'
-        + '<div class="scc-saved-encounter-name">' + sccEsc(enc.name) + '</div>'
-        + '<div class="scc-saved-encounter-summary" title="' + sccEsc(order.map(function(name){return name + ' x' + byName[name];}).join(', ')) + '">'
-          + summary + ' &#8212; ' + totalQty + ' combatant' + (totalQty === 1 ? '' : 's')
-          + (enc.session_number ? ' &middot; Session ' + sccEsc(enc.session_number) : '')
+    var isEditing = enc.id === SCC_EDITING_ENCOUNTER_ID;
+    var diff = sccSavedEncounterDifficulty(enc);
+    var breadcrumb = sccResolveLocationBreadcrumb(enc.location) || '—';
+    var questNames = (enc.quest_ids || []).map(function(id) { return quests.find(function(q) { return q.id === id; }); }).filter(Boolean);
+    // Real bullet marker + real gap between entries -- each quest was its
+    // own <div> before with zero gap between them and no bullet at all, so
+    // 2+ real quests visually ran together into what read as one long
+    // title. Matches Figma's own reference (a real <ul>/<li class="list-
+    // disc">) in effect via a ::before bullet instead of literal list
+    // markup, so the click target stays the whole row exactly as before.
+    var questsHtml = questNames.length
+      ? '<div class="scc-cb2-card-quest-list">' + questNames.map(function(q) { return '<div class="scc-cb2-card-quest-link" onclick="sccOpenLookup(\'quest\',\'' + escQ(q.id) + '\')">' + sccEsc(q.name) + '</div>'; }).join('') + '</div>'
+      : '<span class="scc-cb2-card-quests-none">None</span>';
+    // Real Figma card structure (122:619's own "details" node): Location and
+    // Difficulty share one row (data-name="row", gap-18), Quests is its own
+    // full-width block below -- this whole function's earlier build had
+    // every field (including Location+Difficulty) stacked as independent
+    // full-width .scc-cb2-card-field rows, which is a different, wrong
+    // layout that was never actually fixed until now. The Build Encounter
+    // panel's own Details form (a separate piece of markup entirely --
+    // #scc-encounter-location/.scc-cb2-difficulty) was fixed in an earlier
+    // round; this card is what a DM actually sees in the Saved Encounters
+    // list and had never been touched.
+    // Real Figma structure for the whole card, not just the Location/
+    // Difficulty row: "encounter" is itself a flex ROW (items-center) with
+    // the name+details as one growing column and the Edit/Close pill as a
+    // second, vertically-centered column beside it -- this had the button
+    // as the LAST child of a flex-COLUMN card instead, which is exactly
+    // why it landed bottom-left rather than centered on the right. Direct
+    // DM correction.
+    return '<div class="scc-cb2-encounter-card' + (isEditing ? ' scc-cb2-encounter-card--editing' : '') + '">'
+      + '<div class="scc-cb2-card-body">'
+        + '<div class="scc-cb2-card-name">' + sccEsc(enc.name) + '</div>'
+        + '<div class="scc-cb2-card-details">'
+          + '<div class="scc-cb2-card-row">'
+            + '<div class="scc-cb2-card-field"><span class="scc-cb2-card-label">Location</span><span class="scc-cb2-card-value">' + breadcrumb + '</span></div>'
+            + '<div class="scc-cb2-card-field"><span class="scc-cb2-card-label">Difficulty</span><span class="scc-cb2-card-value scc-diff-value ' + diff.cls + '">' + diff.diff + '</span></div>'
+          + '</div>'
+          + '<div class="scc-cb2-card-field"><span class="scc-cb2-card-label">Quests</span>' + questsHtml + '</div>'
         + '</div>'
       + '</div>'
-      + '<div class="scc-saved-encounter-actions">'
-        + '<button class="scc-btn-sm" onclick="sccLoadSavedEncounter(\'' + sccEsc(enc.id) + '\')">Load</button>'
-        + '<button class="scc-btn-sm scc-btn-danger" onclick="sccDeleteSavedEncounter(\'' + sccEsc(enc.id) + '\')">Delete</button>'
-      + '</div>'
+      + (isEditing
+          ? '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action" onclick="sccCancelEditEncounter()">Close</button>'
+          : '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action" onclick="sccLoadSavedEncounter(\'' + sccEsc(enc.id) + '\')">Edit</button>')
+      // Gold connector triangle, visible only on the editing card (CSS-gated
+      // via .scc-cb2-encounter-card--editing .scc-cb2-card-connector) -- the
+      // small protruding arrow Figma shows linking the active card to the
+      // Build Encounter panel beside it. Always rendered, always empty; the
+      // parent class alone decides whether it shows.
+      + '<div class="scc-cb2-card-connector" aria-hidden="true"></div>'
     + '</div>';
   }).join('');
 }
 
-function sccSaveCurrentAsEncounter() {
+// One entry per staged row, NOT grouped further -- a row already represents
+// qty identical copies (see sccAddToCombatStaging()'s own comment), so this
+// is a direct 1:1 mapping, no risk of the earlier grouped-by-id save shape's
+// real bug (silently discarding per-instance loot the moment 2+ copies of a
+// creature existed) -- there's exactly one loot pool per row here, by design,
+// not an artifact of lossy grouping.
+function sccBuildEncounterCombatantsPayload() {
+  return SCC_COMBATANTS.map(function(c) {
+    return { id: c.id, name: c.name, isPC: !!c.isPC, qty: c.qty || 1, loot: c.loot || { items: [], gp: 0, sp: 0, cp: 0 } };
+  });
+}
+
+// Toggles the Delete button and the Details panel's Name/Location/Quests
+// fields between create-new and update-existing, and re-renders the saved-
+// encounter card list so the loaded card's own Edit/Close state stays in
+// sync with SCC_EDITING_ENCOUNTER_ID -- that card (gold border + "Close")
+// is the only editing indicator now, per the Figma reference, which has no
+// separate "Editing: X" banner in the Details panel. Pass a real encounter
+// row to enter editing mode, or null/undefined to leave it -- called from
+// sccLoadSavedEncounter() (enter), and from sccCancelEditEncounter()/
+// sccClearAllCombatants()/sccStartNewEncounter()/sccEndCombat() (leave),
+// since all of those leave the staging area empty or unrelated to whatever
+// was being edited.
+function sccSetEditingEncounter(enc) {
+  SCC_EDITING_ENCOUNTER_ID = enc ? enc.id : null;
+  var nameInput = document.getElementById('scc-encounter-save-name');
+  var locInput  = document.getElementById('scc-encounter-location');
+  var deleteBtn = document.getElementById('scc-cb2-delete-encounter-btn');
+  if (enc) {
+    if (nameInput) nameInput.value = enc.name;
+    if (locInput)  locInput.value = enc.location || '';
+    SCC_ENCOUNTER_QUEST_IDS = (enc.quest_ids || []).slice();
+    if (deleteBtn) deleteBtn.style.display = '';
+  } else {
+    if (locInput)  locInput.value = '';
+    SCC_ENCOUNTER_QUEST_IDS = [];
+    if (deleteBtn) deleteBtn.style.display = 'none';
+  }
+  sccUpdateEncounterQuestsDisplay();
+  sccRenderSavedEncounters();
+}
+
+function sccCancelEditEncounter() {
+  var nameInput = document.getElementById('scc-encounter-save-name');
+  if (nameInput) nameInput.value = '';
+  sccSetEditingEncounter(null);
+}
+
+// Save button's onclick -- dispatches to update-existing when an encounter
+// is currently loaded for editing, or create-new otherwise. Figma has one
+// Save button, not two -- "Save as New Instead" was dropped; starting fresh
+// now goes through "+ ADD" instead.
+function sccSaveEncounterPrimary() {
+  if (SCC_EDITING_ENCOUNTER_ID) sccUpdateSavedEncounter();
+  else sccSaveEncounterAsNew();
+}
+
+function sccSaveEncounterAsNew() {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
   if (!SCC_COMBATANTS.length) { showDMToast('Add combatants to the encounter before saving', 'error'); return; }
   var nameInput = document.getElementById('scc-encounter-save-name');
   var name = nameInput ? nameInput.value.trim() : '';
   if (!name) { showDMToast('Name the encounter before saving', 'error'); return; }
-  // One entry per staged instance, NOT grouped by id -- an earlier version of
-  // this grouped same-id combatants into {id,qty}, which silently discarded
-  // each instance's own c.loot (coins + items) the moment two copies of the
-  // same creature existed, since there's no single "the" loot to keep for a
-  // group of 2+. Real bug, DM-reported. A flat per-instance array has no such
-  // ambiguity -- N copies just means N array entries, each with its own loot.
-  var combatants = SCC_COMBATANTS.map(function(c) {
-    return { id: c.id, name: c.name, isPC: !!c.isPC, loot: c.loot || { items: [], gp: 0, sp: 0, cp: 0 } };
-  });
+  var locInput  = document.getElementById('scc-encounter-location');
+  var location  = locInput ? locInput.value.trim() : '';
+  var combatants = sccBuildEncounterCombatantsPayload();
   var num = SCC_SESSION ? SCC_SESSION.session_number : null;
   fetch(SCC_URL + '/rest/v1/combat_encounters', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
-    body: JSON.stringify({ name: name, combatants: combatants, session_number: num })
+    body: JSON.stringify({ name: name, location: location || null, quest_ids: SCC_ENCOUNTER_QUEST_IDS, combatants: combatants, session_number: num })
   }).then(function(r) {
     if (!r.ok) { showDMToast('Could not save encounter', 'error'); return; }
     if (nameInput) nameInput.value = '';
+    sccSetEditingEncounter(null);
     showDMToast('Encounter saved: ' + name, 'success');
     sccLoadSavedEncounters();
   }).catch(function() { showDMToast('Could not save encounter', 'error'); });
+}
+
+// Updates the encounter currently loaded for editing IN PLACE (PATCH), rather
+// than the old delete-and-recreate flow -- real DM-reported friction: load a
+// saved encounter, tweak a combatant or its loot, and there was no way to
+// persist that change back without deleting the original row and saving a
+// fresh one under the same name. session_number is deliberately left
+// untouched here -- it's a record of which session the encounter was first
+// built for, not something an edit should silently reassign.
+function sccUpdateSavedEncounter() {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
+  if (!SCC_EDITING_ENCOUNTER_ID) { sccSaveEncounterAsNew(); return; }
+  if (!SCC_COMBATANTS.length) { showDMToast('Add combatants to the encounter before saving', 'error'); return; }
+  var nameInput = document.getElementById('scc-encounter-save-name');
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) { showDMToast('Name the encounter before saving', 'error'); return; }
+  var locInput  = document.getElementById('scc-encounter-location');
+  var location  = locInput ? locInput.value.trim() : '';
+  var combatants = sccBuildEncounterCombatantsPayload();
+  var id = SCC_EDITING_ENCOUNTER_ID;
+  fetch(SCC_URL + '/rest/v1/combat_encounters?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ name: name, location: location || null, quest_ids: SCC_ENCOUNTER_QUEST_IDS, combatants: combatants })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not save changes', 'error'); return; }
+    showDMToast('Encounter updated: ' + name, 'success');
+    sccLoadSavedEncounters();
+  }).catch(function() { showDMToast('Could not save changes', 'error'); });
 }
 
 function sccLoadSavedEncounter(id) {
@@ -17523,28 +18849,26 @@ function sccLoadSavedEncounter(id) {
   if (SCC_COMBATANTS.length && !confirm('Loading "' + enc.name + '" will clear the ' + SCC_COMBATANTS.length + ' combatant' + (SCC_COMBATANTS.length === 1 ? '' : 's') + ' currently staged. Continue?')) return;
   SCC_COMBATANTS = [];
   combatants.forEach(function(c) {
-    // qty is a legacy field from an earlier, buggy save shape (grouped by id,
-    // lost per-instance loot) -- honor it if an old saved row still has it,
-    // so nothing already in the DB breaks, but current saves are always 1
-    // array entry per instance and never set it.
-    var n = c.qty || 1;
-    for (var i = 0; i < n; i++) {
-      sccAddToCombatStaging(c.id, c.name, 1);
-      // sccAddToCombatStaging() always builds a fresh default (empty) loot
-      // object -- restore the real saved loot onto the combatant it just
-      // pushed. Deep-cloned (same JSON.parse(JSON.stringify()) pattern used
-      // elsewhere in this file for working copies) so editing it later via
-      // sccSaveLootCoins()/sccAddLootItem() can't mutate the cached
-      // SCC_SAVED_ENCOUNTERS entry this same encounter would reload from.
-      var added = SCC_COMBATANTS[SCC_COMBATANTS.length - 1];
-      if (added && c.loot) added.loot = JSON.parse(JSON.stringify(c.loot));
-    }
+    // One staged row per saved entry, carrying its own real qty (>=1 -- older
+    // rows saved before this field existed default to 1, exactly the same as
+    // any other row that's never been bumped).
+    sccAddToCombatStaging(c.id, c.name, c.qty || 1);
+    // sccAddToCombatStaging() always builds a fresh default (empty) loot
+    // object -- restore the real saved loot onto the row it just pushed.
+    // Deep-cloned (same JSON.parse(JSON.stringify()) pattern used elsewhere
+    // in this file for working copies) so editing it later via
+    // sccSaveLootCoins()/sccAddLootItem() can't mutate the cached
+    // SCC_SAVED_ENCOUNTERS entry this same encounter would reload from.
+    var added = SCC_COMBATANTS[SCC_COMBATANTS.length - 1];
+    if (added && c.loot) added.loot = JSON.parse(JSON.stringify(c.loot));
   });
   // The loop above sets each combatant's real loot AFTER the render its own
   // sccAddToCombatStaging() call triggered, so the very last one added would
   // otherwise show its default (empty) loot until something else re-renders.
   sccRenderStagingList();
-  showDMToast('Loaded "' + enc.name + '"', 'success');
+  sccUpdateDifficulty();
+  sccSetEditingEncounter(enc);
+  showDMToast('Loaded "' + enc.name + '" — editing it now, save to update it in place', 'success');
 }
 
 function sccDeleteSavedEncounter(id) {
@@ -17558,31 +18882,66 @@ function sccDeleteSavedEncounter(id) {
   }).then(function(r) {
     if (!r.ok) { showDMToast('Delete failed', 'error'); return; }
     SCC_SAVED_ENCOUNTERS = SCC_SAVED_ENCOUNTERS.filter(function(e) { return e.id !== id; });
-    sccRenderSavedEncounters();
+    // If the encounter just deleted was the one currently loaded for editing,
+    // there's nothing left for the Delete/Save buttons to act on -- clear the
+    // staged combatants and editing state rather than leave the builder
+    // pointed at an id that no longer exists.
+    if (id === SCC_EDITING_ENCOUNTER_ID) {
+      SCC_COMBATANTS = [];
+      sccRenderStagingList();
+      sccUpdateDifficulty();
+      sccSetEditingEncounter(null);
+    } else {
+      sccRenderSavedEncounters();
+    }
     showDMToast('Encounter deleted', 'success');
   }).catch(function() { showDMToast('Delete failed', 'error'); });
 }
 
-function sccToggleLoot(idx) {
-  var panel = document.getElementById('scc-loot-' + idx);
-  if (panel) panel.classList.toggle('open');
+// Bottom "DELETE" button on the Build Encounter panel -- only visible while
+// editing a real saved encounter (see sccSetEditingEncounter()), so this is
+// always deleting the one currently loaded.
+function sccDeleteEditingEncounter() {
+  if (!SCC_EDITING_ENCOUNTER_ID) return;
+  sccDeleteSavedEncounter(SCC_EDITING_ENCOUNTER_ID);
 }
 
-function sccRenderCoinRow(idx, c, editing) {
-  if (editing) {
-    return '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-gp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.gp||0) + '"><span class="scc-coin-label gp">GP</span></div>'
-      + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-sp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.sp||0) + '"><span class="scc-coin-label sp">SP</span></div>'
-      + '<div class="scc-coin-input-wrap"><input type="number" class="scc-coin-input" id="scc-loot-cp-' + idx + '" min="0" placeholder="0" value="' + (c.loot.cp||0) + '"><span class="scc-coin-label cp">CP</span></div>'
-      + '<button class="scc-gold-btn-sm" onclick="sccSaveLootCoins(' + idx + ')">Set</button>';
-  } else {
-    var hasCoins = c.loot.gp || c.loot.sp || c.loot.cp;
-    var display = hasCoins
-      ? (c.loot.gp ? '<span class="scc-coin-set gp">' + c.loot.gp + ' GP</span>' : '')
-        + (c.loot.sp ? '<span class="scc-coin-set sp">' + c.loot.sp + ' SP</span>' : '')
-        + (c.loot.cp ? '<span class="scc-coin-set cp">' + c.loot.cp + ' CP</span>' : '')
-      : '<span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;">No coins set</span>';
-    return display + '<button class="scc-btn-sm" style="margin-left:0.5rem;" onclick="sccEditLootCoins(' + idx + ')">Edit</button>';
-  }
+// One "line" per distinct thing assigned -- coins count as a single line
+// regardless of how many denominations are set (gp/sp/cp together are one
+// pile, not three), plus one line per distinct item stack. Drives the row's
+// "✓ Loot Assigned" indicator (Figma) -- present/absent, not a count, per
+// the redesign's own plain green-text treatment.
+function sccStagingLootLineCount(c) {
+  if (!c.loot) return 0;
+  var lines = (c.loot.gp || c.loot.sp || c.loot.cp) ? 1 : 0;
+  lines += (c.loot.items || []).length;
+  return lines;
+}
+
+// Refreshes just the "✓ Loot Assigned" indicator for one combatant -- called
+// from the two loot-edit paths that update their own row surgically
+// (sccSaveLootCoins/sccAddLootItem) rather than a full sccRenderStagingList().
+function sccUpdateLootBadge(idx) {
+  var c = SCC_COMBATANTS[idx];
+  var row = document.getElementById('scc-cb2-combatant-' + idx);
+  if (!c || !row) return;
+  var el = row.querySelector('.scc-cb2-loot-assigned');
+  if (!el) return;
+  var has = sccStagingLootLineCount(c) > 0;
+  el.classList.toggle('scc-cb2-loot-assigned--none', !has);
+  el.innerHTML = has ? '&#10003; Loot Assigned' : '';
+}
+
+// Same 3 colored Gold/Silver/Copper badges as Total Loot's own .scc-cb2-coin-pill
+// (see sccBuildLootTotalsHtml()) -- direct DM ask, not a second pattern: the
+// old version here was a read-only "X GP Y CP" text summary behind a separate
+// Edit toggle, a completely different (and, per Figma, non-existent) design.
+// Always-editable real inputs now, matching Figma's own per-combatant Loot
+// "currency" row, which uses the identical pill shape as Total Loot's.
+function sccRenderCoinRow(idx, c) {
+  return '<div class="scc-cb2-coin-pill gold"><span>Gold</span><input type="number" class="scc-cb2-coin-val-input" id="scc-loot-gp-' + idx + '" min="0" value="' + (c.loot.gp||0) + '" onchange="sccSaveLootCoins(' + idx + ')"></div>'
+    + '<div class="scc-cb2-coin-pill silver"><span>Silver</span><input type="number" class="scc-cb2-coin-val-input" id="scc-loot-sp-' + idx + '" min="0" value="' + (c.loot.sp||0) + '" onchange="sccSaveLootCoins(' + idx + ')"></div>'
+    + '<div class="scc-cb2-coin-pill copper"><span>Copper</span><input type="number" class="scc-cb2-coin-val-input" id="scc-loot-cp-' + idx + '" min="0" value="' + (c.loot.cp||0) + '" onchange="sccSaveLootCoins(' + idx + ')"></div>';
 }
 function sccSaveLootCoins(idx) {
   var c = SCC_COMBATANTS[idx];
@@ -17590,15 +18949,47 @@ function sccSaveLootCoins(idx) {
   c.loot.gp = parseInt((document.getElementById('scc-loot-gp-' + idx)||{}).value) || 0;
   c.loot.sp = parseInt((document.getElementById('scc-loot-sp-' + idx)||{}).value) || 0;
   c.loot.cp = parseInt((document.getElementById('scc-loot-cp-' + idx)||{}).value) || 0;
-  var row = document.getElementById('scc-loot-coin-row-' + idx);
-  if (row) row.innerHTML = sccRenderCoinRow(idx, c, false);
-  showDMToast('Coins set: ' + (c.loot.gp ? c.loot.gp + ' GP ' : '') + (c.loot.sp ? c.loot.sp + ' SP ' : '') + (c.loot.cp ? c.loot.cp + ' CP' : ''), 'success');
+  sccUpdateLootBadge(idx);
+  sccUpdateLootTotals();
 }
-function sccEditLootCoins(idx) {
-  var c = SCC_COMBATANTS[idx];
-  if (!c) return;
-  var row = document.getElementById('scc-loot-coin-row-' + idx);
-  if (row) row.innerHTML = sccRenderCoinRow(idx, c, true);
+
+// Toggle target for the per-row loot search's own "FILTERS" pill -- same
+// show/hide + label-swap pattern sccToggleCombatFiltersBar() already
+// established for the main Combatants search, just id'd per combatant (idx)
+// since each row's loot search is independent. Options are populated live
+// on first open (not pre-built into every row's HTML at render time), same
+// reasoning as sccCombatPopulateFilterOptions() -- cheap, always current,
+// never goes stale.
+function sccToggleLootFiltersBar(idx) {
+  var bar = document.getElementById('scc-loot-filters-bar-' + idx);
+  var btn = document.getElementById('scc-loot-filters-toggle-' + idx);
+  if (!bar) return;
+  var open = bar.style.display === 'none';
+  bar.style.display = open ? '' : 'none';
+  if (btn) btn.textContent = open ? 'FILTERS ✕' : 'FILTERS';
+  if (open) sccPopulateLootFilterOptions(idx);
+}
+
+function sccPopulateLootFilterOptions(idx) {
+  var catSel = document.getElementById('scc-lf-category-' + idx);
+  var rarSel = document.getElementById('scc-lf-rarity-' + idx);
+  if (!catSel || !rarSel) return;
+  var items = (typeof ITEMS !== 'undefined' ? ITEMS : []).filter(function(i) { return i.player_facing !== false; });
+  var cats = Array.from(new Set(items.map(function(i) { return i.category; }).filter(Boolean))).sort();
+  var rarities = Array.from(new Set(items.map(function(i) { return i.rarity; }).filter(Boolean))).sort();
+  var catVal = catSel.value, rarVal = rarSel.value;
+  catSel.innerHTML = '<option value="">Category: All</option>' + cats.map(function(c) { return '<option value="' + sccEsc(c) + '">' + sccEsc(c) + '</option>'; }).join('');
+  rarSel.innerHTML = '<option value="">Rarity: All</option>' + rarities.map(function(r) { return '<option value="' + sccEsc(r) + '">' + sccEsc(r) + '</option>'; }).join('');
+  catSel.value = catVal; rarSel.value = rarVal;
+}
+
+function sccLootFiltersReset(idx) {
+  var catSel = document.getElementById('scc-lf-category-' + idx);
+  var rarSel = document.getElementById('scc-lf-rarity-' + idx);
+  if (catSel) catSel.value = '';
+  if (rarSel) rarSel.value = '';
+  var input = document.getElementById('scc-loot-item-search-' + idx);
+  sccLootItemSearch(idx, input ? input.value : '');
 }
 
 function sccLootItemSearch(idx, query) {
@@ -17606,10 +18997,26 @@ function sccLootItemSearch(idx, query) {
   var drop   = document.getElementById(dropId);
   if (!drop) return;
   query = (query || '').toLowerCase().trim();
-  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var catVal = (document.getElementById('scc-lf-category-' + idx) || {}).value || '';
+  var rarVal = (document.getElementById('scc-lf-rarity-' + idx) || {}).value || '';
+  var filtersActive = !!(catVal || rarVal);
+  // Matches the main Combatants search's own convention: a typed query is
+  // required by default, but once a filter is active the DM can browse with
+  // nothing typed at all (e.g. "every Rare item"), same as
+  // sccCombatantSearch() already allows.
+  if (!query && !filtersActive) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
   var items = typeof ITEMS !== 'undefined' ? ITEMS : [];
+  // player_facing:false rows are DM-only reference notes stored as fake item
+  // entries (e.g. "DM Reference -- Session 1 World Questions") -- real
+  // catalog data, but never a real physical thing a combatant could actually
+  // be carrying, so they don't belong in a loot-assignment search. Confirmed
+  // via SQL: 7 of 139 real item rows are this shape, all player_facing:false.
   var results = items.filter(function(i) {
-    return i.name.toLowerCase().indexOf(query) >= 0;
+    if (i.player_facing === false) return false;
+    if (catVal && i.category !== catVal) return false;
+    if (rarVal && i.rarity !== rarVal) return false;
+    if (query && i.name.toLowerCase().indexOf(query) < 0) return false;
+    return true;
   }).slice(0, 10);
   if (!results.length) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
   drop.innerHTML = results.map(function(item) {
@@ -17621,27 +19028,65 @@ function sccLootItemSearch(idx, query) {
   drop.classList.add('open');
 }
 
+// Shared by the Award Loot / End Combat summary rows (read-only context --
+// no input to edit quantity there, just "Torch ×3").
+function sccLootChipLabel(item) {
+  var qty = item.quantity || 1;
+  return sccEsc(item.name) + (qty > 1 ? ' &times;' + qty : '');
+}
+
+// Shared by the full render and sccAddLootItem()'s own surgical refresh, so
+// the two can't disagree on the empty state -- without this, a creature's
+// very first item (added via the surgical path) would show correctly but
+// with no "nothing here yet" fallback ever having existed to replace. Real
+// data table (sccLootTableRowHtml, shared with Total Loot below) rather than
+// a simple chip list -- editable here (checkbox + live qty input + remove),
+// per the Figma redesign.
+function sccBuildLootItemListHtml(cIdx, items) {
+  if (!items.length) return '<div class="scc-loot-item-list-empty">Nothing assigned yet — search above to add an item.</div>';
+  return '<div class="scc-cb2-loot-table">' + sccLootTableHeaderHtml(true)
+    + items.map(function(item, iIdx) { return sccLootTableRowHtml(item, { editable: true, cIdx: cIdx, iIdx: iIdx }); }).join('')
+  + '</div>';
+}
+
+// Live-edits one item's quantity directly from its own list row -- the real
+// ask this replaces the old pre-set-qty-before-searching field with: assign
+// at 1, then type the real amount right on the row, rather than juggling a
+// separate input before you've even picked the item.
+function sccSetLootItemQuantity(cIdx, itemIdx, inputEl) {
+  var c = SCC_COMBATANTS[cIdx];
+  if (!c || !c.loot || !c.loot.items[itemIdx]) return;
+  var qty = Math.max(1, parseInt(inputEl.value) || 1);
+  c.loot.items[itemIdx].quantity = qty;
+  inputEl.value = qty;
+  sccUpdateLootBadge(cIdx);
+  sccUpdateLootTotals();
+}
+
 function sccAddLootItem(idx, itemId, itemName, itemSummary) {
   var c = SCC_COMBATANTS[idx];
   if (!c) return;
-  if (!c.loot.items.some(function(i){ return i.id === itemId; })) {
-    c.loot.items.push({ id: itemId, name: itemName, summary: itemSummary || '' });
-  }
+  // Stacks onto an existing entry of the same item (+1) instead of the old
+  // silent no-op-if-already-present guard -- that guard is exactly the real
+  // gap being fixed here (DM-reported: no way to assign more than one of
+  // the same item to a creature at all). Exact quantities are set on the
+  // row itself afterward via sccSetLootItemQuantity(), not here.
+  var existing = c.loot.items.find(function(i){ return i.id === itemId; });
+  if (existing) { existing.quantity = (existing.quantity || 1) + 1; }
+  else { c.loot.items.push({ id: itemId, name: itemName, summary: itemSummary || '', quantity: 1 }); }
   var input = document.getElementById('scc-loot-item-search-' + idx);
   var drop  = document.getElementById('scc-loot-item-drop-' + idx);
   if (input) input.value = '';
   if (drop)  { drop.classList.remove('open'); drop.innerHTML = ''; }
-  // Re-render chips only
+  // Re-render the item list only
   var chipsEl = document.getElementById('scc-loot-chips-' + idx);
-  if (chipsEl) {
-    chipsEl.innerHTML = c.loot.items.map(function(item, iIdx) {
-      return '<span class="scc-loot-item-chip">' + sccEsc(item.name)
-        + '<button class="scc-loot-item-remove" onclick="sccRemoveLootItem(' + idx + ',' + iIdx + ')">✕</button>'
-      + '</span>';
-    }).join('');
-  }
+  if (chipsEl) chipsEl.innerHTML = sccBuildLootItemListHtml(idx, c.loot.items);
+  sccUpdateLootBadge(idx);
+  sccUpdateLootTotals();
 }
 
+// Removes the whole row (whatever its quantity) -- to assign fewer, edit the
+// row's own quantity input instead of removing and re-adding.
 function sccRemoveLootItem(idx, itemIdx) {
   var c = SCC_COMBATANTS[idx];
   if (!c) return;
@@ -17649,33 +19094,54 @@ function sccRemoveLootItem(idx, itemIdx) {
   sccRenderStagingList();
 }
 
+// Re-wired to a real UI control (.scc-cb2-combatant-remove, a small corner
+// glyph) after Clear-All-only proved a genuine usability problem in actual
+// play -- a deliberate deviation from the Figma reference (122:483's
+// Combatant component has no per-row remove control at all). Confirm-gated
+// per direct DM ask, matching this file's own established convention for a
+// one-click destructive action (sccClearAllCombatants/
+// sccDeleteSavedEncounter both do the same) -- named after the actual
+// combatant, not a generic "are you sure", so a DM mid-fight can trust
+// they're about to remove the right one.
 function sccRemoveCombatant(idx) {
+  var c = SCC_COMBATANTS[idx];
+  if (!c) return;
+  if (!confirm('Remove ' + c.name + ' from this encounter?')) return;
   SCC_COMBATANTS.splice(idx, 1);
   sccRenderStagingList();
   sccUpdateDifficulty();
 }
 
-function sccUpdateDifficulty() {
-  var badge = document.getElementById('scc-diff-value');
-  if (!badge) return;
+// Shared by the live builder's own badge (sccUpdateDifficulty(), reading
+// SCC_COMBATANTS) and the Saved Encounters card list (reading each saved
+// row's own stored combatants), so both compute difficulty the identical
+// way and can never quietly disagree. `enemies` is an array of {cr, qty} --
+// qty defaults to 1 for callers (older saved rows) that don't carry it.
+function sccComputeDifficultyForEnemies(enemies) {
   var levels = SCC_PLAYERS.map(function(p) { return p.level || 1; });
   var avgLevel = levels.length ? Math.round(levels.reduce(function(a,b){return a+b;},0) / levels.length) : 1;
   var thresholds = SCC_XP_THRESHOLDS[Math.min(avgLevel, 10)] || SCC_XP_THRESHOLDS[1];
-  var enemies = SCC_COMBATANTS.filter(function(c) { return !c.isPC; });
-  if (!enemies.length) { badge.textContent = '—'; badge.className = 'scc-diff-value'; return; }
+  if (!enemies.length) return { diff: '—', cls: '' };
+  var totalCount = enemies.reduce(function(s, c) { return s + (c.qty || 1); }, 0);
   var rawXP = enemies.reduce(function(sum, c) {
-    var cr = parseFloat(c.cr); var xp = SCC_CR_XP[cr] || 0; return sum + xp;
+    var cr = parseFloat(c.cr); var xp = SCC_CR_XP[cr] || 0; return sum + xp * (c.qty || 1);
   }, 0);
-  var adjXP = Math.round(rawXP * sccEncounterMultiplier(enemies.length));
+  var adjXP = Math.round(rawXP * sccEncounterMultiplier(totalCount));
   var partySize = SCC_PLAYERS.length || 3;
-  var diff, cls;
-  if      (adjXP < thresholds[0] * partySize) { diff='Trivial';  cls='low'; }
-  else if (adjXP < thresholds[1] * partySize) { diff='Low';      cls='low'; }
-  else if (adjXP < thresholds[2] * partySize) { diff='Moderate'; cls='moderate'; }
-  else if (adjXP < thresholds[3] * partySize) { diff='High';     cls='high'; }
-  else                                          { diff='Deadly';  cls='deadly'; }
-  badge.textContent = diff;
-  badge.className   = 'scc-diff-value ' + cls;
+  if      (adjXP < thresholds[0] * partySize) return { diff: 'Trivial',  cls: 'low' };
+  else if (adjXP < thresholds[1] * partySize) return { diff: 'Low',      cls: 'low' };
+  else if (adjXP < thresholds[2] * partySize) return { diff: 'Moderate', cls: 'moderate' };
+  else if (adjXP < thresholds[3] * partySize) return { diff: 'High',     cls: 'high' };
+  else                                          return { diff: 'Deadly',  cls: 'deadly' };
+}
+
+function sccUpdateDifficulty() {
+  var badge = document.getElementById('scc-diff-value');
+  if (!badge) return;
+  var enemies = SCC_COMBATANTS.filter(function(c) { return !c.isPC; });
+  var r = sccComputeDifficultyForEnemies(enemies);
+  badge.textContent = r.diff;
+  badge.className   = 'scc-diff-value ' + r.cls;
 }
 
 function sccStartCombat() {
@@ -17684,33 +19150,39 @@ function sccStartCombat() {
     var val   = input ? parseInt(input.value) : NaN;
     c.initiative = isNaN(val) ? Math.floor(Math.random() * 20) + 1 + c.dexMod : val;
   });
-  SCC_INITIATIVE = SCC_COMBATANTS.slice().sort(function(a, b) {
+  // Expand each staged row into its real QTY of individually-trackable live
+  // combatants -- staging keeps N identical creatures as one row (see
+  // sccAddToCombatStaging()'s own comment), but once a fight starts each
+  // needs its own HP/conditions, since they can take different damage.
+  // Genuinely new objects (Object.assign, not shared references) so editing
+  // one copy's HP can never leak into its siblings. All N share the row's
+  // one Initiative roll (that's the whole point of grouping them) and its
+  // one shared loot pool -- attached to only the first of the N so
+  // sccEndCombat()'s own loot-collection sweep (every non-PC SCC_INITIATIVE
+  // entry) can't double-count it.
+  var expanded = [];
+  SCC_COMBATANTS.forEach(function(c) {
+    var n = c.isPC ? 1 : Math.max(1, c.qty || 1);
+    for (var i = 0; i < n; i++) {
+      var copy = Object.assign({}, c);
+      copy.conditions = [];
+      copy.loot = (i === 0) ? c.loot : { items: [], gp: 0, sp: 0, cp: 0 };
+      expanded.push(copy);
+    }
+  });
+  SCC_INITIATIVE = expanded.sort(function(a, b) {
     if (b.initiative !== a.initiative) return b.initiative - a.initiative;
     return b.dexMod - a.dexMod;
   });
   SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_IN_COMBAT = true;
-  document.getElementById('scc-combatant-staging').style.display = 'none';
-  document.getElementById('scc-start-combat-btn').style.display  = 'none';
-  var addAllBtn = document.getElementById('scc-add-all-players-btn');
-  if (addAllBtn) addAllBtn.style.display = 'none';
-  // The rest of the encounter builder used to stay fully visible and clickable
-  // during an active fight — using it silently did nothing, since SCC_INITIATIVE
-  // is a one-time sorted copy of SCC_COMBATANTS taken right here and never
-  // resynced afterward. Hide it outright rather than leave a dead-end control.
-  var rosterLabel = document.getElementById('scc-combat-roster-label');
-  if (rosterLabel) rosterLabel.style.display = 'none';
-  var rosterChips = document.getElementById('scc-combat-session-creatures');
-  if (rosterChips) rosterChips.style.display = 'none';
-  var filtersBar = document.getElementById('scc-combat-filters-bar');
-  if (filtersBar) filtersBar.style.display = 'none';
-  var searchGroup = document.getElementById('scc-combat-search-group');
-  if (searchGroup) searchGroup.style.display = 'none';
-  var clearAllBtn = document.getElementById('scc-clear-all-btn');
-  if (clearAllBtn) clearAllBtn.style.display = 'none';
-  // Saved Encounters is a staging-time tool -- nothing to load into a fight
-  // that's already running.
-  var savedEncBlock = document.getElementById('scc-saved-encounters-block');
-  if (savedEncBlock) savedEncBlock.style.display = 'none';
+  // The whole builder (Saved Encounters + Build Encounter, including the
+  // Details/Session Roster/Combatants/Total Loot sections) used to stay
+  // fully visible and clickable during an active fight -- using it silently
+  // did nothing, since SCC_INITIATIVE is a one-time expansion of
+  // SCC_COMBATANTS taken right here and never resynced afterward. Hidden as
+  // one unit rather than leave any of it a dead-end control.
+  var row = document.getElementById('scc-cb2-row');
+  if (row) row.style.display = 'none';
   document.getElementById('scc-initiative-tracker').style.display = '';
   sccRenderInitiativeList();
 }
@@ -18024,7 +19496,7 @@ function sccOpenLootAward(idx) {
     var itemDesc = item.summary ? '<div style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);line-height:1.3;margin-top:0.1rem;">' + sccEsc(item.summary) + '</div>' : '';
     return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;" id="scc-award-row-' + idx + '-' + iIdx + '">'
       + '<div style="flex:1;min-width:0;">'
-        + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + '">' + sccEsc(item.name) + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span> <button onclick="sccUndoAwardItem(' + idx + ',' + iIdx + ')" style="font-family:var(--font-sans);font-size:0.68rem;padding:0.1rem 0.4rem;background:transparent;border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text-muted);cursor:pointer;margin-left:0.25rem;" title="Undo award">Undo</button>' : '') + '</div>'
+        + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + '">' + sccLootChipLabel(item) + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span> <button onclick="sccUndoAwardItem(' + idx + ',' + iIdx + ')" style="font-family:var(--font-sans);font-size:0.68rem;padding:0.1rem 0.4rem;background:transparent;border:1px solid var(--scc-border-mid);border-radius:4px;color:var(--dm-text-muted);cursor:pointer;margin-left:0.25rem;" title="Undo award">Undo</button>' : '') + '</div>'
         + itemDesc
       + '</div>'
       + (awarded
@@ -18084,11 +19556,14 @@ function sccAwardItem(combatantIdx, itemIdx) {
   var playerIdx   = playerSelEl ? parseInt(playerSelEl.value) : 0;
   var player      = SCC_PLAYERS[playerIdx];
   if (!player) return;
-  // Write to inventory
+  // Write to inventory -- grants the item's own real quantity (was hardcoded
+  // to 1 regardless of how many were actually assigned; the whole stack now
+  // goes to whichever one player is picked, matching how a DM actually hands
+  // out "here, take all 3 torches" rather than one at a time).
   fetch(SCC_URL + '/rest/v1/inventory', {
     method: 'POST',
     headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
-    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true })
+    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: item.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true })
   }).then(function(r) {
     if (r.ok) {
       item.awarded = true;
@@ -18501,7 +19976,7 @@ function sccEndCombat() {
           return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;" id="scc-summary-row-' + iIdx + '">'
             + '<div style="flex:1;min-width:0;">'
               + '<div style="font-family:var(--font-sans);font-size:0.83rem;color:' + (awarded ? 'var(--dm-text-muted)' : 'var(--dm-text)') + ';' + (awarded ? 'text-decoration:line-through;' : '') + ';">'
-                + sccEsc(entry.item.name)
+                + sccLootChipLabel(entry.item)
                 + (awarded ? ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>' : '')
                 + ' <span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);">from ' + sccEsc(entry.source) + '</span>'
               + '</div>'
@@ -18528,22 +20003,14 @@ function sccEndCombat() {
   SCC_END_COMBAT_ITEMS = allItems;
   SCC_IN_COMBAT = false; SCC_COMBATANTS = []; SCC_INITIATIVE = [];
   SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_SELECTED.combatant = [];
+  sccSetEditingEncounter(null);
   document.getElementById('scc-initiative-tracker').style.display = 'none';
-  document.getElementById('scc-combatant-staging').style.display  = '';
   document.getElementById('scc-start-combat-btn').style.display   = 'none';
-  // Restore the encounter-builder controls hidden in sccStartCombat() —
-  // Clear All's own visibility is already re-derived below by
-  // sccRenderStagingList() (hidden again since SCC_COMBATANTS is now empty).
-  var rosterLabelEnd = document.getElementById('scc-combat-roster-label');
-  if (rosterLabelEnd) rosterLabelEnd.style.display = '';
-  var rosterChipsEnd = document.getElementById('scc-combat-session-creatures');
-  if (rosterChipsEnd) rosterChipsEnd.style.display = '';
-  var filtersBarEnd = document.getElementById('scc-combat-filters-bar');
-  if (filtersBarEnd) filtersBarEnd.style.display = '';
-  var searchGroupEnd = document.getElementById('scc-combat-search-group');
-  if (searchGroupEnd) searchGroupEnd.style.display = '';
-  var savedEncBlockEnd = document.getElementById('scc-saved-encounters-block');
-  if (savedEncBlockEnd) savedEncBlockEnd.style.display = '';
+  // Restore the whole builder, hidden as one unit by sccStartCombat() -- its
+  // own internal controls (filters bar open/closed, etc.) were never touched
+  // by Start Combat, so nothing about them needs individually restoring here.
+  var row = document.getElementById('scc-cb2-row');
+  if (row) row.style.display = '';
   sccRenderStagingList(); sccUpdateDifficulty();
 }
 function sccSummaryAwardItem(iIdx) {
@@ -18554,10 +20021,12 @@ function sccSummaryAwardItem(iIdx) {
   var playerIdx = selEl ? parseInt(selEl.value) : 0;
   var player = SCC_PLAYERS[playerIdx];
   if (!player) return;
+  // Grants the item's own real quantity -- was hardcoded to 1 regardless of
+  // how many were actually assigned, same fix as sccAwardItem()'s own POST.
   fetch(SCC_URL + '/rest/v1/inventory', {
     method: 'POST',
     headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
-    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: 1, is_favorite: false, sort_order: 999, dm_granted: true })
+    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: item.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true })
   }).then(function(r) {
     if (r.ok) {
       item.awarded = true;
@@ -18567,7 +20036,7 @@ function sccSummaryAwardItem(iIdx) {
       var row = document.getElementById('scc-summary-row-' + iIdx);
       if (row) {
         row.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-family:var(--font-sans);font-size:0.83rem;color:var(--dm-text-muted);text-decoration:line-through;">'
-          + sccEsc(item.name) + ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>'
+          + sccLootChipLabel(item) + ' <span style="color:var(--dm-green);font-size:0.72rem;">&#10003; Awarded</span>'
           + ' <span style="font-family:var(--font-sans);font-size:0.68rem;color:var(--dm-text-muted);">from ' + sccEsc(entry.source) + '</span>'
           + '</div></div>'
           + '<span style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-green);font-weight:700;padding:0.2rem 0.5rem;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:6px;">&#10003; ' + sccEsc(player.name) + '</span>'
