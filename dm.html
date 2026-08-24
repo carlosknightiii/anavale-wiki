@@ -3436,7 +3436,6 @@
                 <button class="scc-live-tab-btn" data-live="npcs" onclick="sccLiveSwitchSection('npcs')">NPCs</button>
                 <button class="scc-live-tab-btn" data-live="locations" onclick="sccLiveSwitchSection('locations')">Locations</button>
                 <button class="scc-live-tab-btn" data-live="quests" onclick="sccLiveSwitchSection('quests')">Quests</button>
-                <button class="scc-live-tab-btn" data-live="scenarios" onclick="sccLiveSwitchSection('scenarios')">Scenarios</button>
                 <button class="scc-live-tab-btn scc-live-tab-btn--guide active" data-live="fieldguide" onclick="sccLiveSwitchSection('fieldguide')">&#128214; Field Guide</button>
               </div>
 
@@ -3549,26 +3548,25 @@
           </div>
               </div>
 
-              <div class="scc-live-tab-panel" id="scc-live-acc-body-scenarios">
-                <div class="scc-panel-inner">
-                  <div class="scc-live-scenario-filter-wrap">
-                    <input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">
-                    <span class="scc-scenario-filter-clear" id="scc-scenario-filter-clear" onclick="sccScenarioClearFilter()" title="Clear">&#10005;</span>
-                  </div>
-                  <div id="scc-live-scenarios"></div>
-                  <div class="scc-scenario-add-row">
-                    <button class="scc-btn-secondary" onclick="sccJumpToSetupScenarios()">+ Add Scenario</button>
-                  </div>
-                </div>
-              </div>
-
               <div class="scc-live-tab-panel scc-live-tab-panel--fieldguide open" id="scc-live-acc-body-fieldguide">
           <div class="scc-fg-layout">
+          <div class="scc-fg-header">
+            <div class="scc-npc-page-title">Field Guide</div>
+            <div class="scc-fg-colorkey">
+              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--scc-read-aloud-text)"></span>Read Aloud</span>
+              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--blue)"></span>Spoken Dialogue</span>
+              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--dm-only)"></span>DM Only &#183; Background &#183; Why This Works &#183; If They Ask</span>
+              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:#facc15"></span>Comedy</span>
+              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--red-strong)"></span>Don&#8217;t Blow This</span>
+            </div>
+          </div>
           <!-- rendered guide doc, now the only column -->
           <div class="scc-fg-doc" id="scc-fg-doc">
-            <div class="scc-fg-doc-toolbar" id="scc-fg-doc-toolbar">
-              <select id="scc-fg-session-select" class="cm-select" onchange="sccFgSessionChanged()"></select>
-              <button type="button" class="scc-btn-sm" id="scc-fg-edit-toggle" onclick="sccFgToggleEditMode()" title="Rewrite any section of this document, or use the Edit Box link on a specific box below instead">Edit Document</button>
+            <div class="scc-fg-jump-row" id="scc-fg-jump-row">
+              <select id="scc-fg-scenario-jump" class="cm-select" onchange="sccFgJumpToScenario(this.value)">
+                <option value="">Jump to a scenario&#8230;</option>
+              </select>
+              <button type="button" class="scc-btn-sm scc-fg-continue-btn" id="scc-fg-continue-btn" onclick="sccFgReturnFromScenario()" style="display:none;">&#8618; Continue</button>
             </div>
             <div class="scc-fg-doc-inner" id="scc-fg-doc-inner">
               <div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>
@@ -3880,7 +3878,20 @@
     // already uses. sccInit()'s own vendor_stock fetch is untouched and
     // still needed -- it's what keeps stock fresh after a DM edits it while
     // actually on the Session tab, same as every other table listed here.
-    { table: 'vendor_stock',     global: 'VENDOR_STOCK', params: '&order=sort_order.asc' }
+    { table: 'vendor_stock',     global: 'VENDOR_STOCK', params: '&order=sort_order.asc' },
+    // character_attachments hit the exact same bug vendor_stock did, just
+    // discovered later: it was added only to sccInit()'s own Promise.all
+    // (Field Guide Phase 2), so window.SCC_ATTACHMENTS stayed undefined for
+    // the entire Companions & Attachments section until the DM happened to
+    // trigger a real switchTab('session') resync -- confirmed live during
+    // this round's QA pass: a fresh page load straight into Session Details
+    // via sccOpenSessionDetails() (which deliberately skips that resync,
+    // see SCC_SKIP_NEXT_SESSION_RESYNC above) left every player showing
+    // "None yet" regardless of real data in Supabase. Same fix as
+    // vendor_stock: populate it here too, unconditionally, tab-independent.
+    // sccInit()'s own character_attachments fetch stays, for the same
+    // "keep it fresh while actually on the Session tab" reason.
+    { table: 'character_attachments', global: 'SCC_ATTACHMENTS', params: '&active=eq.true&order=created_at.asc' }
   ];
 
   function sbFetch(table, extraParams) {
@@ -7007,15 +7018,32 @@ function showDMToast(msg, type) {
    resolves exactly as before. Content/editor logic below this line is
    completely unchanged, only its container's sizing model is. */
 .scc-live-tab-panel--fieldguide.open { display: flex; flex-direction: column; height: 70vh; }
-.scc-fg-layout { display: grid; grid-template-columns: 1fr; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
-.scc-fg-doc { overflow-y: auto; background: var(--scc-surface); }
-.scc-fg-doc-toolbar {
+.scc-fg-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
+/* ── Field Guide plain header (Phase 2 redesign) — replaces the old title
+   block + session dropdown + Edit Document button. Fixed, doesn't scroll
+   with the document. Matches the plain page-header style the other Live
+   Session tabs (NPCs/Locations) already use. No edit control here at all —
+   the DM never edits the Field Guide directly, Claude handles all edits. */
+.scc-fg-header { flex-shrink: 0; padding: 1.1rem 1.75rem 0.75rem; background: var(--scc-surface); border-bottom: 1px solid var(--scc-border); }
+.scc-fg-header .scc-npc-page-title { margin-bottom: 0.35rem; font-size: 2.1rem; }
+.scc-fg-colorkey { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.scc-fg-colorkey-item { display: flex; align-items: center; gap: 0.35rem; font-family: var(--font-sans); font-size: 0.66rem; color: var(--dm-text-muted); }
+.scc-fg-colorkey-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.scc-fg-doc { flex: 1; min-height: 0; overflow-y: auto; background: var(--scc-surface); }
+/* Repurposes the old toolbar's sticky position for the scenario jump-nav —
+   see CLAUDE.md Decision Log for the Field Guide Phase 2 redesign: the
+   independent session-select dropdown that used to live here is gone
+   (the guide now always tracks whichever session the rest of the app has
+   active/is auditing, via sccResolveViewedSession() — one fewer piece of
+   state that could drift out of sync with the DM's actual place in the app). */
+.scc-fg-jump-row {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.6rem 1.75rem; background: var(--scc-surface);
+  padding: 0.55rem 1.75rem; background: var(--scc-surface);
   border-bottom: 1px solid var(--scc-border);
 }
-.scc-fg-doc-toolbar select { flex: 1; max-width: 260px; }
+.scc-fg-jump-row select { flex: 1; max-width: 320px; }
+.scc-fg-jump-row .scc-fg-continue-btn { flex-shrink: 0; }
 .scc-fg-doc-inner { padding: 1.5rem 1.75rem 3rem; margin: 0 auto; }
 .scc-fg-link {
   color: var(--dm-gold); cursor: pointer; text-decoration: underline;
@@ -7026,63 +7054,30 @@ function showDMToast(msg, type) {
   font-family: var(--font-body); font-size: 0.85rem; color: var(--dm-text-muted);
   font-style: italic; text-align: center; padding: 3rem 1rem;
 }
-/* ── Field Guide editor ── */
-.scc-fg-editor { max-width: 100%; }
-.scc-fg-editor-toolbar { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.scc-fg-editor-group {
-  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius); margin-bottom: 0.6rem; overflow: hidden;
-}
-.scc-fg-editor-group-header {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-  padding: 0.6rem 0.85rem; cursor: pointer; font-family: var(--font-sans);
-  font-size: 0.85rem; font-weight: 700; color: var(--dm-text);
-}
-.scc-fg-editor-group-count {
-  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 400; color: var(--dm-text-faint); flex-shrink: 0;
-}
-.scc-fg-editor-group-body { display: none; padding: 0 0.85rem 0.85rem; }
-.scc-fg-editor-group.open .scc-fg-editor-group-body { display: block; }
-.scc-fg-editor-row {
-  border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm);
-  padding: 0.5rem 0.6rem; margin-top: 0.5rem; background: var(--dm-surface);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-/* Flash cue for "Edit Box" jump landing — fades out on its own after 2.5s. */
+/* Shared flash-highlight cue for a jump-to-anchor landing (Field Guide's own
+   scenario-jump, and the "+ Add Scenario" jump into the Setup scenario
+   editor) — fades out on its own after 2.5s. The Field Guide document
+   editor this was originally built for (per-box "Edit Box" jump) is gone;
+   both remaining consumers of this exact class are unrelated to it, so the
+   rule stays, just no longer under that name's original context. */
 .scc-fg-editor-row--jump-highlight {
   border-color: var(--dm-gold);
   box-shadow: 0 0 0 2px var(--dm-gold-dim);
 }
-.scc-fg-editor-row-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
-.scc-fg-editor-row-type {
-  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--dm-gold);
-}
-.scc-fg-editor-row-actions { display: flex; gap: 0.3rem; }
-.scc-fg-row-btn {
-  background: transparent; border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm);
-  color: var(--dm-text-muted); cursor: pointer; font-size: 0.7rem; padding: 0.15rem 0.4rem;
-}
-.scc-fg-row-btn:hover { color: var(--dm-text); }
-.scc-fg-row-btn-del:hover { color: var(--dm-red); border-color: var(--dm-red); }
-.scc-fg-editor-row-body textarea, .scc-fg-editor-row-body input[type="text"] { width: 100%; box-sizing: border-box; }
-.scc-fg-html-field { display: flex; flex-direction: column; gap: 0.3rem; }
-.scc-fg-edit-hint { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-text-faint); margin-bottom: 0.2rem; }
-.scc-fg-box-edit-row { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
-.scc-fg-box-edit-row input { flex: 1; }
-.scc-fg-box-edit-row select { width: 120px; }
-.scc-fg-table-editor { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
-.scc-fg-table-edit-row { display: flex; gap: 0.35rem; align-items: flex-start; }
-.scc-fg-table-cell { flex: 1; min-height: 2.2rem; }
-.scc-fg-table-edit-header input { flex: 1; font-weight: 700; }
-.scc-fg-editor-add-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; }
-.scc-fg-editor-add-row select { flex: 1; }
 .scc-fg-doc-title { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--dm-gold); text-align: center; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
 .scc-fg-doc-subtitle { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--dm-text); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-tagline { font-family: var(--font-body); font-size: 0.95rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-meta { font-family: var(--font-body); font-size: 0.8rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 1.25rem; }
 .scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
-.scc-fg-doc-h2 { font-family: var(--font-body); font-size: 0.95rem; font-weight: 700; color: #7eb8f0; margin: 1.1rem 0 0.4rem; }
+/* Was #7eb8f0 (blue) -- a pre-existing, category-system-unrelated hardcoded
+   hex that predates Phase 2 (h2 headings never go through the box/category
+   render path at all). Once Spoken Dialogue claimed blue as a reserved
+   meaning, every "Step N" / "Beat N" subheading in the document (30 of
+   them, real Session 1 data) was coincidentally the same hue -- not a
+   category-bleed bug, just two unrelated things that happened to clash.
+   Plain text color instead, matching h1's own approach (size/weight/border
+   already carry the hierarchy, the color doesn't need to). */
+.scc-fg-doc-h2 { font-family: var(--font-body); font-size: 0.95rem; font-weight: 700; color: var(--dm-text); margin: 1.1rem 0 0.4rem; }
 .scc-fg-doc-h3 { font-family: var(--font-body); font-size: 0.88rem; font-weight: 700; color: var(--dm-text-muted); margin: 0.75rem 0 0.3rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .scc-fg-doc-inner p { font-family: var(--font-body); font-size: 0.83rem; color: var(--dm-text); line-height: 1.65; margin: 0 0 0.6rem; }
 .scc-fg-doc-inner ul { font-family: var(--font-body); font-size: 0.83rem; color: var(--dm-text); line-height: 1.65; margin: 0 0 0.6rem; padding-left: 1.25rem; }
@@ -7091,29 +7086,14 @@ function showDMToast(msg, type) {
 .scc-fg-doc-footer { font-family: var(--font-body); font-size: 0.72rem; color: var(--dm-text-muted); text-align: center; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--scc-border); font-style: italic; }
 .scc-fg-box { border-radius: var(--dm-radius-sm); padding: 0.75rem 1rem; margin: 0.5rem 0 0.75rem; }
 .scc-fg-box-label { font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
-/* Per-box jump-to-edit link — normal-case, not uppercase/letter-spaced like the
-   label it sits next to, so it visibly reads as a UI control, not document text. */
-.scc-fg-box-edit-jump {
-  float: right;
-  background: none;
-  border: 1px solid var(--scc-border-mid);
-  border-radius: 4px;
-  color: var(--dm-text-muted);
-  font-family: var(--font-sans);
-  font-size: 0.62rem;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
-  padding: 0.1rem 0.4rem;
-  cursor: pointer;
-}
-.scc-fg-box-edit-jump:hover { color: var(--dm-gold); border-color: var(--scc-border-gold); }
-.scc-audit-mode .scc-fg-box-edit-jump { display: none !important; }
 .scc-fg-box p { margin: 0 0 0.45rem !important; font-size: 0.82rem !important; }
 .scc-fg-box p:last-child { margin-bottom: 0 !important; }
 .scc-fg-box--green { background: var(--scc-read-aloud-bg); border-left: 3px solid var(--scc-read-aloud-border); }
 .scc-fg-box--green .scc-fg-box-label { color: var(--scc-read-aloud-text); }
-.scc-fg-box--green p { font-style: italic; color: #c6f0d8 !important; }
+/* Read Aloud is text the DM speaks straight from the screen at the table --
+   needs to be comfortably legible at a glance, not squeezed to the same
+   size as reference prose. Overrides .scc-fg-box p's 0.82rem. */
+.scc-fg-box--green p { font-style: italic; color: #c6f0d8 !important; font-size: 18px !important; }
 /* .scc-fg-box--magenta: DM Only. Was .scc-fg-box--yellow (a class name that
    stopped meaning anything the moment this box stopped being yellow) — renamed
    once a real bright-yellow box (Comedy, below) needed that name for real.
@@ -7164,6 +7144,238 @@ function showDMToast(msg, type) {
 .scc-fg-box .scc-fg-table { margin: 0.5rem 0 0; }
 .scc-fg-box .scc-fg-table td { color: inherit !important; }
 .scc-fg-box .scc-fg-table td:first-child { color: inherit !important; font-weight: 700; }
+/* ── New category-driven box colors (Phase 2) — Spoken Dialogue (blue) and
+   Don't Blow This (red) never had a color variant before; category now
+   drives which one a box gets (see sccFgCategoryStyle()), not the legacy
+   color field. */
+.scc-fg-box--blue { background: var(--blue-dim); border-left: 3px solid var(--blue-border); }
+.scc-fg-box--blue .scc-fg-box-label { color: var(--blue); }
+.scc-fg-box--red {
+  position: relative;
+  background: var(--red-dim);
+  border: 1px solid var(--red-border-strong);
+  border-left: 4px solid var(--red-strong);
+}
+.scc-fg-box--red::before {
+  content: '\26D4'; position: absolute; top: 0.3rem; right: 0.5rem;
+  font-size: 1.3rem; color: var(--red-strong); opacity: 0.6; line-height: 1;
+}
+.scc-fg-box--red .scc-fg-box-label { color: var(--red-strong); font-size: 0.8rem; padding-right: 1.75rem; }
+.scc-fg-box--red p { color: #ffd9d9 !important; font-weight: 600; }
+/* Category badge — shown only on the boxes that share a color family with
+   others (the magenta family, plus Don't Blow This) where the box's own
+   free-text label can't be trusted to say which category it really is
+   (real Session 1 data has "Why This Works" boxes labeled "DM ONLY").
+   Always derived from category, so it's always correct regardless of
+   what the label text happens to say. */
+.scc-fg-box-cat-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 0.12rem 0.5rem; border-radius: 10px; margin-bottom: 0.4rem;
+}
+.scc-fg-box--magenta .scc-fg-box-cat-badge { background: var(--dm-only-dim); border: 1px solid var(--dm-only-border); color: var(--dm-only); }
+.scc-fg-box--red .scc-fg-box-cat-badge { background: rgba(214,43,43,0.2); border: 1px solid var(--red-border-strong); color: var(--red-strong); }
+/* ── Spoken Dialogue — distinct callout, not a plain box. Speaker portrait +
+   name + pronouns from world_characters, plus an optional tone_note. */
+.scc-fg-spoken { padding: 0.85rem 1rem; }
+.scc-fg-spoken-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.55rem; cursor: pointer; }
+.scc-fg-spoken-thumb, .scc-fg-spoken-thumb-fallback { width: 38px; height: 38px; border-radius: 9999px; object-fit: cover; flex-shrink: 0; }
+.scc-fg-spoken-thumb-fallback {
+  background: var(--dm-surface-high); border: 1px solid var(--dm-border-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headers); font-size: 1.05rem; color: var(--dm-gold);
+}
+.scc-fg-spoken-meta { display: flex; flex-direction: column; }
+.scc-fg-spoken-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); }
+.scc-fg-spoken-name:hover { text-decoration: underline; }
+.scc-fg-spoken-pronouns { font-family: var(--font-sans); font-size: 0.66rem; color: var(--dm-text-muted); }
+.scc-fg-spoken-tone {
+  display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;
+  font-family: var(--font-sans); font-size: 0.72rem; font-style: italic; color: var(--dm-text-muted);
+  background: rgba(255,255,255,0.03); border-radius: var(--dm-radius-sm); padding: 0.3rem 0.55rem;
+}
+.scc-fg-spoken-tone-icon { flex-shrink: 0; }
+/* Same "read at the table" legibility requirement as Read Aloud, above. */
+.scc-fg-spoken-line p { font-size: 18px !important; }
+.scc-fg-spoken-line p:last-child { margin-bottom: 0 !important; }
+/* ── Comedy, inline mode — reads as part of the narration (a normal
+   paragraph), not set apart in a box. Full-box mode (category=comedy,
+   inline!=true) still uses .scc-fg-box--yellow above, unchanged. */
+.scc-fg-comedy-inline { font-style: italic; color: #fef08a; }
+.scc-fg-comedy-inline-icon { margin-right: 0.3rem; opacity: 0.85; }
+/* ── Entity-mention inline thumbnail — first/genuinely significant mention
+   of a linked entity only, tracked per render pass (sccFgLinkify's seen set). */
+.scc-fg-link-thumb, .scc-fg-link-thumb-fallback {
+  display: inline-block; width: 18px; height: 18px; border-radius: 50%;
+  object-fit: cover; vertical-align: -4px; margin: 0 0.25rem 0 0.1rem;
+  border: 1px solid var(--scc-border-mid);
+}
+.scc-fg-link-thumb-fallback {
+  background: var(--dm-surface-high); text-align: center; line-height: 16px;
+  font-family: var(--font-headers); font-size: 0.6rem; color: var(--dm-gold);
+}
+/* ── Session-opening section — always the first thing in the document when
+   present; hidden entirely when the session has no opening data yet. */
+.scc-fg-opening { margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 2px solid var(--dm-gold); }
+.scc-fg-opening-loc { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.85rem; cursor: pointer; }
+.scc-fg-opening-loc-img, .scc-fg-opening-loc-img-fallback { width: 52px; height: 52px; border-radius: var(--dm-radius-sm); object-fit: cover; flex-shrink: 0; }
+.scc-fg-opening-loc-img-fallback {
+  background: var(--dm-surface-high); border: 1px solid var(--dm-border-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headers); font-size: 1.2rem; color: var(--dm-gold);
+}
+.scc-fg-opening-loc-name { font-family: var(--font-sans); font-size: 0.98rem; font-weight: 700; color: var(--dm-text); }
+.scc-fg-opening-loc-name:hover { text-decoration: underline; }
+.scc-fg-player-ctx-wrap { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+.scc-fg-player-ctx { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); padding: 0.6rem 0.75rem; }
+.scc-fg-player-ctx-name { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; color: var(--dm-gold); margin-bottom: 0.3rem; }
+.scc-fg-player-ctx-text { font-family: var(--font-body); font-size: 0.82rem; color: var(--dm-text); line-height: 1.5; }
+/* ── Companions & Attachments ── */
+.scc-fg-attach-section { margin-top: 0.85rem; }
+/* Plain heading, not a chip/pill -- was reusing .scc-fg-box-cat-badge's
+   pill shape with gold coloring, which reads as a clickable control (it's
+   the same shape/color language every other clickable badge in this app
+   uses). This is just a section title. */
+.scc-fg-attach-title {
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--dm-gold);
+  margin-bottom: 0.3rem;
+}
+.scc-fg-attach-pc-row { margin-top: 0.6rem; }
+.scc-fg-attach-pc-header { display: flex; align-items: center; gap: 0.45rem; }
+.scc-fg-attach-pc-thumb, .scc-fg-attach-pc-thumb-fallback { width: 22px; height: 22px; border-radius: 9999px; object-fit: cover; flex-shrink: 0; }
+.scc-fg-attach-pc-thumb-fallback {
+  background: var(--dm-surface-high); border: 1px solid var(--dm-border-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headers); font-size: 0.65rem; color: var(--dm-gold);
+}
+.scc-fg-attach-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.35rem; }
+.scc-fg-attach-none { font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text-faint); font-style: italic; }
+.scc-fg-attach-pill {
+  display: inline-flex; align-items: stretch; gap: 0.35rem;
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); border-radius: 10px;
+  padding: 0.15rem 0.3rem 0.15rem 0.55rem; font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text);
+}
+.scc-fg-attach-pill--permanent { border-color: var(--scc-border-gold); }
+.scc-fg-attach-pill-main { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.scc-fg-attach-pill-main:hover { color: var(--dm-gold); }
+.scc-fg-attach-pill-mode { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--dm-text-muted); }
+.scc-fg-attach-pill--permanent .scc-fg-attach-pill-mode { color: var(--dm-gold); }
+.scc-fg-attach-pill-x { cursor: pointer; color: var(--dm-text-faint); padding: 0 0.1rem; display: flex; align-items: center; }
+.scc-fg-attach-pill-x:hover { color: var(--dm-red); }
+.scc-fg-attach-add-btn { font-size: 0.66rem; padding: 0.15rem 0.5rem; }
+.scc-fg-attach-form { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; padding: 0.5rem; background: var(--dm-surface-high); border-radius: var(--dm-radius-sm); }
+.scc-fg-attach-form .scc-picker-search-wrap { flex: 1 1 140px; position: relative; }
+.scc-fg-attach-form input[type="text"] { width: 100%; box-sizing: border-box; }
+.scc-fg-attach-form select { flex: 0 0 auto; }
+.scc-fg-attach-form textarea { flex: 1 1 100%; }
+.scc-fg-attach-form-actions { display: flex; gap: 0.4rem; align-items: center; }
+.scc-fg-attach-cancel {
+  background: none; border: none; color: var(--dm-text-muted); cursor: pointer;
+  font-family: var(--font-sans); font-size: 0.7rem; padding: 0.2rem 0.3rem;
+}
+.scc-fg-attach-cancel:hover { color: var(--dm-text); }
+/* ── Live quest-beat status, inline in the document -- replaces the old
+   "these beats are in your Quests tab, click them there" instructional
+   text. Real link to the quest + real click-to-advance status, backed by
+   the exact same save path (sccCycleBeatStatus) the Quests tab itself
+   uses -- one real write path, not a second one. */
+.scc-fg-quest-beats { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; }
+.scc-fg-quest-beats-header {
+  padding: 0.55rem 0.85rem; background: var(--dm-surface-high); cursor: pointer;
+  font-family: var(--font-display); font-size: 0.95rem; font-weight: 700;
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-fg-quest-beats-header .scc-fg-link { font-size: inherit; }
+.scc-fg-beat-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.85rem; border-top: 1px solid var(--scc-border);
+  cursor: pointer; transition: background 0.1s;
+}
+.scc-fg-beat-row:first-of-type { border-top: none; }
+.scc-fg-beat-row:hover { background: rgba(255,255,255,0.02); }
+.scc-fg-beat-num {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid); color: var(--dm-text-muted);
+}
+.scc-fg-beat-row--completed .scc-fg-beat-num { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.scc-fg-beat-row--in_progress .scc-fg-beat-num { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
+.scc-fg-beat-title { flex: 1; font-family: var(--font-sans); font-size: 0.82rem; color: var(--dm-text); }
+.scc-fg-beat-row--completed .scc-fg-beat-title { color: var(--dm-text-muted); text-decoration: line-through; text-decoration-color: var(--green-border); }
+.scc-fg-beat-xp { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-gold); flex-shrink: 0; }
+.scc-fg-beat-status {
+  flex-shrink: 0; font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700;
+  padding: 0.15rem 0.5rem; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.scc-fg-beat-status--not_started { background: rgba(255,255,255,0.06); color: var(--dm-text-muted); border: 1px solid var(--scc-border-mid); }
+.scc-fg-beat-status--in_progress { background: var(--dm-gold-dim); color: var(--dm-gold); border: 1px solid var(--scc-border-gold); }
+.scc-fg-beat-status--completed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+/* ── "Roll Initiative" — real new-tab link into Session Details' Combat
+   sub-panel, a saved combat_encounters row already loaded. Anchor tag, not
+   a JS window.open() button, so it genuinely inherits sessionStorage.dm_auth
+   (target="_blank" + rel="opener", same pattern as the lookup drawer's own
+   "open in new tab" links). */
+.scc-fg-roll-init-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem;
+  text-decoration: none; cursor: pointer;
+}
+/* ── Branching combat outcome widget (box.category === 'combat_outcomes') ── */
+.scc-fg-outcomes-box { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; }
+.scc-fg-outcomes-header {
+  padding: 0.55rem 0.85rem; background: var(--dm-surface-high);
+  font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--dm-text);
+  border-bottom: 1px solid var(--scc-border);
+}
+.scc-fg-outcomes-intro { padding: 0.6rem 0.85rem 0; margin: 0 !important; font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
+.scc-fg-outcome-row {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  padding: 0.6rem 0.85rem; border-top: 1px solid var(--scc-border);
+  cursor: pointer; transition: background 0.1s;
+}
+.scc-fg-outcome-row:first-of-type { border-top: none; }
+.scc-fg-outcome-row:hover { background: rgba(255,255,255,0.02); }
+.scc-fg-outcome-row--logged { background: var(--green-dim); }
+.scc-fg-outcome-row--logged:hover { background: var(--green-dim); }
+.scc-fg-outcome-check {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 0.1rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: var(--green);
+  border: 1px solid var(--scc-border-mid);
+}
+.scc-fg-outcome-row--logged .scc-fg-outcome-check { border-color: var(--green-border); }
+.scc-fg-outcome-body { flex: 1; min-width: 0; }
+.scc-fg-outcome-label { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text); }
+.scc-fg-outcome-desc { font-family: var(--font-body); font-size: 0.78rem; color: var(--dm-text-muted); margin-top: 0.15rem; line-height: 1.5; }
+.scc-fg-outcome-logged-tag { font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--green); margin-top: 0.3rem; }
+/* ── Session-opening empty state -- matches Companions & Attachments'
+   "None yet" + "+ Add" language, rather than rendering nothing. ── */
+.scc-fg-opening-empty { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.6rem; }
+.scc-fg-opening-empty-label { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dm-text-muted); }
+.scc-fg-opening-field-form { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; padding: 0.5rem; background: var(--dm-surface-high); border-radius: var(--dm-radius-sm); }
+.scc-fg-opening-field-form .scc-picker-search-wrap { flex: 1 1 100%; position: relative; }
+.scc-fg-opening-field-form input[type="text"], .scc-fg-opening-field-form textarea { width: 100%; box-sizing: border-box; }
+.scc-fg-opening-field-form textarea { flex: 1 1 100%; }
+/* ── NPC Visualization sub-fields (world_characters.vis_*), on a Spoken
+   Dialogue box's speaker -- collapsed by default so it doesn't bloat the
+   always-visible reading flow of a dialogue box a DM is scanning quickly
+   mid-scene; expands on click for prep or a specific player question. */
+.scc-fg-spoken-vis-toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;
+  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; color: var(--blue);
+  margin-bottom: 0.5rem;
+}
+.scc-fg-spoken-vis-toggle:hover, .scc-fg-spoken-vis-toggle.open { text-decoration: underline; }
+.scc-fg-vis-wrap { margin-bottom: 0.6rem; }
+.scc-fg-vis-panel { background: rgba(255,255,255,0.03); border-radius: var(--dm-radius-sm); padding: 0.6rem 0.75rem; }
+.scc-fg-vis-summary { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem !important; margin-bottom: 0.5rem !important; }
+.scc-fg-vis-row { display: flex; gap: 0.5rem; padding: 0.2rem 0; font-size: 0.78rem; }
+.scc-fg-vis-row-label { flex: 0 0 170px; font-family: var(--font-sans); font-weight: 700; color: var(--dm-text-muted); }
+.scc-fg-vis-row-text { flex: 1; color: var(--dm-text); line-height: 1.4; }
+/* ── Scenario reference section, merged in from the old standalone tab ── */
+.scc-fg-scenario-section { margin-top: 2rem; }
 .scc-tab-btn--guide { background: rgba(167,243,208,0.08); border-color: rgba(167,243,208,0.3); color: #6ee7b7; }
 .scc-tab-btn--guide.active { background: rgba(167,243,208,0.16); border-color: rgba(167,243,208,0.6); color: #a7f3d0; }
 /* ── Notes Panel ── */
@@ -13677,7 +13889,8 @@ function sccInit(forceSessionNum) {
     sccFetch('species', '&order=sort_order.asc').then(function(rows) { window.SPECIES = Array.isArray(rows) ? rows : []; }),
     sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; }),
     sccFetch('conditions', '&order=sort_order.asc').then(function(rows) { window.SCC_CONDITIONS_DATA = Array.isArray(rows) ? rows : []; }),
-    sccFetch('vendor_stock', '&order=sort_order.asc').then(function(rows) { window.VENDOR_STOCK = Array.isArray(rows) ? rows : []; })
+    sccFetch('vendor_stock', '&order=sort_order.asc').then(function(rows) { window.VENDOR_STOCK = Array.isArray(rows) ? rows : []; }),
+    sccFetch('character_attachments', '&active=eq.true&order=created_at.asc').then(function(rows) { window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : []; })
   ]).then(function() {
     // sccLoadLatestSession() now loads players itself (see its own comment) --
     // no need to also do it here, that would just be a redundant fetch.
@@ -13718,7 +13931,14 @@ var SCC_XP_THRESHOLDS = {
 // Conditions widgets and the Location card's "Buying as" list, both read
 // straight off SCC_SHEETS/SCC_PLAYERS below.
 function sccLoadPlayers() {
-  sccFetch('player_characters', '&pc=eq.true&order=name').then(function(rows) {
+  // Returns its full promise chain (both the outer fetch AND the nested
+  // Promise.all below) -- added for the Roll Initiative "open in new tab"
+  // routing, which needs to know SCC_SHEETS/SCC_PLAYER_PHOTOS are genuinely
+  // populated (not just SCC_PLAYERS) before staging a saved encounter's real
+  // PCs, since sccAddToCombatStaging()'s AC/HP math reads SCC_SHEETS[id]
+  // directly. No existing caller uses the return value, so this is additive
+  // -- every other call site is unaffected.
+  return sccFetch('player_characters', '&pc=eq.true&order=name').then(function(rows) {
     SCC_PLAYERS = Array.isArray(rows) ? rows : [];
     var ids = SCC_PLAYERS.map(function(p) { return p.id; });
     if (!ids.length) { return; }
@@ -13727,7 +13947,7 @@ function sccLoadPlayers() {
     // only ever ran on a manual tab click (well after this had settled); now that
     // Live Session renders on initial page load (Phase 3a default view), this fetch
     // and that render can genuinely race, so refresh explicitly on completion below.
-    Promise.all([
+    return Promise.all([
       sccFetch('character_sheet', '&character_id=in.(' + ids.join(',') + ')'),
       sccFetch('classes', ''),
       sccFetch('character_photo', '&character_id=in.(' + ids.join(',') + ')')
@@ -13768,6 +13988,12 @@ function sccLoadPlayers() {
       // location card rendered before this resolves would permanently show
       // "No players" until something else re-renders the panel.
       if (typeof sccRenderLocationPanel === 'function') sccRenderLocationPanel();
+      // Same race a third time: SCC_PLAYER_PHOTOS feeds the Field Guide's
+      // Companions & Attachments thumbnails. Only redraw if the guide has
+      // already rendered once (SCC_FG_RENDERED_SESSION_NUM set) -- calling
+      // this before that would show a false "No Field Guide written yet"
+      // against a document cache that just hasn't been fetched.
+      if (typeof sccFgDrawDocument === 'function' && typeof SCC_FG_RENDERED_SESSION_NUM !== 'undefined' && SCC_FG_RENDERED_SESSION_NUM !== null) sccFgDrawDocument();
     });
   }).catch(function() { /* no player bar left to fall back to -- Live Session's own widgets just stay on whatever they last rendered */ });
 }
@@ -14284,11 +14510,28 @@ function sccSwitchPanel(name) {
 // Each session's document lives in `field_guide_sessions` as one ordered
 // jsonb `blocks` array — see CLAUDE.md Decision Log (Aug 13/14 2026) for
 // the full reasoning. This replaces the old single hardcoded Session 1 doc.
-var SCC_FG_DOC_SESSION_NUM = null;      // which session's document is showing
+// SCC_FG_DOC_SESSION_NUM (an independent Field Guide-only session selector)
+// is retired -- Phase 2 redesign, see CLAUDE.md Decision Log. The guide now
+// always tracks whichever session the rest of the app has active/is
+// auditing, via sccFgActiveSessionNum() -> sccResolveViewedSession() (the
+// same resolver Scenarios already used) -- one fewer piece of state that
+// could silently drift from the DM's real place in the app.
 var SCC_FG_DOC_CACHE = {};              // session_number -> row ({id, blocks}) or null (confirmed empty)
-var SCC_FG_EDIT_MODE = false;
-var SCC_FG_EDIT_BLOCKS = null;          // working copy while editing
-var SCC_FG_EDIT_GROUP_OPEN = {};
+var SCC_FG_OPENING_CTX_CACHE = {};      // session_number -> array of session_opening_player_context rows
+var SCC_FG_COMBAT_OUTCOME_LOG_CACHE = {}; // session_number -> session_note_entries rows (category='quest')
+                                         // already logged this session, read synchronously by the
+                                         // combat_outcomes widget so a reload shows what was already picked
+var SCC_FG_RENDERED_SESSION_NUM = null; // which session's HTML is currently in the DOM (guards against
+                                         // rebuilding -- and resetting scroll position -- on every tab switch)
+var SCC_FG_LINK_SEEN = {};              // 'type:id' -> true once an inline entity mention has shown its
+                                         // thumbnail once this render pass (reset each sccFgRenderDoc() call)
+var SCC_FG_RETURN_SCROLL_TOP = 0;       // captured .scc-fg-doc scrollTop, for the scenario-jump Continue button
+var SCC_FG_RETURN_SCROLL_SET = false;   // true once a jump has captured a return point this "session" of jumps
+// The Field Guide document editor (SCC_FG_EDIT_MODE/SCC_FG_EDIT_BLOCKS and
+// its own render/save/cancel functions) is retired -- the DM never edits
+// the Field Guide directly, Claude handles all edits going forward. See
+// CLAUDE.md Decision Log. SCC_FG_BOX_COLOR_CLASS stays: the read view's
+// own fallback for a block with no real category still reads it.
 
 /* Semantic key === CSS class name for every color now (no more indirection
    like the old cyan->'yellow' remap) -- 'blue' (World Lore, confusing, no
@@ -14296,7 +14539,6 @@ var SCC_FG_EDIT_GROUP_OPEN = {};
    were both dropped entirely, not just recolored. See CLAUDE.md Decision Log
    for the real-data migration this required. */
 var SCC_FG_BOX_COLOR_CLASS = { grey: 'grey', green: 'green', magenta: 'magenta', gold: 'gold', yellow: 'yellow' };
-var SCC_FG_BOX_COLORS = ['grey', 'green', 'magenta', 'gold', 'yellow'];
 // Loot/shop (orange) box subtype -> icon. DM-assigned per box, never auto-detected
 // from box text (too unreliable to trust silently). An orange box with no subtype
 // set (or an unrecognized one) falls back to the universal coin icon it always had.
@@ -14317,15 +14559,61 @@ var SCC_FG_LINK_TYPES = {
   organization: { label: 'Organization', arr: function(){ return typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : []; } }
 };
 
+/* Category now drives every box's color and icon — never the legacy `color`
+   field (see CLAUDE.md Decision Log, Phase 2 redesign). `badge` is shown as
+   a small always-correct pill above the box's own free-text label, only for
+   the categories that share a color with a sibling (real Session 1 data has
+   "Why This Works" boxes whose stored label still says "DM ONLY" — the
+   badge is what a DM can actually trust, not the label text). Categories
+   with no entry here (e.g. a null/unrecognized category on old data) fall
+   back to the legacy color field via SCC_FG_BOX_COLOR_CLASS, then grey. */
+var SCC_FG_CATEGORY_STYLE = {
+  read_aloud:      { colorClass: 'green',   badge: null },
+  spoken_dialogue: { colorClass: 'blue',    badge: null }, // rendered via sccFgRenderSpokenDialogue(), not a plain badge
+  dm_only:         { colorClass: 'magenta', badge: { icon: '&#9888;',  name: 'DM Only' } },
+  background:      { colorClass: 'magenta', badge: { icon: '&#128220;', name: 'Background' } },
+  why_this_works:  { colorClass: 'magenta', badge: { icon: '&#128161;', name: 'Why This Works' } },
+  if_they_ask:     { colorClass: 'magenta', badge: { icon: '&#10067;', name: 'If They Ask' } },
+  dont_blow_this:  { colorClass: 'red',     badge: { icon: '&#9940;',  name: "Don't Blow This" } },
+  comedy:          { colorClass: 'yellow',  badge: null },
+  loot_shop:       { colorClass: 'gold',    badge: null },
+  guide_meta:      { colorClass: 'grey',    badge: null }
+};
+
 // Turns [[type:id|Label]] into a clickable span wired to the existing lookup drawer.
 // Manual, DM-authored syntax — not auto-detected — per the confirmed design decision
 // (this app's other inline links, quest.related[], are explicit too; auto-linking
 // real entity names in this dataset — Gerald, Grey, Vel, Fess, Mira — risks false
 // positives on ordinary prose).
+// Small inline thumbnail for an entity's first appearance in a render pass
+// (SCC_FG_LINK_SEEN, reset once per sccFgDrawDocument() call, shared across
+// the opening section, the main body, and the scenario reference so an
+// entity only ever gets its portrait once per document view, wherever it
+// first comes up). Same onerror-swap-to-fallback pattern already proven by
+// sccBuildNpcCardHeaderHtml()'s portraitHtml, reused rather than reinvented.
+function sccFgEntityThumbHtml(type, id) {
+  var def = SCC_FG_LINK_TYPES[type];
+  if (!def) return '';
+  var e = def.arr().find(function(x) { return x.id === id; });
+  if (!e || !e.name) return '';
+  var initial = sccEsc(e.name.charAt(0));
+  if (e.image) {
+    return '<img class="scc-fg-link-thumb" src="' + sccEsc(e.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
+      + '<span class="scc-fg-link-thumb-fallback" style="display:none">' + initial + '</span>';
+  }
+  return '<span class="scc-fg-link-thumb-fallback">' + initial + '</span>';
+}
+
 function sccFgLinkify(html) {
   return (html || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
-    return '<span class="scc-fg-link" onclick="sccOpenLookup(\'' + type.replace(/'/g, "\\'") + '\',\'' + id.replace(/'/g, "\\'") + '\')">' + sccEsc(text) + '</span>';
+    var key = type + ':' + id;
+    var thumb = '';
+    if (!SCC_FG_LINK_SEEN[key]) {
+      SCC_FG_LINK_SEEN[key] = true;
+      thumb = sccFgEntityThumbHtml(type, id);
+    }
+    return thumb + '<span class="scc-fg-link" onclick="sccOpenLookup(\'' + type.replace(/'/g, "\\'") + '\',\'' + id.replace(/'/g, "\\'") + '\')">' + sccEsc(text) + '</span>';
   });
 }
 
@@ -14352,12 +14640,250 @@ function sccFgRenderTableBlock(t) {
   return '<table class="' + cls + '">' + thead + tbody + '</table>';
 }
 
+// Comedy, inline mode — reads as part of the narration (a normal paragraph),
+// not set apart in a box. Full-box mode (category=comedy, inline!=true)
+// still goes through the plain .scc-fg-box--yellow path below.
+function sccFgRenderComedyInline(b) {
+  return '<p class="scc-fg-comedy-inline"><span class="scc-fg-comedy-inline-icon">&#9733;</span>'
+    + (b.label ? '<strong>' + sccEsc(b.label) + ':</strong> ' : '')
+    + sccFgLinkify(b.html || '')
+  + '</p>';
+}
+
+// Spoken Dialogue — a distinct callout (speaker portrait, name, pronouns,
+// optional tone_note), not a plain colored box. Degrades gracefully to a
+// plain blue box if the speaker reference doesn't resolve to a real entity
+// (missing data, deleted NPC, etc.) rather than rendering something broken.
+// NPC Visualization sub-fields (world_characters.vis_*, built in Phase 1) --
+// confirmed via a full grep that nothing anywhere in dm.html read any of
+// these 10 columns before this. Real, populated content on ~26 NPCs
+// (physical appearance, clothes, demeanor, voice/mannerisms, distinguishing
+// features, weapons, age, species, height, plus a vis_summary narrative
+// paragraph) with nowhere for a DM to see it at the table. Wired in here,
+// on a Spoken Dialogue box's own speaker -- the exact place a DM most needs
+// "what does this person look/sound like" while actually running the
+// scene. Only populated fields render (same "no placeholder rows for
+// missing data" convention as the creature stat-block builder).
+var SCC_FG_VIS_FIELDS = [
+  { key: 'vis_physical_appearance', label: 'Appearance', icon: '&#128100;' },
+  { key: 'vis_clothes', label: 'Clothes', icon: '&#128085;' },
+  { key: 'vis_demeanor', label: 'Demeanor', icon: '&#127917;' },
+  { key: 'vis_voice_mannerisms', label: 'Voice &amp; Mannerisms', icon: '&#128483;' },
+  { key: 'vis_distinguishing_features', label: 'Distinguishing Features', icon: '&#10024;' },
+  { key: 'vis_weapons', label: 'Weapons', icon: '&#9876;' },
+  { key: 'vis_age', label: 'Age', icon: '&#8987;' },
+  { key: 'vis_species', label: 'Species', icon: '&#129497;' },
+  { key: 'vis_height', label: 'Height', icon: '&#128207;' }
+];
+
+function sccFgVisualizationHtml(entity) {
+  var rows = SCC_FG_VIS_FIELDS.filter(function(f) { return entity[f.key]; }).map(function(f) {
+    return '<div class="scc-fg-vis-row"><span class="scc-fg-vis-row-label">' + f.icon + ' ' + f.label + '</span><span class="scc-fg-vis-row-text">' + sccEsc(entity[f.key]) + '</span></div>';
+  }).join('');
+  if (!rows && !entity.vis_summary) return '';
+  return '<div class="scc-fg-vis-panel">'
+    + (entity.vis_summary ? '<p class="scc-fg-vis-summary">' + sccEsc(entity.vis_summary) + '</p>' : '')
+    + rows
+  + '</div>';
+}
+
+// Pure local show/hide -- no fetch, nothing to preserve scroll around.
+function sccFgToggleVis(el) {
+  var panel = el.nextElementSibling;
+  if (!panel) return;
+  var open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  el.classList.toggle('open', !open);
+}
+
+function sccFgRenderSpokenDialogue(b) {
+  var speaker = b.speaker || null;
+  var entity = null;
+  var speakerType = speaker && speaker.type ? speaker.type : 'character';
+  if (speaker && speaker.id) {
+    var def = SCC_FG_LINK_TYPES[speakerType] || SCC_FG_LINK_TYPES.character;
+    entity = def.arr().find(function(x) { return x.id === speaker.id; });
+  }
+  var toneHtml = b.tone_note
+    ? '<div class="scc-fg-spoken-tone"><span class="scc-fg-spoken-tone-icon">&#127917;</span>Tone: ' + sccEsc(b.tone_note) + '</div>'
+    : '';
+  if (!entity) {
+    return '<div class="scc-fg-box scc-fg-box--blue">'
+      + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
+      + toneHtml
+      + sccFgLinkify(b.html || '')
+    + '</div>';
+  }
+  var initial = sccEsc((entity.name || '?').charAt(0));
+  var thumbHtml = entity.image
+    ? '<img class="scc-fg-spoken-thumb" src="' + sccEsc(entity.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      + '<div class="scc-fg-spoken-thumb-fallback" style="display:none">' + initial + '</div>'
+    : '<div class="scc-fg-spoken-thumb-fallback">' + initial + '</div>';
+  var visHtml = sccFgVisualizationHtml(entity);
+  var visToggleHtml = visHtml
+    ? '<div class="scc-fg-spoken-vis-toggle" onclick="sccFgToggleVis(this)" title="Show what they look and sound like">&#128065; Visualize</div>'
+      + '<div class="scc-fg-vis-wrap" style="display:none">' + visHtml + '</div>'
+    : '';
+  return '<div class="scc-fg-box scc-fg-box--blue scc-fg-spoken">'
+    + '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
+      + thumbHtml
+      + '<div class="scc-fg-spoken-meta">'
+        + '<span class="scc-fg-spoken-name">' + sccEsc(entity.name) + '</span>'
+        + (entity.pronouns ? '<span class="scc-fg-spoken-pronouns">' + sccEsc(entity.pronouns) + '</span>' : '')
+      + '</div>'
+    + '</div>'
+    + visToggleHtml
+    + toneHtml
+    + '<div class="scc-fg-spoken-line">' + sccFgLinkify(b.html || '') + '</div>'
+  + '</div>';
+}
+
+// Live, clickable quest-beat status inline in the document — real feature,
+// not a content edit. Renders every quest actually assigned to this
+// session (SCC_SELECTED.quest, the same source the Quests tab itself
+// reads), each with a real link to the quest and a click-to-advance status
+// per beat, sharing the exact save path (sccCycleBeatStatus/
+// sccSaveBeatStatus) the Quests tab already uses — one real write path,
+// not a parallel one. b.html (if any) renders as a short intro line above
+// the widget; b.category === 'quest_beats' is what triggers this, not any
+// specific block content, so it works the same for any future session.
+function sccFgOneQuestBeatsHtml(q) {
+  var beats = q.beats || [];
+  var prog = (typeof SCC_PROGRESS !== 'undefined' && SCC_PROGRESS[q.id]) || {};
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  var rows = beats.map(function(bt) {
+    var st = prog[bt.order] || 'not_started';
+    var statusLabelText = st === 'completed' ? '&#10003; Done' : st === 'in_progress' ? '&#9654; In Progress' : 'Available';
+    return '<div class="scc-fg-beat-row scc-fg-beat-row--' + st + '"'
+      + (auditLocked ? '' : ' onclick="sccFgToggleBeat(\'' + sccEsc(q.id) + '\',' + bt.order + ')" title="Click to advance status"')
+      + '>'
+        + '<span class="scc-fg-beat-num">' + bt.order + '</span>'
+        + '<span class="scc-fg-beat-title">' + sccEsc(bt.title || 'Beat ' + bt.order) + '</span>'
+        + (bt.xp ? '<span class="scc-fg-beat-xp">+' + bt.xp + ' XP</span>' : '')
+        + '<span class="scc-fg-beat-status scc-fg-beat-status--' + st + '">' + statusLabelText + '</span>'
+      + '</div>';
+  }).join('');
+  return '<div class="scc-fg-quest-beats" id="scc-fg-quest-beats-' + sccEsc(q.id) + '">'
+    + '<div class="scc-fg-quest-beats-header"><span class="scc-fg-link" onclick="sccOpenLookup(\'quest\',\'' + sccEsc(q.id) + '\')">' + sccEsc(q.name) + '</span></div>'
+    + rows
+  + '</div>';
+}
+
+function sccFgRenderQuestBeatsBlock(b) {
+  var selected = (typeof SCC_SELECTED !== 'undefined' && SCC_SELECTED.quest) || [];
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var widgets = selected.map(function(sel) {
+    var q = quests.find(function(x) { return x.id === sel.id; });
+    return q ? sccFgOneQuestBeatsHtml(q) : '';
+  }).join('');
+  if (!widgets) widgets = '<p style="font-style:italic;color:var(--dm-text-muted);">No quests assigned to this session yet — assign one in Setup.</p>';
+  return (b.html ? sccFgLinkify(b.html) : '') + widgets;
+}
+
+// Advances one beat's status and re-renders just this widget in place,
+// preserving scroll position -- reuses the real save path unchanged
+// (sccCycleBeatStatus -> sccSaveBeatStatus, defined with the Quests tab),
+// SCC_PROGRESS is updated synchronously before the async PATCH fires, so
+// re-rendering right after the call already reflects the new state.
+function sccFgToggleBeat(questId, beatOrder) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quest progress is read-only here', 'error'); return; }
+  sccCycleBeatStatus(questId, beatOrder);
+  var el = document.getElementById('scc-fg-quest-beats-' + questId);
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  var q = quests.find(function(x) { return x.id === questId; });
+  if (el && q) el.outerHTML = sccFgOneQuestBeatsHtml(q);
+}
+
+// ── Branching combat outcome widget (box.category === 'combat_outcomes') ──
+// A DM-authored list of "what could happen here" options (block.outcomes:
+// [{key,label,description}]) rendered as clickable rows. Clicking one logs
+// it into session_note_entries (category 'quest', same table/category the
+// Notes tab's own Quest-Related tag already uses) as a real, permanent
+// record of what actually happened -- not a single mutable "selected"
+// state stored on the block itself (field_guide_sessions.blocks is
+// DM-authored content, not a place to stash per-session play state).
+// "Already logged" is derived by matching each option's own stable title
+// string against SCC_FG_COMBAT_OUTCOME_LOG_CACHE, not a separate flag --
+// so it stays correct across a reload with no extra bookkeeping.
+function sccFgCombatOutcomeTitle(beatLabel, outcomeLabel) {
+  return 'Combat Outcome — ' + beatLabel + ': ' + outcomeLabel;
+}
+
+function sccFgCombatOutcomesDomId(beatLabel) {
+  var slug = String(beatLabel || 'outcomes').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return 'scc-fg-outcomes-' + slug;
+}
+
+function sccFgOneCombatOutcomesHtml(b) {
+  var num = sccFgActiveSessionNum();
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  var outcomes = Array.isArray(b.outcomes) ? b.outcomes : [];
+  var domId = sccFgCombatOutcomesDomId(b.label);
+  var rows = outcomes.map(function(o) {
+    var title = sccFgCombatOutcomeTitle(b.label || '', o.label || '');
+    var loggedRow = log.find(function(n) { return n.title === title; }) || null;
+    var cls = 'scc-fg-outcome-row' + (loggedRow ? ' scc-fg-outcome-row--logged' : '');
+    return '<div class="' + cls + '"'
+        + (auditLocked ? '' : ' onclick="sccFgLogCombatOutcome(this)" title="Click to log this as what happened"')
+        + ' data-beat-label="' + sccEsc(b.label || '') + '" data-outcome-label="' + sccEsc(o.label || '') + '" data-outcome-desc="' + sccEsc(o.description || '') + '">'
+      + '<span class="scc-fg-outcome-check">' + (loggedRow ? '&#10003;' : '') + '</span>'
+      + '<div class="scc-fg-outcome-body">'
+        + '<div class="scc-fg-outcome-label">' + sccEsc(o.label || '') + '</div>'
+        + '<div class="scc-fg-outcome-desc">' + sccEsc(o.description || '') + '</div>'
+        + (loggedRow ? '<div class="scc-fg-outcome-logged-tag">Logged as what happened</div>' : '')
+      + '</div>'
+    + '</div>';
+  }).join('');
+  return '<div class="scc-fg-outcomes-box" id="' + domId + '">'
+    + '<div class="scc-fg-outcomes-header">&#9876; ' + sccEsc(b.label || 'Combat Outcome') + '</div>'
+    + (b.html ? '<p class="scc-fg-outcomes-intro">' + sccFgLinkify(b.html) + '</p>' : '')
+    + '<div class="scc-fg-outcomes-list">' + rows + '</div>'
+  + '</div>';
+}
+
+function sccFgFindCombatOutcomesBlock(num, beatLabel) {
+  var row = SCC_FG_DOC_CACHE[num];
+  var blocks = (row && row.blocks) || [];
+  return blocks.find(function(bl) { return bl.type === 'box' && bl.category === 'combat_outcomes' && (bl.label || '') === beatLabel; }) || null;
+}
+
+function sccFgLogCombatOutcome(el) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — can\'t log a combat outcome here', 'error'); return; }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var beatLabel = el.dataset.beatLabel || '';
+  var outcomeLabel = el.dataset.outcomeLabel || '';
+  var desc = el.dataset.outcomeDesc || '';
+  var title = sccFgCombatOutcomeTitle(beatLabel, outcomeLabel);
+  fetch(SCC_URL + '/rest/v1/session_note_entries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ session_number: num, category: 'quest', title: title, content: desc })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not log outcome', 'error'); return; }
+    showDMToast('Logged: ' + outcomeLabel, 'success');
+    sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
+      SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+      var wrapEl = document.getElementById(sccFgCombatOutcomesDomId(beatLabel));
+      var block = sccFgFindCombatOutcomesBlock(num, beatLabel);
+      if (wrapEl && block) wrapEl.outerHTML = sccFgOneCombatOutcomesHtml(block);
+    });
+  }).catch(function() { showDMToast('Could not log outcome', 'error'); });
+}
+
+function sccFgRenderCombatOutcomesBlock(b) {
+  return sccFgOneCombatOutcomesHtml(b);
+}
+
 function sccFgRenderBlock(b, idx) {
   switch (b.type) {
-    case 'title':    return '<div class="scc-fg-doc-title">' + sccEsc(b.text) + '</div>';
-    case 'subtitle': return '<div class="scc-fg-doc-subtitle">' + sccEsc(b.text) + '</div>';
-    case 'tagline':  return '<div class="scc-fg-doc-tagline">' + sccFgLinkify(b.html) + '</div>';
-    case 'meta':     return '<div class="scc-fg-doc-meta">' + sccFgLinkify(b.html) + '</div>';
+    // title/subtitle/tagline/meta — the old hardcoded document header block
+    // — no longer render at all. Replaced by the plain "Field Guide" header
+    // + color key above the scroll area (see the panel's static markup).
+    // The data itself is untouched (still real, still editable), just not
+    // displayed here anymore.
+    case 'title': case 'subtitle': case 'tagline': case 'meta': return '';
     case 'h1':       return '<div class="scc-fg-doc-h1">' + sccEsc(b.text) + '</div>';
     case 'h2':       return '<div class="scc-fg-doc-h2">' + sccEsc(b.text) + '</div>';
     case 'italic':   return '<p class="scc-fg-doc-italic">' + sccFgLinkify(b.html) + '</p>';
@@ -14366,7 +14892,17 @@ function sccFgRenderBlock(b, idx) {
     case 'table':    return sccFgRenderTableBlock(b);
     case 'footer':   return '<div class="scc-fg-doc-footer">' + sccFgLinkify(b.html) + '</div>';
     case 'box':
-      var colorClass = SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey';
+      // "How to Use This Guide" -- decided removed entirely during the
+      // original audit; the data stays (same "skip rendering, don't touch
+      // the block" treatment as title/subtitle/tagline/meta above), just
+      // never shown.
+      if (b.category === 'guide_meta') return '';
+      if (b.category === 'spoken_dialogue') return sccFgRenderSpokenDialogue(b);
+      if (b.category === 'comedy' && b.inline) return sccFgRenderComedyInline(b);
+      if (b.category === 'quest_beats') return sccFgRenderQuestBeatsBlock(b);
+      if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b);
+      var style = SCC_FG_CATEGORY_STYLE[b.category];
+      var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
       // Loot/shop boxes get a category icon prefix independent of color — reinforces
       // the meaning even for a DM who can't rely on hue alone at a glance. DM-assigned
       // subtype picks a specific icon; no subtype (or an unrecognized one) falls back
@@ -14376,16 +14912,27 @@ function sccFgRenderBlock(b, idx) {
         var subtypeInfo = SCC_FG_LOOT_SUBTYPES.find(function(s) { return s.id === b.subtype; });
         boxLabelPrefix = (subtypeInfo ? subtypeInfo.icon : '&#129689;') + ' ';
       }
-      // Per-box jump-to-edit link, right on the box itself — a DM reported not
-      // understanding what "the block editor" even was or where to find it for a
-      // specific box. This opens the editor already scrolled to and highlighting
-      // THIS box's row (and its subtype field specifically, for orange boxes),
-      // instead of expecting the DM to find the global Edit button, expand the
-      // right one of 15 sections, and scan for the right row unassisted.
-      var editJump = (idx != null) ? '<button type="button" class="scc-fg-box-edit-jump" onclick="sccFgJumpToBlockEdit(' + idx + ')" title="Edit this box">&#9998; Edit Box</button>' : '';
+      // Category badge — always correct regardless of the box's own free-text
+      // label — only shown on the categories that actually need disambiguating
+      // (the magenta family + Don't Blow This). See SCC_FG_CATEGORY_STYLE.
+      var catBadge = (style && style.badge)
+        ? '<div class="scc-fg-box-cat-badge">' + style.badge.icon + ' ' + sccEsc(style.badge.name) + '</div>'
+        : '';
+      // Combat-kickoff boxes (DM-authored, via block.combat_encounter_id)
+      // get a real "Roll Initiative" link -- a genuine same-origin new-tab
+      // link (target="_blank" + rel="opener", same pattern as the lookup
+      // drawer's own "open in new tab" links), not a JS window.open() call,
+      // so it inherits sessionStorage.dm_auth and never re-prompts for the
+      // password. Routes into Session Details' Combat sub-panel with the
+      // real saved encounter already loaded (see sccHandleUrlRouting()).
+      var combatBtnHtml = b.combat_encounter_id
+        ? '<a class="scc-btn-secondary scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(b.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Roll Initiative</a>'
+        : '';
       return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
-        + '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label || '') + editJump + '</div>'
+        + catBadge
+        + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '')
         + sccFgLinkify(b.html || '')
+        + combatBtnHtml
         + (b.table ? sccFgRenderTableBlock(b.table) : '')
       + '</div>';
     default: return '';
@@ -14396,411 +14943,408 @@ function sccFgRenderDoc(blocks) {
   return (blocks || []).map(function(b, idx) { return sccFgRenderBlock(b, idx); }).join('');
 }
 
-// ── Session selector ─────────────────────────────────────────────
-function sccFgPopulateSessionSelect() {
-  var sel = document.getElementById('scc-fg-session-select');
-  if (!sel) return;
-  var sessions = (typeof SCC_ALL_SESSIONS !== 'undefined' ? SCC_ALL_SESSIONS : []).slice().sort(function(a, b) { return a.session_number - b.session_number; });
-  if (!sessions.length) sessions = [{ session_number: 1 }];
-  if (SCC_FG_DOC_SESSION_NUM == null) {
-    var current = (typeof SCC_SESSION !== 'undefined' && SCC_SESSION) ? SCC_SESSION.session_number : null;
-    SCC_FG_DOC_SESSION_NUM = current != null ? current : sessions[sessions.length - 1].session_number;
-  }
-  sel.innerHTML = sessions.map(function(s) {
-    return '<option value="' + s.session_number + '">Session ' + s.session_number + '</option>';
-  }).join('');
-  sel.value = String(SCC_FG_DOC_SESSION_NUM);
-}
-
-function sccFgSessionChanged() {
-  var sel = document.getElementById('scc-fg-session-select');
-  var num = sel ? parseInt(sel.value) : 1;
-  SCC_FG_DOC_SESSION_NUM = num;
-  SCC_FG_EDIT_MODE = false;
-  var toggle = document.getElementById('scc-fg-edit-toggle');
-  if (toggle) toggle.textContent = 'Edit Document';
-  sccFgLoadDocument(num);
+// ── Active session, load, draw ───────────────────────────────────
+function sccFgActiveSessionNum() {
+  var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
+  if (session) return session.session_number;
+  if (typeof SCC_SESSION !== 'undefined' && SCC_SESSION) return SCC_SESSION.session_number;
+  return 1;
 }
 
 function sccFgInitDocument() {
-  sccFgPopulateSessionSelect();
-  sccFgLoadDocument(SCC_FG_DOC_SESSION_NUM);
+  var num = sccFgActiveSessionNum();
+  sccFgPopulateScenarioJump();
+  // Already showing this exact session's guide — don't touch the DOM. Before
+  // this guard, switching to another Live Session tab and back rebuilt the
+  // whole document every time, silently resetting scroll to the top on every
+  // tab switch — this is the real fix for that, not just a performance
+  // nicety.
+  var inner = document.getElementById('scc-fg-doc-inner');
+  if (SCC_FG_RENDERED_SESSION_NUM === num && inner && inner.children.length) return;
+  sccFgLoadDocument(num);
 }
 
 function sccFgLoadDocument(num) {
   var inner = document.getElementById('scc-fg-doc-inner');
   if (!inner) return;
-  if (Object.prototype.hasOwnProperty.call(SCC_FG_DOC_CACHE, num)) {
-    sccFgDrawDocument();
-    return;
-  }
+  var haveDoc = Object.prototype.hasOwnProperty.call(SCC_FG_DOC_CACHE, num);
+  var haveCtx = Object.prototype.hasOwnProperty.call(SCC_FG_OPENING_CTX_CACHE, num);
+  var haveLog = Object.prototype.hasOwnProperty.call(SCC_FG_COMBAT_OUTCOME_LOG_CACHE, num);
+  if (haveDoc && haveCtx && haveLog) { sccFgDrawDocument(num); return; }
   inner.innerHTML = '<div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>';
-  sccFetch('field_guide_sessions', '&session_number=eq.' + encodeURIComponent(num)).then(function(rows) {
-    SCC_FG_DOC_CACHE[num] = (Array.isArray(rows) && rows[0]) ? rows[0] : null;
-    sccFgDrawDocument();
+  Promise.all([
+    haveDoc ? Promise.resolve(null) : sccFetch('field_guide_sessions', '&session_number=eq.' + encodeURIComponent(num)),
+    haveCtx ? Promise.resolve(null) : sccFetch('session_opening_player_context', '&session_number=eq.' + encodeURIComponent(num)),
+    haveLog ? Promise.resolve(null) : sccFetch('session_note_entries', '&session_number=eq.' + encodeURIComponent(num) + '&category=eq.quest&order=created_at.desc')
+  ]).then(function(results) {
+    if (!haveDoc) SCC_FG_DOC_CACHE[num] = (Array.isArray(results[0]) && results[0][0]) ? results[0][0] : null;
+    if (!haveCtx) SCC_FG_OPENING_CTX_CACHE[num] = Array.isArray(results[1]) ? results[1] : [];
+    if (!haveLog) SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(results[2]) ? results[2] : [];
+    sccFgDrawDocument(num);
   }).catch(function() {
     inner.innerHTML = '<div class="scc-fg-empty-doc">Could not load the Field Guide.</div>';
   });
 }
 
-function sccFgDrawDocument() {
+function sccFgDrawDocument(num) {
   var inner = document.getElementById('scc-fg-doc-inner');
   if (!inner) return;
-  if (SCC_FG_EDIT_MODE) { sccFgRenderEditor(); return; }
-  var row = SCC_FG_DOC_CACHE[SCC_FG_DOC_SESSION_NUM];
+  if (num == null) num = sccFgActiveSessionNum();
+  SCC_FG_LINK_SEEN = {};
+  SCC_FG_RETURN_SCROLL_SET = false;
+  var contBtn = document.getElementById('scc-fg-continue-btn');
+  if (contBtn) contBtn.style.display = 'none';
+  var openingHtml = sccFgRenderOpeningSection(num);
+  var row = SCC_FG_DOC_CACHE[num];
   if (!row || !row.blocks || !row.blocks.length) {
-    inner.innerHTML = '<div class="scc-fg-empty-doc">No Field Guide written for Session ' + SCC_FG_DOC_SESSION_NUM + ' yet.<br>Click Edit to start writing it.</div>';
+    inner.innerHTML = openingHtml + '<div class="scc-fg-empty-doc">No Field Guide written for Session ' + num + ' yet.</div>';
+    sccFgPopulateScenarioJump();
+    SCC_FG_RENDERED_SESSION_NUM = num;
     return;
   }
-  inner.innerHTML = sccFgRenderDoc(row.blocks);
+  var footerBlocks = row.blocks.filter(function(b) { return b.type === 'footer'; });
+  var mainBlocks = row.blocks.filter(function(b) { return b.type !== 'footer'; });
+  inner.innerHTML = openingHtml
+    + sccFgRenderDoc(mainBlocks)
+    + sccFgScenarioSectionHtml()
+    + sccFgRenderDoc(footerBlocks);
+  sccLiveRenderScenarios();
+  sccFgPopulateScenarioJump();
+  SCC_FG_RENDERED_SESSION_NUM = num;
 }
 
-function sccFgToggleEditMode() {
-  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — the Field Guide document is read-only here', 'error'); return; }
-  var row = SCC_FG_DOC_CACHE[SCC_FG_DOC_SESSION_NUM];
-  SCC_FG_EDIT_BLOCKS = JSON.parse(JSON.stringify((row && row.blocks) || []));
-  SCC_FG_EDIT_MODE = !SCC_FG_EDIT_MODE;
-  var toggle = document.getElementById('scc-fg-edit-toggle');
-  if (toggle) toggle.textContent = SCC_FG_EDIT_MODE ? 'Close Editor' : 'Edit Document';
-  sccFgDrawDocument();
-}
-
-// Groups the working blocks by their nearest preceding h1 — same collapsible-
-// by-group shape as the session_scenarios editor, just with a richer per-row
-// type set (this document's real content isn't the uniform 2-field rows that
-// editor was built for).
-function sccFgGroupEditBlocks() {
-  var blocks = SCC_FG_EDIT_BLOCKS || [];
-  var groups = [];
-  var current = { title: 'Document Header', items: [] };
-  blocks.forEach(function(b, idx) {
-    if (b.type === 'h1') {
-      groups.push(current);
-      current = { title: b.text || 'Untitled Section', items: [] };
-    }
-    current.items.push({ block: b, idx: idx });
-  });
-  groups.push(current);
-  return groups.filter(function(g) { return g.items.length; });
-}
-
-// Opens the editor already scrolled to and highlighting the exact box the DM
-// clicked "Edit Box" on — expands whichever of the 15 sections holds it, so
-// the DM never has to guess which section their box lives in or scan for it
-// manually. For an orange (loot/shop) box specifically, focuses its subtype
-// field directly, since that's the one thing this jump exists to solve.
-function sccFgJumpToBlockEdit(idx) {
-  if (!SCC_FG_EDIT_MODE) sccFgToggleEditMode();
-  var groups = sccFgGroupEditBlocks();
-  var gi = -1;
-  groups.forEach(function(g, i) {
-    if (g.items.some(function(it) { return it.idx === idx; })) gi = i;
-  });
-  if (gi >= 0) SCC_FG_EDIT_GROUP_OPEN[gi] = true;
-  sccFgRenderEditor();
-  setTimeout(function() {
-    var row = document.getElementById('scc-fg-editor-row-' + idx);
-    if (!row) return;
-    row.scrollIntoView({ block: 'center' });
-    row.classList.add('scc-fg-editor-row--jump-highlight');
-    var block = SCC_FG_EDIT_BLOCKS[idx];
-    if (block && block.type === 'box' && block.color === 'gold') {
-      var selects = row.querySelectorAll('select');
-      var subtypeSelect = null;
-      for (var i = 0; i < selects.length; i++) {
-        var onchange = selects[i].getAttribute('onchange') || '';
-        if (onchange.indexOf("'subtype'") >= 0) { subtypeSelect = selects[i]; break; }
-      }
-      if (subtypeSelect) subtypeSelect.focus();
-    }
-    setTimeout(function() { row.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
-  }, 50);
-}
-
-function sccFgTypeLabel(b) {
-  if (b.type === 'box') return 'Box (' + (b.color || 'grey') + ')';
-  return b.type.charAt(0).toUpperCase() + b.type.slice(1);
-}
-
-function sccFgGetTableRef(idx, subfield) {
-  var b = SCC_FG_EDIT_BLOCKS[idx];
-  if (!b) return null;
-  return subfield === 'table' ? b.table : b;
-}
-
-function sccFgHtmlFieldHtml(idx, field, value) {
-  var taId = 'scc-fg-ta-' + idx + '-' + field;
-  return '<div class="scc-fg-html-field">'
-    + '<textarea class="scc-textarea" id="' + taId + '" rows="3" onblur="sccFgEditSetField(' + idx + ',\'' + field + '\',this.value)">' + sccEsc(value) + '</textarea>'
-    + '<button type="button" class="scc-fg-row-btn" onclick="sccFgOpenLinkPicker(\'' + taId + '\')">+ Insert Link</button>'
-    + '<div class="scc-picker-search-wrap" id="scc-fg-linkpick-wrap-' + taId + '" style="display:none;">'
-      + '<input type="text" class="scc-picker-search" placeholder="Search entity to link&#8230;" oninput="sccFgLinkPickerSearch(\'' + taId + '\',this.value)">'
-      + '<div class="scc-picker-dropdown" id="scc-fg-linkpick-drop-' + taId + '"></div>'
-    + '</div>'
-  + '</div>';
-}
-
-function sccFgTableEditHtml(idx, subfield, t) {
-  var sf = subfield || '';
-  var rowsHtml = (t.rows || []).map(function(row, ri) {
-    return '<div class="scc-fg-table-edit-row">'
-      + row.map(function(cell, ci) {
-        return '<textarea class="scc-textarea scc-fg-table-cell" rows="1" onblur="sccFgEditSetTableCell(' + idx + ',\'' + sf + '\',' + ri + ',' + ci + ',this.value)">' + sccEsc(cell) + '</textarea>';
-      }).join('')
-      + '<button class="scc-fg-row-btn scc-fg-row-btn-del" title="Delete row" onclick="sccFgDeleteTableRow(' + idx + ',\'' + sf + '\',' + ri + ')">&#10005;</button>'
+// ── Scenario reference (merged in from the old standalone Scenarios tab) ──
+function sccFgScenarioSectionHtml() {
+  return '<div class="scc-fg-doc-h1">Scenario Reference <span style="font-weight:400;text-transform:none;letter-spacing:normal;font-size:0.68rem;color:var(--dm-text-muted);">(live, from Setup)</span></div>'
+    + '<div class="scc-fg-scenario-section">'
+      + '<div class="scc-live-scenario-filter-wrap">'
+        + '<input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">'
+        + '<span class="scc-scenario-filter-clear" id="scc-scenario-filter-clear" onclick="sccScenarioClearFilter()" title="Clear">&#10005;</span>'
+      + '</div>'
+      + '<div id="scc-live-scenarios"></div>'
+      + '<div class="scc-scenario-add-row">'
+        + '<button class="scc-btn-secondary" onclick="sccJumpToSetupScenarios()">+ Add Scenario</button>'
+      + '</div>'
     + '</div>';
+}
+
+function sccFgPopulateScenarioJump() {
+  var sel = document.getElementById('scc-fg-scenario-jump');
+  if (!sel) return;
+  var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
+  var groups = (session && session.session_scenarios) || [];
+  sel.innerHTML = '<option value="">Jump to a scenario&#8230;</option>' + groups.map(function(g, gi) {
+    return '<option value="' + gi + '">' + sccEsc(g.group || 'Scenarios') + '</option>';
   }).join('');
-  var headerHtml = t.headerRow ? (
-    '<div class="scc-fg-table-edit-row scc-fg-table-edit-header">'
-      + t.headerRow.map(function(h, ci) {
-        return '<input type="text" class="scc-input" value="' + sccEsc(h) + '" onblur="sccFgEditSetHeaderCell(' + idx + ',\'' + sf + '\',' + ci + ',this.value)">';
+}
+
+// Jumps to a scenario group's anchor inside the document. The return point
+// (for the Continue button) is captured only on the FIRST jump away from
+// natural reading position -- a second jump straight to another scenario,
+// without hitting Continue in between, must still return to where the DM
+// really was, not to the first scenario they jumped to.
+function sccFgJumpToScenario(giStr) {
+  if (giStr === '' || giStr == null) return;
+  var gi = parseInt(giStr, 10);
+  var doc = document.getElementById('scc-fg-doc');
+  var target = document.getElementById('scc-scen-group-' + gi);
+  if (!doc || !target) return;
+  if (!SCC_FG_RETURN_SCROLL_SET) {
+    SCC_FG_RETURN_SCROLL_TOP = doc.scrollTop;
+    SCC_FG_RETURN_SCROLL_SET = true;
+    var contBtn = document.getElementById('scc-fg-continue-btn');
+    if (contBtn) contBtn.style.display = '';
+  }
+  var body = document.getElementById('scc-live-scen-body-' + gi);
+  if (body && !body.classList.contains('open')) sccLiveToggleScenario(gi);
+  target.scrollIntoView({ block: 'start' });
+  target.classList.add('scc-fg-editor-row--jump-highlight');
+  setTimeout(function() { target.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
+  var sel = document.getElementById('scc-fg-scenario-jump');
+  if (sel) sel.value = '';
+}
+
+function sccFgReturnFromScenario() {
+  var doc = document.getElementById('scc-fg-doc');
+  if (doc && SCC_FG_RETURN_SCROLL_SET) doc.scrollTop = SCC_FG_RETURN_SCROLL_TOP;
+  SCC_FG_RETURN_SCROLL_SET = false;
+  var contBtn = document.getElementById('scc-fg-continue-btn');
+  if (contBtn) contBtn.style.display = 'none';
+}
+
+// ── Session-opening section (session_notes.opening_*, session_opening_
+//    player_context) — always the first thing in the document when the
+//    session has any of this data, otherwise renders nothing at all. ──
+function sccFgFindSession(num) {
+  if (typeof SCC_ALL_SESSIONS === 'undefined' || !SCC_ALL_SESSIONS.length) return null;
+  return SCC_ALL_SESSIONS.find(function(s) { return s.session_number === num; }) || null;
+}
+
+// opening_recap_read_aloud/opening_recap_dm_notes/context_text are plain
+// text columns, not stored HTML like a Field Guide block's own .html field
+// -- escape first (a DM could type a literal "<" without meaning HTML),
+// then run the same [[type:id|Label]] convention over the escaped text via
+// sccLinkifyEscaped(), exactly the pattern already established for quest
+// text (see the comment on sccLinkifyEscaped itself).
+function sccFgPlainTextHtml(text) {
+  if (!text) return '';
+  return sccLinkifyEscaped(sccEsc(text)).replace(/\n/g, '<br>');
+}
+
+function sccFgOpeningLocationHtml(ref) {
+  if (!ref || !ref.id) return '';
+  var type = ref.type || 'city';
+  var def = SCC_FG_LINK_TYPES[type];
+  if (!def) return '';
+  var e = def.arr().find(function(x) { return x.id === ref.id; });
+  if (!e) return '';
+  var initial = sccEsc((e.name || '?').charAt(0));
+  var imgHtml = e.image
+    ? '<img class="scc-fg-opening-loc-img" src="' + sccEsc(e.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      + '<div class="scc-fg-opening-loc-img-fallback" style="display:none">' + initial + '</div>'
+    : '<div class="scc-fg-opening-loc-img-fallback">' + initial + '</div>';
+  return '<div class="scc-fg-opening-loc" onclick="sccOpenLookup(\'' + type.replace(/'/g, "\\'") + '\',\'' + String(ref.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
+    + imgHtml
+    + '<span class="scc-fg-opening-loc-name">' + sccEsc(e.name) + '</span>'
+  + '</div>';
+}
+
+// Real, visible empty state for the 3 opening-recap fields (read aloud, DM
+// notes, location) -- matches the Companions & Attachments "None yet" + "+
+// Add" pattern, rather than rendering nothing (the pre-fix behavior a DM
+// had no way to distinguish from "this feature doesn't exist"). Location
+// picks a real city/POI/nation via the same live-search pattern Setup's
+// own entity pickers use; read-aloud/DM-notes are a plain textarea, since
+// they're free text on session_notes, not a linked entity.
+function sccFgOpeningEmptyHtml(kind, heading) {
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  return '<div class="scc-fg-opening-empty">'
+      + '<span class="scc-fg-opening-empty-label">' + sccEsc(heading) + '</span>'
+      + '<span class="scc-fg-attach-none">Not set</span>'
+      + (auditLocked ? '' : '<button type="button" class="scc-btn-sm scc-fg-attach-add-btn" onclick="sccFgOpenOpeningField(\'' + kind + '\')">+ Add</button>')
+    + '</div>'
+    + (auditLocked ? '' : '<div class="scc-fg-opening-field-form" id="scc-fg-opening-form-' + kind + '" style="display:none;"></div>');
+}
+
+function sccFgOpeningFieldFormHtml(kind) {
+  if (kind === 'location') {
+    return '<div class="scc-picker-search-wrap">'
+        + '<input type="text" class="scc-input scc-picker-search" id="scc-fg-opening-loc-input" placeholder="Search a city or POI&#8230;" oninput="sccFgOpeningLocSearch(this.value)" autocomplete="off">'
+        + '<div class="scc-picker-dropdown" id="scc-fg-opening-loc-drop"></div>'
+      + '</div>'
+      + '<div class="scc-fg-attach-form-actions"><button type="button" class="scc-fg-attach-cancel" onclick="sccFgCloseOpeningField(\'location\')">Cancel</button></div>';
+  }
+  var placeholder = kind === 'read_aloud' ? 'Read-aloud text' : 'DM notes';
+  return '<textarea class="scc-textarea" id="scc-fg-opening-text-' + kind + '" rows="3" placeholder="' + sccEsc(placeholder) + '"></textarea>'
+    + '<div class="scc-fg-attach-form-actions">'
+      + '<button type="button" class="scc-btn-secondary" onclick="sccFgSaveOpeningField(\'' + kind + '\')">Save</button>'
+      + '<button type="button" class="scc-fg-attach-cancel" onclick="sccFgCloseOpeningField(\'' + kind + '\')">Cancel</button>'
+    + '</div>';
+}
+
+function sccFgOpenOpeningField(kind) {
+  var container = document.getElementById('scc-fg-opening-form-' + kind);
+  if (!container) return;
+  container.innerHTML = sccFgOpeningFieldFormHtml(kind);
+  container.style.display = 'block';
+}
+
+function sccFgCloseOpeningField(kind) {
+  var el = document.getElementById('scc-fg-opening-form-' + kind);
+  if (!el) return;
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+function sccFgOpeningLocSearch(query) {
+  var inputEl = document.getElementById('scc-fg-opening-loc-input');
+  if (inputEl) delete inputEl.dataset.entityId;
+  var drop = document.getElementById('scc-fg-opening-loc-drop');
+  if (!drop) return;
+  query = (query || '').toLowerCase().trim();
+  if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
+  var results = SCC_FG_LINK_TYPES.city.arr().filter(function(e) {
+    return e.name && e.name.toLowerCase().indexOf(query) >= 0;
+  }).slice(0, 10);
+  if (!results.length) {
+    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+    drop.classList.add('open');
+    return;
+  }
+  drop.innerHTML = results.map(function(e) {
+    return '<div class="scc-picker-option" onclick="sccFgOpeningLocPick(\'' + escQ(e.id) + '\',\'' + escQ(e.name) + '\')">' + sccEsc(e.name) + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+
+// Picking IS the save action here (unlike attachments' Name field, there's
+// no separate "type"/"mode" to also choose) -- 'city' as the stored type is
+// correct for cities, POIs, AND nations alike, since sccOpenLookup('city',
+// id) already resolves all three through one branch (confirmed against
+// SCC_FG_LINK_TYPES.city.arr(), which merges the same 3 arrays).
+function sccFgOpeningLocPick(id, name) {
+  var inputEl = document.getElementById('scc-fg-opening-loc-input');
+  if (inputEl) inputEl.dataset.entityId = id;
+  var drop = document.getElementById('scc-fg-opening-loc-drop');
+  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  sccFgSaveOpeningFieldWithValue('location', { id: id, type: 'city' });
+}
+
+function sccFgSaveOpeningField(kind) {
+  var textEl = document.getElementById('scc-fg-opening-text-' + kind);
+  var text = textEl ? textEl.value.trim() : '';
+  if (!text) { showDMToast('Type something first', 'error'); return; }
+  sccFgSaveOpeningFieldWithValue(kind, text);
+}
+
+function sccFgSaveOpeningFieldWithValue(kind, value) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — read-only here', 'error'); return; }
+  var num = sccFgActiveSessionNum();
+  var session = sccFgFindSession(num);
+  if (!session) { showDMToast('Save session setup first', 'error'); return; }
+  var field = kind === 'location' ? 'opening_location_ref' : (kind === 'read_aloud' ? 'opening_recap_read_aloud' : 'opening_recap_dm_notes');
+  var patch = {};
+  patch[field] = value;
+  sccPatch('session_notes', '?session_number=eq.' + encodeURIComponent(num), patch).then(function(r) {
+    if (!r.ok) { showDMToast('Could not save', 'error'); return; }
+    session[field] = value;
+    sccFgDrawDocument(num);
+    showDMToast('Saved', 'success');
+  }).catch(function() { showDMToast('Could not save', 'error'); });
+}
+
+function sccFgRenderOpeningSection(num) {
+  var session = sccFgFindSession(num);
+  var readAloud = session ? session.opening_recap_read_aloud : null;
+  var dmNotes   = session ? session.opening_recap_dm_notes   : null;
+  var locHtml   = sccFgOpeningLocationHtml(session ? session.opening_location_ref : null);
+  var playerCtx = SCC_FG_OPENING_CTX_CACHE[num] || [];
+  var attachHtml = sccFgAttachmentsSectionHtml();
+  // Only skip the whole section when there's genuinely nothing to show OR
+  // offer -- no session row at all (nothing to attach an edit to) and no
+  // player-context/attachments UI either. Once a session exists, the 3
+  // recap fields always render -- filled, or a real empty state -- rather
+  // than the old "silently render nothing" behavior.
+  if (!session && !playerCtx.length && !attachHtml) return '';
+  var ctxHtml = playerCtx.length ? ('<div class="scc-fg-player-ctx-wrap">' + playerCtx.map(function(row) {
+    var pc = (typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : []).find(function(p) { return p.id === row.character_id; });
+    var name = pc ? pc.name : row.character_id;
+    return '<div class="scc-fg-player-ctx">'
+      + '<div class="scc-fg-player-ctx-name">' + sccEsc(name) + '</div>'
+      + '<div class="scc-fg-player-ctx-text">' + sccFgPlainTextHtml(row.context_text) + '</div>'
+    + '</div>';
+  }).join('') + '</div>') : '';
+  return '<div class="scc-fg-opening" id="scc-fg-opening">'
+    + '<div class="scc-fg-doc-h1">Session Opening</div>'
+    + (locHtml || (session ? sccFgOpeningEmptyHtml('location', 'Location') : ''))
+    + (readAloud ? '<div class="scc-fg-box scc-fg-box--green"><div class="scc-fg-box-label">Read Aloud</div>' + sccFgPlainTextHtml(readAloud) + '</div>' : (session ? sccFgOpeningEmptyHtml('read_aloud', 'Read Aloud') : ''))
+    + (dmNotes ? '<div class="scc-fg-box scc-fg-box--magenta"><div class="scc-fg-box-cat-badge">&#9888; DM Only</div>' + sccFgPlainTextHtml(dmNotes) + '</div>' : (session ? sccFgOpeningEmptyHtml('dm_notes', 'DM Notes') : ''))
+    + ctxHtml
+    + attachHtml
+  + '</div>';
+}
+
+// ── Companions & Attachments (character_attachments) — shown for every
+//    real player character, since these are ongoing continuity details a
+//    DM needs at hand whenever a session opens, not tied to a single
+//    document block. Real assign/remove actions, not just a display. ──
+function sccFgAttachmentsSectionHtml() {
+  if (typeof SCC_PLAYERS === 'undefined' || !SCC_PLAYERS.length) return '';
+  var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  return '<div class="scc-fg-attach-section">'
+    + '<div class="scc-fg-attach-title">&#128142; Companions &amp; Attachments</div>'
+    + SCC_PLAYERS.map(function(pc) {
+        var mine = rows.filter(function(r) { return r.character_id === pc.id; });
+        var photoUrl = (typeof SCC_PLAYER_PHOTOS !== 'undefined') ? SCC_PLAYER_PHOTOS[pc.id] : null;
+        var initial = sccEsc((pc.name || '?').charAt(0));
+        var thumbHtml = photoUrl
+          ? '<img class="scc-fg-attach-pc-thumb" src="' + sccEsc(photoUrl) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+            + '<span class="scc-fg-attach-pc-thumb-fallback" style="display:none">' + initial + '</span>'
+          : '<span class="scc-fg-attach-pc-thumb-fallback">' + initial + '</span>';
+        var pillsHtml = mine.map(function(a) {
+          return '<span class="scc-fg-attach-pill' + (a.mode === 'permanent' ? ' scc-fg-attach-pill--permanent' : '') + '">'
+            + '<span class="scc-fg-attach-pill-main"' + (auditLocked ? '' : ' onclick="sccFgOpenAttachForm(\'' + pc.id + '\',\'' + a.id + '\')" title="Click to edit"') + (a.description ? ' title="' + sccEsc(a.description) + '"' : '') + '>'
+              + sccEsc(a.name)
+              + '<span class="scc-fg-attach-pill-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
+            + '</span>'
+            + (auditLocked ? '' : '<span class="scc-fg-attach-pill-x" onclick="event.stopPropagation();sccFgRemoveAttachment(\'' + a.id + '\')" title="Remove">&#10005;</span>')
+          + '</span>';
+        }).join('');
+        return '<div class="scc-fg-attach-pc-row">'
+          + '<div class="scc-fg-attach-pc-header">' + thumbHtml + '<span class="scc-fg-player-ctx-name">' + sccEsc(pc.name) + '</span></div>'
+          + '<div class="scc-fg-attach-row">'
+            + pillsHtml
+            + (mine.length ? '' : '<span class="scc-fg-attach-none">None yet</span>')
+            + (auditLocked ? '' : '<button type="button" class="scc-btn-sm scc-fg-attach-add-btn" onclick="sccFgOpenAttachForm(\'' + pc.id + '\',null)">+ Add</button>')
+          + '</div>'
+          + (auditLocked ? '' : '<div class="scc-fg-attach-form" id="scc-fg-attach-form-' + pc.id + '" style="display:none;"></div>')
+        + '</div>';
       }).join('')
-      + '<button class="scc-fg-row-btn scc-fg-row-btn-del" title="Remove header row" onclick="sccFgToggleTableHeader(' + idx + ',\'' + sf + '\',false)">&#10005;</button>'
-    + '</div>'
-  ) : '<button class="scc-fg-row-btn" onclick="sccFgToggleTableHeader(' + idx + ',\'' + sf + '\',true)">+ Add Header Row</button>';
-  return '<div class="scc-fg-table-editor">'
-    + headerHtml + rowsHtml
-    + '<button class="scc-fg-row-btn" onclick="sccFgAddTableRow(' + idx + ',\'' + sf + '\')">+ Add Row</button>'
-    + (t.variant !== undefined ? (
-      '<select class="cm-select" onchange="sccFgSetTableVariant(' + idx + ',\'' + sf + '\',this.value)">'
-        + ['','scenario','shop'].map(function(v){ return '<option value="'+v+'"'+(t.variant===v||(!t.variant&&!v)?' selected':'')+'>'+(v||'No style variant')+'</option>'; }).join('')
-      + '</select>'
-    ) : '')
   + '</div>';
 }
 
-function sccFgRenderEditRow(b, idx) {
-  var body = '';
-  switch (b.type) {
-    case 'title': case 'subtitle': case 'h1': case 'h2':
-      body = '<input type="text" class="scc-input" value="' + sccEsc(b.text || '') + '" onblur="sccFgEditSetField(' + idx + ',\'text\',this.value)">';
-      break;
-    case 'tagline': case 'meta': case 'italic': case 'p': case 'footer':
-      body = sccFgHtmlFieldHtml(idx, 'html', b.html || '');
-      break;
-    case 'list':
-      body = '<div class="scc-fg-edit-hint">One &lt;li&gt;...&lt;/li&gt; per line</div>' + sccFgHtmlFieldHtml(idx, 'html', b.html || '');
-      break;
-    case 'table':
-      body = sccFgTableEditHtml(idx, null, b);
-      break;
-    case 'box':
-      body = '<div class="scc-fg-box-edit-row">'
-        + '<input type="text" class="scc-input" placeholder="Label" value="' + sccEsc(b.label || '') + '" onblur="sccFgEditSetField(' + idx + ',\'label\',this.value)">'
-        + '<select class="cm-select" onchange="sccFgEditSetField(' + idx + ',\'color\',this.value)">'
-          + SCC_FG_BOX_COLORS.map(function(c) { return '<option value="' + c + '"' + (b.color === c ? ' selected' : '') + '>' + c + '</option>'; }).join('')
-        + '</select>'
-        + (b.color === 'gold'
-          ? '<select class="cm-select" onchange="sccFgEditSetField(' + idx + ',\'subtype\',this.value)">'
-            + '<option value="">Icon: coin (default)</option>'
-            + SCC_FG_LOOT_SUBTYPES.map(function(s) { return '<option value="' + s.id + '"' + (b.subtype === s.id ? ' selected' : '') + '>' + s.label + '</option>'; }).join('')
-          + '</select>'
-          : '')
-      + '</div>'
-      + sccFgHtmlFieldHtml(idx, 'html', b.html || '')
-      + (b.table ? sccFgTableEditHtml(idx, 'table', b.table) : '<button class="scc-fg-row-btn" onclick="sccFgAddBoxTable(' + idx + ')">+ Add Table to This Box</button>');
-      break;
-    default:
-      body = '';
-  }
-  return '<div class="scc-fg-editor-row" id="scc-fg-editor-row-' + idx + '">'
-    + '<div class="scc-fg-editor-row-head">'
-      + '<span class="scc-fg-editor-row-type">' + sccFgTypeLabel(b) + '</span>'
-      + '<span class="scc-fg-editor-row-actions">'
-        + '<button class="scc-fg-row-btn" title="Move up" onclick="sccFgMoveBlock(' + idx + ',-1)">&#8593;</button>'
-        + '<button class="scc-fg-row-btn" title="Move down" onclick="sccFgMoveBlock(' + idx + ',1)">&#8595;</button>'
-        + '<button class="scc-fg-row-btn scc-fg-row-btn-del" title="Delete" onclick="sccFgDeleteBlock(' + idx + ')">&#10005;</button>'
-      + '</span>'
+// Shared by both Add and Edit -- one form, pre-filled when `existing` is
+// passed. The name field doubles as a live search against real creatures/
+// items (same .scc-picker-search/-dropdown/-option pattern Setup's own
+// entity pickers use) -- picking a result fills name+type and remembers
+// the real entity_id; typing anything else just saves as free text.
+function sccFgAttachFormFieldsHtml(charId, existing) {
+  var isEdit = !!existing;
+  var entityAttr = (isEdit && existing.entity_id) ? ' data-entity-id="' + sccEsc(existing.entity_id) + '"' : '';
+  return '<div class="scc-picker-search-wrap">'
+      + '<input type="text" class="scc-input scc-picker-search" id="scc-fg-attach-name-' + charId + '" placeholder="Name (e.g. a Fluffet named Bwip)" value="' + sccEsc(isEdit ? existing.name : '') + '"' + entityAttr + ' oninput="sccFgAttachSearch(\'' + charId + '\',this.value)" autocomplete="off">'
+      + '<div class="scc-picker-dropdown" id="scc-fg-attach-drop-' + charId + '"></div>'
     + '</div>'
-    + '<div class="scc-fg-editor-row-body">' + body + '</div>'
-  + '</div>';
-}
-
-var SCC_FG_ADD_TYPES = [
-  ['h1', 'H1 (new section)'], ['h2', 'H2 (subsection)'], ['p', 'Paragraph'],
-  ['italic', 'Italic intro line'], ['box', 'Colored box'], ['table', 'Table'], ['list', 'List']
-];
-
-function sccFgAddBlockControlsHtml(gi) {
-  return '<select class="cm-select" id="scc-fg-addtype-' + gi + '">'
-    + SCC_FG_ADD_TYPES.map(function(t) { return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('')
-  + '</select>'
-  + '<button class="scc-fg-row-btn" onclick="sccFgAddBlockToGroup(' + gi + ')">+ Add Block</button>';
-}
-
-function sccFgRenderEditor() {
-  var inner = document.getElementById('scc-fg-doc-inner');
-  if (!inner) return;
-  var groups = sccFgGroupEditBlocks();
-  var html = '<div class="scc-fg-editor">'
-    + '<div class="scc-fg-editor-toolbar">'
-      + '<button class="scc-btn-primary" onclick="sccFgSaveDocument()">Save</button>'
-      + '<button class="scc-fg-row-btn" onclick="sccFgCancelEdit()">Cancel</button>'
-      + '<button class="scc-fg-row-btn" onclick="sccFgAddSection()">+ Add Section</button>'
+    + '<select class="cm-select" id="scc-fg-attach-type-' + charId + '" title="What kind of attachment">'
+      + '<option value="creature"' + (!isEdit || existing.attachment_type === 'creature' ? ' selected' : '') + '>Creature (pet, companion)</option>'
+      + '<option value="item"' + (isEdit && existing.attachment_type === 'item' ? ' selected' : '') + '>Item</option>'
+      + '<option value="effect"' + (isEdit && existing.attachment_type === 'effect' ? ' selected' : '') + '>Effect (curse, blessing, mark)</option>'
+    + '</select>'
+    + '<select class="cm-select" id="scc-fg-attach-mode-' + charId + '">'
+      + '<option value="situational"' + (!isEdit || existing.mode !== 'permanent' ? ' selected' : '') + '>Situational</option>'
+      + '<option value="permanent"' + (isEdit && existing.mode === 'permanent' ? ' selected' : '') + '>Permanent</option>'
+    + '</select>'
+    + '<textarea class="scc-textarea" id="scc-fg-attach-desc-' + charId + '" rows="2" placeholder="Description (optional)">' + sccEsc(isEdit ? (existing.description || '') : '') + '</textarea>'
+    + '<div class="scc-fg-attach-form-actions">'
+      + '<button type="button" class="scc-btn-secondary" onclick="sccFgSaveAttachment(\'' + charId + '\',' + (isEdit ? "'" + existing.id + "'" : 'null') + ')">' + (isEdit ? 'Save Changes' : 'Add') + '</button>'
+      + '<button type="button" class="scc-fg-attach-cancel" onclick="sccFgToggleAttachForm(\'' + charId + '\')">Cancel</button>'
     + '</div>';
-  groups.forEach(function(g, gi) {
-    var open = SCC_FG_EDIT_GROUP_OPEN[gi] !== false;
-    html += '<div class="scc-fg-editor-group' + (open ? ' open' : '') + '">'
-      + '<div class="scc-fg-editor-group-header" onclick="sccFgToggleEditGroup(' + gi + ')">'
-        + '<span>' + sccEsc(g.title) + '</span>'
-        + '<span class="scc-fg-editor-group-count">' + g.items.length + ' block' + (g.items.length === 1 ? '' : 's') + '</span>'
-      + '</div>'
-      + '<div class="scc-fg-editor-group-body">'
-      + g.items.map(function(it) { return sccFgRenderEditRow(it.block, it.idx); }).join('')
-      + '<div class="scc-fg-editor-add-row">' + sccFgAddBlockControlsHtml(gi) + '</div>'
-      + '</div>'
-    + '</div>';
-  });
-  html += '</div>';
-  inner.innerHTML = html;
 }
 
-function sccFgEditSetField(idx, field, value) {
-  if (!SCC_FG_EDIT_BLOCKS[idx]) return;
-  SCC_FG_EDIT_BLOCKS[idx][field] = value;
-  if (field === 'color') sccFgRenderEditor();
-}
-
-function sccFgMoveBlock(idx, dir) {
-  var arr = SCC_FG_EDIT_BLOCKS;
-  var j = idx + dir;
-  if (j < 0 || j >= arr.length) return;
-  var tmp = arr[idx]; arr[idx] = arr[j]; arr[j] = tmp;
-  sccFgRenderEditor();
-}
-
-function sccFgDeleteBlock(idx) {
-  SCC_FG_EDIT_BLOCKS.splice(idx, 1);
-  sccFgRenderEditor();
-}
-
-function sccFgToggleEditGroup(gi) {
-  SCC_FG_EDIT_GROUP_OPEN[gi] = SCC_FG_EDIT_GROUP_OPEN[gi] === false ? true : false;
-  sccFgRenderEditor();
-}
-
-function sccFgNewBlockOfType(type) {
-  switch (type) {
-    case 'h1':    return { type: 'h1', text: 'New Section' };
-    case 'h2':    return { type: 'h2', text: 'New Subsection' };
-    case 'p':     return { type: 'p', html: '' };
-    case 'italic':return { type: 'italic', html: '' };
-    case 'box':   return { type: 'box', color: 'grey', label: '', html: '', table: null };
-    case 'table': return { type: 'table', variant: null, headerRow: null, rows: [['', '']] };
-    case 'list':  return { type: 'list', tag: 'ul', html: '' };
-    default:      return { type: 'p', html: '' };
+// attachmentId null = add mode; a real id = edit mode, pre-filled from
+// SCC_ATTACHMENTS. Re-openable on a different attachment (or back to add)
+// without a page reload -- always rebuilds the form fresh.
+function sccFgOpenAttachForm(charId, attachmentId) {
+  var container = document.getElementById('scc-fg-attach-form-' + charId);
+  if (!container) return;
+  var existing = null;
+  if (attachmentId) {
+    var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
+    existing = rows.find(function(a) { return a.id === attachmentId; }) || null;
   }
+  container.innerHTML = sccFgAttachFormFieldsHtml(charId, existing);
+  container.style.display = 'flex';
 }
 
-function sccFgAddBlockToGroup(gi) {
-  var sel = document.getElementById('scc-fg-addtype-' + gi);
-  var type = sel ? sel.value : 'p';
-  var groups = sccFgGroupEditBlocks();
-  var g = groups[gi];
-  var insertAt = g.items.length ? g.items[g.items.length - 1].idx + 1 : SCC_FG_EDIT_BLOCKS.length;
-  SCC_FG_EDIT_BLOCKS.splice(insertAt, 0, sccFgNewBlockOfType(type));
-  sccFgRenderEditor();
+function sccFgToggleAttachForm(charId) {
+  var el = document.getElementById('scc-fg-attach-form-' + charId);
+  if (!el) return;
+  el.style.display = 'none';
+  el.innerHTML = '';
 }
 
-function sccFgAddSection() {
-  SCC_FG_EDIT_BLOCKS.push({ type: 'h1', text: 'New Section' });
-  sccFgRenderEditor();
-}
-
-function sccFgAddBoxTable(idx) {
-  SCC_FG_EDIT_BLOCKS[idx].table = { variant: null, headerRow: null, rows: [['', '']] };
-  sccFgRenderEditor();
-}
-
-function sccFgEditSetTableCell(idx, subfield, ri, ci, value) {
-  var t = sccFgGetTableRef(idx, subfield);
-  if (!t || !t.rows[ri]) return;
-  t.rows[ri][ci] = value;
-}
-function sccFgEditSetHeaderCell(idx, subfield, ci, value) {
-  var t = sccFgGetTableRef(idx, subfield);
-  if (!t || !t.headerRow) return;
-  t.headerRow[ci] = value;
-}
-function sccFgDeleteTableRow(idx, subfield, ri) {
-  var t = sccFgGetTableRef(idx, subfield);
-  if (!t) return;
-  t.rows.splice(ri, 1);
-  sccFgRenderEditor();
-}
-function sccFgAddTableRow(idx, subfield) {
-  var t = sccFgGetTableRef(idx, subfield);
-  if (!t) return;
-  var cols = t.headerRow ? t.headerRow.length : (t.rows[0] ? t.rows[0].length : 2);
-  var row = [];
-  for (var i = 0; i < cols; i++) row.push('');
-  t.rows.push(row);
-  sccFgRenderEditor();
-}
-function sccFgToggleTableHeader(idx, subfield, on) {
-  var t = sccFgGetTableRef(idx, subfield);
-  if (!t) return;
-  var cols = t.rows[0] ? t.rows[0].length : 2;
-  if (on) {
-    var hdr = [];
-    for (var i = 0; i < cols; i++) hdr.push('');
-    t.headerRow = hdr;
-  } else {
-    t.headerRow = null;
-  }
-  sccFgRenderEditor();
-}
-function sccFgSetTableVariant(idx, subfield, value) {
-  var t = sccFgGetTableRef(idx, subfield);
-  if (!t) return;
-  t.variant = value || null;
-}
-
-function sccFgCancelEdit() {
-  SCC_FG_EDIT_MODE = false;
-  var toggle = document.getElementById('scc-fg-edit-toggle');
-  if (toggle) toggle.textContent = 'Edit Document';
-  sccFgDrawDocument();
-}
-
-function sccFgSaveDocument() {
-  // Defense in depth alongside sccFgToggleEditMode()'s own guard -- SCC_FG_DOC_SESSION_NUM
-  // is Field Guide's own independent session selector, unrelated to which session
-  // SCC_VIEWING_HISTORY is auditing, so this can't be assumed unreachable just
-  // because entry into edit mode is already blocked.
-  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — the Field Guide document is read-only here', 'error'); return; }
-  var num = SCC_FG_DOC_SESSION_NUM;
-  var blocks = SCC_FG_EDIT_BLOCKS || [];
-  var existing = SCC_FG_DOC_CACHE[num];
-  var req = existing
-    ? sccPatch('field_guide_sessions', '?session_number=eq.' + encodeURIComponent(num), { blocks: blocks })
-    : sccPost('field_guide_sessions', { session_number: num, blocks: blocks });
-  req.then(function(r) {
-    if (!r.ok) { showDMToast('Save failed', 'error'); return; }
-    SCC_FG_DOC_CACHE[num] = { session_number: num, blocks: blocks };
-    SCC_FG_EDIT_MODE = false;
-    var toggle = document.getElementById('scc-fg-edit-toggle');
-    if (toggle) toggle.textContent = 'Edit Document';
-    sccFgDrawDocument();
-    showDMToast('Field Guide saved', 'success');
-  }).catch(function() { showDMToast('Save failed', 'error'); });
-}
-
-// ── Inline-link insert helper (manual, DM-driven — see sccFgLinkify) ──
-function sccFgOpenLinkPicker(taId) {
-  var wrap = document.getElementById('scc-fg-linkpick-wrap-' + taId);
-  if (!wrap) return;
-  var showing = wrap.style.display !== 'none';
-  wrap.style.display = showing ? 'none' : 'block';
-}
-
-function sccFgLinkPickerSearch(taId, query) {
-  var drop = document.getElementById('scc-fg-linkpick-drop-' + taId);
+function sccFgAttachSearch(charId, query) {
+  var nameEl = document.getElementById('scc-fg-attach-name-' + charId);
+  // The DM typing by hand is a real edit to the query -- a stale entity_id
+  // from an earlier pick shouldn't silently survive a rename.
+  if (nameEl) delete nameEl.dataset.entityId;
+  var drop = document.getElementById('scc-fg-attach-drop-' + charId);
   if (!drop) return;
   query = (query || '').toLowerCase().trim();
   if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
   var results = [];
-  Object.keys(SCC_FG_LINK_TYPES).forEach(function(typeKey) {
+  ['creature', 'item'].forEach(function(typeKey) {
     var def = SCC_FG_LINK_TYPES[typeKey];
     def.arr().forEach(function(e) {
       if (e.name && e.name.toLowerCase().indexOf(query) >= 0) {
@@ -14808,14 +15352,14 @@ function sccFgLinkPickerSearch(taId, query) {
       }
     });
   });
-  results = results.slice(0, 15);
+  results = results.slice(0, 10);
   if (!results.length) {
-    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matches.</div>';
+    drop.innerHTML = '<div class="scc-picker-option-sub" style="padding:0.5rem 0.85rem;">No matching entity — you can still type a custom name.</div>';
     drop.classList.add('open');
     return;
   }
   drop.innerHTML = results.map(function(r) {
-    return '<div class="scc-picker-option" onclick="sccFgInsertLink(\'' + taId + '\',\'' + r.type + '\',\'' + escQ(r.id) + '\',\'' + escQ(r.name) + '\')">'
+    return '<div class="scc-picker-option" onclick="sccFgAttachPick(\'' + charId + '\',\'' + r.type + '\',\'' + escQ(r.id) + '\',\'' + escQ(r.name) + '\')">'
       + sccEsc(r.name)
       + '<div class="scc-picker-option-sub">' + sccEsc(r.typeLabel) + '</div>'
     + '</div>';
@@ -14823,22 +15367,56 @@ function sccFgLinkPickerSearch(taId, query) {
   drop.classList.add('open');
 }
 
-function sccFgInsertLink(taId, type, id, name) {
-  var ta = document.getElementById(taId);
-  if (!ta) return;
-  var snippet = '[[' + type + ':' + id + '|' + name + ']]';
-  var start = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
-  var end = ta.selectionEnd != null ? ta.selectionEnd : ta.value.length;
-  ta.value = ta.value.slice(0, start) + snippet + ta.value.slice(end);
-  ta.focus();
-  var newPos = start + snippet.length;
-  ta.setSelectionRange(newPos, newPos);
-  var parts = taId.split('-'); // scc-fg-ta-<idx>-<field>
-  sccFgEditSetField(parseInt(parts[3]), parts.slice(4).join('-'), ta.value);
-  var wrap = document.getElementById('scc-fg-linkpick-wrap-' + taId);
-  if (wrap) wrap.style.display = 'none';
-  var drop = document.getElementById('scc-fg-linkpick-drop-' + taId);
+function sccFgAttachPick(charId, type, id, name) {
+  var nameEl = document.getElementById('scc-fg-attach-name-' + charId);
+  var typeEl = document.getElementById('scc-fg-attach-type-' + charId);
+  if (nameEl) { nameEl.value = name; nameEl.dataset.entityId = id; }
+  if (typeEl) typeEl.value = type;
+  var drop = document.getElementById('scc-fg-attach-drop-' + charId);
   if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+}
+
+// Shared save path for both Add (attachmentId null -> POST) and Edit
+// (attachmentId set -> PATCH), so the two modes can't drift apart.
+function sccFgSaveAttachment(charId, attachmentId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — attachments are read-only here', 'error'); return; }
+  var nameEl = document.getElementById('scc-fg-attach-name-' + charId);
+  var typeEl = document.getElementById('scc-fg-attach-type-' + charId);
+  var modeEl = document.getElementById('scc-fg-attach-mode-' + charId);
+  var descEl = document.getElementById('scc-fg-attach-desc-' + charId);
+  var name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { showDMToast('Give the attachment a name first', 'error'); return; }
+  var attachmentType = (typeEl && ['creature','item','effect'].indexOf(typeEl.value) >= 0) ? typeEl.value : 'creature';
+  var entityId = (nameEl && nameEl.dataset.entityId) ? nameEl.dataset.entityId : null;
+  var body = {
+    name: name,
+    attachment_type: attachmentType,
+    entity_id: entityId,
+    mode: (modeEl && modeEl.value === 'permanent') ? 'permanent' : 'situational',
+    description: descEl && descEl.value.trim() ? descEl.value.trim() : null
+  };
+  var req = attachmentId
+    ? sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(attachmentId), body)
+    : sccPost('character_attachments', Object.assign({ character_id: charId, session_number: sccFgActiveSessionNum(), active: true }, body));
+  req.then(function(r) {
+    if (!r.ok) { showDMToast('Could not save attachment', 'error'); return null; }
+    return sccFetch('character_attachments', '&active=eq.true&order=created_at.asc');
+  }).then(function(rows) {
+    if (!rows) return;
+    window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : [];
+    sccFgDrawDocument();
+    showDMToast(attachmentId ? 'Attachment updated' : 'Attachment added', 'success');
+  }).catch(function() { showDMToast('Could not save attachment', 'error'); });
+}
+
+function sccFgRemoveAttachment(id) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — attachments are read-only here', 'error'); return; }
+  if (!confirm('Remove this attachment?')) return;
+  sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(id), { active: false }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not remove attachment', 'error'); return; }
+    window.SCC_ATTACHMENTS = (typeof SCC_ATTACHMENTS !== 'undefined' ? SCC_ATTACHMENTS : []).filter(function(a) { return a.id !== id; });
+    sccFgDrawDocument();
+  }).catch(function() { showDMToast('Could not remove attachment', 'error'); });
 }
 
 // ── Collapsible prep notes ────────────────────────────────────────
@@ -19322,10 +19900,9 @@ function sccMentionSelect(type, id, name) {
   }
   // Programmatically setting .value doesn't fire a real change event, so a
   // Tagged Notes field's own onchange-triggered save never runs on its own —
-  // trigger it directly here, same as sccFgInsertLink() already does for its
-  // own textarea insert. Saved value is always real markup, reconstructed
-  // from the tracked spans when tracking is active -- Supabase never stores
-  // the plain-text composing view.
+  // trigger it directly here instead. Saved value is always real markup,
+  // reconstructed from the tracked spans when tracking is active -- Supabase
+  // never stores the plain-text composing view.
   var card = el.closest('.scc-tagnote-card');
   if (card) {
     var noteId = card.getAttribute('data-note-id');
@@ -19880,13 +20457,17 @@ function sccCloseLookup() {
 // ── "Open in new tab" deep-link routing ─────────────────────────────
 // dm.html has no URL routing of any kind otherwise (confirmed via a full
 // grep — the only location.search/hash usage anywhere in the file before
-// this was the env-banner hostname check). These two URL shapes are the
+// this was the env-banner hostname check). These URL shapes are the
 // entire routing surface, built specifically to support "open in new tab"
 // from the lookup drawer for the 7 entity types that have a real
 // full-detail/edit page — Content Manager's edit form for NPC/City/POI/
 // Creature/Organization/Item, and the Quest Dashboard's detail view for
 // Quest. Nation/Region/Religion/Species have no such page (confirmed in
 // the investigation) and never generate a link that would need routing.
+// A third shape (tab=session&panel=combat&encounter=) was added for the
+// Field Guide's "Roll Initiative" button, which needs to land inside
+// Session Details' own Combat sub-panel (not a top-level tab) with a
+// specific saved combat_encounters row already loaded.
 function sccRoutingUrl(query) {
   return window.location.pathname + '?' + query;
 }
@@ -19895,6 +20476,9 @@ function sccBuildManageEditUrl(type, id) {
 }
 function sccBuildQuestDetailUrl(id) {
   return sccRoutingUrl('tab=quests&quest=' + encodeURIComponent(id));
+}
+function sccBuildCombatEncounterUrl(encounterId) {
+  return sccRoutingUrl('tab=session&panel=combat&encounter=' + encodeURIComponent(encounterId));
 }
 
 // Called once, after the real Supabase data has loaded (so CM_FILTERED/
@@ -19921,6 +20505,22 @@ function sccHandleUrlRouting() {
   } else if (tab === 'quests' && params.get('quest')) {
     switchTab('quests');
     if (typeof selectQuest === 'function') selectQuest(params.get('quest'));
+  } else if (tab === 'session' && params.get('panel') === 'combat' && params.get('encounter')) {
+    var encId = params.get('encounter');
+    switchTab('session');
+    sccSwitchPanel('combat');
+    // sccSwitchPanel('combat') already kicks off sccLoadSavedEncounters(),
+    // but async and un-awaited -- call it again ourselves (idempotent, one
+    // small fetch) so we can chain onto its result. sccLoadPlayers() too,
+    // since sccAddToCombatStaging() reads SCC_SHEETS[id] for a PC's real
+    // AC/HP -- on a genuinely fresh tab neither is guaranteed to have
+    // resolved yet by the time this routing runs.
+    Promise.all([
+      sccLoadSavedEncounters(),
+      (typeof SCC_PLAYERS !== 'undefined' && SCC_PLAYERS.length) ? Promise.resolve() : sccLoadPlayers()
+    ]).then(function() {
+      if (typeof sccLoadSavedEncounter === 'function') sccLoadSavedEncounter(encId);
+    });
   }
 }
 
