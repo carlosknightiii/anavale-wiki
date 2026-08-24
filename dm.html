@@ -3462,6 +3462,10 @@
                 <div id="scc-live-conditions"></div>
               </div>
               <div class="scc-live-section scc-live-strip-item">
+                <div class="scc-live-section-label">Companions &amp; Attachments</div>
+                <div id="scc-live-attachments"></div>
+              </div>
+              <div class="scc-live-section scc-live-strip-item">
                 <div class="scc-live-section-label">Current Beat</div>
                 <div id="scc-live-current-beat"></div>
               </div>
@@ -14734,12 +14738,14 @@ function sccLoadPlayers() {
       // location card rendered before this resolves would permanently show
       // "No players" until something else re-renders the panel.
       if (typeof sccRenderLocationPanel === 'function') sccRenderLocationPanel();
-      // Same race a third time: SCC_PLAYER_PHOTOS feeds the Field Guide's
-      // Companions & Attachments thumbnails. Only redraw if the guide has
-      // already rendered once (SCC_FG_RENDERED_SESSION_NUM set) -- calling
-      // this before that would show a false "No Field Guide written yet"
-      // against a document cache that just hasn't been fetched.
-      if (typeof sccFgDrawDocument === 'function' && typeof SCC_FG_RENDERED_SESSION_NUM !== 'undefined' && SCC_FG_RENDERED_SESSION_NUM !== null) sccFgDrawDocument();
+      // Same race a third time: SCC_PLAYER_PHOTOS feeds Companions &
+      // Attachments' own thumbnails, now in the Live Session sidebar (moved
+      // out of the Field Guide document -- see sccLiveRenderAttachments()).
+      // A direct re-render of that one widget, no SCC_FG_RENDERED_SESSION_NUM
+      // guard needed anymore -- unlike the Field Guide document redraw this
+      // replaced, the sidebar widget has no "document not fetched yet" state
+      // to accidentally clobber.
+      if (typeof sccLiveRenderAttachments === 'function') sccLiveRenderAttachments();
     });
   }).catch(function() { /* no player bar left to fall back to -- Live Session's own widgets just stay on whatever they last rendered */ });
 }
@@ -14762,6 +14768,7 @@ var SCC_LIVE_TIMER_ELAPSED = 0;
 function sccRenderLivePanel() {
   sccLiveRenderParty();
   sccLiveRenderConditions();
+  sccLiveRenderAttachments();
   sccRenderCurrentBeatWidget();
   sccLiveRenderScenarios();
 }
@@ -15971,13 +15978,16 @@ function sccFgRenderOpeningSection(num) {
   var dmNotes   = session ? session.opening_recap_dm_notes   : null;
   var locHtml   = sccFgOpeningLocationHtml(session ? session.opening_location_ref : null);
   var playerCtx = SCC_FG_OPENING_CTX_CACHE[num] || [];
-  var attachHtml = sccFgAttachmentsSectionHtml();
   // Only skip the whole section when there's genuinely nothing to show OR
   // offer -- no session row at all (nothing to attach an edit to) and no
-  // player-context/attachments UI either. Once a session exists, the 3
-  // recap fields always render -- filled, or a real empty state -- rather
-  // than the old "silently render nothing" behavior.
-  if (!session && !playerCtx.length && !attachHtml) return '';
+  // player-context either. Once a session exists, the 3 recap fields
+  // always render -- filled, or a real empty state -- rather than the old
+  // "silently render nothing" behavior. Companions & Attachments used to
+  // factor into this check too -- it's moved to the Live Session sidebar
+  // (alongside Party HP/Conditions, see sccLiveRenderAttachments()), since
+  // it's ongoing per-character status, not opening-specific document
+  // content, so it no longer has any bearing on this section at all.
+  if (!session && !playerCtx.length) return '';
   var ctxHtml = playerCtx.length ? ('<div class="scc-fg-player-ctx-wrap">' + playerCtx.map(function(row) {
     var pc = (typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : []).find(function(p) { return p.id === row.character_id; });
     var name = pc ? pc.name : row.character_id;
@@ -15992,20 +16002,26 @@ function sccFgRenderOpeningSection(num) {
     + (readAloud ? '<div class="scc-fg-box scc-fg-box--green"><div class="scc-fg-box-label">Read Aloud</div>' + sccFgPlainTextHtml(readAloud) + '</div>' : (session ? sccFgOpeningEmptyHtml('read_aloud', 'Read Aloud') : ''))
     + (dmNotes ? '<div class="scc-fg-box scc-fg-box--magenta"><div class="scc-fg-box-cat-badge">&#9888; DM Only</div>' + sccFgPlainTextHtml(dmNotes) + '</div>' : (session ? sccFgOpeningEmptyHtml('dm_notes', 'DM Notes') : ''))
     + ctxHtml
-    + attachHtml
   + '</div>';
 }
 
-// ── Companions & Attachments (character_attachments) — shown for every
-//    real player character, since these are ongoing continuity details a
-//    DM needs at hand whenever a session opens, not tied to a single
-//    document block. Real assign/remove actions, not just a display. ──
+// ── Companions & Attachments (character_attachments) — lives in the Live
+//    Session sidebar's always-visible control strip (#scc-live-attachments,
+//    alongside Party HP/Conditions -- see sccLiveRenderAttachments() below),
+//    not the Field Guide document -- these are ongoing per-character
+//    continuity details a DM needs at hand for the whole session, not tied
+//    to a single document block. Real assign/remove actions, not just a
+//    display. Function/class names keep their scc-fg-* prefix from when
+//    this lived inside the Field Guide document -- relocated, not rebuilt,
+//    so every existing call site (search/pick/save/remove) still targets
+//    the right DOM ids unchanged. No own title here -- the sidebar strip
+//    item's own .scc-live-section-label already provides "Companions &
+//    Attachments", matching every sibling widget (Party HP, Conditions). ──
 function sccFgAttachmentsSectionHtml() {
   if (typeof SCC_PLAYERS === 'undefined' || !SCC_PLAYERS.length) return '';
   var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
   var auditLocked = !!SCC_VIEWING_HISTORY;
   return '<div class="scc-fg-attach-section">'
-    + '<div class="scc-fg-attach-title">&#128142; Companions &amp; Attachments</div>'
     + SCC_PLAYERS.map(function(pc) {
         var mine = rows.filter(function(r) { return r.character_id === pc.id; });
         var photoUrl = (typeof SCC_PLAYER_PHOTOS !== 'undefined') ? SCC_PLAYER_PHOTOS[pc.id] : null;
@@ -16034,6 +16050,17 @@ function sccFgAttachmentsSectionHtml() {
         + '</div>';
       }).join('')
   + '</div>';
+}
+
+// Sidebar render target -- the Live Session control strip's own #scc-live-
+// attachments div (see the sccRenderLivePanel() and sccLoadPlayers() call
+// sites below). SCC_PLAYERS.length === 0 correctly leaves this blank
+// (sccFgAttachmentsSectionHtml() returns '' in that case), same convention
+// sccLiveRenderConditions() already uses for its own sibling widget.
+function sccLiveRenderAttachments() {
+  var el = document.getElementById('scc-live-attachments');
+  if (!el) return;
+  el.innerHTML = sccFgAttachmentsSectionHtml();
 }
 
 // Shared by both Add and Edit -- one form, pre-filled when `existing` is
@@ -16156,7 +16183,7 @@ function sccFgSaveAttachment(charId, attachmentId) {
   }).then(function(rows) {
     if (!rows) return;
     window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : [];
-    sccFgDrawDocument();
+    sccLiveRenderAttachments();
     showDMToast(attachmentId ? 'Attachment updated' : 'Attachment added', 'success');
   }).catch(function() { showDMToast('Could not save attachment', 'error'); });
 }
@@ -16167,7 +16194,7 @@ function sccFgRemoveAttachment(id) {
   sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(id), { active: false }).then(function(r) {
     if (!r.ok) { showDMToast('Could not remove attachment', 'error'); return; }
     window.SCC_ATTACHMENTS = (typeof SCC_ATTACHMENTS !== 'undefined' ? SCC_ATTACHMENTS : []).filter(function(a) { return a.id !== id; });
-    sccFgDrawDocument();
+    sccLiveRenderAttachments();
   }).catch(function() { showDMToast('Could not remove attachment', 'error'); });
 }
 
