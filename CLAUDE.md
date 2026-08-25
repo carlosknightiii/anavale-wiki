@@ -476,9 +476,12 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 **`read_aloud` column:** Present on `world_characters`, `cities`, `pois`, `creatures`, `items`.
 **`session_scenarios` jsonb:** On `session_notes` — read by SCC Live Session tab accordion.
 
+**`field_guide_sessions_backup`** (`id`, `session_number`, `blocks` jsonb, `backed_up_at`, `reason`) — snapshot table for `field_guide_sessions`. Insert a copy of the current row here before any large batch edit to `field_guide_sessions` (not per-edit — before a batch), so a bad rewrite has a real point to revert to.
+**`field_guide_qa_checkpoints`** (`id`, `session_number`, `section`, `status`, `notes`, `updated_at`) — per-section Field Guide QA status. Replaces tracking QA progress as a single free-text note in `active_work`; check this table for the real current shape of QA progress before assuming a session's read-through state from a narrative summary.
+
 ---
 
-## 7. Debugging Rules (D1–D8)
+## 7. Debugging Rules (D1–D9)
 
 **D1 — 2-attempt hard limit (non-negotiable).** If a fix fails twice, STOP. Do not write a third variation. Something is wrong with the diagnosis, not the fix. Say: *"I have reached the 2-attempt limit. I will not write another fix until I have read the exact current state of the broken code and identified the specific line that is wrong."*
 
@@ -495,6 +498,8 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 **D7 — When the DM corrects a factual claim:** Stop immediately. Do not defend the previous answer. Correct the record in the Decision Log before writing any code.
 
 **D8 — When a testing tool proves structurally unable to verify something, say so the first time, then loop in the DM immediately.** Example on record: a sandboxed browser tool that converts `target="_blank"` clicks into same-tab navigation instead of a real, inspectable new tab — no amount of retrying, different click techniques, or `window.open()` variants makes it capable of that specific check. The moment a limitation like this is confirmed (not suspected — actually tried and hit), say so plainly and ask the DM for one concrete, real verification step. Do not spend a second or third round writing another fix and re-running the same approximated/partial test as if it might now pass — a tool that structurally cannot observe the thing in question won't observe it any better on attempt three. Loop in the human check as soon as the ceiling is confirmed, not after exhausting further code changes against it.
+
+**D9 — "Verified live" or "confirmed working" must be backed by real evidence in the report, not a summary assertion.** For a UI/rendering claim, that means the literal text or state actually observed on screen — not "confirmed working." For a data claim, the actual query result — not "confirmed correct." If genuinely unable to produce that evidence for something (see D8), say so plainly instead of writing a confident-sounding summary anyway. This is the mirror-image failure to D8: D8 is about a tool that can't verify; D9 is about writing "verified" without ever actually producing the check. On record: the same box-category-chip bug was reported fixed and verified six times across one project before an actual per-item, evidence-based check (paste what you literally see for each of N things, not a paragraph claiming they all pass) finally caught that most of the "verified" instances never were.
 
 ---
 
