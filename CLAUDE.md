@@ -470,7 +470,14 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 **Tables (world):** `regions` · `nations` · `cities` · `creatures` · `organizations` · `world_characters` · `pois` · `religions` · `items` · `spells` · `species` · `quests`
 **Tables (player):** `player_characters` · `character_sheet` · `inventory` · `character_notes` · `character_photo`
 **Tables (session):** `session_notes` · `quest_progress`
+**Tables (tracking):** `active_work` · `requests`
 **Storage:** `world-images` (public) · `character-photos` (private)
+
+**`active_work`** (`id`, `item`, `location`, `status`, `notes`, `updated_at`) — real-time in-progress/blocked/approved state. General session state only, never a specific tracked item's status (that's `requests`) — check it before starting any new work. Takes priority over `requests` when the two disagree, since it's updated live during a session while `requests` reflects the last time that specific row was touched.
+
+**`requests`** (`id`, `title`, `description`, `area`, `status`, `source`, `notes`, `size`, `priority`, `created_at`, `updated_at`) — the single, live tracker for every DM feature request and bug report (see §1 Start item 7). Both `status` and `priority` are free-text columns, not DB-enforced enums — the values below are the real, current convention, not a schema constraint.
+Real `status` values: `not-started` / `in-progress` / `blocked` / `needs-decision` / `declined` / `in-qa` / `approved-pending-push` / `approved-and-pushed` / `pushed-not-qa-approved`. The last four distinguish *built* from *verified* from *approved* — never treat any of them as interchangeable with a plain "done." A merge is not DM approval; default to `pushed-not-qa-approved` unless sign-off is explicitly confirmed in conversation (see the Aug 25 `0eccbc9` merge, done on this exact point).
+Real `priority` values: `blocking` / `important` / `polish`.
 
 **RLS:** All world tables have anon SELECT enabled. Wiki filters `player_facing` at render time.
 **`read_aloud` column:** Present on `world_characters`, `cities`, `pois`, `creatures`, `items`.
