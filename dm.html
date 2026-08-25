@@ -613,7 +613,10 @@
   align-items: center;
   gap: 0.75rem;
   position: sticky;
-  top: 1rem;
+  /* Same --dm-env-banner-h offset as every other page-level sticky element
+     below -- 0px on the live site (no change there), the banner's real
+     measured height locally, so this doesn't stick underneath it. */
+  top: calc(var(--dm-env-banner-h) + 1rem);
   padding-top: 0.25rem;
 }
 .city-pop-row {
@@ -1207,11 +1210,18 @@
     : 'local file';
   el.textContent = '\u26A0 LOCAL DEV BUILD \u2014 NOT LIVE \u2014 ' + where;
   el.style.display = 'block';
-  // Measured after paint so the gate/app content below shifts down by the
-  // banner's real rendered height, whatever that ends up being.
-  requestAnimationFrame(function() {
-    document.documentElement.style.setProperty('--dm-env-banner-h', el.offsetHeight + 'px');
-  });
+  // Reading .offsetHeight forces a synchronous layout right here -- no need
+  // to defer to requestAnimationFrame for that. Real fix, not a style
+  // preference: rAF is throttled/skipped for backgrounded or not-yet-
+  // visible tabs by design (confirmed in this exact codebase's own history
+  // as unreliable in automated test harnesses specifically because of
+  // this), so a DM opening this in a background tab, or any tooling that
+  // creates the tab non-interactively, could see --dm-env-banner-h stay
+  // 0px indefinitely -- every sticky element that offsets by it (the
+  // Field Guide jump row, the Live Session sidebar, etc.) would then stick
+  // right under the banner instead of below it. Reading the height inline
+  // has no such dependency.
+  document.documentElement.style.setProperty('--dm-env-banner-h', el.offsetHeight + 'px');
 })();
 </script>
 
@@ -1362,7 +1372,8 @@
     <div id="scc-quicknote-modal" class="scc-quicknote-modal" aria-hidden="true">
       <div class="scc-quicknote-modal-inner">
         <div class="scc-quicknote-modal-title">Quick Note</div>
-        <select id="scc-quicknote-cat" class="cm-select"></select>
+        <select id="scc-quicknote-cat" class="cm-select" onchange="sccNoteCategoryChanged('scc-quicknote-cat','scc-quicknote-character')"></select>
+        <select id="scc-quicknote-character" class="cm-select" style="display:none;"></select>
         <input type="text" id="scc-quicknote-title" class="scc-input" placeholder="What happened?" autocomplete="off" oninput="sccMentionInput(this)">
         <textarea id="scc-quicknote-body" class="scc-textarea" placeholder="Details (optional)&#8230;" oninput="sccMentionInput(this)"></textarea>
         <div class="scc-quicknote-modal-actions">
@@ -3402,7 +3413,8 @@
               <div class="scc-section-title">Quick Notes</div>
               <div class="scc-tagnote-hint">Something just happened at the table? Tag it and jot it here — don't wait for the recap.</div>
               <div class="scc-tagnote-add-row">
-                <select id="scc-tagnote-new-cat" class="cm-select"></select>
+                <select id="scc-tagnote-new-cat" class="cm-select" onchange="sccNoteCategoryChanged('scc-tagnote-new-cat','scc-tagnote-new-character')"></select>
+                <select id="scc-tagnote-new-character" class="cm-select" style="display:none;"></select>
                 <button class="scc-btn-primary" onclick="sccAddTagNote()">+ New Note</button>
               </div>
               <div class="scc-tagnote-toolbar">
@@ -3454,61 +3466,95 @@
             <!-- ── ALWAYS-VISIBLE CONTROL STRIP ─────────────────── -->
             <div class="scc-live-strip">
               <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Party HP</div>
-                <div id="scc-live-party"></div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Conditions</div>
-                <div id="scc-live-conditions"></div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Companions &amp; Attachments</div>
-                <div id="scc-live-attachments"></div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Current Beat</div>
-                <div id="scc-live-current-beat"></div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Die Roller</div>
-                <div class="scc-live-dice-row">
-                  <button class="scc-live-die-btn" onclick="sccRollDie(4)">d4</button>
-                  <button class="scc-live-die-btn" onclick="sccRollDie(6)">d6</button>
-                  <button class="scc-live-die-btn" onclick="sccRollDie(8)">d8</button>
-                  <button class="scc-live-die-btn" onclick="sccRollDie(10)">d10</button>
-                  <button class="scc-live-die-btn" onclick="sccRollDie(12)">d12</button>
-                  <button class="scc-live-die-btn scc-live-die-btn--d20" onclick="sccRollDie(20)">d20</button>
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-party" onclick="sccLiveToggleCard('party')">
+                  <span>Party HP</span><span class="scc-live-card-arrow">&#9654;</span>
                 </div>
-                <div class="scc-live-dice-modifier-row">
-                  <span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">Modifier</span>
-                  <input type="number" id="scc-live-die-mod" class="scc-input" style="width:60px;text-align:center;padding:0.2rem 0.4rem;" value="0" min="-20" max="20">
+                <div class="scc-live-card-body open" id="scc-live-card-body-party">
+                  <div id="scc-live-party"></div>
                 </div>
-                <div id="scc-live-die-result" class="scc-live-die-result"></div>
+              </div>
+              <!-- Ordered by likely real usage frequency during live play, not
+                   build order: Party HP and the Die Roller get touched almost
+                   every turn; Conditions/Companions/Current Beat are checked
+                   often but not constantly; DM Safety Net and Timer are
+                   reference/occasional. -->
+              <div class="scc-live-section scc-live-strip-item">
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-dice" onclick="sccLiveToggleCard('dice')">
+                  <span>Die Roller</span><span class="scc-live-card-arrow">&#9654;</span>
+                </div>
+                <div class="scc-live-card-body open" id="scc-live-card-body-dice">
+                  <div class="scc-live-dice-row">
+                    <button class="scc-live-die-btn" onclick="sccRollDie(4)">d4</button>
+                    <button class="scc-live-die-btn" onclick="sccRollDie(6)">d6</button>
+                    <button class="scc-live-die-btn" onclick="sccRollDie(8)">d8</button>
+                    <button class="scc-live-die-btn" onclick="sccRollDie(10)">d10</button>
+                    <button class="scc-live-die-btn" onclick="sccRollDie(12)">d12</button>
+                    <button class="scc-live-die-btn scc-live-die-btn--d20" onclick="sccRollDie(20)">d20</button>
+                  </div>
+                  <div class="scc-live-dice-modifier-row">
+                    <span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">Modifier</span>
+                    <input type="number" id="scc-live-die-mod" class="scc-input" style="width:60px;text-align:center;padding:0.2rem 0.4rem;" value="0" min="-20" max="20">
+                  </div>
+                  <div id="scc-live-die-result" class="scc-live-die-result"></div>
+                </div>
               </div>
               <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label">Timer</div>
-                <div class="scc-live-timer-row">
-                  <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
-                  <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-conditions" onclick="sccLiveToggleCard('conditions')">
+                  <span>Conditions</span><span class="scc-live-card-arrow">&#9654;</span>
+                </div>
+                <div class="scc-live-card-body open" id="scc-live-card-body-conditions">
+                  <div id="scc-live-conditions"></div>
+                </div>
+              </div>
+              <div class="scc-live-section scc-live-strip-item">
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-attachments" onclick="sccLiveToggleCard('attachments')">
+                  <span>Companions &amp; Attachments</span><span class="scc-live-card-arrow">&#9654;</span>
+                </div>
+                <div class="scc-live-card-body open" id="scc-live-card-body-attachments">
+                  <div id="scc-live-attachments"></div>
+                </div>
+              </div>
+              <div class="scc-live-section scc-live-strip-item">
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-beat" onclick="sccLiveToggleCard('beat')">
+                  <span>Current Beat</span><span class="scc-live-card-arrow">&#9654;</span>
+                </div>
+                <div class="scc-live-card-body open" id="scc-live-card-body-beat">
+                  <div id="scc-live-current-beat"></div>
                 </div>
               </div>
               <div class="scc-live-section scc-live-strip-item scc-live-safety-net">
-                <div class="scc-live-section-label">DM Safety Net</div>
-                <div class="scc-live-safety-item">
-                  <span class="scc-live-safety-trigger">Players go sideways?</span>
-                  <span class="scc-live-safety-response">&#8220;Interesting. Give me a [Perception / Investigation] roll.&#8221;</span>
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-safety" onclick="sccLiveToggleCard('safety')">
+                  <span>DM Safety Net</span><span class="scc-live-card-arrow">&#9654;</span>
                 </div>
-                <div class="scc-live-safety-item">
-                  <span class="scc-live-safety-trigger">0 HP?</span>
-                  <span class="scc-live-safety-response">Unconscious. Death saves: DC 10, 3 successes before 3 failures.</span>
+                <div class="scc-live-card-body open" id="scc-live-card-body-safety">
+                  <div class="scc-live-safety-item">
+                    <span class="scc-live-safety-trigger">Players go sideways?</span>
+                    <span class="scc-live-safety-response">&#8220;Interesting. Give me a [Perception / Investigation] roll.&#8221;</span>
+                  </div>
+                  <div class="scc-live-safety-item">
+                    <span class="scc-live-safety-trigger">0 HP?</span>
+                    <span class="scc-live-safety-response">Unconscious. Death saves: DC 10, 3 successes before 3 failures.</span>
+                  </div>
+                  <div class="scc-live-safety-item">
+                    <span class="scc-live-safety-trigger">Rules dispute?</span>
+                    <span class="scc-live-safety-response">&#8220;We&#8217;ll rule it [X] now and look it up after. Keep moving.&#8221;</span>
+                  </div>
+                  <div class="scc-live-safety-item">
+                    <span class="scc-live-safety-trigger">Emotional moment?</span>
+                    <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
+                  </div>
                 </div>
-                <div class="scc-live-safety-item">
-                  <span class="scc-live-safety-trigger">Rules dispute?</span>
-                  <span class="scc-live-safety-response">&#8220;We&#8217;ll rule it [X] now and look it up after. Keep moving.&#8221;</span>
+              </div>
+              <div class="scc-live-section scc-live-strip-item">
+                <div class="scc-live-section-label open" id="scc-live-card-toggle-timer" onclick="sccLiveToggleCard('timer')">
+                  <span>Timer</span><span class="scc-live-card-arrow">&#9654;</span>
                 </div>
-                <div class="scc-live-safety-item">
-                  <span class="scc-live-safety-trigger">Emotional moment?</span>
-                  <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
+                <div class="scc-live-card-body open" id="scc-live-card-body-timer">
+                  <div class="scc-live-timer-row">
+                    <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
+                    <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
+                    <button class="scc-btn-sm scc-btn-secondary" id="scc-live-timer-reset-btn" onclick="sccLiveResetTimer()" title="Stop and zero the timer">Reset</button>
+                  </div>
                 </div>
               </div>
             </div><!-- /scc-live-strip -->
@@ -3631,7 +3677,7 @@
           </div>
               </div>
 
-              <div class="scc-live-tab-panel scc-live-tab-panel--fieldguide open" id="scc-live-acc-body-fieldguide">
+              <div class="scc-live-tab-panel open" id="scc-live-acc-body-fieldguide">
           <div class="scc-fg-layout">
           <div class="scc-fg-header">
             <div class="scc-npc-page-title">Field Guide</div>
@@ -6312,7 +6358,7 @@ function showDMToast(msg, type) {
 .scc-quest-col-main { min-width: 0; }
 .scc-quest-col-sidebar {
   position: sticky;
-  top: 1rem;
+  top: calc(var(--dm-env-banner-h) + 1rem);
   background: var(--scc-surface-high);
   border: 1px solid var(--scc-border);
   border-radius: var(--dm-radius);
@@ -6465,8 +6511,8 @@ function showDMToast(msg, type) {
    viewport sitting empty below a list that had stopped scrolling early. */
 .scc-cb2-saved-col {
   flex: 0 0 21.5rem; display: flex; flex-direction: column; gap: 0.625rem;
-  position: sticky; top: 1rem; align-self: flex-start;
-  max-height: calc(100vh - 2rem);
+  position: sticky; top: calc(var(--dm-env-banner-h) + 1rem); align-self: flex-start;
+  max-height: calc(100vh - 2rem - var(--dm-env-banner-h));
 }
 .scc-cb2-col-title { font-family: var(--font-display); font-size: 1.125rem; color: var(--text); }
 .scc-cb2-add-card {
@@ -6991,7 +7037,7 @@ function showDMToast(msg, type) {
    not just stuck in place looking like part of the normal flow. */
 .scc-encounter-save-sticky {
   position: sticky;
-  top: 0;
+  top: var(--dm-env-banner-h);
   z-index: 5;
   background: var(--scc-surface-high);
   border: 1px solid var(--scc-border-mid);
@@ -7434,7 +7480,27 @@ function showDMToast(msg, type) {
   letter-spacing: 0.12em;
   color: var(--dm-gold);
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
 }
+/* Every sidebar card is a real accordion -- default expanded (both this
+   label and its .scc-live-card-body carry .open in the static markup, so
+   nothing looks different on first load), collapsible via sccLiveToggleCard().
+   Pure UI state, no write -- same "toggle never needs audit-mode gating"
+   reasoning already on record above for Setup's own .scc-collapsible-toggle. */
+.scc-live-card-arrow {
+  font-size: 0.55rem;
+  color: var(--dm-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.scc-live-section-label.open .scc-live-card-arrow { transform: rotate(90deg); }
+.scc-live-card-body { display: none; }
+.scc-live-card-body.open { display: block; }
 /* Beat rail */
 .scc-live-beat-item {
   display: flex;
@@ -7615,7 +7681,12 @@ function showDMToast(msg, type) {
   gap: 1.5rem;
   align-items: start;
 }
-.scc-live-strip { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: 1rem; min-width: 0; }
+/* top: 1rem alone meant the sidebar started sticking just 16px from the
+   true viewport top -- well inside the local-dev banner's real height
+   (#dm-env-banner, fixed, z-index:10000), so it rendered underneath/
+   behind it. Same --dm-env-banner-h offset used elsewhere -- 0px on the
+   live site, no behavior change there. */
+.scc-live-strip { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: calc(var(--dm-env-banner-h) + 1rem); min-width: 0; }
 .scc-live-strip-item { flex: none; min-width: 0; }
 /* ── Live Session tabs (was a 5-section accordion, now horizontal tabs --
    one panel visible at a time). Reuses the same pill-button visual language
@@ -7690,15 +7761,18 @@ function showDMToast(msg, type) {
   .scc-live-strip-wrap { grid-template-columns: 1fr; }
   .scc-live-strip { position: static; }
 }
-/* Field Guide's own internal layout (2 independently-scrolling panes) needs a
-   real, definite height to size against -- it used to get that for free by
-   being the sole full-height active panel; now that it's one tab among
-   several inside a naturally-growing page, give its own tab panel an
-   explicit height when active so .scc-fg-layout's height:100% still
-   resolves exactly as before. Content/editor logic below this line is
-   completely unchanged, only its container's sizing model is. */
-.scc-live-tab-panel--fieldguide.open { display: flex; flex-direction: column; height: 70vh; }
-.scc-fg-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-top: 1px solid var(--scc-border); }
+/* Field Guide used to need a real, definite height here -- back when its
+   own left-panel card list (NPCs/Creatures/Locations/Items, removed
+   entirely in a later session, see CLAUDE.md Decision Log) made this a
+   genuine 2-independently-scrolling-panes layout. With only the document
+   pane left, there's no reason for this tab to behave differently from
+   NPCs/Locations/Quests -- .scc-live-tab-panel.open's own display:block
+   already applies here with no override needed, so the whole panel grows
+   to its real content height and the page itself scrolls, exactly like
+   every sibling tab. (Confirmed via a fresh grep before removing this --
+   .scc-live-tab-panel--fieldguide is otherwise unused, nothing else
+   depends on this rule existing.) */
+.scc-fg-layout { display: flex; flex-direction: column; border-top: 1px solid var(--scc-border); }
 /* ── Field Guide plain header (Phase 2 redesign) — replaces the old title
    block + session dropdown + Edit Document button. Fixed, doesn't scroll
    with the document. Matches the plain page-header style the other Live
@@ -7709,7 +7783,7 @@ function showDMToast(msg, type) {
 .scc-fg-colorkey { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
 .scc-fg-colorkey-item { display: flex; align-items: center; gap: 0.35rem; font-family: var(--font-sans); font-size: 0.66rem; color: var(--dm-text-muted); }
 .scc-fg-colorkey-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.scc-fg-doc { flex: 1; min-height: 0; overflow-y: auto; background: var(--scc-surface); }
+.scc-fg-doc { background: var(--scc-surface); }
 /* Repurposes the old toolbar's sticky position for the scenario jump-nav —
    see CLAUDE.md Decision Log for the Field Guide Phase 2 redesign: the
    independent session-select dropdown that used to live here is gone
@@ -7717,7 +7791,14 @@ function showDMToast(msg, type) {
    active/is auditing, via sccResolveViewedSession() — one fewer piece of
    state that could drift out of sync with the DM's actual place in the app). */
 .scc-fg-jump-row {
-  position: sticky; top: 0; z-index: 5;
+  /* top:0 used to mean "stick at the very top of the viewport" -- but the
+     local-dev warning banner (#dm-env-banner, fixed, z-index:10000) also
+     lives at y:0, so this row was sticking directly underneath/behind it,
+     unreachable during local QA (real live site has no banner, so this was
+     invisible there). Same --dm-env-banner-h offset .gate-overlay/.dm-app
+     already use -- 0px on the live site (no behavior change there), the
+     banner's real measured height locally. */
+  position: sticky; top: var(--dm-env-banner-h); z-index: 5;
   display: flex; align-items: center; gap: 0.6rem;
   padding: 0.55rem 1.75rem; background: var(--scc-surface);
   border-bottom: 1px solid var(--scc-border);
@@ -7748,7 +7829,7 @@ function showDMToast(msg, type) {
 .scc-fg-doc-subtitle { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--dm-text); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-tagline { font-family: var(--font-body); font-size: 0.95rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-meta { font-family: var(--font-body); font-size: 0.8rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 1.25rem; }
-.scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
+.scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
 /* Was #7eb8f0 (blue) -- a pre-existing, category-system-unrelated hardcoded
    hex that predates Phase 2 (h2 headings never go through the box/category
    render path at all). Once Spoken Dialogue claimed blue as a reserved
@@ -7757,7 +7838,17 @@ function showDMToast(msg, type) {
    category-bleed bug, just two unrelated things that happened to clash.
    Plain text color instead, matching h1's own approach (size/weight/border
    already carry the hierarchy, the color doesn't need to). */
-.scc-fg-doc-h2 { font-family: var(--font-body); font-size: 0.95rem; font-weight: 700; color: var(--dm-text); margin: 1.1rem 0 0.4rem; }
+.scc-fg-doc-h2 { font-family: var(--font-body); font-size: 1.25rem; font-weight: 700; color: var(--dm-text); margin: 2.1rem 0 0.4rem; }
+/* A featured h2 (Off-Script Scenarios' table headers, e.g. "At the Forres
+   Brothers Inn") -- the wrapper carries the h2's own top/bottom spacing so
+   it reads identically to a plain h2 from the outside; the h2 itself
+   carries none, so it doesn't double up against the floated image beside
+   it. Same clearfix requirement as .scc-fg-box::after, for the same reason
+   (the floated .scc-fg-featured-row otherwise bleeds into whatever content
+   comes next). */
+.scc-fg-h2-featured-wrap { margin: 2.1rem 0 0.4rem; }
+.scc-fg-h2-featured-wrap::after { content: ''; display: table; clear: both; }
+.scc-fg-doc-h2--featured { margin: 0; }
 .scc-fg-doc-h3 { font-family: var(--font-body); font-size: 0.88rem; font-weight: 700; color: var(--dm-text-muted); margin: 0.75rem 0 0.3rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .scc-fg-doc-inner p { font-family: var(--font-body); font-size: 0.83rem; color: var(--dm-text); line-height: 1.65; margin: 0 0 0.6rem; }
 .scc-fg-doc-inner ul { font-family: var(--font-body); font-size: 0.83rem; color: var(--dm-text); line-height: 1.65; margin: 0 0 0.6rem; padding-left: 1.25rem; }
@@ -7765,7 +7856,26 @@ function showDMToast(msg, type) {
 .scc-fg-doc-italic { font-style: italic; color: var(--dm-text-muted) !important; }
 .scc-fg-doc-footer { font-family: var(--font-body); font-size: 0.72rem; color: var(--dm-text-muted); text-align: center; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--scc-border); font-style: italic; }
 .scc-fg-box { border-radius: var(--dm-radius-sm); padding: 0.75rem 1rem; margin: 0.5rem 0 0.75rem; }
-.scc-fg-box-label { font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+/* Clearfix -- required now that .scc-fg-featured-row (below) floats,
+   otherwise a box whose only content is a short title + a float taller
+   than the rest would collapse its own background/border around nothing,
+   since a float doesn't contribute to its container's own height. */
+.scc-fg-box::after { content: ''; display: table; clear: both; }
+/* Featured thumbnail(s) top-left, floated -- the box's badge + label
+   (chip above title, not side by side with each other or with the image)
+   flow immediately after in normal block flow, so they wrap beside the
+   image's top per standard CSS float behavior; the paragraph text
+   (sccFgRenderBlock()'s next sibling after this) then continues wrapping
+   beside whatever's left of the image's height too, instead of waiting
+   for the whole image to clear first -- this is what actually closes the
+   dead-space gap a flex-row version of this (image and title as two flex
+   children) can't: a flex row's own height is always the taller child's
+   height, so text after the row is stuck waiting for the image regardless
+   of how short the title is. Emitted only when there's a badge, a label,
+   or featured thumbnails -- a box with none of the three (most boxes)
+   renders nothing extra here, identical to before this existed. */
+.scc-fg-box-header-right { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; margin-bottom: 0.4rem; }
+.scc-fg-box-label { font-family: var(--font-body); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
 .scc-fg-box p { margin: 0 0 0.45rem !important; font-size: 0.82rem !important; }
 .scc-fg-box p:last-child { margin-bottom: 0 !important; }
 .scc-fg-box--green { background: var(--scc-read-aloud-bg); border-left: 3px solid var(--scc-read-aloud-border); }
@@ -7773,7 +7883,21 @@ function showDMToast(msg, type) {
 /* Read Aloud is text the DM speaks straight from the screen at the table --
    needs to be comfortably legible at a glance, not squeezed to the same
    size as reference prose. Overrides .scc-fg-box p's 0.82rem. */
-.scc-fg-box--green p { font-style: italic; color: #c6f0d8 !important; font-size: 18px !important; }
+.scc-fg-box--green p { font-style: italic; font-size: 18px !important; }
+/* :not([style]) on every box-color's default `p` color below -- these were
+   unconditionally forcing every paragraph in a box to the same one color
+   via !important, which beats a plain inline style="color:..." attribute
+   regardless of specificity. Real bug, not a style preference: found via a
+   live audit after a specific box (Playing Pellam Consistently) was
+   confirmed to have correct inline-styled comedy/dialogue-color data in
+   Supabase that nonetheless rendered as one flat pink -- the box's own
+   default magenta text color, silently winning over the author's real
+   color choice on every styled <p> in it. Scoped to :not([style]) so the
+   default box-tinted color still applies to every ordinary paragraph (the
+   vast majority, with no inline style at all) exactly as before -- only a
+   paragraph the DM explicitly colored (a comedy element, one side of a
+   dialogue exchange, etc.) is now respected instead of overridden. */
+.scc-fg-box--green p:not([style]) { color: #c6f0d8 !important; }
 /* .scc-fg-box--magenta: DM Only. Was .scc-fg-box--yellow (a class name that
    stopped meaning anything the moment this box stopped being yellow) — renamed
    once a real bright-yellow box (Comedy, below) needed that name for real.
@@ -7799,18 +7923,18 @@ function showDMToast(msg, type) {
   line-height: 1;
 }
 .scc-fg-box--magenta .scc-fg-box-label { color: var(--dm-only); font-size: 0.8rem; padding-right: 1.75rem; }
-.scc-fg-box--magenta p { color: #ffd6fc !important; }
+.scc-fg-box--magenta p:not([style]) { color: #ffd6fc !important; }
 /* .scc-fg-box--yellow: Comedy Beats. Genuinely bright/saturated yellow, distinct
    from --gold (below, Loot & Shop) so the two don't read as the same hue. */
 .scc-fg-box--yellow { background: rgba(250,204,21,0.09); border-left: 3px solid rgba(250,204,21,0.45); }
 .scc-fg-box--yellow .scc-fg-box-label { color: #facc15; }
-.scc-fg-box--yellow p { color: #fef9c3 !important; }
+.scc-fg-box--yellow p:not([style]) { color: #fef9c3 !important; }
 /* .scc-fg-box--gold: Loot & Shop. Was .scc-fg-box--orange (terracotta) — moved
    onto the app's real --gold token per direct DM instruction, distinct from
    Comedy's brighter yellow above. */
 .scc-fg-box--gold { background: rgba(240,180,41,0.09); border-left: 3px solid rgba(240,180,41,0.45); }
 .scc-fg-box--gold .scc-fg-box-label { color: var(--gold); }
-.scc-fg-box--gold p { color: #fbe9c2 !important; }
+.scc-fg-box--gold p:not([style]) { color: #fbe9c2 !important; }
 .scc-fg-box--grey { background: var(--scc-surface-mid); border: 1px solid var(--scc-border); }
 .scc-fg-box--grey .scc-fg-box-label { color: var(--dm-text); }
 .scc-fg-table { width: 100%; border-collapse: collapse; margin: 0.4rem 0 0.75rem; font-family: var(--font-body); font-size: 0.79rem; }
@@ -7841,7 +7965,8 @@ function showDMToast(msg, type) {
   font-size: 1.3rem; color: var(--red-strong); opacity: 0.6; line-height: 1;
 }
 .scc-fg-box--red .scc-fg-box-label { color: var(--red-strong); font-size: 0.8rem; padding-right: 1.75rem; }
-.scc-fg-box--red p { color: #ffd9d9 !important; font-weight: 600; }
+.scc-fg-box--red p { font-weight: 600; }
+.scc-fg-box--red p:not([style]) { color: #ffd9d9 !important; }
 /* Category badge — shown only on the boxes that share a color family with
    others (the magenta family, plus Don't Blow This) where the box's own
    free-text label can't be trusted to say which category it really is
@@ -7856,6 +7981,47 @@ function showDMToast(msg, type) {
 }
 .scc-fg-box--magenta .scc-fg-box-cat-badge { background: var(--dm-only-dim); border: 1px solid var(--dm-only-border); color: var(--dm-only); }
 .scc-fg-box--red .scc-fg-box-cat-badge { background: rgba(214,43,43,0.2); border: 1px solid var(--red-border-strong); color: var(--red-strong); }
+.scc-fg-box--green .scc-fg-box-cat-badge { background: rgba(134,239,172,0.15); border: 1px solid rgba(134,239,172,0.4); color: var(--scc-read-aloud-text); }
+.scc-fg-box--yellow .scc-fg-box-cat-badge { background: rgba(250,204,21,0.18); border: 1px solid rgba(250,204,21,0.5); color: #facc15; }
+/* Spoken Dialogue's own chip -- blue never had a badge variant before,
+   since it was the one category exempted from the standard chip (see
+   SCC_FG_CATEGORY_STYLE.spoken_dialogue). Reuses the exact same --blue
+   tokens .scc-fg-box--blue's own border/label already use, not new hex. */
+.scc-fg-box--blue .scc-fg-box-cat-badge { background: var(--blue-dim); border: 1px solid var(--blue-border); color: var(--blue); }
+/* Comedy's joker glyph (playing-cards block) renders visibly smaller than
+   the other badges' emoji-block icons at an identical font-size -- bumped
+   up so it reads as the same visual weight, not a global icon-size change. */
+.scc-fg-box-cat-badge-icon--comedy { font-size: 1.35em; line-height: 1; }
+/* ── Featured thumbnails — opt-in per box via block.featured (see
+   sccFgRenderFeatured()). Large, prominent portraits, well above
+   sccFgEntityThumbHtml()'s small 18px inline-mention thumbnails
+   (.scc-fg-link-thumb, below) -- a deliberately different scale so the two
+   are never confused for one another. Not automatic on any box; a block
+   with no featured field renders nothing extra here at all. Floated left
+   (see .scc-fg-box::after's clearfix, above) rather than a flex row's
+   fixed-height child -- lets the badge/label AND the paragraph text after
+   it both wrap up beside the image per normal CSS float behavior, instead
+   of the row's own height (always the taller of the two) forcing text to
+   wait for the full image height to clear regardless of how short the
+   title actually is. The magenta/red corner warning glyph's own clearance
+   is already handled by .scc-fg-box-label's own padding-right (below) --
+   no separate reservation needed here since the image floats opposite
+   that corner (left, not right). */
+.scc-fg-featured-row { float: left; display: flex; flex-wrap: wrap; gap: 1rem; margin: 0 0.85rem 0.5rem 0; }
+.scc-fg-featured-item { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; width: 88px; }
+.scc-fg-featured-img, .scc-fg-featured-fallback {
+  width: 88px; height: 88px; border-radius: 9999px; object-fit: cover;
+  border: 2px solid var(--dm-gold); flex-shrink: 0;
+}
+.scc-fg-featured-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--dm-surface-high);
+  font-family: var(--font-headers); font-size: 2rem; color: var(--dm-gold);
+}
+.scc-fg-featured-name {
+  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
+  text-align: center; color: var(--dm-text); line-height: 1.25;
+}
 /* ── Spoken Dialogue — distinct callout, not a plain box. Speaker portrait +
    name + pronouns from world_characters, plus an optional tone_note. */
 .scc-fg-spoken { padding: 0.85rem 1rem; }
@@ -7870,9 +8036,19 @@ function showDMToast(msg, type) {
 .scc-fg-spoken-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--blue); }
 .scc-fg-spoken-name:hover { text-decoration: underline; }
 .scc-fg-spoken-pronouns { font-family: var(--font-sans); font-size: 0.66rem; color: var(--dm-text-muted); }
+/* Was 0.72rem at var(--dm-text-muted) (55% opacity) -- decorative-looking,
+   not actually legible at the table. Real fix, not a tweak: a tone note is
+   DM stage direction read in the moment right before the dialogue line
+   itself, which already got the "read at the table" 18px treatment below
+   -- there was never a reason for the note introducing it to be smaller
+   and dimmer than the box's own default paragraph text (0.82rem, full
+   contrast), let alone the dialogue line. Sized just under the dialogue
+   line itself (still visually secondary via the icon + italic, not via
+   being hard to read) and full contrast, matching the same "read at the
+   table" requirement as the line below it. */
 .scc-fg-spoken-tone {
   display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;
-  font-family: var(--font-sans); font-size: 0.72rem; font-style: italic; color: var(--dm-text-muted);
+  font-family: var(--font-sans); font-size: 0.95rem; font-style: italic; color: var(--dm-text);
   background: rgba(255,255,255,0.03); border-radius: var(--dm-radius-sm); padding: 0.3rem 0.55rem;
 }
 .scc-fg-spoken-tone-icon { flex-shrink: 0; }
@@ -7884,6 +8060,32 @@ function showDMToast(msg, type) {
    inline!=true) still uses .scc-fg-box--yellow above, unchanged. */
 .scc-fg-comedy-inline { font-style: italic; color: #fef08a; }
 .scc-fg-comedy-inline-icon { margin-right: 0.3rem; opacity: 0.85; }
+/* ── Skill checks (sccFgStyleSkillChecks()) — a real container instead of
+   plain paragraph text, so "roll for this" reads as its own distinct thing
+   scanning the page mid-session, not just another line of prose. Own
+   background/border rather than inheriting the parent box's color, so it
+   stays legible and visually consistent regardless of which color family
+   (magenta/green/red/etc.) the surrounding box happens to be. */
+.scc-fg-check {
+  background: rgba(0,0,0,0.22);
+  border: 1px solid var(--scc-border-gold);
+  border-left: 3px solid var(--dm-gold);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.6rem 0.85rem;
+  margin: 0.6rem 0;
+}
+.scc-fg-check-head { display: flex; align-items: center; gap: 0.5rem; }
+.scc-fg-check-icon { font-size: 1.3rem; line-height: 1; }
+.scc-fg-check-name {
+  font-family: var(--font-headers); font-size: 1.1rem; font-weight: 700;
+  color: var(--dm-gold); text-transform: none; letter-spacing: normal;
+}
+.scc-fg-check-body {
+  font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5;
+  color: var(--dm-text); margin-top: 0.35rem;
+}
+.scc-fg-check-body p { margin: 0 0 0.4rem; color: inherit !important; }
+.scc-fg-check-body p:last-child { margin-bottom: 0; }
 /* ── Entity-mention inline thumbnail — first/genuinely significant mention
    of a linked entity only, tracked per render pass (sccFgLinkify's seen set). */
 .scc-fg-link-thumb, .scc-fg-link-thumb-fallback {
@@ -7938,8 +8140,35 @@ function showDMToast(msg, type) {
   padding: 0.15rem 0.3rem 0.15rem 0.55rem; font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text);
 }
 .scc-fg-attach-pill--permanent { border-color: var(--scc-border-gold); }
-.scc-fg-attach-pill-main { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.scc-fg-attach-pill-main { position: relative; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
 .scc-fg-attach-pill-main:hover { color: var(--dm-gold); }
+/* ── Attachment tooltip -- same attr()+::before technique as the Conditions
+   tag above (.scc-live-cond-tag::before), just wider and pre-line instead
+   of normal so the 3 real parts (what it is / why it's attached /
+   behavior) render as genuinely separate paragraphs, not one run-on line. */
+.scc-fg-attach-pill-main[data-tip]::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  width: 260px;
+  background: #0b0e16;
+  border: 1px solid var(--dm-gold);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--dm-text);
+  line-height: 1.45;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1000;
+  white-space: pre-line;
+  text-align: left;
+}
+.scc-fg-attach-pill-main[data-tip]:hover::before { opacity: 1; }
 .scc-fg-attach-pill-mode { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--dm-text-muted); }
 .scc-fg-attach-pill--permanent .scc-fg-attach-pill-mode { color: var(--dm-gold); }
 .scc-fg-attach-pill-x { cursor: pointer; color: var(--dm-text-faint); padding: 0 0.1rem; display: flex; align-items: center; }
@@ -8002,6 +8231,15 @@ function showDMToast(msg, type) {
   display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem;
   text-decoration: none; cursor: pointer;
 }
+/* ── Quick-attach button (block.quick_attach) — same "small secondary
+   action row under the box text" placement as Roll Initiative above. The
+   "already attached" state is a plain label, not a disabled button, so it
+   doesn't read as a dead control -- it's a status, not an unavailable action. */
+.scc-fg-quickattach { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; }
+.scc-fg-quickattach--done {
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
+  color: var(--green); margin-top: 0.6rem;
+}
 /* ── Branching combat outcome widget (box.category === 'combat_outcomes') ── */
 .scc-fg-outcomes-box { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; }
 .scc-fg-outcomes-header {
@@ -8052,7 +8290,11 @@ function showDMToast(msg, type) {
 .scc-fg-vis-panel { background: rgba(255,255,255,0.03); border-radius: var(--dm-radius-sm); padding: 0.6rem 0.75rem; }
 .scc-fg-vis-summary { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem !important; margin-bottom: 0.5rem !important; }
 .scc-fg-vis-row { display: flex; gap: 0.5rem; padding: 0.2rem 0; font-size: 0.78rem; }
-.scc-fg-vis-row-label { flex: 0 0 170px; font-family: var(--font-sans); font-weight: 700; color: var(--dm-text-muted); }
+/* Was var(--dm-text-muted) (55% opacity) -- washed out next to the value
+   column, which already renders at full contrast. A row label (Appearance,
+   Clothes, Demeanor, etc.) is what a DM is scanning for, not secondary
+   info -- matching the value's own full-contrast color. */
+.scc-fg-vis-row-label { flex: 0 0 170px; font-family: var(--font-sans); font-weight: 700; color: var(--dm-text); }
 .scc-fg-vis-row-text { flex: 1; color: var(--dm-text); line-height: 1.4; }
 /* ── Scenario reference section, merged in from the old standalone tab ── */
 .scc-fg-scenario-section { margin-top: 2rem; }
@@ -8182,6 +8424,19 @@ function showDMToast(msg, type) {
 }
 .scc-tagnote-badge--dmonly { background: var(--dm-only-dim); border-color: var(--dm-only-border); color: var(--dm-only); }
 .scc-tagnote-badge--quest  { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
+/* Real player tagged on a note (e.g. Ignores Formery) -- a distinct pill
+   from the category badge, since it's a different kind of tag (a person,
+   not a theme), not styled to be confused with the category badges above. */
+.scc-tagnote-character-badge {
+  background: var(--scc-surface-mid);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: 4px;
+  color: var(--dm-gold);
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+}
 .scc-tagnote-time {
   font-family: var(--font-sans);
   font-size: 0.68rem;
@@ -10297,7 +10552,28 @@ async function uploadImageToSupabase(prefix, folder) {
     var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
     var uploadUrl = SB_URL + '/storage/v1/object/world-images/' + filename;
     var uploadHeaders = { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON, 'x-upsert': 'true' };
-    // Try POST first (new file or upsert)
+    // Real bug found and fixed at the root, not just papered over here: the
+    // world-images Storage bucket had an INSERT policy for anon but no
+    // UPDATE/DELETE policy (confirmed via pg_policies), so re-uploading over
+    // an entity's EXISTING image -- an upsert, which needs UPDATE -- was
+    // rejected outright (403 "new row violates row-level security policy")
+    // every time. Added world_images_anon_update/_delete policies mirroring
+    // the character-photos bucket's own already-correct shape (see that
+    // migration). This block's own fallback ("if the file exists at that
+    // path despite a non-ok response, call it a success") is what let that
+    // 403 go completely unnoticed for who knows how long: an EXISTING file
+    // always exists at that path by definition, so the check trivially
+    // passed on every single failed re-upload, reported "Uploaded" to the
+    // DM, bumped the DB row's updated_at, and never actually wrote the new
+    // bytes -- exactly the reported symptom. Now that the real permission
+    // gap is fixed, this fallback should rarely matter, but it's kept (per
+    // its own original comment, a real non-RLS Supabase quirk may also
+    // cause a non-ok response on a genuine upsert) -- just made honest:
+    // instead of "does a file exist here," it checks "was THIS upload's
+    // write the one that landed," via the object's own last_modified
+    // timestamp compared against when this attempt started, not mere
+    // existence.
+    var uploadStartedAt = Date.now();
     var fd = new FormData();
     fd.append('', blob, entryId + '.webp');
     var res = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: fd });
@@ -10307,18 +10583,34 @@ async function uploadImageToSupabase(prefix, folder) {
       fd2.append('', blob, entryId + '.webp');
       res = await fetch(uploadUrl, { method: 'PUT', headers: uploadHeaders, body: fd2 });
     }
-    // Consider success if either method returned ok OR if the file now exists
-    // (Supabase sometimes returns non-ok for duplicate uploads even with x-upsert)
     var uploadOk = res.ok;
     if (!uploadOk) {
-      // Check if file actually made it to Storage despite non-ok response
       var checkRes = await fetch(SB_URL + '/storage/v1/object/info/world-images/' + filename, {
         headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON }
       });
-      if (checkRes.ok) uploadOk = true;
+      if (checkRes.ok) {
+        var info = await checkRes.json().catch(function() { return null; });
+        var lastModMs = info && info.last_modified ? Date.parse(info.last_modified) : 0;
+        // 5s slack for clock skew between this browser and Supabase's own
+        // server clock -- not a loophole, just avoids a false negative on a
+        // write that landed a moment before Date.now() was read here.
+        if (lastModMs >= uploadStartedAt - 5000) uploadOk = true;
+      }
     }
     if (uploadOk) {
-      var url = SB_URL + '/storage/v1/object/public/world-images/' + filename;
+      // Cache-bust: the storage path is always the same fixed
+      // {folder}/{entryId}.webp per entity, by design (upsert-in-place, not
+      // a new file per upload) -- confirmed via a live Supabase check that
+      // updated_at genuinely changes on every save, but the URL never does.
+      // Supabase Storage serves public objects through a CDN edge layer
+      // with its own cache-control headers; overwriting the object at an
+      // unchanged URL doesn't reliably invalidate an edge's already-cached
+      // response, and a hard refresh only clears the *browser's* cache, not
+      // the CDN's, so the old bytes can keep being served indefinitely.
+      // Appending a real, unique query string makes every upload a
+      // genuinely new resource address -- both the browser and the CDN
+      // have to treat it as a cache miss and actually fetch the new file.
+      var url = SB_URL + '/storage/v1/object/public/world-images/' + filename + '?v=' + Date.now();
       if (pathInput) pathInput.value = url;
       if (sizeEl) sizeEl.innerHTML = '<span style="color:var(--dm-green)">✓ Uploaded to Supabase</span>';
       if (uploadBtn) { uploadBtn.textContent = '✓ Uploaded'; uploadBtn.disabled = false; }
@@ -10355,8 +10647,14 @@ async function removeEntryImage(prefix) {
   var SB_URL  = 'https://ebppsgaftzyvftemfeom.supabase.co';
   var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicHBzZ2FmdHp5dmZ0ZW1mZW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MTA3ODIsImV4cCI6MjA5ODE4Njc4Mn0.C0q7wPpNjXrFPWzCzXcPuR_4n8txumOxxSvzWZkVAFg';
   if (currentUrl && currentUrl.includes('supabase')) {
-    // Supabase Storage delete requires POST to /remove with JSON body
-    var storagePath = currentUrl.replace(SB_URL + '/storage/v1/object/public/world-images/', '');
+    // Real regression, caught during this same round's live verification:
+    // uploadImageToSupabase() now stores a cache-busted URL
+    // (...bounce-beetles.webp?v=169...), and this replace() left the "?v=..."
+    // on the end -- Storage's delete-by-prefix match is exact, so a prefix
+    // with a stray query string attached never matches the real object path,
+    // and the delete silently no-ops (200, nothing removed). Strip any query
+    // string before computing the storage path.
+    var storagePath = currentUrl.replace(SB_URL + '/storage/v1/object/public/world-images/', '').split('?')[0];
     await fetch(SB_URL + '/storage/v1/object/world-images', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json', 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON },
@@ -14746,6 +15044,20 @@ function sccLoadPlayers() {
       // replaced, the sidebar widget has no "document not fetched yet" state
       // to accidentally clobber.
       if (typeof sccLiveRenderAttachments === 'function') sccLiveRenderAttachments();
+      // Same race a fourth time, missed when the other three were fixed:
+      // sccFgFeaturedEntryHtml()'s 'pc' branch (Field Guide box featured
+      // thumbnails referencing a real player character) reads SCC_PLAYERS +
+      // SCC_PLAYER_PHOTOS too, added in a later session after this function's
+      // last race-condition pass -- confirmed via a live DOM check, not
+      // guessed: a box's real player-type featured entry rendered its
+      // fallback initial ("H") with no <img> tag at all, even though
+      // SCC_PLAYER_PHOTOS[id] resolved to a real URL a moment later once
+      // this fetch had actually finished -- the document had simply already
+      // drawn itself before that. SCC_FG_RENDERED_SESSION_NUM being set means
+      // a document is genuinely in the DOM right now (not just "the Field
+      // Guide tab exists somewhere") -- sccFgDrawDocument() redraws purely
+      // from the already-cached block data, no new fetch, safe to call again.
+      if (SCC_FG_RENDERED_SESSION_NUM != null && typeof sccFgDrawDocument === 'function') sccFgDrawDocument(SCC_FG_RENDERED_SESSION_NUM);
     });
   }).catch(function() { /* no player bar left to fall back to -- Live Session's own widgets just stay on whatever they last rendered */ });
 }
@@ -14771,6 +15083,26 @@ function sccRenderLivePanel() {
   sccLiveRenderAttachments();
   sccRenderCurrentBeatWidget();
   sccLiveRenderScenarios();
+}
+// ── Sidebar card accordions ─────────────────────────────────────────
+// Every card in the always-visible strip (Party HP/Conditions/Companions &
+// Attachments/Current Beat/Die Roller/Timer/DM Safety Net) is a real
+// accordion -- collapse/expand only, no write, so no SCC_VIEWING_HISTORY
+// gate is needed (same reasoning already on record for Setup's own
+// .scc-collapsible-toggle). Each card's toggle/body pair share one `key`
+// in their ids (scc-live-card-toggle-{key}/scc-live-card-body-{key}) --
+// the toggle and body always carry .open in lockstep, both starting open
+// in the static markup so nothing looks different on first load. Card
+// content re-renders (sccLiveRenderParty() etc.) only ever touch their own
+// inner render-target div's innerHTML, never the wrapping .scc-live-card-body
+// itself, so a collapse/expand cycle can't be undone by a later re-render.
+function sccLiveToggleCard(key) {
+  var toggle = document.getElementById('scc-live-card-toggle-' + key);
+  var body = document.getElementById('scc-live-card-body-' + key);
+  if (!toggle || !body) return;
+  var willOpen = !body.classList.contains('open');
+  toggle.classList.toggle('open', willOpen);
+  body.classList.toggle('open', willOpen);
 }
 // ── Current Beat (shared with the Quests section's own sidebar box) ──
 // One lookup, two renderers reading from it -- see sccRenderQuestPanel()'s
@@ -15038,7 +15370,18 @@ function sccLiveRenderScenarios() {
     el.innerHTML = '<div style="font-family:var(--font-sans);font-size:0.78rem;color:var(--dm-text-muted);font-style:italic;padding:0.5rem 0;">No scenarios loaded for this session. Add them in Supabase session_notes.session_scenarios.</div>';
     return;
   }
-  el.innerHTML = scenarios.map(function(group, gi) {
+  // gi stays the group's real index within the FULL session_scenarios array
+  // (never renumbered against a filtered subset) -- a homed group's card is
+  // skipped (empty string) rather than removed from the array, so every id
+  // this function has ever generated (scc-scen-group-{gi}, scc-live-scen-
+  // body-{gi}, etc.) still means the same group it always did. This matters
+  // because sccFilterScenarios() independently iterates the same full array
+  // with its own gi and looks up those exact ids -- renumbering here would
+  // silently break which group its search results point at for every group
+  // after the first skipped one.
+  var homed = sccFgHomedScenarioGroupNames();
+  var visibleHtml = scenarios.map(function(group, gi) {
+    if (homed[group.group]) return '';
     var total = (group.scenarios || []).length;
     var usedCount = 0;
     var rows = (group.scenarios || []).map(function(s, si) {
@@ -15065,6 +15408,11 @@ function sccLiveRenderScenarios() {
       + '<div class="scc-live-scenario-body" id="scc-live-scen-body-' + gi + '">' + rows + '</div>'
     + '</div>';
   }).join('');
+  // Every real group now has a static home elsewhere in the document --
+  // nothing genuinely homeless left, so this shows nothing rather than an
+  // empty card list under a heading with no content (sccFgScenarioSectionHtml()
+  // hides the whole heading+section wrapper in this same case).
+  el.innerHTML = visibleHtml;
 }
 function sccLiveToggleScenario(gi) {
   var body = document.getElementById('scc-live-scen-body-' + gi);
@@ -15233,6 +15581,23 @@ function sccLiveToggleTimer() {
     if (btn) btn.textContent = 'Pause';
   }
 }
+// Stops the interval first if running (not just zeroing state underneath a
+// live setInterval, which would keep ticking and immediately overwrite the
+// zeroed display with real elapsed time again a second later), then zeroes
+// everything and restores the Start/Pause button to its fresh "Start" label
+// regardless of which state (running/paused/already-zero) it was reset from.
+function sccLiveResetTimer() {
+  if (SCC_LIVE_TIMER_INTERVAL) {
+    clearInterval(SCC_LIVE_TIMER_INTERVAL);
+    SCC_LIVE_TIMER_INTERVAL = null;
+  }
+  SCC_LIVE_TIMER_START = null;
+  SCC_LIVE_TIMER_ELAPSED = 0;
+  var disp = document.getElementById('scc-live-timer-display');
+  if (disp) disp.textContent = '0:00:00';
+  var btn = document.getElementById('scc-live-timer-btn');
+  if (btn) btn.textContent = 'Start';
+}
 // Hook sccRenderLivePanel into sccSwitchPanel
 var _sccSwitchPanelOrig = null;
 // ── Sub-panel switching ───────────────────────────────────────────
@@ -15284,7 +15649,7 @@ var SCC_FG_RENDERED_SESSION_NUM = null; // which session's HTML is currently in 
                                          // rebuilding -- and resetting scroll position -- on every tab switch)
 var SCC_FG_LINK_SEEN = {};              // 'type:id' -> true once an inline entity mention has shown its
                                          // thumbnail once this render pass (reset each sccFgRenderDoc() call)
-var SCC_FG_RETURN_SCROLL_TOP = 0;       // captured .scc-fg-doc scrollTop, for the scenario-jump Continue button
+var SCC_FG_RETURN_SCROLL_TOP = 0;       // captured window.scrollY, for the scenario-jump Continue button (was .scc-fg-doc's own scrollTop back when that div scrolled internally -- it no longer does, see CLAUDE.md Decision Log, so this now tracks the real page scroll position)
 var SCC_FG_RETURN_SCROLL_SET = false;   // true once a jump has captured a return point this "session" of jumps
 // The Field Guide document editor (SCC_FG_EDIT_MODE/SCC_FG_EDIT_BLOCKS and
 // its own render/save/cancel functions) is retired -- the DM never edits
@@ -15327,14 +15692,31 @@ var SCC_FG_LINK_TYPES = {
    with no entry here (e.g. a null/unrecognized category on old data) fall
    back to the legacy color field via SCC_FG_BOX_COLOR_CLASS, then grey. */
 var SCC_FG_CATEGORY_STYLE = {
-  read_aloud:      { colorClass: 'green',   badge: null },
-  spoken_dialogue: { colorClass: 'blue',    badge: null }, // rendered via sccFgRenderSpokenDialogue(), not a plain badge
+  // read_aloud and comedy previously had no badge at all -- confirmed via a
+  // live audit that these were the two real, plain colored boxes (color
+  // alone, no label chip) that don't match the "every box shows what it is"
+  // consistency every other category already had. Both now match the color
+  // key's own wording exactly ("Read Aloud", "Comedy"). spoken_dialogue used
+  // to be left with badge:null on the reasoning that its portrait + the
+  // speaker's real name was already a stronger identifier than a generic
+  // chip -- overridden per direct DM instruction: the ask was for every
+  // category to show its chip consistently with the color-key legend at the
+  // top of the guide, full stop, not "unless something else already
+  // identifies it." The portrait/name header is additional, not a
+  // substitute -- both now render together (see sccFgRenderSpokenDialogue
+  // below, which reads style.badge from here the same way the generic box
+  // case does). loot_shop is still left badge:null -- it already gets its
+  // own category-specific icon prefixed directly onto the label (subtype
+  // icon, see boxLabelPrefix below), a different but equally consistent
+  // mechanism, not an omission.
+  read_aloud:      { colorClass: 'green',   badge: { icon: '&#128214;', name: 'Read Aloud' } },
+  spoken_dialogue: { colorClass: 'blue',    badge: { icon: '&#128172;', name: 'Spoken Dialogue' } },
   dm_only:         { colorClass: 'magenta', badge: { icon: '&#9888;',  name: 'DM Only' } },
   background:      { colorClass: 'magenta', badge: { icon: '&#128220;', name: 'Background' } },
   why_this_works:  { colorClass: 'magenta', badge: { icon: '&#128161;', name: 'Why This Works' } },
   if_they_ask:     { colorClass: 'magenta', badge: { icon: '&#10067;', name: 'If They Ask' } },
   dont_blow_this:  { colorClass: 'red',     badge: { icon: '&#9940;',  name: "Don't Blow This" } },
-  comedy:          { colorClass: 'yellow',  badge: null },
+  comedy:          { colorClass: 'yellow',  badge: { icon: '&#127183;', name: 'Comedy' } },
   loot_shop:       { colorClass: 'gold',    badge: null },
   guide_meta:      { colorClass: 'grey',    badge: null }
 };
@@ -15363,7 +15745,100 @@ function sccFgEntityThumbHtml(type, id) {
   return '<span class="scc-fg-link-thumb-fallback">' + initial + '</span>';
 }
 
+// ── Featured thumbnails — opt-in per box via block.featured, an array of
+// {type,id}. Large, prominent portraits at the top of a box, distinct from
+// sccFgEntityThumbHtml()'s small 18px inline-mention thumbnails above.
+//
+// Real bug, found via a live audit (a specific box's featured data was
+// confirmed correct in Supabase yet rendered nothing): this used to have
+// its own separate, narrower type vocabulary (npc/creature/pc) instead of
+// reusing SCC_FG_LINK_TYPES -- the same real entity-type strings this
+// document's own [[type:id]] inline links and the lookup drawer use
+// everywhere else (character/city/poi/creature/item/quest/organization).
+// The moment featured entries started being authored with those real type
+// strings (character/city/poi) rather than this function's own invented
+// ones, they silently failed to resolve -- SCC_FG_FEATURED_TYPES had no
+// 'character'/'city'/'poi' key at all, so sccFgFeaturedEntryHtml() bailed
+// out via its own `if (!def) return ''` on every one of them. A full sweep
+// of Session 1's real data confirmed this wasn't isolated to one box: of
+// 31 real featured entries, roughly half used a type SCC_FG_FEATURED_TYPES
+// didn't recognize.
+//
+// Fixed by resolving through SCC_FG_LINK_TYPES itself (one real source of
+// truth for "what type strings does this document use, and what array does
+// each one search"), not a second, parallel table that can drift out of
+// sync with it again. 'pc' is the one genuine addition -- SCC_FG_LINK_TYPES
+// has no player-character entry at all, since inline links were never meant
+// to reference one; resolves against SCC_PLAYERS + SCC_PLAYER_PHOTOS,
+// the same source Companions & Attachments already uses for player
+// portraits. A small alias map covers the real synonyms already in use
+// (npc→character, poi/nation→city — city's own arr() already includes
+// POIS/NATIONS, so 'poi'/'nation' just needed to reach that same array).
+var SCC_FG_FEATURED_TYPE_ALIASES = { npc: 'character', poi: 'city', nation: 'city' };
+function sccFgFeaturedEntryHtml(f) {
+  if (!f || !f.type || !f.id) return '';
+  var type = SCC_FG_FEATURED_TYPE_ALIASES[f.type] || f.type;
+  var arr, imageOf;
+  if (type === 'pc') {
+    arr = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+    imageOf = function(e) { return typeof SCC_PLAYER_PHOTOS !== 'undefined' ? SCC_PLAYER_PHOTOS[e.id] : null; };
+  } else {
+    var def = SCC_FG_LINK_TYPES[type];
+    if (!def) return '';
+    arr = def.arr();
+    imageOf = function(e) { return e.image; };
+  }
+  var e = arr.find(function(x) { return x.id === f.id; });
+  if (!e || !e.name) return '';
+  var initial = sccEsc(e.name.charAt(0));
+  var imgUrl = imageOf(e);
+  var imgHtml = imgUrl
+    ? '<img class="scc-fg-featured-img" src="' + sccEsc(imgUrl) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      + '<span class="scc-fg-featured-fallback" style="display:none">' + initial + '</span>'
+    : '<span class="scc-fg-featured-fallback">' + initial + '</span>';
+  return '<div class="scc-fg-featured-item">' + imgHtml + '<span class="scc-fg-featured-name">' + sccEsc(e.name) + '</span></div>';
+}
+// Never automatic -- a block with no `featured` array (the overwhelming
+// majority) renders nothing extra at all; a real entry that fails to
+// resolve (bad id/type, or its source array not loaded yet) is silently
+// skipped rather than showing a broken placeholder.
+function sccFgRenderFeatured(featured) {
+  if (!Array.isArray(featured) || !featured.length) return '';
+  var items = featured.map(sccFgFeaturedEntryHtml).join('');
+  return items ? '<div class="scc-fg-featured-row">' + items + '</div>' : '';
+}
+
+// Skill checks (dice icon + ability + DC, e.g. "[die] Perception DC 10 --
+// Pass: ... Fail: ...") are DM-authored plain paragraph text -- there's no
+// dedicated block type for them, this is a display-only transform over the
+// existing content, not a data migration. As plain text they read as just
+// another paragraph, easy to skim past scanning the page mid-session.
+// Detected via the exact authored shape (a <p> starting with the die emoji,
+// then a bolded "Ability DC N") and rewritten into a real container: a
+// header row with the icon and the ability/DC text in a larger font, and
+// the rest of the paragraph (Pass:/Fail: outcome text, or whatever plain
+// description follows -- may itself contain a [[type:id]] link, e.g. a
+// Fail outcome pointing at another location) as the body below it. Matched
+// via the die glyph's own UTF-16 surrogate pair, not a
+// literal emoji character in this file's own JS source, per this file's
+// no-literal-emoji-in-JS-strings convention (C2) -- the emoji in the DATA
+// being matched is fine either way, it's untyped Supabase content read via
+// innerHTML, not a JS string literal that could crash parsing.
+function sccFgStyleSkillChecks(html) {
+  return (html || '').replace(
+    /<p>\s*\uD83C\uDFB2\s*<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>/g,
+    function(m, ability, dc, rest) {
+      var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
+      return '<div class="scc-fg-check">'
+        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
+        + (bodyHtml ? '<div class="scc-fg-check-body">' + bodyHtml + '</div>' : '')
+      + '</div>';
+    }
+  );
+}
+
 function sccFgLinkify(html) {
+  html = sccFgStyleSkillChecks(html);
   return (html || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
     var key = type + ':' + id;
@@ -15466,8 +15941,33 @@ function sccFgRenderSpokenDialogue(b) {
   var toneHtml = b.tone_note
     ? '<div class="scc-fg-spoken-tone"><span class="scc-fg-spoken-tone-icon">&#127917;</span>Tone: ' + sccEsc(b.tone_note) + '</div>'
     : '';
+  // Real bug, found via the same audit that fixed sccFgFeaturedEntryHtml()'s
+  // type resolution above: Spoken Dialogue boxes render through this
+  // dedicated function, not the generic box case in sccFgRenderBlock() --
+  // b.featured was never read here at all, so any Spoken Dialogue box with
+  // real featured data (e.g. Session 1's "READ ALOUD" box, featuring both
+  // the speaker and the location the scene happens at) silently dropped it,
+  // the identical failure shape as the Playing Pellam Consistently box, just
+  // via a different code path. The speaker's own small round portrait in the
+  // header below is a separate, existing mechanism (driven by b.speaker, not
+  // b.featured) -- this is additive, not a duplicate of it.
+  var featuredHtml = sccFgRenderFeatured(b.featured);
+  // Category chip -- same SCC_FG_CATEGORY_STYLE the generic box case reads,
+  // rendered unconditionally at the very top of the box (before featuredHtml
+  // and the speaker header) so it shows up identically whether or not this
+  // particular box happens to have featured data -- that was the real gap a
+  // DM screenshot caught: a box with no featured entries and this chip
+  // missing had *nothing* distinguishing it as this box's category at a
+  // glance, unlike every other category, which always shows one regardless
+  // of what else is or isn't set.
+  var spokenStyle = SCC_FG_CATEGORY_STYLE.spoken_dialogue;
+  var spokenBadgeHtml = (spokenStyle && spokenStyle.badge)
+    ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--spoken_dialogue">' + spokenStyle.badge.icon + '</span> ' + sccEsc(spokenStyle.badge.name) + '</div>'
+    : '';
   if (!entity) {
     return '<div class="scc-fg-box scc-fg-box--blue">'
+      + spokenBadgeHtml
+      + featuredHtml
       + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
       + toneHtml
       + sccFgLinkify(b.html || '')
@@ -15484,6 +15984,8 @@ function sccFgRenderSpokenDialogue(b) {
       + '<div class="scc-fg-vis-wrap" style="display:none">' + visHtml + '</div>'
     : '';
   return '<div class="scc-fg-box scc-fg-box--blue scc-fg-spoken">'
+    + spokenBadgeHtml
+    + featuredHtml
     + '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
       + thumbHtml
       + '<div class="scc-fg-spoken-meta">'
@@ -15644,7 +16146,21 @@ function sccFgRenderBlock(b, idx) {
     // displayed here anymore.
     case 'title': case 'subtitle': case 'tagline': case 'meta': return '';
     case 'h1':       return '<div class="scc-fg-doc-h1">' + sccEsc(b.text) + '</div>';
-    case 'h2':       return '<div class="scc-fg-doc-h2">' + sccEsc(b.text) + '</div>';
+    case 'h2': {
+      // Featured thumbnails (sccFgRenderFeatured(), see the box case below)
+      // were only ever wired into box-type blocks -- a real gap, not a
+      // regression, found once Section 3's scenario table headers started
+      // carrying real block.featured data of their own (Off-Script
+      // Scenarios' h2 headers, e.g. "At the Forres Brothers Inn"). Same
+      // float-left image + stacked title layout as a featured box, just
+      // with the h2's own title standing in for the chip+label column (h2
+      // has no category concept, so no chip). h2FeaturedHtml is '' for the
+      // overwhelming majority of h2 blocks with no featured field at all --
+      // falls straight through to the plain, unwrapped h2 exactly as before.
+      var h2FeaturedHtml = sccFgRenderFeatured(b.featured);
+      if (!h2FeaturedHtml) return '<div class="scc-fg-doc-h2">' + sccEsc(b.text) + '</div>';
+      return '<div class="scc-fg-h2-featured-wrap">' + h2FeaturedHtml + '<div class="scc-fg-doc-h2 scc-fg-doc-h2--featured">' + sccEsc(b.text) + '</div></div>';
+    }
     case 'italic':   return '<p class="scc-fg-doc-italic">' + sccFgLinkify(b.html) + '</p>';
     case 'p':        return '<p>' + sccFgLinkify(b.html) + '</p>';
     case 'list':     return '<' + (b.tag || 'ul') + '>' + sccFgLinkify(b.html) + '</' + (b.tag || 'ul') + '>';
@@ -15674,8 +16190,14 @@ function sccFgRenderBlock(b, idx) {
       // Category badge — always correct regardless of the box's own free-text
       // label — only shown on the categories that actually need disambiguating
       // (the magenta family + Don't Blow This). See SCC_FG_CATEGORY_STYLE.
+      // Icon wrapped in its own span (not just plain text before the label)
+      // so a specific category's icon glyph can be sized independently --
+      // needed for Comedy's card-suit-block joker glyph (U+1F0CF), which
+      // renders visibly smaller than the other badges' standard-block emoji
+      // (warning/scroll/bulb/etc.) at the same font-size in most emoji
+      // fonts. See .scc-fg-box-cat-badge-icon--comedy below.
       var catBadge = (style && style.badge)
-        ? '<div class="scc-fg-box-cat-badge">' + style.badge.icon + ' ' + sccEsc(style.badge.name) + '</div>'
+        ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--' + sccEsc(b.category) + '">' + style.badge.icon + '</span> ' + sccEsc(style.badge.name) + '</div>'
         : '';
       // Combat-kickoff boxes (DM-authored, via block.combat_encounter_id)
       // get a real "Roll Initiative" link -- a genuine same-origin new-tab
@@ -15685,14 +16207,30 @@ function sccFgRenderBlock(b, idx) {
       // password. Routes into Session Details' Combat sub-panel with the
       // real saved encounter already loaded (see sccHandleUrlRouting()).
       var combatBtnHtml = b.combat_encounter_id
-        ? '<a class="scc-btn-secondary scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(b.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Roll Initiative</a>'
+        ? '<a class="scc-gold-btn-sm scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(b.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Roll Initiative</a>'
         : '';
+      // Featured thumbnail(s), if any, float top-left (see .scc-fg-featured-row's
+      // own float:left); the badge + label (if either exists) flow right
+      // after in normal block order, wrapping up beside the image per
+      // standard CSS float behavior -- chip above title, never side by
+      // side with each other or with the image. The paragraph text right
+      // after (sccFgLinkify(b.html)) keeps wrapping beside whatever's left
+      // of the image's height too, instead of waiting for the image to
+      // fully clear first -- this is what actually closes the dead-space
+      // gap a fixed-height row can't: text only waits as long as the
+      // image is actually still taller than the content beside it, not
+      // for a fixed row height regardless of how short the title is.
+      // Boxes with no featured field at all get identical markup to
+      // before (featuredHtml is '', so there's nothing to float).
+      var featuredHtml = sccFgRenderFeatured(b.featured);
+      var boxTitleHtml = catBadge + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '');
+      var headerHtml = featuredHtml + (boxTitleHtml ? '<div class="scc-fg-box-header-right">' + boxTitleHtml + '</div>' : '');
       return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
-        + catBadge
-        + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '')
+        + headerHtml
         + sccFgLinkify(b.html || '')
         + combatBtnHtml
         + (b.table ? sccFgRenderTableBlock(b.table) : '')
+        + sccFgRenderQuickAttach(b.quick_attach)
       + '</div>';
     default: return '';
   }
@@ -15708,6 +16246,37 @@ function sccFgActiveSessionNum() {
   if (session) return session.session_number;
   if (typeof SCC_SESSION !== 'undefined' && SCC_SESSION) return SCC_SESSION.session_number;
   return 1;
+}
+
+// Which real session_scenarios groups already have a genuine, contextual
+// home in the document itself -- an h2 block whose text matches the
+// group's own name AND carries real block.featured data (see
+// sccFgRenderBlock()'s h2 case), not just any h2 with a matching title.
+// Real distinction, confirmed live, not assumed: every one of the 7 real
+// session_scenarios groups already has SOME h2 sitting in the "Off-Script
+// Scenarios" section -- that alone doesn't mean it's been given a real
+// contextual placement, since a bare h2 with no featured entity is just
+// still part of that same undifferentiated list. featured is what actually
+// marks "this one got the richer, story-relevant treatment" (a real
+// portrait next to its title) -- confirmed against real data that exactly
+// 5 of the 7 have it (the other 2, "In the Forest / Off the Path" and
+// "Creature Encounters", are real h2 blocks with no featured field at all).
+// Used by both sccLiveRenderScenarios() (skip rendering a homed group's
+// card there -- it would just be a duplicate of the real, richer static
+// content) and sccFgScenarioSectionHtml() (hide the whole section once
+// nothing genuinely un-featured is left). Returns {} (nothing homed) if
+// the document hasn't actually been fetched/cached yet -- correct
+// fallback, since #scc-live-scenarios only ever exists inside that same
+// document's own markup, so this is never reached before the cache is
+// populated in practice.
+function sccFgHomedScenarioGroupNames() {
+  var row = SCC_FG_DOC_CACHE[sccFgActiveSessionNum()];
+  var names = {};
+  if (!row || !row.blocks) return names;
+  row.blocks.forEach(function(b) {
+    if (b.type === 'h2' && b.text && Array.isArray(b.featured) && b.featured.length) names[b.text] = true;
+  });
+  return names;
 }
 
 function sccFgInitDocument() {
@@ -15731,10 +16300,39 @@ function sccFgLoadDocument(num) {
   var haveLog = Object.prototype.hasOwnProperty.call(SCC_FG_COMBAT_OUTCOME_LOG_CACHE, num);
   if (haveDoc && haveCtx && haveLog) { sccFgDrawDocument(num); return; }
   inner.innerHTML = '<div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>';
+  // Real bug, found via a live cold-start reproduction, not guessed: this
+  // document's own box content can reference a real player character via
+  // block.featured (type 'pc', see sccFgFeaturedEntryHtml()) -- but this
+  // function's own Promise.all never waited on SCC_PLAYERS/SCC_PLAYER_PHOTOS
+  // being populated, only on its own 3 fetches. Confirmed live that this
+  // document's own fetch chain (a single flat Promise.all here) reliably
+  // resolves and draws BEFORE sccLoadPlayers()'s deeper, doubly-nested chain
+  // does (fetch, then a nested Promise.all of 3 more fetches) -- so the
+  // very first draw of a session's Field Guide almost always ran with
+  // SCC_PLAYER_PHOTOS still empty, showing a real player's featured
+  // thumbnail as a bare fallback initial forever (SCC_FG_RENDERED_SESSION_NUM
+  // getting set on that first draw means later tab-switches take the cached
+  // fast-path above and never redraw). Waiting on it here, the same way the
+  // other 3 fetches are already waited on, closes the race at its actual
+  // source rather than chasing it with more redraw-after-the-fact hooks
+  // (sccLoadPlayers() itself also redraws an already-drawn document when it
+  // resolves later -- see its own comment -- but that only helps if a draw
+  // has already happened to redraw; it can't fix a draw that hasn't
+  // happened yet). Skipped when players are already loaded (every Field
+  // Guide visit after the first, in practice), so this doesn't add a
+  // redundant fetch to the common case.
   Promise.all([
     haveDoc ? Promise.resolve(null) : sccFetch('field_guide_sessions', '&session_number=eq.' + encodeURIComponent(num)),
     haveCtx ? Promise.resolve(null) : sccFetch('session_opening_player_context', '&session_number=eq.' + encodeURIComponent(num)),
-    haveLog ? Promise.resolve(null) : sccFetch('session_note_entries', '&session_number=eq.' + encodeURIComponent(num) + '&category=eq.quest&order=created_at.desc')
+    haveLog ? Promise.resolve(null) : sccFetch('session_note_entries', '&session_number=eq.' + encodeURIComponent(num) + '&category=eq.quest&order=created_at.desc'),
+    // Gated on SCC_PLAYER_PHOTOS specifically, not SCC_PLAYERS -- real bug
+    // caught via a second live reproduction: SCC_PLAYERS is set synchronously
+    // in sccLoadPlayers()'s FIRST .then(), well before its nested Promise.all
+    // resolves and actually sets SCC_PLAYER_PHOTOS -- gating on SCC_PLAYERS
+    // alone let this same race through a real window where players were
+    // "loaded" but their photos genuinely weren't yet, taking the
+    // Promise.resolve(null) shortcut and drawing stale again.
+    (typeof SCC_PLAYER_PHOTOS !== 'undefined' && Object.keys(SCC_PLAYER_PHOTOS).length) ? Promise.resolve(null) : sccLoadPlayers()
   ]).then(function(results) {
     if (!haveDoc) SCC_FG_DOC_CACHE[num] = (Array.isArray(results[0]) && results[0][0]) ? results[0][0] : null;
     if (!haveCtx) SCC_FG_OPENING_CTX_CACHE[num] = Array.isArray(results[1]) ? results[1] : [];
@@ -15772,9 +16370,26 @@ function sccFgDrawDocument(num) {
   SCC_FG_RENDERED_SESSION_NUM = num;
 }
 
-// ── Scenario reference (merged in from the old standalone Scenarios tab) ──
+// ── Remaining scenarios (was "Scenario Reference", the one central section
+// every session_scenarios group rendered into, always-on). Most groups now
+// have a real, static home elsewhere in the document (an h2 + table with
+// their own featured thumbnails, see sccFgRenderBlock()'s h2 case) --
+// showing them again here would just be a duplicate of richer content
+// that already exists. This section now only ever holds the genuine
+// leftovers (confirmed live: "In the Forest / Off the Path" and "Creature
+// Encounters" as of this session's content), and disappears entirely --
+// not an empty heading over nothing -- once even those get a home of
+// their own. Still the real, live, Setup-editable source either way (the
+// filter box, +Add Scenario, and the accordion cards underneath are
+// completely unchanged), just scoped down to what's actually still
+// homeless via sccFgHomedScenarioGroupNames().
 function sccFgScenarioSectionHtml() {
-  return '<div class="scc-fg-doc-h1">Scenario Reference <span style="font-weight:400;text-transform:none;letter-spacing:normal;font-size:0.68rem;color:var(--dm-text-muted);">(live, from Setup)</span></div>'
+  var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
+  var scenarios = (session && session.session_scenarios) || [];
+  var homed = sccFgHomedScenarioGroupNames();
+  var hasRemaining = scenarios.some(function(g) { return !homed[g.group]; });
+  if (!hasRemaining) return '';
+  return '<div class="scc-fg-doc-h1">Other Scenarios <span style="font-weight:400;text-transform:none;letter-spacing:normal;font-size:0.68rem;color:var(--dm-text-muted);">(live, from Setup)</span></div>'
     + '<div class="scc-fg-scenario-section">'
       + '<div class="scc-live-scenario-filter-wrap">'
         + '<input type="text" id="scc-scenario-filter" class="scc-live-scenario-filter" placeholder="Filter scenarios&#8230;" oninput="sccFilterScenarios(this.value)" autocomplete="off">'
@@ -15787,36 +16402,102 @@ function sccFgScenarioSectionHtml() {
     + '</div>';
 }
 
+// Keyed by group NAME now, not array index -- most groups jump to a real
+// static h2 in the document itself (a different DOM location entirely from
+// the old central section), and the remaining few still jump to the old
+// #scc-scen-group-{gi} cards -- one dropdown covering both destinations
+// needs one key that means the same thing regardless of which kind of
+// target a given group resolves to. See sccFgJumpToScenario().
 function sccFgPopulateScenarioJump() {
   var sel = document.getElementById('scc-fg-scenario-jump');
   if (!sel) return;
   var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
   var groups = (session && session.session_scenarios) || [];
-  sel.innerHTML = '<option value="">Jump to a scenario&#8230;</option>' + groups.map(function(g, gi) {
-    return '<option value="' + gi + '">' + sccEsc(g.group || 'Scenarios') + '</option>';
+  sel.innerHTML = '<option value="">Jump to a scenario&#8230;</option>' + groups.map(function(g) {
+    return '<option value="' + sccEsc(g.group || '') + '">' + sccEsc(g.group || 'Scenarios') + '</option>';
   }).join('');
 }
 
-// Jumps to a scenario group's anchor inside the document. The return point
-// (for the Continue button) is captured only on the FIRST jump away from
-// natural reading position -- a second jump straight to another scenario,
-// without hitting Continue in between, must still return to where the DM
-// really was, not to the first scenario they jumped to.
-function sccFgJumpToScenario(giStr) {
-  if (giStr === '' || giStr == null) return;
-  var gi = parseInt(giStr, 10);
-  var doc = document.getElementById('scc-fg-doc');
-  var target = document.getElementById('scc-scen-group-' + gi);
-  if (!doc || !target) return;
+// Jumps to a scenario group's real, current location -- most groups now
+// live as a genuine static h2 (+ table, + featured thumbnails) elsewhere
+// in the document (sccFgRenderBlock()'s h2 case), not in one shared
+// section anymore. Tried first, by matching the group name against every
+// real h2's own text -- exact same name a homed group's h2 block was
+// authored with (see sccFgHomedScenarioGroupNames(), the same match this
+// file uses to decide whether a group needs the old section at all). Only
+// falls back to the old #scc-scen-group-{gi} accordion cards (the "Other
+// Scenarios" section, sccFgScenarioSectionHtml()) for a group that's
+// genuinely still homeless -- resolved by re-finding its real index in the
+// full session_scenarios array, matching how sccLiveRenderScenarios()
+// itself numbered that group's ids when it rendered.
+//
+// The return point (for the Continue button) is captured only on the
+// FIRST jump away from natural reading position -- a second jump straight
+// to another scenario, without hitting Continue in between, must still
+// return to where the DM really was, not to the first scenario they
+// jumped to. Both the return-point capture and the jump itself read/write
+// the real page scroll (window.scrollY / window.scrollTo), not
+// .scc-fg-doc's own scrollTop -- that div stopped being an internal
+// scroll container once the Field Guide tab's fixed 70vh height was
+// removed (see CLAUDE.md Decision Log), so its scrollTop is always 0 now;
+// the page itself scrolls.
+function sccFgJumpToScenario(groupName) {
+  if (!groupName) return;
+  var target = null;
+  var isOrphanCard = false;
+  // Only a FEATURED h2 counts as this group's real home -- every one of
+  // the 7 real groups has *some* plain h2 sitting in the Off-Script
+  // Scenarios cluster (confirmed live), but a bare one with no featured
+  // entity isn't a real contextual placement, it's just still part of that
+  // undifferentiated list (same distinction sccFgHomedScenarioGroupNames()
+  // makes, reused here so the jump target and the "is this group still in
+  // the remaining section" logic can never disagree with each other).
+  // Matching only .scc-fg-doc-h2--featured, not the bare .scc-fg-doc-h2
+  // class, is what correctly sends "In the Forest / Off the Path" and
+  // "Creature Encounters" to their real destination -- the interactive
+  // accordion card in the renamed remaining section -- instead of their
+  // own inert, thumbnail-less h2 a few blocks away.
+  var h2s = document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h2--featured');
+  var h2Match = Array.from(h2s).find(function(h) { return h.textContent.trim() === groupName; });
+  if (h2Match) {
+    // Featured h2s render inside a .scc-fg-h2-featured-wrap that also
+    // holds the thumbnail row -- jump to that whole wrapper so the image
+    // lands in view too, not just the title.
+    target = h2Match.closest('.scc-fg-h2-featured-wrap') || h2Match;
+  } else {
+    var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
+    var groups = (session && session.session_scenarios) || [];
+    var gi = groups.findIndex(function(g) { return g.group === groupName; });
+    if (gi < 0) return;
+    target = document.getElementById('scc-scen-group-' + gi);
+    isOrphanCard = true;
+  }
+  if (!target) return;
   if (!SCC_FG_RETURN_SCROLL_SET) {
-    SCC_FG_RETURN_SCROLL_TOP = doc.scrollTop;
+    SCC_FG_RETURN_SCROLL_TOP = window.scrollY;
     SCC_FG_RETURN_SCROLL_SET = true;
     var contBtn = document.getElementById('scc-fg-continue-btn');
     if (contBtn) contBtn.style.display = '';
   }
-  var body = document.getElementById('scc-live-scen-body-' + gi);
-  if (body && !body.classList.contains('open')) sccLiveToggleScenario(gi);
-  target.scrollIntoView({ block: 'start' });
+  if (isOrphanCard) {
+    var body = document.getElementById('scc-live-scen-body-' + gi);
+    if (body && !body.classList.contains('open')) sccLiveToggleScenario(gi);
+  }
+  // Real fix, not just re-pointed at window.scrollTo: scrollIntoView({block:
+  // 'start'}) puts the target flush with the viewport's own top edge --
+  // exactly where .scc-fg-jump-row (position:sticky; top:var(--dm-env-banner-h))
+  // itself sits, hiding whatever just landed there underneath the bar.
+  // Measured live, not guessed: read the jump-row's own real rendered
+  // height (it can wrap to two lines at narrow widths, so a hardcoded px
+  // offset would drift) plus the local-dev banner's real height (0 on the
+  // live site, since the row now starts sticking that much lower locally
+  // too -- see .scc-fg-jump-row's own top: var(--dm-env-banner-h)) and land
+  // the target that far below the true viewport top instead.
+  var jumpRow = document.getElementById('scc-fg-jump-row');
+  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
+  var offset = (jumpRow ? jumpRow.getBoundingClientRect().height : 0) + bannerH;
+  var targetTop = target.getBoundingClientRect().top + window.scrollY;
+  window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
   target.classList.add('scc-fg-editor-row--jump-highlight');
   setTimeout(function() { target.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
   var sel = document.getElementById('scc-fg-scenario-jump');
@@ -15824,8 +16505,7 @@ function sccFgJumpToScenario(giStr) {
 }
 
 function sccFgReturnFromScenario() {
-  var doc = document.getElementById('scc-fg-doc');
-  if (doc && SCC_FG_RETURN_SCROLL_SET) doc.scrollTop = SCC_FG_RETURN_SCROLL_TOP;
+  if (SCC_FG_RETURN_SCROLL_SET) window.scrollTo({ top: SCC_FG_RETURN_SCROLL_TOP, behavior: 'auto' });
   SCC_FG_RETURN_SCROLL_SET = false;
   var contBtn = document.getElementById('scc-fg-continue-btn');
   if (contBtn) contBtn.style.display = 'none';
@@ -16017,6 +16697,26 @@ function sccFgRenderOpeningSection(num) {
 //    the right DOM ids unchanged. No own title here -- the sidebar strip
 //    item's own .scc-live-section-label already provides "Companions &
 //    Attachments", matching every sibling widget (Party HP, Conditions). ──
+// Real hover tooltip for an attachment pill -- a quick reference, not the
+// full DM-only entry: what it is (the creature's own real description),
+// why it's attached (the attachment's own description field -- e.g.
+// Hana's bonding story), and its abilities/behavior (the creature's own
+// real behavior field). Only creature-type attachments with a resolvable
+// entity_id get the first/third parts (an item/effect, or a creature typed
+// in free-text with no catalog id, has no creature row to pull them from);
+// the "why" shows whenever the attachment itself has a description,
+// regardless of type. Returns '' (no tooltip at all) when nothing real
+// resolves, rather than an empty/misleading tooltip box.
+function sccFgAttachTooltipText(a) {
+  var creature = (a.attachment_type === 'creature' && a.entity_id)
+    ? (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === a.entity_id; })
+    : null;
+  var parts = [];
+  if (creature && creature.description) parts.push(creature.description);
+  if (a.description) parts.push('Why: ' + a.description);
+  if (creature && creature.behavior) parts.push('Behavior: ' + creature.behavior);
+  return parts.join('\n\n');
+}
 function sccFgAttachmentsSectionHtml() {
   if (typeof SCC_PLAYERS === 'undefined' || !SCC_PLAYERS.length) return '';
   var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
@@ -16031,8 +16731,15 @@ function sccFgAttachmentsSectionHtml() {
             + '<span class="scc-fg-attach-pc-thumb-fallback" style="display:none">' + initial + '</span>'
           : '<span class="scc-fg-attach-pc-thumb-fallback">' + initial + '</span>';
         var pillsHtml = mine.map(function(a) {
+          // (Real fix, not just new code: this pill previously carried two
+          // `title` attributes at once -- "Click to edit" plus the raw
+          // description -- which is invalid HTML; per spec the FIRST wins,
+          // so the description's own tooltip was silently unreachable via
+          // hover the entire time a description existed. One real data-tip
+          // now, richer than either original attribute alone.)
+          var tipText = sccFgAttachTooltipText(a);
           return '<span class="scc-fg-attach-pill' + (a.mode === 'permanent' ? ' scc-fg-attach-pill--permanent' : '') + '">'
-            + '<span class="scc-fg-attach-pill-main"' + (auditLocked ? '' : ' onclick="sccFgOpenAttachForm(\'' + pc.id + '\',\'' + a.id + '\')" title="Click to edit"') + (a.description ? ' title="' + sccEsc(a.description) + '"' : '') + '>'
+            + '<span class="scc-fg-attach-pill-main"' + (auditLocked ? '' : ' onclick="sccFgOpenAttachForm(\'' + pc.id + '\',\'' + a.id + '\')"') + (tipText ? ' data-tip="' + sccEsc(tipText) + '"' : '') + '>'
               + sccEsc(a.name)
               + '<span class="scc-fg-attach-pill-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
             + '</span>'
@@ -16178,13 +16885,10 @@ function sccFgSaveAttachment(charId, attachmentId) {
     ? sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(attachmentId), body)
     : sccPost('character_attachments', Object.assign({ character_id: charId, session_number: sccFgActiveSessionNum(), active: true }, body));
   req.then(function(r) {
-    if (!r.ok) { showDMToast('Could not save attachment', 'error'); return null; }
-    return sccFetch('character_attachments', '&active=eq.true&order=created_at.asc');
-  }).then(function(rows) {
-    if (!rows) return;
-    window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : [];
-    sccLiveRenderAttachments();
-    showDMToast(attachmentId ? 'Attachment updated' : 'Attachment added', 'success');
+    if (!r.ok) { showDMToast('Could not save attachment', 'error'); return; }
+    return sccFgRefreshAttachmentsCache().then(function() {
+      showDMToast(attachmentId ? 'Attachment updated' : 'Attachment added', 'success');
+    });
   }).catch(function() { showDMToast('Could not save attachment', 'error'); });
 }
 
@@ -16196,6 +16900,68 @@ function sccFgRemoveAttachment(id) {
     window.SCC_ATTACHMENTS = (typeof SCC_ATTACHMENTS !== 'undefined' ? SCC_ATTACHMENTS : []).filter(function(a) { return a.id !== id; });
     sccLiveRenderAttachments();
   }).catch(function() { showDMToast('Could not remove attachment', 'error'); });
+}
+
+// Re-fetches the live character_attachments cache and re-renders the
+// sidebar widget -- the one real "just wrote to this table, now reflect
+// it" step, shared by sccFgSaveAttachment() above and the Field Guide
+// quick-attach button below, so there's exactly one real write-and-refresh
+// path into this table, not two.
+function sccFgRefreshAttachmentsCache() {
+  return sccFetch('character_attachments', '&active=eq.true&order=created_at.asc').then(function(rows) {
+    window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : [];
+    sccLiveRenderAttachments();
+  });
+}
+
+// ── Quick-attach button — opt-in per box via block.quick_attach
+// ({character_id, creature_id, mode}). Renders a real button that POSTs
+// the actual character_attachments row through the exact same sccPost()
+// call + sccFgRefreshAttachmentsCache() refresh as the sidebar's own
+// "+Add" form (sccFgSaveAttachment() above) -- not a second write path,
+// just a second entry point into the same one. Checked against the live
+// SCC_ATTACHMENTS cache (not assumed) every render, so a box redrawn after
+// the attachment already exists (from here, or from the sidebar directly)
+// always shows the "already attached" state instead of offering a second
+// click -- real duplicate prevention, not just a disabled-after-one-click
+// button that a reload could re-arm.
+function sccFgQuickAttachExists(characterId, creatureId) {
+  var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
+  return rows.some(function(a) { return a.character_id === characterId && a.attachment_type === 'creature' && a.entity_id === creatureId; });
+}
+function sccFgRenderQuickAttach(qa) {
+  if (!qa || !qa.character_id || !qa.creature_id) return '';
+  var pc = (typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : []).find(function(p) { return p.id === qa.character_id; });
+  var creature = (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === qa.creature_id; });
+  if (!pc || !creature) return '';
+  if (sccFgQuickAttachExists(qa.character_id, qa.creature_id)) {
+    return '<div class="scc-fg-quickattach scc-fg-quickattach--done">&#10003; ' + sccEsc(creature.name) + ' is already ' + sccEsc(pc.name.split(' ')[0]) + '&#8217;s companion</div>';
+  }
+  if (SCC_VIEWING_HISTORY) return ''; // read-only audit view -- no write control here at all, same as every other Field Guide action
+  return '<button type="button" class="scc-btn-sm scc-fg-quickattach" onclick="sccFgQuickAttach(this,\'' + escQ(qa.character_id) + '\',\'' + escQ(qa.creature_id) + '\',\'' + escQ(qa.mode || 'situational') + '\')">+ Add ' + sccEsc(creature.name) + ' as ' + sccEsc(pc.name.split(' ')[0]) + "'s Companion</button>";
+}
+function sccFgQuickAttach(btn, characterId, creatureId, mode) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — attachments are read-only here', 'error'); return; }
+  if (sccFgQuickAttachExists(characterId, creatureId)) { sccFgDrawDocument(); return; } // stale render (e.g. sidebar just created it) -- redraw, no write
+  if (btn) btn.disabled = true;
+  var creature = (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === creatureId; });
+  var body = {
+    character_id: characterId,
+    session_number: sccFgActiveSessionNum(),
+    active: true,
+    name: creature ? creature.name : creatureId,
+    attachment_type: 'creature',
+    entity_id: creatureId,
+    mode: (mode === 'permanent') ? 'permanent' : 'situational',
+    description: creature ? creature.description : null
+  };
+  sccPost('character_attachments', body).then(function(r) {
+    if (!r.ok) { showDMToast('Could not add companion', 'error'); if (btn) btn.disabled = false; return; }
+    return sccFgRefreshAttachmentsCache().then(function() {
+      showDMToast('Added as companion', 'success');
+      sccFgDrawDocument(); // redraw so this button flips to the "already attached" state
+    });
+  }).catch(function() { showDMToast('Could not add companion', 'error'); if (btn) btn.disabled = false; });
 }
 
 // ── Collapsible prep notes ────────────────────────────────────────
@@ -17638,8 +18404,19 @@ function sccBuildNpcCardHeaderHtml(c, opts) {
     + (linkedQuests.length ? '<span class="scc-npc2-quest-icon" title="Quest-related' + (linkedQuests.length > 1 ? ' (' + linkedQuests.length + ' quests)' : ' (' + sccEsc(linkedQuests[0].name) + ')') + '">&#128220;</span>' : '')
   + '</div>';
 
+  // Was a hardcoded deterministic path (world-images/characters/{id}.webp)
+  // rather than c.image itself -- the one real render site in the whole
+  // file that ignored the actual stored URL in favor of reconstructing it.
+  // Two real consequences: it could never pick up uploadImageToSupabase()'s
+  // new cache-busting query string (still hitting the bare, cacheable URL
+  // regardless of what image column actually holds), and after Remove
+  // Image sets image to null, this card kept requesting the old path
+  // anyway -- if a CDN edge was still serving a stale cached 200 for it
+  // (the object being gone at origin doesn't retroactively invalidate an
+  // edge's cache), the onerror fallback never fires, since a cached 200
+  // isn't a load error. Reading c.image directly closes both gaps at once.
   var portraitHtml = c.image
-    ? '<img class="scc-npc2-portrait" src="https://ebppsgaftzyvftemfeom.supabase.co/storage/v1/object/public/world-images/characters/' + sccEsc(c.id) + '.webp" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
+    ? '<img class="scc-npc2-portrait" src="' + sccEsc(c.image) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="">'
       + '<div class="scc-npc2-portrait-fallback" style="display:none">' + sccEsc(c.name.charAt(0)) + '</div>'
     : '<div class="scc-npc2-portrait-fallback">' + sccEsc(c.name.charAt(0)) + '</div>';
 
@@ -20771,6 +21548,14 @@ function sccCopyPostSessionSummary() {
 // Follow-Up) with the 5 existing textarea themes, merging near-duplicates
 // (Player Decisions→Player Actions, Follow-Up Needed→Follow-Up) rather than
 // keeping two near-identical tags.
+// requiresCharacter categories show a real player-character dropdown
+// (SCC_PLAYERS, the actual party roster -- not free text) alongside the
+// usual title/body fields, and persist the pick as session_note_entries.
+// character_id. Ignores Formery exists to support a real future payoff:
+// a specific player's logged paperwork-avoidance eventually catching up
+// with them via a Form 19-D callback, which only works if it's tied to
+// who it actually happened to, not just prose in a text field a DM would
+// have to re-read and guess at months later.
 var SCC_NOTE_CATEGORIES = [
   { id: 'dm-only',     label: 'DM-Only' },
   { id: 'player',      label: 'Player Actions' },
@@ -20778,7 +21563,8 @@ var SCC_NOTE_CATEGORIES = [
   { id: 'followup',    label: 'Follow-Up' },
   { id: 'unexpected',  label: 'Unexpected Moment' },
   { id: 'thread',      label: 'Loose Thread' },
-  { id: 'milestone',   label: 'Milestone' }
+  { id: 'milestone',   label: 'Milestone' },
+  { id: 'ignores-formery', label: 'Ignores Formery', requiresCharacter: true }
 ];
 var SCC_NOTE_ENTRIES = [];
 var SCC_NOTE_FILTER_CAT = '';
@@ -20787,6 +21573,44 @@ var SCC_NOTE_FILTER_Q = '';
 function sccNoteCategoryLabel(id) {
   var c = SCC_NOTE_CATEGORIES.find(function(x){ return x.id === id; });
   return c ? c.label : 'Uncategorized';
+}
+
+function sccNoteCategoryRequiresCharacter(id) {
+  var c = SCC_NOTE_CATEGORIES.find(function(x){ return x.id === id; });
+  return !!(c && c.requiresCharacter);
+}
+
+// Real party roster (SCC_PLAYERS, already fetched app-wide), not free text
+// -- same reasoning as every other "pick a real thing" dropdown in this
+// file (never hardcode, read live). Populated fresh each time shown rather
+// than cached-once, so it can't go stale mid-session the way a one-time
+// populate would if a player got added/renamed after the page first loaded.
+function sccNoteCharacterOptionsHtml() {
+  var players = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+  return '<option value="">Which player?</option>' + players.map(function(p) {
+    return '<option value="' + sccEsc(p.id) + '">' + sccEsc(p.name) + '</option>';
+  }).join('');
+}
+
+function sccNoteCharacterName(characterId) {
+  if (!characterId) return null;
+  var players = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+  var p = players.find(function(x) { return x.id === characterId; });
+  return p ? p.name : null;
+}
+
+// Shared by both real entry points into session_note_entries (the Tagged
+// Notes add-row and the global Quick Note modal) -- one category list, one
+// character-select show/hide rule, can't drift into two different
+// behaviors depending on which surface a DM happens to use.
+function sccNoteCategoryChanged(catSelId, charSelId) {
+  var catSel = document.getElementById(catSelId);
+  var charSel = document.getElementById(charSelId);
+  if (!catSel || !charSel) return;
+  var show = sccNoteCategoryRequiresCharacter(catSel.value);
+  charSel.style.display = show ? '' : 'none';
+  if (!show) charSel.value = '';
+  if (show && !charSel.options.length) charSel.innerHTML = sccNoteCharacterOptionsHtml();
 }
 
 // sessionNumOverride lets sccLoadHistorySession() load a *different*
@@ -20849,7 +21673,13 @@ function sccFilterTagNotes() {
   var q = SCC_NOTE_FILTER_Q;
   var filtered = SCC_NOTE_ENTRIES.filter(function(n) {
     if (SCC_NOTE_FILTER_CAT && n.category !== SCC_NOTE_FILTER_CAT) return false;
-    if (q && (n.title || '').toLowerCase().indexOf(q) < 0 && (n.content || '').toLowerCase().indexOf(q) < 0) return false;
+    if (q) {
+      var charName = (sccNoteCharacterName(n.character_id) || '').toLowerCase();
+      var matchesTitle = (n.title || '').toLowerCase().indexOf(q) >= 0;
+      var matchesContent = (n.content || '').toLowerCase().indexOf(q) >= 0;
+      var matchesCharacter = charName && charName.indexOf(q) >= 0;
+      if (!matchesTitle && !matchesContent && !matchesCharacter) return false;
+    }
     return true;
   });
   if (!filtered.length) {
@@ -20918,10 +21748,13 @@ function sccNoteTimeAgo(iso) {
 // full document-level edit mode would be overkill for a quick note).
 function sccBuildTagNoteCard(n, readonly) {
   var catClass = n.category === 'dm-only' ? ' scc-tagnote-badge--dmonly' : n.category === 'quest' ? ' scc-tagnote-badge--quest' : '';
+  var charName = sccNoteCharacterName(n.character_id);
+  var charBadge = charName ? '<span class="scc-tagnote-character-badge" title="Tagged player">&#128100; ' + sccEsc(charName) + '</span>' : '';
   var delBtn = readonly ? '' : '<button class="scc-tagnote-del" title="Delete note" onclick="sccDeleteTagNote(\'' + sccEsc(n.id) + '\')">&#10005;</button>';
   return '<div class="scc-tagnote-card" data-note-id="' + sccEsc(n.id) + '">'
     + '<div class="scc-tagnote-card-head">'
       + '<span class="scc-tagnote-badge' + catClass + '">' + sccEsc(sccNoteCategoryLabel(n.category)) + '</span>'
+      + charBadge
       + '<span class="scc-tagnote-time">' + sccEsc(sccNoteTimeAgo(n.updated_at)) + '</span>'
       + '<button class="scc-tagnote-copy" title="Copy note" onclick="sccCopyTagNote(\'' + sccEsc(n.id) + '\')">&#128203;</button>'
       + delBtn
@@ -21028,6 +21861,12 @@ function sccOpenQuickNoteModal() {
       return '<option value="' + c.id + '">' + sccEsc(c.label) + '</option>';
     }).join('');
   }
+  // Reset to hidden/empty every open, not just once -- a category left
+  // selected from a previous note (e.g. still on Ignores Formery) would
+  // otherwise leave the character select visible-but-stale on a genuinely
+  // fresh note.
+  var charSel = document.getElementById('scc-quicknote-character');
+  if (charSel) { charSel.style.display = 'none'; charSel.value = ''; }
   var titleEl = document.getElementById('scc-quicknote-title');
   var bodyEl  = document.getElementById('scc-quicknote-body');
   titleEl.value = '';
@@ -21058,6 +21897,12 @@ function sccSubmitQuickNote() {
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
   var catSel   = document.getElementById('scc-quicknote-cat');
   var category = catSel && catSel.value ? catSel.value : SCC_NOTE_CATEGORIES[0].id;
+  var characterId = null;
+  if (sccNoteCategoryRequiresCharacter(category)) {
+    var charSel = document.getElementById('scc-quicknote-character');
+    characterId = charSel && charSel.value ? charSel.value : null;
+    if (!characterId) { showDMToast('Pick which player this is about', 'error'); return; }
+  }
   var titleEl  = document.getElementById('scc-quicknote-title');
   var bodyEl   = document.getElementById('scc-quicknote-body');
   // Supabase always gets real [[type:id|Label]] markup, never the plain-text
@@ -21074,7 +21919,7 @@ function sccSubmitQuickNote() {
       'Authorization': 'Bearer ' + SCC_ANON,
       'Prefer': 'return=minimal'
     },
-    body: JSON.stringify({ session_number: num, category: category, title: title, content: content })
+    body: JSON.stringify({ session_number: num, category: category, title: title, content: content, character_id: characterId })
   }).then(function(r) {
     if (!r.ok) { showDMToast('Could not save note', 'error'); return; }
     sccCloseQuickNoteModal();
@@ -21093,6 +21938,12 @@ function sccAddTagNote() {
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
   var catSel = document.getElementById('scc-tagnote-new-cat');
   var category = catSel && catSel.value ? catSel.value : SCC_NOTE_CATEGORIES[0].id;
+  var characterId = null;
+  if (sccNoteCategoryRequiresCharacter(category)) {
+    var charSel = document.getElementById('scc-tagnote-new-character');
+    characterId = charSel && charSel.value ? charSel.value : null;
+    if (!characterId) { showDMToast('Pick which player this is about', 'error'); return; }
+  }
   // return=representation (not the shared sccPost helper's return=minimal) so the
   // new row's real id comes back immediately — needed to focus the right card below,
   // since the DM could have several blank-titled notes at once otherwise.
@@ -21104,7 +21955,7 @@ function sccAddTagNote() {
       'Authorization': 'Bearer ' + SCC_ANON,
       'Prefer': 'return=representation'
     },
-    body: JSON.stringify({ session_number: num, category: category, title: '', content: '' })
+    body: JSON.stringify({ session_number: num, category: category, title: '', content: '', character_id: characterId })
   }).then(function(r) {
     if (!r.ok) { showDMToast('Could not create note', 'error'); return; }
     r.json().then(function(rows) {
