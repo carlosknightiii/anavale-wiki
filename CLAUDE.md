@@ -591,7 +591,127 @@ This is a standing rule, not a one-off decision — a future "is this spell legi
 
 ---
 
-## 12. Decision Log
+## 12. Field Guide Request Tracker (as of Aug 25, 2026)
+
+Status taxonomy: Not Started / In Progress / In QA / Approved Pending
+Push / Approved and Pushed / Pushed but Not QA Approved.
+
+Content edits (direct Supabase writes) take effect immediately, no
+separate push step. Code/CSS fixes go through local -> merge -> push.
+Where DM sign-off isn't explicitly confirmed in conversation, default
+to "Pushed but Not QA Approved" rather than assume approval, a merge is
+not the same as DM approval (see the DM's own standing note on the
+original Phase 2/5 merge, commit 0eccbc9).
+
+Two merge batches: 0eccbc9 (earlier, explicitly NOT DM-approved,
+technical/consolidation only) and e40def2 (tonight's later batch,
+scenario distribution through the image-upload fix).
+
+### Overall Field Guide QA status
+In Progress. DM paused mid-read-through at "Beat 2 — Under the Bridge
+(75 XP)" in Session 1. Tracked in the active_work Supabase table.
+
+### Templatization goal
+In Progress, tracked as its own active_work row. Audit delivered
+(field-guide-templatization-audit.md, given to the DM directly, not in
+this repo): closed category set identified, hardcoded colors found,
+recurring patterns documented. Not yet done: turning those patterns
+into something Code-enforced rather than remembered.
+
+### Content & Narrative
+| Request | Status |
+|---|---|
+| Full Field Guide audit + redesign (4-phase) | Pushed but Not QA Approved |
+| Session Opening real content (recap, location, per-player context) | Pushed but Not QA Approved |
+| A/B/C placeholders to real player names | Pushed but Not QA Approved |
+| Entity links throughout the document | Pushed but Not QA Approved |
+| Generic "DM ONLY" titles to real descriptive titles | Pushed but Not QA Approved |
+| Remove redundant static Beat XP headers | Pushed but Not QA Approved |
+| Split mixed narration/dialogue/DM-only boxes | Pushed but Not QA Approved |
+| Remove "how to use the tool" instructional text | Pushed but Not QA Approved |
+| Fix broken "names above" reference in Beat 3 | Pushed but Not QA Approved |
+| Inline quest-beat status + skill check formatting for Beat 1/2 | Approved and Pushed |
+| Clarify player-known vs DM-only for "What the Town Knows" | Pushed but Not QA Approved |
+| Merge Message Board content into scenarios correctly | Pushed but Not QA Approved |
+| Formery refusal content to scenarios | Pushed but Not QA Approved |
+| Religion/org presence woven into arrival, not standalone section | Pushed but Not QA Approved (automated trigger version still Not Started) |
+| Section renumbering removed entirely | Approved and Pushed |
+| Gerald's size increased to 8ft/12ft | Approved and Pushed |
+| Gerald's death: real player-interaction window before he dies | Approved and Pushed |
+| Comedy content woven inline, not standalone boxes | Approved and Pushed |
+| "Comedic Element" label applied to all inline comedy | Approved and Pushed |
+| Comedy dialogue exchanges reformatted script-style | Approved and Pushed |
+| Player/NPC dialogue color-coded | Approved and Pushed (needs real CSS variable, see Bugs) |
+| Bumble Frog dialogue boxes added | Approved and Pushed |
+| "The Dimming — Quick Reference" box added to World Reference | Approved and Pushed |
+| Gigglegloom/Dimming questions removed (players already know) | Approved and Pushed |
+| Grusk/Vareth/Formery/Brightcreed questions moved to contextual trigger points | Approved and Pushed |
+| Read-aloud description added for first seeing the Grusk agents | Approved and Pushed |
+| "Playing Pellam Consistently" guidance box | Approved and Pushed |
+| Duplicate acorn/Fluffet scene found and removed | Approved and Pushed |
+| "The Real Prize Is the Documentation" moved to correct beat | Approved and Pushed |
+| Beat naming mismatch fixed (quest data + Field Guide aligned) | Approved and Pushed |
+| Pellam pronoun sweep (they/them) | Approved and Pushed |
+| Bridge-to-inn transition text added | Approved and Pushed |
+| Tinywing's sound ("skree") established | Approved and Pushed |
+| Pocketmole comedy beat split and clarified | Approved and Pushed |
+| guide_meta intro box rewritten (was hours stale) | Approved and Pushed |
+| Featured thumbnails + entity links across ~25+ boxes | Mostly Pushed but Not QA Approved; specific screenshotted ones Approved and Pushed |
+| Scenario groups distributed to contextual beat locations | Approved and Pushed |
+
+### Layout & Visual (Code)
+| Request | Status |
+|---|---|
+| Sidebar cards as accordions | Pushed but Not QA Approved |
+| Sidebar reorder + Timer reset button | Pushed but Not QA Approved |
+| Field Guide content area height | Pushed but Not QA Approved |
+| Dialogue tone note readability | Pushed but Not QA Approved |
+| Visualize panel field label readability | Pushed but Not QA Approved |
+| Heading/label font sizes | Pushed but Not QA Approved |
+| Featured thumbnail layout (image top-left, chip+title stacked) | Pushed but Not QA Approved |
+| Header-to-body vertical gap reduction | Pushed but Not QA Approved |
+| Comedy chip icon size | Pushed but Not QA Approved |
+| h2 margin spacing | Pushed but Not QA Approved |
+| Local dev warning bar overlap (main column + sidebar) | Pushed but Not QA Approved |
+| Scenario jump lands under sticky header | Pushed but Not QA Approved |
+| Box category chip consistency (all 7 categories) | Approved and Pushed |
+| Roll Initiative button color | Pushed but Not QA Approved |
+| Skill check container styling | Pushed but Not QA Approved |
+| Featured entity thumbnails zoomed 50% | Not Started |
+| Small inline entity-link icon alignment | Not Started |
+| Scenario distribution rendering + jump dropdown rework | Approved and Pushed |
+| Featured-thumbnail rendering extended to h2 scenario headers | Pushed but Not QA Approved |
+| Featured thumbnails not rendering for type "poi" | Pushed but Not QA Approved |
+| Featured thumbnails not rendering for type "pc" | Pushed but Not QA Approved |
+
+### Features
+| Request | Status |
+|---|---|
+| Quick-attach companion button | Pushed but Not QA Approved |
+| Companion attachments on real character sheet + tooltips | Pushed but Not QA Approved |
+| Quick Note: "Ignores Formery" category with player tagging | Pushed but Not QA Approved |
+| Real location-arrival trigger for religion/org presence | Not Started |
+
+### Real bugs found and fixed
+| Bug | Status |
+|---|---|
+| Image upload/removal silently failing (missing storage RLS policies) | Pushed but Not QA Approved |
+| Bounce Beetles artwork accidentally overwritten during that fix's testing | Restored and confirmed byte-identical |
+| Mislinked "Tumblerun" | Approved and Pushed |
+| Broken entity link character:pellam-voss | Approved and Pushed |
+| Off-by-one data corruption, Pocketmole edit (caught same session) | Approved and Pushed |
+| Off-by-one data corruption, Questions cleanup (caught same session) | Approved and Pushed |
+| Stale "READ ALOUD" literal text in two dialogue box labels | Approved and Pushed |
+| Hardcoded gold hex used for Pellam's dialogue color | Approved and Pushed |
+| Two remaining hardcoded hex colors, not real CSS variables yet | Not Started |
+
+### Needs DM decision
+- Situational vs Permanent attachments: should Situational do anything mechanically?
+- `background` category doing three different jobs with no visual distinction, worth a decision before Session 2 copies it forward.
+
+---
+
+## 13. Decision Log
 
 *Append-only. Most recent entry at top. Entries older than 60 days are summarised to one line.*
 
