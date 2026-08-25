@@ -484,6 +484,8 @@ Real `priority` values: `blocking` / `important` / `polish`.
 **`session_scenarios` jsonb:** On `session_notes` — read by SCC Live Session tab accordion.
 
 **`field_guide_sessions_backup`** (`id`, `session_number`, `blocks` jsonb, `backed_up_at`, `reason`) — snapshot table for `field_guide_sessions`. Insert a copy of the current row here before any large batch edit to `field_guide_sessions` (not per-edit — before a batch), so a bad rewrite has a real point to revert to.
+**`world_characters_backup`** (`id`, `character_id`, `data` jsonb, `backed_up_at`, `reason`) — same snapshot pattern, for `world_characters`. Insert a copy of the current row before any large batch edit.
+**`quests_backup`** (`id`, `quest_id`, `data` jsonb, `backed_up_at`, `reason`) — same snapshot pattern, for `quests`. Insert a copy of the current row before any large batch edit.
 **`field_guide_qa_checkpoints`** (`id`, `session_number`, `section`, `status`, `notes`, `updated_at`) — per-section Field Guide QA status. Replaces tracking QA progress as a single free-text note in `active_work`; check this table for the real current shape of QA progress before assuming a session's read-through state from a narrative summary.
 
 ---
@@ -510,7 +512,7 @@ Real `priority` values: `blocking` / `important` / `polish`.
 
 ---
 
-## 8. Site Integrity Rules (C1–C5)
+## 8. Site Integrity Rules (C1–C6)
 
 **C1 — Read dm.html before every edit. No exceptions.** Read the current state of the target function with line numbers before writing any replacement. Project knowledge is never sufficient.
 
@@ -523,6 +525,8 @@ Real `priority` values: `blocking` / `important` / `polish`.
 **C4 — Site crash recovery: `git reset --hard`, not `git revert` chains.** See Section 4.
 
 **C5 — Rejected diagnosis is confirmed wrong. Stop completely.** If the DM says a diagnosis is wrong, stop all iteration. Read the actual current code state. State the new diagnosis with the specific line and reason. Write one fix only after the new diagnosis is confirmed.
+
+**C6 — A change to shared rendering logic must re-verify every feature that mechanism affects, not just the one it was meant to fix.** If a change touches a chip/badge system, a shared layout component, thumbnail rendering, or any other mechanism multiple already-shipped features depend on, explicitly check the *other* consumers of that mechanism too, and say in the verification report that this was checked — not just the one thing the ask named. An item already marked `approved-and-pushed` in `requests` is not immune to a later shared-mechanism change breaking it silently; approval reflects the state at the time it was checked, not a guarantee against regressions introduced afterward.
 
 ---
 
