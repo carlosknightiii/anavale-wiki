@@ -8057,8 +8057,14 @@ function showDMToast(msg, type) {
 .scc-fg-spoken-line p:last-child { margin-bottom: 0 !important; }
 /* ── Comedy, inline mode — reads as part of the narration (a normal
    paragraph), not set apart in a box. Full-box mode (category=comedy,
-   inline!=true) still uses .scc-fg-box--yellow above, unchanged. */
-.scc-fg-comedy-inline { font-style: italic; color: #fef08a; }
+   inline!=true) still uses .scc-fg-box--yellow above, unchanged.
+   Color: var(--fg-comedy-text), tokens.css — this is the same real
+   concept as the raw style="color:#f7ff00" "🃏 Comedic Element:" markers
+   already hardcoded into Session 1's content (confirmed live, both are
+   inline/not-boxed comedy narration), just rendered via a different
+   code path. Repointed at the shared token (2026-08-25) instead of its
+   own drifted #fef08a so both paths read as one color, not two. */
+.scc-fg-comedy-inline { font-style: italic; color: var(--fg-comedy-text); }
 .scc-fg-comedy-inline-icon { margin-right: 0.3rem; opacity: 0.85; }
 /* ── Skill checks (sccFgStyleSkillChecks()) — a real container instead of
    plain paragraph text, so "roll for this" reads as its own distinct thing
