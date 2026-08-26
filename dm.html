@@ -4033,6 +4033,24 @@
   }
 
   function syncFromSupabase() {
+    // sccFetchFgCategorySchema() (js/fg-category-schema.json -> SCC_FG_CATEGORY_STYLE,
+    // see that function's own comment) hits the exact same "only wired into
+    // sccInit()'s Promise.all" bug already fixed twice above for vendor_stock
+    // and character_attachments -- sccOpenSessionDetails() (the real, common
+    // path into Session Details) deliberately skips sccInit() entirely, so a
+    // schema fetch living only there would leave every Field Guide box
+    // rendering un-styled (grey/legacy-color fallback) on a fresh page load
+    // straight into a session. Fired here too, unconditionally and
+    // tab-independent, same fix shape. Not a Supabase table, so it's a
+    // separate call rather than a TABLES entry -- sbFetch() assumes a
+    // /rest/v1/ table URL. Confirmed via C1: this file's dedicated
+    // typeof-guard style, since this IIFE runs before the later script block
+    // that declares the function is guaranteed to have executed in every
+    // real ordering (DOMContentLoaded doesn't fire until the whole document,
+    // including that later synchronous <script>, has parsed) -- kept
+    // defensive anyway, matching cmRefresh's own guard just below.
+    if (typeof sccFetchFgCategorySchema === 'function') sccFetchFgCategorySchema();
+
     Promise.all(TABLES.map(function(t) {
       return sbFetch(t.table, t.params).then(function(rows) {
         return { global: t.global, rows: rows };
@@ -8075,8 +8093,14 @@ function showDMToast(msg, type) {
 .scc-fg-aside { color: var(--dm-only); font-style: normal; font-weight: 600; }
 /* ── Comedy, inline mode — reads as part of the narration (a normal
    paragraph), not set apart in a box. Full-box mode (category=comedy,
-   inline!=true) still uses .scc-fg-box--yellow above, unchanged. */
-.scc-fg-comedy-inline { font-style: italic; color: #fef08a; }
+   inline!=true) still uses .scc-fg-box--yellow above, unchanged.
+   Color: var(--fg-comedy-text), tokens.css — this is the same real
+   concept as the raw style="color:#f7ff00" "🃏 Comedic Element:" markers
+   already hardcoded into Session 1's content (confirmed live, both are
+   inline/not-boxed comedy narration), just rendered via a different
+   code path. Repointed at the shared token (2026-08-25) instead of its
+   own drifted #fef08a so both paths read as one color, not two. */
+.scc-fg-comedy-inline { font-style: italic; color: var(--fg-comedy-text); }
 .scc-fg-comedy-inline-icon { margin-right: 0.3rem; opacity: 0.85; }
 /* ── Staging-cue paragraph (type:p, category:staging) -- same "inline,
    lightweight, no full box" treatment as comedy inline above, for the
@@ -15003,7 +15027,8 @@ function sccInit(forceSessionNum) {
     sccFetch('items').then(function(rows) { if (Array.isArray(rows) && rows.length) window.ITEMS = rows; }),
     sccFetch('conditions', '&order=sort_order.asc').then(function(rows) { window.SCC_CONDITIONS_DATA = Array.isArray(rows) ? rows : []; }),
     sccFetch('vendor_stock', '&order=sort_order.asc').then(function(rows) { window.VENDOR_STOCK = Array.isArray(rows) ? rows : []; }),
-    sccFetch('character_attachments', '&active=eq.true&order=created_at.asc').then(function(rows) { window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : []; })
+    sccFetch('character_attachments', '&active=eq.true&order=created_at.asc').then(function(rows) { window.SCC_ATTACHMENTS = Array.isArray(rows) ? rows : []; }),
+    sccFetchFgCategorySchema()
   ]).then(function() {
     // sccLoadLatestSession() now loads players itself (see its own comment) --
     // no need to also do it here, that would just be a redundant fetch.
@@ -15755,36 +15780,40 @@ var SCC_FG_LINK_TYPES = {
    "Why This Works" boxes whose stored label still says "DM ONLY" — the
    badge is what a DM can actually trust, not the label text). Categories
    with no entry here (e.g. a null/unrecognized category on old data) fall
-   back to the legacy color field via SCC_FG_BOX_COLOR_CLASS, then grey. */
-var SCC_FG_CATEGORY_STYLE = {
-  // read_aloud and comedy previously had no badge at all -- confirmed via a
-  // live audit that these were the two real, plain colored boxes (color
-  // alone, no label chip) that don't match the "every box shows what it is"
-  // consistency every other category already had. Both now match the color
-  // key's own wording exactly ("Read Aloud", "Comedy"). spoken_dialogue used
-  // to be left with badge:null on the reasoning that its portrait + the
-  // speaker's real name was already a stronger identifier than a generic
-  // chip -- overridden per direct DM instruction: the ask was for every
-  // category to show its chip consistently with the color-key legend at the
-  // top of the guide, full stop, not "unless something else already
-  // identifies it." The portrait/name header is additional, not a
-  // substitute -- both now render together (see sccFgRenderSpokenDialogue
-  // below, which reads style.badge from here the same way the generic box
-  // case does). loot_shop is still left badge:null -- it already gets its
-  // own category-specific icon prefixed directly onto the label (subtype
-  // icon, see boxLabelPrefix below), a different but equally consistent
-  // mechanism, not an omission.
-  read_aloud:      { colorClass: 'green',   badge: { icon: '&#128214;', name: 'Read Aloud' } },
-  spoken_dialogue: { colorClass: 'blue',    badge: { icon: '&#128172;', name: 'Spoken Dialogue' } },
-  dm_only:         { colorClass: 'magenta', badge: { icon: '&#9888;',  name: 'DM Only' } },
-  background:      { colorClass: 'magenta', badge: { icon: '&#128220;', name: 'Background' } },
-  why_this_works:  { colorClass: 'magenta', badge: { icon: '&#128161;', name: 'Why This Works' } },
-  if_they_ask:     { colorClass: 'magenta', badge: { icon: '&#10067;', name: 'If They Ask' } },
-  dont_blow_this:  { colorClass: 'red',     badge: { icon: '&#9940;',  name: "Don't Blow This" } },
-  comedy:          { colorClass: 'yellow',  badge: { icon: '&#127183;', name: 'Comedy' } },
-  loot_shop:       { colorClass: 'gold',    badge: null },
-  guide_meta:      { colorClass: 'grey',    badge: null }
-};
+   back to the legacy color field via SCC_FG_BOX_COLOR_CLASS, then grey.
+
+   Extracted into js/fg-category-schema.json — single source of truth, same
+   principle as css/tokens.css, so scripts/fg-template.mjs (check/build) and
+   this file can't drift out of sync with two hand-maintained copies of the
+   same table. Declared empty here and populated by sccFetchFgCategorySchema()
+   below, called from sccInit()'s own Promise.all alongside every other
+   fetch this app boots with — nothing renders the Field Guide until well
+   after that resolves (it's behind a tab click, at minimum), so there's no
+   real race to guard against, same reasoning already applied to
+   window.SCC_CONDITIONS_DATA/window.VENDOR_STOCK/etc. in that same list. */
+var SCC_FG_CATEGORY_STYLE = {};
+
+// Loads js/fg-category-schema.json (a same-origin static file, not a
+// Supabase table — sccFetch() doesn't apply here) and populates
+// SCC_FG_CATEGORY_STYLE from its `categories` object. On any failure
+// (missing file, bad JSON, wrong shape) SCC_FG_CATEGORY_STYLE is left as
+// whatever it already was — {} on first boot, meaning every box falls back
+// to its legacy-color/grey styling rather than the page crashing — and the
+// failure is logged so it isn't silently invisible.
+function sccFetchFgCategorySchema() {
+  return fetch('js/fg-category-schema.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.categories && typeof data.categories === 'object') {
+        SCC_FG_CATEGORY_STYLE = data.categories;
+      } else {
+        console.error('fg-category-schema.json loaded but had no `categories` object — Field Guide box styling will fall back to legacy colors.');
+      }
+    })
+    .catch(function(err) {
+      console.error('Failed to load js/fg-category-schema.json — Field Guide box styling will fall back to legacy colors.', err);
+    });
+}
 
 // Corner alert icon -- reuses each category's own chip badge icon
 // (above) so the meaning stays consistent between the chip and the corner

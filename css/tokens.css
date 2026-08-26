@@ -268,6 +268,24 @@
   --scc-read-aloud-bg:     rgba(134,239,172,0.07);
   --scc-read-aloud-border: rgba(134,239,172,0.5);
   --scc-read-aloud-text:   #4ade80;
+  /* Field Guide inline text colors (2026-08-25) -- these replace raw
+     style="color:#hex" spans currently hardcoded directly into Session 1's
+     Field Guide content in Supabase (a separate update, not made here).
+     --fg-comedy-text matches the real, live "🃏 Comedic Element:" markers
+     (confirmed via the actual field_guide_sessions data, 5 real instances,
+     all #f7ff00) -- .scc-fg-comedy-inline below was independently built
+     for the identical concept (inline comedy narration, not boxed) via a
+     different, code-rendered path and had drifted to its own hardcoded
+     #fef08a; repointed it at this token so both paths share one real
+     source instead of two colors for the same thing. --fg-dialogue-npc
+     reuses --gold rather than a new hex, per instruction -- NPC dialogue
+     already means "gold" everywhere else in this app (Active status,
+     brand accent, etc.), so a second gold-ish value here would just be
+     the exact one-meaning-two-hexes problem this token block exists to
+     avoid. --fg-dialogue-player is new, no existing token matched. */
+  --fg-comedy-text:     #f7ff00;
+  --fg-dialogue-player: #9fb3c8;
+  --fg-dialogue-npc:    var(--gold);
   /* Beat progress (2026-08-16): matches the Quest Status scheme the DM
      specified the same day one level up -- Available=blue, Active=gold,
      Completed=grey (Blocked has no beat-level equivalent). Was previously
