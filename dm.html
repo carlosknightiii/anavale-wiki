@@ -3689,6 +3689,11 @@
               <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--red-strong)"></span>Don&#8217;t Blow This</span>
             </div>
           </div>
+          <!-- Vertical scroll progress indicator -- fixed to the viewport,
+               populated dynamically from the document's own h1 headings
+               (see sccFgBuildScrollIndicator()) whenever a session's
+               Field Guide document renders. -->
+          <div class="scc-fg-scroll-indicator" id="scc-fg-scroll-indicator"></div>
           <!-- rendered guide doc, now the only column -->
           <div class="scc-fg-doc" id="scc-fg-doc">
             <div class="scc-fg-jump-row" id="scc-fg-jump-row">
@@ -7824,6 +7829,27 @@ function showDMToast(msg, type) {
 .scc-fg-jump-row select { flex: 1; max-width: 320px; }
 .scc-fg-jump-row .scc-fg-continue-btn { flex-shrink: 0; }
 .scc-fg-doc-inner { padding: 1.5rem 1.75rem 3rem; margin: 0 auto; }
+/* ── Vertical scroll progress indicator -- one dot+label per real h1
+   section in the currently-rendered document (sccFgBuildScrollIndicator()
+   derives these dynamically, no hardcoded per-session list). Fixed to the
+   viewport, thin by default (labels hidden), a hovered/active row reveals
+   its label so the rail stays genuinely thin rather than a wide column
+   permanently competing with the document for space. */
+.scc-fg-scroll-indicator {
+  position: fixed; top: 50%; right: 0.5rem; transform: translateY(-50%);
+  display: none; flex-direction: column; gap: 0.5rem; z-index: 40;
+  max-height: 70vh; overflow-y: auto; padding: 0.25rem;
+}
+.scc-fg-scroll-dot-row { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; justify-content: flex-end; }
+.scc-fg-scroll-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--fg-scroll-inactive); transition: background 0.2s; }
+.scc-fg-scroll-dot-row--reached .scc-fg-scroll-dot { background: var(--dm-gold); }
+.scc-fg-scroll-label {
+  font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700;
+  color: var(--fg-scroll-inactive); white-space: nowrap;
+  max-width: 0; overflow: hidden; opacity: 0; transition: max-width 0.2s, opacity 0.2s;
+}
+.scc-fg-scroll-dot-row--reached .scc-fg-scroll-label { color: var(--dm-gold); }
+.scc-fg-scroll-dot-row:hover .scc-fg-scroll-label { max-width: 220px; opacity: 1; }
 .scc-fg-link {
   color: var(--dm-gold); cursor: pointer; text-decoration: underline;
   text-decoration-style: dotted; text-underline-offset: 2px;
@@ -16606,6 +16632,99 @@ function sccFgLoadDocument(num) {
   });
 }
 
+// ── Vertical scroll progress indicator -- one dot+label per real h1
+// section, derived dynamically from the document's own rendered headings
+// (never a hardcoded per-session list, so this works for any future
+// session with zero manual configuration). Labels are the heading text up
+// to its own em dash if it has one ("Beat 3 — The Extractor..." -> "Beat
+// 3"), else the first 3 words -- a real, honest tradeoff: this reads well
+// for every Step/Beat/named-section heading in this project's own real
+// content, and only mediocre-not-broken for the couple of longer,
+// dash-less h1s (e.g. "Something Is Wrong With Gerald" -> "Something Is
+// Wrong"). Flagged in the handoff rather than silently shipped as if it
+// were perfect for every possible future heading.
+function sccFgScrollIndicatorLabel(text) {
+  text = (text || '').trim();
+  var dashIdx = text.indexOf('\u2014');
+  if (dashIdx > 0) return text.slice(0, dashIdx).trim();
+  // A parenthetical aside ("Other Scenarios (live, from Setup)") is never
+  // part of the real short name -- stop before it, same reasoning as the
+  // dash split above. Live-tested this against all 10 of Session 1's real
+  // headings: without this, "Other Scenarios (live," and "Message Board &"
+  // (a bare word-count cut landing mid-parenthetical / on a trailing
+  // ampersand) read as genuinely broken, not just imperfect -- this fixes
+  // both real cases, not a hypothetical one.
+  var parenIdx = text.indexOf('(');
+  if (parenIdx > 0) text = text.slice(0, parenIdx).trim();
+  var words = text.split(/\s+/);
+  var label = words.length <= 3 ? text : words.slice(0, 3).join(' ');
+  return label.replace(/[&,:;-]+$/, '').trim();
+}
+
+function sccFgBuildScrollIndicator() {
+  var wrap = document.getElementById('scc-fg-scroll-indicator');
+  if (!wrap) return;
+  var headings = Array.prototype.slice.call(document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h1'));
+  if (!headings.length) { wrap.innerHTML = ''; wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = headings.map(function(h, i) {
+    var full = h.textContent.trim();
+    return '<div class="scc-fg-scroll-dot-row" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(full) + '">'
+      + '<span class="scc-fg-scroll-label">' + sccEsc(sccFgScrollIndicatorLabel(full)) + '</span>'
+      + '<span class="scc-fg-scroll-dot"></span>'
+    + '</div>';
+  }).join('');
+  sccFgUpdateScrollIndicator();
+}
+
+function sccFgScrollIndicatorJump(i) {
+  var headings = Array.prototype.slice.call(document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h1'));
+  var target = headings[i];
+  if (!target) return;
+  var jumpRow = document.getElementById('scc-fg-jump-row');
+  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
+  var offset = (jumpRow ? jumpRow.getBoundingClientRect().height : 0) + bannerH;
+  var targetTop = target.getBoundingClientRect().top + window.scrollY;
+  // 'auto' (instant), not 'smooth' -- matches sccFgJumpToScenario's own
+  // established convention for this exact "jump to a section" pattern
+  // elsewhere in this file, and avoids a genuinely slow, sluggish-feeling
+  // animated scroll on the longer jumps in a real, long document.
+  window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
+}
+
+// Dot/label turn gold once the reader has scrolled past that section's
+// heading (a small +100px lead so the very top of a section reads as
+// "reached", not the pixel it first appears) -- every earlier section
+// gets the same gold treatment, only sections still ahead stay dark blue,
+// matching "shift as the reader scrolls past" literally rather than a
+// 3-state passed/active/upcoming scheme the ask didn't ask for.
+function sccFgUpdateScrollIndicator() {
+  var wrap = document.getElementById('scc-fg-scroll-indicator');
+  if (!wrap || !wrap.children.length) return;
+  var headings = Array.prototype.slice.call(document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h1'));
+  var scrollPos = window.scrollY + 100;
+  var activeIdx = -1;
+  for (var i = 0; i < headings.length; i++) {
+    if (scrollPos >= headings[i].getBoundingClientRect().top + window.scrollY) activeIdx = i;
+  }
+  var rows = wrap.children;
+  for (var j = 0; j < rows.length; j++) {
+    rows[j].classList.toggle('scc-fg-scroll-dot-row--reached', j <= activeIdx);
+  }
+}
+
+var SCC_FG_SCROLL_LISTENER_BOUND = false;
+function sccFgEnsureScrollListenerBound() {
+  if (SCC_FG_SCROLL_LISTENER_BOUND) return;
+  SCC_FG_SCROLL_LISTENER_BOUND = true;
+  var ticking = false;
+  window.addEventListener('scroll', function() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function() { sccFgUpdateScrollIndicator(); ticking = false; });
+  });
+}
+
 function sccFgDrawDocument(num) {
   var inner = document.getElementById('scc-fg-doc-inner');
   if (!inner) return;
@@ -16620,6 +16739,8 @@ function sccFgDrawDocument(num) {
     inner.innerHTML = openingHtml + '<div class="scc-fg-empty-doc">No Field Guide written for Session ' + num + ' yet.</div>';
     sccFgPopulateScenarioJump();
     SCC_FG_RENDERED_SESSION_NUM = num;
+    sccFgBuildScrollIndicator();
+    sccFgEnsureScrollListenerBound();
     return;
   }
   var footerBlocks = row.blocks.filter(function(b) { return b.type === 'footer'; });
@@ -16631,6 +16752,8 @@ function sccFgDrawDocument(num) {
   sccLiveRenderScenarios();
   sccFgPopulateScenarioJump();
   SCC_FG_RENDERED_SESSION_NUM = num;
+  sccFgBuildScrollIndicator();
+  sccFgEnsureScrollListenerBound();
 }
 
 // ── Remaining scenarios (was "Scenario Reference", the one central section

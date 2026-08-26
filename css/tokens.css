@@ -283,6 +283,12 @@
      brand accent, etc.), so a second gold-ish value here would just be
      the exact one-meaning-two-hexes problem this token block exists to
      avoid. --fg-dialogue-player is new, no existing token matched. */
+  /* Scroll progress indicator (2026-08-26) -- the "dark blue" state for a
+     section not yet reached; turns --dm-gold once the reader scrolls past
+     it. No existing dark-blue token fit this exact role, but --blue-400
+     is already the right value (used elsewhere for dark blue-toned UI) --
+     referenced via a new named token rather than a stray new hex. */
+  --fg-scroll-inactive: var(--blue-400);
   --fg-comedy-text:     #f7ff00;
   --fg-dialogue-player: #9fb3c8;
   --fg-dialogue-npc:    var(--gold);
