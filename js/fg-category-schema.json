@@ -1,0 +1,30 @@
+{
+  "$comment": "Single source of truth for Field Guide box-category styling (colorClass + badge icon/name). Read by dm.html at runtime (fetched into SCC_FG_CATEGORY_STYLE) and by scripts/fg-template.mjs (check/build). Edit this file, not a hardcoded copy in either place — see CLAUDE.md Decision Log for the original SCC_FG_CATEGORY_STYLE object this was extracted from.",
+
+  "categories": {
+    "read_aloud":      { "colorClass": "green",   "badge": { "icon": "&#128214;", "name": "Read Aloud" } },
+    "spoken_dialogue": { "colorClass": "blue",    "badge": { "icon": "&#128172;", "name": "Spoken Dialogue" } },
+    "dm_only":         { "colorClass": "magenta", "badge": { "icon": "&#9888;",  "name": "DM Only" } },
+    "background":      { "colorClass": "magenta", "badge": { "icon": "&#128220;", "name": "Background" } },
+    "why_this_works":  { "colorClass": "magenta", "badge": { "icon": "&#128161;", "name": "Why This Works" } },
+    "if_they_ask":     { "colorClass": "magenta", "badge": { "icon": "&#10067;", "name": "If They Ask" } },
+    "dont_blow_this":  { "colorClass": "red",     "badge": { "icon": "&#9940;",  "name": "Don't Blow This" } },
+    "comedy":          { "colorClass": "yellow",  "badge": { "icon": "&#127183;", "name": "Comedy" } },
+    "loot_shop":       { "colorClass": "gold",    "badge": null },
+    "guide_meta":      { "colorClass": "grey",    "badge": null }
+  },
+
+  "$specialCasedCategories": {
+    "$comment": "These box categories are NOT in `categories` above -- they never read colorClass/badge from this table at all, because sccFgRenderBlock() dispatches them to their own dedicated render function before the generic box case (which is the only consumer of `categories`) ever runs. Listed here so fg-template.mjs's `check` command knows they're recognized categories without treating their absence from `categories` as an unknown-category error. Do not add entries for these to `categories` -- that would imply they use the generic colorClass/badge box rendering, which they don't.",
+    "spoken_dialogue_note": "spoken_dialogue IS also a real key in `categories` above (its own dedicated render function, sccFgRenderSpokenDialogue, reads categories.spoken_dialogue directly for its badge) -- it is not special-cased out of the table, just special-cased out of the *generic* box render path. Listed here only for cross-reference, not as an extra recognized-but-untabled category.",
+    "comedy_inline_note": "comedy (with block.inline === true) is likewise a real key in `categories` -- sccFgRenderComedyInline() also reads categories.comedy for consistency, it just renders as a plain inline paragraph instead of a colored box shell. Not a separate category name.",
+    "quest_beats": "Live, clickable quest-beat status widget (sccFgRenderQuestBeatsBlock). Ignores block.color/category styling entirely -- pulls its own content from SCC_SELECTED.quest + the quests table, not from any box color scheme.",
+    "combat_outcomes": "Branching combat-outcome log widget (sccFgRenderCombatOutcomesBlock). Its own fixed header/styling, no colorClass/badge lookup at all.",
+    "guide_meta_note": "guide_meta IS a real key in `categories` above (colorClass grey, badge null) but sccFgRenderBlock() returns '' for it unconditionally before the generic box case is ever reached -- confirmed intentionally unrendered (the old 'How to Use This Guide' box), not a bug. Data is kept, never displayed."
+  },
+
+  "$recognizedLinkTypes": {
+    "$comment": "The type vocabulary sccFgLinkify() actually resolves for inline [[type:id|Label]] markup (mirrors dm.html's SCC_FG_LINK_TYPES keys). No alias resolution happens here unlike block.featured entries (which accept npc/poi/nation via SCC_FG_FEATURED_TYPE_ALIASES) -- an inline link using an alias type (e.g. [[poi:...]]) will format-match the regex but its click target (sccOpenLookup) has no dedicated 'poi' branch, so fg-template.mjs's `check` flags it as a real, non-resolving type even though the bracket syntax itself is well-formed.",
+    "types": ["character", "creature", "city", "item", "quest", "organization"]
+  }
+}
