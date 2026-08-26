@@ -134,7 +134,9 @@ const KNOWN_BLOCK_TYPES = new Set([
 // dedicated render function before the generic colorClass/badge box case
 // ever runs. See js/fg-category-schema.json's own $specialCasedCategories
 // block for the full reasoning per category.
-const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes']);
+// scenario_cards (2026-08-26) -- Scenario Cards module, replaces the
+// earlier scenario_tabs/approach_tracker categories entirely.
+const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards']);
 
 // The die-emoji skill-check paragraph shape sccFgStyleSkillChecks() looks
 // for inside a box's html, reproduced here only to *validate* -- check

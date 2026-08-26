@@ -11,7 +11,8 @@
     "dont_blow_this":  { "colorClass": "red",     "badge": { "icon": "&#9940;",  "name": "Don't Blow This" } },
     "comedy":          { "colorClass": "yellow",  "badge": { "icon": "&#127183;", "name": "Comedy" } },
     "loot_shop":       { "colorClass": "gold",    "badge": null },
-    "guide_meta":      { "colorClass": "grey",    "badge": null }
+    "guide_meta":      { "colorClass": "grey",    "badge": null },
+    "player_decision": { "colorClass": "gold",    "badge": { "icon": "&#128256;", "name": "Player Decision" } }
   },
 
   "$specialCasedCategories": {
@@ -19,7 +20,8 @@
     "spoken_dialogue_note": "spoken_dialogue IS also a real key in `categories` above (its own dedicated render function, sccFgRenderSpokenDialogue, reads categories.spoken_dialogue directly for its badge) -- it is not special-cased out of the table, just special-cased out of the *generic* box render path. Listed here only for cross-reference, not as an extra recognized-but-untabled category.",
     "comedy_inline_note": "comedy (with block.inline === true) is likewise a real key in `categories` -- sccFgRenderComedyInline() also reads categories.comedy for consistency, it just renders as a plain inline paragraph instead of a colored box shell. Not a separate category name.",
     "quest_beats": "Live, clickable quest-beat status widget (sccFgRenderQuestBeatsBlock). Ignores block.color/category styling entirely -- pulls its own content from SCC_SELECTED.quest + the quests table, not from any box color scheme.",
-    "combat_outcomes": "Branching combat-outcome log widget (sccFgRenderCombatOutcomesBlock). Its own fixed header/styling, no colorClass/badge lookup at all.",
+    "combat_outcomes": "Branching combat-outcome log widget (sccFgRenderCombatOutcomesBlock). Header now renders the real player_decision chip (see `categories` above) instead of a hardcoded icon+label, but the box shell itself still has its own fixed styling, no colorClass/badge lookup for the shell.",
+    "scenario_cards": "Scenario Cards navigation module (sccFgRenderScenarioCardsBlock, 2026-08-26 rebuild) -- any-length array of cards, each with an optional entity portrait, rich block-array content (rendered via the same sccFgRenderDoc every other Field Guide content uses), and an optional decision selector (player_decision chip, click-to-log/unlog via the same shared session_note_entries mechanism combat_outcomes uses). Replaces the earlier scenario_tabs/approach_tracker categories entirely -- both are gone, not kept alongside this.",
     "guide_meta_note": "guide_meta IS a real key in `categories` above (colorClass grey, badge null) but sccFgRenderBlock() returns '' for it unconditionally before the generic box case is ever reached -- confirmed intentionally unrendered (the old 'How to Use This Guide' box), not a bug. Data is kept, never displayed."
   },
 
