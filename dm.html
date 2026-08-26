@@ -6465,7 +6465,7 @@ function showDMToast(msg, type) {
 }
 .scc-beat-status-badge--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border-color: var(--scc-beat-todo-border); }
 .scc-beat-status-badge--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border-color: var(--scc-beat-prog-border); }
-.scc-beat-status-badge--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: rgba(160,160,160,0.3); }
+.scc-beat-status-badge--completed   { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border-color: var(--scc-beat-done-border); }
 /* ── Combat Tracker ── */
 /* ══════════════════ Combat: Figma redesign ══════════════════════════════
    P0tcVgf02XeI13Tz0TtRaX, node 122:483, .scc-cb2-* prefix. Layered over the
@@ -7855,7 +7855,24 @@ function showDMToast(msg, type) {
 .scc-fg-doc-inner li { margin-bottom: 0.3rem; }
 .scc-fg-doc-italic { font-style: italic; color: var(--dm-text-muted) !important; }
 .scc-fg-doc-footer { font-family: var(--font-body); font-size: 0.72rem; color: var(--dm-text-muted); text-align: center; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--scc-border); font-style: italic; }
-.scc-fg-box { border-radius: var(--dm-radius-sm); padding: 0.75rem 1rem; margin: 0.5rem 0 0.75rem; }
+.scc-fg-box { position: relative; border-radius: var(--dm-radius-sm); padding: 0.75rem 1rem; margin: 0.5rem 0 0.75rem; }
+/* ── Corner alert icon -- now a real rendered element (sccFgBoxCornerIconHtml()),
+   not a pure-CSS ::before, since magenta alone covers 4 real categories
+   (dm_only/background/why_this_works/if_they_ask) that each need their OWN
+   icon, not one hardcoded glyph for the whole color family -- a plain
+   ::before can't vary per box without a second data attribute + attr()
+   trick, so this reuses the exact icon each category's own chip badge
+   already shows (style.badge.icon) via a small JS-rendered span instead.
+   Was previously two separate, only-sometimes-correct hardcoded ::before
+   rules (magenta always showed dm_only's warning icon regardless of the
+   box's real category; red happened to be correct since it only ever
+   mapped to one category). One real mechanism now, correct for every
+   category with a chip icon. */
+.scc-fg-box-corner-icon { position: absolute; top: 0.3rem; right: 0.5rem; font-size: 1.3rem; opacity: 0.55; line-height: 1; pointer-events: none; }
+.scc-fg-box--green .scc-fg-box-corner-icon { color: var(--scc-read-aloud-text); }
+.scc-fg-box--blue .scc-fg-box-corner-icon { color: var(--blue); }
+.scc-fg-box--yellow .scc-fg-box-corner-icon { color: #facc15; }
+.scc-fg-box--gold .scc-fg-box-corner-icon { color: var(--gold); }
 /* Clearfix -- required now that .scc-fg-featured-row (below) floats,
    otherwise a box whose only content is a short title + a float taller
    than the rest would collapse its own background/border around nothing,
@@ -7912,16 +7929,7 @@ function showDMToast(msg, type) {
   border: 1px solid var(--dm-only-border);
   border-left: 3px solid var(--dm-only);
 }
-.scc-fg-box--magenta::before {
-  content: '\26A0';
-  position: absolute;
-  top: 0.3rem;
-  right: 0.5rem;
-  font-size: 1.4rem;
-  color: var(--dm-only);
-  opacity: 0.55;
-  line-height: 1;
-}
+.scc-fg-box--magenta .scc-fg-box-corner-icon { color: var(--dm-only); }
 .scc-fg-box--magenta .scc-fg-box-label { color: var(--dm-only); font-size: 0.8rem; padding-right: 1.75rem; }
 .scc-fg-box--magenta p:not([style]) { color: #ffd6fc !important; }
 /* .scc-fg-box--yellow: Comedy Beats. Genuinely bright/saturated yellow, distinct
@@ -7960,10 +7968,7 @@ function showDMToast(msg, type) {
   border: 1px solid var(--red-border-strong);
   border-left: 4px solid var(--red-strong);
 }
-.scc-fg-box--red::before {
-  content: '\26D4'; position: absolute; top: 0.3rem; right: 0.5rem;
-  font-size: 1.3rem; color: var(--red-strong); opacity: 0.6; line-height: 1;
-}
+.scc-fg-box--red .scc-fg-box-corner-icon { color: var(--red-strong); }
 .scc-fg-box--red .scc-fg-box-label { color: var(--red-strong); font-size: 0.8rem; padding-right: 1.75rem; }
 .scc-fg-box--red p { font-weight: 600; }
 .scc-fg-box--red p:not([style]) { color: #ffd9d9 !important; }
@@ -8007,7 +8012,7 @@ function showDMToast(msg, type) {
    is already handled by .scc-fg-box-label's own padding-right (below) --
    no separate reservation needed here since the image floats opposite
    that corner (left, not right). */
-.scc-fg-featured-row { float: left; display: flex; flex-wrap: wrap; gap: 1rem; margin: 0 0.85rem 0.5rem 0; }
+.scc-fg-featured-row { float: left; display: flex; flex-wrap: wrap; gap: 1rem; margin: 0 1.85rem 1.5rem 0; }
 .scc-fg-featured-item { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; width: 88px; }
 .scc-fg-featured-img, .scc-fg-featured-fallback {
   width: 88px; height: 88px; border-radius: 9999px; object-fit: cover;
@@ -8055,11 +8060,35 @@ function showDMToast(msg, type) {
 /* Same "read at the table" legibility requirement as Read Aloud, above. */
 .scc-fg-spoken-line p { font-size: 18px !important; }
 .scc-fg-spoken-line p:last-child { margin-bottom: 0 !important; }
+/* ── Inline DM-only aside within spoken_dialogue box text (box.html) --
+   marks a note the character does NOT actually say (a stage direction, a
+   branching instruction, a parenthetical like "He does not.") as visibly
+   distinct from the real quoted line sitting right next to it, so a DM
+   skimming mid-scene can't mistake one for the other. Real, reusable
+   schema option -- wrap the aside text in
+   <span class="scc-fg-aside">...</span> anywhere inside any spoken_dialogue
+   box's html, not a one-off fix for a single box. Reuses the existing
+   DM-only magenta color language rather than introducing a new hue;
+   deliberately NOT italic, since real dialogue lines are already
+   italicized via <em> here -- the two need to read as different things,
+   not two shades of the same emphasis. */
+.scc-fg-aside { color: var(--dm-only); font-style: normal; font-weight: 600; }
 /* ── Comedy, inline mode — reads as part of the narration (a normal
    paragraph), not set apart in a box. Full-box mode (category=comedy,
    inline!=true) still uses .scc-fg-box--yellow above, unchanged. */
 .scc-fg-comedy-inline { font-style: italic; color: #fef08a; }
 .scc-fg-comedy-inline-icon { margin-right: 0.3rem; opacity: 0.85; }
+/* ── Staging-cue paragraph (type:p, category:staging) -- same "inline,
+   lightweight, no full box" treatment as comedy inline above, for the
+   opposite reason: this is real staging/transition information (where an
+   NPC is standing, how long they've been there) that reads as missable
+   plain text next to full colored boxes, not flavor that needs setting
+   apart. Bold + a small pin icon, no color change and no box -- enough to
+   catch a DM's eye scanning the page without matching a full box's visual
+   weight. Real, reusable schema option (category on any type:p block), not
+   a one-off fix for a single sentence. */
+.scc-fg-staging-cue { font-weight: 600; }
+.scc-fg-staging-cue-icon { margin-right: 0.35rem; opacity: 0.85; }
 /* ── Skill checks (sccFgStyleSkillChecks()) — a real container instead of
    plain paragraph text, so "roll for this" reads as its own distinct thing
    scanning the page mid-session, not just another line of prose. Own
@@ -8190,13 +8219,13 @@ function showDMToast(msg, type) {
    text. Real link to the quest + real click-to-advance status, backed by
    the exact same save path (sccCycleBeatStatus) the Quests tab itself
    uses -- one real write path, not a second one. */
-.scc-fg-quest-beats { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; }
+.scc-fg-quest-beats { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; background-color: var(--blue-600); }
 .scc-fg-quest-beats-header {
-  padding: 0.55rem 0.85rem; background: var(--dm-surface-high); cursor: pointer;
+  padding: 0.55rem 0.85rem; background: var(--dm-gold); cursor: pointer;
   font-family: var(--font-display); font-size: 0.95rem; font-weight: 700;
   border-bottom: 1px solid var(--scc-border);
 }
-.scc-fg-quest-beats-header .scc-fg-link { font-size: inherit; }
+.scc-fg-quest-beats-header .scc-fg-link { font-size: inherit; color: var(--dm-gold-text-on); }
 .scc-fg-beat-row {
   display: flex; align-items: center; gap: 0.6rem;
   padding: 0.5rem 0.85rem; border-top: 1px solid var(--scc-border);
@@ -8205,23 +8234,34 @@ function showDMToast(msg, type) {
 .scc-fg-beat-row:first-of-type { border-top: none; }
 .scc-fg-beat-row:hover { background: rgba(255,255,255,0.02); }
 .scc-fg-beat-num {
-  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
-  background: var(--dm-surface); border: 1px solid var(--scc-border-mid); color: var(--dm-text-muted);
+  font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700;
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid); color: var(--dm-text);
 }
-.scc-fg-beat-row--completed .scc-fg-beat-num { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
-.scc-fg-beat-row--in_progress .scc-fg-beat-num { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
-.scc-fg-beat-title { flex: 1; font-family: var(--font-sans); font-size: 0.82rem; color: var(--dm-text); }
-.scc-fg-beat-row--completed .scc-fg-beat-title { color: var(--dm-text-muted); text-decoration: line-through; text-decoration-color: var(--green-border); }
-.scc-fg-beat-xp { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-gold); flex-shrink: 0; }
+/* Real bug, not just a size/spec pass: these two rules (plus the
+   .scc-fg-beat-status--* rules below) used to be their own independent
+   hardcoded colors -- grey/gold/green -- completely disconnected from the
+   Quest tab's real shared semantic tokens (--scc-beat-todo/prog/done-*),
+   which is why this widget's beat colors never matched the Quest tab's own
+   colors for the identical states. Both widgets now point at the same 3
+   tokens, so there's one real color source instead of two independently
+   drifting ones. not_started had no --scc-fg-beat-num rule at all before
+   (fell through to the base rule's grey) -- added explicitly so all 3
+   states are real, not 2-explicit-plus-a-fallback. */
+.scc-fg-beat-row--not_started .scc-fg-beat-num { background: var(--scc-beat-todo-bg); border-color: var(--scc-beat-todo-border); color: var(--scc-beat-todo-text); }
+.scc-fg-beat-row--completed .scc-fg-beat-num { background: var(--scc-beat-done-bg); border-color: var(--scc-beat-done-border); color: var(--scc-beat-done-text); }
+.scc-fg-beat-row--in_progress .scc-fg-beat-num { background: var(--scc-beat-prog-bg); border-color: var(--scc-beat-prog-border); color: var(--scc-beat-prog-text); }
+.scc-fg-beat-title { flex: 1; font-family: var(--font-sans); font-size: 1.0rem; color: var(--dm-text); }
+.scc-fg-beat-row--completed .scc-fg-beat-title { color: var(--dm-text-muted); text-decoration: line-through; text-decoration-color: var(--scc-beat-done-border); }
+.scc-fg-beat-xp { font-family: var(--font-sans); font-size: 1rem; color: var(--dm-gold); flex-shrink: 0; }
 .scc-fg-beat-status {
-  flex-shrink: 0; font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700;
+  flex-shrink: 0; font-family: var(--font-sans); font-size: 1rem; font-weight: 700;
   padding: 0.15rem 0.5rem; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.03em;
 }
-.scc-fg-beat-status--not_started { background: rgba(255,255,255,0.06); color: var(--dm-text-muted); border: 1px solid var(--scc-border-mid); }
-.scc-fg-beat-status--in_progress { background: var(--dm-gold-dim); color: var(--dm-gold); border: 1px solid var(--scc-border-gold); }
-.scc-fg-beat-status--completed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+.scc-fg-beat-status--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border: 1px solid var(--scc-beat-todo-border); }
+.scc-fg-beat-status--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border: 1px solid var(--scc-beat-prog-border); }
+.scc-fg-beat-status--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border: 1px solid var(--scc-beat-done-border); }
 /* ── "Roll Initiative" — real new-tab link into Session Details' Combat
    sub-panel, a saved combat_encounters row already loaded. Anchor tag, not
    a JS window.open() button, so it genuinely inherits sessionStorage.dm_auth
@@ -8268,6 +8308,31 @@ function showDMToast(msg, type) {
 .scc-fg-outcome-label { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text); }
 .scc-fg-outcome-desc { font-family: var(--font-body); font-size: 0.78rem; color: var(--dm-text-muted); margin-top: 0.15rem; line-height: 1.5; }
 .scc-fg-outcome-logged-tag { font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--green); margin-top: 0.3rem; }
+/* ── Shared card-tab component (box.category === 'scenario_tabs' /
+   'approach_tracker') -- same clickable-card look for both: scenario_tabs
+   uses --active to show which location's content is currently displayed
+   (a pure display switch, not persisted), approach_tracker uses --logged
+   to show which real DM decision has been recorded (persisted, same shape
+   as .scc-fg-outcome-row--logged above). Gold-accented per the box styling/
+   gold-accent visual language already established for interactive state in
+   this document (quest_beats' in_progress treatment, Roll Initiative). */
+.scc-fg-tab-group { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); padding: 0.75rem 0.85rem; margin: 0.5rem 0 0.75rem; background: var(--dm-surface-high); }
+.scc-fg-tab-group-label { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--dm-text); margin-bottom: 0.6rem; }
+.scc-fg-tab-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.scc-fg-tab-card {
+  flex: 1 1 auto; min-width: 160px; text-align: center; cursor: pointer;
+  padding: 0.5rem 0.75rem; border-radius: var(--dm-radius-sm);
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--dm-text-muted);
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+.scc-fg-tab-card:hover { border-color: var(--scc-border-gold); color: var(--dm-text); }
+.scc-fg-tab-card--active, .scc-fg-tab-card--logged {
+  background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold);
+}
+.scc-fg-tab-body { margin-top: 0.75rem; }
+.scc-fg-tab-body .scc-fg-table { margin: 0; }
+.scc-fg-tab-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
 /* ── Session-opening empty state -- matches Companions & Attachments'
    "None yet" + "+ Add" language, rather than rendering nothing. ── */
 .scc-fg-opening-empty { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.6rem; }
@@ -15721,6 +15786,23 @@ var SCC_FG_CATEGORY_STYLE = {
   guide_meta:      { colorClass: 'grey',    badge: null }
 };
 
+// Corner alert icon -- reuses each category's own chip badge icon
+// (above) so the meaning stays consistent between the chip and the corner
+// mark, rather than a second, independently-maintained icon choice.
+// loot_shop has no badge (see the comment above -- it already gets its own
+// subtype icon prefixed onto the label) -- falls back to that exact same
+// subtype icon here too, rather than being the one category with no
+// corner mark at all.
+function sccFgBoxCornerIconHtml(category, subtype) {
+  var style = SCC_FG_CATEGORY_STYLE[category];
+  if (style && style.badge) return '<span class="scc-fg-box-corner-icon">' + style.badge.icon + '</span>';
+  if (category === 'loot_shop') {
+    var subtypeInfo = SCC_FG_LOOT_SUBTYPES.find(function(s) { return s.id === subtype; });
+    return '<span class="scc-fg-box-corner-icon">' + (subtypeInfo ? subtypeInfo.icon : '&#129689;') + '</span>';
+  }
+  return '';
+}
+
 // Turns [[type:id|Label]] into a clickable span wired to the existing lookup drawer.
 // Manual, DM-authored syntax — not auto-detected — per the confirmed design decision
 // (this app's other inline links, quest.related[], are explicit too; auto-linking
@@ -15884,6 +15966,17 @@ function sccFgRenderComedyInline(b) {
   + '</p>';
 }
 
+// Staging-cue paragraph (type:p, category:staging) -- a short staging/
+// transition sentence a DM needs to actually catch (where someone's
+// standing, how long they've been there), same "inline, no full box"
+// mechanics as comedy inline above -- reusable via a category on any
+// type:p block, not hardcoded to one sentence.
+function sccFgRenderStagingCue(b) {
+  return '<p class="scc-fg-staging-cue"><span class="scc-fg-staging-cue-icon">&#128205;</span>'
+    + sccFgLinkify(b.html || '')
+  + '</p>';
+}
+
 // Spoken Dialogue — a distinct callout (speaker portrait, name, pronouns,
 // optional tone_note), not a plain colored box. Degrades gracefully to a
 // plain blue box if the speaker reference doesn't resolve to a real entity
@@ -15964,8 +16057,10 @@ function sccFgRenderSpokenDialogue(b) {
   var spokenBadgeHtml = (spokenStyle && spokenStyle.badge)
     ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--spoken_dialogue">' + spokenStyle.badge.icon + '</span> ' + sccEsc(spokenStyle.badge.name) + '</div>'
     : '';
+  var spokenCornerIconHtml = sccFgBoxCornerIconHtml('spoken_dialogue');
   if (!entity) {
     return '<div class="scc-fg-box scc-fg-box--blue">'
+      + spokenCornerIconHtml
       + spokenBadgeHtml
       + featuredHtml
       + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
@@ -15984,6 +16079,7 @@ function sccFgRenderSpokenDialogue(b) {
       + '<div class="scc-fg-vis-wrap" style="display:none">' + visHtml + '</div>'
     : '';
   return '<div class="scc-fg-box scc-fg-box--blue scc-fg-spoken">'
+    + spokenCornerIconHtml
     + spokenBadgeHtml
     + featuredHtml
     + '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
@@ -16137,6 +16233,140 @@ function sccFgRenderCombatOutcomesBlock(b) {
   return sccFgOneCombatOutcomesHtml(b);
 }
 
+// ── Scenario tabs widget (box.category === 'scenario_tabs') ──
+// A DM-authored set of {label, group} pairs, each `group` matching a real
+// session_notes.session_scenarios group name by exact string -- the widget
+// itself holds no scenario content, it's purely a display switch over data
+// that already exists there. Reusable, not hardcoded to Beat 1: any future
+// Step/Beat that wants "pick a location, see that location's scenarios" gets
+// this by authoring a scenario_tabs block with the right group names, same
+// as quest_beats/combat_outcomes are reusable via their own block fields.
+// No persistence -- which tab is showing is pure display state, not a DM
+// decision worth logging (contrast with approach_tracker below, which is).
+function sccFgScenarioTabDomId(blockIdx) {
+  return 'scc-fg-scenariotabs-' + blockIdx;
+}
+
+function sccFgScenarioTabBodyHtml(tab, groups) {
+  if (!tab) return '<div class="scc-fg-tab-empty">No content.</div>';
+  var group = groups.find(function(g) { return g.group === tab.group; });
+  var scenarios = (group && group.scenarios) || [];
+  if (!scenarios.length) return '<div class="scc-fg-tab-empty">No scenarios found for "' + sccEsc(tab.group || '') + '".</div>';
+  var rows = scenarios.map(function(s) {
+    return '<tr><td>' + sccFgLinkify(s.action || '') + '</td><td>' + sccFgLinkify(s.response || '') + '</td></tr>';
+  }).join('');
+  return '<table class="scc-fg-table scc-fg-table--scenario"><thead><tr><th>Action</th><th>Response</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function sccFgRenderScenarioTabsBlock(b, idx) {
+  var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
+  var groups = (session && session.session_scenarios) || [];
+  var tabs = Array.isArray(b.tabs) ? b.tabs : [];
+  var domId = sccFgScenarioTabDomId(idx);
+  var tabsHtml = tabs.map(function(t, i) {
+    return '<div class="scc-fg-tab-card' + (i === 0 ? ' scc-fg-tab-card--active' : '') + '" onclick="sccFgSwitchScenarioTab(' + idx + ', ' + i + ', this)">' + sccEsc(t.label || t.group || '') + '</div>';
+  }).join('');
+  return '<div class="scc-fg-tab-group" id="' + domId + '">'
+    + (b.label ? '<div class="scc-fg-tab-group-label">' + sccEsc(b.label) + '</div>' : '')
+    + '<div class="scc-fg-tab-row">' + tabsHtml + '</div>'
+    + '<div class="scc-fg-tab-body" id="' + domId + '-body">' + sccFgScenarioTabBodyHtml(tabs[0], groups) + '</div>'
+  + '</div>';
+}
+
+function sccFgSwitchScenarioTab(blockIdx, tabIdx, el) {
+  var row = SCC_FG_DOC_CACHE[sccFgActiveSessionNum()];
+  var blocks = (row && row.blocks) || [];
+  var b = blocks[blockIdx];
+  if (!b || !Array.isArray(b.tabs)) return;
+  var tab = b.tabs[tabIdx];
+  var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
+  var groups = (session && session.session_scenarios) || [];
+  var domId = sccFgScenarioTabDomId(blockIdx);
+  var bodyEl = document.getElementById(domId + '-body');
+  if (bodyEl) bodyEl.innerHTML = sccFgScenarioTabBodyHtml(tab, groups);
+  var rowEl = document.getElementById(domId);
+  if (rowEl) {
+    Array.prototype.forEach.call(rowEl.querySelectorAll('.scc-fg-tab-card'), function(c) { c.classList.remove('scc-fg-tab-card--active'); });
+    if (el) el.classList.add('scc-fg-tab-card--active');
+  }
+}
+
+// ── Approach tracker widget (box.category === 'approach_tracker') ──
+// Same card UI as scenario_tabs above (.scc-fg-tab-card), but a genuinely
+// different behavior: this records a real DM decision ("how did the party
+// approach"), not a display switch, so it persists the same way
+// combat_outcomes does -- one session_note_entries row (category 'quest'),
+// "already picked" derived by matching against SCC_FG_COMBAT_OUTCOME_LOG_CACHE
+// (the exact same cache combat_outcomes already populates and reads, since
+// both are just "category=quest session_note_entries for this session" --
+// no reason for a second, parallel cache of the identical query). Deliberately
+// reuses combat_outcomes' own title/log/re-render plumbing shape rather than
+// inventing a new one, per the instruction to keep this consistent with the
+// existing Fled/Captured tracker it sits next to.
+function sccFgApproachTitle(beatLabel, optionLabel) {
+  return 'Approach — ' + beatLabel + ': ' + optionLabel;
+}
+
+function sccFgApproachDomId(beatLabel) {
+  var slug = String(beatLabel || 'approach').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return 'scc-fg-approach-' + slug;
+}
+
+function sccFgOneApproachTrackerHtml(b) {
+  var num = sccFgActiveSessionNum();
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  var options = Array.isArray(b.options) ? b.options : [];
+  var domId = sccFgApproachDomId(b.beat_label);
+  var cards = options.map(function(o) {
+    var title = sccFgApproachTitle(b.beat_label || '', o.label || '');
+    var loggedRow = log.find(function(n) { return n.title === title; }) || null;
+    var cls = 'scc-fg-tab-card' + (loggedRow ? ' scc-fg-tab-card--logged' : '');
+    return '<div class="' + cls + '"'
+        + (auditLocked ? '' : ' onclick="sccFgLogApproach(this)" title="Click to log how this actually started"')
+        + ' data-beat-label="' + sccEsc(b.beat_label || '') + '" data-option-label="' + sccEsc(o.label || '') + '">'
+      + sccEsc(o.label || '') + (loggedRow ? ' &#10003;' : '')
+    + '</div>';
+  }).join('');
+  return '<div class="scc-fg-tab-group" id="' + domId + '">'
+    + '<div class="scc-fg-tab-group-label">' + sccEsc(b.label || 'How did they approach?') + '</div>'
+    + '<div class="scc-fg-tab-row">' + cards + '</div>'
+  + '</div>';
+}
+
+function sccFgFindApproachTrackerBlock(num, beatLabel) {
+  var row = SCC_FG_DOC_CACHE[num];
+  var blocks = (row && row.blocks) || [];
+  return blocks.find(function(bl) { return bl.type === 'box' && bl.category === 'approach_tracker' && (bl.beat_label || '') === beatLabel; }) || null;
+}
+
+function sccFgLogApproach(el) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — can\'t log an approach here', 'error'); return; }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var beatLabel = el.dataset.beatLabel || '';
+  var optionLabel = el.dataset.optionLabel || '';
+  var title = sccFgApproachTitle(beatLabel, optionLabel);
+  fetch(SCC_URL + '/rest/v1/session_note_entries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ session_number: num, category: 'quest', title: title, content: '' })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not log approach', 'error'); return; }
+    showDMToast('Logged: ' + optionLabel, 'success');
+    sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
+      SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+      var wrapEl = document.getElementById(sccFgApproachDomId(beatLabel));
+      var block = sccFgFindApproachTrackerBlock(num, beatLabel);
+      if (wrapEl && block) wrapEl.outerHTML = sccFgOneApproachTrackerHtml(block);
+    });
+  }).catch(function() { showDMToast('Could not log approach', 'error'); });
+}
+
+function sccFgRenderApproachTrackerBlock(b) {
+  return sccFgOneApproachTrackerHtml(b);
+}
+
 function sccFgRenderBlock(b, idx) {
   switch (b.type) {
     // title/subtitle/tagline/meta — the old hardcoded document header block
@@ -16162,7 +16392,7 @@ function sccFgRenderBlock(b, idx) {
       return '<div class="scc-fg-h2-featured-wrap">' + h2FeaturedHtml + '<div class="scc-fg-doc-h2 scc-fg-doc-h2--featured">' + sccEsc(b.text) + '</div></div>';
     }
     case 'italic':   return '<p class="scc-fg-doc-italic">' + sccFgLinkify(b.html) + '</p>';
-    case 'p':        return '<p>' + sccFgLinkify(b.html) + '</p>';
+    case 'p':        return (b.category === 'staging') ? sccFgRenderStagingCue(b) : '<p>' + sccFgLinkify(b.html) + '</p>';
     case 'list':     return '<' + (b.tag || 'ul') + '>' + sccFgLinkify(b.html) + '</' + (b.tag || 'ul') + '>';
     case 'table':    return sccFgRenderTableBlock(b);
     case 'footer':   return '<div class="scc-fg-doc-footer">' + sccFgLinkify(b.html) + '</div>';
@@ -16176,6 +16406,8 @@ function sccFgRenderBlock(b, idx) {
       if (b.category === 'comedy' && b.inline) return sccFgRenderComedyInline(b);
       if (b.category === 'quest_beats') return sccFgRenderQuestBeatsBlock(b);
       if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b);
+      if (b.category === 'scenario_tabs') return sccFgRenderScenarioTabsBlock(b, idx);
+      if (b.category === 'approach_tracker') return sccFgRenderApproachTrackerBlock(b);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
       var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
       // Loot/shop boxes get a category icon prefix independent of color — reinforces
@@ -16225,7 +16457,9 @@ function sccFgRenderBlock(b, idx) {
       var featuredHtml = sccFgRenderFeatured(b.featured);
       var boxTitleHtml = catBadge + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '');
       var headerHtml = featuredHtml + (boxTitleHtml ? '<div class="scc-fg-box-header-right">' + boxTitleHtml + '</div>' : '');
+      var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
       return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
+        + cornerIconHtml
         + headerHtml
         + sccFgLinkify(b.html || '')
         + combatBtnHtml
@@ -16676,8 +16910,14 @@ function sccFgRenderOpeningSection(num) {
       + '<div class="scc-fg-player-ctx-text">' + sccFgPlainTextHtml(row.context_text) + '</div>'
     + '</div>';
   }).join('') + '</div>') : '';
+  // Was "Session Opening" -- literally reversed the words of the Field
+  // Guide document's own "Opening the Session" h1 right below it, two
+  // different things (this is the pre-session recap card: last time's
+  // status/location/DM notes/per-player context; the document's own
+  // heading is this session's actual opening beat). Renamed to something
+  // clearly distinct rather than a near-synonym.
   return '<div class="scc-fg-opening" id="scc-fg-opening">'
-    + '<div class="scc-fg-doc-h1">Session Opening</div>'
+    + '<div class="scc-fg-doc-h1">Session Recap</div>'
     + (locHtml || (session ? sccFgOpeningEmptyHtml('location', 'Location') : ''))
     + (readAloud ? '<div class="scc-fg-box scc-fg-box--green"><div class="scc-fg-box-label">Read Aloud</div>' + sccFgPlainTextHtml(readAloud) + '</div>' : (session ? sccFgOpeningEmptyHtml('read_aloud', 'Read Aloud') : ''))
     + (dmNotes ? '<div class="scc-fg-box scc-fg-box--magenta"><div class="scc-fg-box-cat-badge">&#9888; DM Only</div>' + sccFgPlainTextHtml(dmNotes) + '</div>' : (session ? sccFgOpeningEmptyHtml('dm_notes', 'DM Notes') : ''))
@@ -16938,7 +17178,10 @@ function sccFgRenderQuickAttach(qa) {
     return '<div class="scc-fg-quickattach scc-fg-quickattach--done">&#10003; ' + sccEsc(creature.name) + ' is already ' + sccEsc(pc.name.split(' ')[0]) + '&#8217;s companion</div>';
   }
   if (SCC_VIEWING_HISTORY) return ''; // read-only audit view -- no write control here at all, same as every other Field Guide action
-  return '<button type="button" class="scc-btn-sm scc-fg-quickattach" onclick="sccFgQuickAttach(this,\'' + escQ(qa.character_id) + '\',\'' + escQ(qa.creature_id) + '\',\'' + escQ(qa.mode || 'situational') + '\')">+ Add ' + sccEsc(creature.name) + ' as ' + sccEsc(pc.name.split(' ')[0]) + "'s Companion</button>";
+  // Was scc-btn-sm (plain grey outline) -- inconsistent with the app's
+  // standard gold primary-action button used elsewhere in DM Tools (e.g.
+  // Roll Initiative); scc-gold-btn-sm is that real, established class.
+  return '<button type="button" class="scc-gold-btn-sm scc-fg-quickattach" onclick="sccFgQuickAttach(this,\'' + escQ(qa.character_id) + '\',\'' + escQ(qa.creature_id) + '\',\'' + escQ(qa.mode || 'situational') + '\')">+ Add ' + sccEsc(creature.name) + ' as ' + sccEsc(pc.name.split(' ')[0]) + "'s Companion</button>";
 }
 function sccFgQuickAttach(btn, characterId, creatureId, mode) {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — attachments are read-only here', 'error'); return; }
@@ -22545,7 +22788,29 @@ function sccOpenLookup(type, id) {
     newTabUrl = sccBuildManageEditUrl('creature', cr.id);
     var abMod = function(score){ if(!score) return '—'; var m=Math.floor((score-10)/2); return (m>=0?'+':'')+m; };
     var hasAbilities = cr.str||cr.dex||cr.con||cr.int||cr.wis||cr.cha;
+    // Real bug: this was the one Quick Look type with no .scc-ql-header/
+    // portrait block at all -- organization/item/region (and character/city
+    // via their own shared header builders) all render one via the same
+    // .scc-ql-portrait/.scc-ql-portrait-fallback pattern; creature just
+    // dropped straight into the stat block. Confirmed live: Pocketmoles has
+    // a real creatures.image URL that already renders correctly as an
+    // inline thumbnail elsewhere on this same page -- the data was never
+    // the problem, this render path just never read it.
+    var crPortraitHtml = cr.image
+      ? '<img class="scc-ql-portrait" src="' + sccEsc(cr.image) + '" onerror="this.style.display=\'none\'" alt="">'
+      : '<div class="scc-ql-portrait-fallback">' + sccEsc((cr.name||'?').charAt(0)) + '</div>';
     html = (cr.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(cr.read_aloud)+'</div></div>':'')
+      + '<div class="scc-ql-header">'
+        + crPortraitHtml
+        + '<div class="scc-ql-header-info">'
+          + '<div class="scc-ql-name">' + sccEsc(cr.name) + '</div>'
+          + (cr.tier || cr.category ? '<div class="scc-ql-role">'
+              + (cr.tier ? '<span class="scc-ql-bold">Tier:</span> ' + sccEsc(cr.tier) : '')
+              + (cr.tier && cr.category ? ' &nbsp;·&nbsp; ' : '')
+              + (cr.category ? '<span class="scc-ql-bold">Category:</span> ' + sccEsc(cr.category) : '')
+            + '</div>' : '')
+        + '</div>'
+      + '</div>'
       + '<div class="scc-stat-block">'
       + '<div class="scc-stat-block-header"><div class="scc-stat-block-name">'+sccEsc(cr.name)+'</div><div class="scc-stat-block-type">'+sccEsc((cr.size||'')+' '+(cr.creature_type||'')+(cr.creature_alignment?', '+cr.creature_alignment:''))+'</div></div>'
       + '<div class="scc-stat-block-body">'
