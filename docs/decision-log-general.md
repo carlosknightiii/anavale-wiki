@@ -4,6 +4,12 @@
 
 ---
 
+**2026-08-23 — Added anon INSERT/UPDATE RLS policies to the `nations` table. Supabase-only, no code changed.**
+`nations` was missing the anon `INSERT`/`UPDATE` RLS policies that `regions`/`cities`/`creatures`/`pois`/`items`/`organizations`/`world_characters` already had — confirmed via `pg_policies` before touching anything, not assumed. Needed so the new bulk image upload script (`anavale-wiki-bulk-image-upload` branch, `scripts/bulk-image-upload.mjs`) can write nation images end-to-end: without these, the anon key can `SELECT` a nation row to confirm it exists but can't `PATCH` its `image` column after a successful Storage upload, silently failing every nation-table row in a batch. Applied directly via Supabase migration (`add_nations_anon_write_policies`, `20260823081628`), not through this repo — confirmed live via `pg_policies` afterward, `nations` now has `nations_anon_insert`/`nations_anon_update` matching the other 7 world tables exactly.
+
+
+---
+
 **2026-08-21 (new session, process note — two "how an NPC should sound" systems, not a naming collision) — `CLAUDE.md`.**
 Confirmed with the DM: `[Voice: ...]` bracketed text inside `read_aloud` is pre-existing DM performance direction — how to act the line out loud at the table, nothing to do with audio. The new `elevenlabs_voice_id`/`voice_notes` columns (built on the still-uncommitted `npc-voices` branch, confirmed via a read-only investigation of that worktree's diff — not modified, per explicit instruction not to touch active work in progress) pick an actual synthesized voice for TTS playback, a different concept entirely. The branch's own Preview Voice feature (`sccStripVoiceDirection()`) already strips `[Voice: ...]` text before sending it to ElevenLabs, so the two never actually overlap. Both stay — genuinely different purposes, not something that needs reconciling.
 
