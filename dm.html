@@ -8463,26 +8463,39 @@ function showDMToast(msg, type) {
   font-size: 0.68rem;
 }
 .scc-fg-outcomes-intro { padding: 0.6rem 0.85rem 0; margin: 0 !important; font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
+.scc-fg-outcome-wrap { border-top: 1px solid var(--scc-border); }
+.scc-fg-outcome-wrap:first-of-type { border-top: none; }
+/* The clickable "log this as what happened" strip -- deliberately just
+   the label/checkmark, NOT a wrapper around the outcome's own rich
+   content below (item 8, 2026-08-27: descriptions became real category
+   boxes, which can render their own interactive elements like entity
+   links; those need to stay independently clickable, not swallowed by a
+   parent onclick that would also toggle the log entry on every click
+   inside them). */
 .scc-fg-outcome-row {
   display: flex; align-items: flex-start; gap: 0.6rem;
-  padding: 0.6rem 0.85rem; border-top: 1px solid var(--scc-border);
-  cursor: pointer; transition: background 0.1s;
+  padding: 0.6rem 0.85rem; cursor: pointer; transition: background 0.1s;
 }
-.scc-fg-outcome-row:first-of-type { border-top: none; }
 .scc-fg-outcome-row:hover { background: rgba(255,255,255,0.02); }
-.scc-fg-outcome-row--logged { background: var(--green-dim); }
-.scc-fg-outcome-row--logged:hover { background: var(--green-dim); }
+.scc-fg-outcome-wrap--logged .scc-fg-outcome-row { background: var(--green-dim); }
+.scc-fg-outcome-wrap--logged .scc-fg-outcome-row:hover { background: var(--green-dim); }
 .scc-fg-outcome-check {
   width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 0.1rem;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.7rem; font-weight: 700; color: var(--green);
   border: 1px solid var(--scc-border-mid);
 }
-.scc-fg-outcome-row--logged .scc-fg-outcome-check { border-color: var(--green-border); }
+.scc-fg-outcome-wrap--logged .scc-fg-outcome-check { border-color: var(--green-border); }
 .scc-fg-outcome-body { flex: 1; min-width: 0; }
 .scc-fg-outcome-label { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text); }
 .scc-fg-outcome-desc { font-family: var(--font-body); font-size: 0.78rem; color: var(--dm-text-muted); margin-top: 0.15rem; line-height: 1.5; }
 .scc-fg-outcome-logged-tag { font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--green); margin-top: 0.3rem; }
+/* Real category box content (DM Only, Read Aloud, etc.), sibling of the
+   clickable row above, not nested inside it -- padding matches the row's
+   own horizontal padding so a box's left/right edges align with the
+   label above it; its own box margin provides top/bottom spacing. */
+.scc-fg-outcome-content { padding: 0 0.85rem 0.6rem; }
+.scc-fg-outcome-content .scc-fg-box:last-child { margin-bottom: 0; }
 /* ── Scenario Cards module (box.category === 'scenario_cards',
    2026-08-26 rebuild) -- replaces scenario_tabs + approach_tracker
    entirely, both fully removed. One reusable component covers both of
@@ -16493,27 +16506,55 @@ function sccFgCombatOutcomesDomId(beatLabel) {
   return 'scc-fg-outcomes-' + slug;
 }
 
-function sccFgOneCombatOutcomesHtml(b) {
+// ctx is optional -- undefined for a top-level combat_outcomes block
+// (rerender-by-label + getElementById, the original behavior), or
+// { scenarioCardsDomId, cardIdx } when rendered as nested Scenario Card
+// content (item 8, 2026-08-27: real bug found and fixed here, not just
+// the rich-content ask -- combat_outcomes now nests inside Beat 3's
+// Talked/Attacked cards, but SCC_FG_LOG_RERENDER.combat_outcomes only
+// ever searched TOP-LEVEL blocks, so logging an outcome correctly wrote
+// to Supabase but the click handler's own outerHTML replacement silently
+// found nothing and the row never visually updated to show it was
+// logged -- exactly the risk flagged when combat_outcomes was nested).
+// When ctx is set, the row's rerender key points at the SAME
+// scenario_cards redraw machinery decision rows already use instead of
+// a label-keyed lookup that can't see inside nested card content.
+function sccFgOneCombatOutcomesHtml(b, ctx) {
   var num = sccFgActiveSessionNum();
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
   var auditLocked = !!SCC_VIEWING_HISTORY;
   var outcomes = Array.isArray(b.outcomes) ? b.outcomes : [];
   var domId = sccFgCombatOutcomesDomId(b.label);
+  var rerenderType = (ctx && ctx.scenarioCardsDomId != null) ? 'scenario_cards' : 'combat_outcomes';
+  var rerenderKey = (ctx && ctx.scenarioCardsDomId != null) ? (ctx.scenarioCardsDomId + '|' + ctx.cardIdx) : (b.label || '');
   var rows = outcomes.map(function(o) {
     var title = sccFgCombatOutcomeTitle(b.label || '', o.label || '');
     var loggedRow = log.find(function(n) { return n.title === title; }) || null;
-    var cls = 'scc-fg-outcome-row' + (loggedRow ? ' scc-fg-outcome-row--logged' : '');
-    return '<div class="' + cls + '"'
+    // Outcome descriptions now support the same rich block-array content
+    // as Scenario Cards (item 8, 2026-08-27) -- o.blocks, rendered via
+    // sccFgRenderDoc so a "Fled at low HP" or "Captured" outcome can be a
+    // real DM Only / Read Aloud box instead of flat plain text. o.description
+    // (a plain string) stays as the fallback for any outcome that hasn't
+    // been migrated yet, and is still what gets written to the log entry's
+    // own content field either way -- a short plain-text summary is more
+    // useful there than serialized HTML.
+    var contentHtml = Array.isArray(o.blocks) && o.blocks.length
+      ? '<div class="scc-fg-outcome-content">' + sccFgRenderDoc(o.blocks) + '</div>'
+      : (o.description ? '<div class="scc-fg-outcome-content"><div class="scc-fg-outcome-desc">' + sccEsc(o.description) + '</div></div>' : '');
+    var wrapCls = 'scc-fg-outcome-wrap' + (loggedRow ? ' scc-fg-outcome-wrap--logged' : '');
+    return '<div class="' + wrapCls + '">'
+      + '<div class="scc-fg-outcome-row"'
         + (auditLocked ? '' : ' onclick="sccFgToggleLoggedEntry(this)" title="' + (loggedRow ? 'Click to remove this log entry' : 'Click to log this as what happened') + '"')
         + ' data-log-title="' + sccEsc(title) + '" data-log-desc="' + sccEsc(o.description || '') + '"'
-        + ' data-log-rerender="combat_outcomes" data-log-rerender-key="' + sccEsc(b.label || '') + '"'
+        + ' data-log-rerender="' + sccEsc(rerenderType) + '" data-log-rerender-key="' + sccEsc(rerenderKey) + '"'
         + ' data-outcome-label="' + sccEsc(o.label || '') + '">'
-      + '<span class="scc-fg-outcome-check">' + (loggedRow ? '&#10003;' : '') + '</span>'
-      + '<div class="scc-fg-outcome-body">'
-        + '<div class="scc-fg-outcome-label">' + sccEsc(o.label || '') + '</div>'
-        + '<div class="scc-fg-outcome-desc">' + sccEsc(o.description || '') + '</div>'
-        + (loggedRow ? '<div class="scc-fg-outcome-logged-tag">Logged as what happened — click to remove</div>' : '')
+        + '<span class="scc-fg-outcome-check">' + (loggedRow ? '&#10003;' : '') + '</span>'
+        + '<div class="scc-fg-outcome-body">'
+          + '<div class="scc-fg-outcome-label">' + sccEsc(o.label || '') + '</div>'
+          + (loggedRow ? '<div class="scc-fg-outcome-logged-tag">Logged as what happened — click to remove</div>' : '')
+        + '</div>'
       + '</div>'
+      + contentHtml
     + '</div>';
   }).join('');
   var decisionStyle = SCC_FG_CATEGORY_STYLE.player_decision;
@@ -16591,8 +16632,8 @@ function sccFgToggleLoggedEntry(el) {
   }).catch(function() { showDMToast('Could not update log', 'error'); });
 }
 
-function sccFgRenderCombatOutcomesBlock(b) {
-  return sccFgOneCombatOutcomesHtml(b);
+function sccFgRenderCombatOutcomesBlock(b, ctx) {
+  return sccFgOneCombatOutcomesHtml(b, ctx);
 }
 
 // ── Scenario Cards module (box.category === 'scenario_cards',
@@ -16742,7 +16783,7 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
       + '<span class="scc-fg-outcome-check">' + (loggedRow ? '&#10003;' : '') + '</span>'
     + '</div>';
   }
-  var contentHtml = sccFgRenderDoc(card.blocks || []);
+  var contentHtml = sccFgRenderDoc(card.blocks || [], { scenarioCardsDomId: domId, cardIdx: cardIdx });
   if (!contentHtml && !decisionHtml) contentHtml = '<div class="scc-fg-sc-empty">No content yet.</div>';
   var backBtn = '<div class="scc-fg-sc-back-btn" onclick="sccFgBackToScenarioCards(\'' + sccEsc(domId) + '\')">&#8593; Back to Scenario Cards</div>';
   return decisionHtml + contentHtml + backBtn;
@@ -16840,7 +16881,7 @@ function sccFgSequencedHeadingText(b, idx) {
   return seqLabel + ' ' + num + ' \u2014 ' + (b.title || '') + (b.suffix ? ' (' + b.suffix + ')' : '');
 }
 
-function sccFgRenderBlock(b, idx) {
+function sccFgRenderBlock(b, idx, ctx) {
   switch (b.type) {
     // title/subtitle/tagline/meta — the old hardcoded document header block
     // — no longer render at all. Replaced by the plain "Field Guide" header
@@ -16888,7 +16929,7 @@ function sccFgRenderBlock(b, idx) {
       if (b.category === 'spoken_dialogue') return sccFgRenderSpokenDialogue(b);
       if (b.category === 'comedy' && b.inline) return sccFgRenderComedyInline(b);
       if (b.category === 'quest_beats') return sccFgRenderQuestBeatsBlock(b, idx);
-      if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b);
+      if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b, ctx);
       if (b.category === 'scenario_cards') return sccFgRenderScenarioCardsBlock(b, idx);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
       var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
@@ -16980,10 +17021,16 @@ function sccFgRenderH1(b) {
 // stateless per-block and reused for Scenario Cards' own card content --
 // wrapping there isn't wanted and card content never authors an h1 anyway,
 // so this is a no-op there regardless).
-function sccFgRenderDoc(blocks) {
+// ctx is optional and just passed through to sccFgRenderBlock -- used by
+// sccFgScenarioCardBodyHtml to tell a NESTED combat_outcomes block which
+// Scenario Card contains it (item 8, 2026-08-27), so its log-toggle
+// click can redraw the right thing instead of a label-only lookup that
+// can't see inside card content. undefined everywhere else, same as
+// before this existed.
+function sccFgRenderDoc(blocks, ctx) {
   var inQuestSection = false;
   return (blocks || []).map(function(b, idx) {
-    var html = sccFgRenderBlock(b, idx);
+    var html = sccFgRenderBlock(b, idx, ctx);
     if (b && b.type === 'h1') inQuestSection = !!b.quest_id;
     return inQuestSection ? '<div class="scc-fg-quest-section-block">' + html + '</div>' : html;
   }).join('');
