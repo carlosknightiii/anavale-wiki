@@ -23751,6 +23751,17 @@ document.addEventListener('click', function(e) {
 var SCC_LOOKUP_TYPE = null;
 var SCC_LOOKUP_ID   = null;
 function sccOpenLookup(type, id) {
+  // Item 8, round 4, 2026-08-27: [[poi:...]] inline links (sccFgLinkify)
+  // pass the raw type straight through -- this function's own branches
+  // below only ever recognized the canonical 'city' (POIs/nations were
+  // never given their own branch, they've always lived inside 'city' via
+  // its arr() already merging CITIES+POIS+NATIONS). Resolving through the
+  // same SCC_FG_FEATURED_TYPE_ALIASES map the featured-thumbnail code
+  // already uses for this exact synonym set (npc->character,
+  // poi/nation->city) closes the whole class of bug in one place instead
+  // of requiring every caller to pre-resolve it themselves the way
+  // sccVendorRefreshLookup() was already forced to do defensively.
+  type = SCC_FG_FEATURED_TYPE_ALIASES[type] || type;
   var panel    = document.getElementById('scc-lookup-panel');
   var backdrop = document.getElementById('scc-lookup-backdrop');
   var content  = document.getElementById('scc-lookup-content');

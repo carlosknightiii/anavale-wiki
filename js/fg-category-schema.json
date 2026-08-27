@@ -26,7 +26,7 @@
   },
 
   "$recognizedLinkTypes": {
-    "$comment": "The type vocabulary sccFgLinkify() actually resolves for inline [[type:id|Label]] markup (mirrors dm.html's SCC_FG_LINK_TYPES keys). No alias resolution happens here unlike block.featured entries (which accept npc/poi/nation via SCC_FG_FEATURED_TYPE_ALIASES) -- an inline link using an alias type (e.g. [[poi:...]]) will format-match the regex but its click target (sccOpenLookup) has no dedicated 'poi' branch, so fg-template.mjs's `check` flags it as a real, non-resolving type even though the bracket syntax itself is well-formed.",
-    "types": ["character", "creature", "city", "item", "quest", "organization"]
+    "$comment": "The type vocabulary an inline [[type:id|Label]] link actually resolves to when clicked. Fixed 2026-08-27 (QA round 4, item 8): sccOpenLookup() (dm.html) now resolves its `type` argument through the same SCC_FG_FEATURED_TYPE_ALIASES map block.featured entries already used (npc->character, poi/nation->city) before dispatching to its type-specific branches, so [[poi:...]]/[[npc:...]]/[[nation:...]] links resolve correctly now -- previously sccOpenLookup had no dedicated branch for those raw type strings, so a well-formed [[poi:...]] link opened the lookup drawer to a permanent 'No details available.' with no real error. `types` here lists every type an inline link's click target actually resolves to, aliases included -- kept as its own list rather than reused verbatim from SCC_FG_LINK_TYPES's keys, since an author should still be free to write [[city:...]] directly for a real city and either [[poi:...]] or [[city:...]] for a POI -- both are valid authoring choices now.",
+    "types": ["character", "creature", "city", "item", "quest", "organization", "npc", "poi", "nation"]
   }
 }
