@@ -1373,6 +1373,16 @@
     </div>
     <div id="scc-lookup-backdrop" class="scc-lookup-backdrop" onclick="sccCloseLookup()"></div>
 
+    <!-- ── Featured-portrait fullscreen viewer (item 9, round 4, 2026-08-27)
+         -- lives at page level like the lookup panel above, for the same
+         reason: a Field Guide featured portrait can be clicked from deep
+         inside a box, regardless of which tab/panel is currently active. -->
+    <div id="scc-fg-imgview-backdrop" class="scc-fg-imgview-backdrop" onclick="sccFgCloseImgView()"></div>
+    <div id="scc-fg-imgview" class="scc-fg-imgview" aria-hidden="true">
+      <button type="button" class="scc-fg-imgview-close" onclick="sccFgCloseImgView()" title="Close" aria-label="Close">&#10005;</button>
+      <img id="scc-fg-imgview-img" class="scc-fg-imgview-img" src="" alt="">
+    </div>
+
     <!-- ── QUICK NOTE — global, always-accessible entry point ──────────
          Lives at page level like the lookup panel above, for the same reason:
          a DM report that jotting a quick note required navigating to Session
@@ -8997,6 +9007,42 @@ function showDMToast(msg, type) {
   pointer-events: auto;
 }
 .scc-lookup-backdrop.open { display: block; }
+/* ── Featured-portrait fullscreen viewer (item 9, round 4, 2026-08-27) --
+   a real shadowbox, deliberately darker/more opaque than the lookup
+   drawer's own 0.5-alpha backdrop above (0.92, matching common lightbox
+   convention) since the whole point here is showing just the image with
+   nothing else competing for attention, not a semi-transparent scrim
+   behind still-readable page content. Two stacked fixed layers, same
+   pattern as every other page-level modal in this file: a full-bleed
+   click-to-close backdrop, and a separate flex-centered layer holding
+   the actual image + close button (so a click on the image itself does
+   NOT close the viewer, only a click on the backdrop around it does). */
+.scc-fg-imgview-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1200;
+  display: none;
+}
+.scc-fg-imgview-backdrop.open { display: block; }
+.scc-fg-imgview {
+  position: fixed; inset: 0; z-index: 1201;
+  display: none; align-items: center; justify-content: center;
+  padding: 3rem; pointer-events: none;
+}
+.scc-fg-imgview.open { display: flex; }
+.scc-fg-imgview-img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  border-radius: var(--dm-radius-sm); box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+  pointer-events: auto;
+}
+.scc-fg-imgview-close {
+  position: fixed; top: calc(var(--dm-env-banner-h) + 1.25rem); right: 1.25rem; z-index: 1202;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
+  color: var(--dm-text); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+  transition: var(--dm-transition);
+}
+.scc-fg-imgview-close:hover { color: var(--dm-gold); border-color: var(--scc-border-gold); }
 .scc-lookup-panel {
   position: fixed;
   /* Was a bare top:0, with no awareness of the dev banner (10000 z-index) —
@@ -16297,11 +16343,47 @@ function sccFgFeaturedEntryHtml(f) {
   var r = sccFgResolveFeaturedEntity(f);
   if (!r) return '';
   var initial = sccEsc(r.name.charAt(0));
+  // Click-to-fullscreen (item 9, round 4, 2026-08-27) -- only on a real
+  // resolved <img>, not the letter-avatar fallback (nothing to show
+  // fullscreen when there's no real portrait). onerror's fallback-swap
+  // is untouched; this only adds a second onclick to the same <img>.
   var imgHtml = r.imgUrl
-    ? '<img class="scc-fg-featured-img" src="' + sccEsc(r.imgUrl) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+    ? '<img class="scc-fg-featured-img" src="' + sccEsc(r.imgUrl) + '" alt="" title="Click to view fullscreen" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" onclick="sccFgOpenImgView(\'' + sccEsc(r.imgUrl).replace(/'/g, "\\'") + '\',\'' + sccEsc(r.name).replace(/'/g, "\\'") + '\')">'
       + '<span class="scc-fg-featured-fallback" style="display:none">' + initial + '</span>'
     : '<span class="scc-fg-featured-fallback">' + initial + '</span>';
   return '<div class="scc-fg-featured-item">' + imgHtml + '<span class="scc-fg-featured-name">' + sccEsc(r.name) + '</span></div>';
+}
+// Fullscreen viewer for a featured-entity portrait -- a real shadowbox
+// (#scc-fg-imgview-backdrop/#scc-fg-imgview, page-level HTML), not the
+// lookup drawer's semi-transparent scrim; the whole point is showing
+// just the image with nothing else competing for attention. Works for
+// any entity type with a resolved image, since it's fed a plain
+// url+name rather than re-resolving the entity itself. Escape-to-close
+// alongside the backdrop click and the explicit close button, same as
+// this project's other dismissable overlays.
+function sccFgOpenImgView(url, name) {
+  var backdrop = document.getElementById('scc-fg-imgview-backdrop');
+  var viewer   = document.getElementById('scc-fg-imgview');
+  var img      = document.getElementById('scc-fg-imgview-img');
+  if (!backdrop || !viewer || !img) return;
+  img.src = url;
+  img.alt = name || '';
+  backdrop.classList.add('open');
+  viewer.classList.add('open');
+  viewer.setAttribute('aria-hidden', 'false');
+  document.addEventListener('keydown', sccFgImgViewEscHandler);
+}
+function sccFgCloseImgView() {
+  var backdrop = document.getElementById('scc-fg-imgview-backdrop');
+  var viewer   = document.getElementById('scc-fg-imgview');
+  var img      = document.getElementById('scc-fg-imgview-img');
+  if (backdrop) backdrop.classList.remove('open');
+  if (viewer) { viewer.classList.remove('open'); viewer.setAttribute('aria-hidden', 'true'); }
+  if (img) img.src = '';
+  document.removeEventListener('keydown', sccFgImgViewEscHandler);
+}
+function sccFgImgViewEscHandler(e) {
+  if (e.key === 'Escape') sccFgCloseImgView();
 }
 // Never automatic -- a block with no `featured` array (the overwhelming
 // majority) renders nothing extra at all; a real entry that fails to
