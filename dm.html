@@ -8140,6 +8140,15 @@ function showDMToast(msg, type) {
    color field. */
 .scc-fg-box--blue { background: var(--blue-dim); border-left: 3px solid var(--blue-border); }
 .scc-fg-box--blue .scc-fg-box-label { color: var(--blue); }
+/* Item 4, round 5, 2026-08-27: the 3 sibling box colors (magenta/green/
+   yellow, above) each have a default p:not([style]) tint; blue (Spoken
+   Dialogue) never got one, so its unstyled paragraphs fell back to plain
+   white. Reuses --fg-dialogue-player (the existing pale-blue-grey
+   dialogue token, #9fb3c8) rather than a new hex, per instruction --
+   doesn't collide with the box's own inline-styled player/NPC dialogue
+   lines, since those already carry their own style="..." and are
+   excluded by :not([style]) exactly like the sibling rules above. */
+.scc-fg-box--blue p:not([style]) { color: var(--fg-dialogue-player) !important; }
 .scc-fg-box--red {
   position: relative;
   background: var(--red-dim);
@@ -9084,6 +9093,12 @@ function showDMToast(msg, type) {
    NOT close the viewer, only a click on the backdrop around it does). */
 .scc-fg-imgview-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1200;
+  /* Blur added (item 3, round 5, 2026-08-27) -- the dark overlay alone
+     still left page text legible underneath, undermining the real point
+     of this feature (showing players an image without exposing
+     surrounding DM-only text). backdrop-filter blurs whatever's actually
+     behind this fixed layer, on top of the existing darkening. */
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   display: none;
 }
 .scc-fg-imgview-backdrop.open { display: block; }
@@ -16538,9 +16553,17 @@ function sccFgStyleSkillChecks(html) {
       // hand-typed inline styles by whoever authors the content. Matches
       // the literal word at a clause start (immediately followed by
       // ":"), same convention as every real check in Session 1's data.
+      // Fail: gets its own paragraph break (item 2, round 5, 2026-08-27)
+      // when both Pass: and Fail: appear in the same check body -- only
+      // when Pass: was already seen earlier in this same pass, so a
+      // Fail-only (or Pass-only) body never gets a stray leading break.
+      var sccCheckSeenPass = false;
       bodyHtml = bodyHtml.replace(/\b(Pass|Fail):/g, function(mm, word) {
         var cls = word === 'Pass' ? 'scc-fg-check-pass' : 'scc-fg-check-fail';
-        return '<span class="' + cls + '">' + word + ':</span>';
+        var breakPrefix = '';
+        if (word === 'Pass') { sccCheckSeenPass = true; }
+        else if (sccCheckSeenPass) { breakPrefix = '<br><br>'; }
+        return breakPrefix + '<span class="' + cls + '">' + word + ':</span>';
       });
       var titleHtml = title ? '<div class="scc-fg-check-title">' + sccEsc(title.trim()) + '</div>' : '';
       return '<div class="scc-fg-check">'
