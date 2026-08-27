@@ -8130,6 +8130,26 @@ function showDMToast(msg, type) {
    the other badges' emoji-block icons at an identical font-size -- bumped
    up so it reads as the same visual weight, not a global icon-size change. */
 .scc-fg-box-cat-badge-icon--comedy { font-size: 1.35em; line-height: 1; }
+/* ── Click-any-container-to-complete (item 11, 2026-08-27) -- a small
+   toggle next to the category chip (or standalone when a box has none,
+   e.g. most read_aloud boxes); the whole box + its contents fade to 50%
+   opacity once marked, so a DM scanning mid-session can see at a glance
+   what's already been covered without losing the ability to still read
+   it. Scoped to the two "plain content display" render paths (the
+   generic box case, and spoken_dialogue's own dedicated one) -- NOT
+   quest_beats/combat_outcomes/scenario_cards, which already have their
+   own established click-driven state models; adding a second, generic
+   click-to-complete on top of those would just create two competing
+   meanings for a click on the same element. */
+.scc-fg-box--completed { opacity: 0.5; }
+.scc-fg-box-complete-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+  border: 1px solid var(--scc-border-mid); font-size: 0.6rem; font-weight: 700;
+  color: var(--dm-text-muted); margin-left: 0.4rem; vertical-align: middle;
+}
+.scc-fg-box-complete-toggle:hover { border-color: var(--green-border); }
+.scc-fg-box-complete-toggle--on { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
 /* ── Featured thumbnails — opt-in per box via block.featured (see
    sccFgRenderFeatured()). Large, prominent portraits, well above
    sccFgEntityThumbHtml()'s small 18px inline-mention thumbnails
@@ -16390,10 +16410,13 @@ function sccFgRenderSpokenDialogue(b) {
     ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--spoken_dialogue">' + spokenStyle.badge.icon + '</span> ' + sccEsc(spokenStyle.badge.name) + '</div>'
     : '';
   var spokenCornerIconHtml = sccFgBoxCornerIconHtml('spoken_dialogue');
+  var spokenCompletedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
+  var spokenCompleteToggleHtml = sccFgBoxCompletionToggleHtml(b);
   if (!entity) {
-    return '<div class="scc-fg-box scc-fg-box--blue">'
+    return '<div class="scc-fg-box scc-fg-box--blue' + spokenCompletedCls + '">'
       + spokenCornerIconHtml
       + spokenBadgeHtml
+      + spokenCompleteToggleHtml
       + featuredHtml
       + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
       + toneHtml
@@ -16410,9 +16433,10 @@ function sccFgRenderSpokenDialogue(b) {
     ? '<div class="scc-fg-spoken-vis-toggle" onclick="sccFgToggleVis(this)" title="Show what they look and sound like">&#128065; Visualize</div>'
       + '<div class="scc-fg-vis-wrap" style="display:none">' + visHtml + '</div>'
     : '';
-  return '<div class="scc-fg-box scc-fg-box--blue scc-fg-spoken">'
+  return '<div class="scc-fg-box scc-fg-box--blue scc-fg-spoken' + spokenCompletedCls + '">'
     + spokenCornerIconHtml
     + spokenBadgeHtml
+    + spokenCompleteToggleHtml
     + featuredHtml
     + '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
       + thumbHtml
@@ -16645,6 +16669,83 @@ function sccFgToggleLoggedEntry(el) {
       if (handler) handler(rerenderKey);
     });
   }).catch(function() { showDMToast('Could not update log', 'error'); });
+}
+
+// ── Click-any-container-to-complete (item 11, 2026-08-27) ──
+// Plain content boxes (generic-category boxes, spoken_dialogue) have no
+// stable id of their own in field_guide_sessions.blocks, unlike
+// quest_beats (quest.id)/combat_outcomes/scenario_cards (their own
+// label/title fields) -- authoring one would mean a schema change just
+// for this. Instead, the completion key is derived from the box's own
+// real content (category + label + the first 120 chars of its html),
+// hashed to a short stable string -- survives page reloads and session
+// switches like every other real block, and only breaks (silently, not
+// destructively -- it just shows as not-yet-completed again) if that
+// exact content is later edited, an acceptable trade-off against adding
+// a new required field to every box ever authored.
+function sccFgBoxCompletionKey(b) {
+  var basis = (b.category || '') + '|' + (b.label || '') + '|' + (b.html || '').slice(0, 120);
+  var hash = 0;
+  for (var i = 0; i < basis.length; i++) {
+    hash = ((hash << 5) - hash + basis.charCodeAt(i)) | 0;
+  }
+  return 'Box Completed — ' + Math.abs(hash);
+}
+
+function sccFgBoxIsCompleted(b) {
+  var num = sccFgActiveSessionNum();
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var key = sccFgBoxCompletionKey(b);
+  return log.some(function(n) { return n.title === key; });
+}
+
+// No toggle at all while viewing history -- completion is live-session
+// DM bookkeeping, not something a past, locked session should still be
+// mutable through (same read-only principle as every other click-to-log
+// control in audit mode).
+function sccFgBoxCompletionToggleHtml(b) {
+  if (SCC_VIEWING_HISTORY) return '';
+  var completed = sccFgBoxIsCompleted(b);
+  var key = sccFgBoxCompletionKey(b);
+  return '<span class="scc-fg-box-complete-toggle' + (completed ? ' scc-fg-box-complete-toggle--on' : '') + '"'
+    + ' onclick="event.stopPropagation(); sccFgToggleBoxCompletion(\'' + key + '\', this)"'
+    + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
+    + (completed ? '&#10003;' : '') + '</span>';
+}
+
+// Toggles in place (class + icon on the button and its ancestor box)
+// rather than re-rendering the whole box from scratch -- nothing else
+// about a box's content changes when its completion state flips, so a
+// full outerHTML rebuild (the pattern every OTHER click-to-log control in
+// this file uses) would be needless work for a change this small.
+function sccFgToggleBoxCompletion(key, btnEl) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — can\'t change that here', 'error'); return; }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var existing = log.find(function(n) { return n.title === key; }) || null;
+  var req = existing
+    ? fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, {
+        method: 'DELETE',
+        headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+      })
+    : fetch(SCC_URL + '/rest/v1/session_note_entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ session_number: num, category: 'quest', title: key, content: '' })
+      });
+  req.then(function(r) {
+    if (!r.ok) { showDMToast('Could not update', 'error'); return; }
+    sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
+      SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+      var nowCompleted = !existing;
+      var box = btnEl.closest('.scc-fg-box');
+      if (box) box.classList.toggle('scc-fg-box--completed', nowCompleted);
+      btnEl.classList.toggle('scc-fg-box-complete-toggle--on', nowCompleted);
+      btnEl.innerHTML = nowCompleted ? '&#10003;' : '';
+      btnEl.title = nowCompleted ? 'Click to mark not completed' : 'Click to mark completed';
+    });
+  }).catch(function() { showDMToast('Could not update', 'error'); });
 }
 
 function sccFgRenderCombatOutcomesBlock(b, ctx) {
@@ -16993,10 +17094,11 @@ function sccFgRenderBlock(b, idx, ctx) {
       // Boxes with no featured field at all get identical markup to
       // before (featuredHtml is '', so there's nothing to float).
       var featuredHtml = sccFgRenderFeatured(b.featured);
-      var boxTitleHtml = catBadge + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '');
+      var boxTitleHtml = catBadge + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '') + sccFgBoxCompletionToggleHtml(b);
       var headerHtml = featuredHtml + (boxTitleHtml ? '<div class="scc-fg-box-header-right">' + boxTitleHtml + '</div>' : '');
       var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
-      return '<div class="scc-fg-box scc-fg-box--' + colorClass + '">'
+      var completedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
+      return '<div class="scc-fg-box scc-fg-box--' + colorClass + completedCls + '">'
         + cornerIconHtml
         + headerHtml
         + sccFgLinkify(b.html || '')
