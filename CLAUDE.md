@@ -582,6 +582,12 @@ Always use a bash heredoc when writing file contents that include backtick code 
 - Partition animation text is drawn via `drawText(p)` — never via HTML/CSS
 - Never add HTML elements inside `#partition-sticky`
 
+**Field Guide inline content treatments (`dm.html`):**
+- Any inline visual treatment for content — a DM-only aside, stage-direction, comedy, a skill check, anything that needs to visually read differently from plain prose — must be a real, named CSS class (e.g. `.scc-fg-aside`, `.scc-fg-stage-direction`, `.scc-fg-comedy-inline`, `.scc-fg-check`), never a one-off inline `style=` attribute.
+- Any label text that treatment implies (e.g. "(DM-Only)", "(Read Aloud)") must be auto-injected by that class — a CSS `::before { content: ... }`, same mechanism `.scc-fg-aside` and `.scc-fg-stage-direction` both use — never hand-typed into the content itself. Hand-typed labels drift out of sync with the styling and can't be bulk-recolored/relabeled later without touching every instance of content.
+- Before building a new treatment, check `js/fg-category-schema.json` and this file's own class list for an existing one that already fits. A category/treatment with no real home yet is a signal to build one class other content can reuse, not to hand-patch this one instance.
+- This governs *presentation* classes specifically (how something looks/reads). It doesn't apply to structural block types (tables, quest-beat widgets, scenario cards) that already have their own dedicated render functions and real schema-defined shape.
+
 ---
 
 ## 10. Design Tokens
