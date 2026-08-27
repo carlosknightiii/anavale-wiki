@@ -8336,8 +8336,10 @@ function showDMToast(msg, type) {
   padding: 0.55rem 0.85rem; background: var(--dm-gold); cursor: pointer;
   font-family: var(--font-display); font-size: 0.95rem; font-weight: 700;
   border-bottom: 1px solid var(--scc-border);
+  display: flex; align-items: center; gap: 0.4rem;
 }
 .scc-fg-quest-beats-header .scc-fg-link { font-size: inherit; color: var(--dm-gold-text-on); }
+.scc-fg-quest-beats-header-icon { font-size: 0.95rem; color: var(--dm-gold-text-on); opacity: 0.85; }
 .scc-fg-beat-row {
   display: flex; align-items: center; gap: 0.6rem;
   padding: 0.5rem 0.85rem; border-top: 1px solid var(--scc-border);
@@ -8455,9 +8457,15 @@ function showDMToast(msg, type) {
 }
 .scc-fg-scenario-cards-header-icon { font-size: 1rem; opacity: 0.85; }
 .scc-fg-scenario-cards-header-sub { font-weight: 400; color: var(--dm-text-muted); font-size: 0.82rem; }
-.scc-fg-scenario-cards-row { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 0.85rem 0; }
+/* Real grid, not flex -- flex sized each tile to its own title text, so
+   the column boundary shifted row to row (row 1 splitting at one x
+   position, row 2 at another), a jagged misaligned look. A fixed
+   2-column grid gives every tile in every row the exact same column
+   width regardless of title length, tested against the real 4-card
+   (2x2) and 2-card (1x2) cases. */
+.scc-fg-scenario-cards-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 0.75rem 0.85rem 0; }
 .scc-fg-sc-tile {
-  position: relative; flex: 1 1 auto; min-width: 150px; cursor: pointer;
+  position: relative; cursor: pointer;
   padding: 0.5rem 0.65rem; border-radius: var(--dm-radius-sm);
   background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
   display: flex; align-items: center; gap: 0.5rem;
@@ -8483,6 +8491,20 @@ function showDMToast(msg, type) {
   font-size: 0.62rem; font-weight: 700; color: var(--green);
   border: 1px solid var(--green-border); background: var(--green-dim);
 }
+/* Not Done / Started / Completed, DM-set via click-to-cycle -- reuses the
+   quest_beats widget's own 3-state token convention exactly (blue=not
+   started, green=in progress, grey=completed) rather than inventing a
+   parallel color scheme, per instruction. A separate concept from the
+   decision-check above: status is the DM's own progress tracking through
+   the module, decision is a logged fact about what happened. */
+.scc-fg-sc-status {
+  flex-shrink: 0; font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.4rem; border-radius: 8px;
+  cursor: pointer;
+}
+.scc-fg-sc-status--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border: 1px solid var(--scc-beat-todo-border); }
+.scc-fg-sc-status--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border: 1px solid var(--scc-beat-prog-border); }
+.scc-fg-sc-status--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border: 1px solid var(--scc-beat-done-border); }
 .scc-fg-scenario-cards-body {
   margin: 0.75rem 0.85rem 0.85rem; padding: 0.75rem 0.85rem;
   background: var(--dm-bg); border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm);
@@ -8490,6 +8512,14 @@ function showDMToast(msg, type) {
 .scc-fg-scenario-cards-body .scc-fg-box:last-child,
 .scc-fg-scenario-cards-body p:last-child { margin-bottom: 0; }
 .scc-fg-sc-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
+.scc-fg-sc-back-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;
+  margin-top: 0.85rem; padding: 0.4rem 0.75rem; border-radius: var(--dm-radius-sm);
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; color: var(--dm-text-muted);
+  transition: border-color 0.1s, color 0.1s;
+}
+.scc-fg-sc-back-btn:hover { border-color: var(--scc-border-gold); color: var(--dm-gold); }
 .scc-fg-sc-decision-row {
   display: flex; align-items: center; gap: 0.6rem; cursor: pointer;
   padding: 0.5rem 0.65rem; border-radius: var(--dm-radius-sm);
@@ -16329,7 +16359,14 @@ function sccFgRenderSpokenDialogue(b) {
 // not a parallel one. b.html (if any) renders as a short intro line above
 // the widget; b.category === 'quest_beats' is what triggers this, not any
 // specific block content, so it works the same for any future session.
-function sccFgOneQuestBeatsHtml(q) {
+// instanceKey disambiguates multiple renders of the SAME quest's widget
+// appearing more than once in one document (real case: Session 1 has 4
+// quest_beats blocks, all for the same quest) -- each gets its own unique
+// DOM id (id attribute duplication is invalid HTML and silently breaks
+// getElementById, see sccFgToggleBeat below), while data-quest-id stays
+// shared across all of a quest's instances so they can all be found and
+// refreshed together after a click on any one of them.
+function sccFgOneQuestBeatsHtml(q, instanceKey) {
   var beats = q.beats || [];
   var prog = (typeof SCC_PROGRESS !== 'undefined' && SCC_PROGRESS[q.id]) || {};
   var auditLocked = !!SCC_VIEWING_HISTORY;
@@ -16345,35 +16382,46 @@ function sccFgOneQuestBeatsHtml(q) {
         + '<span class="scc-fg-beat-status scc-fg-beat-status--' + st + '">' + statusLabelText + '</span>'
       + '</div>';
   }).join('');
-  return '<div class="scc-fg-quest-beats" id="scc-fg-quest-beats-' + sccEsc(q.id) + '">'
-    + '<div class="scc-fg-quest-beats-header"><span class="scc-fg-link" onclick="sccOpenLookup(\'quest\',\'' + sccEsc(q.id) + '\')">' + sccEsc(q.name) + '</span></div>'
+  return '<div class="scc-fg-quest-beats scc-fg-quest-beats-instance" id="scc-fg-quest-beats-' + sccEsc(q.id) + '-' + sccEsc(String(instanceKey)) + '" data-quest-id="' + sccEsc(q.id) + '">'
+    + '<div class="scc-fg-quest-beats-header"><span class="scc-fg-quest-beats-header-icon">&#128276;</span><span class="scc-fg-link" onclick="sccOpenLookup(\'quest\',\'' + sccEsc(q.id) + '\')">' + sccEsc(q.name) + '</span></div>'
     + rows
   + '</div>';
 }
 
-function sccFgRenderQuestBeatsBlock(b) {
+function sccFgRenderQuestBeatsBlock(b, idx) {
   var selected = (typeof SCC_SELECTED !== 'undefined' && SCC_SELECTED.quest) || [];
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
   var widgets = selected.map(function(sel) {
     var q = quests.find(function(x) { return x.id === sel.id; });
-    return q ? sccFgOneQuestBeatsHtml(q) : '';
+    return q ? sccFgOneQuestBeatsHtml(q, idx) : '';
   }).join('');
   if (!widgets) widgets = '<p style="font-style:italic;color:var(--dm-text-muted);">No quests assigned to this session yet — assign one in Setup.</p>';
   return (b.html ? sccFgLinkify(b.html) : '') + widgets;
 }
 
-// Advances one beat's status and re-renders just this widget in place,
-// preserving scroll position -- reuses the real save path unchanged
-// (sccCycleBeatStatus -> sccSaveBeatStatus, defined with the Quests tab),
-// SCC_PROGRESS is updated synchronously before the async PATCH fires, so
-// re-rendering right after the call already reflects the new state.
+// Advances one beat's status and re-renders EVERY instance of this quest's
+// widget, not just one -- real bug fix (2026-08-27): this used to look up
+// a single element by a shared, non-unique id (getElementById only ever
+// returns the first DOM match), so clicking a beat in the 2nd/3rd/4th
+// occurrence of the same quest's widget elsewhere in the document silently
+// updated the underlying data (SCC_PROGRESS/quest_progress, confirmed
+// correct via the shared sccCycleBeatStatus save path) but left every
+// panel except the first showing stale status until a full reload. Now
+// finds every instance via the shared data-quest-id + class, re-rendering
+// each with its own preserved instanceKey (parsed back out of its own
+// unique id) rather than assuming there's only one.
 function sccFgToggleBeat(questId, beatOrder) {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — quest progress is read-only here', 'error'); return; }
   sccCycleBeatStatus(questId, beatOrder);
-  var el = document.getElementById('scc-fg-quest-beats-' + questId);
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
   var q = quests.find(function(x) { return x.id === questId; });
-  if (el && q) el.outerHTML = sccFgOneQuestBeatsHtml(q);
+  if (!q) return;
+  var idPrefix = 'scc-fg-quest-beats-' + questId + '-';
+  var instances = document.querySelectorAll('.scc-fg-quest-beats-instance[data-quest-id="' + CSS.escape(questId) + '"]');
+  Array.prototype.forEach.call(instances, function(el) {
+    var instanceKey = el.id.indexOf(idPrefix) === 0 ? el.id.slice(idPrefix.length) : el.id;
+    el.outerHTML = sccFgOneQuestBeatsHtml(q, instanceKey);
+  });
 }
 
 // ── Branching combat outcome widget (box.category === 'combat_outcomes') ──
@@ -16529,6 +16577,80 @@ function sccFgScenarioDecisionTitle(b, card) {
   return 'Scenario Decision — ' + ns + ': ' + (card.decision.label || card.title || '');
 }
 
+// Not Started / Started / Completed, DM-set (never auto-detected) via
+// click-to-cycle on the tile's own status pill -- reuses quest_beats'
+// exact 3-state color convention (blue/green/grey), a distinct concept
+// from the decision check above (that's a logged fact about what
+// happened; this is the DM's own manual progress tracking through the
+// module). Persisted the same way status/decisions elsewhere in this file
+// are: absence of a row = the default state (not_started), so only
+// in_progress/completed ever need a real row.
+var SCC_FG_SC_STATUS_CYCLE = { not_started: 'in_progress', in_progress: 'completed', completed: 'not_started' };
+var SCC_FG_SC_STATUS_LABEL = { not_started: 'Not Started', in_progress: 'Started', completed: 'Completed' };
+function sccFgScenarioCardStatusTitle(b, card) {
+  var ns = b.beat_label || b.label || '';
+  return 'Scenario Card Status — ' + ns + ': ' + (card.title || card.id || '');
+}
+function sccFgScenarioCardStatus(b, card, log) {
+  var title = sccFgScenarioCardStatusTitle(b, card);
+  var row = log.find(function(n) { return n.title === title; });
+  return (row && row.content) || 'not_started';
+}
+function sccFgCycleScenarioCardStatus(domId, cardIdx) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — can\'t change status here', 'error'); return; }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var found = sccFgFindScenarioCardsBlockByDomId(domId);
+  if (!found) return;
+  var cards = Array.isArray(found.block.cards) ? found.block.cards : [];
+  var card = cards[cardIdx];
+  if (!card) return;
+  var title = sccFgScenarioCardStatusTitle(found.block, card);
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var existing = log.find(function(n) { return n.title === title; }) || null;
+  var current = (existing && existing.content) || 'not_started';
+  var next = SCC_FG_SC_STATUS_CYCLE[current];
+  var req;
+  if (next === 'not_started') {
+    req = existing
+      ? fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, { method: 'DELETE', headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON } })
+      : Promise.resolve({ ok: true });
+  } else if (existing) {
+    req = fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON },
+      body: JSON.stringify({ content: next })
+    });
+  } else {
+    req = fetch(SCC_URL + '/rest/v1/session_note_entries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
+      body: JSON.stringify({ session_number: num, category: 'quest', title: title, content: next })
+    });
+  }
+  req.then(function(r) {
+    if (!r.ok) { showDMToast('Could not update status', 'error'); return; }
+    sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
+      SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+      sccFgRedrawScenarioCardsBlock(domId, cardIdx);
+    });
+  }).catch(function() { showDMToast('Could not update status', 'error'); });
+}
+
+// "Back to Scenario Cards" -- jumps back to the module's own grid (not
+// just the top of the page), same sticky-header-offset math as
+// sccFgScrollIndicatorJump so it lands consistently below the jump-row
+// bar and the local-dev banner, not hidden under either.
+function sccFgBackToScenarioCards(domId) {
+  var el = document.getElementById(domId);
+  if (!el) return;
+  var jumpRow = document.getElementById('scc-fg-jump-row');
+  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
+  var offset = (jumpRow ? jumpRow.getBoundingClientRect().height : 0) + bannerH;
+  var targetTop = el.getBoundingClientRect().top + window.scrollY;
+  window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
+}
+
 // Portrait-only render, sharing sccFgResolveFeaturedEntity() with
 // sccFgFeaturedEntryHtml() (item 1c: "via existing .scc-fg-featured-img
 // pattern") -- same lookup/fallback logic, just without the name label
@@ -16573,7 +16695,8 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   }
   var contentHtml = sccFgRenderDoc(card.blocks || []);
   if (!contentHtml && !decisionHtml) contentHtml = '<div class="scc-fg-sc-empty">No content yet.</div>';
-  return decisionHtml + contentHtml;
+  var backBtn = '<div class="scc-fg-sc-back-btn" onclick="sccFgBackToScenarioCards(\'' + sccEsc(domId) + '\')">&#8593; Back to Scenario Cards</div>';
+  return decisionHtml + contentHtml + backBtn;
 }
 
 function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
@@ -16585,9 +16708,14 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
   var tiles = cards.map(function(card, i) {
     var portrait = sccFgScenarioCardPortraitHtml(card.entity);
     var loggedTile = card.decision && log.some(function(n) { return n.title === sccFgScenarioDecisionTitle(b, card); });
+    var status = sccFgScenarioCardStatus(b, card, log);
+    var statusHtml = '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
+        + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status">'
+      + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
     return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '" onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
       + portrait
       + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
+      + statusHtml
       + (loggedTile ? '<span class="scc-fg-sc-tile-check" title="Logged as what happened">&#10003;</span>' : '')
     + '</div>';
   }).join('');
@@ -16710,7 +16838,7 @@ function sccFgRenderBlock(b, idx) {
       if (b.category === 'guide_meta') return '';
       if (b.category === 'spoken_dialogue') return sccFgRenderSpokenDialogue(b);
       if (b.category === 'comedy' && b.inline) return sccFgRenderComedyInline(b);
-      if (b.category === 'quest_beats') return sccFgRenderQuestBeatsBlock(b);
+      if (b.category === 'quest_beats') return sccFgRenderQuestBeatsBlock(b, idx);
       if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b);
       if (b.category === 'scenario_cards') return sccFgRenderScenarioCardsBlock(b, idx);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
