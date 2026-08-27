@@ -1283,15 +1283,6 @@
         <input type="text" class="scc-global-search" id="scc-global-search" placeholder="Global search..." oninput="sccGlobalSearch(this.value)" autocomplete="off">
         <button type="button" class="scc-global-filter-toggle" id="scc-global-filter-toggle" onclick="sccGlobalToggleFilters()" title="Filters">&#9881;</button>
       </div>
-      <!-- Quick Reference (item 10, round 4, 2026-08-27) -- durable,
-           cross-session rules notes (e.g. Gigglegloom-near-the-Drain
-           effects), reachable from every tab/session via the header
-           itself, same "reachable from anywhere" placement principle as
-           the header's own search -- deliberately NOT gated to
-           CURRENT_TAB==='session' the way the Quick Note/session-only
-           FABs are, since this content has nothing to do with any one
-           session. -->
-      <button type="button" class="scc-quickref-btn" onclick="sccOpenQuickRefModal()" title="Quick Reference — durable rules notes, any session">&#128214; Reference</button>
     </div>
   </div>
   <div class="scc-global-filters-bar" id="scc-global-filters-bar">
@@ -1390,24 +1381,6 @@
     <div id="scc-fg-imgview" class="scc-fg-imgview" aria-hidden="true">
       <button type="button" class="scc-fg-imgview-close" onclick="sccFgCloseImgView()" title="Close" aria-label="Close">&#10005;</button>
       <img id="scc-fg-imgview-img" class="scc-fg-imgview-img" src="" alt="">
-    </div>
-
-    <!-- ── Quick Reference modal (item 10, round 4, 2026-08-27) -- durable,
-         cross-session DM rules notes (public.dm_quick_reference), opened
-         from the header button above. Same centered-panel shape as
-         .scc-quicknote-modal, own class for the wider/taller sizing this
-         content needs (a rules note can run longer than a quick note). -->
-    <div id="scc-quickref-backdrop" class="scc-lookup-backdrop" onclick="sccCloseQuickRefModal()"></div>
-    <div id="scc-quickref-modal" class="scc-quicknote-modal scc-quickref-modal" aria-hidden="true">
-      <div class="scc-quicknote-modal-inner">
-        <div class="scc-quicknote-modal-title">Quick Reference</div>
-        <div id="scc-quickref-list" class="scc-quickref-list">
-          <div class="scc-lookup-loading">Loading…</div>
-        </div>
-        <div class="scc-quicknote-modal-actions">
-          <button class="scc-btn-secondary" onclick="sccCloseQuickRefModal()">Close</button>
-        </div>
-      </div>
     </div>
 
     <!-- ── Add/Edit Attachment modal (item 12, round 4, 2026-08-27) --
@@ -4080,6 +4053,15 @@
     { table: 'religions',        global: 'RELIGIONS' },
     { table: 'items',            global: 'ITEMS' },
     { table: 'quests',           global: 'QUESTS' },
+    // Items 5-6, round 5, 2026-08-27: concept/system-level entities (e.g.
+    // Gigglegloom) reachable via the same Quick Look drawer as every other
+    // world table -- loaded here (unconditional, tab-independent), not
+    // only inside sccInit()'s own Promise.all, for the exact same real
+    // fetch-timing reason vendor_stock/character_attachments were moved
+    // here (see the comments below): a DM opening the drawer straight from
+    // the default Entries/Manage landing page, before ever visiting
+    // Session, would otherwise find window.CONCEPTS still undefined.
+    { table: 'world_concepts',   global: 'CONCEPTS' },
     // vendor_stock was added here to fix a real bug: sccVendorShopSectionHtml()
     // (the Shop section woven into the POI/org Quick Lookup card) reads
     // window.VENDOR_STOCK, which was previously ONLY ever populated inside
@@ -8161,6 +8143,15 @@ function showDMToast(msg, type) {
    lines, since those already carry their own style="..." and are
    excluded by :not([style]) exactly like the sibling rules above. */
 .scc-fg-box--blue p:not([style]) { color: var(--fg-dialogue-player) !important; }
+/* .scc-fg-box--teal: Gigglegloom Effect (item 6, round 5, 2026-08-27) --
+   full treatment from the start (background/border/label/corner-icon
+   color via sccFgBoxCornerIconHtml()'s generic style.badge.icon path,
+   plus the pale p:not([style]) text tint), not built then patched the
+   way blue's own tint gap (item 4, this same round) had to be. */
+.scc-fg-box--teal { background: var(--fg-gigglegloom-dim); border-left: 3px solid var(--fg-gigglegloom-border); }
+.scc-fg-box--teal .scc-fg-box-label { color: var(--fg-gigglegloom); }
+.scc-fg-box--teal .scc-fg-box-corner-icon { color: var(--fg-gigglegloom); }
+.scc-fg-box--teal p:not([style]) { color: var(--fg-gigglegloom-text) !important; }
 .scc-fg-box--red {
   position: relative;
   background: var(--red-dim);
@@ -8203,6 +8194,9 @@ function showDMToast(msg, type) {
    own subtype icon does that job instead), so this is a genuinely new rule,
    not a repointed one. */
 .scc-fg-box--gold .scc-fg-box-cat-badge { background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold); }
+/* Gigglegloom Effect's own chip (item 6, round 5, 2026-08-27) -- same
+   --fg-gigglegloom tokens .scc-fg-box--teal's own border/label already use. */
+.scc-fg-box--teal .scc-fg-box-cat-badge { background: var(--fg-gigglegloom-dim); border: 1px solid var(--fg-gigglegloom-border); color: var(--fg-gigglegloom); }
 /* Comedy's joker glyph (playing-cards block) renders visibly smaller than
    the other badges' emoji-block icons at an identical font-size -- bumped
    up so it reads as the same visual weight, not a global icon-size change. */
@@ -8527,8 +8521,8 @@ function showDMToast(msg, type) {
 .scc-fg-attach-add-btn { font-size: 0.66rem; padding: 0.15rem 0.5rem; }
 /* Real popup (item 12, round 4, 2026-08-27) -- was an inline div squeezed
    into the 260px Live Session sidebar strip; #scc-fg-attach-modal-fields
-   (page-level, see the modal markup near #scc-quickref-modal) now holds
-   the exact same .scc-fg-attach-form fields, just with real room to
+   (page-level, see #scc-fg-attach-modal near #scc-lookup-backdrop) now
+   holds the exact same .scc-fg-attach-form fields, just with real room to
    breathe. The form's own internal flex-wrap layout is unchanged -- only
    its container moved. */
 .scc-fg-attach-modal { width: 440px; }
@@ -9422,6 +9416,46 @@ function showDMToast(msg, type) {
   line-height: 1.65;
   white-space: pre-wrap;
 }
+/* ── Concept entity (world_concepts) Quick Look -- items 5-6, round 5,
+   2026-08-27 -- the 4-type grid + situational-behavior list Gigglegloom's
+   lookup card needs, genuinely different shape from every other entity's
+   flat .scc-ql-fields rows. */
+.scc-concept-types-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+.scc-concept-type-card {
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm);
+  padding: 0.6rem 0.7rem;
+}
+.scc-concept-type-icon { width: 28px; height: 28px; display: block; margin-bottom: 0.3rem; }
+.scc-concept-type-name {
+  font-family: var(--font-headers); font-size: 0.85rem; color: var(--dm-gold);
+}
+.scc-concept-type-element {
+  font-family: var(--font-sans); font-size: 0.62rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--dm-text-muted); margin: 0.15rem 0 0.4rem;
+}
+.scc-concept-type-desc {
+  font-family: var(--font-body); font-size: 0.78rem; color: var(--dm-text); line-height: 1.5;
+}
+.scc-concept-situation { margin-bottom: 0.75rem; }
+.scc-concept-situation:last-child { margin-bottom: 0; }
+.scc-concept-situation-title {
+  font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--dm-text);
+  margin-bottom: 0.3rem;
+}
+.scc-concept-situation-effects {
+  margin: 0 0 0.4rem; padding-left: 1.1rem;
+  font-family: var(--font-body); font-size: 0.82rem; color: var(--dm-text); line-height: 1.55;
+}
+.scc-concept-situation-ruling {
+  font-family: var(--font-body); font-size: 0.82rem; color: var(--dm-text-muted); line-height: 1.55;
+  font-style: italic;
+}
 .scc-ql-tags {
   display: flex;
   flex-wrap: wrap;
@@ -9834,43 +9868,6 @@ function showDMToast(msg, type) {
 }
 .scc-global-filter-toggle:hover,
 .scc-global-filter-toggle.active { color: var(--dm-gold); border-color: var(--scc-border-gold); }
-/* ── Quick Reference (item 10, round 4, 2026-08-27) -- header button +
-   modal for public.dm_quick_reference, durable cross-session DM rules
-   notes. Button styling deliberately close to .scc-global-filter-toggle
-   (same header row, same "small secondary control" visual weight) but
-   its own class since it carries a text label, not just an icon. */
-.scc-quickref-btn {
-  flex-shrink: 0;
-  display: flex; align-items: center; gap: 0.35rem;
-  background: var(--dm-surface-high);
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius-sm);
-  color: var(--dm-text-muted);
-  font-family: var(--font-sans); font-size: 0.8rem;
-  padding: 0.38rem 0.65rem;
-  cursor: pointer;
-  transition: var(--dm-transition);
-}
-.scc-quickref-btn:hover { color: var(--dm-gold); border-color: var(--scc-border-gold); }
-.scc-quickref-modal { width: 560px; max-height: 80vh; }
-.scc-quickref-modal .scc-quicknote-modal-inner { max-height: calc(80vh - 2.5rem); overflow-y: auto; }
-.scc-quickref-list { display: flex; flex-direction: column; gap: 1rem; }
-.scc-quickref-entry {
-  border: 1px solid var(--scc-border-mid);
-  border-radius: var(--dm-radius-sm);
-  padding: 0.75rem 0.9rem;
-  background: var(--dm-surface-high);
-}
-.scc-quickref-entry-title {
-  font-family: var(--font-headers); font-size: 1rem; color: var(--dm-gold);
-  margin-bottom: 0.5rem;
-}
-.scc-quickref-entry-body {
-  font-family: var(--font-sans); font-size: 0.85rem; color: var(--dm-text);
-  line-height: 1.5;
-}
-.scc-quickref-entry-body p { margin: 0 0 0.65rem; }
-.scc-quickref-entry-body p:last-child { margin-bottom: 0; }
 .scc-global-filters-bar {
   display: none;
   flex-wrap: wrap;
@@ -16321,7 +16318,13 @@ var SCC_FG_LINK_TYPES = {
   city:      { label: 'Location', arr: function(){ return (typeof CITIES !== 'undefined' ? CITIES : []).concat(typeof POIS !== 'undefined' ? POIS : []).concat(typeof NATIONS !== 'undefined' ? NATIONS : []); } },
   item:      { label: 'Item', arr: function(){ return typeof ITEMS !== 'undefined' ? ITEMS : []; } },
   quest:     { label: 'Quest', arr: function(){ return typeof QUESTS !== 'undefined' ? QUESTS : []; } },
-  organization: { label: 'Organization', arr: function(){ return typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : []; } }
+  organization: { label: 'Organization', arr: function(){ return typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : []; } },
+  // Items 5-6, round 5, 2026-08-27: concept/system-level entities (world_concepts) --
+  // Gigglegloom is the first real row. No single .image field the way every
+  // other type has (its lookup card shows 4 per-type icons instead), so
+  // inline-mention/featured thumbnails correctly fall back to a letter
+  // avatar, same as any other entity with no portrait.
+  concept: { label: 'Concept', arr: function(){ return typeof CONCEPTS !== 'undefined' ? CONCEPTS : []; } }
 };
 
 /* Category now drives every box's color and icon — never the legacy `color`
@@ -23521,62 +23524,6 @@ function sccCloseQuickNoteModal() {
   document.getElementById('scc-quicknote-backdrop').classList.remove('open');
 }
 
-// ── Quick Reference (item 10, round 4, 2026-08-27) ──────────────────
-// public.dm_quick_reference -- durable, cross-session DM rules notes,
-// deliberately NOT scoped to any session (no session_number column,
-// unlike session_note_entries) since the whole point is being reachable
-// regardless of which session is loaded. Cached in memory after first
-// fetch -- this content changes rarely (a DM edits it directly in
-// Supabase, not through this UI) so there's no reason to re-fetch every
-// open; SCC_QUICKREF_CACHE stays null only until the first successful
-// load.
-var SCC_QUICKREF_CACHE = null;
-function sccOpenQuickRefModal() {
-  var backdrop = document.getElementById('scc-quickref-backdrop');
-  var modal    = document.getElementById('scc-quickref-modal');
-  var list     = document.getElementById('scc-quickref-list');
-  if (!backdrop || !modal || !list) return;
-  backdrop.classList.add('open');
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-  if (SCC_QUICKREF_CACHE) {
-    sccRenderQuickRefList(SCC_QUICKREF_CACHE);
-    return;
-  }
-  list.innerHTML = '<div class="scc-lookup-loading">Loading…</div>';
-  sccFetch('dm_quick_reference', '&order=sort_order.asc')
-    .then(function(rows) {
-      SCC_QUICKREF_CACHE = Array.isArray(rows) ? rows : [];
-      sccRenderQuickRefList(SCC_QUICKREF_CACHE);
-    })
-    .catch(function(err) {
-      list.innerHTML = '<div class="scc-lookup-loading">Failed to load reference notes.</div>';
-      console.error('dm_quick_reference fetch failed', err);
-    });
-}
-function sccRenderQuickRefList(rows) {
-  var list = document.getElementById('scc-quickref-list');
-  if (!list) return;
-  if (!rows.length) { list.innerHTML = '<div class="scc-lookup-loading">No reference notes yet.</div>'; return; }
-  list.innerHTML = rows.map(function(r) {
-    // Blank-line-separated paragraphs, same convention as everywhere
-    // else in this file that stores DM-authored plain text (e.g. quest
-    // hook/summary fields) -- sccEsc() first for HTML safety, then a
-    // single remaining \n within a paragraph becomes a <br>, not a new
-    // paragraph.
-    var paras = (r.content || '').split(/\n\s*\n/).map(function(p) {
-      return '<p>' + sccEsc(p).replace(/\n/g, '<br>') + '</p>';
-    }).join('');
-    return '<div class="scc-quickref-entry"><div class="scc-quickref-entry-title">' + sccEsc(r.title) + '</div><div class="scc-quickref-entry-body">' + paras + '</div></div>';
-  }).join('');
-}
-function sccCloseQuickRefModal() {
-  var backdrop = document.getElementById('scc-quickref-backdrop');
-  var modal    = document.getElementById('scc-quickref-modal');
-  if (backdrop) backdrop.classList.remove('open');
-  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
-}
-
 function sccSubmitQuickNote() {
   var num = SCC_SESSION ? SCC_SESSION.session_number : null;
   if (!num) { showDMToast('Save session setup first', 'error'); return; }
@@ -24132,6 +24079,7 @@ function sccGlobalSearch(query) {
   addCollection(typeof REGIONS       !== 'undefined' ? REGIONS       : [], 'region',       'Region');
   addCollection(typeof RELIGIONS     !== 'undefined' ? RELIGIONS     : [], 'religion',     'Religion');
   addCollection(typeof SPECIES       !== 'undefined' ? SPECIES       : [], 'species',      'Species');
+  addCollection(typeof CONCEPTS      !== 'undefined' ? CONCEPTS      : [], 'concept',      'Concept');
 
   allEntries.sort(function(a,b){ return a.rank - b.rank || a.name.localeCompare(b.name); });
   allEntries = allEntries.slice(0, 20);
@@ -24514,6 +24462,56 @@ function sccOpenLookup(type, id) {
       + '</div>'
       // ── PROSE SECTIONS ──
       + (sp.description ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(sp.description) + '</div></div>' : '');
+  } else if (type === 'concept') {
+    // Items 5-6, round 5, 2026-08-27: concept/system-level entities
+    // (world_concepts) -- Gigglegloom is the first real row. Structured
+    // types[] + situational_behaviors[] render as their own dedicated
+    // sections rather than generic .scc-ql-fields rows, since a flat
+    // key/value list can't represent "4 types, each with its own
+    // name/element/description" or "N situations, each with a per-type
+    // effect list plus a ruling" without losing the real structure.
+    var concepts = typeof CONCEPTS !== 'undefined' ? CONCEPTS : [];
+    var concept = concepts.find(function(x){ return x.id === id; });
+    if (!concept) { content.innerHTML = '<div class="scc-lookup-loading">Entry not found.</div>'; return; }
+    var conceptTypes = Array.isArray(concept.types) ? concept.types : [];
+    var conceptTypeName = {};
+    conceptTypes.forEach(function(t){ conceptTypeName[t.id] = t.name; });
+    var typesGridHtml = conceptTypes.length
+      ? '<div class="scc-ql-section"><div class="scc-ql-section-label">The Four Types</div>'
+        + '<div class="scc-concept-types-grid">'
+        + conceptTypes.map(function(t) {
+            return '<div class="scc-concept-type-card">'
+              + (t.icon ? '<img class="scc-concept-type-icon" src="' + sccEsc(t.icon) + '" alt="" onerror="this.style.display=\'none\'">' : '')
+              + '<div class="scc-concept-type-name">' + sccEsc(t.name) + '</div>'
+              + (t.element ? '<div class="scc-concept-type-element">' + sccEsc(t.element) + '</div>' : '')
+              + (t.desc ? '<div class="scc-concept-type-desc">' + sccEsc(t.desc) + '</div>' : '')
+            + '</div>';
+          }).join('')
+        + '</div></div>'
+      : '';
+    var behaviors = Array.isArray(concept.situational_behaviors) ? concept.situational_behaviors : [];
+    var behaviorsHtml = behaviors.length
+      ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Situational Behaviors</div>'
+        + behaviors.map(function(b) {
+            var effects = Array.isArray(b.effects) ? b.effects : [];
+            return '<div class="scc-concept-situation">'
+              + '<div class="scc-concept-situation-title">' + sccEsc(b.situation || '') + '</div>'
+              + (effects.length ? '<ul class="scc-concept-situation-effects">' + effects.map(function(e) {
+                  var tName = conceptTypeName[e.type_id] || e.type_id;
+                  return '<li><strong>' + sccEsc(tName) + ':</strong> ' + sccEsc(e.effect || '') + '</li>';
+                }).join('') + '</ul>' : '')
+              + (b.ruling ? '<div class="scc-concept-situation-ruling"><strong>Ruling:</strong> ' + sccEsc(b.ruling) + '</div>' : '')
+            + '</div>';
+          }).join('')
+        + '</div>'
+      : '';
+    html = '<div class="scc-ql-header">'
+        + '<div class="scc-ql-portrait-fallback">' + sccEsc((concept.name||'?').charAt(0)) + '</div>'
+        + '<div class="scc-ql-header-info"><div class="scc-ql-name">' + sccEsc(concept.name) + '</div></div>'
+      + '</div>'
+      + (concept.summary ? '<div class="scc-ql-section"><div class="scc-ql-section-body">' + sccEsc(concept.summary) + '</div></div>' : '')
+      + typesGridHtml
+      + behaviorsHtml;
   }
   content.innerHTML = html || '<div class="scc-lookup-loading">No details available.</div>';
   if (newTabEl) {

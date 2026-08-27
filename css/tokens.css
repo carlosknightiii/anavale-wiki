@@ -305,6 +305,22 @@
   --fg-comedy-text:     #f7ff00;
   --fg-dialogue-player: #9fb3c8;
   --fg-dialogue-npc:    var(--gold);
+  /* Gigglegloom Effect box category (item 6, round 5, 2026-08-27) -- new
+     dedicated tokens rather than reusing --teal (a dark, desaturated
+     region-health-status swatch, #1a6a5a, not legible as a box accent/
+     label color against this app's near-black surfaces) or --purple
+     (already a real, established "deity/high-stakes" meaning elsewhere
+     in DM Tools -- reusing it here would recreate the exact kind of
+     hue collision this project has hit and had to fix repeatedly).
+     True teal/cyan (~170°) sits clearly apart from every existing Field
+     Guide box hue (green ~142°, blue ~217°) at a glance. -text is the
+     pale in-box paragraph tint, same convention as every sibling color
+     (--fg-dialogue-player for blue, etc.) -- added from the start here,
+     not as a follow-up fix the way blue's own gap needed one this round. */
+  --fg-gigglegloom:        #2dd4bf;
+  --fg-gigglegloom-dim:    rgba(45,212,191,0.12);
+  --fg-gigglegloom-border: rgba(45,212,191,0.35);
+  --fg-gigglegloom-text:   #c3f7ef;
   /* Stage-direction/narration text inline within a spoken_dialogue box --
      e.g. "Edvin grins." before his actual quoted line. RECOLORED
      2026-08-27 (item 2, round 4) from a dedicated blue token to
