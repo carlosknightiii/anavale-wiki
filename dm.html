@@ -1424,6 +1424,18 @@
         <div id="scc-fg-attach-modal-fields"></div>
       </div>
     </div>
+    <!-- Browse All panel for the attachment search field (item 7, round 5,
+         2026-08-27) -- a page-level sibling of the modal above, not nested
+         inside it: .scc-fg-attach-modal carries a `transform` (the same
+         open/close scale animation every .scc-quicknote-modal uses), and a
+         transform on an ancestor creates a new containing block for
+         position:fixed descendants -- nesting this panel inside the modal
+         would silently break its viewport-relative positioning math
+         (sccFgAttachToggleBrowse() below, mirroring sccToggleBrowse()'s own
+         getBoundingClientRect() approach exactly). Same real
+         .scc-browse-panel class Session Setup's own Browse All buttons use,
+         not a lookalike copy. -->
+    <div class="scc-browse-panel" id="scc-fg-attach-browse"></div>
 
     <!-- ── QUICK NOTE — global, always-accessible entry point ──────────
          Lives at page level like the lookup panel above, for the same reason:
@@ -8521,6 +8533,11 @@ function showDMToast(msg, type) {
    its container moved. */
 .scc-fg-attach-modal { width: 440px; }
 .scc-fg-attach-form { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; padding: 0.5rem; background: var(--dm-surface-high); border-radius: var(--dm-radius-sm); }
+/* Browse All (item 7, round 5, 2026-08-27) -- the search input + button now
+   sit inside their own .scc-picker-controls row (Setup's own wrapper
+   class), which needs to claim the form's full row width the way the bare
+   search-wrap implicitly did before it was wrapped. */
+.scc-fg-attach-form .scc-picker-controls { flex: 1 1 100%; margin-bottom: 0; }
 .scc-fg-attach-form .scc-picker-search-wrap { flex: 1 1 140px; position: relative; }
 .scc-fg-attach-form input[type="text"] { width: 100%; box-sizing: border-box; }
 .scc-fg-attach-form select { flex: 0 0 auto; }
@@ -18271,9 +18288,21 @@ function sccFgAttachFormFieldsHtml(existing) {
   var isEdit = !!existing;
   var entityAttr = (isEdit && existing.entity_id) ? ' data-entity-id="' + sccEsc(existing.entity_id) + '"' : '';
   return '<div class="scc-fg-attach-form">'
-    + '<div class="scc-picker-search-wrap">'
-        + '<input type="text" class="scc-input scc-picker-search" id="scc-fg-attach-name" placeholder="Name (e.g. a Fluffet named Bwip)" value="' + sccEsc(isEdit ? existing.name : '') + '"' + entityAttr + ' oninput="sccFgAttachSearch(this.value)" autocomplete="off">'
-        + '<div class="scc-picker-dropdown" id="scc-fg-attach-drop"></div>'
+    + '<div class="scc-picker-controls">'
+      + '<div class="scc-picker-search-wrap" style="flex:1;position:relative;">'
+          + '<input type="text" class="scc-input scc-picker-search" id="scc-fg-attach-name" placeholder="Name (e.g. a Fluffet named Bwip)" value="' + sccEsc(isEdit ? existing.name : '') + '"' + entityAttr + ' oninput="sccFgAttachSearch(this.value)" autocomplete="off">'
+          + '<div class="scc-picker-dropdown" id="scc-fg-attach-drop"></div>'
+        + '</div>'
+        // Browse All (item 7, round 5, 2026-08-27) -- same real
+        // .scc-browse-btn/.scc-browse-panel component Session Setup's own
+        // Locations/NPCs/Creatures fields use, reused rather than a
+        // one-off lookalike; sccFgAttachToggleBrowse()/sccFgAttachBrowseSelect()
+        // are thin wrappers since this field picks ONE entity into a text
+        // input (name+entity_id), not Setup's own multi-select chip array
+        // -- the reused part is the grouped-data logic (sccBrowseGroups())
+        // and the panel markup/CSS, not the multi-select semantics, which
+        // genuinely don't apply here.
+        + '<button type="button" class="scc-browse-btn" onclick="sccFgAttachToggleBrowse()">Browse All ▾</button>'
       + '</div>'
       + '<input type="text" class="scc-input" id="scc-fg-attach-nickname" placeholder="Nickname (optional, e.g. Sparky)" value="' + sccEsc(isEdit ? (existing.nickname || '') : '') + '">'
       + '<select class="cm-select" id="scc-fg-attach-type" title="What kind of attachment">'
@@ -18371,6 +18400,78 @@ function sccFgAttachPick(type, id, name) {
   if (typeEl) typeEl.value = type;
   var drop = document.getElementById('scc-fg-attach-drop');
   if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+}
+
+// Browse All for the attachment search field (item 7, round 5,
+// 2026-08-27) -- reuses sccBrowseGroups() (the real grouped-data logic
+// Session Setup's own Locations/NPCs/Creatures Browse All buttons use)
+// and the same .scc-browse-panel/-group-header/-option markup+CSS, not a
+// lookalike copy. The selection action is genuinely different though:
+// Setup's sccBrowseSelect() pushes into a multi-select SCC_SELECTED[type]
+// array feeding chips; this field picks exactly ONE entity into the name
+// input (the same thing sccFgAttachPick() above already does for a text
+// search result) -- so the click handler wraps sccFgAttachPick() instead
+// of sccBrowseSelect(), while everything about how the panel is grouped,
+// styled, and positioned is the identical shared component.
+//
+// Combines creature + item groups in one panel (two top-level sections),
+// matching the search field itself, which already searches both types at
+// once rather than being scoped to a single type like Setup's separate
+// per-type fields are.
+function sccFgAttachToggleBrowse() {
+  var panel = document.getElementById('scc-fg-attach-browse');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  panel.classList.remove('open');
+  if (isOpen) return;
+  sccFgAttachRenderBrowsePanel(panel);
+  var btn = document.querySelector('.scc-fg-attach-form .scc-browse-btn');
+  if (btn) {
+    var rect   = btn.getBoundingClientRect();
+    var panelW = 420;
+    var top    = rect.bottom + 4;
+    var left   = rect.left;
+    if (left + panelW > window.innerWidth - 12) left = window.innerWidth - panelW - 12;
+    if (left < 8) left = 8;
+    panel.style.top  = top  + 'px';
+    panel.style.left = left + 'px';
+  }
+  panel.classList.add('open');
+}
+
+function sccFgAttachRenderBrowsePanel(panel) {
+  var sections = [
+    { type: 'creature', heading: 'Creatures' },
+    { type: 'item',     heading: 'Items' }
+  ];
+  var html = '';
+  sections.forEach(function(section) {
+    var groups = sccBrowseGroups(section.type);
+    var groupKeys = Object.keys(groups).sort();
+    if (!groupKeys.length) return;
+    html += '<div class="scc-browse-group-header">' + sccEsc(section.heading) + '</div>';
+    groupKeys.forEach(function(subKey) {
+      html += '<div class="scc-browse-subheader">' + sccEsc(subKey) + '</div>';
+      (groups[subKey] || []).forEach(function(item) {
+        html += '<div class="scc-browse-option" onclick="sccFgAttachBrowseSelect(\'' + section.type + '\',\'' + sccEsc(item.id) + '\',\'' + sccEsc(item.name) + '\')">'
+          + sccEsc(item.name)
+          + (item.cat ? '<span class="scc-browse-option-cat">' + sccEsc(item.cat) + '</span>' : '')
+        + '</div>';
+      });
+    });
+  });
+  panel.innerHTML = '<div class="scc-browse-panel-scroll">' + html + '</div>'
+    + '<div class="scc-browse-done"><button class="scc-btn-primary" onclick="sccFgAttachCloseBrowse()">Close</button><span style="font-family:var(--font-sans);font-size:0.72rem;color:var(--dm-text-muted);">Click an entry to select it</span></div>';
+}
+
+function sccFgAttachBrowseSelect(type, id, name) {
+  sccFgAttachPick(type, id, name);
+  sccFgAttachCloseBrowse();
+}
+
+function sccFgAttachCloseBrowse() {
+  var panel = document.getElementById('scc-fg-attach-browse');
+  if (panel) panel.classList.remove('open');
 }
 
 // Shared save path for both Add (attachmentId null -> POST) and Edit
@@ -19499,8 +19600,17 @@ function sccCloseBrowse(type) {
 }
 
 // Close browse panels on outside click
+// .closest('.scc-browse-panel') added (item 7, round 5, 2026-08-27) --
+// Setup's own browse panels happen to sit inside .scc-picker-group, which
+// already protected clicks inside them, but that was really standing in
+// for "click landed inside an open browse panel." The attachment modal's
+// Browse All panel (#scc-fg-attach-browse) is deliberately a page-level
+// sibling of the modal, not nested in a .scc-picker-group -- checking the
+// panel itself directly is the more correct, general condition, and is a
+// strict superset of the old check (every .scc-picker-group-nested panel
+// still matches it too, so this changes nothing for existing consumers).
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.scc-picker-group') && !e.target.closest('.scc-browse-btn')) {
+  if (!e.target.closest('.scc-picker-group') && !e.target.closest('.scc-browse-btn') && !e.target.closest('.scc-browse-panel')) {
     document.querySelectorAll('.scc-browse-panel.open').forEach(function(p) { p.classList.remove('open'); });
     document.querySelectorAll('.scc-picker-dropdown.open').forEach(function(d) { d.classList.remove('open'); d.innerHTML = ''; });
   }
