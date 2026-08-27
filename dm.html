@@ -1410,6 +1410,21 @@
       </div>
     </div>
 
+    <!-- ── Add/Edit Attachment modal (item 12, round 4, 2026-08-27) --
+         real popup, replacing the old inline form squeezed into the
+         260px Live Session sidebar strip. One shared modal for every
+         player's attachments (not one per-pc container) -- which
+         attachment/character it's currently editing lives in JS state
+         (SCC_FG_ATTACH_MODAL_CHAR_ID/_EDIT_ID), set by
+         sccFgOpenAttachForm(). -->
+    <div id="scc-fg-attach-backdrop" class="scc-lookup-backdrop" onclick="sccFgCloseAttachModal()"></div>
+    <div id="scc-fg-attach-modal" class="scc-quicknote-modal scc-fg-attach-modal" aria-hidden="true">
+      <div class="scc-quicknote-modal-inner">
+        <div class="scc-quicknote-modal-title" id="scc-fg-attach-modal-title">Add Attachment</div>
+        <div id="scc-fg-attach-modal-fields"></div>
+      </div>
+    </div>
+
     <!-- ── QUICK NOTE — global, always-accessible entry point ──────────
          Lives at page level like the lookup panel above, for the same reason:
          a DM report that jotting a quick note required navigating to Session
@@ -8436,9 +8451,25 @@ function showDMToast(msg, type) {
 .scc-fg-attach-pill {
   display: inline-flex; align-items: stretch; gap: 0.35rem;
   background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); border-radius: 10px;
-  padding: 0.15rem 0.3rem 0.15rem 0.55rem; font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text);
+  padding: 0.15rem 0.3rem 0.15rem 0.3rem; font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text);
 }
 .scc-fg-attach-pill--permanent { border-color: var(--scc-border-gold); }
+/* Thumbnail per attachment (item 11, round 4, 2026-08-27) -- same real-
+   art-or-letter-avatar pattern as .scc-staging-thumb, just smaller
+   (24px, this pill sits in a narrow 260px sidebar strip). A resolvable
+   creature entity_id gets the creature's own catalog image (the same
+   CREATURES[].image the Field Guide's own featured-thumbnail mechanism
+   reads); item/effect/free-text attachments (no entity_id) always fall
+   back to a letter avatar -- there's no catalog image to show for those. */
+.scc-fg-attach-pill-thumb, .scc-fg-attach-pill-thumb-fallback {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+}
+.scc-fg-attach-pill-thumb { object-fit: cover; border: 1px solid var(--scc-border-mid); }
+.scc-fg-attach-pill-thumb-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--scc-surface-high); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-headers); font-size: 0.68rem; color: var(--dm-gold);
+}
 .scc-fg-attach-pill-main { position: relative; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
 .scc-fg-attach-pill-main:hover { color: var(--dm-gold); }
 /* ── Attachment tooltip -- same attr()+::before technique as the Conditions
@@ -8473,6 +8504,13 @@ function showDMToast(msg, type) {
 .scc-fg-attach-pill-x { cursor: pointer; color: var(--dm-text-faint); padding: 0 0.1rem; display: flex; align-items: center; }
 .scc-fg-attach-pill-x:hover { color: var(--dm-red); }
 .scc-fg-attach-add-btn { font-size: 0.66rem; padding: 0.15rem 0.5rem; }
+/* Real popup (item 12, round 4, 2026-08-27) -- was an inline div squeezed
+   into the 260px Live Session sidebar strip; #scc-fg-attach-modal-fields
+   (page-level, see the modal markup near #scc-quickref-modal) now holds
+   the exact same .scc-fg-attach-form fields, just with real room to
+   breathe. The form's own internal flex-wrap layout is unchanged -- only
+   its container moved. */
+.scc-fg-attach-modal { width: 440px; }
 .scc-fg-attach-form { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; padding: 0.5rem; background: var(--dm-surface-high); border-radius: var(--dm-radius-sm); }
 .scc-fg-attach-form .scc-picker-search-wrap { flex: 1 1 140px; position: relative; }
 .scc-fg-attach-form input[type="text"] { width: 100%; box-sizing: border-box; }
@@ -18116,6 +18154,34 @@ function sccFgAttachTooltipText(a) {
   if (creature && creature.behavior) parts.push('Behavior: ' + creature.behavior);
   return parts.join('\n\n');
 }
+// Nickname display (item 12, round 4, 2026-08-27) -- `name` keeps meaning
+// exactly what it always has (the entity's own resolved name when picked
+// from search, e.g. "Tinywings", or the free-typed text when it isn't);
+// `nickname` is a new, genuinely separate optional field. "Sparky
+// (Tinywings)" when set, "Tinywings" (today's exact behavior) when not.
+function sccFgAttachDisplayName(a) {
+  return a.nickname ? (a.nickname + ' (' + a.name + ')') : a.name;
+}
+// Thumbnail per attachment (item 11, round 4, 2026-08-27) -- a resolvable
+// creature entity_id uses the creature's own catalog image, the same
+// CREATURES[].image field the Field Guide's featured-thumbnail mechanism
+// (sccFgResolveFeaturedEntity) already reads for the identical purpose.
+// item/effect/free-text attachments (no entity_id, or a non-creature
+// type) always fall back to a letter avatar -- there's no catalog image
+// to show for those. Falls back to the display name's own first letter
+// (nickname's, if set) so the avatar always matches what's actually
+// showing next to it.
+function sccFgAttachPillThumbHtml(a) {
+  var creature = (a.attachment_type === 'creature' && a.entity_id)
+    ? (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === a.entity_id; })
+    : null;
+  var initial = sccEsc((a.nickname || a.name || '?').charAt(0));
+  if (creature && creature.image) {
+    return '<img class="scc-fg-attach-pill-thumb" src="' + sccEsc(creature.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      + '<span class="scc-fg-attach-pill-thumb-fallback" style="display:none">' + initial + '</span>';
+  }
+  return '<span class="scc-fg-attach-pill-thumb-fallback">' + initial + '</span>';
+}
 function sccFgAttachmentsSectionHtml() {
   if (typeof SCC_PLAYERS === 'undefined' || !SCC_PLAYERS.length) return '';
   var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
@@ -18139,7 +18205,8 @@ function sccFgAttachmentsSectionHtml() {
           var tipText = sccFgAttachTooltipText(a);
           return '<span class="scc-fg-attach-pill' + (a.mode === 'permanent' ? ' scc-fg-attach-pill--permanent' : '') + '">'
             + '<span class="scc-fg-attach-pill-main"' + (auditLocked ? '' : ' onclick="sccFgOpenAttachForm(\'' + pc.id + '\',\'' + a.id + '\')"') + (tipText ? ' data-tip="' + sccEsc(tipText) + '"' : '') + '>'
-              + sccEsc(a.name)
+              + sccFgAttachPillThumbHtml(a)
+              + '<span>' + sccEsc(sccFgAttachDisplayName(a)) + '</span>'
               + '<span class="scc-fg-attach-pill-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
             + '</span>'
             + (auditLocked ? '' : '<span class="scc-fg-attach-pill-x" onclick="event.stopPropagation();sccFgRemoveAttachment(\'' + a.id + '\')" title="Remove">&#10005;</span>')
@@ -18152,7 +18219,6 @@ function sccFgAttachmentsSectionHtml() {
             + (mine.length ? '' : '<span class="scc-fg-attach-none">None yet</span>')
             + (auditLocked ? '' : '<button type="button" class="scc-btn-sm scc-fg-attach-add-btn" onclick="sccFgOpenAttachForm(\'' + pc.id + '\',null)">+ Add</button>')
           + '</div>'
-          + (auditLocked ? '' : '<div class="scc-fg-attach-form" id="scc-fg-attach-form-' + pc.id + '" style="display:none;"></div>')
         + '</div>';
       }).join('')
   + '</div>';
@@ -18174,57 +18240,80 @@ function sccLiveRenderAttachments() {
 // items (same .scc-picker-search/-dropdown/-option pattern Setup's own
 // entity pickers use) -- picking a result fills name+type and remembers
 // the real entity_id; typing anything else just saves as free text.
-function sccFgAttachFormFieldsHtml(charId, existing) {
+// Fixed element ids now (item 12, round 4, 2026-08-27) -- previously
+// suffixed per-charId since one inline form could exist per player card
+// at once; now there is exactly one shared modal, so a single fixed id
+// per field is correct, not a regression.
+function sccFgAttachFormFieldsHtml(existing) {
   var isEdit = !!existing;
   var entityAttr = (isEdit && existing.entity_id) ? ' data-entity-id="' + sccEsc(existing.entity_id) + '"' : '';
-  return '<div class="scc-picker-search-wrap">'
-      + '<input type="text" class="scc-input scc-picker-search" id="scc-fg-attach-name-' + charId + '" placeholder="Name (e.g. a Fluffet named Bwip)" value="' + sccEsc(isEdit ? existing.name : '') + '"' + entityAttr + ' oninput="sccFgAttachSearch(\'' + charId + '\',this.value)" autocomplete="off">'
-      + '<div class="scc-picker-dropdown" id="scc-fg-attach-drop-' + charId + '"></div>'
-    + '</div>'
-    + '<select class="cm-select" id="scc-fg-attach-type-' + charId + '" title="What kind of attachment">'
-      + '<option value="creature"' + (!isEdit || existing.attachment_type === 'creature' ? ' selected' : '') + '>Creature (pet, companion)</option>'
-      + '<option value="item"' + (isEdit && existing.attachment_type === 'item' ? ' selected' : '') + '>Item</option>'
-      + '<option value="effect"' + (isEdit && existing.attachment_type === 'effect' ? ' selected' : '') + '>Effect (curse, blessing, mark)</option>'
-    + '</select>'
-    + '<select class="cm-select" id="scc-fg-attach-mode-' + charId + '">'
-      + '<option value="situational"' + (!isEdit || existing.mode !== 'permanent' ? ' selected' : '') + '>Situational</option>'
-      + '<option value="permanent"' + (isEdit && existing.mode === 'permanent' ? ' selected' : '') + '>Permanent</option>'
-    + '</select>'
-    + '<textarea class="scc-textarea" id="scc-fg-attach-desc-' + charId + '" rows="2" placeholder="Description (optional)">' + sccEsc(isEdit ? (existing.description || '') : '') + '</textarea>'
-    + '<div class="scc-fg-attach-form-actions">'
-      + '<button type="button" class="scc-btn-secondary" onclick="sccFgSaveAttachment(\'' + charId + '\',' + (isEdit ? "'" + existing.id + "'" : 'null') + ')">' + (isEdit ? 'Save Changes' : 'Add') + '</button>'
-      + '<button type="button" class="scc-fg-attach-cancel" onclick="sccFgToggleAttachForm(\'' + charId + '\')">Cancel</button>'
+  return '<div class="scc-fg-attach-form">'
+    + '<div class="scc-picker-search-wrap">'
+        + '<input type="text" class="scc-input scc-picker-search" id="scc-fg-attach-name" placeholder="Name (e.g. a Fluffet named Bwip)" value="' + sccEsc(isEdit ? existing.name : '') + '"' + entityAttr + ' oninput="sccFgAttachSearch(this.value)" autocomplete="off">'
+        + '<div class="scc-picker-dropdown" id="scc-fg-attach-drop"></div>'
+      + '</div>'
+      + '<input type="text" class="scc-input" id="scc-fg-attach-nickname" placeholder="Nickname (optional, e.g. Sparky)" value="' + sccEsc(isEdit ? (existing.nickname || '') : '') + '">'
+      + '<select class="cm-select" id="scc-fg-attach-type" title="What kind of attachment">'
+        + '<option value="creature"' + (!isEdit || existing.attachment_type === 'creature' ? ' selected' : '') + '>Creature (pet, companion)</option>'
+        + '<option value="item"' + (isEdit && existing.attachment_type === 'item' ? ' selected' : '') + '>Item</option>'
+        + '<option value="effect"' + (isEdit && existing.attachment_type === 'effect' ? ' selected' : '') + '>Effect (curse, blessing, mark)</option>'
+        + '<option value="character"' + (isEdit && existing.attachment_type === 'character' ? ' selected' : '') + '>Character/NPC</option>'
+      + '</select>'
+      + '<select class="cm-select" id="scc-fg-attach-mode">'
+        + '<option value="situational"' + (!isEdit || existing.mode !== 'permanent' ? ' selected' : '') + '>Situational</option>'
+        + '<option value="permanent"' + (isEdit && existing.mode === 'permanent' ? ' selected' : '') + '>Permanent</option>'
+      + '</select>'
+      + '<textarea class="scc-textarea" id="scc-fg-attach-desc" rows="2" placeholder="Description (optional)">' + sccEsc(isEdit ? (existing.description || '') : '') + '</textarea>'
+      + '<div class="scc-fg-attach-form-actions">'
+        + '<button type="button" class="scc-btn-secondary" onclick="sccFgSaveAttachment(' + (isEdit ? "'" + existing.id + "'" : 'null') + ')">' + (isEdit ? 'Save Changes' : 'Add') + '</button>'
+        + '<button type="button" class="scc-fg-attach-cancel" onclick="sccFgCloseAttachModal()">Cancel</button>'
+      + '</div>'
     + '</div>';
 }
 
+// Add/Edit Attachment modal (item 12, round 4, 2026-08-27) -- a real
+// popup now, not a form squeezed into the 260px sidebar strip. charId is
+// tracked in module state (SCC_FG_ATTACH_MODAL_CHAR_ID) since the save
+// button's own onclick no longer carries it via a per-form element id.
+var SCC_FG_ATTACH_MODAL_CHAR_ID = null;
 // attachmentId null = add mode; a real id = edit mode, pre-filled from
 // SCC_ATTACHMENTS. Re-openable on a different attachment (or back to add)
 // without a page reload -- always rebuilds the form fresh.
 function sccFgOpenAttachForm(charId, attachmentId) {
-  var container = document.getElementById('scc-fg-attach-form-' + charId);
-  if (!container) return;
+  var backdrop = document.getElementById('scc-fg-attach-backdrop');
+  var modal    = document.getElementById('scc-fg-attach-modal');
+  var fields   = document.getElementById('scc-fg-attach-modal-fields');
+  var titleEl  = document.getElementById('scc-fg-attach-modal-title');
+  if (!backdrop || !modal || !fields) return;
+  SCC_FG_ATTACH_MODAL_CHAR_ID = charId;
   var existing = null;
   if (attachmentId) {
     var rows = (typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || [];
     existing = rows.find(function(a) { return a.id === attachmentId; }) || null;
   }
-  container.innerHTML = sccFgAttachFormFieldsHtml(charId, existing);
-  container.style.display = 'flex';
+  if (titleEl) titleEl.textContent = existing ? 'Edit Attachment' : 'Add Attachment';
+  fields.innerHTML = sccFgAttachFormFieldsHtml(existing);
+  backdrop.classList.add('open');
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
 }
 
-function sccFgToggleAttachForm(charId) {
-  var el = document.getElementById('scc-fg-attach-form-' + charId);
-  if (!el) return;
-  el.style.display = 'none';
-  el.innerHTML = '';
+function sccFgCloseAttachModal() {
+  var backdrop = document.getElementById('scc-fg-attach-backdrop');
+  var modal    = document.getElementById('scc-fg-attach-modal');
+  var fields   = document.getElementById('scc-fg-attach-modal-fields');
+  if (backdrop) backdrop.classList.remove('open');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+  if (fields) fields.innerHTML = '';
+  SCC_FG_ATTACH_MODAL_CHAR_ID = null;
 }
 
-function sccFgAttachSearch(charId, query) {
-  var nameEl = document.getElementById('scc-fg-attach-name-' + charId);
+function sccFgAttachSearch(query) {
+  var nameEl = document.getElementById('scc-fg-attach-name');
   // The DM typing by hand is a real edit to the query -- a stale entity_id
   // from an earlier pick shouldn't silently survive a rename.
   if (nameEl) delete nameEl.dataset.entityId;
-  var drop = document.getElementById('scc-fg-attach-drop-' + charId);
+  var drop = document.getElementById('scc-fg-attach-drop');
   if (!drop) return;
   query = (query || '').toLowerCase().trim();
   if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
@@ -18244,7 +18333,7 @@ function sccFgAttachSearch(charId, query) {
     return;
   }
   drop.innerHTML = results.map(function(r) {
-    return '<div class="scc-picker-option" onclick="sccFgAttachPick(\'' + charId + '\',\'' + r.type + '\',\'' + escQ(r.id) + '\',\'' + escQ(r.name) + '\')">'
+    return '<div class="scc-picker-option" onclick="sccFgAttachPick(\'' + r.type + '\',\'' + escQ(r.id) + '\',\'' + escQ(r.name) + '\')">'
       + sccEsc(r.name)
       + '<div class="scc-picker-option-sub">' + sccEsc(r.typeLabel) + '</div>'
     + '</div>';
@@ -18252,29 +18341,33 @@ function sccFgAttachSearch(charId, query) {
   drop.classList.add('open');
 }
 
-function sccFgAttachPick(charId, type, id, name) {
-  var nameEl = document.getElementById('scc-fg-attach-name-' + charId);
-  var typeEl = document.getElementById('scc-fg-attach-type-' + charId);
+function sccFgAttachPick(type, id, name) {
+  var nameEl = document.getElementById('scc-fg-attach-name');
+  var typeEl = document.getElementById('scc-fg-attach-type');
   if (nameEl) { nameEl.value = name; nameEl.dataset.entityId = id; }
   if (typeEl) typeEl.value = type;
-  var drop = document.getElementById('scc-fg-attach-drop-' + charId);
+  var drop = document.getElementById('scc-fg-attach-drop');
   if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
 }
 
 // Shared save path for both Add (attachmentId null -> POST) and Edit
 // (attachmentId set -> PATCH), so the two modes can't drift apart.
-function sccFgSaveAttachment(charId, attachmentId) {
+function sccFgSaveAttachment(attachmentId) {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — attachments are read-only here', 'error'); return; }
-  var nameEl = document.getElementById('scc-fg-attach-name-' + charId);
-  var typeEl = document.getElementById('scc-fg-attach-type-' + charId);
-  var modeEl = document.getElementById('scc-fg-attach-mode-' + charId);
-  var descEl = document.getElementById('scc-fg-attach-desc-' + charId);
+  var charId = SCC_FG_ATTACH_MODAL_CHAR_ID;
+  if (!charId) { showDMToast('Could not save attachment', 'error'); return; }
+  var nameEl     = document.getElementById('scc-fg-attach-name');
+  var nicknameEl = document.getElementById('scc-fg-attach-nickname');
+  var typeEl     = document.getElementById('scc-fg-attach-type');
+  var modeEl     = document.getElementById('scc-fg-attach-mode');
+  var descEl     = document.getElementById('scc-fg-attach-desc');
   var name = nameEl ? nameEl.value.trim() : '';
   if (!name) { showDMToast('Give the attachment a name first', 'error'); return; }
-  var attachmentType = (typeEl && ['creature','item','effect'].indexOf(typeEl.value) >= 0) ? typeEl.value : 'creature';
+  var attachmentType = (typeEl && ['creature','item','effect','character'].indexOf(typeEl.value) >= 0) ? typeEl.value : 'creature';
   var entityId = (nameEl && nameEl.dataset.entityId) ? nameEl.dataset.entityId : null;
   var body = {
     name: name,
+    nickname: nicknameEl && nicknameEl.value.trim() ? nicknameEl.value.trim() : null,
     attachment_type: attachmentType,
     entity_id: entityId,
     mode: (modeEl && modeEl.value === 'permanent') ? 'permanent' : 'situational',
@@ -18285,6 +18378,7 @@ function sccFgSaveAttachment(charId, attachmentId) {
     : sccPost('character_attachments', Object.assign({ character_id: charId, session_number: sccFgActiveSessionNum(), active: true }, body));
   req.then(function(r) {
     if (!r.ok) { showDMToast('Could not save attachment', 'error'); return; }
+    sccFgCloseAttachModal();
     return sccFgRefreshAttachmentsCache().then(function() {
       showDMToast(attachmentId ? 'Attachment updated' : 'Attachment added', 'success');
     });
