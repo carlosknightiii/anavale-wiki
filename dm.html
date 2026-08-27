@@ -8203,6 +8203,26 @@ function showDMToast(msg, type) {
    not two shades of the same emphasis. */
 .scc-fg-aside { color: var(--dm-only); font-style: normal; font-weight: 600; }
 .scc-fg-aside::before { content: "(DM-Only) "; }
+/* ── Stage-direction/narration line inside a spoken_dialogue box (item 7,
+   2026-08-27) -- a distinct concept from the DM-only aside above: this is
+   narrator description of HOW a line is delivered or what an NPC does
+   ("Edvin grins.", "He looks at his desk."), not DM-only guidance never
+   spoken. Block-level (its own <p>, a real paragraph break from the quote
+   next to it), bracketed, and blue -- concrete spec: wrap the sentence in
+   <p class="scc-fg-stage-direction">...</p>, brackets are a ::before/
+   ::after pair so the stored content itself never has to include literal
+   "[" "]" characters. Not italic, for the same reason the aside above
+   isn't -- real quoted dialogue already uses <em> here, so this needs to
+   read as a different kind of text, not another shade of emphasis. */
+/* .scc-fg-doc-inner p.scc-fg-stage-direction, not the bare class -- same
+   specificity bug already fixed once this session for staging-cue
+   (.scc-fg-doc-inner p is 0,1,1, a bare single-class rule is only 0,1,0,
+   so the generic paragraph-color rule silently won regardless of source
+   order). Caught this time by reading computed style before declaring it
+   done, not assumed fixed from the staging-cue precedent alone. */
+.scc-fg-doc-inner p.scc-fg-stage-direction { display: block; color: var(--fg-stage-direction); font-style: normal; }
+.scc-fg-stage-direction::before { content: "["; }
+.scc-fg-stage-direction::after { content: "]"; }
 /* ── Comedy, inline mode — reads as part of the narration (a normal
    paragraph), not set apart in a box. Full-box mode (category=comedy,
    inline!=true) still uses .scc-fg-box--yellow above, unchanged.
