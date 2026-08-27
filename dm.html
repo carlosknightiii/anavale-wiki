@@ -8508,17 +8508,28 @@ function showDMToast(msg, type) {
   font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
   color: var(--green); margin-top: 0.6rem;
 }
+/* ── Player Decision header (item 1, 2026-08-27 consolidation) -- ONE
+   real component for the chip+icon+label combo everywhere a click-to-log
+   decision point appears (combat_outcomes' header, Scenario Cards' own
+   decision row, and any future decision-tracker type), replacing two
+   independently-styled one-offs that had drifted to visibly different
+   layouts/sizing (chip font-size 0.68rem vs 0.66rem, label font-family/
+   size differing, only one of the two even using this shared class).
+   Chip still reads SCC_FG_CATEGORY_STYLE.player_decision's own badge
+   icon/name via the standard .scc-fg-box-cat-badge class every other
+   category chip already uses -- not a new one-off badge shape, just a
+   consistent size override and a shared label treatment next to it. */
+.scc-fg-decision-header { display: flex; align-items: center; gap: 0.5rem; }
+.scc-fg-decision-header .scc-fg-box-cat-badge {
+  background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold);
+  font-size: 0.68rem; flex-shrink: 0; margin-bottom: 0;
+}
+.scc-fg-decision-header-label { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); flex: 1; min-width: 0; }
 /* ── Branching combat outcome widget (box.category === 'combat_outcomes') ── */
 .scc-fg-outcomes-box { position: relative; border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; }
 .scc-fg-outcomes-header {
   padding: 0.55rem 2.4rem 0.55rem 0.85rem; background: var(--dm-surface-high);
-  font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--dm-text);
   border-bottom: 1px solid var(--scc-border);
-  display: flex; align-items: center; gap: 0.4rem;
-}
-.scc-fg-outcomes-header .scc-fg-box-cat-badge {
-  background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold);
-  font-size: 0.68rem;
 }
 .scc-fg-outcomes-intro { padding: 0.6rem 0.85rem 0; margin: 0 !important; font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
 .scc-fg-outcome-wrap { border-top: 1px solid var(--scc-border); }
@@ -8640,20 +8651,23 @@ function showDMToast(msg, type) {
   transition: border-color 0.1s, color 0.1s;
 }
 .scc-fg-sc-back-btn:hover { border-color: var(--scc-border-gold); color: var(--dm-gold); }
+/* Chip+icon+label sizing now comes entirely from the shared
+   .scc-fg-decision-header/-label classes above (item 1 consolidation) --
+   this rule only owns the row's own outer chrome (clickable card look,
+   logged-state background) and the "Affects: X" sub-line, which
+   .scc-fg-outcomes-header has no equivalent of. */
 .scc-fg-sc-decision-row {
-  display: flex; align-items: center; gap: 0.6rem; cursor: pointer;
+  display: flex; flex-direction: column; gap: 0.15rem; cursor: pointer;
   padding: 0.5rem 0.65rem; border-radius: var(--dm-radius-sm);
   background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
   margin-bottom: 0.75rem; transition: background 0.1s;
 }
 .scc-fg-sc-decision-row:hover { background: rgba(255,255,255,0.03); }
 .scc-fg-sc-decision-row--logged { background: var(--green-dim); border-color: var(--green-border); }
-.scc-fg-sc-decision-label { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 700; color: var(--dm-text); flex: 1; min-width: 0; }
-.scc-fg-sc-decision-affects { font-weight: 400; color: var(--dm-text-muted); font-size: 0.72rem; display: block; margin-top: 0.15rem; }
-.scc-fg-sc-decision-row .scc-fg-box-cat-badge {
-  background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold);
-  font-size: 0.66rem; flex-shrink: 0;
-}
+.scc-fg-sc-decision-row-top { display: flex; align-items: center; gap: 0.6rem; }
+.scc-fg-sc-decision-row-top .scc-fg-decision-header { flex: 1; min-width: 0; }
+.scc-fg-sc-decision-row-top .scc-fg-outcome-check { flex-shrink: 0; }
+.scc-fg-sc-decision-affects { font-weight: 400; color: var(--dm-text-muted); font-size: 0.72rem; display: block; }
 /* ── Session-opening empty state -- matches Companions & Attachments'
    "None yet" + "+ Add" language, rather than rendering nothing. ── */
 .scc-fg-opening-empty { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.6rem; }
@@ -16647,6 +16661,23 @@ function sccFgCombatOutcomesDomId(beatLabel) {
   return 'scc-fg-outcomes-' + slug;
 }
 
+// ── Player Decision header (item 1, 2026-08-27) -- ONE real component
+// for the chip+icon+label combo, used identically everywhere a
+// click-to-log decision point appears: combat_outcomes' own header,
+// Scenario Cards' decision row, and any future decision-tracker type.
+// Reads SCC_FG_CATEGORY_STYLE.player_decision the same way every other
+// category chip is built (sccFgRenderBlock()'s generic box case), not a
+// new one-off badge shape -- this only replaces the two call sites that
+// had each hand-assembled that same chip markup independently and let
+// their sizing/layout drift apart.
+function sccFgPlayerDecisionHeaderHtml(label) {
+  var decisionStyle = SCC_FG_CATEGORY_STYLE.player_decision;
+  var chip = (decisionStyle && decisionStyle.badge)
+    ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--player_decision">' + decisionStyle.badge.icon + '</span> ' + sccEsc(decisionStyle.badge.name) + '</div>'
+    : '';
+  return '<div class="scc-fg-decision-header">' + chip + '<span class="scc-fg-decision-header-label">' + sccEsc(label) + '</span></div>';
+}
+
 // ctx is optional -- undefined for a top-level combat_outcomes block
 // (rerender-by-label + getElementById, the original behavior), or
 // { scenarioCardsDomId, cardIdx } when rendered as nested Scenario Card
@@ -16698,13 +16729,9 @@ function sccFgOneCombatOutcomesHtml(b, ctx) {
       + contentHtml
     + '</div>';
   }).join('');
-  var decisionStyle = SCC_FG_CATEGORY_STYLE.player_decision;
-  var headerChip = (decisionStyle && decisionStyle.badge)
-    ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--player_decision">' + decisionStyle.badge.icon + '</span> ' + sccEsc(decisionStyle.badge.name) + '</div>'
-    : '';
   return '<div class="scc-fg-outcomes-box" id="' + domId + '">'
     + sccFgBoxCornerIconHtml('player_decision')
-    + '<div class="scc-fg-outcomes-header">' + headerChip + '<span>' + sccEsc(b.label || 'Combat Outcome') + '</span></div>'
+    + '<div class="scc-fg-outcomes-header">' + sccFgPlayerDecisionHeaderHtml(b.label || 'Combat Outcome') + '</div>'
     + (b.html ? '<p class="scc-fg-outcomes-intro">' + sccFgLinkify(b.html) + '</p>' : '')
     + '<div class="scc-fg-outcomes-list">' + rows + '</div>'
   + '</div>';
@@ -16987,10 +17014,6 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   if (card.decision) {
     var title = sccFgScenarioDecisionTitle(b, card);
     var loggedRow = log.find(function(n) { return n.title === title; }) || null;
-    var decisionStyle = SCC_FG_CATEGORY_STYLE.player_decision;
-    var chip = (decisionStyle && decisionStyle.badge)
-      ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--player_decision">' + decisionStyle.badge.icon + '</span> ' + sccEsc(decisionStyle.badge.name) + '</div>'
-      : '';
     var affectsHtml = '';
     if (card.decision.affects_quest_id) {
       var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
@@ -17001,9 +17024,11 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
         + (auditLocked ? '' : ' onclick="sccFgToggleLoggedEntry(this)" title="' + (loggedRow ? 'Click to remove this log entry' : 'Click to log this as what happened') + '"')
         + ' data-log-title="' + sccEsc(title) + '" data-log-desc="" data-decision-label="' + sccEsc(card.decision.label || card.title || '') + '"'
         + ' data-log-rerender="scenario_cards" data-log-rerender-key="' + sccEsc(domId + '|' + cardIdx) + '">'
-      + chip
-      + '<div class="scc-fg-sc-decision-label">' + sccEsc(card.decision.label || card.title || '') + affectsHtml + '</div>'
-      + '<span class="scc-fg-outcome-check">' + (loggedRow ? '&#10003;' : '') + '</span>'
+      + '<div class="scc-fg-sc-decision-row-top">'
+        + sccFgPlayerDecisionHeaderHtml(card.decision.label || card.title || '')
+        + '<span class="scc-fg-outcome-check">' + (loggedRow ? '&#10003;' : '') + '</span>'
+      + '</div>'
+      + affectsHtml
     + '</div>';
   }
   var contentHtml = sccFgRenderDoc(card.blocks || [], { scenarioCardsDomId: domId, cardIdx: cardIdx });
