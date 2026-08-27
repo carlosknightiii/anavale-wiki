@@ -7854,70 +7854,60 @@ function showDMToast(msg, type) {
 .scc-fg-jump-row select { flex: 1; max-width: 320px; }
 .scc-fg-jump-row .scc-fg-continue-btn { flex-shrink: 0; }
 .scc-fg-doc-inner { padding: 1.5rem 1.75rem 3rem; margin: 0 auto; }
-/* ── Vertical scroll progress indicator -- one dot+label per real h1
-   section in the currently-rendered document (sccFgBuildScrollIndicator()
-   derives these dynamically, no hardcoded per-session list). Fixed to the
-   viewport. DM feedback on the first build, addressed here: (a) all
-   labels show by default now, not just on hover -- a DM scanning the
-   rail needs to see every section name at a glance, not discover them one
-   at a time; (b) not-yet-visited dots/labels moved from --blue-400 to the
-   lighter --blue-100 for real legibility against the dark page background
-   (--fg-scroll-inactive itself stays pointed at --blue-400 elsewhere it's
-   still used correctly dim -- this rail's own not-reached state needed to
-   be brighter than that, so it gets its own explicit color rather than
-   changing the shared token's meaning for everything else that reads it);
-   (c) a track+progress line (below) reinforces how far down the reader
-   is, not just the dot colors alone; (d) each row gets real padding so
-   the actual clickable area is meaningfully bigger than the 8px visual
-   dot, not just the dot's own bounding box. */
-/* 50vh tall, vertically centered (top:50%/translateY(-50%) unchanged) --
-   rows are positioned by sccFgApplyProportionalSpacing() as real absolute
-   `top` offsets computed from each section's actual scroll distance, not
-   flex/gap even spacing, so display is block here, not flex, and the
-   fixed positioning context rows anchor against is this element itself. */
+/* ── Vertical scroll progress indicator (item 13, 2026-08-27 rebuild) --
+   one dot+label per real h1/quest-Beat-h2 in the currently-rendered
+   document, derived dynamically at render time (sccFgCollectScrollEntries()
+   walks the live DOM, nothing hardcoded to Session 1). Built directly
+   against the DM-approved reference implementation stored in this
+   feature's own requests-table row -- buffer-zone layout (dots/line can
+   never be positioned into a fixed 14px dead zone top/bottom, which is
+   what actually produces the soft-edge look, not a gradient mask that
+   can misalign with a real dot), two separate position arrays kept
+   throughout the JS (dotPositions, the true px/maxScroll percentage,
+   vs. drawPositions, a spacing-adjusted copy used only for on-screen
+   placement -- collapsing these into one array was the root cause of
+   two of round 3's real bugs: clicking a dot didn't line up with where
+   the fill line stopped, and the fix line could overshoot on scroll).
+   Explicitly flat -- no indentation/nesting for quest Beats under their
+   parent quest heading, confirmed reversed from round 3's own nested
+   treatment per the DM's final approved mockup. */
 .scc-fg-scroll-indicator {
-  position: fixed; top: 50%; right: 0.5rem; transform: translateY(-50%);
-  display: none; height: 50vh; z-index: 40;
-  overflow: visible; padding: 0.25rem 0.25rem 0.25rem 0;
+  position: fixed; top: 50%; right: 2px; transform: translateY(-50%);
+  display: none; height: 50vh; width: 130px; z-index: 40; pointer-events: none;
 }
-.scc-fg-scroll-track {
-  position: absolute; top: 0.25rem; bottom: 0.25rem; right: 11px;
-  width: 2px; background: var(--blue-400); border-radius: 1px; z-index: 0; pointer-events: none;
+.scc-fg-scroll-line-track { position: absolute; inset: 0; pointer-events: none; }
+.scc-fg-scroll-base-line { position: absolute; right: 15px; width: 2px; background: var(--fg-scroll-line); }
+.scc-fg-scroll-fill-line {
+  position: absolute; right: 15px; width: 2px; background: var(--dm-gold);
+  height: 0; transition: height 0.05s linear;
 }
-.scc-fg-scroll-progress {
-  position: absolute; top: 0.25rem; right: 11px;
-  width: 2px; background: var(--dm-gold); border-radius: 1px; z-index: 1; pointer-events: none;
-  height: 0; transition: height 0.15s;
+.scc-fg-scroll-dot {
+  position: absolute; right: 11px; transform: translateY(-50%);
+  width: 10px; height: 10px; border-radius: 50%; cursor: pointer; pointer-events: auto;
+  background: var(--fg-scroll-dot-bg); border: 1px solid var(--fg-scroll-dot-border);
+  transition: background 0.15s, border-color 0.15s; z-index: 2;
 }
-.scc-fg-scroll-dot-row {
-  position: absolute; right: 0; z-index: 2;
-  display: flex; align-items: center; gap: 0.4rem; cursor: pointer; justify-content: flex-end;
-  padding: 0.3rem 0.15rem;
-}
-/* Beat sub-entries nested under their parent quest h1 (item 4, 2026-08-27)
-   -- same rail, same proportional spacing, just visually indented with a
-   smaller dot and slightly dimmer/smaller label so they read as children
-   of the quest entry above them, not another top-level section. */
-.scc-fg-scroll-dot-row--sub { padding-right: 0.85rem; }
-.scc-fg-scroll-dot-row--sub .scc-fg-scroll-dot { width: 6px; height: 6px; }
-.scc-fg-scroll-dot-row--sub .scc-fg-scroll-label { font-size: 0.6rem; opacity: 0.85; }
-.scc-fg-scroll-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--blue-100); transition: background 0.2s; }
-.scc-fg-scroll-dot-row--reached .scc-fg-scroll-dot { background: var(--dm-gold); }
+.scc-fg-scroll-dot--reached { background: var(--dm-gold); border-color: var(--dm-gold); }
 .scc-fg-scroll-label {
-  font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700;
-  color: var(--blue-100); white-space: nowrap;
+  position: absolute; right: 25px; transform: translateY(-50%);
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
+  color: #fff; white-space: nowrap; cursor: pointer; pointer-events: auto;
+  transition: color 0.15s;
 }
-.scc-fg-scroll-dot-row--reached .scc-fg-scroll-label { color: var(--dm-gold); }
-/* Backdrop behind the indicator, left edge set from its real measured
-   position via sccFgPositionScrollBackdrop() (see the HTML comment above
-   this element) -- 80% opaque black at the screen's right edge, fading to
-   fully transparent by the indicator's own left edge, so dots/labels stay
-   legible over whatever page content sits behind them without a
-   hard-edged box. */
+.scc-fg-scroll-label--reached { color: var(--dm-gold); }
+/* Backdrop behind the indicator -- 80% opaque black at the screen's right
+   edge fading to transparent at the indicator's own measured left edge
+   (position set by sccFgPositionScrollBackdrop(), same as before, its
+   width is intrinsic to label content). A real top/bottom mask on this
+   static, non-animating element is safe from the percentage-of-a-growing-
+   box bug that ruled out masking the fill line itself -- the backdrop's
+   own height never changes during scroll, only the indicator's dots do. */
 .scc-fg-scroll-backdrop {
   position: fixed; top: 0; bottom: 0; right: 0; z-index: 39;
   display: none; pointer-events: none;
   background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
 }
 .scc-fg-link {
   color: var(--dm-gold); cursor: pointer; text-decoration: underline;
@@ -8161,13 +8151,27 @@ function showDMToast(msg, type) {
    click-to-complete on top of those would just create two competing
    meanings for a click on the same element. */
 .scc-fg-box--completed { opacity: 0.5; }
+/* Item 14, 2026-08-27: the toggle circle alone wasn't self-explanatory on
+   sight -- wrapped it with a real text label ("Mark Completed" / a
+   confirming "Completed" once on) rather than leaving a DM to guess what
+   an unlabeled circle next to the chip does. Wrapper carries the click
+   handler (not just the circle) so clicking the label text also toggles. */
+.scc-fg-box-complete-wrap {
+  display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;
+  margin-left: 0.4rem; vertical-align: middle;
+}
+.scc-fg-box-complete-label {
+  font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--dm-text-muted);
+}
+.scc-fg-box-complete-wrap--on .scc-fg-box-complete-label { color: var(--green); }
 .scc-fg-box-complete-toggle {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+  width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
   border: 1px solid var(--scc-border-mid); font-size: 0.6rem; font-weight: 700;
-  color: var(--dm-text-muted); margin-left: 0.4rem; vertical-align: middle;
+  color: var(--dm-text-muted);
 }
-.scc-fg-box-complete-toggle:hover { border-color: var(--green-border); }
+.scc-fg-box-complete-wrap:hover .scc-fg-box-complete-toggle { border-color: var(--green-border); }
 .scc-fg-box-complete-toggle--on { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
 /* ── Featured thumbnails — opt-in per box via block.featured (see
    sccFgRenderFeatured()). Large, prominent portraits, well above
@@ -16805,10 +16809,12 @@ function sccFgBoxCompletionToggleHtml(b) {
   if (SCC_VIEWING_HISTORY) return '';
   var completed = sccFgBoxIsCompleted(b);
   var key = sccFgBoxCompletionKey(b);
-  return '<span class="scc-fg-box-complete-toggle' + (completed ? ' scc-fg-box-complete-toggle--on' : '') + '"'
-    + ' onclick="event.stopPropagation(); sccFgToggleBoxCompletion(\'' + key + '\', this)"'
-    + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
-    + (completed ? '&#10003;' : '') + '</span>';
+  return '<span class="scc-fg-box-complete-wrap' + (completed ? ' scc-fg-box-complete-wrap--on' : '') + '"'
+      + ' onclick="event.stopPropagation(); sccFgToggleBoxCompletion(\'' + key + '\', this)"'
+      + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
+    + '<span class="scc-fg-box-complete-toggle' + (completed ? ' scc-fg-box-complete-toggle--on' : '') + '">' + (completed ? '&#10003;' : '') + '</span>'
+    + '<span class="scc-fg-box-complete-label">' + (completed ? 'Completed' : 'Mark Completed') + '</span>'
+  + '</span>';
 }
 
 // Toggles in place (class + icon on the button and its ancestor box)
@@ -16839,9 +16845,12 @@ function sccFgToggleBoxCompletion(key, btnEl) {
       var nowCompleted = !existing;
       var box = btnEl.closest('.scc-fg-box');
       if (box) box.classList.toggle('scc-fg-box--completed', nowCompleted);
-      btnEl.classList.toggle('scc-fg-box-complete-toggle--on', nowCompleted);
-      btnEl.innerHTML = nowCompleted ? '&#10003;' : '';
+      btnEl.classList.toggle('scc-fg-box-complete-wrap--on', nowCompleted);
       btnEl.title = nowCompleted ? 'Click to mark not completed' : 'Click to mark completed';
+      var circle = btnEl.querySelector('.scc-fg-box-complete-toggle');
+      if (circle) { circle.classList.toggle('scc-fg-box-complete-toggle--on', nowCompleted); circle.innerHTML = nowCompleted ? '&#10003;' : ''; }
+      var label = btnEl.querySelector('.scc-fg-box-complete-label');
+      if (label) label.textContent = nowCompleted ? 'Completed' : 'Mark Completed';
     });
   }).catch(function() { showDMToast('Could not update', 'error'); });
 }
@@ -17354,44 +17363,51 @@ function sccFgLoadDocument(num) {
   });
 }
 
-// ── Vertical scroll progress indicator -- one dot+label per real h1
-// section, derived dynamically from the document's own rendered headings
-// (never a hardcoded per-session list, so this works for any future
-// session with zero manual configuration). Labels are the heading text up
-// to its own em dash if it has one ("Beat 3 — The Extractor..." -> "Beat
-// 3"), else the first 3 words -- a real, honest tradeoff: this reads well
-// for every Step/Beat/named-section heading in this project's own real
-// content, and only mediocre-not-broken for the couple of longer,
-// dash-less h1s (e.g. "Something Is Wrong With Gerald" -> "Something Is
-// Wrong"). Flagged in the handoff rather than silently shipped as if it
-// were perfect for every possible future heading.
+// ── Vertical scroll progress indicator (item 13, 2026-08-27 rebuild) --
+// one dot+label per real h1/quest-Beat-h2, derived dynamically from the
+// document's own rendered headings (never a hardcoded per-session list).
+// sccFgScrollIndicatorLabel() picks a short display name (heading text up
+// to its own em dash, e.g. "Beat 3 — The Extractor..." -> "Beat 3"; else
+// up to a parenthetical; else the first 3 words), THEN a hard 20-char cap
+// (17 chars + "...") is applied on top as a safety net for any heading
+// that heuristic doesn't shorten enough -- matches the DM-approved
+// reference implementation's own two-step shorten-then-truncate shape.
+// The full untruncated text always survives separately as a native title
+// tooltip, so truncation never fully hides the real section name.
 function sccFgScrollIndicatorLabel(text) {
   text = (text || '').trim();
-  var dashIdx = text.indexOf('\u2014');
-  if (dashIdx > 0) return text.slice(0, dashIdx).trim();
-  // A parenthetical aside ("Other Scenarios (live, from Setup)") is never
-  // part of the real short name -- stop before it, same reasoning as the
-  // dash split above. Live-tested this against all 10 of Session 1's real
-  // headings: without this, "Other Scenarios (live," and "Message Board &"
-  // (a bare word-count cut landing mid-parenthetical / on a trailing
-  // ampersand) read as genuinely broken, not just imperfect -- this fixes
-  // both real cases, not a hypothetical one.
-  var parenIdx = text.indexOf('(');
-  if (parenIdx > 0) text = text.slice(0, parenIdx).trim();
-  var words = text.split(/\s+/);
-  var label = words.length <= 3 ? text : words.slice(0, 3).join(' ');
-  return label.replace(/[&,:;-]+$/, '').trim();
+  var dashIdx = text.indexOf('—');
+  if (dashIdx > 0) { text = text.slice(0, dashIdx).trim(); }
+  else {
+    // A parenthetical aside ("Other Scenarios (live, from Setup)") is never
+    // part of the real short name -- stop before it, same reasoning as the
+    // dash split above.
+    var parenIdx = text.indexOf('(');
+    if (parenIdx > 0) { text = text.slice(0, parenIdx).trim(); }
+    else {
+      var words = text.split(/\s+/);
+      if (words.length > 3) text = words.slice(0, 3).join(' ');
+    }
+  }
+  text = text.replace(/[&,:;-]+$/, '').trim();
+  return sccFgTruncateScrollLabel(text, 20);
 }
 
-// Flat, ordered list of {el, level, full, label} -- level 0 for a real h1
-// section, level 1 for a Beat h2 nested under its parent quest (item 4,
-// 2026-08-27: quest sub-nesting). Detecting a level-1 entry doesn't need
-// its own "am I inside a quest section" tracking -- sccFgRenderDoc()
-// already only ever wraps blocks in .scc-fg-quest-section-block when a
-// quest-tied h1 started that section, so any h2 found inside one of those
-// wrappers is, by construction, a quest sub-entry. One shared collector
-// used by build/jump/update below so all three stay in sync by definition
-// rather than three independently-maintained heading queries drifting.
+function sccFgTruncateScrollLabel(text, max) {
+  return text.length > max ? text.slice(0, max - 3) + '...' : text;
+}
+
+// Flat, ordered list of {el, full, label} -- one entry per real h1
+// section AND per Beat h2 nested under its parent quest, at the SAME
+// level (item 13, 2026-08-27: the DM's final approved mockup explicitly
+// reverses round 3's own indented sub-nesting -- flat list only, no
+// visual hierarchy). Detecting a quest-nested h2 doesn't need its own
+// "am I inside a quest section" tracking -- sccFgRenderDoc() already only
+// ever wraps blocks in .scc-fg-quest-section-block when a quest-tied h1
+// started that section, so any h2 found inside one of those wrappers is,
+// by construction, a quest Beat. One shared collector used by
+// build/jump/update below so all three stay in sync by definition rather
+// than three independently-maintained heading queries drifting.
 function sccFgCollectScrollEntries() {
   var container = document.getElementById('scc-fg-doc-inner');
   if (!container) return [];
@@ -17403,90 +17419,85 @@ function sccFgCollectScrollEntries() {
     // covers the h1 through its last Beat, not just what comes after it).
     // So an h1 can show up either as a direct child (a plain, non-quest
     // section) or nested one level inside the wrapper (a quest section) --
-    // check for it either way before falling through to the h2-sub-entry
-    // case, or a quest's own top-level entry silently disappears.
+    // check for it either way before falling through to the h2 case, or a
+    // quest's own top-level entry silently disappears.
     var h1 = child.classList.contains('scc-fg-doc-h1') ? child : child.querySelector('.scc-fg-doc-h1');
     if (h1) {
       var titleEl = h1.querySelector('.scc-fg-h1-quest-title');
       var full = (titleEl ? titleEl.textContent : h1.textContent).trim();
-      entries.push({ el: h1, level: 0, full: full, label: sccFgScrollIndicatorLabel(full) });
+      entries.push({ el: h1, full: full, label: sccFgScrollIndicatorLabel(full) });
       return;
     }
     if (child.classList.contains('scc-fg-quest-section-block')) {
       var h2 = child.querySelector('.scc-fg-doc-h2');
       if (h2) {
         var h2Full = h2.textContent.trim();
-        entries.push({ el: h2, level: 1, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full) });
+        entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full) });
       }
     }
   });
   return entries;
 }
 
+// Real px/maxScroll state computed once per build, reused by the scroll
+// listener on every tick -- dotPositions in particular is the TRUE
+// percentage array (never touched after this function returns) that both
+// the fill-line height and each dot/label's reached state are always
+// compared against; drawPositions is a separate, spacing-adjusted COPY
+// used only to place elements on screen. Collapsing these into one array
+// was the root cause of two real round-3 bugs (clicking a dot didn't
+// line up with where the fill line actually stopped, and minimum-gap
+// spacing could desync the fill line from the dot it was supposed to
+// match) -- see this feature's own requests-table row for the full
+// bug-by-bug history. maxScroll is the same denominator used both here
+// and in sccFgUpdateScrollIndicator()'s fill-percentage calculation, by
+// design -- two different denominators was the OTHER round-3 bug class.
+var SCC_FG_SCROLL_STATE = { dotPositions: [], trackHeightPx: 0, bufferPx: 14, maxScroll: 0 };
+
 function sccFgBuildScrollIndicator() {
   var wrap = document.getElementById('scc-fg-scroll-indicator');
   if (!wrap) return;
   var entries = sccFgCollectScrollEntries();
-  if (!entries.length) { wrap.innerHTML = ''; wrap.style.display = 'none'; sccFgPositionScrollBackdrop(false); return; }
+  if (!entries.length) { wrap.innerHTML = ''; wrap.style.display = 'none'; wrap.style.height = ''; sccFgPositionScrollBackdrop(false); return; }
   wrap.style.display = 'block';
-  // Track (always-visible dim line) + progress (gold overlay, height set
-  // by sccFgUpdateScrollIndicator) are their own elements, not part of the
-  // per-row loop below -- kept as the first two children so
-  // sccFgUpdateScrollIndicator() can always find them at a fixed
-  // position, and dot-rows are looked up by class rather than raw
-  // wrap.children indexing so these two don't throw that off.
-  var rowsHtml = entries.map(function(entry, i) {
-    var cls = 'scc-fg-scroll-dot-row' + (entry.level === 1 ? ' scc-fg-scroll-dot-row--sub' : '');
-    return '<div class="' + cls + '" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '">'
-      + '<span class="scc-fg-scroll-label">' + sccEsc(entry.label) + '</span>'
-      + '<span class="scc-fg-scroll-dot"></span>'
-    + '</div>';
+  wrap.style.height = '50vh'; // reset to the CSS default before measuring "natural" height below
+  var maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  var offsetsPx = entries.map(function(e) { return e.el.getBoundingClientRect().top + window.scrollY; });
+  // True percentage, clamped to 100 -- shares maxScroll with the fill-line
+  // calculation in sccFgUpdateScrollIndicator(), never recomputed against
+  // a different denominator (e.g. total document height) anywhere else.
+  var dotPositions = offsetsPx.map(function(px) { return Math.min(px / maxScroll, 1) * 100; });
+
+  var minGapPx = 24;
+  var bufferPx = 14;
+  var naturalHeightPx = wrap.getBoundingClientRect().height;
+  var requiredHeightPx = entries.length * minGapPx;
+  var trackHeightPx = Math.max(naturalHeightPx, requiredHeightPx) - 2 * bufferPx;
+  wrap.style.height = (trackHeightPx + 2 * bufferPx) + 'px';
+  var minGapPct = (minGapPx / trackHeightPx) * 100;
+
+  // drawPositions: a spacing-enforced COPY, used only for visual
+  // placement -- dotPositions (above) is never mutated.
+  var drawPositions = dotPositions.slice();
+  for (var i = 1; i < drawPositions.length; i++) {
+    if (drawPositions[i] - drawPositions[i - 1] < minGapPct) {
+      drawPositions[i] = drawPositions[i - 1] + minGapPct;
+    }
+  }
+
+  var dotsHtml = entries.map(function(entry, i) {
+    var topPx = bufferPx + (drawPositions[i] / 100) * trackHeightPx;
+    return '<div class="scc-fg-scroll-dot" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '"></div>'
+      + '<div class="scc-fg-scroll-label" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '">' + sccEsc(entry.label) + '</div>';
   }).join('');
-  wrap.innerHTML = '<div class="scc-fg-scroll-track"></div><div class="scc-fg-scroll-progress" id="scc-fg-scroll-progress"></div>' + rowsHtml;
-  sccFgApplyProportionalSpacing(entries);
+  wrap.innerHTML = '<div class="scc-fg-scroll-line-track">'
+      + '<div class="scc-fg-scroll-base-line" style="top:' + bufferPx + 'px;height:' + trackHeightPx + 'px"></div>'
+      + '<div class="scc-fg-scroll-fill-line" id="scc-fg-scroll-fill-line" style="top:' + bufferPx + 'px"></div>'
+    + '</div>' + dotsHtml;
+
+  SCC_FG_SCROLL_STATE = { dotPositions: dotPositions, trackHeightPx: trackHeightPx, bufferPx: bufferPx, maxScroll: maxScroll };
   sccFgPositionScrollBackdrop(true);
   sccFgUpdateScrollIndicator();
-}
-
-// Spaces consecutive dots proportionally to each section's real amount of
-// scrollable content (item 4, 2026-08-27), not evenly -- a long section
-// gets more rail space before the next dot, a short one gets less. Each
-// entry's "length" is the document distance to the next entry (or to the
-// end of the rendered doc, for the last one); those lengths are summed
-// and normalized to fit the indicator's real 50vh height, then a single
-// pass enforces a minimum gap so a run of short sections can't visually
-// collide -- if that enforcement would overflow the container, the whole
-// set is scaled back down rather than left to spill past the bottom.
-function sccFgApplyProportionalSpacing(entries) {
-  var wrap = document.getElementById('scc-fg-scroll-indicator');
-  var rows = wrap ? Array.prototype.slice.call(wrap.querySelectorAll('.scc-fg-scroll-dot-row')) : [];
-  if (!rows.length || rows.length !== entries.length) return;
-  var docInner = document.getElementById('scc-fg-doc-inner');
-  var positions = entries.map(function(e) { return e.el.getBoundingClientRect().top + window.scrollY; });
-  var docEnd = docInner ? docInner.getBoundingClientRect().bottom + window.scrollY : (positions[positions.length - 1] + 400);
-  var lengths = positions.map(function(p, i) {
-    var next = i < positions.length - 1 ? positions[i + 1] : docEnd;
-    return Math.max(1, next - p);
-  });
-  var total = lengths.reduce(function(a, b) { return a + b; }, 0) || 1;
-  var containerH = wrap.getBoundingClientRect().height;
-  var minGap = rows[0].getBoundingClientRect().height || 20;
-  var tops = [];
-  var cum = 0;
-  for (var i = 0; i < lengths.length; i++) {
-    tops.push((cum / total) * containerH);
-    cum += lengths[i];
-  }
-  for (var j = 1; j < tops.length; j++) {
-    if (tops[j] - tops[j - 1] < minGap) tops[j] = tops[j - 1] + minGap;
-  }
-  var maxTop = containerH - minGap;
-  var lastTop = tops[tops.length - 1];
-  if (lastTop > maxTop && lastTop > 0) {
-    var scale = maxTop / lastTop;
-    tops = tops.map(function(t) { return t * scale; });
-  }
-  rows.forEach(function(row, i) { row.style.top = tops[i] + 'px'; });
 }
 
 // Left edge of the gradient backdrop (see the CSS comment on
@@ -17519,39 +17530,27 @@ function sccFgScrollIndicatorJump(i) {
   window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
 }
 
-// Dot/label turn gold once the reader has scrolled past that section's
-// heading (a small +100px lead so the very top of a section reads as
-// "reached", not the pixel it first appears) -- every earlier section
-// gets the same gold treatment, only sections still ahead stay dark blue,
-// matching "shift as the reader scrolls past" literally rather than a
-// 3-state passed/active/upcoming scheme the ask didn't ask for.
+// Fill-line height and each dot/label's reached state are both driven by
+// the SAME pct (window.scrollY / SCC_FG_SCROLL_STATE.maxScroll) and
+// compared against the TRUE dotPositions array computed at build time --
+// never the spacing-adjusted draw positions used for on-screen placement,
+// and never a separately-recomputed denominator. This is the exact fix
+// for round 3's fill-line-overshoots-the-clicked-dot bug.
 function sccFgUpdateScrollIndicator() {
   var wrap = document.getElementById('scc-fg-scroll-indicator');
-  var rows = wrap ? Array.prototype.slice.call(wrap.querySelectorAll('.scc-fg-scroll-dot-row')) : [];
-  if (!rows.length) return;
-  var entries = sccFgCollectScrollEntries();
-  var scrollPos = window.scrollY + 100;
-  var activeIdx = -1;
-  for (var i = 0; i < entries.length; i++) {
-    if (scrollPos >= entries[i].el.getBoundingClientRect().top + window.scrollY) activeIdx = i;
-  }
-  for (var j = 0; j < rows.length; j++) {
-    rows[j].classList.toggle('scc-fg-scroll-dot-row--reached', j <= activeIdx);
-  }
-  // Progress line height is measured against the real dot positions (not
-  // a row-count percentage estimate) so it stays pixel-accurate regardless
-  // of label length/wrapping differences between rows.
-  var progress = document.getElementById('scc-fg-scroll-progress');
-  if (progress) {
-    if (activeIdx < 0) {
-      progress.style.height = '0px';
-    } else {
-      var wrapRect = wrap.getBoundingClientRect();
-      var dotRect = rows[activeIdx].querySelector('.scc-fg-scroll-dot').getBoundingClientRect();
-      var dotCenterY = dotRect.top + dotRect.height / 2;
-      progress.style.height = Math.max(0, dotCenterY - wrapRect.top) + 'px';
-    }
-  }
+  if (!wrap || wrap.style.display === 'none') return;
+  var state = SCC_FG_SCROLL_STATE;
+  if (!state.dotPositions.length) return;
+  var pct = state.maxScroll > 0 ? Math.max(0, Math.min(1, window.scrollY / state.maxScroll)) : 0;
+  var fillLine = document.getElementById('scc-fg-scroll-fill-line');
+  if (fillLine) fillLine.style.height = (pct * state.trackHeightPx) + 'px';
+  var dotEls = wrap.querySelectorAll('.scc-fg-scroll-dot');
+  var labelEls = wrap.querySelectorAll('.scc-fg-scroll-label');
+  state.dotPositions.forEach(function(truePct, i) {
+    var reached = (pct * 100) >= truePct - 0.5;
+    if (dotEls[i]) dotEls[i].classList.toggle('scc-fg-scroll-dot--reached', reached);
+    if (labelEls[i]) labelEls[i].classList.toggle('scc-fg-scroll-label--reached', reached);
+  });
 }
 
 var SCC_FG_SCROLL_LISTENER_BOUND = false;
