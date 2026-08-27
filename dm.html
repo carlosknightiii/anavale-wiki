@@ -8324,6 +8324,17 @@ function showDMToast(msg, type) {
   padding: 0.6rem 0.85rem;
   margin: 0.6rem 0;
 }
+/* Optional context title (item 3b, 2026-08-27) -- author writes
+   <em>Title</em> immediately before the Ability DC pattern, e.g.
+   "🎲 <em>Noticing the Wrongness in the Air</em> <strong>Perception DC
+   12</strong> ...". Sits above the ability/DC line so the DM knows what
+   the check is actually for without reading the full Pass/Fail text --
+   entirely optional, a check with no title renders exactly as before. */
+.scc-fg-check-title {
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--dm-text-muted);
+  margin-bottom: 0.3rem;
+}
 .scc-fg-check-head { display: flex; align-items: center; gap: 0.5rem; }
 .scc-fg-check-icon { font-size: 1.3rem; line-height: 1; }
 .scc-fg-check-name {
@@ -8336,6 +8347,12 @@ function showDMToast(msg, type) {
 }
 .scc-fg-check-body p { margin: 0 0 0.4rem; color: inherit !important; }
 .scc-fg-check-body p:last-child { margin-bottom: 0; }
+/* Pass:/Fail: auto-coloring (item 3a, 2026-08-27) -- detected and wrapped
+   by sccFgStyleSkillChecks() itself, never hand-typed inline styles.
+   Reuses the existing --green/--red tokens (not new hex) already
+   established elsewhere in this file for the same real meaning. */
+.scc-fg-check-pass { color: var(--green); font-weight: 700; }
+.scc-fg-check-fail { color: var(--red); font-weight: 700; }
 /* ── Entity-mention inline thumbnail — first/genuinely significant mention
    of a linked entity only, tracked per render pass (sccFgLinkify's seen set). */
 .scc-fg-link-thumb, .scc-fg-link-thumb-fallback {
@@ -16366,12 +16383,27 @@ function sccFgRenderFeatured(featured) {
 // no-literal-emoji-in-JS-strings convention (C2) -- the emoji in the DATA
 // being matched is fine either way, it's untyped Supabase content read via
 // innerHTML, not a JS string literal that could crash parsing.
+// title (optional, item 3b, 2026-08-27) -- an author-written <em>...</em>
+// immediately before the ability/DC pattern, e.g. the die glyph, then
+// <em>Noticing the Wrongness in the Air</em>, then <strong>Perception DC
+// 12</strong>. A check with no title renders exactly as before --
+// entirely additive, not a required field.
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
-    /<p>\s*\uD83C\uDFB2\s*<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>/g,
-    function(m, ability, dc, rest) {
+    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>/g,
+    function(m, title, ability, dc, rest) {
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
+      // Pass:/Fail: auto-coloring (item 3a) -- detected here, never
+      // hand-typed inline styles by whoever authors the content. Matches
+      // the literal word at a clause start (immediately followed by
+      // ":"), same convention as every real check in Session 1's data.
+      bodyHtml = bodyHtml.replace(/\b(Pass|Fail):/g, function(mm, word) {
+        var cls = word === 'Pass' ? 'scc-fg-check-pass' : 'scc-fg-check-fail';
+        return '<span class="' + cls + '">' + word + ':</span>';
+      });
+      var titleHtml = title ? '<div class="scc-fg-check-title">' + sccEsc(title.trim()) + '</div>' : '';
       return '<div class="scc-fg-check">'
+        + titleHtml
         + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
         + (bodyHtml ? '<div class="scc-fg-check-body">' + bodyHtml + '</div>' : '')
       + '</div>';
