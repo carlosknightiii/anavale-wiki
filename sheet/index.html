@@ -3701,6 +3701,28 @@
     var total = dexMod + bonus;
     return { total: total, tip: dexMod + ' Dex' + (hasAlert ? ' + 5 (Alert)' : '') + ' = ' + total };
   }
+  // Proficiency Bonus (item 8, round 5, 2026-08-27) -- derived live from
+  // ch.level (2024 PHB table: +2 at levels 1-4, +3 at 5-8, +4 at 9-12,
+  // +5 at 13-16, +6 at 17-20), same "derive, don't cache" principle
+  // js/hp-calc.js and this file's own Spell Slots/Class-Specific trackers
+  // already use for every other level-dependent stat -- NOT read from
+  // character_sheet.proficiency_bonus, a real stored column already used
+  // internally for Skills/Saves/Spell DC math but confirmed (via a full
+  // grep of dm.html) to have no editor anywhere and no code path that
+  // ever updates it past its character-creation default of 2. Deriving
+  // here closes that latent staleness bug before it can ever manifest --
+  // all 3 real characters are level 1 today (confirmed via SQL, so the
+  // stored column hasn't yet drifted from level in practice), but nothing
+  // would have caught it the moment any of them leveled past 4. ch.level
+  // is already synchronously available wherever ch.feats is (same
+  // player_characters row, no SHEET/CLASS_ROW wait), so this renders
+  // once at first paint, no separate refresh function needed -- identical
+  // timing story to computeInitiative() just above.
+  function computeProficiencyBonus(ch) {
+    var level = parseInt(ch && ch.level) || 1;
+    var bonus = 2 + Math.floor((level - 1) / 4);
+    return { total: bonus, tip: 'Level ' + level + ' — 2024 PHB proficiency bonus by level' };
+  }
   function escHtml(str) {
     if (!str) return '';
     return String(str)
@@ -5335,6 +5357,7 @@
     var typeKey    = (ch.class_gigglegloom || '').toLowerCase();
     var typeMeta   = TYPE_META[typeKey] || { name: cap(typeKey) };
     var initBadge  = computeInitiative(ch);
+    var profBadge  = computeProficiencyBonus(ch);
 
     // Blurb — species + class's Gigglegloom-flavor name + type + region,
     // plus the alignment trait sentence. Sourced from the same lookups
@@ -5373,6 +5396,7 @@
             + '<div class="cs-mi-vitals">'
               + '<div class="cs-mi-ac-badge" id="cs-mi-ac-badge" data-tip=""><span class="cs-mi-ac-label">AC</span><span class="cs-mi-ac-num">—</span></div>'
               + '<div class="cs-mi-init-badge" data-tip="' + initBadge.tip.replace(/"/g,'&quot;') + '"><span class="cs-mi-init-label">Init</span><span class="cs-mi-init-num">' + (initBadge.total >= 0 ? '+' : '') + initBadge.total + '</span></div>'
+              + '<div class="cs-mi-init-badge" data-tip="' + profBadge.tip.replace(/"/g,'&quot;') + '"><span class="cs-mi-init-label">Prof</span><span class="cs-mi-init-num">+' + profBadge.total + '</span></div>'
               + '<div class="cs-mi-hp-slot" id="cs-mi-hp-slot"></div>'
               + '<div class="cs-mi-temp-hp" id="cs-mi-temp-hp"></div>'
               + '<div id="cs-mi-hit-dice-slot"></div>'
