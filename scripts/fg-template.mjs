@@ -353,8 +353,87 @@ function validateBlock(block, schema) {
   return issues;
 }
 
+// ── Duplicate background/If-Asked content detection ───────────────────
+// Flags when the same reference content appears to be authored TWICE --
+// once inline in a Beat/Step background/if_they_ask box, and again in a
+// separate reference table elsewhere in the document. This is the exact
+// duplication shape found and fixed by hand earlier in this project (a
+// duplicate Brightcreed/Stillkeep/Veilborn religion box, see CLAUDE.md's
+// Decision Log) -- this check exists so the next instance gets caught by
+// `check` automatically instead of needing another manual read-through.
+// Verbatim-only: flags a real shared sentence (10+ words) between a
+// background/if_they_ask box's text and any table's cell text, not a
+// fuzzy paraphrase/similarity match -- catches genuine copy-paste
+// duplication (the real pattern this was built from) without the
+// false-positive risk a looser heuristic would carry.
+const DUP_MIN_WORDS = 10;
+
+function plainText(html) {
+  return String(html || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sentenceChunks(text, minWords) {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.split(' ').filter(Boolean).length >= minWords);
+}
+
+function tableCellText(block) {
+  const cells = [];
+  if (Array.isArray(block.headerRow)) cells.push(...block.headerRow);
+  if (Array.isArray(block.rows)) {
+    block.rows.forEach((row) => { if (Array.isArray(row)) cells.push(...row); });
+  }
+  return cells.filter((c) => typeof c === 'string').join(' . ');
+}
+
+// Returns a Map<blockIndex, issue[]> -- merged into each block's own
+// issues array by validateBlocks() below, so duplicate-content warnings
+// show up in the normal per-block report with no separate section to
+// remember to read.
+function checkDuplicateBackgroundContent(blocks) {
+  const byIndex = new Map();
+  const refBoxes = [];
+  const tables = [];
+
+  blocks.forEach((b, i) => {
+    if (!b || typeof b !== 'object') return;
+    if (b.type === 'box' && (b.category === 'background' || b.category === 'if_they_ask')) {
+      const sentences = sentenceChunks(plainText(b.html), DUP_MIN_WORDS);
+      if (sentences.length) refBoxes.push({ index: i, sentences });
+    } else if (b.type === 'table') {
+      const sentences = sentenceChunks(plainText(tableCellText(b)), DUP_MIN_WORDS);
+      if (sentences.length) tables.push({ index: i, sentences });
+    }
+  });
+
+  for (const ref of refBoxes) {
+    for (const table of tables) {
+      const shared = ref.sentences.find((s) => table.sentences.some((ts) => ts.includes(s) || s.includes(ts)));
+      if (shared) {
+        const msg = `box [${ref.index}] (background/if_they_ask) appears to duplicate content also present in table block [${table.index}] -- shared text: "${shared.slice(0, 80)}${shared.length > 80 ? '…' : ''}"`;
+        if (!byIndex.has(ref.index)) byIndex.set(ref.index, []);
+        byIndex.get(ref.index).push({ level: 'warning', message: msg });
+        break; // one flag per ref box is enough, don't spam the same pair repeatedly
+      }
+    }
+  }
+  return byIndex;
+}
+
 function validateBlocks(blocks, schema) {
-  return blocks.map((b, i) => ({ index: i, block: b, issues: validateBlock(b, schema) }));
+  const dupIssues = checkDuplicateBackgroundContent(blocks);
+  return blocks.map((b, i) => ({
+    index: i,
+    block: b,
+    issues: validateBlock(b, schema).concat(dupIssues.get(i) || []),
+  }));
 }
 
 function printReport(results, { label }) {
