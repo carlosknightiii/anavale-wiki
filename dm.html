@@ -3686,7 +3686,7 @@
               <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--blue)"></span>Spoken Dialogue</span>
               <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--dm-only)"></span>DM Only &#183; Background &#183; Why This Works &#183; If They Ask</span>
               <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:#facc15"></span>Comedy</span>
-              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--red-strong)"></span>Don&#8217;t Blow This</span>
+              <span class="scc-fg-colorkey-item"><span class="scc-fg-colorkey-dot" style="background:var(--fg-dont-blow-this)"></span>Don&#8217;t Blow This</span>
             </div>
           </div>
           <!-- Vertical scroll progress indicator -- fixed to the viewport,
@@ -8048,6 +8048,17 @@ function showDMToast(msg, type) {
 .scc-fg-box--yellow { background: rgba(250,204,21,0.09); border-left: 3px solid rgba(250,204,21,0.45); }
 .scc-fg-box--yellow .scc-fg-box-label { color: #facc15; }
 .scc-fg-box--yellow p:not([style]) { color: #fef9c3 !important; }
+/* Item 9, 2026-08-27: the 18px read-at-the-table minimum already applied
+   to read_aloud (.scc-fg-box--green p) and spoken_dialogue
+   (.scc-fg-spoken-line p) never covered Comedy -- a real gap, not a
+   one-off, since a standalone Comedic Element box (item 6) can hold a
+   genuine in-character dialogue exchange (Edvin/Aldvin) just as speakable
+   at the table as anything in a spoken_dialogue box. Applies to every
+   paragraph in a comedy box regardless of its own inline style (unlike
+   the color rule above, which only touches unstyled ones) -- font size
+   should never shrink below the speakable minimum, even on a line that
+   also carries its own inline color. */
+.scc-fg-box--yellow p { font-size: 18px !important; }
 /* .scc-fg-box--gold: Loot & Shop. Was .scc-fg-box--orange (terracotta) — moved
    onto the app's real --gold token per direct DM instruction, distinct from
    Comedy's brighter yellow above. */
@@ -8079,8 +8090,12 @@ function showDMToast(msg, type) {
   border: 1px solid var(--red-border-strong);
   border-left: 4px solid var(--red-strong);
 }
-.scc-fg-box--red .scc-fg-box-corner-icon { color: var(--red-strong); }
-.scc-fg-box--red .scc-fg-box-label { color: var(--red-strong); font-size: 0.8rem; padding-right: 1.75rem; }
+/* Chip/header text specifically (not the box's own background/border,
+   which stay on --red-strong) repointed to a brighter, more legible red
+   -- item 10, 2026-08-27, DM found --red-strong too dark/muted for the
+   label and chip text against the box background. */
+.scc-fg-box--red .scc-fg-box-corner-icon { color: var(--fg-dont-blow-this); }
+.scc-fg-box--red .scc-fg-box-label { color: var(--fg-dont-blow-this); font-size: 0.8rem; padding-right: 1.75rem; }
 .scc-fg-box--red p { font-weight: 600; }
 .scc-fg-box--red p:not([style]) { color: #ffd9d9 !important; }
 /* Category badge — shown only on the boxes that share a color family with
@@ -8096,7 +8111,7 @@ function showDMToast(msg, type) {
   padding: 0.12rem 0.5rem; border-radius: 10px; margin-bottom: 0.4rem;
 }
 .scc-fg-box--magenta .scc-fg-box-cat-badge { background: var(--dm-only-dim); border: 1px solid var(--dm-only-border); color: var(--dm-only); }
-.scc-fg-box--red .scc-fg-box-cat-badge { background: rgba(214,43,43,0.2); border: 1px solid var(--red-border-strong); color: var(--red-strong); }
+.scc-fg-box--red .scc-fg-box-cat-badge { background: rgba(214,43,43,0.2); border: 1px solid var(--red-border-strong); color: var(--fg-dont-blow-this); }
 .scc-fg-box--green .scc-fg-box-cat-badge { background: rgba(134,239,172,0.15); border: 1px solid rgba(134,239,172,0.4); color: var(--scc-read-aloud-text); }
 .scc-fg-box--yellow .scc-fg-box-cat-badge { background: rgba(250,204,21,0.18); border: 1px solid rgba(250,204,21,0.5); color: #facc15; }
 /* Spoken Dialogue's own chip -- blue never had a badge variant before,
@@ -8232,7 +8247,7 @@ function showDMToast(msg, type) {
    inline/not-boxed comedy narration), just rendered via a different
    code path. Repointed at the shared token (2026-08-25) instead of its
    own drifted #fef08a so both paths read as one color, not two. */
-.scc-fg-comedy-inline { font-style: italic; color: var(--fg-comedy-text); }
+.scc-fg-comedy-inline { font-style: italic; color: var(--fg-comedy-text); font-size: 18px !important; }
 .scc-fg-comedy-inline-icon { margin-right: 0.3rem; opacity: 0.85; }
 /* ── Staging-cue paragraph (type:p, category:staging) -- same "inline,
    lightweight, no full box" treatment as comedy inline above, for the

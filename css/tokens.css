@@ -147,6 +147,12 @@
   --red-border:   rgba(248,113,113,0.35);
   --red-border-strong: rgba(214,43,43,0.6);
   --red-track:    #371212; /* MainInfo HP bar unfilled track (Figma 51:1385) */
+  /* Field Guide "Don't Blow This" chip/header text (item 10, 2026-08-27) --
+     a real, dedicated token, not a --red-strong value change: --red-strong
+     is already load-bearing elsewhere for a completely unrelated purpose
+     (sheet/index.html's HP bar fill), so brightening it here would have
+     silently recolored that too. DM's exact requested value, #ff0000. */
+  --fg-dont-blow-this: #ff0000;
 
   /* Aliases */
   --dm-red:         var(--red);
