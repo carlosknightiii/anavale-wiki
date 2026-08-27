@@ -305,17 +305,15 @@
   --fg-comedy-text:     #f7ff00;
   --fg-dialogue-player: #9fb3c8;
   --fg-dialogue-npc:    var(--gold);
-  /* Stage-direction/narration text inline within a spoken_dialogue box
-     (2026-08-27, item 7) -- e.g. "Edvin grins." before his actual quoted
-     line. Deliberately its own token, not a reuse of --fg-dialogue-player:
-     that one is reserved for a real, different future meaning (which
-     player said a line), and repurposing it here would recreate the exact
-     one-token-two-meanings problem this whole block exists to avoid.
-     Reuses the existing --blue-200 value (a real token, not a new hex) --
-     visibly blue-family but distinct from both spoken_dialogue's own box
-     color (--blue) and the scroll indicator's --blue-100, so it reads as
-     related-but-different rather than a confusing duplicate of either. */
-  --fg-stage-direction: var(--blue-200);
+  /* Stage-direction/narration text inline within a spoken_dialogue box --
+     e.g. "Edvin grins." before his actual quoted line. RECOLORED
+     2026-08-27 (item 2, round 4) from a dedicated blue token to
+     --scc-read-aloud-text directly: this text is meant to be read aloud
+     by the DM (just not as the character's own words), so it now reads
+     as the same green as every other read-aloud surface rather than its
+     own distinct hue -- the DM's own explicit correction, confirmed no
+     other consumer of the retired --fg-stage-direction existed before
+     removing it (grep). */
   /* Beat progress (2026-08-16): matches the Quest Status scheme the DM
      specified the same day one level up -- Available=blue, Active=gold,
      Completed=grey (Blocked has no beat-level equivalent). Was previously
