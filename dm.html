@@ -8032,7 +8032,19 @@ function showDMToast(msg, type) {
 .scc-fg-box-corner-icon { position: absolute; top: 0.55rem; right: 0.85rem; font-size: 1.3rem; opacity: 0.55; line-height: 1; pointer-events: none; }
 .scc-fg-box--green .scc-fg-box-corner-icon { color: var(--scc-read-aloud-text); }
 .scc-fg-box--blue .scc-fg-box-corner-icon { color: var(--blue); }
-.scc-fg-box--yellow .scc-fg-box-corner-icon { color: #facc15; }
+/* Item 9, round 6, 2026-08-28: the joker glyph (playing-cards block)
+   already got a 1.35em compensating boost on the CHIP badge icon (see
+   .scc-fg-box-cat-badge-icon--comedy below -- it renders visibly
+   smaller than other emoji at an identical font-size in most emoji
+   fonts, a real glyph-rendering quirk, not a CSS sizing bug). That
+   compensation was only ever applied to the chip; the corner icon
+   (this rule) reused the flat 1.3rem every category shares, with no
+   comedy-specific bump -- confirmed live, comedy's corner icon computed
+   to the exact same 20.8px as every other category's before this fix.
+   Same 1.35x ratio applied here too, for the same reason. yellow is
+   comedy's own, only colorClass (confirmed via
+   js/fg-category-schema.json), safe to scope by box color. */
+.scc-fg-box--yellow .scc-fg-box-corner-icon { color: #facc15; font-size: 1.75rem; }
 .scc-fg-box--gold .scc-fg-box-corner-icon { color: var(--gold); }
 /* Clearfix -- required now that .scc-fg-featured-row (below) floats,
    otherwise a box whose only content is a short title + a float taller
