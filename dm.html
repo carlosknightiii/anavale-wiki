@@ -8323,6 +8323,24 @@ function showDMToast(msg, type) {
    not two shades of the same emphasis. */
 .scc-fg-aside { color: var(--dm-only); font-style: normal; font-weight: 600; }
 .scc-fg-aside::before { content: "(DM-Only) "; }
+/* Item 1, round 6, 2026-08-28: real bug, not a new preference -- every
+   .scc-fg-box--{color} p:not([style]) rule (green/magenta/yellow/blue/
+   teal, added incrementally across rounds 4-5) carries !important, and
+   .scc-fg-aside/.scc-fg-stage-direction (below) didn't. A DM-authored
+   class applied directly to a <p> (the real, observed usage -- e.g.
+   <p class="scc-fg-aside">...</p>, not always the span-wrapped form the
+   original comment above describes) has no inline style="...", so it
+   also matches the box's own p:not([style]) selector; !important always
+   beats non-!important regardless of specificity, so the box's default
+   text color was silently winning over these two DM-authored inline
+   treatments whenever they sat inside a box (any category). This
+   targeted rule -- real specificity via .scc-fg-doc-inner .scc-fg-box
+   (0,3,1), genuinely higher than any single box rule's (0,2,1), plus
+   matching !important -- wins unconditionally regardless of stylesheet
+   order or how many box colors exist. The bare .scc-fg-aside rule above
+   is untouched and still the one that applies outside a box (e.g. a
+   plain type:'p' block), where no competing !important rule exists. */
+.scc-fg-doc-inner .scc-fg-box p.scc-fg-aside { color: var(--dm-only) !important; }
 /* ── Stage-direction/narration line inside a spoken_dialogue box -- a
    distinct concept from the DM-only aside above: this is narrator
    description of HOW a line is delivered or what an NPC does ("Edvin
@@ -8350,6 +8368,12 @@ function showDMToast(msg, type) {
    done, not assumed fixed from the staging-cue precedent alone. */
 .scc-fg-doc-inner p.scc-fg-stage-direction { display: block; color: var(--scc-read-aloud-text); font-style: normal; }
 .scc-fg-stage-direction::before { content: "(Read Aloud) "; }
+/* Item 1, round 6, 2026-08-28 -- same real !important-vs-!important bug
+   and fix as .scc-fg-aside above, applied here too: the box-color rules
+   (green/magenta/yellow/blue/teal) all carry !important and were
+   silently winning over this rule (also !important-free) whenever a
+   stage-direction <p> sat inside any color of box. */
+.scc-fg-doc-inner .scc-fg-box p.scc-fg-stage-direction { color: var(--scc-read-aloud-text) !important; }
 /* ── Comedy, inline mode — reads as part of the narration (a normal
    paragraph), not set apart in a box. Full-box mode (category=comedy,
    inline!=true) still uses .scc-fg-box--yellow above, unchanged.
