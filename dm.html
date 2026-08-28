@@ -17585,14 +17585,34 @@ function sccFgRenderScenarioCardsBlock(b, idx) {
   return sccFgOneScenarioCardsHtml(b, idx, 0);
 }
 
+// Bug fix, 2026-08-28: a scenario_cards module can now be nested inside
+// another one's own card content (e.g. Beat 1's "At the Forres Brothers
+// Inn" card containing a nested "Who To Talk To" picker) -- this lookup
+// previously only ever searched the top-level document blocks array, so
+// every interaction routed through it (tile switching, status cycling,
+// decision logging -- sccFgSwitchScenarioCard/sccFgCycleScenarioCardStatus/
+// sccFgRedrawScenarioCardsBlock all call this first) silently no-op'd for a
+// nested instance via its own `if (!found) return;` guard: the click
+// handler fired, found nothing, and did nothing. Fixed by recursing into
+// every scenario_cards block's own cards[].blocks arrays -- not hardcoded
+// to one level of nesting, since a nested module could itself contain
+// another and this needs to keep working if that ever happens.
 function sccFgFindScenarioCardsBlockByDomId(domId) {
   var num = sccFgActiveSessionNum();
   var row = SCC_FG_DOC_CACHE[num];
   var blocks = (row && row.blocks) || [];
+  return sccFgFindScenarioCardsBlockInArray(blocks, domId);
+}
+function sccFgFindScenarioCardsBlockInArray(blocks, domId) {
   for (var i = 0; i < blocks.length; i++) {
     var bl = blocks[i];
-    if (bl && bl.type === 'box' && bl.category === 'scenario_cards' && sccFgScenarioCardsDomId(bl, i) === domId) {
-      return { block: bl, idx: i };
+    if (!bl || typeof bl !== 'object' || bl.type !== 'box' || bl.category !== 'scenario_cards') continue;
+    if (sccFgScenarioCardsDomId(bl, i) === domId) return { block: bl, idx: i };
+    var cards = Array.isArray(bl.cards) ? bl.cards : [];
+    for (var c = 0; c < cards.length; c++) {
+      var cardBlocks = Array.isArray(cards[c].blocks) ? cards[c].blocks : [];
+      var nested = sccFgFindScenarioCardsBlockInArray(cardBlocks, domId);
+      if (nested) return nested;
     }
   }
   return null;
