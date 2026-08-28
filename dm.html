@@ -7964,10 +7964,23 @@ function showDMToast(msg, type) {
    editor) — fades out on its own after 2.5s. The Field Guide document
    editor this was originally built for (per-box "Edit Box" jump) is gone;
    both remaining consumers of this exact class are unrelated to it, so the
-   rule stays, just no longer under that name's original context. */
+   rule stays, just no longer under that name's original context.
+   Strengthened (item 11, round 6, 2026-08-28) -- the previous box-shadow-
+   only version (0 0 0 2px at --dm-gold-dim, an 18%-opacity ring) was
+   confirmed technically firing correctly (verified live: the class does
+   get added, on schedule, to the real jump target), but read as close to
+   invisible against this app's dark surfaces -- a real "no clear landing
+   indicator" gap even though the underlying jump/scroll targeting itself
+   was confirmed correct. A background wash + a real transition (so the
+   fade-out reads as a deliberate cue fading, not an abrupt snap when the
+   class is removed) makes the landing genuinely unmistakable regardless
+   of which element type it lands on (a bare h2 with no border of its own,
+   same as a bordered card). */
 .scc-fg-editor-row--jump-highlight {
   border-color: var(--dm-gold);
-  box-shadow: 0 0 0 2px var(--dm-gold-dim);
+  background-color: var(--dm-gold-dim);
+  box-shadow: 0 0 0 3px var(--dm-gold);
+  transition: background-color 0.4s ease, box-shadow 0.4s ease;
 }
 .scc-fg-doc-title { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--dm-gold); text-align: center; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
 .scc-fg-doc-subtitle { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--dm-text); text-align: center; margin-bottom: 0.2rem; }
