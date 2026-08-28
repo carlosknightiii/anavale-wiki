@@ -17054,6 +17054,15 @@ function sccFgRenderSpokenDialogue(b) {
     + spokenBadgeHtml
     + spokenCompleteToggleHtml
     + featuredHtml
+    // Bug fix, 2026-08-28: this branch (speaker resolves to a real entity --
+    // the common case, ~32 boxes gained a real speaker field earlier tonight)
+    // never rendered b.label at all -- only the !entity fallback branch above
+    // did. A box with BOTH label and speaker set silently dropped its bold
+    // label header, going straight from featuredHtml to the speaker name/
+    // pronouns line. Same markup/position as the !entity branch (right after
+    // featuredHtml, before anything else), so both branches agree on where
+    // the label header sits relative to the rest of the box.
+    + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
     + '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
       + thumbHtml
       + '<div class="scc-fg-spoken-meta">'
