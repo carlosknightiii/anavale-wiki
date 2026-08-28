@@ -16611,7 +16611,17 @@ function sccFgResolveFeaturedEntity(f) {
   }
   var e = arr.find(function(x) { return x.id === f.id; });
   if (!e || !e.name) return null;
-  return { name: e.name, imgUrl: imageOf(e) };
+  // Item 2, round 7, 2026-08-28: "has a face a zoomed crop would
+  // improve" -- true for every NPC/player character, and for a creature
+  // only when its own tier is 'humanoid' (the real, existing field that
+  // distinguishes e.g. Veran/Brek -- both creatures, both
+  // creature_type:"Humanoid (Human)", tier:"humanoid" -- from Bounce
+  // Beetles or any other non-humanoid creature with no real face to
+  // zoom into). Computed once here so every consumer of this resolver
+  // (currently sccFgFeaturedEntryHtml() and
+  // sccFgScenarioCardPortraitHtml()) agrees on the same answer.
+  var isFace = (type === 'character' || type === 'pc') || (type === 'creature' && e.tier === 'humanoid');
+  return { name: e.name, imgUrl: imageOf(e), isFace: isFace };
 }
 function sccFgFeaturedEntryHtml(f) {
   var r = sccFgResolveFeaturedEntity(f);
@@ -16638,7 +16648,13 @@ function sccFgFeaturedEntryHtml(f) {
     ? '<img class="scc-fg-featured-img" src="' + sccEsc(r.imgUrl) + '" alt="" title="Click to view fullscreen" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" onclick="sccFgOpenImgView(\'' + sccEsc(r.imgUrl).replace(/'/g, "\\'") + '\',\'' + sccEsc(r.name).replace(/'/g, "\\'") + '\')">'
       + '<span class="scc-fg-featured-fallback" style="display:none">' + initial + '</span>'
     : '<span class="scc-fg-featured-fallback">' + initial + '</span>';
-  return '<div class="scc-fg-featured-item"><div class="scc-fg-featured-img-wrap">' + imgHtml + '</div><span class="scc-fg-featured-name">' + sccEsc(r.name) + '</span></div>';
+  // Item 2, round 7, 2026-08-28: the zoom/crop wrapper is now conditional
+  // on r.isFace -- an item/location/non-humanoid-creature portrait
+  // renders unwrapped (the exact pre-round-6 markup: base
+  // .scc-fg-featured-img/-fallback classes directly, no scale/crop),
+  // since a zoomed-in crop only ever made sense for a face.
+  var portraitHtml = r.isFace ? '<div class="scc-fg-featured-img-wrap">' + imgHtml + '</div>' : imgHtml;
+  return '<div class="scc-fg-featured-item">' + portraitHtml + '<span class="scc-fg-featured-name">' + sccEsc(r.name) + '</span></div>';
 }
 // Fullscreen viewer for a featured-entity portrait -- a real shadowbox
 // (#scc-fg-imgview-backdrop/#scc-fg-imgview, page-level HTML), not the
