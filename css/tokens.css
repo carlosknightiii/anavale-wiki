@@ -223,8 +223,33 @@
   --featherflow-pale: #bcd9f5;
   --steelfist-pale:   #ddc9f5;
   --flamerage-pale:   #f5c9b8;
-  --gigglegloom-gradient:      linear-gradient(90deg, var(--bubbleseed), var(--featherflow), var(--steelfist), var(--flamerage));
-  --gigglegloom-gradient-pale: linear-gradient(90deg, var(--bubbleseed-pale), var(--featherflow-pale), var(--steelfist-pale), var(--flamerage-pale));
+  /* "Bright" tier (item 1, round 7, 2026-08-28) -- a DM-flagged legibility
+     fix, not the same thing as -pale above. The base 4 colors (dark,
+     built for a solid-fill swatch, not text) read low-contrast as
+     gradient-clipped TEXT on this app's dark surfaces; -pale is already
+     the OTHER direction (very light, meant for large blocks of body
+     prose, too washed out to read as a bold chip/title). This sits
+     between the two -- a real, moderate lightening of each base hue,
+     still clearly saturated/vivid (unlike -pale's near-pastel tones),
+     used for exactly the two DM-flagged surfaces (box title, chip label). */
+  --bubbleseed-bright:  #4caf64;
+  --featherflow-bright: #4a90d9;
+  --steelfist-bright:   #9b6fd9;
+  --flamerage-bright:   #e85a38;
+  --gigglegloom-gradient:        linear-gradient(90deg, var(--bubbleseed), var(--featherflow), var(--steelfist), var(--flamerage));
+  --gigglegloom-gradient-pale:   linear-gradient(90deg, var(--bubbleseed-pale), var(--featherflow-pale), var(--steelfist-pale), var(--flamerage-pale));
+  --gigglegloom-gradient-bright: linear-gradient(90deg, var(--bubbleseed-bright), var(--featherflow-bright), var(--steelfist-bright), var(--flamerage-bright));
+  /* Vertical orientation (item 1, round 7, 2026-08-28) -- for
+     border-image specifically. border-image slices the SAME image
+     across all 4 border edges; on a border-left-only box (0 width on
+     the other 3 sides), only a thin strip of the image is ever visible,
+     and border-image-slice maps position along the border's own axis
+     (vertical, for a left edge) -- the horizontal (90deg) gradient above
+     only varies left-to-right, so that thin vertical strip sampled from
+     it reads as one near-uniform color (bubbleseed, the leftmost stop --
+     exactly the "still solid flat green" the DM flagged). A gradient
+     that actually varies top-to-bottom is what a border-left needs. */
+  --gigglegloom-gradient-vertical: linear-gradient(180deg, var(--bubbleseed), var(--featherflow), var(--steelfist), var(--flamerage));
 
   /* ── RADIUS ──────────────────────────────────────────────── */
   --radius-sm:  6px;

@@ -8182,13 +8182,29 @@ function showDMToast(msg, type) {
    it as legible enough to ship, not assumed. Border-left uses a real
    border-image gradient rather than a flat border-color, since a
    border-left is the one surface here with zero legibility risk either
-   way. */
+   way.
+   TWO REFINEMENTS, item 1, round 7, 2026-08-28:
+   1. border-image now uses --gigglegloom-gradient-vertical, not the
+      horizontal (90deg) --gigglegloom-gradient -- border-image slices
+      the same image across all 4 edges, and on a border-left-only box
+      only a thin VERTICAL strip is ever shown; sampling a horizontal
+      gradient along that axis reads as one near-uniform color (the
+      leftmost stop, bubbleseed) -- confirmed exactly the "still solid
+      flat green" the DM flagged, not a rendering bug, a wrong gradient
+      axis for this specific use.
+   2. Box title (.scc-fg-box-label) and chip label
+      (.scc-fg-box-cat-badge-label, below) switched from the dark base
+      --gigglegloom-gradient to the new --gigglegloom-gradient-bright --
+      the base colors were built as solid-fill swatches, not text, and
+      read low-contrast against this app's dark surfaces once
+      background-clip:text'd. Corner icon and body-paragraph pale-tint
+      were not flagged and stay as they were. */
 .scc-fg-box--teal {
   background: linear-gradient(135deg, rgba(42,122,58,0.1), rgba(34,102,184,0.1), rgba(106,58,170,0.1), rgba(170,58,26,0.1));
-  border-left: 3px solid; border-image: var(--gigglegloom-gradient) 1;
+  border-left: 3px solid; border-image: var(--gigglegloom-gradient-vertical) 1;
 }
 .scc-fg-box--teal .scc-fg-box-label {
-  background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
+  background: var(--gigglegloom-gradient-bright); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .scc-fg-box--teal .scc-fg-box-corner-icon {
   background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -8249,8 +8265,12 @@ function showDMToast(msg, type) {
   background: linear-gradient(90deg, rgba(42,122,58,0.18), rgba(34,102,184,0.18), rgba(106,58,170,0.18), rgba(170,58,26,0.18));
   border: 1px solid; border-image: var(--gigglegloom-gradient) 1;
 }
+/* Bright tier (item 1, round 7, 2026-08-28) -- same legibility fix as
+   the box title above, same reason: the base gradient's dark colors
+   read low-contrast as gradient-clipped text at this badge's small
+   0.6rem size. */
 .scc-fg-box--teal .scc-fg-box-cat-badge-label {
-  background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
+  background: var(--gigglegloom-gradient-bright); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 /* Comedy's joker glyph (playing-cards block) renders visibly smaller than
    the other badges' emoji-block icons at an identical font-size -- bumped
