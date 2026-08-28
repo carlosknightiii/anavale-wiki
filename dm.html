@@ -4117,7 +4117,21 @@
     // vendor_stock: populate it here too, unconditionally, tab-independent.
     // sccInit()'s own character_attachments fetch stays, for the same
     // "keep it fresh while actually on the Session tab" reason.
-    { table: 'character_attachments', global: 'SCC_ATTACHMENTS', params: '&active=eq.true&order=created_at.asc' }
+    { table: 'character_attachments', global: 'SCC_ATTACHMENTS', params: '&active=eq.true&order=created_at.asc' },
+    // Round 8 item 2: location_entity_presence/visited_locations are both
+    // read by sccOpenLookup()'s city/poi/nation branch (sccFgLocationPresenceHtml/
+    // sccFgMarkLocationVisited), reachable the exact same tab-independent
+    // ways (global search, an inline [[city:...]] link) that motivated
+    // every fix above this comment -- added here from the start rather than
+    // repeating that same bug class a third time. location_entity_presence
+    // is DM-authored reference content (like RELIGIONS/ORGANIZATIONS just
+    // above), so this boot fetch alone is enough; visited_locations is
+    // mutated live by sccFgMarkLocationVisited() itself, which keeps its
+    // own in-memory cache in sync after every write, so no sccInit()
+    // duplicate fetch is needed the way vendor_stock/character_attachments
+    // have one.
+    { table: 'location_entity_presence', global: 'SCC_LOCATION_PRESENCE' },
+    { table: 'visited_locations',        global: 'SCC_VISITED_LOCATIONS' }
   ];
 
   function sbFetch(table, extraParams) {
@@ -6134,6 +6148,30 @@ function showDMToast(msg, type) {
 }
 .scc-npc2-dm-rows > .scc-npc2-dm-row:last-child { border-bottom: none; padding-bottom: 0; }
 .scc-npc2-red { color: var(--dm-only) !important; }
+/* Religion/Org presence real location-arrival trigger (round 8 item 2) --
+   sits in the Quick Look drawer body, right under the header, above every
+   other location section (read-aloud/summary/etc.) since arrival content
+   is meant to be the first thing a DM reads. Plain reference styling by
+   default; --new adds a gold border + the "first time" badge above it,
+   only shown on a location's actual first open (sccFgLocationPresenceHtml). */
+.scc-loc-presence-section {
+  margin: 0.75rem 0; padding: 0.75rem 0.85rem;
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm);
+}
+.scc-loc-presence-section--new { border-color: var(--scc-border-gold); box-shadow: 0 0 0 1px var(--scc-border-gold); }
+.scc-loc-presence-new-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; color: var(--dm-gold);
+  text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.5rem;
+}
+.scc-loc-presence-title {
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; color: var(--dm-text-muted); margin-bottom: 0.5rem;
+}
+.scc-loc-presence-item + .scc-loc-presence-item { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--scc-border-mid); }
+.scc-loc-presence-item-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); }
+.scc-loc-presence-item-kind { font-weight: 400; color: var(--dm-text-muted); font-size: 0.78rem; }
+.scc-loc-presence-item-note { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.5; margin-top: 0.2rem; }
 .scc-npc2-quest-link {
   font-family: var(--font-sans);
   font-size: 0.9rem;
@@ -20768,6 +20806,72 @@ function sccBuildLocationCardBodyHtml(loc) {
   return body;
 }
 
+// ── Religion/Org presence real location-arrival trigger (round 8 item 2) ──
+// Reads location_entity_presence (DM-authored: which religions/orgs have a
+// real, player-safe presence at a specific location) and visited_locations
+// (durable, campaign-wide -- see the migration's own comment for why this
+// is NOT session-scoped). Rendered from sccOpenLookup()'s city/poi/nation
+// branch -- the one real "a location entity got opened/referenced during
+// Live Session" event this app already has, reused rather than inventing a
+// second trigger surface. Returns '' when the location has no presence
+// rows at all (the common case for most locations, and always the case
+// for a POI the DM never gave its own row -- no fallback/inheritance from
+// a parent city here, see the call site's own comment on why that's
+// correct, not a missing feature).
+function sccFgLocationPresenceHtml(loc, locationCollection) {
+  var rows = ((typeof SCC_LOCATION_PRESENCE !== 'undefined' && SCC_LOCATION_PRESENCE) || []).filter(function(p) {
+    return p.location_collection === locationCollection && p.location_id === loc.id;
+  });
+  if (!rows.length) return '';
+  var alreadyVisited = ((typeof SCC_VISITED_LOCATIONS !== 'undefined' && SCC_VISITED_LOCATIONS) || []).some(function(v) {
+    return v.location_collection === locationCollection && v.location_id === loc.id;
+  });
+  var religionsAll = typeof RELIGIONS !== 'undefined' ? RELIGIONS : [];
+  var orgsAll = typeof ORGANIZATIONS !== 'undefined' ? ORGANIZATIONS : [];
+  var itemsHtml = rows.map(function(p) {
+    var entity = p.entity_collection === 'religions'
+      ? religionsAll.find(function(r) { return r.id === p.entity_id; })
+      : orgsAll.find(function(o) { return o.id === p.entity_id; });
+    var entityName = entity ? entity.name : p.entity_id;
+    var kindLabel = p.entity_collection === 'religions' ? 'Religion' : 'Organization';
+    // player_safe_note is plain authored prose (not raw HTML, unlike a
+    // Field Guide box's own html field) that may carry the same [[type:id|
+    // Label]] convention -- escape first, then linkify the already-escaped
+    // text, same order sccLinkifyEscaped's own doc comment specifies for
+    // quest text (the closest existing analog: also plain prose, not raw
+    // HTML, with the same inline-link convention).
+    return '<div class="scc-loc-presence-item">'
+      + '<div class="scc-loc-presence-item-name">' + sccEsc(entityName) + ' <span class="scc-loc-presence-item-kind">(' + kindLabel + ')</span></div>'
+      + '<div class="scc-loc-presence-item-note">' + sccLinkifyEscaped(sccEsc(p.player_safe_note)) + '</div>'
+    + '</div>';
+  }).join('');
+  var newBadge = alreadyVisited ? '' : '<div class="scc-loc-presence-new-badge">&#10024; First time reaching this location — introduce this now</div>';
+  return '<div class="scc-loc-presence-section' + (alreadyVisited ? '' : ' scc-loc-presence-section--new') + '">'
+    + newBadge
+    + '<div class="scc-loc-presence-title">Religion &amp; Organization Presence</div>'
+    + itemsHtml
+  + '</div>';
+}
+
+// Fire-and-forget, campaign-wide (not per-session) -- idempotent via the
+// table's own UNIQUE(location_collection, location_id) constraint plus
+// sccPost()'s resolution=merge-duplicates, so a rapid double-open or a
+// stale client cache can't produce a duplicate row or a failed write.
+// Updates the in-memory cache optimistically, before the network call
+// resolves, so a DM re-opening the same location a second later (before
+// the POST would have completed) doesn't see the "first time" banner
+// twice.
+function sccFgMarkLocationVisited(locationCollection, locationId) {
+  var cache = (typeof SCC_VISITED_LOCATIONS !== 'undefined' && SCC_VISITED_LOCATIONS) || [];
+  var already = cache.some(function(v) { return v.location_collection === locationCollection && v.location_id === locationId; });
+  if (already) return;
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  var row = { location_collection: locationCollection, location_id: locationId, first_visited_session: num };
+  cache.push(row);
+  window.SCC_VISITED_LOCATIONS = cache;
+  sccPost('visited_locations', row).catch(function() {});
+}
+
 function sccCycleRelationship(npcId) {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — relationships are read-only here', 'error'); return; }
   var cur = SCC_NPC_RELATIONSHIPS[npcId] || 'neutral';
@@ -24594,7 +24698,23 @@ function sccOpenLookup(type, id) {
     // sccBuildLocationCardHeaderHtml/sccBuildLocationCardBodyHtml) --
     // .scc-ql-header kept as the outer wrapper for its divider styling only,
     // same reasoning as the character branch above.
+    // Round 8 item 2: real location-arrival trigger. locationCollection here
+    // (not locInfo.typeLine, which is a display label like "Town"/"POI")
+    // matches location_entity_presence's own collection vocabulary exactly.
+    // Presence content renders for ANY location with a real presence row --
+    // a city/nation always has one if the DM authored it; a POI only has one
+    // if the DM specifically wrote a POI-scoped row (there's no automatic
+    // inheritance from the parent city here, so a dedicated row IS the
+    // "genuinely unique to this POI" signal per the DM's own spec, not a
+    // second content-diffing step). sccFgMarkLocationVisited() is fire-and-
+    // forget and reads its own "already visited" state BEFORE this render
+    // call decides whether to show the first-time banner -- order matters,
+    // see sccFgLocationPresenceHtml()'s own call site below.
+    var locationCollection = locInfo.isNationEntry ? 'nations' : locInfo.isPoiEntry ? 'pois' : 'cities';
+    var presenceHtml = sccFgLocationPresenceHtml(loc, locationCollection);
+    if (!SCC_VIEWING_HISTORY) sccFgMarkLocationVisited(locationCollection, loc.id);
     html = '<div class="scc-ql-header">' + sccBuildLocationCardHeaderHtml(loc, {}) + '</div>'
+      + presenceHtml
       + sccBuildLocationCardBodyHtml(loc);
   } else if (type === 'creature') {
     var creatures = typeof CREATURES!=='undefined'?CREATURES:[];
