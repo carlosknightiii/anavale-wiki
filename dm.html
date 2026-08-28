@@ -8294,6 +8294,30 @@ function showDMToast(msg, type) {
   background: var(--dm-surface-high);
   font-family: var(--font-headers); font-size: 2rem; color: var(--dm-gold);
 }
+/* Item 6, round 6, 2026-08-28: zoom featured portraits ~50% so faces are
+   more visible, less empty background/body. .scc-fg-featured-img-wrap
+   (new, see sccFgFeaturedEntryHtml()) now owns the fixed 88px circle/
+   border/clip; the .scc-fg-featured-img/-fallback base rule above still
+   sets their own 88px+border-radius+border too, but that's harmless --
+   these nested overrides win on specificity and strip it back to 100%/
+   no-border/no-radius so only the wrapper's frame is visible, with the
+   <img> itself scaled up 1.5x and object-position biased toward the
+   upper portion of the frame (roughly where a portrait's face sits)
+   before being clipped by the wrapper's own overflow:hidden. Unscoped
+   .scc-fg-featured-img (no wrapper) -- sccFgScenarioCardPortraitHtml()'s
+   own scenario-card tile portraits -- is completely untouched, these
+   selectors only match inside the new wrapper. */
+.scc-fg-featured-img-wrap {
+  width: 88px; height: 88px; border-radius: 9999px; overflow: hidden;
+  border: 2px solid var(--dm-gold); flex-shrink: 0; position: relative;
+}
+.scc-fg-featured-img-wrap .scc-fg-featured-img {
+  width: 100%; height: 100%; border-radius: 0; border: none;
+  object-position: center 20%; transform: scale(1.5); display: block;
+}
+.scc-fg-featured-img-wrap .scc-fg-featured-fallback {
+  width: 100%; height: 100%; border-radius: 0; border: none;
+}
 .scc-fg-featured-name {
   font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
   text-align: center; color: var(--dm-text); line-height: 1.25;
@@ -16552,11 +16576,24 @@ function sccFgFeaturedEntryHtml(f) {
   // resolved <img>, not the letter-avatar fallback (nothing to show
   // fullscreen when there's no real portrait). onerror's fallback-swap
   // is untouched; this only adds a second onclick to the same <img>.
+  // Wrapped in .scc-fg-featured-img-wrap (item 6, round 6, 2026-08-28) --
+  // a real zoomed-in crop needs a fixed-size clipping container distinct
+  // from the scaled <img> itself: a CSS transform:scale() on an element
+  // that already carries its own border-radius circle-clip scales the
+  // WHOLE already-clipped circle (border-radius applies before
+  // transform in the render pipeline), growing the visible circle past
+  // its own frame rather than zooming the photo inside a same-size
+  // frame. The wrapper now owns the fixed 88px circle/border/overflow-
+  // clip; the <img> inside is scaled+repositioned freely within it.
+  // Scoped to .scc-fg-featured-img-wrap specifically (see CSS) so
+  // sccFgScenarioCardPortraitHtml()'s own reuse of the base
+  // .scc-fg-featured-img class, unwrapped, for its differently-sized
+  // scenario-card tile portraits is completely unaffected.
   var imgHtml = r.imgUrl
     ? '<img class="scc-fg-featured-img" src="' + sccEsc(r.imgUrl) + '" alt="" title="Click to view fullscreen" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" onclick="sccFgOpenImgView(\'' + sccEsc(r.imgUrl).replace(/'/g, "\\'") + '\',\'' + sccEsc(r.name).replace(/'/g, "\\'") + '\')">'
       + '<span class="scc-fg-featured-fallback" style="display:none">' + initial + '</span>'
     : '<span class="scc-fg-featured-fallback">' + initial + '</span>';
-  return '<div class="scc-fg-featured-item">' + imgHtml + '<span class="scc-fg-featured-name">' + sccEsc(r.name) + '</span></div>';
+  return '<div class="scc-fg-featured-item"><div class="scc-fg-featured-img-wrap">' + imgHtml + '</div><span class="scc-fg-featured-name">' + sccEsc(r.name) + '</span></div>';
 }
 // Fullscreen viewer for a featured-entity portrait -- a real shadowbox
 // (#scc-fg-imgview-backdrop/#scc-fg-imgview, page-level HTML), not the
