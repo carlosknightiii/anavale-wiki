@@ -528,6 +528,121 @@ function checkNearDuplicateBackgroundBoxes(blocks) {
   return byIndex;
 }
 
+// ── Miscategorization candidates (round 8) ──────────────────────────────
+// Flags likely category mistakes for DM review -- content authoring is an
+// intent judgment this tool can't make, so this NEVER auto-fixes, only
+// surfaces candidates. Heuristic and deliberately imperfect: real dialogue
+// prose is too varied for exact rules, and a false positive here costs the
+// DM one glance at a real box, while a missed real mistake just means the
+// DM's own read-through (already standing practice for this project) still
+// catches it eventually. Calibrated against real Session 1 content before
+// being trusted -- see the commit message for the specific examples this
+// was tuned not to false-positive on.
+//
+// Recurses into every scenario_cards block's own cards[].blocks -- unlike
+// the duplicate-detection checks above (checkDuplicateBackgroundContent/
+// checkNearDuplicateBackgroundBoxes), which only ever scan the top-level
+// blocks array. That's a real, known gap in those two checks now that
+// nested Scenario Cards modules are a real content shape (a scenario_cards
+// block placed inside another card's own blocks array) -- flagged here,
+// not silently fixed as a side effect of this unrelated change; recursing
+// them too is a separate, later pass.
+
+// Any straight- or curly-quoted span with real content -- used to confirm
+// a spoken_dialogue box has at least one actual quoted line anywhere
+// (matches both the <em>"..."</em> convention and the <strong>Name:</strong>
+// "..." dialogue-exchange convention -- confirmed both are real, current
+// patterns in Session 1 before writing this regex, not assumed from one).
+const ANY_QUOTE_RE = /["“][^"“”<]+["”]/;
+
+// Stricter -- a quoted span with an internal space (2+ words). Used only
+// for the dm_only reverse-check, so a short interjection quoted inside
+// otherwise-third-person narration (e.g. a creature's "skree" sound
+// effect, confirmed real in Session 1 dm_only content) doesn't
+// false-positive as "a real spoken line snuck into a DM-only box."
+const DIALOGUE_LIKE_QUOTE_RE = /["“][^"“”<]*\s[^"“”<]*["”]/;
+
+// Third-person NPC-behavior narration -- a pronoun immediately followed by
+// a behavior-describing verb. Deliberately NOT just "if asked" alone --
+// confirmed against real Session 1 content that "If asked what Form 31-G
+// is:" is a completely normal, correctly-categorized spoken_dialogue
+// scene-setup lead-in (a stage-direction paragraph followed by the real
+// quoted response), not a sign of miscategorization -- a bare "if asked"
+// trigger would have false-positived on it.
+const THIRD_PERSON_NARRATION_RE = /\b(?:he|she|they|it)\s+(?:will|simply|responds by|reacts by|would say|does not (?:say|respond|elaborate)|refuses to|never (?:says|responds))\b/i;
+
+// DM-facing framing/instructional language -- broad on purpose. Confirmed
+// against 5 real dm_only boxes that legitimately quote a line (a scripted
+// NPC response, a boundary phrase, a sound effect) that every one of them
+// carries at least one of these words somewhere in its own DM-instruction
+// prose ("if they ask, say:", "do not narrate", "stop after", "let them",
+// "use this once", "regardless") -- a genuinely miscategorized dm_only box
+// (pure first-person monologue with zero DM meta-commentary) would carry
+// none of them.
+const DM_FRAMING_RE = /\b(if\s|don'?t|do not|stop|pause|let\s|use this|note:|reminder|secret|ruling|dm[\s-]only|dm note|regardless)\b/i;
+
+function plainTextForMiscat(html) {
+  return String(html || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function checkMiscategorization(blocks, pathLabel) {
+  const findings = [];
+  (blocks || []).forEach((b, i) => {
+    if (!b || typeof b !== 'object') return;
+    const loc = `${pathLabel}[${i}]`;
+    if (b.type === 'box' && b.category === 'spoken_dialogue') {
+      const html = b.html || '';
+      const label = b.label || '(no label)';
+      if (!ANY_QUOTE_RE.test(html)) {
+        findings.push({
+          location: loc, category: 'spoken_dialogue', label,
+          reason: 'no quoted line anywhere in this box -- real dialogue should contain at least one actual quote. Possibly belongs in dm_only/background/if_they_ask instead.',
+        });
+      }
+      const narrationMatch = plainTextForMiscat(html).match(THIRD_PERSON_NARRATION_RE);
+      if (narrationMatch) {
+        findings.push({
+          location: loc, category: 'spoken_dialogue', label,
+          reason: `reads as third-person NPC-behavior description ("${narrationMatch[0]}") rather than a first-person quote, even if it contains a quote elsewhere.`,
+        });
+      }
+    }
+    if (b.type === 'box' && b.category === 'dm_only') {
+      const html = b.html || '';
+      const label = b.label || '(no label)';
+      if (DIALOGUE_LIKE_QUOTE_RE.test(html) && !DM_FRAMING_RE.test(plainTextForMiscat(html))) {
+        findings.push({
+          location: loc, category: 'dm_only', label,
+          reason: 'contains a first-person quote formatted like real dialogue, with no DM-facing framing language around it -- possibly belongs in spoken_dialogue instead.',
+        });
+      }
+    }
+    if (b.type === 'box' && b.category === 'scenario_cards' && Array.isArray(b.cards)) {
+      b.cards.forEach((c) => {
+        findings.push(...checkMiscategorization(c.blocks, `${loc}.card["${c.title || c.id || '?'}"].blocks`));
+      });
+    }
+  });
+  return findings;
+}
+
+function printMiscatReport(findings) {
+  console.log('── Miscategorization Candidates ' + '─'.repeat(35));
+  if (!findings.length) {
+    console.log('None found.');
+    return;
+  }
+  console.log(`${findings.length} candidate(s) -- review only, nothing auto-fixed:`);
+  findings.forEach((f) => {
+    console.log(`  ${f.location} [${f.category}] "${f.label}"`);
+    console.log(`    ${f.reason}`);
+  });
+}
+
 function validateBlocks(blocks, schema) {
   const dupIssues = checkDuplicateBackgroundContent(blocks);
   const nearDupIssues = checkNearDuplicateBackgroundBoxes(blocks);
@@ -585,6 +700,9 @@ async function cmdCheck(sessionNumber) {
   console.log('');
   const results = validateBlocks(blocks, schema);
   const errorCount = printReport(results, { label: `Session ${sessionNumber}` });
+  console.log('');
+  const miscatFindings = checkMiscategorization(blocks, 'blocks');
+  printMiscatReport(miscatFindings);
   if (errorCount > 0) process.exitCode = 1;
 }
 
