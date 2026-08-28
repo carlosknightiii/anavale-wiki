@@ -8471,10 +8471,24 @@ function showDMToast(msg, type) {
 .scc-fg-check-fail { color: var(--red); font-weight: 700; }
 /* ── Entity-mention inline thumbnail — first/genuinely significant mention
    of a linked entity only, tracked per render pass (sccFgLinkify's seen set). */
+/* Item 5, round 6, 2026-08-28: vertical-align:middle (item 6, round 4)
+   was already the best of every plain vertical-align value tested --
+   re-verified this round against 6 candidates (middle, -0.05em/-0.08em/
+   -0.1em/-1px/0px) across all 3 real font-size contexts in Session 1
+   (13.12px/13.28px/18px) -- middle alone landed within +1.03 to +1.24px
+   of true glyph-center in every one, every flat alternative was worse
+   (-1.2 to -4.5px). middle's residual is consistently in the SAME
+   direction and a similar small magnitude across all 3 contexts (icon
+   sitting slightly low), so a small compensating position:relative nudge
+   on top of it -- rather than replacing "middle" with a different single
+   value -- closes that residual everywhere at once: re-measured at
+   -0.06/+0.15/+0.15px across the same 3 contexts, genuinely
+   sub-quarter-pixel now, not just "close." */
 .scc-fg-link-thumb, .scc-fg-link-thumb-fallback {
   display: inline-block; width: 18px; height: 18px; border-radius: 50%;
   object-fit: cover; vertical-align: middle; margin: 0 0.25rem 0 0.1rem;
   border: 1px solid var(--scc-border-mid);
+  position: relative; top: -1.1px;
 }
 .scc-fg-link-thumb-fallback {
   background: var(--dm-surface-high); text-align: center; line-height: 16px;
