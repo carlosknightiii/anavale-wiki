@@ -8143,15 +8143,34 @@ function showDMToast(msg, type) {
    lines, since those already carry their own style="..." and are
    excluded by :not([style]) exactly like the sibling rules above. */
 .scc-fg-box--blue p:not([style]) { color: var(--fg-dialogue-player) !important; }
-/* .scc-fg-box--teal: Gigglegloom Effect (item 6, round 5, 2026-08-27) --
-   full treatment from the start (background/border/label/corner-icon
-   color via sccFgBoxCornerIconHtml()'s generic style.badge.icon path,
-   plus the pale p:not([style]) text tint), not built then patched the
-   way blue's own tint gap (item 4, this same round) had to be. */
-.scc-fg-box--teal { background: var(--fg-gigglegloom-dim); border-left: 3px solid var(--fg-gigglegloom-border); }
-.scc-fg-box--teal .scc-fg-box-label { color: var(--fg-gigglegloom); }
-.scc-fg-box--teal .scc-fg-box-corner-icon { color: var(--fg-gigglegloom); }
-.scc-fg-box--teal p:not([style]) { color: var(--fg-gigglegloom-text) !important; }
+/* .scc-fg-box--teal: Gigglegloom Effect (item 6, round 5, 2026-08-27;
+   RECOLORED item 3, round 6, 2026-08-28 -- flat teal replaced with a
+   real 4-color gradient built from the 4 already-established Gigglegloom
+   type brand colors, --bubbleseed/--featherflow/--steelfist/--flamerage
+   -- confirmed matching js/character.js's and js/wiki.js's own
+   TYPE_COLORS constants exactly before reusing them, not invented here.
+   Text surfaces (label, corner icon, body paragraphs) use the standard
+   background-clip:text gradient-text technique -- safe for the short,
+   non-wrapping label/icon; verified live for body paragraphs too (a
+   pale 4-stop variant, --gigglegloom-gradient-pale, at the same
+   lightness tier as the sibling colors' own pale tints) before treating
+   it as legible enough to ship, not assumed. Border-left uses a real
+   border-image gradient rather than a flat border-color, since a
+   border-left is the one surface here with zero legibility risk either
+   way. */
+.scc-fg-box--teal {
+  background: linear-gradient(135deg, rgba(42,122,58,0.1), rgba(34,102,184,0.1), rgba(106,58,170,0.1), rgba(170,58,26,0.1));
+  border-left: 3px solid; border-image: var(--gigglegloom-gradient) 1;
+}
+.scc-fg-box--teal .scc-fg-box-label {
+  background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.scc-fg-box--teal .scc-fg-box-corner-icon {
+  background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.scc-fg-box--teal p:not([style]) {
+  background: var(--gigglegloom-gradient-pale); -webkit-background-clip: text; background-clip: text; color: transparent !important;
+}
 .scc-fg-box--red {
   position: relative;
   background: var(--red-dim);
@@ -8194,9 +8213,20 @@ function showDMToast(msg, type) {
    own subtype icon does that job instead), so this is a genuinely new rule,
    not a repointed one. */
 .scc-fg-box--gold .scc-fg-box-cat-badge { background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold); }
-/* Gigglegloom Effect's own chip (item 6, round 5, 2026-08-27) -- same
-   --fg-gigglegloom tokens .scc-fg-box--teal's own border/label already use. */
-.scc-fg-box--teal .scc-fg-box-cat-badge { background: var(--fg-gigglegloom-dim); border: 1px solid var(--fg-gigglegloom-border); color: var(--fg-gigglegloom); }
+/* Gigglegloom Effect's own chip (item 6, round 5, 2026-08-27; RECOLORED
+   item 3, round 6, 2026-08-28) -- gradient border + a translucent
+   gradient wash for the pill background (both safe, no text involved),
+   gradient-clipped text only on the inner .scc-fg-box-cat-badge-label
+   span (added above) so the icon glyph itself is untouched -- emoji
+   ignore background-clip:text/color anyway, so clipping the whole badge
+   would have looked inconsistent between icon and label. */
+.scc-fg-box--teal .scc-fg-box-cat-badge {
+  background: linear-gradient(90deg, rgba(42,122,58,0.18), rgba(34,102,184,0.18), rgba(106,58,170,0.18), rgba(170,58,26,0.18));
+  border: 1px solid; border-image: var(--gigglegloom-gradient) 1;
+}
+.scc-fg-box--teal .scc-fg-box-cat-badge-label {
+  background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 /* Comedy's joker glyph (playing-cards block) renders visibly smaller than
    the other badges' emoji-block icons at an identical font-size -- bumped
    up so it reads as the same visual weight, not a global icon-size change. */
@@ -17446,8 +17476,16 @@ function sccFgRenderBlock(b, idx, ctx) {
       // renders visibly smaller than the other badges' standard-block emoji
       // (warning/scroll/bulb/etc.) at the same font-size in most emoji
       // fonts. See .scc-fg-box-cat-badge-icon--comedy below.
+      // Label text wrapped in its own span (item 3, round 6, 2026-08-28)
+      // -- lets .scc-fg-box--teal's gradient-text treatment clip to just
+      // the label text without also needing the icon span's own text to
+      // participate (background-clip:text on the whole badge div would
+      // otherwise clip the icon glyph too, which -- being a real emoji --
+      // ignores CSS color/background-clip anyway and would just look
+      // inconsistent). No visual change for any other category: an
+      // unstyled span is invisible in the render either way.
       var catBadge = (style && style.badge)
-        ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--' + sccEsc(b.category) + '">' + style.badge.icon + '</span> ' + sccEsc(style.badge.name) + '</div>'
+        ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--' + sccEsc(b.category) + '">' + style.badge.icon + '</span> <span class="scc-fg-box-cat-badge-label">' + sccEsc(style.badge.name) + '</span></div>'
         : '';
       // Combat-kickoff boxes (DM-authored, via block.combat_encounter_id)
       // get a real "Roll Initiative" link -- a genuine same-origin new-tab

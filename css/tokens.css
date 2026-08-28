@@ -212,6 +212,19 @@
     135deg,
     #e8c84a 0%, #f8e888 30%, #e87a8a 55%, #9a70e8 80%, #4ac8b8 100%
   );
+  /* Pale variants of the 4 real Gigglegloom type colors above (item 3,
+     round 6, 2026-08-28) -- for the Gigglegloom Effect Field Guide box
+     category's default paragraph text, same lightened-for-legibility
+     relationship every sibling box color already has to its own pale
+     tint (e.g. --green #22c55e -> its own #c6f0d8). Not --gradient-colorful
+     above (a pre-existing, unrelated 5-stop decorative gradient with its
+     own different hex stops, not built from these 4 real type colors). */
+  --bubbleseed-pale:  #c8ecd0;
+  --featherflow-pale: #bcd9f5;
+  --steelfist-pale:   #ddc9f5;
+  --flamerage-pale:   #f5c9b8;
+  --gigglegloom-gradient:      linear-gradient(90deg, var(--bubbleseed), var(--featherflow), var(--steelfist), var(--flamerage));
+  --gigglegloom-gradient-pale: linear-gradient(90deg, var(--bubbleseed-pale), var(--featherflow-pale), var(--steelfist-pale), var(--flamerage-pale));
 
   /* ── RADIUS ──────────────────────────────────────────────── */
   --radius-sm:  6px;
