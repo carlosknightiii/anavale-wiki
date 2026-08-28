@@ -427,12 +427,114 @@ function checkDuplicateBackgroundContent(blocks) {
   return byIndex;
 }
 
+// ── Near-duplicate background-box detection (box vs. box) ──────────────
+// The Brightcreed/Stillkeep/Veilborn case wasn't a background box copying
+// a reference table (that's checkDuplicateBackgroundContent above) -- it
+// was the same religion described in two separate background boxes under
+// two different labels, discovered and merged by hand. A verbatim-
+// sentence match (the table check's approach) wouldn't have caught it:
+// the wording overlapped without being copy-pasted. This is deliberately
+// a fuzzy check instead -- normalized word-overlap (Jaccard similarity)
+// on label text and on body text, checked independently (either one
+// tripping the threshold is enough to flag), against every OTHER real
+// content block in the same session, not just other background boxes or
+// just tables. Looser than the verbatim check on purpose, so it's a
+// warning either way -- a genuine near-duplicate needs a human read, not
+// an automatic merge.
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'at', 'for',
+  'with', 'is', 'are', 'was', 'were', 'be', 'been', 'it', 'its', 'this',
+  'that', 'as', 'by', 'from', 'he', 'she', 'they', 'his', 'her', 'their',
+  'you', 'your', 'not', 'has', 'have', 'had', 'who', 'what', 'when',
+]);
+const NEARDUP_LABEL_JACCARD = 0.6;
+const NEARDUP_BODY_JACCARD = 0.5;
+const NEARDUP_BODY_MIN_WORDS = 15; // below this, overlap is too noisy to mean anything
+
+function wordSet(text) {
+  return new Set(
+    plainText(text)
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
+  );
+}
+
+function jaccard(setA, setB) {
+  if (!setA.size || !setB.size) return 0;
+  let shared = 0;
+  for (const w of setA) if (setB.has(w)) shared++;
+  const union = setA.size + setB.size - shared;
+  return union === 0 ? 0 : shared / union;
+}
+
+function blockLabelText(b) {
+  if (typeof b.label === 'string') return b.label;
+  if ((b.type === 'h1' || b.type === 'h2') && typeof b.text === 'string') return b.text;
+  return '';
+}
+
+function blockBodyText(b) {
+  if (typeof b.html === 'string') return b.html;
+  if (b.type === 'table') return tableCellText(b);
+  if (typeof b.text === 'string') return b.text;
+  return '';
+}
+
+function checkNearDuplicateBackgroundBoxes(blocks) {
+  const byIndex = new Map();
+  const bgBoxes = [];
+  blocks.forEach((b, i) => {
+    if (b && typeof b === 'object' && b.type === 'box' && b.category === 'background') {
+      bgBoxes.push({
+        index: i,
+        block: b,
+        labelWords: wordSet(blockLabelText(b)),
+        bodyWords: wordSet(blockBodyText(b)),
+      });
+    }
+  });
+  if (!bgBoxes.length) return byIndex;
+
+  for (const ref of bgBoxes) {
+    for (let i = 0; i < blocks.length; i++) {
+      if (i === ref.index) continue;
+      const other = blocks[i];
+      if (!other || typeof other !== 'object') continue;
+      // Widget-shaped boxes (quest_beats/combat_outcomes/scenario_cards)
+      // carry structural data, not comparable prose -- skip them.
+      if (other.type === 'box' && SPECIAL_CASED_BOX_CATEGORIES.has(other.category)) continue;
+
+      const otherLabelWords = wordSet(blockLabelText(other));
+      const otherBodyWords = wordSet(blockBodyText(other));
+
+      const labelScore = jaccard(ref.labelWords, otherLabelWords);
+      const labelHit = ref.labelWords.size > 0 && otherLabelWords.size > 0 && labelScore >= NEARDUP_LABEL_JACCARD;
+
+      const bodyEligible = ref.bodyWords.size >= NEARDUP_BODY_MIN_WORDS && otherBodyWords.size >= NEARDUP_BODY_MIN_WORDS;
+      const bodyScore = bodyEligible ? jaccard(ref.bodyWords, otherBodyWords) : 0;
+      const bodyHit = bodyEligible && bodyScore >= NEARDUP_BODY_JACCARD;
+
+      if (!labelHit && !bodyHit) continue;
+
+      const kind = labelHit && bodyHit ? 'label and body' : labelHit ? 'label' : 'body';
+      const pct = Math.round((labelHit ? labelScore : bodyScore) * 100);
+      const refLabel = blockLabelText(ref.block) || '(no label)';
+      const msg = `box [${ref.index}] (background, "${refLabel}") appears to near-duplicate block [${i}]'s ${kind} (~${pct}% word overlap) -- likely the same content authored twice under different labels`;
+      if (!byIndex.has(ref.index)) byIndex.set(ref.index, []);
+      byIndex.get(ref.index).push({ level: 'warning', message: msg });
+      break; // one flag per ref box is enough, don't spam the same box against every other near-hit
+    }
+  }
+  return byIndex;
+}
+
 function validateBlocks(blocks, schema) {
   const dupIssues = checkDuplicateBackgroundContent(blocks);
+  const nearDupIssues = checkNearDuplicateBackgroundBoxes(blocks);
   return blocks.map((b, i) => ({
     index: i,
     block: b,
-    issues: validateBlock(b, schema).concat(dupIssues.get(i) || []),
+    issues: validateBlock(b, schema).concat(dupIssues.get(i) || []).concat(nearDupIssues.get(i) || []),
   }));
 }
 
