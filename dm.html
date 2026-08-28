@@ -8126,24 +8126,6 @@ function showDMToast(msg, type) {
 .scc-fg-box p:last-child { margin-bottom: 0 !important; }
 .scc-fg-box--green { background: var(--scc-read-aloud-bg); border-left: 3px solid var(--scc-read-aloud-border); }
 .scc-fg-box--green .scc-fg-box-label { color: var(--scc-read-aloud-text); }
-/* Read Aloud is text the DM speaks straight from the screen at the table --
-   needs to be comfortably legible at a glance, not squeezed to the same
-   size as reference prose. Overrides .scc-fg-box p's 0.82rem. */
-.scc-fg-box--green p { font-style: italic; font-size: 18px !important; }
-/* :not([style]) on every box-color's default `p` color below -- these were
-   unconditionally forcing every paragraph in a box to the same one color
-   via !important, which beats a plain inline style="color:..." attribute
-   regardless of specificity. Real bug, not a style preference: found via a
-   live audit after a specific box (Playing Pellam Consistently) was
-   confirmed to have correct inline-styled comedy/dialogue-color data in
-   Supabase that nonetheless rendered as one flat pink -- the box's own
-   default magenta text color, silently winning over the author's real
-   color choice on every styled <p> in it. Scoped to :not([style]) so the
-   default box-tinted color still applies to every ordinary paragraph (the
-   vast majority, with no inline style at all) exactly as before -- only a
-   paragraph the DM explicitly colored (a comedy element, one side of a
-   dialogue exchange, etc.) is now respected instead of overridden. */
-.scc-fg-box--green p:not([style]) { color: #c6f0d8 !important; }
 /* .scc-fg-box--magenta: DM Only. Was .scc-fg-box--yellow (a class name that
    stopped meaning anything the moment this box stopped being yellow) — renamed
    once a real bright-yellow box (Comedy, below) needed that name for real.
@@ -8160,31 +8142,62 @@ function showDMToast(msg, type) {
 }
 .scc-fg-box--magenta .scc-fg-box-corner-icon { color: var(--dm-only); }
 .scc-fg-box--magenta .scc-fg-box-label { color: var(--dm-only); font-size: 0.8rem; padding-right: 1.75rem; }
-.scc-fg-box--magenta p:not([style]) { color: #ffd6fc !important; }
 /* .scc-fg-box--yellow: Comedy Beats. Genuinely bright/saturated yellow, distinct
    from --gold (below, Loot & Shop) so the two don't read as the same hue. */
 .scc-fg-box--yellow { background: rgba(250,204,21,0.09); border-left: 3px solid rgba(250,204,21,0.45); }
 .scc-fg-box--yellow .scc-fg-box-label { color: #facc15; }
-.scc-fg-box--yellow p:not([style]) { color: #fef9c3 !important; }
-/* Item 9, 2026-08-27: the 18px read-at-the-table minimum already applied
-   to read_aloud (.scc-fg-box--green p) and spoken_dialogue
-   (.scc-fg-spoken-line p) never covered Comedy -- a real gap, not a
-   one-off, since a standalone Comedic Element box (item 6) can hold a
-   genuine in-character dialogue exchange (Edvin/Aldvin) just as speakable
-   at the table as anything in a spoken_dialogue box. Applies to every
-   paragraph in a comedy box regardless of its own inline style (unlike
-   the color rule above, which only touches unstyled ones) -- font size
-   should never shrink below the speakable minimum, even on a line that
-   also carries its own inline color. */
-.scc-fg-box--yellow p { font-size: 18px !important; }
 /* .scc-fg-box--gold: Loot & Shop. Was .scc-fg-box--orange (terracotta) — moved
    onto the app's real --gold token per direct DM instruction, distinct from
    Comedy's brighter yellow above. */
 .scc-fg-box--gold { background: rgba(240,180,41,0.09); border-left: 3px solid rgba(240,180,41,0.45); }
 .scc-fg-box--gold .scc-fg-box-label { color: var(--gold); }
-.scc-fg-box--gold p:not([style]) { color: #fbe9c2 !important; }
 .scc-fg-box--grey { background: var(--scc-surface-mid); border: 1px solid var(--scc-border); }
 .scc-fg-box--grey .scc-fg-box-label { color: var(--dm-text); }
+/* ── Category-driven TEXT treatment (round 8 architecture fix, 2026-08-28) ──
+   Font-size/color for a box's own body paragraphs used to be inferred from
+   a tangle of signals that had nothing to do with the box's real category:
+   which colorClass a category happened to share with OTHER categories
+   (.scc-fg-box--green p, .scc-fg-box--yellow p, etc. -- colorClass is a
+   many-to-one grouping, e.g. magenta alone covers dm_only/background/
+   why_this_works/if_they_ask), and for Spoken Dialogue specifically, which
+   of two JS branches fired inside sccFgRenderSpokenDialogue() depending on
+   whether b.speaker happened to resolve to a real entity -- the branch
+   that DIDN'T resolve never wrapped its body html in .scc-fg-spoken-line,
+   so it silently never got the 18px "read at the table" treatment
+   regardless of what its paragraphs contained. That branch is now gone
+   entirely (sccFgRenderSpokenDialogue is one path, see its own comment).
+   Every rule below is instead selected purely by a class the JS applies
+   unconditionally from b.category (sccFgTextClass()) -- one real class per
+   category, always present, never conditional on speaker/branch/paragraph
+   position/child tag. :not([style]) on the color rules preserves the one
+   real exception that predates this system and is still correct: a
+   paragraph the DM explicitly inline-styled (one side of a dialogue
+   exchange, a comedy beat's own color) keeps that color instead of being
+   overridden -- font-size rules apply to EVERY <p> regardless, since
+   legibility at the table shouldn't depend on whether a line also carries
+   its own color.
+   Categories with no dedicated font-size/color rule here (dm_only,
+   background, why_this_works, if_they_ask, loot_shop, player_decision)
+   correctly fall through to .scc-fg-box p's plain 0.82rem/default color --
+   these are DM-reference categories, never read aloud at the table, so the
+   compact size is the deliberate, correct default, not a gap. */
+.scc-fg-text--read-aloud p { font-style: italic; font-size: 18px !important; }
+.scc-fg-text--read-aloud p:not([style]) { color: #c6f0d8 !important; }
+.scc-fg-text--spoken-dialogue p { font-size: 18px !important; }
+.scc-fg-text--spoken-dialogue p:not([style]) { color: var(--fg-dialogue-player) !important; }
+.scc-fg-text--comedy p { font-size: 18px !important; }
+.scc-fg-text--comedy p:not([style]) { color: #fef9c3 !important; }
+.scc-fg-text--dm-only p:not([style]) { color: #ffd6fc !important; }
+.scc-fg-text--background p:not([style]) { color: #ffd6fc !important; }
+.scc-fg-text--why-this-works p:not([style]) { color: #ffd6fc !important; }
+.scc-fg-text--if-they-ask p:not([style]) { color: #ffd6fc !important; }
+.scc-fg-text--dont-blow-this p { font-weight: 600; }
+.scc-fg-text--dont-blow-this p:not([style]) { color: #ffd9d9 !important; }
+.scc-fg-text--loot-shop p:not([style]) { color: #fbe9c2 !important; }
+.scc-fg-text--player-decision p:not([style]) { color: #fbe9c2 !important; }
+.scc-fg-text--gigglegloom-effect p:not([style]) {
+  background: var(--gigglegloom-gradient-pale); -webkit-background-clip: text; background-clip: text; color: transparent !important;
+}
 .scc-fg-table { width: 100%; border-collapse: collapse; margin: 0.4rem 0 0.75rem; font-family: var(--font-body); font-size: 0.79rem; }
 .scc-fg-table th { background: var(--scc-surface-mid); color: var(--dm-gold); font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.08em; padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid var(--scc-border-gold); }
 .scc-fg-table td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--scc-border); color: var(--dm-text); vertical-align: top; line-height: 1.5; }
@@ -8202,15 +8215,6 @@ function showDMToast(msg, type) {
    color field. */
 .scc-fg-box--blue { background: var(--blue-dim); border-left: 3px solid var(--blue-border); }
 .scc-fg-box--blue .scc-fg-box-label { color: var(--blue); }
-/* Item 4, round 5, 2026-08-27: the 3 sibling box colors (magenta/green/
-   yellow, above) each have a default p:not([style]) tint; blue (Spoken
-   Dialogue) never got one, so its unstyled paragraphs fell back to plain
-   white. Reuses --fg-dialogue-player (the existing pale-blue-grey
-   dialogue token, #9fb3c8) rather than a new hex, per instruction --
-   doesn't collide with the box's own inline-styled player/NPC dialogue
-   lines, since those already carry their own style="..." and are
-   excluded by :not([style]) exactly like the sibling rules above. */
-.scc-fg-box--blue p:not([style]) { color: var(--fg-dialogue-player) !important; }
 /* .scc-fg-box--teal: Gigglegloom Effect (item 6, round 5, 2026-08-27;
    RECOLORED item 3, round 6, 2026-08-28 -- flat teal replaced with a
    real 4-color gradient built from the 4 already-established Gigglegloom
@@ -8252,9 +8256,12 @@ function showDMToast(msg, type) {
 .scc-fg-box--teal .scc-fg-box-corner-icon {
   background: var(--gigglegloom-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.scc-fg-box--teal p:not([style]) {
-  background: var(--gigglegloom-gradient-pale); -webkit-background-clip: text; background-clip: text; color: transparent !important;
-}
+/* Body-paragraph gradient-text lives in .scc-fg-text--gigglegloom-effect now
+   (category-driven text treatment block, above) -- moved out of this
+   colorClass-scoped rule during the round 8 architecture fix, same visual
+   result (teal is still 1:1 with gigglegloom_effect), just selected by the
+   real category instead of the color family it happens to share nothing
+   else with. */
 .scc-fg-box--red {
   position: relative;
   background: var(--red-dim);
@@ -8267,8 +8274,6 @@ function showDMToast(msg, type) {
    label and chip text against the box background. */
 .scc-fg-box--red .scc-fg-box-corner-icon { color: var(--fg-dont-blow-this); }
 .scc-fg-box--red .scc-fg-box-label { color: var(--fg-dont-blow-this); font-size: 0.8rem; padding-right: 1.75rem; }
-.scc-fg-box--red p { font-weight: 600; }
-.scc-fg-box--red p:not([style]) { color: #ffd9d9 !important; }
 /* Category badge — shown only on the boxes that share a color family with
    others (the magenta family, plus Don't Blow This) where the box's own
    free-text label can't be trusted to say which category it really is
@@ -8440,9 +8445,6 @@ function showDMToast(msg, type) {
   background: rgba(255,255,255,0.03); border-radius: var(--dm-radius-sm); padding: 0.3rem 0.55rem;
 }
 .scc-fg-spoken-tone-icon { flex-shrink: 0; }
-/* Same "read at the table" legibility requirement as Read Aloud, above. */
-.scc-fg-spoken-line p { font-size: 18px !important; }
-.scc-fg-spoken-line p:last-child { margin-bottom: 0 !important; }
 /* ── Inline DM-only aside, generalized (item 11, 2026-08-26) -- marks a
    note that isn't part of the container's own real content (a stage
    direction, a branching instruction, a parenthetical like "He does not."
@@ -16991,6 +16993,36 @@ function sccFgToggleVis(el) {
   el.classList.toggle('open', !open);
 }
 
+// Category-driven text treatment (round 8 architecture fix, 2026-08-28) --
+// the single source of which class controls a box's own body-paragraph
+// font-size/color. Derived directly and unconditionally from b.category,
+// nothing else -- not colorClass (a many-to-one grouping shared by several
+// categories), not which JS branch happened to fire, not paragraph
+// position or child tag. See the matching .scc-fg-text--* CSS block for
+// what each class actually sets. Applied identically by every render path
+// that emits a category box: the generic case in sccFgRenderBlock() and
+// sccFgRenderSpokenDialogue() below -- one function, one rule, every box.
+function sccFgTextClass(category) {
+  return category ? 'scc-fg-text--' + String(category).replace(/_/g, '-') : '';
+}
+
+// Round 8 architecture fix, 2026-08-28: ONE path now, not two. Previously
+// this function branched entirely on whether b.speaker resolved to a real
+// entity -- the branch that didn't resolve skipped the label header
+// entirely (a real, separately-reported bug, already patched once before
+// this rewrite subsumed the fix), and the branch that DID resolve wrapped
+// body text in a div (.scc-fg-spoken-line) that was the ONLY thing giving
+// Spoken Dialogue its 18px "read at the table" size -- so a box whose
+// speaker didn't resolve silently lost that too, regardless of what its
+// paragraphs contained. Both gaps had the same root shape: real visual
+// treatment depending on which JS branch fired instead of being a direct
+// function of the box's own data. Fixed structurally, not with more
+// special-casing: the label header renders whenever b.label is set, the
+// speaker header renders whenever entity resolves, neither can suppress
+// the other (they're two independent conditionals, not two branches of
+// one return), and font-size/color is driven entirely by
+// sccFgTextClass('spoken_dialogue') on the box itself -- present on every
+// Spoken Dialogue box unconditionally, whether or not a speaker resolves.
 function sccFgRenderSpokenDialogue(b) {
   var speaker = b.speaker || null;
   var entity = null;
@@ -17002,25 +17034,13 @@ function sccFgRenderSpokenDialogue(b) {
   var toneHtml = b.tone_note
     ? '<div class="scc-fg-spoken-tone"><span class="scc-fg-spoken-tone-icon">&#127917;</span>Tone: ' + sccEsc(b.tone_note) + '</div>'
     : '';
-  // Real bug, found via the same audit that fixed sccFgFeaturedEntryHtml()'s
-  // type resolution above: Spoken Dialogue boxes render through this
-  // dedicated function, not the generic box case in sccFgRenderBlock() --
-  // b.featured was never read here at all, so any Spoken Dialogue box with
-  // real featured data (e.g. Session 1's "READ ALOUD" box, featuring both
-  // the speaker and the location the scene happens at) silently dropped it,
-  // the identical failure shape as the Playing Pellam Consistently box, just
-  // via a different code path. The speaker's own small round portrait in the
-  // header below is a separate, existing mechanism (driven by b.speaker, not
-  // b.featured) -- this is additive, not a duplicate of it.
+  // b.featured -- read unconditionally, same reasoning as the category
+  // chip below: a box with no featured data just renders '' here, same as
+  // always.
   var featuredHtml = sccFgRenderFeatured(b.featured);
-  // Category chip -- same SCC_FG_CATEGORY_STYLE the generic box case reads,
-  // rendered unconditionally at the very top of the box (before featuredHtml
-  // and the speaker header) so it shows up identically whether or not this
-  // particular box happens to have featured data -- that was the real gap a
-  // DM screenshot caught: a box with no featured entries and this chip
-  // missing had *nothing* distinguishing it as this box's category at a
-  // glance, unlike every other category, which always shows one regardless
-  // of what else is or isn't set.
+  // Category chip -- rendered unconditionally at the very top of the box
+  // (before featuredHtml and either header) so it shows up identically
+  // regardless of what else this particular box does or doesn't have set.
   var spokenStyle = SCC_FG_CATEGORY_STYLE.spoken_dialogue;
   var spokenBadgeHtml = (spokenStyle && spokenStyle.badge)
     ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--spoken_dialogue">' + spokenStyle.badge.icon + '</span> ' + sccEsc(spokenStyle.badge.name) + '</div>'
@@ -17028,51 +17048,48 @@ function sccFgRenderSpokenDialogue(b) {
   var spokenCornerIconHtml = sccFgBoxCornerIconHtml('spoken_dialogue');
   var spokenCompletedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
   var spokenCompleteToggleHtml = sccFgBoxCompletionToggleHtml(b);
-  if (!entity) {
-    return '<div class="scc-fg-box scc-fg-box--blue' + spokenCompletedCls + '">'
-      + spokenCornerIconHtml
-      + spokenBadgeHtml
-      + spokenCompleteToggleHtml
-      + featuredHtml
-      + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
-      + toneHtml
-      + sccFgLinkify(b.html || '')
-    + '</div>';
-  }
-  var initial = sccEsc((entity.name || '?').charAt(0));
-  var thumbHtml = entity.image
-    ? '<img class="scc-fg-spoken-thumb" src="' + sccEsc(entity.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
-      + '<div class="scc-fg-spoken-thumb-fallback" style="display:none">' + initial + '</div>'
-    : '<div class="scc-fg-spoken-thumb-fallback">' + initial + '</div>';
-  var visHtml = sccFgVisualizationHtml(entity);
-  var visToggleHtml = visHtml
-    ? '<div class="scc-fg-spoken-vis-toggle" onclick="sccFgToggleVis(this)" title="Show what they look and sound like">&#128065; Visualize</div>'
-      + '<div class="scc-fg-vis-wrap" style="display:none">' + visHtml + '</div>'
-    : '';
-  return '<div class="scc-fg-box scc-fg-box--blue scc-fg-spoken' + spokenCompletedCls + '">'
-    + spokenCornerIconHtml
-    + spokenBadgeHtml
-    + spokenCompleteToggleHtml
-    + featuredHtml
-    // Bug fix, 2026-08-28: this branch (speaker resolves to a real entity --
-    // the common case, ~32 boxes gained a real speaker field earlier tonight)
-    // never rendered b.label at all -- only the !entity fallback branch above
-    // did. A box with BOTH label and speaker set silently dropped its bold
-    // label header, going straight from featuredHtml to the speaker name/
-    // pronouns line. Same markup/position as the !entity branch (right after
-    // featuredHtml, before anything else), so both branches agree on where
-    // the label header sits relative to the rest of the box.
-    + (b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '')
-    + '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
+
+  // Label header -- independent of speaker entirely. Shows whenever
+  // b.label is set, full stop.
+  var labelHeaderHtml = b.label ? '<div class="scc-fg-box-label">' + sccEsc(b.label) + '</div>' : '';
+
+  // Speaker header + Visualize toggle -- independent of label entirely.
+  // Shows whenever speaker resolves to a real entity, full stop. A
+  // speaker that's set but doesn't resolve (bad id, or the entity list
+  // hasn't loaded yet) renders neither -- there's no portrait/name to
+  // show for an entity that doesn't exist, same as before this rewrite.
+  var speakerHeaderHtml = '';
+  var visToggleHtml = '';
+  if (entity) {
+    var initial = sccEsc((entity.name || '?').charAt(0));
+    var thumbHtml = entity.image
+      ? '<img class="scc-fg-spoken-thumb" src="' + sccEsc(entity.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<div class="scc-fg-spoken-thumb-fallback" style="display:none">' + initial + '</div>'
+      : '<div class="scc-fg-spoken-thumb-fallback">' + initial + '</div>';
+    speakerHeaderHtml = '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
       + thumbHtml
       + '<div class="scc-fg-spoken-meta">'
         + '<span class="scc-fg-spoken-name">' + sccEsc(entity.name) + '</span>'
         + (entity.pronouns ? '<span class="scc-fg-spoken-pronouns">' + sccEsc(entity.pronouns) + '</span>' : '')
       + '</div>'
-    + '</div>'
+    + '</div>';
+    var visHtml = sccFgVisualizationHtml(entity);
+    visToggleHtml = visHtml
+      ? '<div class="scc-fg-spoken-vis-toggle" onclick="sccFgToggleVis(this)" title="Show what they look and sound like">&#128065; Visualize</div>'
+        + '<div class="scc-fg-vis-wrap" style="display:none">' + visHtml + '</div>'
+      : '';
+  }
+
+  return '<div class="scc-fg-box scc-fg-box--blue ' + sccFgTextClass('spoken_dialogue') + (entity ? ' scc-fg-spoken' : '') + spokenCompletedCls + '">'
+    + spokenCornerIconHtml
+    + spokenBadgeHtml
+    + spokenCompleteToggleHtml
+    + featuredHtml
+    + labelHeaderHtml
+    + speakerHeaderHtml
     + visToggleHtml
     + toneHtml
-    + '<div class="scc-fg-spoken-line">' + sccFgLinkify(b.html || '') + '</div>'
+    + sccFgLinkify(b.html || '')
   + '</div>';
 }
 
@@ -17780,7 +17797,11 @@ function sccFgRenderBlock(b, idx, ctx) {
       var headerHtml = featuredHtml + (boxTitleHtml ? '<div class="scc-fg-box-header-right">' + boxTitleHtml + '</div>' : '');
       var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
       var completedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
-      return '<div class="scc-fg-box scc-fg-box--' + colorClass + completedCls + '">'
+      // sccFgTextClass(b.category) -- see its own comment. Applied here
+      // unconditionally alongside colorClass, so every box's body-text
+      // font-size/color is a direct function of its real category, not the
+      // (possibly shared) color family colorClass groups it into.
+      return '<div class="scc-fg-box scc-fg-box--' + colorClass + ' ' + sccFgTextClass(b.category) + completedCls + '">'
         + cornerIconHtml
         + headerHtml
         + sccFgLinkify(b.html || '')
