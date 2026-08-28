@@ -1410,6 +1410,25 @@
          not a lookalike copy. -->
     <div class="scc-browse-panel" id="scc-fg-attach-browse"></div>
 
+    <!-- ── Session-End Situational Attachment Review (round 7 item 5,
+         2026-08-27) -- gates sccCompleteSession(): when Situational
+         attachments are still active at session-end, surfaces each one
+         with its reason before the session actually completes. Keep/Remove
+         only, never auto-decides -- see sccOpenSessionEndAttachmentReview()
+         below. Same real modal shape as the Attachment modal above. -->
+    <div id="scc-session-end-review-backdrop" class="scc-lookup-backdrop"></div>
+    <div id="scc-session-end-review-modal" class="scc-quicknote-modal scc-session-end-review-modal" aria-hidden="true">
+      <div class="scc-quicknote-modal-inner">
+        <div class="scc-quicknote-modal-title">Situational Attachments — Review Before Completing</div>
+        <div class="scc-session-end-review-sub">Still active from this session. Keep or remove each — nothing is deleted automatically.</div>
+        <div id="scc-session-end-review-list"></div>
+        <div class="scc-quicknote-modal-actions">
+          <button type="button" class="scc-btn-secondary" onclick="sccSessionEndReviewCancel()">Cancel — Don't Complete Session</button>
+          <button type="button" class="scc-btn-primary" onclick="sccSessionEndReviewFinish()">Complete Session</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── QUICK NOTE — global, always-accessible entry point ──────────
          Lives at page level like the lookup panel above, for the same reason:
          a DM report that jotting a quick note required navigating to Session
@@ -8665,6 +8684,47 @@ function showDMToast(msg, type) {
   font-family: var(--font-sans); font-size: 0.7rem; padding: 0.2rem 0.3rem;
 }
 .scc-fg-attach-cancel:hover { color: var(--dm-text); }
+/* ── Situational reason + mechanical effect fields (round 7 item 5,
+   2026-08-27) -- own full-width rows inside the same .scc-fg-attach-form
+   flex-wrap layout, shown/hidden via direct style.display toggling from
+   sccFgAttachSyncFormVisibility() (mirrors the Quick Note modal's own
+   character-select show/hide pattern, no new CSS state machine needed). */
+.scc-fg-attach-reason-wrap, .scc-fg-attach-effect-wrap {
+  flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding-top: 0.4rem; border-top: 1px dashed var(--scc-border-mid);
+}
+.scc-fg-attach-reason-label, .scc-fg-attach-effect-label {
+  flex: 1 1 100%; font-family: var(--font-sans); font-size: 0.68rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--dm-text-muted);
+}
+.scc-fg-attach-reason-wrap select, .scc-fg-attach-effect-wrap select { flex: 0 0 auto; }
+.scc-fg-attach-reason-wrap input[type="text"], .scc-fg-attach-effect-wrap input[type="text"] { flex: 1 1 160px; }
+/* ── Session-End Situational Attachment Review modal (round 7 item 5) ── */
+.scc-session-end-review-modal { width: 560px; max-height: 80vh; overflow-y: auto; }
+.scc-session-end-review-sub { font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text-muted); }
+.scc-session-end-review-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm); padding: 0.6rem 0.7rem; margin-top: 0.5rem;
+}
+.scc-session-end-review-row--flagged { border-color: var(--dm-gold); background: rgba(240,180,41,0.08); }
+.scc-session-end-review-row--handled { opacity: 0.45; }
+.scc-session-end-review-row-main { flex: 1 1 220px; min-width: 0; }
+.scc-session-end-review-row-name { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); }
+.scc-session-end-review-row-owner { font-family: var(--font-sans); font-size: 0.7rem; color: var(--dm-text-muted); }
+.scc-session-end-review-row-reason { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-muted); margin-top: 0.15rem; }
+.scc-session-end-review-row-flag { font-family: var(--font-sans); font-size: 0.68rem; color: var(--dm-gold); font-weight: 700; margin-top: 0.15rem; }
+.scc-session-end-review-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.scc-session-end-review-row-status { font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-faint); font-style: italic; }
+/* Active-effect badge -- Live Session attachment pills and Combat's
+   initiative rows both surface this identically (round 7 item 5). */
+.scc-active-effect-badge {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  background: rgba(155,111,217,0.12); border: 1px solid var(--steelfist, #9b6fd9);
+  color: var(--steelfist, #9b6fd9); border-radius: 999px;
+  padding: 0.1rem 0.45rem; font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
+}
 /* ── Live quest-beat status, inline in the document -- replaces the old
    "these beats are in your Quests tab, click them there" instructional
    text. Real link to the quest + real click-to-advance status, backed by
@@ -14048,9 +14108,32 @@ function setQuestStatus(id, newStatus) {
   }).then(function(r) {
     if (msgEl) msgEl.textContent = r.ok ? '✓ Saved' : '⚠ Save failed';
     if (msgEl) setTimeout(function(){ msgEl.textContent = ''; }, 3000);
-    if (r.ok) showDMToast(quest.name + ' → ' + statusLabel(newStatus) + ' ✓', 'success');
+    if (r.ok) {
+      showDMToast(quest.name + ' → ' + statusLabel(newStatus) + ' ✓', 'success');
+      if (newStatus === 'completed') sccFlagAttachmentsForCompletedQuest(id);
+    }
   }).catch(function() {
     if (msgEl) msgEl.textContent = '⚠ Save failed';
+  });
+}
+
+// Quest-scoped auto-suggest (round 7 item 5) -- when a quest a Situational
+// attachment is linked to (reason_type:'quest', reason_quest_id) completes,
+// flag that attachment for review. This is a pre-flagged SMART DEFAULT in
+// the session-end prompt, not an automatic removal -- the DM still has to
+// act on it there (sccOpenSessionEndAttachmentReview() reads flagged_for_review
+// to highlight these rows). Scoped to still-active situational attachments
+// only -- a permanent item or an already-inactive/removed one has nothing
+// to flag.
+function sccFlagAttachmentsForCompletedQuest(questId) {
+  var rows = ((typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || []).filter(function(a) {
+    return a.active && a.mode === 'situational' && a.reason_type === 'quest' && a.reason_quest_id === questId && !a.flagged_for_review;
+  });
+  if (!rows.length) return;
+  rows.forEach(function(a) {
+    sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(a.id), { flagged_for_review: true }).then(function(r) {
+      if (r.ok) a.flagged_for_review = true; // keep the live cache in sync, same as every other in-place SCC_ATTACHMENTS mutation in this file
+    });
   });
 }
 
@@ -18285,12 +18368,22 @@ function sccFgAttachmentsSectionHtml() {
           // hover the entire time a description existed. One real data-tip
           // now, richer than either original attribute alone.)
           var tipText = sccFgAttachTooltipText(a);
+          // Active mechanical effect (round 7 item 5) -- surfaced right on
+          // the pill, not just inside the edit form, so a DM scanning the
+          // sidebar mid-session sees "this PC currently has +1 saves" at a
+          // glance. Only shows once effect_cleared flips true (duration
+          // condition met) it disappears -- the attachment pill itself
+          // stays until the DM removes it, per spec.
+          var effectBadge = (a.effect_text && !a.effect_cleared)
+            ? '<span class="scc-active-effect-badge" title="' + sccEsc(a.effect_text) + '">&#10024; ' + sccEsc(a.effect_text.length > 28 ? a.effect_text.slice(0, 28) + '…' : a.effect_text) + '</span>'
+            : '';
           return '<span class="scc-fg-attach-pill' + (a.mode === 'permanent' ? ' scc-fg-attach-pill--permanent' : '') + '">'
             + '<span class="scc-fg-attach-pill-main"' + (auditLocked ? '' : ' onclick="sccFgOpenAttachForm(\'' + pc.id + '\',\'' + a.id + '\')"') + (tipText ? ' data-tip="' + sccEsc(tipText) + '"' : '') + '>'
               + sccFgAttachPillThumbHtml(a)
               + '<span>' + sccEsc(sccFgAttachDisplayName(a)) + '</span>'
               + '<span class="scc-fg-attach-pill-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
             + '</span>'
+            + effectBadge
             + (auditLocked ? '' : '<span class="scc-fg-attach-pill-x" onclick="event.stopPropagation();sccFgRemoveAttachment(\'' + a.id + '\')" title="Remove">&#10005;</span>')
           + '</span>';
         }).join('');
@@ -18353,16 +18446,88 @@ function sccFgAttachFormFieldsHtml(existing) {
         + '<option value="effect"' + (isEdit && existing.attachment_type === 'effect' ? ' selected' : '') + '>Effect (curse, blessing, mark)</option>'
         + '<option value="character"' + (isEdit && existing.attachment_type === 'character' ? ' selected' : '') + '>Character/NPC</option>'
       + '</select>'
-      + '<select class="cm-select" id="scc-fg-attach-mode">'
+      + '<select class="cm-select" id="scc-fg-attach-mode" onchange="sccFgAttachSyncFormVisibility()">'
         + '<option value="situational"' + (!isEdit || existing.mode !== 'permanent' ? ' selected' : '') + '>Situational</option>'
         + '<option value="permanent"' + (isEdit && existing.mode === 'permanent' ? ' selected' : '') + '>Permanent</option>'
       + '</select>'
       + '<textarea class="scc-textarea" id="scc-fg-attach-desc" rows="2" placeholder="Description (optional)">' + sccEsc(isEdit ? (existing.description || '') : '') + '</textarea>'
+      + sccFgAttachReasonFieldsHtml(existing)
+      + sccFgAttachEffectFieldsHtml(existing)
       + '<div class="scc-fg-attach-form-actions">'
         + '<button type="button" class="scc-btn-secondary" onclick="sccFgSaveAttachment(' + (isEdit ? "'" + existing.id + "'" : 'null') + ')">' + (isEdit ? 'Save Changes' : 'Add') + '</button>'
         + '<button type="button" class="scc-fg-attach-cancel" onclick="sccFgCloseAttachModal()">Cancel</button>'
       + '</div>'
     + '</div>';
+}
+
+// Situational-only: the UI must not allow saving mode=situational without
+// picking exactly one of 3 reasons (quest-linked / scenario-linked / end-
+// of-session) -- see sccFgSaveAttachment()'s gate. Permanent items need no
+// reason at all, so this whole block hides for them (sccFgAttachSyncFormVisibility()).
+// No option is pre-selected on Add -- a real, deliberate empty first
+// option forces an explicit pick rather than silently defaulting to one.
+function sccFgAttachReasonFieldsHtml(existing) {
+  var isEdit = !!existing;
+  var reasonType = isEdit ? (existing.reason_type || '') : '';
+  var quests = (typeof QUESTS !== 'undefined' ? QUESTS : []).slice().sort(function(a, b) {
+    return (a.name || '').localeCompare(b.name || '');
+  });
+  var questOptions = '<option value="">— Choose a quest —</option>' + quests.map(function(q) {
+    return '<option value="' + sccEsc(q.id) + '"' + (isEdit && existing.reason_quest_id === q.id ? ' selected' : '') + '>' + sccEsc(q.name) + '</option>';
+  }).join('');
+  return '<div class="scc-fg-attach-reason-wrap" id="scc-fg-attach-reason-wrap">'
+    + '<span class="scc-fg-attach-reason-label">Why is this Situational? (required)</span>'
+    + '<select class="cm-select" id="scc-fg-attach-reason-type" onchange="sccFgAttachSyncFormVisibility()">'
+      + '<option value="">— Choose a reason —</option>'
+      + '<option value="quest"' + (reasonType === 'quest' ? ' selected' : '') + '>Quest-Linked</option>'
+      + '<option value="scenario"' + (reasonType === 'scenario' ? ' selected' : '') + '>Scenario-Linked</option>'
+      + '<option value="end_of_session"' + (reasonType === 'end_of_session' ? ' selected' : '') + '>End of Session (no specific link)</option>'
+    + '</select>'
+    + '<select class="cm-select" id="scc-fg-attach-reason-quest">' + questOptions + '</select>'
+    + '<input type="text" class="scc-input" id="scc-fg-attach-reason-scenario" placeholder="Which scenario (free text)" value="' + sccEsc(isEdit ? (existing.reason_scenario_text || '') : '') + '">'
+  + '</div>';
+}
+
+// Optional on either mode (a blessing/curse/borrowed item can be
+// Permanent too) -- duration is only meaningful once effect text is set,
+// and "until linked quest completes" only makes sense when the reason is
+// actually a quest link, so that option is disabled otherwise rather than
+// silently allowed and never firing (sccFgAttachSyncFormVisibility()).
+function sccFgAttachEffectFieldsHtml(existing) {
+  var isEdit = !!existing;
+  var durationKind = isEdit ? (existing.effect_duration_kind || '') : '';
+  return '<div class="scc-fg-attach-effect-wrap">'
+    + '<span class="scc-fg-attach-effect-label">Active Mechanical Effect (optional)</span>'
+    + '<input type="text" class="scc-input" id="scc-fg-attach-effect-text" placeholder="e.g. +1 to saves until leaving the shrine" value="' + sccEsc(isEdit ? (existing.effect_text || '') : '') + '">'
+    + '<select class="cm-select" id="scc-fg-attach-effect-duration">'
+      + '<option value="">Duration — pick when set</option>'
+      + '<option value="session_end"' + (durationKind === 'session_end' ? ' selected' : '') + '>Until this session ends</option>'
+      + '<option value="quest_complete" id="scc-fg-attach-effect-duration-quest"' + (durationKind === 'quest_complete' ? ' selected' : '') + '>Until the linked quest completes</option>'
+      + '<option value="manual"' + (durationKind === 'manual' ? ' selected' : '') + '>Until the DM clears it manually</option>'
+    + '</select>'
+  + '</div>';
+}
+
+// Toggles visibility of the reason sub-fields (situational only) and the
+// quest/scenario sub-pickers within it, and disables the effect
+// duration's "until quest completes" option unless a quest is actually
+// linked -- called on both the mode select and the reason-type select's
+// onchange, plus once right after the form is built so an Edit correctly
+// shows whichever sub-fields its existing data implies.
+function sccFgAttachSyncFormVisibility() {
+  var modeEl = document.getElementById('scc-fg-attach-mode');
+  var reasonWrap = document.getElementById('scc-fg-attach-reason-wrap');
+  var reasonTypeEl = document.getElementById('scc-fg-attach-reason-type');
+  var questEl = document.getElementById('scc-fg-attach-reason-quest');
+  var scenarioEl = document.getElementById('scc-fg-attach-reason-scenario');
+  var durQuestOpt = document.getElementById('scc-fg-attach-effect-duration-quest');
+  if (!modeEl || !reasonWrap) return;
+  var isSituational = modeEl.value !== 'permanent';
+  reasonWrap.style.display = isSituational ? 'flex' : 'none';
+  var reasonType = reasonTypeEl ? reasonTypeEl.value : '';
+  if (questEl) questEl.style.display = (isSituational && reasonType === 'quest') ? '' : 'none';
+  if (scenarioEl) scenarioEl.style.display = (isSituational && reasonType === 'scenario') ? '' : 'none';
+  if (durQuestOpt) durQuestOpt.disabled = !(isSituational && reasonType === 'quest');
 }
 
 // Add/Edit Attachment modal (item 12, round 4, 2026-08-27) -- a real
@@ -18387,6 +18552,7 @@ function sccFgOpenAttachForm(charId, attachmentId) {
   }
   if (titleEl) titleEl.textContent = existing ? 'Edit Attachment' : 'Add Attachment';
   fields.innerHTML = sccFgAttachFormFieldsHtml(existing);
+  sccFgAttachSyncFormVisibility();
   backdrop.classList.add('open');
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
@@ -18527,18 +18693,67 @@ function sccFgSaveAttachment(attachmentId) {
   var typeEl     = document.getElementById('scc-fg-attach-type');
   var modeEl     = document.getElementById('scc-fg-attach-mode');
   var descEl     = document.getElementById('scc-fg-attach-desc');
+  var reasonTypeEl     = document.getElementById('scc-fg-attach-reason-type');
+  var reasonQuestEl    = document.getElementById('scc-fg-attach-reason-quest');
+  var reasonScenarioEl = document.getElementById('scc-fg-attach-reason-scenario');
+  var effectTextEl     = document.getElementById('scc-fg-attach-effect-text');
+  var effectDurationEl = document.getElementById('scc-fg-attach-effect-duration');
   var name = nameEl ? nameEl.value.trim() : '';
   if (!name) { showDMToast('Give the attachment a name first', 'error'); return; }
   var attachmentType = (typeEl && ['creature','item','effect','character'].indexOf(typeEl.value) >= 0) ? typeEl.value : 'creature';
   var entityId = (nameEl && nameEl.dataset.entityId) ? nameEl.dataset.entityId : null;
+  var mode = (modeEl && modeEl.value === 'permanent') ? 'permanent' : 'situational';
+
+  // Required-reason gate (round 7 item 5) -- situational cannot save
+  // without exactly one of the 3 real reasons, each with its own required
+  // sub-field. Permanent needs none of this -- reason columns stay null.
+  var reasonType = null, reasonQuestId = null, reasonScenarioText = null;
+  if (mode === 'situational') {
+    reasonType = reasonTypeEl ? reasonTypeEl.value : '';
+    if (!reasonType) { showDMToast('Situational attachments need a reason: Quest-Linked, Scenario-Linked, or End of Session', 'error'); return; }
+    if (reasonType === 'quest') {
+      reasonQuestId = reasonQuestEl ? reasonQuestEl.value : '';
+      if (!reasonQuestId) { showDMToast('Pick which quest this is linked to', 'error'); return; }
+    } else if (reasonType === 'scenario') {
+      reasonScenarioText = reasonScenarioEl ? reasonScenarioEl.value.trim() : '';
+      if (!reasonScenarioText) { showDMToast('Describe which scenario this is linked to', 'error'); return; }
+    }
+    // reasonType === 'end_of_session' needs nothing further -- it resurfaces
+    // at every session-end reminder until resolved, by design.
+  }
+
+  var effectText = effectTextEl ? effectTextEl.value.trim() : '';
+  var effectDuration = effectDurationEl ? effectDurationEl.value : '';
+  // "Until the linked quest completes" only makes sense with a real quest
+  // link -- defensively downgraded here too, not just disabled in the UI,
+  // in case the DM picked it before switching away from a quest reason.
+  if (effectDuration === 'quest_complete' && reasonType !== 'quest') effectDuration = 'manual';
+  if (!effectText) effectDuration = '';
+
+  var existingRow = attachmentId
+    ? ((typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || []).find(function(a) { return a.id === attachmentId; })
+    : null;
+  var effectChanged = !existingRow || (existingRow.effect_text || '') !== effectText || (existingRow.effect_duration_kind || '') !== effectDuration;
+
   var body = {
     name: name,
     nickname: nicknameEl && nicknameEl.value.trim() ? nicknameEl.value.trim() : null,
     attachment_type: attachmentType,
     entity_id: entityId,
-    mode: (modeEl && modeEl.value === 'permanent') ? 'permanent' : 'situational',
-    description: descEl && descEl.value.trim() ? descEl.value.trim() : null
+    mode: mode,
+    description: descEl && descEl.value.trim() ? descEl.value.trim() : null,
+    reason_type: reasonType,
+    reason_quest_id: reasonQuestId,
+    reason_scenario_text: reasonScenarioText,
+    effect_text: effectText || null,
+    effect_duration_kind: effectDuration || null
   };
+  // Only touch effect_cleared when the effect itself actually changed --
+  // editing something unrelated (e.g. the nickname) on an attachment whose
+  // effect already auto-cleared (duration condition met) must NOT silently
+  // revive it just because the DM saved an unrelated edit.
+  if (effectChanged && effectText) body.effect_cleared = false;
+
   var req = attachmentId
     ? sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(attachmentId), body)
     : sccPost('character_attachments', Object.assign({ character_id: charId, session_number: sccFgActiveSessionNum(), active: true }, body));
@@ -18547,6 +18762,11 @@ function sccFgSaveAttachment(attachmentId) {
     sccFgCloseAttachModal();
     return sccFgRefreshAttachmentsCache().then(function() {
       showDMToast(attachmentId ? 'Attachment updated' : 'Attachment added', 'success');
+      // Combat's initiative rows carry their own independent active-effect
+      // badge (sccRenderInitiativeList) -- refresh it too when combat is
+      // actually running, so a mid-combat attachment edit shows up there
+      // immediately rather than only after the next unrelated combat action.
+      if (typeof SCC_INITIATIVE !== 'undefined' && SCC_INITIATIVE.length) sccRenderInitiativeList();
     });
   }).catch(function() { showDMToast('Could not save attachment', 'error'); });
 }
@@ -19289,14 +19509,136 @@ function sccLoadCurrentSession() {
   SCC_VIEWING_HISTORY = false;
   sccLoadLatestSession();
 }
+// Entry point (round 7 item 5 gate) -- same confirm() as before, but now
+// checks for still-active Situational attachments before the session
+// actually completes. A clean session (nothing situational active) runs
+// straight through to sccRunSessionCompletion() exactly as it always did
+// -- this is purely additive, no extra step for the common case.
 function sccCompleteSession() {
   if (!SCC_SESSION) {
     showDMToast('No active session to complete — save session setup first', 'error');
     return;
   }
   if (!confirm('Mark Session ' + SCC_SESSION.session_number + ' as completed? This locks it for audit and opens Session ' + (SCC_SESSION.session_number + 1) + '.')) return;
+  var pending = ((typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || []).filter(function(a) {
+    return a.active && a.mode === 'situational';
+  });
+  if (pending.length) {
+    sccOpenSessionEndAttachmentReview(pending);
+  } else {
+    sccRunSessionCompletion();
+  }
+}
+
+// ── Session-End Situational Attachment Review (round 7 item 5) ─────────
+// Surfaces every still-active Situational attachment with its reason,
+// Keep/Remove only -- never auto-decides, the DM always chooses. A row
+// flagged_for_review (its linked quest just completed, see
+// sccFlagAttachmentsForCompletedQuest()) is highlighted as a pre-flagged
+// smart default -- still requires the DM to actually click Remove, it's
+// never removed automatically. Clicking Keep just dismisses the flag (if
+// any) and marks the row handled in this modal; nothing is written unless
+// the row was flagged. Clicking Remove does the exact same soft-delete
+// sccFgRemoveAttachment() does (active:false), minus the confirm() dialog
+// -- this modal *is* the confirmation step.
+var SCC_SESSION_END_REVIEW_ROWS = [];
+function sccSessionEndReviewReasonText(a) {
+  if (a.reason_type === 'quest') {
+    var quest = ((typeof QUESTS !== 'undefined' && QUESTS) || []).find(function(q) { return q.id === a.reason_quest_id; });
+    return 'Quest-Linked: ' + (quest ? quest.name : a.reason_quest_id || '(quest not found)');
+  }
+  if (a.reason_type === 'scenario') return 'Scenario-Linked: ' + (a.reason_scenario_text || '(no detail)');
+  if (a.reason_type === 'end_of_session') return 'End of Session — no specific link';
+  return '(no reason on record)';
+}
+function sccSessionEndReviewRowHtml(a) {
+  var pc = ((typeof SCC_PLAYERS !== 'undefined' && SCC_PLAYERS) || []).find(function(p) { return p.id === a.character_id; });
+  var flagHtml = a.flagged_for_review
+    ? '<div class="scc-session-end-review-row-flag">&#10024; Linked quest completed — review recommended</div>'
+    : '';
+  return '<div class="scc-session-end-review-row' + (a.flagged_for_review ? ' scc-session-end-review-row--flagged' : '') + '" id="scc-session-end-row-' + sccEsc(a.id) + '">'
+    + '<div class="scc-session-end-review-row-main">'
+      + '<div class="scc-session-end-review-row-name">' + sccEsc(sccFgAttachDisplayName(a)) + '</div>'
+      + '<div class="scc-session-end-review-row-owner">' + sccEsc(pc ? pc.name : '(unknown character)') + '</div>'
+      + '<div class="scc-session-end-review-row-reason">' + sccEsc(sccSessionEndReviewReasonText(a)) + '</div>'
+      + flagHtml
+    + '</div>'
+    + '<div class="scc-session-end-review-row-actions" id="scc-session-end-row-actions-' + sccEsc(a.id) + '">'
+      + '<button type="button" class="scc-btn-secondary" onclick="sccSessionEndReviewKeep(\'' + a.id + '\')">Keep</button>'
+      + '<button type="button" class="scc-btn-secondary" style="color:var(--dm-red);" onclick="sccSessionEndReviewRemove(\'' + a.id + '\')">Remove</button>'
+    + '</div>'
+  + '</div>';
+}
+function sccOpenSessionEndAttachmentReview(pending) {
+  SCC_SESSION_END_REVIEW_ROWS = pending;
+  var list = document.getElementById('scc-session-end-review-list');
+  if (list) list.innerHTML = pending.map(sccSessionEndReviewRowHtml).join('');
+  var backdrop = document.getElementById('scc-session-end-review-backdrop');
+  var modal    = document.getElementById('scc-session-end-review-modal');
+  if (backdrop) backdrop.classList.add('open');
+  if (modal) { modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); }
+}
+function sccSessionEndReviewCloseModal() {
+  var backdrop = document.getElementById('scc-session-end-review-backdrop');
+  var modal    = document.getElementById('scc-session-end-review-modal');
+  if (backdrop) backdrop.classList.remove('open');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+  var list = document.getElementById('scc-session-end-review-list');
+  if (list) list.innerHTML = '';
+  SCC_SESSION_END_REVIEW_ROWS = [];
+}
+function sccSessionEndReviewMarkHandled(id, statusText) {
+  var row = document.getElementById('scc-session-end-row-' + id);
+  var actions = document.getElementById('scc-session-end-row-actions-' + id);
+  if (row) row.classList.add('scc-session-end-review-row--handled');
+  if (actions) actions.innerHTML = '<span class="scc-session-end-review-row-status">' + sccEsc(statusText) + '</span>';
+}
+function sccSessionEndReviewKeep(id) {
+  var a = SCC_SESSION_END_REVIEW_ROWS.find(function(x) { return x.id === id; });
+  sccSessionEndReviewMarkHandled(id, 'Kept');
+  if (a && a.flagged_for_review) {
+    sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(id), { flagged_for_review: false }).then(function(r) {
+      if (r.ok) a.flagged_for_review = false;
+    });
+  }
+}
+function sccSessionEndReviewRemove(id) {
+  sccSessionEndReviewMarkHandled(id, 'Removed');
+  sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(id), { active: false, flagged_for_review: false }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not remove attachment', 'error'); return; }
+    window.SCC_ATTACHMENTS = (typeof SCC_ATTACHMENTS !== 'undefined' ? SCC_ATTACHMENTS : []).filter(function(a) { return a.id !== id; });
+  });
+}
+function sccSessionEndReviewCancel() {
+  sccSessionEndReviewCloseModal();
+}
+function sccSessionEndReviewFinish() {
+  sccSessionEndReviewCloseModal();
+  sccRunSessionCompletion();
+}
+
+// The actual session-completion write + state reset -- unchanged from
+// before this round's gate was added, just extracted into its own
+// function so sccCompleteSession() can defer it behind the review modal
+// above. Also now auto-clears any active mechanical effect whose duration
+// is "until this session ends" -- the effect_cleared FLAG only, never the
+// attachment record itself (per spec, the DM removes that separately).
+function sccRunSessionCompletion() {
+  if (!SCC_SESSION) return;
   var completedNum = SCC_SESSION.session_number;
   var nextNum      = completedNum + 1;
+  // Real mechanical duration (round 7 item 5) -- clear effect_cleared on
+  // every active, still-open "until this session ends" effect. Fire-and-
+  // forget alongside the session_notes write below (not chained/awaited)
+  // -- this is a housekeeping side-effect of completion, not something the
+  // completion itself should block or fail on if one PATCH is slow.
+  ((typeof SCC_ATTACHMENTS !== 'undefined' && SCC_ATTACHMENTS) || []).forEach(function(a) {
+    if (a.active && a.effect_text && !a.effect_cleared && a.effect_duration_kind === 'session_end') {
+      sccPatch('character_attachments', '?id=eq.' + encodeURIComponent(a.id), { effect_cleared: true }).then(function(r) {
+        if (r.ok) a.effect_cleared = true;
+      });
+    }
+  });
   // Mark current session as completed
   sccPatch('session_notes',
     '?session_number=eq.' + completedNum,
@@ -22302,6 +22644,19 @@ function sccRenderInitiativeList() {
     var acBadge = c.ac != null
       ? '<span class="scc-init-ac-badge"><span class="scc-init-ac-badge-label">AC</span><span class="scc-init-ac-badge-num">' + c.ac + '</span></span>'
       : '';
+    // Active mechanical effects (round 7 item 5) -- same character_attachments
+    // rows the Live Session sidebar's own pills surface, read here too so a
+    // DM running combat doesn't have to tab away to remember a PC has an
+    // active blessing/curse. Monsters never carry attachments, so this is
+    // PC-only -- same gate as the death-save panel above.
+    var activeEffects = c.isPC
+      ? (typeof SCC_ATTACHMENTS !== 'undefined' ? SCC_ATTACHMENTS : []).filter(function(a) {
+          return a.character_id === c.id && a.effect_text && !a.effect_cleared;
+        })
+      : [];
+    var effectBadges = activeEffects.map(function(a) {
+      return '<span class="scc-active-effect-badge" title="' + sccEsc(a.effect_text) + '">&#10024; ' + sccEsc(a.effect_text.length > 24 ? a.effect_text.slice(0, 24) + '…' : a.effect_text) + '</span>';
+    }).join('');
 
     return '<div class="' + rowCls + '">'
       + '<div class="scc-init-name">'
@@ -22309,6 +22664,7 @@ function sccRenderInitiativeList() {
         + sccEsc(c.name)
         + (c.isPC ? ' <span style="font-size:0.65rem;color:var(--dm-blue);">PC</span>' : '')
         + acBadge
+        + effectBadges
         + downedBadge
       + '</div>'
       + '<div class="scc-init-hp-wrap">'
