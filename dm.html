@@ -8926,10 +8926,16 @@ function showDMToast(msg, type) {
    decision-check above: status is the DM's own progress tracking through
    the module, decision is a logged fact about what happened. */
 .scc-fg-sc-status {
-  flex-shrink: 0; font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.2rem;
+  font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.4rem; border-radius: 8px;
-  cursor: pointer;
+  cursor: pointer; transition: filter 0.1s, box-shadow 0.1s, transform 0.1s;
 }
+/* Round 8 item 1a -- real hover feedback (brightness bump + a visible
+   ring), not just a cursor:pointer change too subtle to notice. Applies
+   to every real status color below via filter, not a per-color override. */
+.scc-fg-sc-status:hover { filter: brightness(1.25); box-shadow: 0 0 0 2px var(--scc-border-gold); transform: translateY(-1px); }
+.scc-fg-sc-status-icon { font-size: 0.72rem; opacity: 0.8; line-height: 1; }
 .scc-fg-sc-status--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border: 1px solid var(--scc-beat-todo-border); }
 .scc-fg-sc-status--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border: 1px solid var(--scc-beat-prog-border); }
 .scc-fg-sc-status--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border: 1px solid var(--scc-beat-done-border); }
@@ -17439,12 +17445,18 @@ function sccFgCycleScenarioCardStatus(domId, cardIdx) {
 // banner. Used to also account for the "Jump to a scenario..." dropdown's
 // own sticky bar height, removed in item 3, round 7, 2026-08-28 -- just
 // the banner offset now, nothing else sticky sits above the document.
+// Round 8 item 1b: smooth, not instant -- deliberately DIFFERENT from
+// sccFgScrollIndicatorJump's own 'auto' choice (that function can jump
+// the full length of a long document, where an animated scroll drags;
+// this button only ever travels from a card's own body back up to its
+// own tile grid, a short, local hop where a smooth animation reads as
+// "returning," not as sluggish).
 function sccFgBackToScenarioCards(domId) {
   var el = document.getElementById(domId);
   if (!el) return;
   var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
   var targetTop = el.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
+  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'smooth' });
 }
 
 // Portrait-only render, sharing sccFgResolveFeaturedEntity() with
@@ -17503,9 +17515,16 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     var portrait = sccFgScenarioCardPortraitHtml(card.entity);
     var loggedTile = card.decision && log.some(function(n) { return n.title === sccFgScenarioDecisionTitle(b, card); });
     var status = sccFgScenarioCardStatus(b, card, log);
+    // Round 8 item 1a -- a native `title` tooltip alone wasn't enough of an
+    // affordance (DM couldn't discover this was clickable without being
+    // told, since hover-only tooltips reveal nothing at a glance). Added a
+    // persistent cycle-arrow icon baked into the label itself (always
+    // visible, not hover-gated) plus a real :hover state below -- both
+    // signal "clickable, cycles a value" without relying on the DM finding
+    // and reading a delayed tooltip.
     var statusHtml = '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
-        + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status">'
-      + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
+        + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status: Not Started → Started → Completed">'
+      + '<span class="scc-fg-sc-status-icon">&#8635;</span>' + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
     return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '" onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
       + portrait
       + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
