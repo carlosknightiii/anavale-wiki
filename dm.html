@@ -3752,13 +3752,20 @@
           <div class="scc-fg-scroll-backdrop" id="scc-fg-scroll-backdrop"></div>
           <div class="scc-fg-scroll-indicator" id="scc-fg-scroll-indicator"></div>
           <!-- rendered guide doc, now the only column -->
+          <!-- "Jump to a scenario..." dropdown removed (item 3, round 7,
+               2026-08-28) -- its data source (session_notes.session_scenarios)
+               is empty for Session 1 since that content moved into Scenario
+               Cards (round 5), and the approved scroll progress indicator
+               above already covers jump-to-section navigation. Removal
+               scoped to the dropdown UI/JS only -- session_scenarios itself
+               is untouched (still read by the Live Session tab's own
+               scenario rendering and the Setup scenario editor), and
+               sccFgScrollIndicatorJump()/sccFgBackToScenarioCards() (two
+               unrelated, still-active features that also referenced
+               #scc-fg-jump-row for their own sticky-offset math) already
+               guard for a missing element via `jumpRow ? ... : 0`, so
+               removing this row needed no changes to either. -->
           <div class="scc-fg-doc" id="scc-fg-doc">
-            <div class="scc-fg-jump-row" id="scc-fg-jump-row">
-              <select id="scc-fg-scenario-jump" class="cm-select" onchange="sccFgJumpToScenario(this.value)">
-                <option value="">Jump to a scenario&#8230;</option>
-              </select>
-              <button type="button" class="scc-btn-sm scc-fg-continue-btn" id="scc-fg-continue-btn" onclick="sccFgReturnFromScenario()" style="display:none;">&#8618; Continue</button>
-            </div>
             <div class="scc-fg-doc-inner" id="scc-fg-doc-inner">
               <div class="scc-lookup-loading">Loading Field Guide&#x2026;</div>
             </div><!-- /scc-fg-doc-inner -->
@@ -7873,27 +7880,6 @@ function showDMToast(msg, type) {
 .scc-fg-colorkey-item { display: flex; align-items: center; gap: 0.35rem; font-family: var(--font-sans); font-size: 0.66rem; color: var(--dm-text-muted); }
 .scc-fg-colorkey-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .scc-fg-doc { background: var(--scc-surface); }
-/* Repurposes the old toolbar's sticky position for the scenario jump-nav —
-   see CLAUDE.md Decision Log for the Field Guide Phase 2 redesign: the
-   independent session-select dropdown that used to live here is gone
-   (the guide now always tracks whichever session the rest of the app has
-   active/is auditing, via sccResolveViewedSession() — one fewer piece of
-   state that could drift out of sync with the DM's actual place in the app). */
-.scc-fg-jump-row {
-  /* top:0 used to mean "stick at the very top of the viewport" -- but the
-     local-dev warning banner (#dm-env-banner, fixed, z-index:10000) also
-     lives at y:0, so this row was sticking directly underneath/behind it,
-     unreachable during local QA (real live site has no banner, so this was
-     invisible there). Same --dm-env-banner-h offset .gate-overlay/.dm-app
-     already use -- 0px on the live site (no behavior change there), the
-     banner's real measured height locally. */
-  position: sticky; top: var(--dm-env-banner-h); z-index: 5;
-  display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.55rem 1.75rem; background: var(--scc-surface);
-  border-bottom: 1px solid var(--scc-border);
-}
-.scc-fg-jump-row select { flex: 1; max-width: 320px; }
-.scc-fg-jump-row .scc-fg-continue-btn { flex-shrink: 0; }
 .scc-fg-doc-inner { padding: 1.5rem 1.75rem 3rem; margin: 0 auto; }
 /* ── Vertical scroll progress indicator (item 13, 2026-08-27 rebuild) --
    one dot+label per real h1/quest-Beat-h2 in the currently-rendered
@@ -16424,8 +16410,6 @@ var SCC_FG_RENDERED_SESSION_NUM = null; // which session's HTML is currently in 
                                          // rebuilding -- and resetting scroll position -- on every tab switch)
 var SCC_FG_LINK_SEEN = {};              // 'type:id' -> true once an inline entity mention has shown its
                                          // thumbnail once this render pass (reset each sccFgRenderDoc() call)
-var SCC_FG_RETURN_SCROLL_TOP = 0;       // captured window.scrollY, for the scenario-jump Continue button (was .scc-fg-doc's own scrollTop back when that div scrolled internally -- it no longer does, see CLAUDE.md Decision Log, so this now tracks the real page scroll position)
-var SCC_FG_RETURN_SCROLL_SET = false;   // true once a jump has captured a return point this "session" of jumps
 // The Field Guide document editor (SCC_FG_EDIT_MODE/SCC_FG_EDIT_BLOCKS and
 // its own render/save/cancel functions) is retired -- the DM never edits
 // the Field Guide directly, Claude handles all edits going forward. See
@@ -17368,16 +17352,16 @@ function sccFgCycleScenarioCardStatus(domId, cardIdx) {
 
 // "Back to Scenario Cards" -- jumps back to the module's own grid (not
 // just the top of the page), same sticky-header-offset math as
-// sccFgScrollIndicatorJump so it lands consistently below the jump-row
-// bar and the local-dev banner, not hidden under either.
+// sccFgScrollIndicatorJump so it lands consistently below the local-dev
+// banner. Used to also account for the "Jump to a scenario..." dropdown's
+// own sticky bar height, removed in item 3, round 7, 2026-08-28 -- just
+// the banner offset now, nothing else sticky sits above the document.
 function sccFgBackToScenarioCards(domId) {
   var el = document.getElementById(domId);
   if (!el) return;
-  var jumpRow = document.getElementById('scc-fg-jump-row');
   var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
-  var offset = (jumpRow ? jumpRow.getBoundingClientRect().height : 0) + bannerH;
   var targetTop = el.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
+  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
 }
 
 // Portrait-only render, sharing sccFgResolveFeaturedEntity() with
@@ -17723,7 +17707,6 @@ function sccFgHomedScenarioGroupNames() {
 
 function sccFgInitDocument() {
   var num = sccFgActiveSessionNum();
-  sccFgPopulateScenarioJump();
   // Already showing this exact session's guide — don't touch the DOM. Before
   // this guard, switching to another Live Session tab and back rebuilt the
   // whole document every time, silently resetting scroll to the top on every
@@ -17941,15 +17924,11 @@ function sccFgScrollIndicatorJump(i) {
   var entries = sccFgCollectScrollEntries();
   var target = entries[i] ? entries[i].el : null;
   if (!target) return;
-  var jumpRow = document.getElementById('scc-fg-jump-row');
   var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
-  var offset = (jumpRow ? jumpRow.getBoundingClientRect().height : 0) + bannerH;
   var targetTop = target.getBoundingClientRect().top + window.scrollY;
-  // 'auto' (instant), not 'smooth' -- matches sccFgJumpToScenario's own
-  // established convention for this exact "jump to a section" pattern
-  // elsewhere in this file, and avoids a genuinely slow, sluggish-feeling
-  // animated scroll on the longer jumps in a real, long document.
-  window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
+  // 'auto' (instant), not 'smooth' -- avoids a genuinely slow, sluggish-
+  // feeling animated scroll on the longer jumps in a real, long document.
+  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
 }
 
 // Fill-line height and each dot/label's reached state are both driven by
@@ -17992,14 +17971,10 @@ function sccFgDrawDocument(num) {
   if (!inner) return;
   if (num == null) num = sccFgActiveSessionNum();
   SCC_FG_LINK_SEEN = {};
-  SCC_FG_RETURN_SCROLL_SET = false;
-  var contBtn = document.getElementById('scc-fg-continue-btn');
-  if (contBtn) contBtn.style.display = 'none';
   var openingHtml = sccFgRenderOpeningSection(num);
   var row = SCC_FG_DOC_CACHE[num];
   if (!row || !row.blocks || !row.blocks.length) {
     inner.innerHTML = openingHtml + '<div class="scc-fg-empty-doc">No Field Guide written for Session ' + num + ' yet.</div>';
-    sccFgPopulateScenarioJump();
     SCC_FG_RENDERED_SESSION_NUM = num;
     sccFgBuildScrollIndicator();
     sccFgEnsureScrollListenerBound();
@@ -18012,7 +17987,6 @@ function sccFgDrawDocument(num) {
     + sccFgScenarioSectionHtml()
     + sccFgRenderDoc(footerBlocks);
   sccLiveRenderScenarios();
-  sccFgPopulateScenarioJump();
   SCC_FG_RENDERED_SESSION_NUM = num;
   sccFgBuildScrollIndicator();
   sccFgEnsureScrollListenerBound();
@@ -18048,115 +18022,6 @@ function sccFgScenarioSectionHtml() {
         + '<button class="scc-btn-secondary" onclick="sccJumpToSetupScenarios()">+ Add Scenario</button>'
       + '</div>'
     + '</div>';
-}
-
-// Keyed by group NAME now, not array index -- most groups jump to a real
-// static h2 in the document itself (a different DOM location entirely from
-// the old central section), and the remaining few still jump to the old
-// #scc-scen-group-{gi} cards -- one dropdown covering both destinations
-// needs one key that means the same thing regardless of which kind of
-// target a given group resolves to. See sccFgJumpToScenario().
-function sccFgPopulateScenarioJump() {
-  var sel = document.getElementById('scc-fg-scenario-jump');
-  if (!sel) return;
-  var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
-  var groups = (session && session.session_scenarios) || [];
-  sel.innerHTML = '<option value="">Jump to a scenario&#8230;</option>' + groups.map(function(g) {
-    return '<option value="' + sccEsc(g.group || '') + '">' + sccEsc(g.group || 'Scenarios') + '</option>';
-  }).join('');
-}
-
-// Jumps to a scenario group's real, current location -- most groups now
-// live as a genuine static h2 (+ table, + featured thumbnails) elsewhere
-// in the document (sccFgRenderBlock()'s h2 case), not in one shared
-// section anymore. Tried first, by matching the group name against every
-// real h2's own text -- exact same name a homed group's h2 block was
-// authored with (see sccFgHomedScenarioGroupNames(), the same match this
-// file uses to decide whether a group needs the old section at all). Only
-// falls back to the old #scc-scen-group-{gi} accordion cards (the "Other
-// Scenarios" section, sccFgScenarioSectionHtml()) for a group that's
-// genuinely still homeless -- resolved by re-finding its real index in the
-// full session_scenarios array, matching how sccLiveRenderScenarios()
-// itself numbered that group's ids when it rendered.
-//
-// The return point (for the Continue button) is captured only on the
-// FIRST jump away from natural reading position -- a second jump straight
-// to another scenario, without hitting Continue in between, must still
-// return to where the DM really was, not to the first scenario they
-// jumped to. Both the return-point capture and the jump itself read/write
-// the real page scroll (window.scrollY / window.scrollTo), not
-// .scc-fg-doc's own scrollTop -- that div stopped being an internal
-// scroll container once the Field Guide tab's fixed 70vh height was
-// removed (see CLAUDE.md Decision Log), so its scrollTop is always 0 now;
-// the page itself scrolls.
-function sccFgJumpToScenario(groupName) {
-  if (!groupName) return;
-  var target = null;
-  var isOrphanCard = false;
-  // Only a FEATURED h2 counts as this group's real home -- every one of
-  // the 7 real groups has *some* plain h2 sitting in the Off-Script
-  // Scenarios cluster (confirmed live), but a bare one with no featured
-  // entity isn't a real contextual placement, it's just still part of that
-  // undifferentiated list (same distinction sccFgHomedScenarioGroupNames()
-  // makes, reused here so the jump target and the "is this group still in
-  // the remaining section" logic can never disagree with each other).
-  // Matching only .scc-fg-doc-h2--featured, not the bare .scc-fg-doc-h2
-  // class, is what correctly sends "In the Forest / Off the Path" and
-  // "Creature Encounters" to their real destination -- the interactive
-  // accordion card in the renamed remaining section -- instead of their
-  // own inert, thumbnail-less h2 a few blocks away.
-  var h2s = document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h2--featured');
-  var h2Match = Array.from(h2s).find(function(h) { return h.textContent.trim() === groupName; });
-  if (h2Match) {
-    // Featured h2s render inside a .scc-fg-h2-featured-wrap that also
-    // holds the thumbnail row -- jump to that whole wrapper so the image
-    // lands in view too, not just the title.
-    target = h2Match.closest('.scc-fg-h2-featured-wrap') || h2Match;
-  } else {
-    var session = (typeof sccResolveViewedSession === 'function') ? sccResolveViewedSession() : null;
-    var groups = (session && session.session_scenarios) || [];
-    var gi = groups.findIndex(function(g) { return g.group === groupName; });
-    if (gi < 0) return;
-    target = document.getElementById('scc-scen-group-' + gi);
-    isOrphanCard = true;
-  }
-  if (!target) return;
-  if (!SCC_FG_RETURN_SCROLL_SET) {
-    SCC_FG_RETURN_SCROLL_TOP = window.scrollY;
-    SCC_FG_RETURN_SCROLL_SET = true;
-    var contBtn = document.getElementById('scc-fg-continue-btn');
-    if (contBtn) contBtn.style.display = '';
-  }
-  if (isOrphanCard) {
-    var body = document.getElementById('scc-live-scen-body-' + gi);
-    if (body && !body.classList.contains('open')) sccLiveToggleScenario(gi);
-  }
-  // Real fix, not just re-pointed at window.scrollTo: scrollIntoView({block:
-  // 'start'}) puts the target flush with the viewport's own top edge --
-  // exactly where .scc-fg-jump-row (position:sticky; top:var(--dm-env-banner-h))
-  // itself sits, hiding whatever just landed there underneath the bar.
-  // Measured live, not guessed: read the jump-row's own real rendered
-  // height (it can wrap to two lines at narrow widths, so a hardcoded px
-  // offset would drift) plus the local-dev banner's real height (0 on the
-  // live site, since the row now starts sticking that much lower locally
-  // too -- see .scc-fg-jump-row's own top: var(--dm-env-banner-h)) and land
-  // the target that far below the true viewport top instead.
-  var jumpRow = document.getElementById('scc-fg-jump-row');
-  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
-  var offset = (jumpRow ? jumpRow.getBoundingClientRect().height : 0) + bannerH;
-  var targetTop = target.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo({ top: Math.max(0, targetTop - offset - 12), behavior: 'auto' });
-  target.classList.add('scc-fg-editor-row--jump-highlight');
-  setTimeout(function() { target.classList.remove('scc-fg-editor-row--jump-highlight'); }, 2500);
-  var sel = document.getElementById('scc-fg-scenario-jump');
-  if (sel) sel.value = '';
-}
-
-function sccFgReturnFromScenario() {
-  if (SCC_FG_RETURN_SCROLL_SET) window.scrollTo({ top: SCC_FG_RETURN_SCROLL_TOP, behavior: 'auto' });
-  SCC_FG_RETURN_SCROLL_SET = false;
-  var contBtn = document.getElementById('scc-fg-continue-btn');
-  if (contBtn) contBtn.style.display = 'none';
 }
 
 // ── Session-opening section (session_notes.opening_*, session_opening_
