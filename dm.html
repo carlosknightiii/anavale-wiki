@@ -8119,8 +8119,12 @@ function showDMToast(msg, type) {
    height, so text after the row is stuck waiting for the image regardless
    of how short the title is. Emitted only when there's a badge, a label,
    or featured thumbnails -- a box with none of the three (most boxes)
-   renders nothing extra here, identical to before this existed. */
-.scc-fg-box-header-right { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; margin-bottom: 0.4rem; }
+   renders nothing extra here.
+   No wrapping container around badge/toggle/label (there used to be one,
+   .scc-fg-box-header-right, a flex-column that stacked all three onto
+   separate rows unconditionally) -- removed as part of standardizing
+   "Mark Completed" position across categories; see sccFgRenderBlock()'s
+   'box' case for why. */
 .scc-fg-box-label { font-family: var(--font-body); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
 .scc-fg-box p { margin: 0 0 0.45rem !important; font-size: 0.82rem !important; }
 .scc-fg-box p:last-child { margin-bottom: 0 !important; }
@@ -11090,19 +11094,25 @@ function showDMToast(msg, type) {
         2-column grid to 1 column so tiles aren't cramped on a real
         phone width -- this class has no existing media-query override
         anywhere else.
-     4) Spoken Dialogue boxes (sccFgRenderSpokenDialogue()) render their
-        category chip (.scc-fg-box-cat-badge, inline-flex) and the "Mark
-        Completed" toggle (.scc-fg-box-complete-wrap, inline-flex) as
-        direct siblings with no wrapping container -- unlike the generic
-        box path, which already stacks them in a flex column
-        (.scc-fg-box-header-right) and is unaffected. On a narrow box
-        the two inline-flex elements sit on the same line with nothing
-        reserving space from the box's absolutely-positioned top-right
-        .scc-fg-box-corner-icon, so "Mark Completed" can run into/under
-        it. Forcing the toggle onto its own line (block-level flex,
-        rather than inline-flex) at mobile widths only fixes this without
-        touching the corner icon, the badge, or the generic box path's
-        already-correct stacking.
+     4) Every Field Guide box category (sccFgRenderSpokenDialogue() and the
+        generic 'box' case in sccFgRenderBlock() both, as of the "Mark
+        Completed" position-standardization round -- they used to differ
+        here, see that round's own comment above sccFgRenderBlock()'s
+        'box' case) renders its category chip (.scc-fg-box-cat-badge,
+        inline-flex) and the "Mark Completed" toggle
+        (.scc-fg-box-complete-wrap, inline-flex) as direct siblings with
+        no wrapping container. On a narrow box the two inline-flex
+        elements sit on the same line with nothing reserving space from
+        the box's absolutely-positioned top-right .scc-fg-box-corner-icon,
+        so "Mark Completed" can run into/under it. Forcing the toggle onto
+        its own line (block-level flex, rather than inline-flex) at mobile
+        widths only fixes this without touching the corner icon or the
+        badge. This same rule now applies uniformly to every category,
+        not just Spoken Dialogue -- correct, not a widened blast radius:
+        every category has the exact same unwrapped structure now, so
+        every category had the exact same latent mobile collision risk,
+        just previously masked for everyone except Spoken Dialogue by the
+        generic path's now-removed column-flex wrapper.
      5) The floating Quick Note button (.scc-quicknote-fab) is
         position:fixed to the viewport, so it can sit on top of the last
         visible line of body text while scrolling on a narrow screen.
@@ -17846,8 +17856,25 @@ function sccFgRenderBlock(b, idx, ctx) {
       // Boxes with no featured field at all get identical markup to
       // before (featuredHtml is '', so there's nothing to float).
       var featuredHtml = sccFgRenderFeatured(b.featured);
-      var boxTitleHtml = catBadge + (b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '') + sccFgBoxCompletionToggleHtml(b);
-      var headerHtml = featuredHtml + (boxTitleHtml ? '<div class="scc-fg-box-header-right">' + boxTitleHtml + '</div>' : '');
+      // Round: standardize "Mark Completed" position across every category.
+      // Was wrapped (with catBadge and the label) in .scc-fg-box-header-right,
+      // a flex-column container that stacked all three onto separate rows
+      // unconditionally -- the one thing that made every non-spoken_dialogue
+      // category differ from spoken_dialogue, which has never used that
+      // wrapper (see sccFgRenderSpokenDialogue() below) and instead emits
+      // catBadge + the completion toggle as plain sibling elements, both
+      // already display:inline-flex, so they simply flow onto the same line
+      // together in normal inline layout -- no wrapper needed. Mirrored
+      // that exact structure here instead of inventing a new one: badge +
+      // toggle first (same row, matching the target pattern), label as its
+      // own separate block after (unchanged visually -- .scc-fg-box-label
+      // was already a block-level div, so it already forced its own line
+      // even inside the old column wrapper). The removed wrapper's own
+      // margin-bottom is not missed -- .scc-fg-box-label and
+      // .scc-fg-box-cat-badge both already carry their own margin-bottom,
+      // same as they do for spoken_dialogue today.
+      var labelHeaderHtml = b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '';
+      var headerHtml = featuredHtml + catBadge + sccFgBoxCompletionToggleHtml(b) + labelHeaderHtml;
       var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
       var completedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
       // sccFgTextClass(b.category) -- see its own comment. Applied here
