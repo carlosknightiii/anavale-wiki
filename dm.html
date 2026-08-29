@@ -11067,6 +11067,59 @@ function showDMToast(msg, type) {
 .scc-trait-list { display: flex; flex-direction: column; gap: 0.4rem; }
 .scc-trait-item { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.5; }
 .scc-trait-name { font-weight: 700; color: var(--dm-gold); }
+
+/* ── MOBILE RESPONSIVE (requests rows 41e91301 "Make the Field Guide
+   mobile-responsive", 1e66de44 "MARK COMPLETED overlaps the comment/tone
+   icon", ea21ea74 "floating Quick Note button covers body text") ───────
+   Strictly additive: every selector below lives inside this one @media
+   block and touches zero existing rules anywhere else in the file. Above
+   768px this block has no effect by construction (media-query scoping),
+   not just by testing. To revert, delete this block only.
+     1) Live Session's sidebar strip (Party HP/Die Roller/Conditions/
+        Companions & Attachments/Current Beat/DM Safety Net/Timer) stacks
+        BELOW the main content column instead of above it. The existing
+        900px rule above already collapses .scc-live-strip-wrap to a
+        single grid column -- this only reorders the two grid children via
+        `order` (a no-op above 768px); DOM order and the 900px rule are
+        untouched.
+     2) Main content (Field Guide etc.) already goes full-width the
+        moment that same 900px rule collapses the grid to one column --
+        no new rule needed for that part of the ask.
+     3) Nested Scenario Card tile grid (e.g. Field Guide's "Who To Talk
+        To" tiles, .scc-fg-scenario-cards-row) goes from a fixed
+        2-column grid to 1 column so tiles aren't cramped on a real
+        phone width -- this class has no existing media-query override
+        anywhere else.
+     4) Spoken Dialogue boxes (sccFgRenderSpokenDialogue()) render their
+        category chip (.scc-fg-box-cat-badge, inline-flex) and the "Mark
+        Completed" toggle (.scc-fg-box-complete-wrap, inline-flex) as
+        direct siblings with no wrapping container -- unlike the generic
+        box path, which already stacks them in a flex column
+        (.scc-fg-box-header-right) and is unaffected. On a narrow box
+        the two inline-flex elements sit on the same line with nothing
+        reserving space from the box's absolutely-positioned top-right
+        .scc-fg-box-corner-icon, so "Mark Completed" can run into/under
+        it. Forcing the toggle onto its own line (block-level flex,
+        rather than inline-flex) at mobile widths only fixes this without
+        touching the corner icon, the badge, or the generic box path's
+        already-correct stacking.
+     5) The floating Quick Note button (.scc-quicknote-fab) is
+        position:fixed to the viewport, so it can sit on top of the last
+        visible line of body text while scrolling on a narrow screen.
+        Reserves real space at the bottom of the Session tab's content
+        (#form-session -- the only tab this button ever shows on, per
+        sccUpdateQuickNoteFabVisibility()) so the true end of scrollable
+        content clears the button's real footprint (padding + bottom
+        offset + shadow, roughly 64px) with margin to spare, instead of
+        auto-hiding or shrinking the button (would need JS, out of scope
+        for a CSS-only additive fix). */
+@media (max-width: 768px) {
+  .scc-live-strip { order: 2; }
+  .scc-live-tabs-wrap { order: 1; }
+  .scc-fg-scenario-cards-row { grid-template-columns: 1fr; }
+  .scc-fg-box-complete-wrap { display: flex; margin-left: 0; margin-top: 0.35rem; }
+  #form-session { padding-bottom: 5rem; }
+}
 </style>
 
 <script>
