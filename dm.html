@@ -3795,6 +3795,9 @@
 
             </div><!-- /scc-live-tabs-wrap -->
           </div><!-- /scc-live-strip-wrap -->
+          <!-- Mobile-only (<=768px, see the MOBILE RESPONSIVE block): opens the
+               sidebar strip above as a bottom sheet. display:none at desktop. -->
+          <button type="button" class="scc-live-tools-fab" id="scc-live-tools-fab" onclick="sccLiveToggleMobileTools()" aria-expanded="false">&#127922;<span class="scc-live-tools-fab-label">Session Tools</span></button>
         </div><!-- /scc-panel-live -->
       </div><!-- /form-session -->
 
@@ -11072,63 +11075,180 @@ function showDMToast(msg, type) {
 .scc-trait-item { font-family: var(--font-sans); font-size: 0.8rem; color: var(--dm-text); line-height: 1.5; }
 .scc-trait-name { font-weight: 700; color: var(--dm-gold); }
 
-/* ── MOBILE RESPONSIVE (requests rows 41e91301 "Make the Field Guide
-   mobile-responsive", 1e66de44 "MARK COMPLETED overlaps the comment/tone
-   icon", ea21ea74 "floating Quick Note button covers body text") ───────
-   Strictly additive: every selector below lives inside this one @media
-   block and touches zero existing rules anywhere else in the file. Above
-   768px this block has no effect by construction (media-query scoping),
-   not just by testing. To revert, delete this block only.
-     1) Live Session's sidebar strip (Party HP/Die Roller/Conditions/
-        Companions & Attachments/Current Beat/DM Safety Net/Timer) stacks
-        BELOW the main content column instead of above it. The existing
-        900px rule above already collapses .scc-live-strip-wrap to a
-        single grid column -- this only reorders the two grid children via
-        `order` (a no-op above 768px); DOM order and the 900px rule are
-        untouched.
-     2) Main content (Field Guide etc.) already goes full-width the
-        moment that same 900px rule collapses the grid to one column --
-        no new rule needed for that part of the ask.
-     3) Nested Scenario Card tile grid (e.g. Field Guide's "Who To Talk
-        To" tiles, .scc-fg-scenario-cards-row) goes from a fixed
-        2-column grid to 1 column so tiles aren't cramped on a real
-        phone width -- this class has no existing media-query override
-        anywhere else.
-     4) Every Field Guide box category (sccFgRenderSpokenDialogue() and the
-        generic 'box' case in sccFgRenderBlock() both, as of the "Mark
-        Completed" position-standardization round -- they used to differ
-        here, see that round's own comment above sccFgRenderBlock()'s
-        'box' case) renders its category chip (.scc-fg-box-cat-badge,
-        inline-flex) and the "Mark Completed" toggle
-        (.scc-fg-box-complete-wrap, inline-flex) as direct siblings with
-        no wrapping container. On a narrow box the two inline-flex
-        elements sit on the same line with nothing reserving space from
-        the box's absolutely-positioned top-right .scc-fg-box-corner-icon,
-        so "Mark Completed" can run into/under it. Forcing the toggle onto
-        its own line (block-level flex, rather than inline-flex) at mobile
-        widths only fixes this without touching the corner icon or the
-        badge. This same rule now applies uniformly to every category,
-        not just Spoken Dialogue -- correct, not a widened blast radius:
-        every category has the exact same unwrapped structure now, so
-        every category had the exact same latent mobile collision risk,
-        just previously masked for everyone except Spoken Dialogue by the
-        generic path's now-removed column-flex wrapper.
-     5) The floating Quick Note button (.scc-quicknote-fab) is
-        position:fixed to the viewport, so it can sit on top of the last
-        visible line of body text while scrolling on a narrow screen.
-        Reserves real space at the bottom of the Session tab's content
-        (#form-session -- the only tab this button ever shows on, per
-        sccUpdateQuickNoteFabVisibility()) so the true end of scrollable
-        content clears the button's real footprint (padding + bottom
-        offset + shadow, roughly 64px) with margin to spare, instead of
-        auto-hiding or shrinking the button (would need JS, out of scope
-        for a CSS-only additive fix). */
+/* ── MOBILE RESPONSIVE (<=768px) ─────────────────────────────────────────
+   Round 1 (2026-08-29, commit 263fde8; requests rows 41e91301, 1e66de44,
+   ea21ea74): sidebar order, single-column Scenario Card tiles, "Mark
+   Completed" on its own line, Quick Note FAB bottom padding.
+   Round 2 (2026-09-07, branch anavale-wiki-dm-manager-mobile; requests rows
+   71d58f4a, 1614018f, 25158d4e, df64171e, 363e7405, 49d74d71, 1a5ebf52):
+   driven by the DM's real-phone screenshots of the live site. Everything
+   still lives inside this one @media block -- strictly additive at 768px and
+   below, zero effect above it by construction (the only things outside it
+   are the new .scc-live-tools-fab element's base rule, display:none, and its
+   toggle function). To revert either round, delete its rules here.
+
+   1) DEAD BROWN COLUMN / HORIZONTAL OVERFLOW (71d58f4a). On a phone the
+      page rendered as a narrow content column with a wide empty brown strip
+      to its right. Root cause, measured live at 390px: .dm-tabs
+      (Entries/Quests/Players/Sessions + "+ New Entry") is `flex: 1 0 auto`
+      with every .dm-tab at min-width:100px, so that row is 560-592px wide
+      and never wraps -- the document overflows to 592px, mobile browsers
+      zoom out to fit it, and the body's own background (var(--ink), the
+      brown canvas color the shared stylesheet gives every page) shows
+      through everywhere the 390px-wide .dm-app doesn't reach. Fixed at the
+      cause (let the tab row shrink and wrap, drop the 100px floor), plus
+      overflow-x:clip on .dm-app as a guard so no future wide element can
+      re-trigger the zoom-out. `clip`, not `hidden`: hidden would make
+      .dm-app a scroll container and break both the sticky header and
+      document scrolling (CLAUDE.md §9 has the same warning for body).
+      Also hides .dm-output, a leftover side-panel wrapper whose only child
+      (#save-status) is never written by any JS -- it was silently eating
+      48px of every row (mobile-only hide here; the same dead strip exists
+      at desktop, flagged, not changed).
+      On the other top-level tabs .dm-forms-panel now stays viewport-wide
+      instead of growing past it (see that rule under 3).
+   2) HEADER CLUTTER (1614018f). Same rows, tighter and more distinct: the
+      logo/title and the DM Manager/Wiki switcher share one line;
+      Entries/Quests/Players/Sessions wrap naturally with the global search
+      full-width beneath; the session header's Setup/Live Session/Combat/
+      Notes row becomes an equal-width segmented tab bar closed off by its
+      own bottom rule; the NPCs/Locations/Quests/Field Guide chips sit on
+      one horizontally-scrollable line. Each row keeps its own background
+      band, so the stack reads as separate levels, not one block.
+   3) SIDE MARGINS (25158d4e). One --dm-mobile-pad token (tokens.css)
+      replaces the 32px / 2rem / 2.5rem desktop insets on every page-level
+      container; Field Guide boxes and sidebar cards tighten too.
+   4) TYPE SCALE (df64171e). Display-font headings step down one size on a
+      phone; body copy is untouched.
+   5) MARK COMPLETED SPACING (363e7405). Round 1 only gave the toggle a top
+      margin when it moved onto its own line; 2e2747d then applied that
+      structure to every box category, so on every box the title now sat
+      0px below "Mark Completed" (measured live). Real bottom margin added.
+   6) THUMBNAILS (49d74d71). The 88px featured-entity thumbnails inside
+      Field Guide boxes and the 90-100px NPC-card / lookup-drawer / Players-
+      page portraits shrink. The sidebar's Companions & Attachments
+      thumbnails were measured at 22-24px already and are untouched.
+   7) SESSION TOOLS SHEET (1a5ebf52). Round 1's `order` fix put the sidebar
+      strip below the Field Guide, which meant scrolling past the whole
+      document to reach Party HP / Die Roller. On a phone the strip now
+      leaves the flow entirely and opens as a fixed bottom sheet from a
+      "Session Tools" button pinned bottom-left (Quick Note already owns
+      bottom-right). sccLiveToggleMobileTools() toggles .scc-live-tools-open
+      on #scc-panel-live -- pure UI state, no writes, same DOM and render
+      functions as desktop, so audit-mode gating is unchanged. */
+.scc-live-tools-fab {
+  display: none; /* mobile-only -- shown by the @media block below */
+  position: fixed;
+  left: var(--dm-mobile-pad);
+  bottom: 1.25rem;
+  z-index: 500; /* same tier as .scc-quicknote-fab; above the sheet (490) and the sticky header (400) */
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--dm-gold);
+  color: var(--dm-gold-text-on);
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: var(--dm-gold-btn-shadow);
+  cursor: pointer;
+}
 @media (max-width: 768px) {
-  .scc-live-strip { order: 2; }
-  .scc-live-tabs-wrap { order: 1; }
+  /* 1) overflow / dead column */
+  .dm-app { overflow-x: clip; }
+  .dm-output { display: none; }
+  .dm-tabs { flex: 1 1 auto; min-width: 0; gap: 4px 14px; }
+  .dm-tab { min-width: 0; height: 24px; font-size: 14px; }
+  .dm-btn-add-entry { padding: 0.3rem 0.7rem; font-size: 0.72rem; margin-left: auto; }
+  /* 2) header rows */
+  .dm-shell-top { padding: 10px var(--dm-mobile-pad) 0; flex-wrap: nowrap; align-items: center; gap: 8px; }
+  .dm-shell-pagetitle { flex: 1 1 auto; padding-bottom: 10px; }
+  .dm-shell-logo { height: 16px; }
+  .dm-shell-title { font-size: 18px; }
+  .dm-shell-sitenav { padding-bottom: 10px; gap: 6px; }
+  .dm-shell-sitelink { min-width: 0; height: 22px; font-size: 13px; padding: 0 4px; }
+  .dm-shell-secondary { padding: 6px var(--dm-mobile-pad) 8px; gap: 6px; }
+  .scc-global-search-wrap { flex: 1 1 100%; max-width: none; }
+  .scc-global-filters-bar { padding: 0.5rem var(--dm-mobile-pad); }
+  .scc-header { padding: 0.75rem var(--dm-mobile-pad) 0; gap: 0.35rem; border-bottom: 1px solid var(--scc-border); }
+  .scc-session-back-link { font-size: 0.8rem; }
+  .scc-header-title-row { align-items: center; gap: 0.25rem 0.6rem; }
+  .scc-header-title, .scc-header-date { font-size: var(--text-lg); }
+  .scc-viewing-badge { font-size: 0.6rem; padding: 0.1rem 0.45rem; margin-left: 0.25rem; }
+  .scc-header-nav { flex-wrap: nowrap; gap: 0; margin-top: 0.25rem; }
+  .scc-tab-btn { flex: 1 1 0; min-width: 0; height: 32px; font-size: 14px; }
+  .scc-readonly-banner { padding: 0.4rem var(--dm-mobile-pad); font-size: 0.72rem; }
+  .scc-live-tabs { flex-wrap: nowrap; overflow-x: auto; gap: 0.3rem; margin-bottom: 0.75rem; padding-bottom: 0.6rem; scrollbar-width: none; }
+  .scc-live-tabs::-webkit-scrollbar { display: none; }
+  .scc-live-tab-btn { flex: 0 0 auto; padding: 0.35rem 0.7rem; font-size: 0.74rem; }
+  /* Field Guide's fixed right-edge scroll rail: its 130px of section labels
+     (plus the gradient backdrop behind them) sat on top of the session
+     header's Notes tab and the document's right edge at 390px. Keep the
+     10px jump dots, drop the labels and backdrop. !important on the
+     backdrop only: sccFgPositionScrollBackdrop() sets its display inline. */
+  .scc-fg-scroll-indicator { width: 26px; }
+  .scc-fg-scroll-label { display: none; }
+  .scc-fg-scroll-backdrop { display: none !important; }
+  /* 3) side margins */
+  /* min-width:0: as a flex child of .dm-main the panel otherwise grows to
+     its content's min width (Manage's table, the Sessions list grid --
+     450-690px measured at 390px) and .dm-main's overflow:hidden clips the
+     excess; now it stays viewport-wide and its content lays out to fit.
+     No overflow-x:auto here on purpose -- it would be outranked on every
+     tab by `.dm-main:has(#scc-panel-live.active) .dm-forms-panel
+     { overflow: visible }` (that panel keeps .active while hidden), so a
+     still-too-wide child (the Entries editor's fixed-width image panel,
+     ~470px) is clipped rather than scrollable -- pre-existing, flagged. */
+  .dm-forms-panel { padding: 1rem var(--dm-mobile-pad); min-width: 0; }
+  .scc-panel-inner, .scc-live-strip-wrap { padding: 1rem var(--dm-mobile-pad) 2rem; }
+  .scc-fg-doc-inner { padding: 1rem var(--dm-mobile-pad) 2rem; }
+  .scc-fg-box { padding: 0.65rem 0.75rem; }
+  .scc-live-section { padding: 0.6rem; }
+  /* Sessions list (the "< Back" destination): its 4-column grid
+     (1fr 90px 200px 150px = 567px measured) can't fit a phone; header and
+     rows both become a 2x2 grid (Session/Date over Status/Archived), same
+     auto-placement in both so the sort buttons still line up. */
+  .scc-sessions-list-header, .scc-sessions-list-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+  .scc-sessions-list-row { padding: 8px var(--dm-mobile-pad); }
+  /* 4) type scale */
+  .dm-form-title { font-size: var(--text-xl); }
+  .scc-fg-doc-title { font-size: 1.4rem; }
+  .scc-fg-doc-subtitle { font-size: 1rem; }
+  .scc-fg-doc-h1, .scc-fg-h1-quest-title { font-size: 1.2rem; }
+  .scc-fg-doc-h2 { font-size: 1.05rem; }
+  .scc-npc2-name { font-size: 1.3rem; }
+  .scc-ql-name { font-size: 1.15rem; }
+  .scc-cb2-col-title, .scc-cb2-build-title { font-size: 1rem; }
+  /* 5) Mark Completed -- round 1's own-line rule, now with a bottom margin */
+  .scc-fg-box-complete-wrap { display: flex; margin: 0.5rem 0 0.6rem; }
+  /* 6) thumbnails */
+  .scc-fg-featured-row { gap: 0.6rem; margin: 0 0.85rem 0.75rem 0; }
+  .scc-fg-featured-item { width: 56px; }
+  .scc-fg-featured-img, .scc-fg-featured-fallback, .scc-fg-featured-img-wrap { width: 56px; height: 56px; }
+  .scc-fg-featured-fallback { font-size: 1.3rem; }
+  .scc-npc2-portrait, .scc-npc2-portrait-fallback { width: 64px; height: 64px; }
+  .scc-ql-portrait, .scc-ql-portrait-fallback { width: 64px; height: 64px; }
+  .scc-pd-portrait, .scc-pd-portrait-fallback { width: 64px; height: 64px; }
+  /* round 1, unchanged */
   .scc-fg-scenario-cards-row { grid-template-columns: 1fr; }
-  .scc-fg-box-complete-wrap { display: flex; margin-left: 0; margin-top: 0.35rem; }
-  #form-session { padding-bottom: 5rem; }
+  #form-session { padding-bottom: 5.5rem; }
+  /* 7) Session Tools sheet -- replaces round 1's `order` reshuffle of the strip */
+  .scc-live-strip { display: none; }
+  #scc-panel-live.scc-live-tools-open .scc-live-strip {
+    display: flex;
+    position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+    z-index: 490;
+    max-height: 62vh; overflow-y: auto;
+    gap: 0.6rem;
+    padding: 0.75rem var(--dm-mobile-pad) 4.25rem;
+    background: var(--dm-surface);
+    border-top: 2px solid var(--scc-border-gold);
+    border-radius: var(--dm-radius) var(--dm-radius) 0 0;
+    box-shadow: var(--shadow-md);
+  }
+  .scc-live-tools-fab { display: inline-flex; }
 }
 </style>
 
@@ -16056,6 +16176,22 @@ function sccLiveToggleCard(key) {
   var willOpen = !body.classList.contains('open');
   toggle.classList.toggle('open', willOpen);
   body.classList.toggle('open', willOpen);
+}
+// Mobile-only "Session Tools" bottom sheet (<=768px; see the MOBILE
+// RESPONSIVE CSS block, item 7). Toggles a class on #scc-panel-live that the
+// media query turns into a fixed bottom sheet holding the same .scc-live-strip
+// cards the desktop sidebar shows -- no DOM is moved or re-rendered, so every
+// strip render function (Party HP, Conditions, Attachments, Current Beat) and
+// the audit-mode gating on them are untouched. Above 768px the class is inert.
+function sccLiveToggleMobileTools(force) {
+  var panel = document.getElementById('scc-panel-live');
+  var fab = document.getElementById('scc-live-tools-fab');
+  if (!panel) return;
+  var open = panel.classList.toggle('scc-live-tools-open', force);
+  if (fab) {
+    fab.innerHTML = (open ? '&#10005;' : '&#127922;') + '<span class="scc-live-tools-fab-label">' + (open ? 'Close Tools' : 'Session Tools') + '</span>';
+    fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
 }
 // ── Current Beat (shared with the Quests section's own sidebar box) ──
 // One lookup, two renderers reading from it -- see sccRenderQuestPanel()'s
