@@ -17938,7 +17938,18 @@ function sccFgRenderBlock(b, idx, ctx) {
       // stays fully supported for every h2 that ISN'T part of a
       // Step/Beat sequence (scenario headers, etc.) -- completely
       // unaffected by this.
-      var h2Text = b.sequence ? sccFgSequencedHeadingText(b, idx) : b.text;
+      // b.title fallback: a real, confirmed content gap (found while
+      // testing the jump-rail fix, item 13 follow-up, 2026-09-12) --
+      // SQL confirmed 7 real non-sequence h2 blocks across Sessions 1-2
+      // store their heading under b.title with no b.text key at all
+      // (rendering a genuinely blank heading in the live document, not
+      // just in the rail), most likely from whatever authored/migrated
+      // that content using the sequence-heading shape's own field name
+      // for a plain heading. Tolerating either field name here is a
+      // one-line renderer fix rather than a content-data correction --
+      // b.text still wins whenever both exist, so this only ever changes
+      // behavior for blocks that had literally no text to show before.
+      var h2Text = b.sequence ? sccFgSequencedHeadingText(b, idx) : (b.text != null ? b.text : b.title);
       // Featured thumbnails (sccFgRenderFeatured(), see the box case below)
       // were only ever wired into box-type blocks -- a real gap, not a
       // regression, found once Section 3's scenario table headers started
@@ -18241,16 +18252,30 @@ function sccFgTruncateScrollLabel(text, max) {
 }
 
 // Flat, ordered list of {el, full, label} -- one entry per real h1
-// section AND per Beat h2 nested under its parent quest, at the SAME
-// level (item 13, 2026-08-27: the DM's final approved mockup explicitly
-// reverses round 3's own indented sub-nesting -- flat list only, no
-// visual hierarchy). Detecting a quest-nested h2 doesn't need its own
-// "am I inside a quest section" tracking -- sccFgRenderDoc() already only
-// ever wraps blocks in .scc-fg-quest-section-block when a quest-tied h1
-// started that section, so any h2 found inside one of those wrappers is,
-// by construction, a quest Beat. One shared collector used by
-// build/jump/update below so all three stay in sync by definition rather
-// than three independently-maintained heading queries drifting.
+// section AND per h2 (every scenario h2, not just a Beat nested under a
+// quest), at the SAME level (item 13, 2026-08-27: the DM's final approved
+// mockup explicitly reverses round 3's own indented sub-nesting -- flat
+// list only, no visual hierarchy). An h2 can reach this collector three
+// different ways depending on what sccFgRenderDoc()/sccFgRenderBlock()
+// wrapped it in: plain (the child itself IS .scc-fg-doc-h2, no quest
+// section active), featured-thumbnail-wrapped (.scc-fg-h2-featured-wrap,
+// still not quest-tied), or quest-Beat-wrapped (.scc-fg-quest-section-block,
+// added by sccFgRenderDoc() whenever a quest-tied h1 started that
+// section) -- any of those three is a real h2 heading and belongs in the
+// rail. The original code only ever checked the quest-Beat-wrapped case,
+// silently dropping every non-quest-tied scenario h2 -- most sessions'
+// real content, since only Beat-carrying sections are quest-tied. The h2
+// lookup below stays scoped to exactly these two known wrapper classes
+// (never a blanket child.querySelector) on purpose: a top-level child
+// can also be a .scc-fg-scenario-cards block (itself sometimes wrapped
+// in .scc-fg-quest-section-block, same as any other block type, when it
+// falls inside a quest section) whose active card body renders its own
+// nested content via a recursive sccFgRenderDoc() call -- an unscoped
+// deep search would reach into that nested card content and could latch
+// onto an h2 several levels down inside it, not a real top-level section
+// heading. One shared collector used by build/jump/update below so all
+// three stay in sync by definition rather than three independently-
+// maintained heading queries drifting.
 function sccFgCollectScrollEntries() {
   var container = document.getElementById('scc-fg-doc-inner');
   if (!container) return [];
@@ -18271,12 +18296,15 @@ function sccFgCollectScrollEntries() {
       entries.push({ el: h1, full: full, label: sccFgScrollIndicatorLabel(full) });
       return;
     }
-    if (child.classList.contains('scc-fg-quest-section-block')) {
-      var h2 = child.querySelector('.scc-fg-doc-h2');
-      if (h2) {
-        var h2Full = h2.textContent.trim();
-        entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full) });
-      }
+    var h2 = null;
+    if (child.classList.contains('scc-fg-doc-h2')) {
+      h2 = child;
+    } else if (child.classList.contains('scc-fg-quest-section-block') || child.classList.contains('scc-fg-h2-featured-wrap')) {
+      h2 = child.querySelector('.scc-fg-doc-h2');
+    }
+    if (h2) {
+      var h2Full = h2.textContent.trim();
+      entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full) });
     }
   });
   return entries;
