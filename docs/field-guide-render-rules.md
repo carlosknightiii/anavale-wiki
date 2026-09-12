@@ -2,9 +2,7 @@
 
 *What the Field Guide document renderer (`dm.html`, Live Session → Field Guide) actually understands, structurally, when it reads a `field_guide_sessions.blocks` array. Written for a content-author working directly in Supabase (or Claude Chat writing on their behalf), not a Code session — but every claim below is cited to a function name + line number in `dm.html` so a future Code session can re-verify or update it, rather than trusting this doc blindly as it ages.*
 
-**Basis:** `dm.html` on `main` @ `bfd506e` (2026-09-12). Line numbers will drift as the file changes — if something here looks wrong, grep for the cited function name first; don't assume the doc is right just because it's newer than your memory.
-
-**⚠ Known in-flight change, not yet merged as of this writing:** worktree `anavale-wiki-jump-rail-fix` has real, uncommitted edits to the jump-rail logic described in §3.1 below (it extends rail detection to plain top-level `h2` and `h2` blocks wrapped in `.scc-fg-h2-featured-wrap`, on top of the quest-section-wrapped `h2` case that's live on `main` today). §3.1 documents both the current `main` behavior and exactly what the pending fix changes, so this doc doesn't go stale the moment it merges — but re-check §3.1 once `anavale-wiki-jump-rail-fix` lands, and cut the "current vs. pending" framing down to just "current."
+**Basis:** `dm.html` on `main` @ `5ffb6ba` (2026-09-12, includes the `anavale-wiki-jump-rail-fix` merge). Line numbers will drift as the file changes — if something here looks wrong, grep for the cited function name first; don't assume the doc is right just because it's newer than your memory.
 
 ---
 
@@ -33,7 +31,7 @@ Dispatched by a single `switch (b.type)` in `sccFgRenderBlock(b, idx, ctx)` (lin
 | `table` | `sccFgRenderTableBlock(b)` (line 17138) — see below. |
 | `footer` | Rendered — but always moved to the physical end of the document regardless of where it sits in the array. See §3.4. |
 | `box` | The full category system — see §2. |
-| anything else, or a typo | **Renders nothing, no warning.** `default: return '';` (line 18068). |
+| anything else, or a typo | **Renders nothing, no warning.** `default: return '';` (line 18060). |
 
 There is no `h3`, `image`, `hr`, `quote`, or `columns` type. If you need something that looks like a divider or an image standalone, use a `box` with an appropriate category, or a `featured` array on an `h2`/`box`/`spoken_dialogue` block.
 
@@ -47,7 +45,7 @@ There is no `h3`, `image`, `hr`, `quote`, or `columns` type. If you need somethi
 
 **h2 detail — `sequence` and plain text are mutually exclusive in practice:**
 - If `b.sequence` (`'step'` or `'beat'`) is set, the displayed text is fully computed: count every earlier `h2` block in the document sharing the same `sequence` value, then render `"{Ucfirst(sequence)} {n} — {b.title}{b.suffix ? ' ('+b.suffix+')' : ''}"`. **`b.text` is ignored entirely when `sequence` is set** — you must use `b.title`/`b.suffix` instead.
-- If `b.sequence` is absent, `b.text` is used verbatim and `b.title`/`b.suffix` are ignored.
+- If `b.sequence` is absent, the heading text is `b.text` — falling back to `b.title` only if `b.text` is `null`/absent (added 2026-09-12 after 7 real h2 blocks across Sessions 1–2 turned out to store their heading under `b.title` with no `b.text` at all, rendering blank both in the rail and in the live document body). `b.text` always wins when both are present; don't rely on the fallback for new content — author `b.text` directly for a non-sequence heading, and reserve `b.title`/`b.suffix` for `sequence` headings.
 - `b.featured` (an array of `{type,id}`) adds portrait(s) above the heading — see §3.3. No category/chip system applies to h2 at all.
 
 ---
@@ -131,7 +129,7 @@ Only reachable when `category: 'comedy'` **and** `inline: true` are both set on 
 - If no quests are assigned to the session: renders "No quests assigned to this session yet — assign one in Setup."
 - **Multiple `quest_beats` blocks in one document all render the identical set of quests.** There's no way to scope one `quest_beats` block to a specific quest — if you want beat status to appear at two different points in the document, both blocks show the same full quest list.
 
-### `combat_outcomes` (`sccFgRenderCombatOutcomesBlock` → `sccFgOneCombatOutcomesHtml`, line 17441)
+### `combat_outcomes` (`sccFgRenderCombatOutcomesBlock` → `sccFgOneCombatOutcomesHtml`, line 17451)
 
 Shape: `{ type:'box', category:'combat_outcomes', label, html?, outcomes: [{ label, description?, blocks? }] }`.
 
@@ -149,28 +147,26 @@ This is the section that matters most for avoiding "looks fine in Supabase, rend
 
 ### 3.1 The jump rail (right-edge scroll indicator)
 
-There is no dropdown table-of-contents anymore (it was removed). The only navigation aid is the fixed right-edge dot rail. **It does not read `blocks` directly — it walks the already-rendered DOM**, over the direct children of the document container, via `sccFgCollectScrollEntries()` (line 18254).
+There is no dropdown table-of-contents anymore (it was removed). The only navigation aid is the fixed right-edge dot rail. **It does not read `blocks` directly — it walks the already-rendered DOM**, over the direct children of the document container, via `sccFgCollectScrollEntries()` (line 18279).
 
-**Current behavior on `main` (as of `bfd506e`):**
+**Current behavior (fixed 2026-09-12 — see git history for the earlier, more limited version if you're reconciling this against an old memory of the rail):**
 1. Every `h1` becomes a rail entry (including the opening section's "Session Recap" h1, and the synthetic "Other Scenarios" h1).
-2. An `h2` becomes a rail entry **only if it falls inside a quest section** (i.e., physically wrapped in `.scc-fg-quest-section-block`, meaning it comes after a quest-tied `h1` and before the next `h1` — see §3.2). **A plain `h2` that is not inside a quest section gets no rail entry at all**, even though it renders completely normally in the body. In practice this means most scenario-header `h2`s (the ones not nested under a quest beat) are invisible to the rail.
-3. Boxes, tables, footers, and scenario-card content are never rail entries on their own.
+2. An `h2` becomes a rail entry in any of three shapes: a **plain** top-level `h2` (the child itself carries `.scc-fg-doc-h2`, not quest-tied at all), an `h2` wrapped in `.scc-fg-h2-featured-wrap` (has a `featured` portrait, still not quest-tied), or an `h2` wrapped in `.scc-fg-quest-section-block` (falls after a quest-tied `h1`, before the next `h1` — see §3.2). Before this fix, only the third case counted, which meant most sessions' real scenario headings (the ones not nested under a quest beat) never showed up in the rail at all — confirmed live at the time as "2 dots instead of a real 6–7" for one real session.
+3. Boxes, tables, footers, and scenario-card content are never rail entries **directly** — but see the caveat below, they can still leak in.
 
-**A known, confirmed side-effect of #2 above (this is real, not theoretical):** since the only h2 detection path is "look inside a `.scc-fg-quest-section-block` wrapper," and that wrapper's `querySelector` searches *all* descendants (not just direct children), an `h2` buried arbitrarily deep inside a `scenario_cards` module's own nested card content — if that module happens to sit inside a quest section — can also surface as a rail entry, even though it isn't a real top-level section heading. This is the flip side of the same underlying gap: the detection isn't scoped tightly enough in either direction.
+**A real, still-present caveat, not fully closed by the fix above:** for the two wrapper-based cases (`.scc-fg-quest-section-block` / `.scc-fg-h2-featured-wrap`), the lookup is `child.querySelector('.scc-fg-doc-h2')` — a full descendant search, not a direct-child check. `.scc-fg-h2-featured-wrap` only ever contains its own single h2, so that case is safe. But `.scc-fg-quest-section-block` can wrap a top-level `scenario_cards` (or `combat_outcomes`) block instead of a plain heading, and that block's own nested/active card content is rendered inside the same wrapper via a recursive `sccFgRenderDoc()` call. **If that nested content contains its own `h2`, the querySelector will find it and add a phantom rail entry for something that isn't a real top-level section heading.** This is a narrow, quest-section-specific case — avoid authoring an `h2` inside `scenario_cards`/`combat_outcomes` nested content if you don't want it showing up in the rail.
 
-**⚠ In-flight fix, not yet on `main`:** the worktree `anavale-wiki-jump-rail-fix` has uncommitted changes that broaden step 2 to recognize three cases instead of one — a plain top-level `h2` (not quest-tied at all), an `h2` inside a quest-section wrapper (today's only case), and an `h2` inside a featured-thumbnail wrapper (`.scc-fg-h2-featured-wrap`) — while deliberately keeping the search scoped to exactly those three known top-level wrapper shapes (not an unscoped deep search), specifically to avoid the phantom-entry risk described above. Once that branch merges, update this section to describe the three-case behavior as current, and drop this note.
-
-**Author-facing takeaway (true today, and will remain mostly true after the pending fix):** if you want something to show up in the jump rail, make it an `h1`, or an `h2` that sits after a quest-tied `h1` (today), or any `h2` at all (once the fix above lands). Rail labels are auto-derived from the heading's own text (split at the first em-dash, else first parenthesis, else first 3 words, then hard-truncated to 20 characters) — the full text survives as a hover tooltip, so don't worry about writing a "short version," just write a real heading and expect it to get truncated in the rail itself.
+**Author-facing takeaway:** if you want something to show up in the jump rail, make it a real `h1` or `h2` — that's now sufficient on its own, you don't need to nest it under a quest beat the way you used to. Rail labels are auto-derived from the heading's own text (split at the first em-dash, else first parenthesis, else first 3 words, then hard-truncated to 20 characters) — the full text survives as a hover tooltip, so don't worry about writing a "short version," just write a real heading and expect it to get truncated in the rail itself.
 
 ### 3.2 Quest-section gold banding
 
-`sccFgRenderDoc(blocks, ctx)` (line 18098) tracks one boolean, `inQuestSection`, as it walks the array in order:
+`sccFgRenderDoc(blocks, ctx)` (line 18109) tracks one boolean, `inQuestSection`, as it walks the array in order:
 
 - **Turns on** the moment it renders an `h1` whose `quest_id` is set (regardless of whether that id resolves to a real quest).
 - **Turns off** only at the *next* `h1` that has no `quest_id`. Nothing else turns it off — not an `h2`, not a box, not a footer, not a table.
 - While on, **every single block** (including the triggering h1 itself) gets individually wrapped in its own `.scc-fg-quest-section-block` div (a gold left-border), one wrapper per block, not one wrapper around the whole run.
 - This state is **local to each `sccFgRenderDoc` call** — it does not carry across into nested calls. A `scenario_cards` card's own content, or a `combat_outcomes` outcome's own content, always starts with `inQuestSection = false`, even if the module itself sits inside a quest section. So an `h1` authored inside card/outcome content will never gold-band, and (per §3.1) an `h2` inside such nested content also won't get a rail entry via the quest-section path.
-- **This is also the only mechanism the jump rail's h2 detection relies on today** — there's no separate "am I in a quest section" tracking for the rail; it just looks for the same wrapper class in the DOM (§3.1).
+- **This wrapper is also one of the three shapes the jump rail's h2 detection looks for** — there's no separate "am I in a quest section" tracking for the rail; it just checks for the same wrapper class in the DOM alongside its other two cases (§3.1).
 
 **Practical rule:** if you want a run of content — narration, DM notes, comedy, whatever — visually associated with "this is part of quest X," put it after a quest-tied `h1` and before the next `h1`. If you *don't* want gold banding (e.g. this h1 starts a non-quest interlude), make sure the h1 genuinely has no `quest_id`, not just an empty string that happens to be falsy — either way works, but be deliberate about it.
 
@@ -203,7 +199,7 @@ An `h2` with `b.sequence` set (`'step'` or `'beat'`) has its displayed number co
 
 ### 3.6 "Homed" scenario groups can silently delete a live section
 
-`sccFgHomedScenarioGroupNames()` (line 18136) scans the document for `h2` blocks where **`b.text` (not `b.title`) is set and `b.featured` is a non-empty array**, and treats each matching text as a "homed" scenario-group name. If **every** live `session_scenarios` group name matches a homed heading, the entire "Other Scenarios" section (heading, filter, Add button) is suppressed — which also removes its jump-rail entry.
+`sccFgHomedScenarioGroupNames()` (line 18147) scans the document for `h2` blocks where **`b.text` (not `b.title`) is set and `b.featured` is a non-empty array**, and treats each matching text as a "homed" scenario-group name. If **every** live `session_scenarios` group name matches a homed heading, the entire "Other Scenarios" section (heading, filter, Add button) is suppressed — which also removes its jump-rail entry.
 
 **This means: if you give a plain (non-sequence) `h2` a `text` value that exactly matches (case-sensitive) the name of a scenario group in `session_scenarios`, and also give that h2 a `featured` array, you will silently remove that scenario group's live card from the "Other Scenarios" section** — the assumption being you've already manually built a proper section for it elsewhere in the document. If that's not your intent, either don't add `featured` to that heading, or make sure its text doesn't collide with a real scenario-group name.
 
@@ -327,16 +323,16 @@ Do not hand-type "(DM-Only)"/"(Read Aloud)" into your text — it's injected via
 For a future Code session verifying or updating this doc:
 
 - `sccFgRenderBlock(b, idx, ctx)` — line 17922 — the block-type switch (§1).
-- `sccFgRenderDoc(blocks, ctx)` — line 18098 — the array walker + quest-section tracking (§3.2).
-- `sccFgDrawDocument` — line ~18407 — the footer split, opening-section injection, and full draw pipeline (§3.4, §3.8).
-- `sccFgCollectScrollEntries` — line 18254 — the jump rail (§3.1).
-- `sccFgHomedScenarioGroupNames` — line 18136 — the homed-scenario-group check (§3.6).
+- `sccFgRenderDoc(blocks, ctx)` — line 18109 — the array walker + quest-section tracking (§3.2).
+- `sccFgDrawDocument` — line 18435 — the footer split, opening-section injection, and full draw pipeline (§3.4, §3.8).
+- `sccFgCollectScrollEntries` — line 18279 — the jump rail (§3.1).
+- `sccFgHomedScenarioGroupNames` — line 18147 — the homed-scenario-group check (§3.6).
 - `sccFgRenderFeatured` / `sccFgResolveFeaturedEntity` — lines 17039 / 16943 — featured thumbnails (§3.3).
 - `sccFgRenderSpokenDialogue` — line 17257 (§2).
-- `sccFgOneQuestBeatsHtml` / `sccFgRenderQuestBeatsBlock` — line 17365-ish (§2).
-- `sccFgOneCombatOutcomesHtml` — line 17441 (§2).
-- `sccFgRenderScenarioCardsBlock` / `sccFgOneScenarioCardsHtml` / `sccFgScenarioCardBodyHtml` / `sccFgFindScenarioCardsBlockInArray` — lines 17646–17920 (§4).
-- `sccFgBoxIsCompleted` / `sccFgBoxCompletionKey` / `sccFgToggleLoggedEntry` / `SCC_FG_LOG_RERENDER` — lines 17522–17640 (§6).
+- `sccFgOneQuestBeatsHtml` / `sccFgRenderQuestBeatsBlock` — lines 17343 / 17365 (§2).
+- `sccFgOneCombatOutcomesHtml` — line 17451 (§2).
+- `sccFgRenderScenarioCardsBlock` / `sccFgOneScenarioCardsHtml` / `sccFgScenarioCardBodyHtml` / `sccFgFindScenarioCardsBlockInArray` — lines 17771–17863, `sccFgRenderScenarioCardsBlock` at 17841 (§4).
+- `sccFgBoxIsCompleted` / `sccFgBoxCompletionKey` / `sccFgToggleLoggedEntry` — lines 17581 / 17572 / 17528 (§6).
 - `sccFgLinkify` / `sccFgStyleSkillChecks` — lines 17108 / 17077 (§5).
 - `js/fg-category-schema.json` — the category → color/badge source of truth (§2).
 
