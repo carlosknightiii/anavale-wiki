@@ -6503,11 +6503,34 @@ function showDMToast(msg, type) {
   white-space: nowrap;
 }
 .scc-beat-live-btn:hover { background: rgba(240,180,41,0.2); }
-/* Two-column quest layout */
-.scc-quest-panel-inner { max-width: none !important; padding: 1.5rem 2rem 3rem; }
+/* Two-column quest layout. This panel always sits nested inside Live
+   Session's own outer two-column grid (.scc-live-strip-wrap, its sticky
+   Party HP/Die Roller strip taking up to 300px + gap on the left) -- so the
+   actual width available to this grid is well below the raw browser
+   viewport width whenever that outer strip is still showing as its own
+   column. A plain viewport @media query can't see that: at e.g. a 1000px
+   browser window (nowhere near the existing 900px stack breakpoint below),
+   the real space left for this grid was only ~500px, main column held its
+   640px cap by taking space from the sidebar's old minmax(0, 1fr), and the
+   Current Beat sidebar (title/description text) collapsed to ~30px wide --
+   nearly one word per line, unreadable. Fixed two ways: the sidebar column
+   now has a real 220px floor so it can't be squeezed away (confirmed this
+   doesn't change desktop-full-width sizing -- the sidebar's own natural
+   remainder there is already 228px, above the new floor); and a real
+   @container query (measuring this grid's own actual parent width, not the
+   viewport) stacks to one column before the two-column layout would get
+   uncomfortably tight even with that floor in place. The existing 900px
+   viewport @media rule below is left as-is, not redundant -- it's still
+   correct for genuinely narrow/mobile viewports, where the outer strip has
+   already stacked too. */
+.scc-quest-panel-inner {
+  max-width: none !important;
+  padding: 1.5rem 2rem 3rem;
+  container: scc-quest-panel / inline-size;
+}
 .scc-quest-two-col {
   display: grid;
-  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 640px) minmax(220px, 1fr);
   gap: 2rem;
   align-items: start;
 }
@@ -6550,6 +6573,15 @@ function showDMToast(msg, type) {
   display: inline-block;
 }
 @media (max-width: 900px) {
+  .scc-quest-two-col { grid-template-columns: 1fr; }
+  .scc-quest-col-sidebar { position: static; }
+}
+/* Container-width version of the same stack, see the comment on
+   .scc-quest-panel-inner above -- catches the case the viewport media
+   query above can't: outer Live Session strip still two-column, but the
+   actual space left for this grid is already too tight for a comfortable
+   640px main + 220px sidebar split. */
+@container scc-quest-panel (max-width: 620px) {
   .scc-quest-two-col { grid-template-columns: 1fr; }
   .scc-quest-col-sidebar { position: static; }
 }
