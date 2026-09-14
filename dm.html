@@ -11234,30 +11234,76 @@ function showDMToast(msg, type) {
   /* Field Guide's fixed right-edge scroll rail: its 130px of section labels
      (plus the gradient backdrop behind them) sat on top of the session
      header's Notes tab and the document's right edge at 390px. Keep the
-     10px jump dots, drop the labels and backdrop. !important on the
-     backdrop only: sccFgPositionScrollBackdrop() sets its display inline. */
+     10px jump dots, drop the labels and backdrop by default (see the
+     swipe-to-reveal block right below for how/when they come back). */
   .scc-fg-scroll-indicator { width: 26px; }
-  .scc-fg-scroll-label { display: none; }
-  .scc-fg-scroll-backdrop { display: none !important; }
-  /* Swipe-to-reveal (DM request, 2026-09-14): a right-edge swipe-left
-     touch gesture (sccFgEnsureRailSwipeBound()) adds these two modifier
-     classes to bring the real labels + gradient backdrop back on demand,
-     auto-hiding again after SCC_FG_RAIL_REVEAL_HOLD_MS with no further
-     touch. Higher specificity (two classes) is what lets --revealed win
-     over the plain .scc-fg-scroll-backdrop hide above despite both being
-     !important -- equal !important falls back to specificity, not source
-     order, so this must stay two classes, not a single new class name.
-     Deliberately no width transition on .scc-fg-scroll-indicator: found
-     live that adding one makes sccFgSetRailRevealed()'s immediate
+  /* Swipe-to-reveal (DM request, 2026-09-14; smooth-reveal + legibility
+     follow-up, 2026-09-14): a right-edge swipe-left touch gesture
+     (sccFgEnsureRailSwipeBound()) adds --revealed to the indicator +
+     backdrop to bring the real labels back on demand, auto-hiding again
+     after SCC_FG_RAIL_REVEAL_HOLD_MS with no further touch.
+     Hidden via opacity (not display:none) specifically so the reveal can
+     transition smoothly -- a CSS transition cannot animate across a
+     display:none boundary at all (nothing to interpolate from), which is
+     why the first cut of this feature had to snap instantly. Opacity is
+     the one property in play here that's PURELY visual: unlike the width
+     transition tried (and deliberately rejected, see below) and unlike a
+     transform, it never changes what getBoundingClientRect() reports for
+     an element, at any point during the animation -- so
+     sccFgPositionScrollBackdrop()'s label-position measurement (below)
+     stays exactly as accurate mid-fade as it is at rest. No transform
+     was added here for that same reason: a translateX slide would look
+     nice but, unlike opacity, does shift the reported rect while
+     animating, reopening exactly the kind of measurement race this
+     comment is about closing, not just moving it from width to transform. */
+  .scc-fg-scroll-label {
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .scc-fg-scroll-backdrop {
+    opacity: 0; transition: opacity 0.2s ease;
+  }
+  /* Higher specificity (two classes) is what lets --revealed win over the
+     plain .scc-fg-scroll-label/-backdrop opacity:0 above -- both rules
+     have the same specificity otherwise, so source order alone would be
+     fragile against a future reorder; two classes settles it for good.
+     Deliberately no width transition on .scc-fg-scroll-indicator itself:
+     found live that adding one makes sccFgSetRailRevealed()'s immediate
      sccFgPositionScrollBackdrop() call measure the box's PRE-transition
      width (getBoundingClientRect() forces a reflow of the just-applied
      class, but the transition itself hasn't started animating on the
      very next frame), leaving the backdrop's left edge positioned too
      far right to actually sit behind the now-wider revealed labels --
-     the exact legibility bug this backdrop exists to prevent. */
+     the exact legibility bug this backdrop exists to prevent. The width
+     rule stays (unanimated, snaps instantly) since dot/label position is
+     driven entirely by `right:Npx` off the indicator's own right edge,
+     which :right:2px pins in place regardless of width -- widening never
+     visually moves anything, so there's nothing lost by leaving it un-
+     animated. */
   .scc-fg-scroll-indicator--revealed { width: 130px; }
-  .scc-fg-scroll-indicator--revealed .scc-fg-scroll-label { display: block; }
-  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--revealed { display: block !important; }
+  .scc-fg-scroll-indicator--revealed .scc-fg-scroll-label {
+    opacity: 1; pointer-events: auto;
+  }
+  /* Real DM-reported legibility bug, fixed 2026-09-14: a long label (e.g.
+     "The River, Getting Worse") renders far wider than the indicator's
+     own 130px box -- position:absolute with no clipping lets it overflow
+     freely -- so the backdrop, previously sized off the indicator's own
+     box, covered only a narrow strip near the dots while the label's own
+     leftmost text sat uncovered, directly over busy document content.
+     sccFgPositionScrollBackdrop() now measures each real, currently-
+     visible label's own left edge (not the indicator box) and sizes the
+     backdrop to the widest one actually on screen. This override also
+     darkens the reveal specifically (not touched on desktop, where the
+     backdrop is already always-on and untouched by this ask): a wider
+     but equally faint gradient wouldn't fix legibility on its own. Pixel
+     (not percentage) stops so the fade-to-solid ramp always completes
+     within a fixed 60px of the backdrop's own left edge regardless of
+     how wide a given label makes that box -- matched to the 60px JS
+     buffer below so the ramp's transparent end always falls in the empty
+     space before any label text starts, never underneath it. */
+  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--revealed {
+    opacity: 1;
+    background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.9) 60px, rgba(0,0,0,0.97) 100%);
+  }
   /* 3) side margins */
   /* min-width:0: as a flex child of .dm-main the panel otherwise grows to
      its content's min width (Manage's table, the Sessions list grid --
@@ -18444,17 +18490,42 @@ function sccFgBuildScrollIndicator() {
 }
 
 // Left edge of the gradient backdrop (see the CSS comment on
-// .scc-fg-scroll-backdrop) is set from the indicator's own real measured
-// position, not a fixed value -- its width is intrinsic to label content
-// and varies by section-name length, so no static CSS value could track
-// it correctly.
+// .scc-fg-scroll-backdrop) is set from the WIDEST real, currently-visible
+// label's own measured left edge, not the indicator box's own left edge.
+// Real DM-reported bug, fixed 2026-09-14: a label is position:absolute
+// with no clipping, so a long one (e.g. "The River, Getting Worse")
+// routinely renders far wider than the indicator's own 130px box and
+// overflows past it -- sizing the backdrop off the box alone left that
+// overflowing text sitting uncovered, directly over busy document
+// content. SCC_FG_RAIL_LABEL_BUFFER_PX pads further left of the widest
+// label so the backdrop's own fade-to-solid ramp (see the matching pixel
+// stops on .scc-fg-scroll-backdrop--revealed) completes in the empty
+// space before any label text starts, never underneath it.
+//
+// "Currently visible" is read from real, discrete state (the --revealed
+// class, or the >768px desktop breakpoint where labels have no reveal
+// gate at all) rather than each label's live getComputedStyle() opacity
+// -- immediately after sccFgSetRailRevealed() toggles that class, the
+// fade-in transition hasn't actually started animating yet, so which way
+// a synchronous opacity read would resolve at that exact instant isn't
+// reliably specified. The class/breakpoint check has no such ambiguity:
+// it's the same discrete state before, during, and after the fade.
+var SCC_FG_RAIL_LABEL_BUFFER_PX = 60;
 function sccFgPositionScrollBackdrop(visible) {
   var backdrop = document.getElementById('scc-fg-scroll-backdrop');
   if (!backdrop) return;
   var wrap = document.getElementById('scc-fg-scroll-indicator');
   if (!visible || !wrap) { backdrop.style.display = 'none'; return; }
-  var rect = wrap.getBoundingClientRect();
-  backdrop.style.left = rect.left + 'px';
+  var leftPx = wrap.getBoundingClientRect().left;
+  var labelsVisible = wrap.classList.contains('scc-fg-scroll-indicator--revealed') || window.innerWidth > 768;
+  if (labelsVisible) {
+    var labels = wrap.querySelectorAll('.scc-fg-scroll-label');
+    for (var i = 0; i < labels.length; i++) {
+      var labelLeft = labels[i].getBoundingClientRect().left;
+      if (labelLeft < leftPx) leftPx = labelLeft;
+    }
+  }
+  backdrop.style.left = Math.max(0, leftPx - SCC_FG_RAIL_LABEL_BUFFER_PX) + 'px';
   backdrop.style.display = 'block';
 }
 
@@ -18541,10 +18612,12 @@ function sccFgSetRailRevealed(revealed) {
   wrap.classList.toggle('scc-fg-scroll-indicator--revealed', revealed);
   if (backdrop) backdrop.classList.toggle('scc-fg-scroll-backdrop--revealed', revealed);
   // Re-measure now, not at the next scheduled build: sccFgPositionScrollBackdrop()
-  // sets the backdrop's left edge from the indicator's CURRENT width, and
-  // --revealed just changed that width (26px -> 130px on mobile) --
-  // reusing the stale pre-reveal position would leave the gradient too
-  // narrow to actually sit behind the labels it's meant to back.
+  // sizes the backdrop off each real label's OWN measured position, and
+  // that position only means anything once --revealed has been toggled
+  // (it reads that exact class to decide whether labels count as visible
+  // at all -- see its own comment) -- reusing a stale pre-reveal position
+  // would leave the gradient sized for zero visible labels instead of the
+  // real ones now on screen.
   if (wrap.style.display !== 'none') sccFgPositionScrollBackdrop(true);
   if (SCC_FG_RAIL_REVEAL_TIMER) { clearTimeout(SCC_FG_RAIL_REVEAL_TIMER); SCC_FG_RAIL_REVEAL_TIMER = null; }
   if (revealed) {
