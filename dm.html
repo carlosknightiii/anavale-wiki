@@ -7987,9 +7987,16 @@ function showDMToast(msg, type) {
    placement -- collapsing these into one array was the root cause of
    two of round 3's real bugs: clicking a dot didn't line up with where
    the fill line stopped, and the fix line could overshoot on scroll).
-   Explicitly flat -- no indentation/nesting for quest Beats under their
-   parent quest heading, confirmed reversed from round 3's own nested
-   treatment per the DM's final approved mockup. */
+   h1/h2 entries stay flat among themselves -- no indentation/nesting for
+   quest Beats under their parent quest heading, confirmed reversed from
+   round 3's own nested treatment per the DM's final approved mockup, and
+   NOT revisited here. A second, genuinely nested tier was added
+   2026-09-12 for a different, later, explicit DM ask: each scenario_cards
+   module's own card titles now nest one level under whichever heading
+   precedes it (--sub dot/label modifiers below), since a scenario card
+   title is a sub-item of its section, not a sibling section of its own --
+   a distinct question from the round-3 Beat-nesting reversal, not a
+   quiet re-litigation of it. */
 .scc-fg-scroll-indicator {
   position: fixed; top: 50%; right: 2px; transform: translateY(-50%);
   display: none; height: 50vh; width: 130px; z-index: 40; pointer-events: none;
@@ -8007,6 +8014,14 @@ function showDMToast(msg, type) {
   transition: background 0.15s, border-color 0.15s; z-index: 2;
 }
 .scc-fg-scroll-dot--reached { background: var(--dm-gold); border-color: var(--dm-gold); }
+/* Sub-tier (scenario_cards card titles, 2026-09-12) -- smaller, centered on
+   the SAME shared guide line as a major dot (right:13px keeps its visual
+   center aligned with the line at right:15px, same math the major dot at
+   right:11px/width:10px already uses) so it still reads as "on the rail,"
+   just a lesser stop on it, not a disconnected floating mark. Dimmed via
+   opacity, not color, on purpose -- color is what --reached overrides, and
+   opacity composes with that instead of fighting it for cascade order. */
+.scc-fg-scroll-dot--sub { width: 6px; height: 6px; right: 13px; opacity: 0.85; }
 .scc-fg-scroll-label {
   position: absolute; right: 25px; transform: translateY(-50%);
   font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
@@ -8014,6 +8029,7 @@ function showDMToast(msg, type) {
   transition: color 0.15s;
 }
 .scc-fg-scroll-label--reached { color: var(--dm-gold); }
+.scc-fg-scroll-label--sub { right: 32px; font-size: 0.62rem; font-weight: 600; opacity: 0.85; }
 /* Backdrop behind the indicator -- 80% opaque black at the screen's right
    edge fading to transparent at the indicator's own measured left edge
    (position set by sccFgPositionScrollBackdrop(), same as before, its
@@ -18251,11 +18267,12 @@ function sccFgTruncateScrollLabel(text, max) {
   return text.length > max ? text.slice(0, max - 3) + '...' : text;
 }
 
-// Flat, ordered list of {el, full, label} -- one entry per real h1
-// section AND per h2 (every scenario h2, not just a Beat nested under a
-// quest), at the SAME level (item 13, 2026-08-27: the DM's final approved
-// mockup explicitly reverses round 3's own indented sub-nesting -- flat
-// list only, no visual hierarchy). An h2 can reach this collector three
+// Flat, ordered list of {el, full, label, tier, scenarioDomId?, cardIdx?}
+// -- tier is 'h1' | 'h2' | 'card'. One entry per real h1 section AND per h2
+// (every scenario h2, not just a Beat nested under a quest), at the SAME
+// level as each other (item 13, 2026-08-27: the DM's final approved mockup
+// explicitly reverses round 3's own indented sub-nesting for quest Beats --
+// that reversal is untouched here). An h2 can reach this collector three
 // different ways depending on what sccFgRenderDoc()/sccFgRenderBlock()
 // wrapped it in: plain (the child itself IS .scc-fg-doc-h2, no quest
 // section active), featured-thumbnail-wrapped (.scc-fg-h2-featured-wrap,
@@ -18264,18 +18281,32 @@ function sccFgTruncateScrollLabel(text, max) {
 // section) -- any of those three is a real h2 heading and belongs in the
 // rail. The original code only ever checked the quest-Beat-wrapped case,
 // silently dropping every non-quest-tied scenario h2 -- most sessions'
-// real content, since only Beat-carrying sections are quest-tied. The h2
-// lookup below stays scoped to exactly these two known wrapper classes
-// (never a blanket child.querySelector) on purpose: a top-level child
-// can also be a .scc-fg-scenario-cards block (itself sometimes wrapped
-// in .scc-fg-quest-section-block, same as any other block type, when it
-// falls inside a quest section) whose active card body renders its own
-// nested content via a recursive sccFgRenderDoc() call -- an unscoped
-// deep search would reach into that nested card content and could latch
-// onto an h2 several levels down inside it, not a real top-level section
-// heading. One shared collector used by build/jump/update below so all
-// three stay in sync by definition rather than three independently-
-// maintained heading queries drifting.
+// real content, since only Beat-carrying sections are quest-tied.
+//
+// 2026-09-12 addition: a genuinely nested 'card' tier, one entry per
+// scenario_cards card title, nested under whichever h1/h2 precedes its
+// module in the document (a real DM ask, distinct from the round-3
+// Beat-nesting question noted above -- see the CSS comment on
+// .scc-fg-scroll-indicator). The scenario_cards check runs BEFORE the h2
+// branch below and matches only the module's OWN root class (never a
+// descendant search) -- this is deliberate, not just ordering for its own
+// sake: docs/field-guide-render-rules.md §3.1 documents a real, still-open
+// phantom-rail-entry risk where the h2 branch's `child.querySelector(
+// '.scc-fg-doc-h2')` is a full descendant search, so a top-level
+// scenario_cards (or combat_outcomes) block wrapped in
+// .scc-fg-quest-section-block can have an h2 buried in its own active
+// card's nested content picked up as a phantom top-level heading. Matching
+// scenario_cards identity first (on its own root class, or its wrapper's
+// direct child when quest-tied) means a scenario_cards module now never
+// falls through to that querySelector at all -- this closes the
+// scenario_cards half of that documented risk as a side effect of this
+// change, though the combat_outcomes half is untouched (no equivalent
+// check added here, out of scope for this ask) and remains exactly as
+// documented. The h2 lookup itself stays scoped to exactly its two known
+// wrapper classes (never a blanket child.querySelector) for the same
+// reason it always did -- see the branch below. One shared collector used
+// by build/jump/update below so all three stay in sync by definition
+// rather than three independently-maintained heading queries drifting.
 function sccFgCollectScrollEntries() {
   var container = document.getElementById('scc-fg-doc-inner');
   if (!container) return [];
@@ -18293,7 +18324,27 @@ function sccFgCollectScrollEntries() {
     if (h1) {
       var titleEl = h1.querySelector('.scc-fg-h1-quest-title');
       var full = (titleEl ? titleEl.textContent : h1.textContent).trim();
-      entries.push({ el: h1, full: full, label: sccFgScrollIndicatorLabel(full) });
+      entries.push({ el: h1, full: full, label: sccFgScrollIndicatorLabel(full), tier: 'h1' });
+      return;
+    }
+    // scenario_cards check -- see the comment above this function for why
+    // this runs before the h2 branch and matches only the module's own
+    // root class, never a descendant search.
+    var scBlock = child.classList.contains('scc-fg-scenario-cards') ? child
+      : (child.classList.contains('scc-fg-quest-section-block') && child.firstElementChild
+          && child.firstElementChild.classList.contains('scc-fg-scenario-cards'))
+        ? child.firstElementChild : null;
+    if (scBlock) {
+      var tiles = scBlock.querySelectorAll('.scc-fg-scenario-cards-row > .scc-fg-sc-tile');
+      Array.prototype.forEach.call(tiles, function(tile, cardIdx) {
+        var tileTitleEl = tile.querySelector('.scc-fg-sc-tile-title');
+        var cardFull = (tileTitleEl ? tileTitleEl.textContent : '').trim();
+        if (!cardFull) return; // an untitled card has nothing worth a rail entry
+        entries.push({
+          el: tile, full: cardFull, label: sccFgTruncateScrollLabel(cardFull, 20),
+          tier: 'card', scenarioDomId: scBlock.id, cardIdx: cardIdx
+        });
+      });
       return;
     }
     var h2 = null;
@@ -18304,7 +18355,7 @@ function sccFgCollectScrollEntries() {
     }
     if (h2) {
       var h2Full = h2.textContent.trim();
-      entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full) });
+      entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full), tier: 'h2' });
     }
   });
   return entries;
@@ -18358,8 +18409,10 @@ function sccFgBuildScrollIndicator() {
 
   var dotsHtml = entries.map(function(entry, i) {
     var topPx = bufferPx + (drawPositions[i] / 100) * trackHeightPx;
-    return '<div class="scc-fg-scroll-dot" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '"></div>'
-      + '<div class="scc-fg-scroll-label" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '">' + sccEsc(entry.label) + '</div>';
+    var subMod = entry.tier === 'card' ? ' scc-fg-scroll-dot--sub' : '';
+    var subModLabel = entry.tier === 'card' ? ' scc-fg-scroll-label--sub' : '';
+    return '<div class="scc-fg-scroll-dot' + subMod + '" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '"></div>'
+      + '<div class="scc-fg-scroll-label' + subModLabel + '" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '">' + sccEsc(entry.label) + '</div>';
   }).join('');
   wrap.innerHTML = '<div class="scc-fg-scroll-line-track">'
       + '<div class="scc-fg-scroll-base-line" style="top:' + bufferPx + 'px;height:' + trackHeightPx + 'px"></div>'
@@ -18388,7 +18441,18 @@ function sccFgPositionScrollBackdrop(visible) {
 
 function sccFgScrollIndicatorJump(i) {
   var entries = sccFgCollectScrollEntries();
-  var target = entries[i] ? entries[i].el : null;
+  var entry = entries[i];
+  if (!entry) return;
+  // A 'card' sub-item's own content only exists in the DOM once that card is
+  // the module's active one (sccFgOneScenarioCardsHtml only ever renders
+  // cards[active] -- see docs/field-guide-render-rules.md §4). Open it the
+  // same way clicking its own tile would before scrolling, or "jump to this
+  // card" would just land on the tile row with whichever OTHER card happened
+  // to already be open underneath it.
+  if (entry.tier === 'card' && entry.scenarioDomId != null && entry.cardIdx != null) {
+    sccFgSwitchScenarioCard(entry.scenarioDomId, entry.cardIdx, entry.el);
+  }
+  var target = entry.el;
   if (!target) return;
   var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
   var targetTop = target.getBoundingClientRect().top + window.scrollY;
