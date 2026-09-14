@@ -11239,6 +11239,25 @@ function showDMToast(msg, type) {
   .scc-fg-scroll-indicator { width: 26px; }
   .scc-fg-scroll-label { display: none; }
   .scc-fg-scroll-backdrop { display: none !important; }
+  /* Swipe-to-reveal (DM request, 2026-09-14): a right-edge swipe-left
+     touch gesture (sccFgEnsureRailSwipeBound()) adds these two modifier
+     classes to bring the real labels + gradient backdrop back on demand,
+     auto-hiding again after SCC_FG_RAIL_REVEAL_HOLD_MS with no further
+     touch. Higher specificity (two classes) is what lets --revealed win
+     over the plain .scc-fg-scroll-backdrop hide above despite both being
+     !important -- equal !important falls back to specificity, not source
+     order, so this must stay two classes, not a single new class name.
+     Deliberately no width transition on .scc-fg-scroll-indicator: found
+     live that adding one makes sccFgSetRailRevealed()'s immediate
+     sccFgPositionScrollBackdrop() call measure the box's PRE-transition
+     width (getBoundingClientRect() forces a reflow of the just-applied
+     class, but the transition itself hasn't started animating on the
+     very next frame), leaving the backdrop's left edge positioned too
+     far right to actually sit behind the now-wider revealed labels --
+     the exact legibility bug this backdrop exists to prevent. */
+  .scc-fg-scroll-indicator--revealed { width: 130px; }
+  .scc-fg-scroll-indicator--revealed .scc-fg-scroll-label { display: block; }
+  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--revealed { display: block !important; }
   /* 3) side margins */
   /* min-width:0: as a flex child of .dm-main the panel otherwise grows to
      its content's min width (Manage's table, the Sessions list grid --
@@ -18496,6 +18515,80 @@ function sccFgEnsureScrollListenerBound() {
   });
 }
 
+// Mobile swipe-to-reveal (DM request, 2026-09-14, requests-table row
+// 87a4f798): the @media(max-width:768px) block above drops the rail to
+// dots-only -- no room for real labels at that width -- which leaves no
+// way to see what a dot actually jumps to without tapping it blind. This
+// adds a right-edge swipe-left gesture that temporarily restores the
+// labels + gradient backdrop (the exact same backdrop/label markup
+// desktop always shows, just toggled via a --revealed modifier class
+// instead of the width breakpoint), auto-hiding again after a few
+// seconds or on a tap elsewhere. Harmless at desktop widths: the
+// --revealed classes only have any visual rule inside that same mobile
+// media block, so binding this listener unconditionally (rather than
+// gating it on window.innerWidth, which would need its own resize
+// tracking to stay correct across rotation) costs nothing on desktop.
+var SCC_FG_RAIL_REVEAL_EDGE_PX = 40; // swipe must START within this many px of the real screen edge
+var SCC_FG_RAIL_REVEAL_THRESHOLD_PX = 36; // minimum leftward travel before it counts as reveal, not a scroll/tap
+var SCC_FG_RAIL_REVEAL_HOLD_MS = 4000; // auto-hide this long after the last touch interaction
+var SCC_FG_RAIL_REVEAL_TIMER = null;
+var SCC_FG_RAIL_TOUCH_START = null; // {x, y} while a candidate edge-swipe is in progress, else null
+
+function sccFgSetRailRevealed(revealed) {
+  var wrap = document.getElementById('scc-fg-scroll-indicator');
+  var backdrop = document.getElementById('scc-fg-scroll-backdrop');
+  if (!wrap) return;
+  wrap.classList.toggle('scc-fg-scroll-indicator--revealed', revealed);
+  if (backdrop) backdrop.classList.toggle('scc-fg-scroll-backdrop--revealed', revealed);
+  // Re-measure now, not at the next scheduled build: sccFgPositionScrollBackdrop()
+  // sets the backdrop's left edge from the indicator's CURRENT width, and
+  // --revealed just changed that width (26px -> 130px on mobile) --
+  // reusing the stale pre-reveal position would leave the gradient too
+  // narrow to actually sit behind the labels it's meant to back.
+  if (wrap.style.display !== 'none') sccFgPositionScrollBackdrop(true);
+  if (SCC_FG_RAIL_REVEAL_TIMER) { clearTimeout(SCC_FG_RAIL_REVEAL_TIMER); SCC_FG_RAIL_REVEAL_TIMER = null; }
+  if (revealed) {
+    SCC_FG_RAIL_REVEAL_TIMER = setTimeout(function() { sccFgSetRailRevealed(false); }, SCC_FG_RAIL_REVEAL_HOLD_MS);
+  }
+}
+
+var SCC_FG_RAIL_SWIPE_BOUND = false;
+function sccFgEnsureRailSwipeBound() {
+  if (SCC_FG_RAIL_SWIPE_BOUND) return;
+  SCC_FG_RAIL_SWIPE_BOUND = true;
+  document.addEventListener('touchstart', function(e) {
+    var wrap = document.getElementById('scc-fg-scroll-indicator');
+    if (!wrap || wrap.style.display === 'none' || !e.touches.length) { SCC_FG_RAIL_TOUCH_START = null; return; }
+    var t = e.touches[0];
+    // wrap.contains(t.target) exempts a tap ON the rail itself (a dot, or
+    // a now-revealed label further from the edge than the reveal zone)
+    // from the "outside" check below -- found live: without this, tapping
+    // a revealed label to jump to its section could itself sit past the
+    // 40px edge zone and get read as a tap-away-to-dismiss, hiding the
+    // label out from under the DM's own tap instead of letting it jump.
+    if (!wrap.contains(t.target) && window.innerWidth - t.clientX > SCC_FG_RAIL_REVEAL_EDGE_PX) {
+      // A touch starting outside the rail while it's already revealed is
+      // read as "tap away to dismiss" -- otherwise the only way to hide
+      // it early is waiting out the full auto-hide timer.
+      if (wrap.classList.contains('scc-fg-scroll-indicator--revealed')) sccFgSetRailRevealed(false);
+      SCC_FG_RAIL_TOUCH_START = null;
+      return;
+    }
+    SCC_FG_RAIL_TOUCH_START = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    if (!SCC_FG_RAIL_TOUCH_START || !e.touches.length) return;
+    var t = e.touches[0];
+    var dx = SCC_FG_RAIL_TOUCH_START.x - t.clientX; // positive = finger moved left
+    var dy = Math.abs(t.clientY - SCC_FG_RAIL_TOUCH_START.y);
+    if (dx > SCC_FG_RAIL_REVEAL_THRESHOLD_PX && dx > dy) {
+      sccFgSetRailRevealed(true);
+      SCC_FG_RAIL_TOUCH_START = null; // one reveal per gesture, not one per qualifying move event
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', function() { SCC_FG_RAIL_TOUCH_START = null; }, { passive: true });
+}
+
 function sccFgDrawDocument(num) {
   var inner = document.getElementById('scc-fg-doc-inner');
   if (!inner) return;
@@ -18508,6 +18601,7 @@ function sccFgDrawDocument(num) {
     SCC_FG_RENDERED_SESSION_NUM = num;
     sccFgBuildScrollIndicator();
     sccFgEnsureScrollListenerBound();
+    sccFgEnsureRailSwipeBound();
     return;
   }
   var footerBlocks = row.blocks.filter(function(b) { return b.type === 'footer'; });
@@ -18520,6 +18614,7 @@ function sccFgDrawDocument(num) {
   SCC_FG_RENDERED_SESSION_NUM = num;
   sccFgBuildScrollIndicator();
   sccFgEnsureScrollListenerBound();
+  sccFgEnsureRailSwipeBound();
 }
 
 // ── Remaining scenarios (was "Scenario Reference", the one central section
