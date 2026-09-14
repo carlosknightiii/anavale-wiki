@@ -8882,14 +8882,24 @@ function showDMToast(msg, type) {
 .scc-fg-beat-status--not_started { background: var(--scc-beat-todo-bg); color: var(--scc-beat-todo-text); border: 1px solid var(--scc-beat-todo-border); }
 .scc-fg-beat-status--in_progress { background: var(--scc-beat-prog-bg); color: var(--scc-beat-prog-text); border: 1px solid var(--scc-beat-prog-border); }
 .scc-fg-beat-status--completed { background: var(--scc-beat-done-bg); color: var(--scc-beat-done-text); border: 1px solid var(--scc-beat-done-border); }
-/* ── "Roll Initiative" — real new-tab link into Session Details' Combat
+/* ── "Start Combat" — real new-tab link into Session Details' Combat
    sub-panel, a saved combat_encounters row already loaded. Anchor tag, not
    a JS window.open() button, so it genuinely inherits sessionStorage.dm_auth
    (target="_blank" + rel="opener", same pattern as the lookup drawer's own
-   "open in new tab" links). */
+   "open in new tab" links). Shares .scc-gold-btn-sm's base look but sizes
+   up from it here (2026-09-14, DM ask) — this button is a real combat
+   launch action, not one of .scc-gold-btn-sm's small inline toggles (Loot/
+   Stats/currency Set), so it gets its own larger padding/font-size on top
+   of that shared class rather than resizing .scc-gold-btn-sm itself, which
+   would also grow those unrelated buttons. Both real render sites (Field
+   Guide box-level combat-kickoff boxes and scenario_cards-level combat
+   cards) are simple block-flow placements with room to grow — verified
+   live, no overflow in either. */
 .scc-fg-roll-init-btn {
-  display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem;
+  display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem;
   text-decoration: none; cursor: pointer;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
 }
 /* ── Quick-attach button (block.quick_attach) — same "small secondary
    action row under the box text" placement as Roll Initiative above. The
@@ -17876,15 +17886,13 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
     + '</div>';
   }
   // Combat-leading cards (card.combat_encounter_id) get the same real
-  // new-tab "Roll Initiative" link the DM-authored box category above
+  // new-tab "Start Combat" link the DM-authored box category above
   // already uses -- same sccBuildCombatEncounterUrl()/sccHandleUrlRouting()
-  // plumbing, same .scc-fg-roll-init-btn styling (small gold button, one
-  // shared class rather than a one-off), just reached from a scenario
-  // card's own combat_encounter_id instead of a block's. Text reads "Start
-  // Combat" here (matching the DM's own naming for this ask) rather than
-  // "Roll Initiative" -- same destination/behavior, a scenario card is
-  // read before combat has started, unlike Beat 3's box which already
-  // assumes the fight is on.
+  // plumbing, same .scc-fg-roll-init-btn styling, same class and text as
+  // the block-level sibling above (standardized 2026-09-14 -- the two had
+  // drifted to "Start Combat" here vs "Roll Initiative" there despite
+  // identical destination/behavior), just reached from a scenario card's
+  // own combat_encounter_id instead of a block's.
   var combatBtnHtml = card.combat_encounter_id
     ? '<a class="scc-gold-btn-sm scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(card.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Start Combat</a>'
     : '';
@@ -18106,14 +18114,18 @@ function sccFgRenderBlock(b, idx, ctx) {
         ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--' + sccEsc(b.category) + '">' + style.badge.icon + '</span> <span class="scc-fg-box-cat-badge-label">' + sccEsc(style.badge.name) + '</span></div>'
         : '';
       // Combat-kickoff boxes (DM-authored, via block.combat_encounter_id)
-      // get a real "Roll Initiative" link -- a genuine same-origin new-tab
+      // get a real "Start Combat" link -- a genuine same-origin new-tab
       // link (target="_blank" + rel="opener", same pattern as the lookup
       // drawer's own "open in new tab" links), not a JS window.open() call,
       // so it inherits sessionStorage.dm_auth and never re-prompts for the
       // password. Routes into Session Details' Combat sub-panel with the
       // real saved encounter already loaded (see sccHandleUrlRouting()).
+      // Text standardized to "Start Combat" (2026-09-14, DM ask) -- was
+      // "Roll Initiative" here, "Start Combat" on the scenario_cards-level
+      // sibling below; same class, same destination/behavior, no reason
+      // for the two to read differently.
       var combatBtnHtml = b.combat_encounter_id
-        ? '<a class="scc-gold-btn-sm scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(b.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Roll Initiative</a>'
+        ? '<a class="scc-gold-btn-sm scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(b.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Start Combat</a>'
         : '';
       // Featured thumbnail(s), if any, float top-left (see .scc-fg-featured-row's
       // own float:left); the badge + label (if either exists) flow right
@@ -25645,7 +25657,7 @@ function sccCloseLookup() {
 // Quest. Nation/Region/Religion/Species have no such page (confirmed in
 // the investigation) and never generate a link that would need routing.
 // A third shape (tab=session&panel=combat&encounter=) was added for the
-// Field Guide's "Roll Initiative" button, which needs to land inside
+// Field Guide's "Start Combat" button, which needs to land inside
 // Session Details' own Combat sub-panel (not a top-level tab) with a
 // specific saved combat_encounters row already loaded.
 function sccRoutingUrl(query) {
