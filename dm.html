@@ -18940,23 +18940,33 @@ function sccFgRenderOpeningSection(num) {
 //    item's own .scc-live-section-label already provides "Companions &
 //    Attachments", matching every sibling widget (Party HP, Conditions). ──
 // Real hover tooltip for an attachment pill -- a quick reference, not the
-// full DM-only entry: what it is (the creature's own real description),
-// why it's attached (the attachment's own description field -- e.g.
-// Hana's bonding story), and its abilities/behavior (the creature's own
-// real behavior field). Only creature-type attachments with a resolvable
-// entity_id get the first/third parts (an item/effect, or a creature typed
-// in free-text with no catalog id, has no creature row to pull them from);
-// the "why" shows whenever the attachment itself has a description,
-// regardless of type. Returns '' (no tooltip at all) when nothing real
-// resolves, rather than an empty/misleading tooltip box.
+// full DM-only entry: what it is (the entity's own real description), why
+// it's attached (the attachment's own description field -- e.g. Hana's
+// bonding story), and its abilities/behavior (the entity's own real
+// behavior field). Resolves against CREATURES for attachment_type
+// 'creature' and against CHARACTERS (world_characters -- named NPCs/
+// companions like Drogon or Meeko, which have no CREATURES catalog row at
+// all) for attachment_type 'character' -- world_characters uses
+// summary/personality where the creature catalog uses description/
+// behavior, so both are checked. Only these two types with a resolvable
+// entity_id get the first/third parts (an item/effect, or anything typed
+// in free-text with no catalog id, has no row to pull them from); the
+// "why" shows whenever the attachment itself has a description, regardless
+// of type. Returns '' (no tooltip at all) when nothing real resolves,
+// rather than an empty/misleading tooltip box.
 function sccFgAttachTooltipText(a) {
-  var creature = (a.attachment_type === 'creature' && a.entity_id)
-    ? (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === a.entity_id; })
-    : null;
+  var entity = null;
+  if (a.entity_id && a.attachment_type === 'creature') {
+    entity = (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === a.entity_id; });
+  } else if (a.entity_id && a.attachment_type === 'character') {
+    entity = (typeof CHARACTERS !== 'undefined' ? CHARACTERS : []).find(function(c) { return c.id === a.entity_id; });
+  }
   var parts = [];
-  if (creature && creature.description) parts.push(creature.description);
+  var desc = entity && (entity.description || entity.summary);
+  if (desc) parts.push(desc);
   if (a.description) parts.push('Why: ' + a.description);
-  if (creature && creature.behavior) parts.push('Behavior: ' + creature.behavior);
+  var behavior = entity && (entity.behavior || entity.personality);
+  if (behavior) parts.push('Behavior: ' + behavior);
   return parts.join('\n\n');
 }
 // Nickname display (item 12, round 4, 2026-08-27) -- `name` keeps meaning
@@ -18968,21 +18978,26 @@ function sccFgAttachDisplayName(a) {
   return a.nickname ? (a.nickname + ' (' + a.name + ')') : a.name;
 }
 // Thumbnail per attachment (item 11, round 4, 2026-08-27) -- a resolvable
-// creature entity_id uses the creature's own catalog image, the same
-// CREATURES[].image field the Field Guide's featured-thumbnail mechanism
-// (sccFgResolveFeaturedEntity) already reads for the identical purpose.
-// item/effect/free-text attachments (no entity_id, or a non-creature
-// type) always fall back to a letter avatar -- there's no catalog image
-// to show for those. Falls back to the display name's own first letter
-// (nickname's, if set) so the avatar always matches what's actually
+// entity_id uses that entity's own catalog image: CREATURES[].image for
+// attachment_type 'creature', or CHARACTERS[].image (world_characters --
+// named NPCs/companions like Drogon or Meeko have no CREATURES row to pull
+// from at all) for attachment_type 'character'. Either is the same field
+// the Field Guide's featured-thumbnail mechanism (sccFgResolveFeaturedEntity)
+// already reads for the identical purpose. item/effect/free-text
+// attachments (no entity_id, or a type with no matching catalog) always
+// fall back to a letter avatar. Falls back to the display name's own first
+// letter (nickname's, if set) so the avatar always matches what's actually
 // showing next to it.
 function sccFgAttachPillThumbHtml(a) {
-  var creature = (a.attachment_type === 'creature' && a.entity_id)
-    ? (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === a.entity_id; })
-    : null;
+  var entity = null;
+  if (a.entity_id && a.attachment_type === 'creature') {
+    entity = (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === a.entity_id; });
+  } else if (a.entity_id && a.attachment_type === 'character') {
+    entity = (typeof CHARACTERS !== 'undefined' ? CHARACTERS : []).find(function(c) { return c.id === a.entity_id; });
+  }
   var initial = sccEsc((a.nickname || a.name || '?').charAt(0));
-  if (creature && creature.image) {
-    return '<img class="scc-fg-attach-pill-thumb" src="' + sccEsc(creature.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+  if (entity && entity.image) {
+    return '<img class="scc-fg-attach-pill-thumb" src="' + sccEsc(entity.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
       + '<span class="scc-fg-attach-pill-thumb-fallback" style="display:none">' + initial + '</span>';
   }
   return '<span class="scc-fg-attach-pill-thumb-fallback">' + initial + '</span>';
@@ -19218,7 +19233,15 @@ function sccFgAttachSearch(query) {
   query = (query || '').toLowerCase().trim();
   if (!query) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
   var results = [];
-  ['creature', 'item'].forEach(function(typeKey) {
+  // 'character' added here -- the attach-type dropdown already offers
+  // "Character/NPC" (SCC_FG_LINK_TYPES.character already exists and points
+  // at CHARACTERS/world_characters, used correctly elsewhere in this file)
+  // but this search loop never included it, so a named NPC companion with
+  // no CREATURES catalog row (e.g. Meeko, a raccoon that only exists in
+  // world_characters) could never actually be found/picked here -- only
+  // free-typed as untracked text with no entity_id. Real bug, not a data
+  // gap: the type was selectable but functionally dead.
+  ['creature', 'item', 'character'].forEach(function(typeKey) {
     var def = SCC_FG_LINK_TYPES[typeKey];
     def.arr().forEach(function(e) {
       if (e.name && e.name.toLowerCase().indexOf(query) >= 0) {
@@ -19288,13 +19311,22 @@ function sccFgAttachToggleBrowse() {
 }
 
 function sccFgAttachRenderBrowsePanel(panel) {
+  // 'character' section added alongside creature/item -- same gap as
+  // sccFgAttachSearch() above: the attach-type dropdown offers "Character/
+  // NPC" but Browse All never surfaced any. browseType bridges the naming
+  // mismatch between this form's own attachment_type value ('character',
+  // matching SCC_FG_LINK_TYPES) and sccBrowseGroups()'s param for the same
+  // data ('npc', the key Session Setup's own NPC browse-all already uses)
+  // -- section.type still drives the saved attachment_type via
+  // sccFgAttachBrowseSelect() below, unaffected.
   var sections = [
-    { type: 'creature', heading: 'Creatures' },
-    { type: 'item',     heading: 'Items' }
+    { type: 'creature',  heading: 'Creatures' },
+    { type: 'item',      heading: 'Items' },
+    { type: 'character', heading: 'Characters / NPCs', browseType: 'npc' }
   ];
   var html = '';
   sections.forEach(function(section) {
-    var groups = sccBrowseGroups(section.type);
+    var groups = sccBrowseGroups(section.browseType || section.type);
     var groupKeys = Object.keys(groups).sort();
     if (!groupKeys.length) return;
     html += '<div class="scc-browse-group-header">' + sccEsc(section.heading) + '</div>';
