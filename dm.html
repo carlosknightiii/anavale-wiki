@@ -17875,10 +17875,23 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
       + affectsHtml
     + '</div>';
   }
+  // Combat-leading cards (card.combat_encounter_id) get the same real
+  // new-tab "Roll Initiative" link the DM-authored box category above
+  // already uses -- same sccBuildCombatEncounterUrl()/sccHandleUrlRouting()
+  // plumbing, same .scc-fg-roll-init-btn styling (small gold button, one
+  // shared class rather than a one-off), just reached from a scenario
+  // card's own combat_encounter_id instead of a block's. Text reads "Start
+  // Combat" here (matching the DM's own naming for this ask) rather than
+  // "Roll Initiative" -- same destination/behavior, a scenario card is
+  // read before combat has started, unlike Beat 3's box which already
+  // assumes the fight is on.
+  var combatBtnHtml = card.combat_encounter_id
+    ? '<a class="scc-gold-btn-sm scc-fg-roll-init-btn" href="' + sccEsc(sccBuildCombatEncounterUrl(card.combat_encounter_id)) + '" target="_blank" rel="opener">&#9876; Start Combat</a>'
+    : '';
   var contentHtml = sccFgRenderDoc(card.blocks || [], { scenarioCardsDomId: domId, cardIdx: cardIdx });
-  if (!contentHtml && !decisionHtml) contentHtml = '<div class="scc-fg-sc-empty">No content yet.</div>';
+  if (!contentHtml && !decisionHtml && !combatBtnHtml) contentHtml = '<div class="scc-fg-sc-empty">No content yet.</div>';
   var backBtn = '<div class="scc-fg-sc-back-btn" onclick="sccFgBackToScenarioCards(\'' + sccEsc(domId) + '\')">&#8593; Back to Scenario Cards</div>';
-  return decisionHtml + contentHtml + backBtn;
+  return decisionHtml + combatBtnHtml + contentHtml + backBtn;
 }
 
 function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
