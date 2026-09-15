@@ -8981,7 +8981,21 @@ function showDMToast(msg, type) {
    accidentally commits one. Body is visually a mini version of the main
    Field Guide document (inset surface, same box/category rendering via
    sccFgRenderDoc) -- open design call, flagged per instruction. */
-.scc-fg-scenario-cards { border: 1px solid var(--scc-border); border-radius: var(--dm-radius-sm); overflow: hidden; margin: 0.5rem 0 0.75rem; }
+/* Ambient warm-gold canvas tint, 2026-09-15 -- DM-approved mockup CSS, applied
+   verbatim to the module's outer container only (not per-box) so a scenario
+   card's visual footprint is unmistakable against the plain black document
+   background surrounding it -- fixes "hard to tell if a box is inside a
+   scenario_cards module or just sitting after one in the flat flow". Replaces
+   the old thin var(--scc-border) outline with the approved inset gold ring;
+   overflow:hidden kept (harmless, nothing overflows now that real padding
+   exists) so old code paths relying on corner-clipping don't regress. */
+.scc-fg-scenario-cards {
+  background: radial-gradient(ellipse at top left, rgba(240,180,41,0.09), transparent 65%), #100f0a;
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: inset 0 0 0 3px rgba(240,180,41,0.35);
+  overflow: hidden; margin: 0.5rem 0 0.75rem;
+}
 .scc-fg-scenario-cards-header {
   padding: 0.55rem 0.85rem; background: var(--dm-surface-high);
   font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--dm-text);
