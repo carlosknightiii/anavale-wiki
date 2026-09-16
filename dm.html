@@ -17196,10 +17196,21 @@ function sccFgStyleSkillChecks(html) {
   );
 }
 
+// [[block:id|Label]] is a sibling of the entity-link convention below,
+// not a variant of it -- there's no entity to look up, so it skips the
+// thumbnail/SCC_FG_LINK_SEEN machinery entirely (that's specifically for
+// deduping a repeated entity's portrait, meaningless for a plain
+// scroll-target) and calls sccFgJumpToBlock() instead of sccOpenLookup().
+// Same [[type:id|Label]] outer syntax deliberately, so authoring a block
+// link reads as "the same kind of thing" as an entity link, not a new
+// convention to learn.
 function sccFgLinkify(html) {
   html = sccFgStyleSkillChecks(html);
   return (html || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
+    if (type === 'block') {
+      return '<span class="scc-fg-link" onclick="sccFgJumpToBlock(\'' + id.replace(/'/g, "\\'") + '\')">' + sccEsc(text) + '</span>';
+    }
     var key = type + ':' + id;
     var thumb = '';
     if (!SCC_FG_LINK_SEEN[key]) {
@@ -17222,6 +17233,9 @@ function sccFgLinkify(html) {
 function sccLinkifyEscaped(escapedText) {
   return (escapedText || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
+    if (type === 'block') {
+      return '<span class="scc-fg-link" onclick="sccFgJumpToBlock(\'' + id.replace(/'/g, "\\'") + '\')">' + text + '</span>';
+    }
     return '<span class="scc-fg-link" onclick="sccOpenLookup(\'' + type.replace(/'/g, "\\'") + '\',\'' + id.replace(/'/g, "\\'") + '\')">' + text + '</span>';
   });
 }
@@ -18021,7 +18035,24 @@ function sccFgSequencedHeadingText(b, idx) {
   return seqLabel + ' ' + num + ' \u2014 ' + (b.title || '') + (b.suffix ? ' (' + b.suffix + ')' : '');
 }
 
+// b.id is an optional, DM-authored stable identifier -- not used by any
+// render branch below directly, just stamped onto whichever single root
+// element that branch returns, so [[block:id|Label]] inline links (see
+// sccFgLinkify()) have something real to querySelector() for regardless
+// of which of the many return paths (box, its several category
+// sub-renderers, h1, h2, p, etc.) actually produced the html. A thin
+// wrapper around the real switch below, rather than touching every
+// individual branch, so this one change point covers all of them
+// (including future ones) and both top-level blocks AND a scenario
+// card's own nested card.blocks -- sccFgRenderDoc() is the only caller,
+// and it's reused for both (see sccFgScenarioCardBodyHtml()).
 function sccFgRenderBlock(b, idx, ctx) {
+  var html = sccFgRenderBlockRaw(b, idx, ctx);
+  if (b && b.id && html) html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-block-id="' + sccEsc(b.id) + '"');
+  return html;
+}
+
+function sccFgRenderBlockRaw(b, idx, ctx) {
   switch (b.type) {
     // title/subtitle/tagline/meta — the old hardcoded document header block
     // — no longer render at all. Replaced by the plain "Field Guide" header
@@ -18573,6 +18604,70 @@ function sccFgScrollIndicatorJump(i) {
   var targetTop = target.getBoundingClientRect().top + window.scrollY;
   // 'auto' (instant), not 'smooth' -- avoids a genuinely slow, sluggish-
   // feeling animated scroll on the longer jumps in a real, long document.
+  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
+}
+
+// Recursive search for a block carrying a given b.id, mirroring
+// sccFgFindScenarioCardsBlockInArray()'s own recursion into a scenario
+// card's nested card.blocks -- not hardcoded to one level, since a
+// scenario_cards module can itself be nested inside another card's
+// content. Returns { block, chain } where chain is the ordered list of
+// { domId, cardIdx } scenario-card tiles that have to be switched to
+// active, outermost first, before the target block actually exists in
+// the DOM -- empty when the target isn't inside any scenario card at
+// all (the common case: a plain top-level box/p/etc.). Matches only a
+// BLOCK's own b.id, never a scenario card's own (pre-existing) card.id
+// -- two separate id namespaces, so a card's "calm-the-otter" id can't
+// be accidentally targeted by a [[block:...]] link meant for one of its
+// nested content blocks, or vice versa.
+function sccFgFindBlockByIdInArray(blocks, id, chain) {
+  for (var i = 0; i < blocks.length; i++) {
+    var bl = blocks[i];
+    if (!bl || typeof bl !== 'object') continue;
+    if (bl.id === id) return { block: bl, chain: chain };
+    if (bl.type === 'box' && bl.category === 'scenario_cards' && Array.isArray(bl.cards)) {
+      var domId = sccFgScenarioCardsDomId(bl, i);
+      for (var c = 0; c < bl.cards.length; c++) {
+        var found = sccFgFindBlockByIdInArray(bl.cards[c].blocks || [], id, chain.concat([{ domId: domId, cardIdx: c }]));
+        if (found) return found;
+      }
+    }
+  }
+  return null;
+}
+
+function sccFgFindBlockById(id) {
+  var num = sccFgActiveSessionNum();
+  var row = SCC_FG_DOC_CACHE[num];
+  var blocks = (row && row.blocks) || [];
+  return sccFgFindBlockByIdInArray(blocks, id, []);
+}
+
+// Click handler for [[block:id|Label]] inline links (see sccFgLinkify()).
+// Unlike an entity link, there's nothing to open in the lookup drawer --
+// just scrolls to the target block, landing below the sticky header
+// exactly like a jump-rail dot (same --dm-env-banner-h offset math as
+// sccFgScrollIndicatorJump() above, deliberately not shared as a helper
+// since the two differ in how they locate `target` beforehand). A target
+// nested inside a not-currently-active scenario card is switched into
+// first, one chain step at a time, outermost first -- sccFgSwitchScenarioCard()
+// re-renders that card's body synchronously, so the next (inner) chain
+// step's own DOM exists by the time it runs. Silently no-ops on an
+// unresolvable id (bad/stale content), same as sccOpenLookup() degrading
+// on a bad entity id -- never a broken-looking dead click.
+function sccFgJumpToBlock(id) {
+  var found = sccFgFindBlockById(id);
+  if (!found) return;
+  found.chain.forEach(function(step) {
+    var tileEl = null;
+    var rowEl = document.querySelector('#' + step.domId + ' .scc-fg-scenario-cards-row');
+    if (rowEl) tileEl = rowEl.querySelectorAll('.scc-fg-sc-tile')[step.cardIdx] || null;
+    sccFgSwitchScenarioCard(step.domId, step.cardIdx, tileEl);
+  });
+  var target = document.querySelector('[data-fg-block-id="' + CSS.escape(id) + '"]');
+  if (!target) return;
+  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
+  var targetTop = target.getBoundingClientRect().top + window.scrollY;
   window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
 }
 
