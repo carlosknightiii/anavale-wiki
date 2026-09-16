@@ -16733,10 +16733,10 @@ function sccLiveSwitchSection(name) {
 // Decides which Live Session inner-tab a DM actually lands on, once per
 // session load -- guarded so it only applies once and doesn't keep
 // re-forcing the DM back to a specific tab if they've since navigated to a
-// different one on purpose. Field Guide is the real default landing view
-// (it's the actual read-aloud script for the session), with one deliberate
-// override: an assigned quest with a genuine in-progress beat is a more
-// actionable "come look at this" signal, so Quests wins instead.
+// different one on purpose. Field Guide is always the default landing view
+// (it's the actual read-aloud script for the session) -- the DM confirmed
+// this should hold for every session, not just ones with no in-progress
+// beat, superseding the earlier "an in-progress beat wins instead" override.
 // Deliberately NOT called from sccRenderQuestPanel() itself -- that function
 // runs from many places (chip add/remove, etc.) with no guarantee SCC_PROGRESS
 // has actually finished loading yet; calling this too early would latch it
@@ -16746,7 +16746,7 @@ function sccLiveSwitchSection(name) {
 function sccLiveApplyAutoExpand() {
   if (SCC_LIVE_ACC_AUTO_APPLIED) return;
   SCC_LIVE_ACC_AUTO_APPLIED = true;
-  sccLiveSwitchSection(sccComputeActiveBeat() ? 'quests' : 'fieldguide');
+  sccLiveSwitchSection('fieldguide');
 }
 // Quick Note capture is now the single, global FAB (sccOpenQuickNoteModal(),
 // reachable from every tab) -- the Live Session strip's own local Quick Note
