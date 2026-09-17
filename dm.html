@@ -8967,6 +8967,37 @@ function showDMToast(msg, type) {
    label above it; its own box margin provides top/bottom spacing. */
 .scc-fg-outcome-content { padding: 0 0.85rem 0.6rem; }
 .scc-fg-outcome-content .scc-fg-box:last-child { margin-bottom: 0; }
+/* ── Loot table widget (block.loot_table) -- small assign-to-PC list
+   appended after any block (top-level or nested inside a Scenario Card's
+   own content) that carries unclaimed loot. See
+   sccFgRenderLootTableWidget(). */
+.scc-fg-loot-widget {
+  margin: 0.5rem 0 0.75rem; padding: 0.6rem 0.75rem;
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius-sm);
+}
+.scc-fg-loot-widget-label {
+  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--dm-gold);
+  margin-bottom: 0.45rem;
+}
+.scc-fg-loot-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  padding: 0.35rem 0; border-top: 1px solid var(--scc-border); flex-wrap: wrap;
+}
+.scc-fg-loot-row:first-of-type { border-top: none; }
+.scc-fg-loot-row-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.scc-fg-loot-row-name { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--dm-text); }
+.scc-fg-loot-row-remaining { font-family: var(--font-body); font-size: 0.7rem; color: var(--dm-text-muted); }
+.scc-fg-loot-row-controls { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+.scc-fg-loot-pc-select { max-width: 140px; }
+.scc-fg-loot-qty-input {
+  width: 48px; padding: 0.25rem 0.4rem;
+  background: var(--dm-surface); border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm); color: var(--dm-text);
+  font-family: var(--font-sans); font-size: 0.78rem;
+}
+.scc-fg-loot-no-players { font-family: var(--font-body); font-size: 0.72rem; color: var(--dm-text-muted); font-style: italic; }
 /* ── Scenario Cards module (box.category === 'scenario_cards',
    2026-08-26 rebuild) -- replaces scenario_tabs + approach_tracker
    entirely, both fully removed. One reusable component covers both of
@@ -18063,7 +18094,130 @@ function sccFgSequencedHeadingText(b, idx) {
 function sccFgRenderBlock(b, idx, ctx) {
   var html = sccFgRenderBlockRaw(b, idx, ctx);
   if (b && b.id && html) html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-block-id="' + sccEsc(b.id) + '"');
+  // Loot table widget (block.loot_table) -- optional on ANY block, not tied
+  // to a specific type/category, so this is checked here rather than inside
+  // sccFgRenderBlockRaw's per-type switch. Appended as a sibling after the
+  // block's own content, not wrapped inside it -- simplest way to support
+  // every block type (a 'p', a 'box', a table row header, etc.) with the
+  // same one check.
+  if (html && b && Array.isArray(b.loot_table) && b.loot_table.length) {
+    html += sccFgRenderLootTableWidget(b, idx, ctx);
+  }
   return html;
+}
+
+// ── Loot table widget (block.loot_table, 2026-09-16) ──────────────────
+// Any block can carry an optional loot_table: [{item_id, item_name,
+// quantity}] -- items found but not yet handed to a specific character.
+// Renders a small widget listing every entry that still has quantity > 0,
+// with a PC picker + quantity input to assign some or all of it; an entry
+// that reaches 0 just drops out of the list (no separate "fully assigned"
+// state to render). Assigning both grants a real inventory row (same shape
+// sccAwardItem()/sccVendorBuy() already use) AND decrements the block's own
+// quantity, PATCHed straight back to field_guide_sessions.blocks -- unlike
+// completion/decision state elsewhere in this file (a session_note_entries
+// side-log, since those are just togglable flags), "how many are left" is a
+// real running count that has to live on the block itself. field_guide_sessions
+// already grants anon UPDATE (same RLS shape as every other table here), and
+// this is no different in kind from vendor_stock's own quantity decrement.
+//
+// ctx threads through exactly like combat_outcomes/scenario_cards above:
+// undefined for a top-level block, {scenarioCardsDomId, cardIdx} when this
+// block lives inside a Scenario Card's own nested content -- so the widget
+// (and its save path) works generically anywhere sccFgRenderBlock() runs,
+// not just at the document's top level.
+function sccFgLootCtxKey(ctx) {
+  return (ctx && ctx.scenarioCardsDomId != null) ? (ctx.scenarioCardsDomId + '' + ctx.cardIdx) : '';
+}
+function sccFgLootCtxFromKey(key) {
+  if (!key) return null;
+  var parts = key.split('');
+  return { scenarioCardsDomId: parts[0], cardIdx: parseInt(parts[1], 10) };
+}
+// The array that actually holds the block at position idx -- row.blocks
+// itself for a top-level block, or the relevant Scenario Card's own .blocks
+// for a nested one. Both are part of the SAME field_guide_sessions.blocks
+// jsonb tree, so mutating what this returns is enough for the later
+// PATCH of the whole row.blocks column to persist the change either way.
+function sccFgLootContainerBlocks(ctx) {
+  var num = sccFgActiveSessionNum();
+  var row = SCC_FG_DOC_CACHE[num];
+  if (!row) return null;
+  if (ctx && ctx.scenarioCardsDomId != null) {
+    var found = sccFgFindScenarioCardsBlockByDomId(ctx.scenarioCardsDomId);
+    var card = (found && Array.isArray(found.block.cards)) ? found.block.cards[ctx.cardIdx] : null;
+    return (card && Array.isArray(card.blocks)) ? card.blocks : null;
+  }
+  return Array.isArray(row.blocks) ? row.blocks : null;
+}
+function sccFgLootWidgetDomId(idx, ctxKey) {
+  return 'scc-fg-loot-widget-' + (ctxKey ? ctxKey.replace(/[^a-zA-Z0-9]/g, '_') + '-' : '') + idx;
+}
+function sccFgRenderLootTableWidget(b, idx, ctx) {
+  var items = Array.isArray(b.loot_table) ? b.loot_table : [];
+  if (!items.length) return '';
+  var ctxKey = sccFgLootCtxKey(ctx);
+  var domId = sccFgLootWidgetDomId(idx, ctxKey);
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  var players = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+  var rows = items.map(function(it, itemIdx) {
+    if (!it || !((it.quantity || 0) > 0)) return '';
+    var playerOptions = players.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
+    return '<div class="scc-fg-loot-row">'
+      + '<div class="scc-fg-loot-row-info">'
+        + '<span class="scc-fg-loot-row-name">' + sccEsc(it.item_name || it.item_id || 'Item') + '</span>'
+        + '<span class="scc-fg-loot-row-remaining">' + it.quantity + ' remaining</span>'
+      + '</div>'
+      + (auditLocked ? '' : (players.length
+        ? '<div class="scc-fg-loot-row-controls">'
+          + '<select class="scc-input scc-fg-loot-pc-select" id="' + domId + '-pc-' + itemIdx + '">' + playerOptions + '</select>'
+          + '<input type="number" class="scc-fg-loot-qty-input" id="' + domId + '-qty-' + itemIdx + '" min="1" max="' + it.quantity + '" value="' + it.quantity + '">'
+          + '<button class="scc-btn-sm" onclick="sccFgLootAssign(' + idx + ',\'' + escQ(ctxKey) + '\',' + itemIdx + ')">Assign</button>'
+        + '</div>'
+        : '<span class="scc-fg-loot-no-players">No players</span>'))
+    + '</div>';
+  }).join('');
+  if (!rows) return '';
+  return '<div class="scc-fg-loot-widget" id="' + domId + '">'
+    + '<div class="scc-fg-loot-widget-label">&#128230; Unclaimed Loot</div>'
+    + rows
+  + '</div>';
+}
+function sccFgRerenderLootWidget(idx, ctx) {
+  var containerBlocks = sccFgLootContainerBlocks(ctx);
+  var block = containerBlocks ? containerBlocks[idx] : null;
+  var el = document.getElementById(sccFgLootWidgetDomId(idx, sccFgLootCtxKey(ctx)));
+  if (!el) return;
+  var html = block ? sccFgRenderLootTableWidget(block, idx, ctx) : '';
+  if (html) el.outerHTML = html; else el.remove();
+}
+function sccFgLootAssign(idx, ctxKey, itemIdx) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — loot is read-only here', 'error'); return; }
+  var ctx = sccFgLootCtxFromKey(ctxKey);
+  var containerBlocks = sccFgLootContainerBlocks(ctx);
+  var block = containerBlocks ? containerBlocks[idx] : null;
+  var item = (block && Array.isArray(block.loot_table)) ? block.loot_table[itemIdx] : null;
+  if (!item) { showDMToast('Could not find this loot item', 'error'); return; }
+  var domId = sccFgLootWidgetDomId(idx, ctxKey);
+  var selEl = document.getElementById(domId + '-pc-' + itemIdx);
+  var qtyEl = document.getElementById(domId + '-qty-' + itemIdx);
+  var player = selEl ? SCC_PLAYERS[parseInt(selEl.value, 10)] : null;
+  if (!player) { showDMToast('No player selected', 'error'); return; }
+  var qty = qtyEl ? parseInt(qtyEl.value, 10) : NaN;
+  if (!(qty > 0)) { showDMToast('Enter a quantity of at least 1', 'error'); return; }
+  if (qty > (item.quantity || 0)) { showDMToast('Only ' + item.quantity + ' left', 'error'); return; }
+  var num = sccFgActiveSessionNum();
+  var row = SCC_FG_DOC_CACHE[num];
+  sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true }).then(function(r) {
+    if (!r.ok) { showDMToast('Failed to add to inventory', 'error'); return null; }
+    item.quantity = item.quantity - qty;
+    return sccPatch('field_guide_sessions', '?session_number=eq.' + encodeURIComponent(num), { blocks: row.blocks });
+  }).then(function(r2) {
+    if (!r2) return;
+    if (!r2.ok) { showDMToast('Item granted, but could not save the updated remaining count', 'error'); return; }
+    showDMToast((item.item_name || item.item_id) + ' \u00d7' + qty + ' \u2192 ' + player.name + ' \u2713', 'success');
+    sccFgRerenderLootWidget(idx, ctx);
+  }).catch(function() { showDMToast('Failed to assign loot', 'error'); });
 }
 
 function sccFgRenderBlockRaw(b, idx, ctx) {
