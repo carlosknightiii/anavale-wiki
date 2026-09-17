@@ -8972,7 +8972,13 @@ function showDMToast(msg, type) {
    own content) that carries unclaimed loot. See
    sccFgRenderLootTableWidget(). */
 .scc-fg-loot-widget {
-  margin: 0.5rem 0 0.75rem; padding: 0.6rem 0.75rem;
+  /* Right margin keeps this box clear of the fixed right-edge jump rail
+     (.scc-fg-scroll-indicator, right:2px + up to 130px of always-on
+     desktop labels) -- confirmed live the doc's own content column
+     already runs a fixed ~24px past the rail's left edge regardless of
+     viewport width, so a block-level box flush to the column's own
+     right edge sits partly under the rail's labels. */
+  margin: 0.5rem 3.75rem 0.75rem 0; padding: 0.6rem 0.75rem;
   background: var(--dm-surface-high); border: 1px solid var(--scc-border-gold);
   border-radius: var(--dm-radius-sm);
 }
@@ -18172,7 +18178,7 @@ function sccFgRenderLootTableWidget(b, idx, ctx) {
         ? '<div class="scc-fg-loot-row-controls">'
           + '<select class="scc-input scc-fg-loot-pc-select" id="' + domId + '-pc-' + itemIdx + '">' + playerOptions + '</select>'
           + '<input type="number" class="scc-fg-loot-qty-input" id="' + domId + '-qty-' + itemIdx + '" min="1" max="' + it.quantity + '" value="' + it.quantity + '">'
-          + '<button class="scc-btn-sm" onclick="sccFgLootAssign(' + idx + ',\'' + escQ(ctxKey) + '\',' + itemIdx + ')">Assign</button>'
+          + '<button class="scc-gold-btn-sm" onclick="sccFgLootAssign(' + idx + ',\'' + escQ(ctxKey) + '\',' + itemIdx + ')">Assign</button>'
         + '</div>'
         : '<span class="scc-fg-loot-no-players">No players</span>'))
     + '</div>';
