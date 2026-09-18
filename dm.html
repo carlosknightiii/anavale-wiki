@@ -9239,8 +9239,30 @@ function showDMToast(msg, type) {
   padding: 0.35rem 0; border-top: 1px solid var(--scc-border); flex-wrap: wrap;
 }
 .scc-fg-loot-row:first-of-type { border-top: none; }
-.scc-fg-loot-row-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.scc-fg-loot-row-info { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+/* Thumbnail, same resolve/fallback pattern as .scc-fg-sc-portrait/-fallback
+   (Scene Cast) -- see sccFgLootRowThumbHtml(). Sized between that panel's
+   34px cast portraits and the inline 18px mention thumbnails: a loot row
+   is its own list item (like a cast entry) but denser than a Scene Cast
+   panel, so it gets a size in between rather than reusing either verbatim. */
+.scc-fg-loot-row-thumb, .scc-fg-loot-row-fallback {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  object-fit: cover; border: 1px solid var(--scc-border-mid);
+}
+.scc-fg-loot-row-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--dm-surface); color: var(--dm-text-muted);
+  font-family: var(--font-display); font-size: 0.72rem;
+}
+.scc-fg-loot-row-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .scc-fg-loot-row-name { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--dm-text); }
+/* Clickable state reuses .scc-fg-link verbatim (the same gold/dotted-underline
+   language every other in-document entity link already uses) rather than a
+   new one-off treatment -- only applied when the entry actually resolves
+   against a real items-catalog row (see sccFgRenderLootTableWidget()); an
+   entry with no catalog match (or a currency entry, which has no catalog
+   row at all) renders as plain text, same "no click that does nothing"
+   rule Scene Cast's own 'pc' entries follow. */
 .scc-fg-loot-row-remaining { font-family: var(--font-body); font-size: 0.7rem; color: var(--dm-text-muted); }
 .scc-fg-loot-row-controls { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
 .scc-fg-loot-pc-select { max-width: 140px; }
@@ -19101,6 +19123,34 @@ function sccFgLootEntryLabel(it) {
   }
   return (it && (it.item_name || it.item_id)) || 'Item';
 }
+// Thumbnail + click-through for one loot row, 2026-09-18. Reuses
+// sccFgResolveFeaturedEntity() verbatim -- the same resolver
+// block.featured/Scene Cast already use for a real catalog image, with the
+// exact same letter-avatar fallback everywhere else in the doc falls back
+// to when there's no portrait -- rather than a third copy of that lookup+
+// fallback logic. A currency entry has no catalog row to resolve against
+// (wealth is a character_sheet.gold_cp integer, not an inventory item --
+// see this widget's own header comment above) -- falls back straight to
+// its currency name's own initial, same fallback mechanism, and is never
+// treated as clickable (there's no lookup card for "3 Silver Pieces").
+// Returns { thumbHtml, resolved } so the caller (sccFgRenderLootTableWidget)
+// knows whether to render the name as a real sccOpenLookup() link -- an
+// item_id that doesn't match any real items-catalog row degrades to plain
+// text, same "no click that does nothing" rule Scene Cast's own 'pc'
+// entries follow, rather than linking to a lookup card that won't resolve.
+function sccFgLootRowThumbHtml(it) {
+  if (it && it.currency) {
+    var currInitial = sccEsc(((SCC_FG_LOOT_CURRENCY_NAME[it.currency] || it.currency) + '').charAt(0));
+    return { thumbHtml: '<span class="scc-fg-loot-row-fallback">' + currInitial + '</span>', resolved: null };
+  }
+  var r = (it && it.item_id) ? sccFgResolveFeaturedEntity({ type: 'item', id: it.item_id }) : null;
+  var initial = sccEsc((sccFgLootEntryLabel(it) || '?').charAt(0));
+  var thumbHtml = (r && r.imgUrl)
+    ? '<img class="scc-fg-loot-row-thumb" src="' + sccEsc(r.imgUrl) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      + '<span class="scc-fg-loot-row-fallback" style="display:none">' + initial + '</span>'
+    : '<span class="scc-fg-loot-row-fallback">' + initial + '</span>';
+  return { thumbHtml: thumbHtml, resolved: r };
+}
 function sccFgRenderLootTableWidget(b, idx, ctx) {
   var items = Array.isArray(b.loot_table) ? b.loot_table : [];
   if (!items.length) return '';
@@ -19111,10 +19161,17 @@ function sccFgRenderLootTableWidget(b, idx, ctx) {
   var rows = items.map(function(it, itemIdx) {
     if (!it || !((it.quantity || 0) > 0)) return '';
     var playerOptions = players.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
+    var thumb = sccFgLootRowThumbHtml(it);
+    var nameHtml = thumb.resolved
+      ? '<span class="scc-fg-loot-row-name scc-fg-link" onclick="sccOpenLookup(\'item\',\'' + escQ(it.item_id) + '\')" title="Open full entry">' + sccEsc(sccFgLootEntryLabel(it)) + '</span>'
+      : '<span class="scc-fg-loot-row-name">' + sccEsc(sccFgLootEntryLabel(it)) + '</span>';
     return '<div class="scc-fg-loot-row">'
       + '<div class="scc-fg-loot-row-info">'
-        + '<span class="scc-fg-loot-row-name">' + sccEsc(sccFgLootEntryLabel(it)) + '</span>'
-        + '<span class="scc-fg-loot-row-remaining">' + it.quantity + ' remaining</span>'
+        + thumb.thumbHtml
+        + '<div class="scc-fg-loot-row-text">'
+          + nameHtml
+          + '<span class="scc-fg-loot-row-remaining">' + it.quantity + ' remaining</span>'
+        + '</div>'
       + '</div>'
       + (auditLocked ? '' : (players.length
         ? '<div class="scc-fg-loot-row-controls">'
