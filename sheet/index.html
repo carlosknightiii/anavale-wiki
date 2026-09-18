@@ -842,6 +842,20 @@
     }
     .cs-spellcast-stat-example { opacity: 0.8; font-style: italic; }
     .cs-spellcast-stat-icon { font-size: 1rem; }
+    /* Small all-caps tag directly above the spell name (mirrors dm.html's
+       .scc-pd-class-ability-tag), not a separate column. */
+    .cs-sl-class-ability-tag {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.85;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
     .cs-spellcast-stat-tagline {
       font-family: var(--font-body);
       font-size: 0.8rem;
@@ -4908,6 +4922,7 @@
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
     var favSet = (SHEET && Array.isArray(SHEET.favorite_spells)) ? SHEET.favorite_spells : [];
     var alwaysPrepared = (SHEET && Array.isArray(SHEET.always_prepared_spells)) ? SHEET.always_prepared_spells : [];
+    var classAbilityIds = classAbilitySpellIds();
     var maxPrepared = computePreparedMax();
     var full = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
       .sort(spellsLearnedComparator());
@@ -4936,8 +4951,15 @@
       // regardless of the daily-prepared budget, same reasoning as
       // cantrips: never counted, never checkbox-addable to prepared_spells.
       var isAlwaysPrepared = s.level === 0 || alwaysPrepared.indexOf(s.id) !== -1;
+      // A real class-feature grant (Favored Enemy's Hunter's Mark, etc.) gets
+      // the "Class Ability" tag above its name instead of the generic
+      // "Always Prepared" text — same distinction dm.html's Admin view makes
+      // between a class grant and a personal/story DM grant.
+      var isClassAbility = classAbilityIds.indexOf(s.id) !== -1;
       var preparedCell = isAlwaysPrepared
-        ? '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>'
+        ? (isClassAbility
+            ? '<span style="color:var(--char-text-faint); font-size:0.78rem;" title="Always prepared &mdash; granted by a class feature">&mdash;</span>'
+            : '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>')
         : '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
       // Row height matches actual content, not a fixed reservation — the
       // long-description columns forced every row (short spells included)
@@ -4953,7 +4975,7 @@
         + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
         + '<td class="cs-inv-td"><span class="cs-sl-name-cell">'
           + '<button class="cs-sl-fav-btn' + (isFav ? ' favorited' : '') + '" onclick="toggleSpellFavorite(\'' + s.id + '\')" aria-label="' + (isFav ? 'Unfavorite' : 'Favorite') + ' ' + escHtml(s.name) + '" title="' + (isFav ? 'Unfavorite' : 'Favorite') + '">' + (isFav ? '&#9733;' : '&#9734;') + '</button>'
-          + escHtml(s.name)
+          + '<span>' + (isClassAbility ? '<span class="cs-sl-class-ability-tag">Class Ability</span>' : '') + escHtml(s.name) + '</span>'
         + '</span></td>'
         + '<td class="cs-inv-td cs-inv-td-cat">' + levelLabel + '</td>'
         + '<td class="cs-inv-td">' + (s.school ? escHtml(s.school) : '&mdash;') + '</td>'
@@ -5055,6 +5077,17 @@
       + '<span class="cs-spellcast-stat-explain">' + explain + '</span>'
       + '<span class="cs-spellcast-stat-example">' + example + '</span>'
     + '</div>';
+  }
+  // Ported from dm.html's sccPlayerClassAbilitySpellIds(): classes.
+  // class_ability_spells entries ({spell_id, min_level}) gated on the
+  // character's real level. Null-spell_id entries (spells not in the catalog
+  // yet) are skipped — nothing to match against.
+  function classAbilitySpellIds() {
+    var level = (CH && CH.level) || 1;
+    var entries = (CLASS_ROW && Array.isArray(CLASS_ROW.class_ability_spells)) ? CLASS_ROW.class_ability_spells : [];
+    return entries
+      .filter(function(e) { return e.spell_id && level >= (e.min_level || 1); })
+      .map(function(e) { return e.spell_id; });
   }
   function renderSpellcastingStats() {
     var el = document.getElementById('cs-class-spellcasting-stats');
