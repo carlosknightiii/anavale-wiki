@@ -887,6 +887,10 @@
       padding-bottom: 0.1rem; /* aligns its baseline with the labeled fields beside it (.cs-inv-filter-row is align-items:flex-end) */
     }
     .cs-sl-fav-filter input { cursor: pointer; }
+    .cs-sl-cast--action { color: var(--spell-cast-action); font-weight: 700; }
+    .cs-sl-cast--bonus { color: var(--spell-cast-bonus); font-weight: 700; }
+    .cs-sl-cast--reaction { color: var(--spell-cast-reaction); font-weight: 700; }
+    .cs-sl-ritual { font-size: 0.72rem; color: var(--text); border: 1px solid var(--border-strong, currentColor); border-radius: var(--radius-sm); padding: 0 0.3rem; margin-left: 0.25rem; white-space: nowrap; }
     .cs-spell-thumb { width: 28px; height: 28px; object-fit: contain; display: block; margin: 0 auto; }
     .cs-spell-thumb-fallback { display: block; text-align: center; opacity: 0.5; font-size: 1rem; }
     /* Favorite star lives inline with the spell name rather than as its own
@@ -3284,13 +3288,13 @@
   // domain regardless of what this specific character knows — same reason
   // Inventory's own Category select is a static enum, not derived from the
   // player's actual items.
-  var SL_FILTER = { q: '', level: '', favOnly: false };
+  var SL_FILTER = { q: '', level: '', cast: '', favOnly: false };
   // Column sort, additive to the search/level/favorites filters above —
   // col is null (falls back to the table's own default level-then-name
   // order) until a sortable header is clicked; dir is 1 (ascending) or -1
   // (descending), flipped by a second click on the same column. Reset per
   // page load only, same lifetime as SL_FILTER.
-  var SL_SORT = { col: null, dir: 1 };
+  var SL_SORT = { col: 'name', dir: 1 };
   var CH = null;              // player_characters row, set once by renderCharacter() — lets async
                                // re-renderers (fetchBackgroundData/fetchRegionData callbacks) reach it
                                // without threading it through every call site.
@@ -4508,6 +4512,12 @@
               + '<option value="">All Levels</option>'
             + '</select>'
           + '</div>'
+          + '<div class="cs-inv-filter-field cs-inv-filter-field--cat">'
+            + '<label class="cs-inv-filter-label">Casting Time</label>'
+            + '<select class="cs-inv-filter-select" id="cs-sl-cast-select" onchange="applySpellsLearnedFilter()">'
+              + '<option value="">All Casting Times</option>'
+            + '</select>'
+          + '</div>'
           + '<label class="cs-sl-fav-filter"><input type="checkbox" id="cs-sl-fav-filter-cb" onchange="applySpellsLearnedFilter()"> &#9733; Favorites only</label>'
         + '</div>'
         + '<div class="cs-inv-table-wrap">'
@@ -4771,8 +4781,9 @@
     if (col === 'category') return s.school || '';
     return s[col] || '';
   }
-  // Default order (no column sorted) stays level-then-name, exactly as
-  // before this feature existed. A sorted column always falls back to name
+  // Default order is alphabetical by name (SL_SORT starts on 'name', so the
+  // Name header shows its arrow from the first render); the level-then-name
+  // fallback below only applies if SL_SORT.col is ever cleared. A sorted column always falls back to name
   // as its own tie-break, so equal values (e.g. every Level 1 spell, or
   // every spell sharing "Action" casting time) don't jump around between
   // re-renders in an order that looks arbitrary.
@@ -4810,6 +4821,8 @@
     var searchEl = document.getElementById('cs-sl-search-input');
     var levelEl = document.getElementById('cs-sl-level-select');
     var favEl = document.getElementById('cs-sl-fav-filter-cb');
+    var castEl = document.getElementById('cs-sl-cast-select');
+    SL_FILTER.cast = castEl ? castEl.value : '';
     SL_FILTER.q = searchEl ? (searchEl.value || '').trim().toLowerCase() : '';
     SL_FILTER.level = levelEl ? levelEl.value : '';
     SL_FILTER.favOnly = favEl ? favEl.checked : false;
@@ -4818,6 +4831,7 @@
   function spellsLearnedRowMatchesFilter(s, favSet) {
     if (SL_FILTER.favOnly && favSet.indexOf(s.id) === -1) return false;
     if (SL_FILTER.level !== '' && String(s.level) !== SL_FILTER.level) return false;
+    if (SL_FILTER.cast !== '' && spellCastKind(s.casting_time) !== SL_FILTER.cast) return false;
     if (SL_FILTER.q) {
       var haystack = (s.name + ' ' + (s.school || '') + ' ' + (s.spell_desc || '')).toLowerCase();
       if (haystack.indexOf(SL_FILTER.q) === -1) return false;
@@ -4858,6 +4872,46 @@
     }
     levelEl.value = currentValue;
   }
+  // Casting time as stored can carry a trailer (e.g. Ensnaring Strike's
+  // "Bonus Action (immediately after hitting a creature with a weapon)") —
+  // color + filter both key off the base kind so that row still reads as a
+  // Bonus Action, while the full stored text is still what displays.
+  function spellCastKind(ct) {
+    var t = (ct || '').trim();
+    if (/^bonus action/i.test(t)) return 'Bonus Action';
+    if (/^reaction/i.test(t)) return 'Reaction';
+    if (/^action/i.test(t)) return 'Action';
+    return t;
+  }
+  var SPELL_CAST_CLASS = { 'Action': 'cs-sl-cast--action', 'Bonus Action': 'cs-sl-cast--bonus', 'Reaction': 'cs-sl-cast--reaction' };
+  var SPELL_CAST_ORDER = ['Action', 'Bonus Action', 'Reaction'];
+  // Same live-derived, selection-preserving pattern as the Level select.
+  function populateSpellsLearnedCastOptions() {
+    var el = document.getElementById('cs-sl-cast-select');
+    if (!el) return;
+    var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
+    var present = {};
+    learned.forEach(function(id) {
+      var sp = SPELLS_BY_ID[id];
+      if (sp && sp.casting_time) present[spellCastKind(sp.casting_time)] = true;
+    });
+    var kinds = Object.keys(present).sort(function(a, b) {
+      var ia = SPELL_CAST_ORDER.indexOf(a), ib = SPELL_CAST_ORDER.indexOf(b);
+      if (ia === -1) ia = 99; if (ib === -1) ib = 99;
+      return (ia - ib) || a.localeCompare(b);
+    });
+    var cur = el.value;
+    el.innerHTML = '<option value="">All Casting Times</option>'
+      + kinds.map(function(k) { return '<option value="' + escHtml(k) + '">' + escHtml(k) + '</option>'; }).join('');
+    if (cur !== '' && kinds.indexOf(cur) === -1) { cur = ''; SL_FILTER.cast = ''; }
+    el.value = cur;
+  }
+  function spellCastCellHtml(s) {
+    if (!s.casting_time) return '&mdash;';
+    var cls = SPELL_CAST_CLASS[spellCastKind(s.casting_time)];
+    var badge = s.ritual ? ' <span class="cs-sl-ritual" title="Ritual &mdash; can be cast without a spell slot by taking 10 extra minutes" aria-label="Ritual">&#8635; Ritual</span>' : '';
+    return '<span class="' + (cls || '') + '">' + escHtml(s.casting_time) + '</span>' + badge;
+  }
   function renderSpellsLearnedTable() {
     var card = document.getElementById('cs-spells-learned-card');
     var tbody = document.getElementById('cs-spells-learned-tbody');
@@ -4868,6 +4922,7 @@
     if (!hasCasting) { card.style.display = 'none'; return; }
     card.style.display = '';
     populateSpellsLearnedLevelOptions();
+    populateSpellsLearnedCastOptions();
     updateSpellsLearnedSortArrows();
     var learned = (SHEET && Array.isArray(SHEET.learned_spells)) ? SHEET.learned_spells : [];
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
@@ -4922,7 +4977,7 @@
         + '</span></td>'
         + '<td class="cs-inv-td cs-inv-td-cat">' + levelLabel + '</td>'
         + '<td class="cs-inv-td">' + (s.school ? escHtml(s.school) : '&mdash;') + '</td>'
-        + '<td class="cs-inv-td">' + (s.casting_time ? escHtml(s.casting_time) : '&mdash;') + '</td>'
+        + '<td class="cs-inv-td">' + spellCastCellHtml(s) + '</td>'
         + '<td class="cs-inv-td">' + (s.range ? escHtml(s.range) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.components ? escHtml(s.components) : '&mdash;') + '</td>'
         + '<td class="cs-inv-td">' + (s.duration ? escHtml(s.duration) : '&mdash;') + '</td>'
