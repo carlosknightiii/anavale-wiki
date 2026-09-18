@@ -18338,21 +18338,58 @@ function sccFgRedrawScenarioCardsBlock(domId, cardIdx) {
   if (wrapEl) wrapEl.outerHTML = sccFgOneScenarioCardsHtml(found.block, found.idx, cardIdx);
 }
 
-// Computes an auto-numbered Step/Beat h2's real display text -- the
-// number is 1-based position among every h2 block sharing the same
+// Real quest beat headings ('beat' sequence specifically) have a canonical
+// number already -- the matching entry's own `order` in that quest's real
+// quests.beats array -- found 2026-09-17 while investigating a DM report
+// that a Field Guide beat heading showed the wrong name/XP for its number.
+// Root cause turned out to be the reverse of that report's own guess: the
+// heading's name+XP were already correct for what it actually represents,
+// but its auto-counted NUMBER was wrong, because position-counting is
+// scoped to one document (see sccFgSequencedHeadingText below) and
+// "Something Is Wrong With Gerald"'s beat 3 ("The Extractor") heading is
+// deliberately re-included in Session 2's document (the party didn't
+// finish it in Session 1) -- Session 2's own count for 'beat' headings
+// starts fresh at 1, so the re-included beat 3 heading showed as "Beat 1"
+// there despite being real beat 3 content. Matches by title against every
+// quest's beats array (titles are DM-authored per quest and not expected
+// to collide) and returns null -- caller falls back to the old
+// position-count -- for any 'beat' heading that isn't really a structured
+// quests.beats entry (typo'd title, freeform beat with no quest tie, etc.)
+// so this can't break a heading it has no real data for.
+function sccFgQuestBeatOrderForTitle(title) {
+  if (!title) return null;
+  var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  for (var i = 0; i < quests.length; i++) {
+    var beats = quests[i].beats || [];
+    for (var j = 0; j < beats.length; j++) {
+      if (beats[j].title === title) return beats[j].order;
+    }
+  }
+  return null;
+}
+// Computes an auto-numbered Step/Beat h2's real display text. For 'beat'
+// sequence headings, the number is the real quest beat_order looked up via
+// sccFgQuestBeatOrderForTitle() above -- a quest beat has one true number
+// regardless of which document(s) its heading appears in. For 'step' (and
+// any 'beat' heading with no matching quests.beats entry), the number
+// falls back to 1-based position among every h2 block sharing the same
 // b.sequence value, counted in real document order up to and including
 // this block's own index (not a separately-maintained counter that could
-// itself drift). b.title/b.suffix mirror the old literal-text shape's own
-// "Name (parenthetical)" convention verbatim (suffix covers "5 min", "50
-// XP", "300 XP + Level Up", "Hana's Moment" -- confirmed live these vary
-// too much to parse into separate duration/XP fields, so it's kept as one
-// free-text field, not two).
+// itself drift) -- correct for a step sequence, which has no cross-
+// document identity of its own to look up. b.title/b.suffix mirror the old
+// literal-text shape's own "Name (parenthetical)" convention verbatim
+// (suffix covers "5 min", "50 XP", "300 XP + Level Up", "Hana's Moment" --
+// confirmed live these vary too much to parse into separate
+// duration/XP fields, so it's kept as one free-text field, not two).
 function sccFgSequencedHeadingText(b, idx) {
-  var row = SCC_FG_DOC_CACHE[sccFgActiveSessionNum()];
-  var blocks = (row && row.blocks) || [];
-  var num = 0;
-  for (var i = 0; i <= idx && i < blocks.length; i++) {
-    if (blocks[i] && blocks[i].type === 'h2' && blocks[i].sequence === b.sequence) num++;
+  var num = b.sequence === 'beat' ? sccFgQuestBeatOrderForTitle(b.title) : null;
+  if (num == null) {
+    var row = SCC_FG_DOC_CACHE[sccFgActiveSessionNum()];
+    var blocks = (row && row.blocks) || [];
+    num = 0;
+    for (var i = 0; i <= idx && i < blocks.length; i++) {
+      if (blocks[i] && blocks[i].type === 'h2' && blocks[i].sequence === b.sequence) num++;
+    }
   }
   var seqLabel = b.sequence.charAt(0).toUpperCase() + b.sequence.slice(1);
   return seqLabel + ' ' + num + ' \u2014 ' + (b.title || '') + (b.suffix ? ' (' + b.suffix + ')' : '');
