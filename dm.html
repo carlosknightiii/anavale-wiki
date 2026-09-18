@@ -498,6 +498,16 @@
   background: var(--dm-gold-dim);
 }
 
+/* ── ELEVENLABS VOICE PREVIEW (character form) ─────────────────── */
+.scc-voice-preview-status {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--dm-text-muted);
+  margin-top: 0.4rem;
+  min-height: 1.2em;
+}
+.scc-voice-preview-status--error { color: var(--dm-red); }
+
 /* ── IMAGE UPLOAD ──────────────────────────── */
 .image-upload-area {
   border: 2px dashed var(--dm-border-mid);
@@ -2184,8 +2194,23 @@
           <div class="form-section-header">DM Only</div>
           <div class="field-group">
             <label class="field-label" for="char-read-aloud">Read Aloud</label>
-            <span class="field-help">Prose read aloud to players when they first encounter this character — spoken at the table</span>
+            <span class="field-help">Prose read aloud to players when they first encounter this character — spoken at the table. Bracketed [Voice: ...] notes are performance direction for you, not part of the text — Preview Voice strips them out automatically.</span>
             <textarea class="field-textarea tall" id="char-read-aloud" placeholder="A figure stands at the crossroads…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-elevenlabs-voice-id">ElevenLabs Voice ID</label>
+            <span class="field-help">Find and copy a voice ID from ElevenLabs' Voice Library, then paste it here to preview this NPC's Read Aloud text in that voice.</span>
+            <input class="field-input" type="text" id="char-elevenlabs-voice-id" placeholder="Paste a voice ID from ElevenLabs' Voice Library…">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="char-voice-notes">Voice Notes</label>
+            <span class="field-help">Why this voice — for your own reference, never shown to players</span>
+            <input class="field-input" type="text" id="char-voice-notes" placeholder="e.g. Gravelly, slow cadence, sounds tired of everything">
+          </div>
+          <div class="field-group">
+            <button type="button" class="btn-add" id="char-voice-preview-btn" onclick="sccPreviewCharacterVoice()">▶ Preview Voice</button>
+            <div id="char-voice-preview-status" class="scc-voice-preview-status"></div>
+            <audio id="char-voice-preview-audio" controls style="display:none;margin-top:0.6rem;width:100%;max-width:420px;"></audio>
           </div>
           <div class="field-group">
             <label class="field-label" for="char-secret">Secret</label>
@@ -10104,6 +10129,8 @@ function generateCharacter() {
     player_knowledge:         orNull(val('char-player-knowledge')),
     dm_notes:                 orNull(val('char-dm-notes')),
     read_aloud:               orNull(val('char-read-aloud')),
+    elevenlabs_voice_id:      orNull(val('char-elevenlabs-voice-id')),
+    voice_notes:              orNull(val('char-voice-notes')),
     gigglegloom_relationship: orNull(val('char-gigglegloom')),
     color:                    orNull(val('char-color')),
     tags:                     tagsArr('char-tags')
@@ -10121,6 +10148,101 @@ function generateCharacter() {
   if (imgPath) entry.image = imgPath;
   entry.player_facing = triRadio('char-pf');
   showOutput(entry, 'character');
+}
+
+/* ── ELEVENLABS VOICE PREVIEW (character form) ───────────────────
+   Public repo — dm.html never talks to ElevenLabs directly and never
+   holds an ElevenLabs API key anywhere (not in localStorage, not in
+   Supabase table data, not in any committed file). Preview Voice calls
+   the "voice-proxy" Supabase Edge Function instead (same project as
+   everything else this file talks to, ebppsgaftzyvftemfeom) — that
+   function holds the real key as a Supabase secret (set via the
+   dashboard's Edge Functions > Secrets page, never written to any
+   file) and makes the actual ElevenLabs call server-side. verify_jwt
+   is deliberately off for that function; it does its own Origin
+   allowlist check instead (carlosknightiii.github.io + any localhost),
+   matching what was asked for. First pass: character edit form only,
+   not the Live Session view — see CLAUDE.md Decision Log for the
+   scope note. ──────────────────────────────────────────────────────── */
+var VOICE_PROXY_URL = 'https://ebppsgaftzyvftemfeom.supabase.co/functions/v1/voice-proxy';
+
+function sccResetVoicePreview() {
+  var statusEl = document.getElementById('char-voice-preview-status');
+  var audioEl  = document.getElementById('char-voice-preview-audio');
+  var btn      = document.getElementById('char-voice-preview-btn');
+  if (statusEl) { statusEl.textContent = ''; statusEl.className = 'scc-voice-preview-status'; }
+  if (audioEl)  { audioEl.pause(); audioEl.removeAttribute('src'); audioEl.style.display = 'none'; }
+  if (btn)      { btn.disabled = false; btn.textContent = '▶ Preview Voice'; }
+}
+
+function sccSetVoicePreviewStatus(msg, isError) {
+  var statusEl = document.getElementById('char-voice-preview-status');
+  if (!statusEl) return;
+  statusEl.textContent = msg;
+  statusEl.className = 'scc-voice-preview-status' + (isError ? ' scc-voice-preview-status--error' : '');
+}
+
+// Bracketed [Voice: ...] notes are DM performance direction (tone, pacing,
+// accent cues written for the human reading it aloud) — not part of the
+// character's actual line, so they'd read as gibberish to a TTS engine.
+function sccStripVoiceDirection(text) {
+  return (text || '').replace(/\[voice:[^\]]*\]/gi, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+function sccPreviewCharacterVoice() {
+  var voiceId = val('char-elevenlabs-voice-id');
+  if (!voiceId) {
+    sccSetVoicePreviewStatus('Add an ElevenLabs Voice ID above first — find one in ElevenLabs’ Voice Library.', true);
+    return;
+  }
+  var text = sccStripVoiceDirection(val('char-read-aloud'));
+  if (!text) {
+    sccSetVoicePreviewStatus('Nothing to preview — add Read Aloud text above first.', true);
+    return;
+  }
+
+  var btn = document.getElementById('char-voice-preview-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+  sccSetVoicePreviewStatus('Generating preview…', false);
+
+  fetch(VOICE_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ voiceId: voiceId, text: text })
+  }).then(function(r) {
+    if (!r.ok) {
+      return r.text().then(function(t) {
+        var detail = '';
+        try {
+          var parsed = JSON.parse(t);
+          detail = (parsed.detail && (parsed.detail.message || parsed.detail)) || parsed.error || '';
+        } catch (e) {}
+        throw new Error(
+          r.status === 401 ? 'The voice proxy’s ElevenLabs key was rejected (401) — it may need rotating in the Supabase dashboard (Edge Functions > Secrets).'
+          : r.status === 403 ? 'This page isn’t allowed to use the voice proxy (403) — check its Origin allowlist.'
+          : r.status === 404 ? 'ElevenLabs couldn’t find that Voice ID (404) — double-check it against the Voice Library.'
+          : r.status === 500 ? 'The voice proxy isn’t configured with an ElevenLabs key yet — set the ELEVENLABS_API_KEY secret in the Supabase dashboard.'
+          : 'Voice preview failed (' + r.status + ')' + (detail ? ': ' + detail : '.')
+        );
+      });
+    }
+    return r.blob();
+  }).then(function(blob) {
+    var audioEl = document.getElementById('char-voice-preview-audio');
+    if (audioEl) {
+      var url = URL.createObjectURL(blob);
+      if (audioEl._blobUrl) URL.revokeObjectURL(audioEl._blobUrl);
+      audioEl._blobUrl = url;
+      audioEl.src = url;
+      audioEl.style.display = 'block';
+      audioEl.play().catch(function() {}); // autoplay can be blocked; controls are visible either way
+    }
+    sccSetVoicePreviewStatus('Preview ready.', false);
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Preview Voice'; }
+  }).catch(function(err) {
+    sccSetVoicePreviewStatus(err.message || 'Couldn’t reach the voice proxy — check the console.', true);
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Preview Voice'; }
+  });
 }
 
 function generateOrganization() {
@@ -10414,6 +10536,7 @@ function clearForm(formType) {
     var aEmpty = document.getElementById('char-assoc-empty');
     if (aEmpty) aEmpty.style.display = '';
   }
+  if (formType === 'character') sccResetVoicePreview();
   // Clear image compress panels and path text inputs
   form.querySelectorAll('.img-compress-panel').forEach(function(el) { el.style.display = 'none'; });
   form.querySelectorAll('.img-compress-thumb').forEach(function(img) {
@@ -11303,6 +11426,8 @@ function cmPopulateForm(entry, type) {
     sv('char-player-knowledge', entry.player_knowledge);
     sv('char-dm-notes',       entry.dm_notes);
     sv('char-read-aloud',     entry.read_aloud);
+    sv('char-elevenlabs-voice-id', entry.elevenlabs_voice_id);
+    sv('char-voice-notes',    entry.voice_notes);
     sv('char-gigglegloom',    entry.gigglegloom_relationship);
     sv('char-color',          entry.color);
     sv('char-location',       entry.location);
