@@ -8011,9 +8011,15 @@ function showDMToast(msg, type) {
   position: absolute; right: 11px; transform: translateY(-50%);
   width: 10px; height: 10px; border-radius: 50%; cursor: pointer; pointer-events: auto;
   background: var(--fg-scroll-dot-bg); border: 1px solid var(--fg-scroll-dot-border);
-  transition: background 0.15s, border-color 0.15s; z-index: 2;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s; z-index: 2;
 }
 .scc-fg-scroll-dot--reached { background: var(--dm-gold); border-color: var(--dm-gold); }
+/* h2 tier (2026-09-17, visual hierarchy pass) -- sized and offset between
+   the h1-level default above and the card sub-tier below, same right-offset
+   ladder the sub-tier already established (11px h1 -> 12px h2 -> 13px card)
+   so all three read as genuinely graduated depth on the shared guide line,
+   not just two states plus an outlier. */
+.scc-fg-scroll-dot--h2 { width: 8px; height: 8px; right: 12px; }
 /* Sub-tier (scenario_cards card titles, 2026-09-12) -- smaller, centered on
    the SAME shared guide line as a major dot (right:13px keeps its visual
    center aligned with the line at right:15px, same math the major dot at
@@ -8022,14 +8028,37 @@ function showDMToast(msg, type) {
    opacity, not color, on purpose -- color is what --reached overrides, and
    opacity composes with that instead of fighting it for cascade order. */
 .scc-fg-scroll-dot--sub { width: 6px; height: 6px; right: 13px; opacity: 0.85; }
+/* Hover (2026-09-17, DM-approved Variant B): scale + a subtle gold halo,
+   applied once here since the base class is present on every tier's dot
+   regardless of --h2/--sub modifier -- no per-tier hover rule needed. A
+   box-shadow ring, not a background-color swap, so it doesn't fight the
+   dot's own state color (black at rest, solid gold once --reached). */
+.scc-fg-scroll-dot:hover { transform: translateY(-50%) scale(1.07); box-shadow: 0 0 0 4px var(--gold-subtle); }
+/* Left accent bars by level (2026-09-17, DM-approved Variant B mockup,
+   requests row 540712d9): the base rule below IS the h1 (major-section)
+   treatment -- solid 3px gold, least padding -- since h1 was always this
+   rail's implicit default tier before h2/card got their own modifiers, and
+   giving h1 its own empty --h1 rule would just duplicate these values for
+   no behavioral difference. h2 and card/sub each override border width+
+   color+padding-left below, in the same graduated direction as their dot's
+   right-offset ladder above: thinner border, more muted color, more
+   indentation as depth increases. */
 .scc-fg-scroll-label {
   position: absolute; right: 25px; transform: translateY(-50%);
   font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
   color: #fff; white-space: nowrap; cursor: pointer; pointer-events: auto;
-  transition: color 0.15s;
+  transition: color 0.15s, transform 0.15s, background-color 0.15s;
+  border-left: 3px solid var(--dm-gold); padding: 0.1rem 0.35rem 0.1rem 0.5rem;
 }
 .scc-fg-scroll-label--reached { color: var(--dm-gold); }
-.scc-fg-scroll-label--sub { right: 32px; font-size: 0.62rem; font-weight: 600; opacity: 0.85; }
+.scc-fg-scroll-label--h2 {
+  right: 28px; border-left: 2px solid var(--gold-border-mid); padding-left: 0.7rem;
+}
+.scc-fg-scroll-label--sub {
+  right: 32px; font-size: 0.62rem; font-weight: 600; opacity: 0.85;
+  border-left: 1px solid var(--dm-text-muted); padding-left: 0.9rem;
+}
+.scc-fg-scroll-label:hover { transform: translateY(-50%) scale(1.07); background: var(--gold-subtle); }
 /* Backdrop behind the indicator -- 80% opaque black at the screen's right
    edge fading to transparent at the indicator's own measured left edge
    (position set by sccFgPositionScrollBackdrop(), same as before, its
@@ -18758,10 +18787,15 @@ function sccFgBuildScrollIndicator() {
 
   var dotsHtml = entries.map(function(entry, i) {
     var topPx = bufferPx + (drawPositions[i] / 100) * trackHeightPx;
-    var subMod = entry.tier === 'card' ? ' scc-fg-scroll-dot--sub' : '';
-    var subModLabel = entry.tier === 'card' ? ' scc-fg-scroll-label--sub' : '';
-    return '<div class="scc-fg-scroll-dot' + subMod + '" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '"></div>'
-      + '<div class="scc-fg-scroll-label' + subModLabel + '" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '">' + sccEsc(entry.label) + '</div>';
+    // Every entry gets an explicit tier suffix now (h1/h2/sub), not just
+    // card-level entries -- the visual-hierarchy pass (2026-09-17) needs a
+    // real CSS hook to differentiate h1 from h2, which a bare/empty
+    // modifier for both never provided.
+    var tierSuffix = entry.tier === 'card' ? 'sub' : entry.tier;
+    var tierMod = ' scc-fg-scroll-dot--' + tierSuffix;
+    var tierModLabel = ' scc-fg-scroll-label--' + tierSuffix;
+    return '<div class="scc-fg-scroll-dot' + tierMod + '" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '"></div>'
+      + '<div class="scc-fg-scroll-label' + tierModLabel + '" data-idx="' + i + '" style="top:' + topPx + 'px" onclick="sccFgScrollIndicatorJump(' + i + ')" title="' + sccEsc(entry.full) + '">' + sccEsc(entry.label) + '</div>';
   }).join('');
   wrap.innerHTML = '<div class="scc-fg-scroll-line-track">'
       + '<div class="scc-fg-scroll-base-line" style="top:' + bufferPx + 'px;height:' + trackHeightPx + 'px"></div>'
