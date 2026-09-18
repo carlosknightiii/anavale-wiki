@@ -2776,8 +2776,9 @@
     .cs-inv-tr.selected .cs-inv-td { background: var(--dm-row-selected); }
     .cs-inv-tr.equipped .cs-inv-td:first-child { box-shadow: inset 4px 0 0 var(--gold); }
     .cs-inv-equipped-badge {
-      display: inline-block;
-      margin-left: 0.5rem;
+      display: block;
+      width: fit-content;
+      margin-bottom: 0.25rem;
       padding: 0.1rem 0.5rem;
       border-radius: 999px;
       background: var(--gold-dim);
@@ -7145,8 +7146,9 @@
     return '<tr class="cs-inv-tr' + (equippedLabel ? ' equipped' : '') + (SELECTED_INV_IDS[item.id] ? ' selected' : '') + '" id="inv-row-' + item.id + '">'
       + '<td class="cs-inv-td cs-inv-td-select"><input type="checkbox" ' + (SELECTED_INV_IDS[item.id] ? 'checked' : '') + ' onchange="toggleInvSelect(\'' + item.id + '\', this.checked)"></td>'
       + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
-      + '<td class="cs-inv-td cs-inv-td-name">' + name
-        + (equippedLabel ? '<span class="cs-inv-equipped-badge">&#10003; Equipped &middot; ' + equippedLabel + '</span>' : '') + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-name">'
+        + (equippedLabel ? '<span class="cs-inv-equipped-badge">&#10003; Equipped &middot; ' + equippedLabel + '</span>' : '')
+        + name + '</td>'
       + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-price">' + costGp + ',' + costSp + ',' + costCp + '</td>'
       + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + '</td>'
