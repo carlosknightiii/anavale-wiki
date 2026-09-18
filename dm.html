@@ -9374,6 +9374,113 @@ function showDMToast(msg, type) {
 .scc-fg-sc-decision-row-top .scc-fg-decision-header { flex: 1; min-width: 0; }
 .scc-fg-sc-decision-row-top .scc-fg-outcome-check { flex-shrink: 0; }
 .scc-fg-sc-decision-affects { font-weight: 400; color: var(--dm-text-muted); font-size: 0.72rem; display: block; }
+/* ── Sticky Question Panel module (box.category === 'question_panel',
+   2026-09-18) -- for a scene with several branching "If Asked" questions
+   where flat stacking makes one specific answered question hard to find
+   again mid-session (built from Session 2's real Extraction Site, which
+   had accumulated 5 separate If Asked boxes in a row). Deliberately kept
+   visually neutral/plain (dm-surface-high shell, no ambient color tint) --
+   NOT given scenario_cards' own gold-tinted treatment, so the two modules
+   read as genuinely different tools at a glance rather than two skins on
+   the same thing. Active/selected question reuses the same gold
+   selected-state language as everywhere else in this file (scenario card
+   tiles, dropdown actives); the per-question completion circle reuses the
+   exact green Mark Completed language (.scc-fg-box-complete-toggle,
+   above) rather than inventing a second visual vocabulary for the same
+   concept. */
+/* No overflow:hidden here, unlike .scc-fg-scenario-cards' otherwise
+   near-identical shell -- overflow:hidden (any value but visible, really)
+   makes an element a scroll container, and CSS position:sticky sticks
+   relative to its NEAREST scroll-container ancestor, not necessarily the
+   real page. This wrapper never actually scrolls internally (it's sized
+   to its own content, same as .scc-fg-scenario-cards is), so a sticky
+   descendant inside an overflow:hidden version of this rule would "stick"
+   relative to a container that has no scroll range of its own -- i.e. it
+   would just scroll away with the page like a plain static element,
+   confirmed live via getBoundingClientRect() before landing on this fix
+   (leftRect.top tracked the page scroll 1:1 instead of clamping to the
+   sticky offset). Corners are rounded individually below instead
+   (.scc-fg-qp-header/-left) so the outer 8px radius still reads correctly
+   without this rule needing to clip anything. */
+.scc-fg-question-panel {
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border);
+  border-radius: 8px; margin: 0.5rem 0 0.75rem;
+}
+.scc-fg-qp-header {
+  padding: 0.55rem 0.85rem; background: var(--dm-surface);
+  font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--dm-text);
+  border-bottom: 1px solid var(--scc-border);
+  border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; gap: 0.45rem;
+}
+.scc-fg-qp-header-icon { font-size: 1rem; opacity: 0.85; }
+.scc-fg-qp-header-sub { font-weight: 400; color: var(--dm-text-muted); font-size: 0.82rem; }
+/* align-items:flex-start on the row -- same reason .scc-cb2-row/
+   .scc-live-strip's own row parents need it: without it, flex stretches
+   the left column to match the right column's full height, and
+   position:sticky can't "stick" inside a box that's already been
+   stretched to fill the scroll length it's meant to track. */
+.scc-fg-qp-layout { display: flex; align-items: flex-start; gap: 0; }
+/* Sticky, matching .scc-cb2-saved-col's exact formula (same app shell,
+   same --dm-env-banner-h offset, same reason it works: the ancestor chain
+   up to the real scrolling context has overflow:visible, per the fix
+   above at #scc-panel-live.active). Only the max-height lives on this
+   outer element -- no overflow here (a bare max-height caps how tall this
+   can grow without clipping anything itself); the actual internal scroll,
+   if the question list is ever taller than the cap, lives on
+   .scc-fg-qp-groups below instead, same split .scc-cb2-saved-col uses and
+   for the same reason (overflow-y:auto on an element with no declared
+   overflow-x forces the x-axis to compute as auto too, which would clip
+   anything meant to sit flush against this column's edge). */
+.scc-fg-qp-left {
+  flex: 0 0 240px; display: flex; flex-direction: column;
+  position: sticky; top: calc(var(--dm-env-banner-h) + 1rem); align-self: flex-start;
+  max-height: calc(100vh - 2rem - var(--dm-env-banner-h));
+  background: var(--dm-surface); border-right: 1px solid var(--scc-border);
+  border-radius: 0 0 0 8px;
+  padding: 0.75rem;
+}
+.scc-fg-qp-groups { display: flex; flex-direction: column; gap: 0.4rem; overflow-y: auto; }
+.scc-fg-qp-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.scc-fg-qp-group-label {
+  display: flex; align-items: center; gap: 0.35rem;
+  font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--dm-gold);
+  margin: 0.5rem 0 0.1rem;
+}
+.scc-fg-qp-group:first-child .scc-fg-qp-group-label,
+.scc-fg-qp-groups > .scc-fg-qp-group-label:first-child { margin-top: 0; }
+.scc-fg-qp-group-icon { font-size: 0.85rem; }
+.scc-fg-qp-btn {
+  display: flex; align-items: center; gap: 0.5rem; text-align: left; cursor: pointer;
+  width: 100%; padding: 0.5rem 0.6rem; border-radius: var(--dm-radius-sm);
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid);
+  font-family: var(--font-sans); font-size: 0.78rem; color: var(--dm-text);
+  transition: border-color 0.1s, background 0.1s, color 0.1s;
+}
+.scc-fg-qp-btn:hover { border-color: var(--scc-border-gold); }
+.scc-fg-qp-btn--active { background: var(--dm-gold-dim); border-color: var(--scc-border-gold); color: var(--dm-gold); }
+.scc-fg-qp-btn--completed { color: var(--dm-text-muted); }
+.scc-fg-qp-btn--completed .scc-fg-qp-btn-label { text-decoration: line-through; text-decoration-color: var(--dm-text-muted); }
+.scc-fg-qp-btn-label { flex: 1; min-width: 0; }
+/* Same 15px circle as .scc-fg-box-complete-toggle, verbatim -- a second,
+   independently-clickable control on the same button (stopPropagation'd
+   in the onclick itself so tapping it never also selects the question). */
+.scc-fg-qp-check {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid var(--scc-border-mid); font-size: 0.6rem; font-weight: 700;
+  color: var(--dm-text-muted); cursor: pointer;
+}
+.scc-fg-qp-btn:hover .scc-fg-qp-check { border-color: var(--green-border); }
+.scc-fg-qp-check--on { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.scc-fg-qp-right { flex: 1; min-width: 0; padding: 0.85rem 1.1rem 1rem; }
+.scc-fg-qp-right-title {
+  font-family: var(--font-display); color: var(--dm-gold); font-size: 1.05rem;
+  margin: 0 0 0.65rem; padding-bottom: 0.55rem; border-bottom: 1px solid var(--scc-border);
+}
+.scc-fg-qp-right .scc-fg-box:last-child, .scc-fg-qp-right p:last-child { margin-bottom: 0; }
+.scc-fg-qp-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
 /* ── Session-opening empty state -- matches Companions & Attachments'
    "None yet" + "+ Add" language, rather than rendering nothing. ── */
 .scc-fg-opening-empty { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.6rem; }
@@ -11659,6 +11766,13 @@ function showDMToast(msg, type) {
   .scc-pd-portrait, .scc-pd-portrait-fallback { width: 64px; height: 64px; }
   /* round 1, unchanged */
   .scc-fg-scenario-cards-row { grid-template-columns: 1fr; }
+  /* Sticky Question Panel: un-stick and stack, same pattern
+     .scc-cb2-row/.scc-cb2-saved-col already use at their own 900px
+     breakpoint -- no room for a fixed sticky sidebar at phone width, and a
+     column that no longer scrolls independently needs no max-height cap
+     either. */
+  .scc-fg-qp-layout { flex-direction: column; }
+  .scc-fg-qp-left { position: static; width: 100%; max-height: none; border-right: none; border-bottom: 1px solid var(--scc-border); }
   #form-session { padding-bottom: 5.5rem; }
   /* 7) Session Tools sheet -- replaces round 1's `order` reshuffle of the
      strip. 2026-09-17: the strip itself became a collapsed-by-default
@@ -18383,6 +18497,242 @@ function sccFgRedrawScenarioCardsBlock(domId, cardIdx) {
   if (wrapEl) wrapEl.outerHTML = sccFgOneScenarioCardsHtml(found.block, found.idx, cardIdx);
 }
 
+// ── Sticky Question Panel module (box.category === 'question_panel',
+//    2026-09-18) ──
+// For a scene with several branching "If Asked" questions where flat
+// stacking makes one specific answered question hard to find again
+// mid-session -- built by converting Session 2's real Extraction Site,
+// which had accumulated 5 separate If Asked boxes in a row (see the
+// DM-provided reference mockup this was built against, stored in this
+// feature's own requests-table row). Block shape:
+//   { type:'box', category:'question_panel', label (optional, shown as a
+//     header subtitle), group_icons: {groupName: iconGlyph, ...} (one
+//     icon per CATEGORY GROUP, not per question, per instruction),
+//     questions: [
+//       { id (stable, required -- backs both the completion-log key and
+//             the [[block:id|Label]] linking this module reuses from
+//             every other block type, see sccFgRenderBlock()'s wrapper),
+//         label, group,
+//         blocks: [...same shape as field_guide_sessions.blocks, rendered
+//                  via the real sccFgRenderDoc so a question's answer goes
+//                  through the exact same box/category system as the rest
+//                  of the Field Guide -- Read Aloud, Spoken Dialogue,
+//                  whatever real category fits, not a flattened tag/text
+//                  pair invented just for this module] }
+//     ] }
+// Left column is a sticky nav (position:sticky, same --dm-env-banner-h
+// offset every other sticky sidebar in this file uses -- see
+// .scc-cb2-saved-col) of question buttons, grouped under their own
+// group's header. Selecting a question only ever swaps which one's
+// content shows on the right (cheap, reversible, same "browsing never
+// commits anything" principle scenario_cards' own tile-select already
+// established) -- a separate small circle on each button (visually
+// identical to the existing Mark Completed circle, see
+// sccFgBoxCompletionToggleHtml above) toggles that QUESTION's own
+// completion independently of selecting it, via the same shared
+// session_note_entries mechanism (category:'quest') every other
+// click-to-log/toggle control in this file already uses -- shared,
+// DM-facing state that persists across reloads, not a per-viewer
+// preference (per instruction).
+// KNOWN GAP, not wired up: a loot_table on a block nested inside a
+// question's own .blocks would resolve against the wrong container --
+// sccFgLootContainerBlocks(ctx) only understands ctx.scenarioCardsDomId
+// today, and passing a differently-shaped ctx here would silently target
+// row.blocks at the wrong index instead of the question's own array. Not
+// a real case yet (no question content has ever needed one) -- flagged
+// here rather than silently risked, same as scenario_cards' own
+// self-nesting gap note above.
+function sccFgQuestionPanelDomId(b, idx) {
+  var base = b.label || ('qp-' + idx);
+  var slug = String(base).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return 'scc-fg-qp-' + slug;
+}
+
+function sccFgQuestionPanelCompletionTitle(domId, q) {
+  return 'Question Panel — ' + domId + ': ' + (q.id || q.label || '');
+}
+
+function sccFgQuestionPanelIsCompleted(domId, q, log) {
+  var title = sccFgQuestionPanelCompletionTitle(domId, q);
+  return log.some(function(n) { return n.title === title; });
+}
+
+// Groups in first-occurrence order among the real questions array (not
+// alphabetical -- the author's own question ordering IS the intended
+// reading order for which group appears first). Within each group,
+// not-yet-completed questions keep their original relative order and come
+// first; completed ones sink to the bottom of that SAME group, also in
+// their original relative order -- never a global bottom across groups,
+// per instruction.
+function sccFgQuestionPanelGrouped(questions, domId, log) {
+  var order = [];
+  var byGroup = {};
+  questions.forEach(function(q) {
+    var g = q.group || '';
+    if (!byGroup[g]) { byGroup[g] = []; order.push(g); }
+    byGroup[g].push(q);
+  });
+  return order.map(function(g) {
+    var qs = byGroup[g];
+    var open = qs.filter(function(q) { return !sccFgQuestionPanelIsCompleted(domId, q, log); });
+    var done = qs.filter(function(q) { return sccFgQuestionPanelIsCompleted(domId, q, log); });
+    return { group: g, questions: open.concat(done) };
+  });
+}
+
+function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
+  var num = sccFgActiveSessionNum();
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var groupIcons = (b.group_icons && typeof b.group_icons === 'object') ? b.group_icons : {};
+  var groups = sccFgQuestionPanelGrouped(Array.isArray(b.questions) ? b.questions : [], domId, log);
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  return groups.map(function(grp) {
+    var headerHtml = grp.group
+      ? '<div class="scc-fg-qp-group-label"><span class="scc-fg-qp-group-icon">' + (groupIcons[grp.group] || '') + '</span><span>' + sccEsc(grp.group) + '</span></div>'
+      : '';
+    var btns = grp.questions.map(function(q) {
+      var completed = sccFgQuestionPanelIsCompleted(domId, q, log);
+      var active = q.id === activeId;
+      var checkHtml = '<span class="scc-fg-qp-check' + (completed ? ' scc-fg-qp-check--on' : '') + '"'
+          + (auditLocked ? '' : ' onclick="event.stopPropagation(); sccFgToggleQuestionPanelCompletion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\')"')
+          + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
+        + (completed ? '&#10003;' : '') + '</span>';
+      return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + '"'
+          + ' data-question-id="' + sccEsc(q.id) + '"'
+          + ' onclick="sccFgSwitchQuestionPanelQuestion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\', this)">'
+        + checkHtml
+        + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '') + '</span>'
+      + '</button>';
+    }).join('');
+    return headerHtml + '<div class="scc-fg-qp-group">' + btns + '</div>';
+  }).join('');
+}
+
+function sccFgQuestionPanelBodyHtml(b, q, domId) {
+  if (!q) return '<div class="scc-fg-qp-empty">No question selected.</div>';
+  var contentHtml = sccFgRenderDoc(q.blocks || []);
+  return '<h3 class="scc-fg-qp-right-title">' + sccEsc(q.label || '') + '</h3>'
+    + (contentHtml || '<div class="scc-fg-qp-empty">No content yet.</div>');
+}
+
+function sccFgOneQuestionPanelHtml(b, idx, activeId) {
+  var domId = sccFgQuestionPanelDomId(b, idx);
+  var questions = Array.isArray(b.questions) ? b.questions : [];
+  var active = (activeId && questions.some(function(q) { return q.id === activeId; }))
+    ? activeId
+    : ((questions[0] && questions[0].id) || null);
+  var activeQ = questions.find(function(q) { return q.id === active; }) || null;
+  return '<div class="scc-fg-question-panel" id="' + domId + '" data-block-idx="' + idx + '">'
+    + '<div class="scc-fg-qp-header">'
+      + '<span class="scc-fg-qp-header-icon">&#10067;</span>'
+      + '<span>Common Questions' + (b.label ? '<span class="scc-fg-qp-header-sub"> — ' + sccEsc(b.label) + '</span>' : '') + '</span>'
+    + '</div>'
+    + '<div class="scc-fg-qp-layout">'
+      + '<div class="scc-fg-qp-left"><div class="scc-fg-qp-groups" id="' + domId + '-left">' + sccFgQuestionPanelLeftHtml(b, domId, active) + '</div></div>'
+      + '<div class="scc-fg-qp-right" id="' + domId + '-right">' + sccFgQuestionPanelBodyHtml(b, activeQ, domId) + '</div>'
+    + '</div>'
+  + '</div>';
+}
+
+function sccFgRenderQuestionPanelBlock(b, idx) {
+  return sccFgOneQuestionPanelHtml(b, idx, null);
+}
+
+// Recurses into scenario_cards' own nested cards[].blocks too, the same
+// way sccFgFindScenarioCardsBlockByDomId recurses into itself -- a
+// question_panel sitting inside a scenario card's own content is no
+// different in kind from a nested scenario_cards module, which is already
+// a real, supported case. Not a real case yet for question_panel
+// specifically, but the lookup costs nothing extra to get right now
+// rather than silently no-op the first time it happens.
+function sccFgFindQuestionPanelBlockByDomId(domId) {
+  var num = sccFgActiveSessionNum();
+  var row = SCC_FG_DOC_CACHE[num];
+  var blocks = (row && row.blocks) || [];
+  return sccFgFindQuestionPanelBlockInArray(blocks, domId);
+}
+function sccFgFindQuestionPanelBlockInArray(blocks, domId) {
+  for (var i = 0; i < blocks.length; i++) {
+    var bl = blocks[i];
+    if (!bl || typeof bl !== 'object' || bl.type !== 'box') continue;
+    if (bl.category === 'question_panel' && sccFgQuestionPanelDomId(bl, i) === domId) return { block: bl, idx: i };
+    if (bl.category === 'scenario_cards' && Array.isArray(bl.cards)) {
+      for (var c = 0; c < bl.cards.length; c++) {
+        var nested = sccFgFindQuestionPanelBlockInArray(bl.cards[c].blocks || [], domId);
+        if (nested) return nested;
+      }
+    }
+  }
+  return null;
+}
+
+// Cheap swap -- only the right panel's content and the left column's
+// active-button class change; question order never does, so unlike
+// completion (below) this never needs a full-module rebuild.
+function sccFgSwitchQuestionPanelQuestion(domId, questionId, el) {
+  var found = sccFgFindQuestionPanelBlockByDomId(domId);
+  if (!found) return;
+  var questions = Array.isArray(found.block.questions) ? found.block.questions : [];
+  var q = questions.find(function(x) { return x.id === questionId; }) || null;
+  var rightEl = document.getElementById(domId + '-right');
+  if (rightEl) rightEl.innerHTML = sccFgQuestionPanelBodyHtml(found.block, q, domId);
+  var leftEl = document.getElementById(domId + '-left');
+  if (leftEl) {
+    Array.prototype.forEach.call(leftEl.querySelectorAll('.scc-fg-qp-btn'), function(btn) {
+      btn.classList.toggle('scc-fg-qp-btn--active', btn === el);
+    });
+  }
+}
+
+function sccFgToggleQuestionPanelCompletion(domId, questionId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — can\'t change that here', 'error'); return; }
+  var num = SCC_SESSION ? SCC_SESSION.session_number : null;
+  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  var found = sccFgFindQuestionPanelBlockByDomId(domId);
+  if (!found) return;
+  var questions = Array.isArray(found.block.questions) ? found.block.questions : [];
+  var q = questions.find(function(x) { return x.id === questionId; }) || null;
+  if (!q) return;
+  var title = sccFgQuestionPanelCompletionTitle(domId, q);
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
+  var existing = log.find(function(n) { return n.title === title; }) || null;
+  var req = existing
+    ? fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, {
+        method: 'DELETE',
+        headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
+      })
+    : fetch(SCC_URL + '/rest/v1/session_note_entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ session_number: num, category: 'quest', title: title, content: '' })
+      });
+  req.then(function(r) {
+    if (!r.ok) { showDMToast('Could not update', 'error'); return; }
+    sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
+      SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+      sccFgRedrawQuestionPanelBlock(domId);
+    });
+  }).catch(function() { showDMToast('Could not update', 'error'); });
+}
+
+// Full-module rebuild, NOT the cheap in-place class toggle plain box
+// completion uses above -- completing a question can move it to the
+// bottom of its group, so the left column's own DOM order has to change,
+// not just one button's classes (same reasoning scenario card status
+// redraw already documents for itself). Reads whichever question was
+// selected straight off the currently-active button before rebuilding
+// (not re-derived some other way) so completing/uncompleting a question
+// never silently jumps the DM back to the first one.
+function sccFgRedrawQuestionPanelBlock(domId) {
+  var found = sccFgFindQuestionPanelBlockByDomId(domId);
+  if (!found) return;
+  var wrapEl = document.getElementById(domId);
+  if (!wrapEl) return;
+  var activeBtn = wrapEl.querySelector('.scc-fg-qp-btn--active');
+  var activeId = activeBtn ? activeBtn.dataset.questionId : null;
+  wrapEl.outerHTML = sccFgOneQuestionPanelHtml(found.block, found.idx, activeId);
+}
+
 // Real quest beat headings ('beat' sequence specifically) have a canonical
 // number already -- the matching entry's own `order` in that quest's real
 // quests.beats array -- found 2026-09-17 while investigating a DM report
@@ -18695,6 +19045,7 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       if (b.category === 'quest_beats') return sccFgRenderQuestBeatsBlock(b, idx);
       if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b, ctx);
       if (b.category === 'scenario_cards') return sccFgRenderScenarioCardsBlock(b, idx);
+      if (b.category === 'question_panel') return sccFgRenderQuestionPanelBlock(b, idx);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
       var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
       // Loot/shop boxes get a category icon prefix independent of color — reinforces

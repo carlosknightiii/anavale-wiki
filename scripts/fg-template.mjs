@@ -136,7 +136,9 @@ const KNOWN_BLOCK_TYPES = new Set([
 // block for the full reasoning per category.
 // scenario_cards (2026-08-26) -- Scenario Cards module, replaces the
 // earlier scenario_tabs/approach_tracker categories entirely.
-const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards']);
+// question_panel (2026-09-18) -- Sticky Question Panel module, see
+// js/fg-category-schema.json's own $specialCasedCategories entry for it.
+const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards', 'question_panel']);
 
 // The die-emoji skill-check paragraph shape sccFgStyleSkillChecks() looks
 // for inside a box's html, reproduced here only to *validate* -- check
@@ -320,6 +322,30 @@ function validateBlock(block, schema) {
             issues.push({ level: 'warning', message: `combat_outcomes box outcomes[${i}] has no description` });
           }
         });
+      }
+    } else if (cat === 'question_panel') {
+      if (!Array.isArray(block.questions) || !block.questions.length) {
+        issues.push({ level: 'error', message: 'question_panel box has no questions (or questions is not a non-empty array)' });
+      } else {
+        const seenIds = new Set();
+        block.questions.forEach((q, i) => {
+          if (!q || typeof q !== 'object' || !q.id) {
+            issues.push({ level: 'error', message: `question_panel box questions[${i}] is missing id -- completion state and question switching both key off this` });
+          } else if (seenIds.has(q.id)) {
+            issues.push({ level: 'error', message: `question_panel box questions[${i}] has duplicate id "${q.id}" -- must be unique within this panel` });
+          } else {
+            seenIds.add(q.id);
+          }
+          if (!q || typeof q !== 'object' || !q.label) {
+            issues.push({ level: 'error', message: `question_panel box questions[${i}] is missing label` });
+          }
+          if (!q || typeof q !== 'object' || !Array.isArray(q.blocks) || !q.blocks.length) {
+            issues.push({ level: 'warning', message: `question_panel box questions[${i}] has no content (blocks is empty or missing)` });
+          }
+        });
+      }
+      if (block.group_icons != null && (typeof block.group_icons !== 'object' || Array.isArray(block.group_icons))) {
+        issues.push({ level: 'error', message: 'question_panel box group_icons must be an object of {groupName: icon}' });
       }
     }
     return issues;
@@ -624,6 +650,11 @@ function checkMiscategorization(blocks, pathLabel) {
     if (b.type === 'box' && b.category === 'scenario_cards' && Array.isArray(b.cards)) {
       b.cards.forEach((c) => {
         findings.push(...checkMiscategorization(c.blocks, `${loc}.card["${c.title || c.id || '?'}"].blocks`));
+      });
+    }
+    if (b.type === 'box' && b.category === 'question_panel' && Array.isArray(b.questions)) {
+      b.questions.forEach((q) => {
+        findings.push(...checkMiscategorization(q.blocks, `${loc}.question["${q.label || q.id || '?'}"].blocks`));
       });
     }
   });
