@@ -826,6 +826,26 @@
       font-size: var(--char-ov-h3);
       color: var(--text);
     }
+    .cs-spellcast-stat { flex-basis: 220px; }
+    .cs-spellcast-stat-prof {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--gold);
+    }
+    .cs-spellcast-stat-explain,
+    .cs-spellcast-stat-example {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .cs-spellcast-stat-example { opacity: 0.8; font-style: italic; }
+    .cs-class-warden-note {
+      display: block;
+      color: var(--gold);
+      font-size: 0.8rem;
+    }
 
     /* ── Spells Prepared (Features accordion, sibling group — Handoff B) ── */
     .cs-prepared-header-row { display: flex; justify-content: space-between; align-items: center; gap: var(--char-ov-gap-2xs); }
@@ -3603,7 +3623,7 @@
     },
     warden: {
       icon: '&#9876;',
-      desc: 'You gain proficiency with martial weapons and medium armor.'
+      desc: 'Passive and always on: you gain proficiency with martial weapons and medium armor. Nothing to use or track; it applies automatically to your weapon attacks and lets you wear medium armor without penalty.'
     }
   };
   var ALIGNMENT_PHB = {
@@ -4249,6 +4269,15 @@
     var weapons = row ? row.weapons           : null;
     var savesTip  = row ? row.saves_tip   : null;
     var weaponsTip = row ? row.weapons_tip : null;
+    // Druid Primal Order: Warden is a passive, always-on proficiency grant
+    // (Martial weapons + Medium armor) — shown here, next to the class's own
+    // proficiencies, since that's where it actually matters.
+    var isWarden = !!(CH && String(CH.primal_order || '').toLowerCase() === 'warden');
+    var wardenNote = '<span class="cs-class-warden-note">+ Primal Order: Warden (always active)</span>';
+    if (isWarden) {
+      armor   = (armor   || '') + ', Medium armor' + wardenNote;
+      weapons = (weapons || '') + ', Martial weapons' + wardenNote;
+    }
     return '<div class="cs-ov-class-detail">'
         + '<p class="cs-ov-class-detail-key">Primary ability:</p><p class="cs-ov-class-detail-val">' + (primary || '—') + '</p>'
         + '<p class="cs-ov-class-detail-key">' + classTraitLabel('Saving throws:', savesTip) + '</p><p class="cs-ov-class-detail-val">' + (saves || '—') + '</p>'
@@ -5003,12 +5032,19 @@
   // renderClassFeaturesAccordion()), so this function no longer needs to
   // manage its own card visibility; a non-caster simply never gets the
   // target div rendered at all.
-  function spellStatCardHtml(label, value, tip) {
+  // ANV-18: always-visible explanation instead of a "?" tooltip. Formulas are
+  // the 2024 PHB's own wording ("Spell save DC = 8 + your spellcasting
+  // ability modifier + your Proficiency Bonus"; "Spell attack modifier =
+  // your spellcasting ability modifier + your Proficiency Bonus"). The
+  // proficiency note sits directly under the number — the players' main
+  // point of confusion was whether the shown number already includes it.
+  function spellStatCardHtml(label, value, profNote, explain, example) {
     return '<div class="cs-spellcast-stat">'
-      + '<span class="cs-spellcast-stat-label">' + label
-        + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
-      + '</span>'
+      + '<span class="cs-spellcast-stat-label">' + label + '</span>'
       + '<span class="cs-spellcast-stat-val">' + value + '</span>'
+      + '<span class="cs-spellcast-stat-prof">' + profNote + '</span>'
+      + '<span class="cs-spellcast-stat-explain">' + explain + '</span>'
+      + '<span class="cs-spellcast-stat-example">' + example + '</span>'
     + '</div>';
   }
   function renderSpellcastingStats() {
@@ -5020,10 +5056,22 @@
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
     var saveDC = 8 + profBonus + abMod;
     var atkBonus = profBonus + abMod;
+    var sgn = function(n) { return (n >= 0 ? '+' : '') + n; };
+    var abName = { str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma' }[castingAbility] || castingAbility;
+    var pbTxt = '+' + profBonus;
     el.innerHTML = '<div class="cs-spellcast-stats">'
-      + spellStatCardHtml('Spellcasting Modifier', (abMod >= 0 ? '+' : '') + abMod, 'The ability modifier your class uses to cast spells.')
-      + spellStatCardHtml('Spell Save DC', saveDC, 'The number a creature must roll at or above to resist your spell.')
-      + spellStatCardHtml('Spell Attack Bonus', (atkBonus >= 0 ? '+' : '') + atkBonus, 'Added to the d20 when you make an attack roll with a spell.')
+      + spellStatCardHtml('Spellcasting Modifier', sgn(abMod),
+          'Does NOT include proficiency bonus',
+          'Your ' + abName + ' modifier. This is the ability your class uses to cast spells; the other two numbers are built from it.',
+          'Just your ' + abName + ' modifier: ' + sgn(abMod) + '.')
+      + spellStatCardHtml('Spell Save DC', saveDC,
+          '(includes your ' + pbTxt + ' proficiency bonus)',
+          'Spell save DC = 8 + your spellcasting ability modifier + your Proficiency Bonus. A creature must roll this or higher on its saving throw to resist your spell.',
+          'Example: 8 + ' + abMod + ' + ' + profBonus + ' = ' + saveDC + '. The target rolls a d20 and needs ' + saveDC + ' or more.')
+      + spellStatCardHtml('Spell Attack Bonus', sgn(atkBonus),
+          '(includes your ' + pbTxt + ' proficiency bonus)',
+          'Spell attack modifier = your spellcasting ability modifier + your Proficiency Bonus. Add it to the d20 when a spell calls for an attack roll.',
+          'Example: roll a d20 and add ' + sgn(atkBonus) + ' (' + abMod + ' + ' + profBonus + '). Do not add proficiency again.')
     + '</div>';
   }
 
@@ -5892,9 +5940,21 @@
       if (f.recharge === 'short_rest') spentMap[f.name] = 0;
     });
     SHEET.limited_use_spent = spentMap;
-    saveSheet({ limited_use_spent: spentMap });
+    var fields = { limited_use_spent: spentMap };
+    // Warlock Pact Magic (2024 PHB): slots return on a Short OR Long Rest.
+    // classes.spell_slots_recharge is the data-driven flag (long_rest for
+    // every other caster). doLongRest() deliberately still resets slots for
+    // these classes too — a Long Rest restores Pact Magic slots as well, so
+    // there is no double-refill problem to guard against.
+    var slotsBack = !!(CLASS_ROW && CLASS_ROW.spell_slots_recharge === 'short_rest');
+    if (slotsBack) {
+      SHEET.spell_slots = {};
+      fields.spell_slots = {};
+    }
+    saveSheet(fields);
     renderLimitedUseFeatures();
-    showToast('Short Rest complete — short-rest features restored.');
+    if (slotsBack) renderSpellSlotsGroup();
+    showToast(slotsBack ? 'Short Rest complete — Pact Magic slots and short-rest features restored.' : 'Short Rest complete — short-rest features restored.');
   }
   function doLongRest() {
     if (!SHEET) return;
@@ -6630,6 +6690,7 @@
       if (weightClass === 'heavy') {
         breakdown.push('Dex (not added)');
       } else if (weightClass === 'medium') {
+        if (CH && String(CH.primal_order || '').toLowerCase() === 'warden') breakdown.push('medium armor proficiency via Primal Order: Warden');
         var maxDex = (armor.max_dex_bonus != null && armor.max_dex_bonus !== '') ? parseInt(armor.max_dex_bonus) : 2;
         var dexApplied = Math.min(dexMod, maxDex);
         ac += dexApplied;
