@@ -17259,8 +17259,8 @@ function sccFgRenderFeatured(featured) {
 // entirely additive, not a required field.
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
-    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>/g,
-    function(m, title, ability, dc, rest) {
+    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
+    function(m, title, ability, dc, rest, siblingParas) {
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
       // Pass:/Fail: auto-coloring (item 3a) -- detected here, never
       // hand-typed inline styles by whoever authors the content. Matches
@@ -17279,10 +17279,21 @@ function sccFgStyleSkillChecks(html) {
         return breakPrefix + '<span class="' + cls + '">' + word + ':</span>';
       });
       var titleHtml = title ? '<div class="scc-fg-check-title">' + sccEsc(title.trim()) + '</div>' : '';
+      // Real authored shape (every check across both sessions): the check
+      // line, Pass, and Fail (plus, on a few checks, a further
+      // continuation paragraph after Fail) are separate sibling <p> tags,
+      // not one paragraph with everything folded in -- siblingParas
+      // captures any <p>...</p> immediately following the check's own
+      // paragraph so they land inside this same bordered box instead of
+      // spilling out as plain, unbordered text below it. Kept as real,
+      // separate <p> elements -- one per original line, never flattened
+      // into bodyHtml's own <br>-joined string -- matching the
+      // .scc-fg-check-body p rules already in the CSS for exactly this.
+      var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
       return '<div class="scc-fg-check">'
         + titleHtml
         + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
-        + (bodyHtml ? '<div class="scc-fg-check-body">' + bodyHtml + '</div>' : '')
+        + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
     }
   );
@@ -18355,7 +18366,19 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       return '<div class="scc-fg-h2-featured-wrap">' + h2FeaturedHtml + '<div class="scc-fg-doc-h2 scc-fg-doc-h2--featured">' + sccEsc(h2Text) + '</div></div>';
     }
     case 'italic':   return '<p class="scc-fg-doc-italic">' + sccFgLinkify(b.html) + '</p>';
-    case 'p':        return (b.category === 'staging') ? sccFgRenderStagingCue(b) : '<p>' + sccFgLinkify(b.html) + '</p>';
+    case 'p': {
+      if (b.category === 'staging') return sccFgRenderStagingCue(b);
+      var pInner = sccFgLinkify(b.html);
+      // A skill-check paragraph is rewritten by sccFgStyleSkillChecks()
+      // (called inside sccFgLinkify()) into its own self-contained
+      // <div class="scc-fg-check">...</div> -- wrapping that in a further
+      // <p> here would nest a div inside a p, which the browser silently
+      // "fixes" by closing the p early and leaving a stray empty one in
+      // the DOM ahead of the real box. Skip the wrap whenever the
+      // linkified content is already a self-contained block; every other
+      // type "p" block's content is plain/inline and still needs it.
+      return /^\s*<div/.test(pInner) ? pInner : '<p>' + pInner + '</p>';
+    }
     case 'list':     return '<' + (b.tag || 'ul') + '>' + sccFgLinkify(b.html) + '</' + (b.tag || 'ul') + '>';
     case 'table':    return sccFgRenderTableBlock(b);
     case 'footer':   return '<div class="scc-fg-doc-footer">' + sccFgLinkify(b.html) + '</div>';
