@@ -18115,17 +18115,27 @@ function sccFgRenderBlock(b, idx, ctx) {
 // ── Loot table widget (block.loot_table, 2026-09-16) ──────────────────
 // Any block can carry an optional loot_table: [{item_id, item_name,
 // quantity}] -- items found but not yet handed to a specific character.
+// A second, alternative entry shape, {currency: 'cp'|'sp'|'gp', quantity},
+// covers loose coinage (2026-09-17) -- wealth has no catalog row of its own
+// (it lives as a single character_sheet.gold_cp integer, not an inventory
+// row), so a currency entry is assigned by adding its copper-piece
+// equivalent straight to gold_cp instead of posting to `inventory`. Both
+// shapes can appear in the same loot_table array and render in the same
+// list, keyed off whether an entry has `.currency` (see
+// sccFgLootEntryLabel/sccFgLootAssign below).
 // Renders a small widget listing every entry that still has quantity > 0,
 // with a PC picker + quantity input to assign some or all of it; an entry
 // that reaches 0 just drops out of the list (no separate "fully assigned"
-// state to render). Assigning both grants a real inventory row (same shape
-// sccAwardItem()/sccVendorBuy() already use) AND decrements the block's own
-// quantity, PATCHed straight back to field_guide_sessions.blocks -- unlike
-// completion/decision state elsewhere in this file (a session_note_entries
-// side-log, since those are just togglable flags), "how many are left" is a
-// real running count that has to live on the block itself. field_guide_sessions
-// already grants anon UPDATE (same RLS shape as every other table here), and
-// this is no different in kind from vendor_stock's own quantity decrement.
+// state to render). Assigning an item grants a real inventory row (same
+// shape sccAwardItem()/sccVendorBuy() already use); assigning currency
+// grants gold_cp directly (same arithmetic sccAwardCoins() already uses) --
+// either way the block's own quantity is decremented and PATCHed straight
+// back to field_guide_sessions.blocks -- unlike completion/decision state
+// elsewhere in this file (a session_note_entries side-log, since those are
+// just togglable flags), "how many are left" is a real running count that
+// has to live on the block itself. field_guide_sessions already grants
+// anon UPDATE (same RLS shape as every other table here), and this is no
+// different in kind from vendor_stock's own quantity decrement.
 //
 // ctx threads through exactly like combat_outcomes/scenario_cards above:
 // undefined for a top-level block, {scenarioCardsDomId, cardIdx} when this
@@ -18159,6 +18169,21 @@ function sccFgLootContainerBlocks(ctx) {
 function sccFgLootWidgetDomId(idx, ctxKey) {
   return 'scc-fg-loot-widget-' + (ctxKey ? ctxKey.replace(/[^a-zA-Z0-9]/g, '_') + '-' : '') + idx;
 }
+// Standard 5e coinage -- 1 gp = 10 sp = 100 cp -- the copper-piece
+// equivalent of one unit of each currency shape a loot_table entry can use.
+var SCC_FG_LOOT_CURRENCY_CP = { cp: 1, sp: 10, gp: 100 };
+var SCC_FG_LOOT_CURRENCY_NAME = { cp: 'Copper Piece', sp: 'Silver Piece', gp: 'Gold Piece' };
+// Display label for one loot_table entry, either shape -- "3 Silver Pieces"
+// for currency, the item's own name for an item. Currency has no separate
+// "name" field to fall back on (it's just an amount of a coin type), so the
+// quantity is baked into the label itself rather than shown as a suffix.
+function sccFgLootEntryLabel(it) {
+  if (it && it.currency) {
+    var name = SCC_FG_LOOT_CURRENCY_NAME[it.currency] || it.currency;
+    return (it.quantity || 0) + ' ' + name + ((it.quantity === 1) ? '' : 's');
+  }
+  return (it && (it.item_name || it.item_id)) || 'Item';
+}
 function sccFgRenderLootTableWidget(b, idx, ctx) {
   var items = Array.isArray(b.loot_table) ? b.loot_table : [];
   if (!items.length) return '';
@@ -18171,7 +18196,7 @@ function sccFgRenderLootTableWidget(b, idx, ctx) {
     var playerOptions = players.map(function(p, i) { return '<option value="' + i + '">' + sccEsc(p.name) + '</option>'; }).join('');
     return '<div class="scc-fg-loot-row">'
       + '<div class="scc-fg-loot-row-info">'
-        + '<span class="scc-fg-loot-row-name">' + sccEsc(it.item_name || it.item_id || 'Item') + '</span>'
+        + '<span class="scc-fg-loot-row-name">' + sccEsc(sccFgLootEntryLabel(it)) + '</span>'
         + '<span class="scc-fg-loot-row-remaining">' + it.quantity + ' remaining</span>'
       + '</div>'
       + (auditLocked ? '' : (players.length
@@ -18214,14 +18239,31 @@ function sccFgLootAssign(idx, ctxKey, itemIdx) {
   if (qty > (item.quantity || 0)) { showDMToast('Only ' + item.quantity + ' left', 'error'); return; }
   var num = sccFgActiveSessionNum();
   var row = SCC_FG_DOC_CACHE[num];
-  sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true }).then(function(r) {
-    if (!r.ok) { showDMToast('Failed to add to inventory', 'error'); return null; }
+  // Currency has no catalog row to post to `inventory` -- it's added straight
+  // to the player's own character_sheet.gold_cp, same conversion + PATCH
+  // sccAwardCoins() already uses for the Combat tracker's coin award.
+  var grant;
+  if (item.currency) {
+    var sheet = SCC_SHEETS[player.id];
+    if (!sheet) { showDMToast('No character sheet found for ' + player.name, 'error'); return; }
+    var addCP = qty * (SCC_FG_LOOT_CURRENCY_CP[item.currency] || 0);
+    var newTotal = (sheet.gold_cp || 0) + addCP;
+    grant = sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(player.id), { gold_cp: newTotal }).then(function(r) {
+      if (r.ok) sheet.gold_cp = newTotal;
+      return r;
+    });
+  } else {
+    grant = sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true });
+  }
+  grant.then(function(r) {
+    if (!r.ok) { showDMToast('Failed to ' + (item.currency ? 'add gold' : 'add to inventory'), 'error'); return null; }
     item.quantity = item.quantity - qty;
     return sccPatch('field_guide_sessions', '?session_number=eq.' + encodeURIComponent(num), { blocks: row.blocks });
   }).then(function(r2) {
     if (!r2) return;
-    if (!r2.ok) { showDMToast('Item granted, but could not save the updated remaining count', 'error'); return; }
-    showDMToast((item.item_name || item.item_id) + ' \u00d7' + qty + ' \u2192 ' + player.name + ' \u2713', 'success');
+    if (!r2.ok) { showDMToast((item.currency ? 'Gold granted' : 'Item granted') + ', but could not save the updated remaining count', 'error'); return; }
+    var toastLabel = item.currency ? sccFgLootEntryLabel({ currency: item.currency, quantity: qty }) : (item.item_name || item.item_id) + ' \u00d7' + qty;
+    showDMToast(toastLabel + ' \u2192 ' + player.name + ' \u2713', 'success');
     sccFgRerenderLootWidget(idx, ctx);
   }).catch(function() { showDMToast('Failed to assign loot', 'error'); });
 }
