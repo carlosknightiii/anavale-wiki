@@ -841,6 +841,12 @@
       color: var(--text);
     }
     .cs-spellcast-stat-example { opacity: 0.8; font-style: italic; }
+    .cs-spellcast-stat-icon { font-size: 1rem; }
+    .cs-spellcast-stat-tagline {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      color: var(--blue-100);
+    }
     .cs-class-warden-note {
       display: block;
       color: var(--gold);
@@ -5038,9 +5044,12 @@
   // your spellcasting ability modifier + your Proficiency Bonus"). The
   // proficiency note sits directly under the number — the players' main
   // point of confusion was whether the shown number already includes it.
-  function spellStatCardHtml(label, value, profNote, explain, example) {
+  // Icons reuse the sheet's existing emoji-entity convention (same glyphs as
+  // FEAT_ICONS: sparkles = Spellcasting, shield, target) — no new assets.
+  function spellStatCardHtml(label, icon, tagline, value, profNote, explain, example) {
     return '<div class="cs-spellcast-stat">'
-      + '<span class="cs-spellcast-stat-label">' + label + '</span>'
+      + '<span class="cs-spellcast-stat-label"><span class="cs-spellcast-stat-icon">' + icon + '</span>' + label + '</span>'
+      + '<span class="cs-spellcast-stat-tagline">' + tagline + '</span>'
       + '<span class="cs-spellcast-stat-val">' + value + '</span>'
       + '<span class="cs-spellcast-stat-prof">' + profNote + '</span>'
       + '<span class="cs-spellcast-stat-explain">' + explain + '</span>'
@@ -5058,19 +5067,18 @@
     var atkBonus = profBonus + abMod;
     var sgn = function(n) { return (n >= 0 ? '+' : '') + n; };
     var abName = { str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma' }[castingAbility] || castingAbility;
-    var pbTxt = '+' + profBonus;
     el.innerHTML = '<div class="cs-spellcast-stats">'
-      + spellStatCardHtml('Spellcasting Modifier', sgn(abMod),
-          'Does NOT include proficiency bonus',
-          'Your ' + abName + ' modifier. This is the ability your class uses to cast spells; the other two numbers are built from it.',
+      + spellStatCardHtml('Spellcasting Modifier', '&#10024;', 'Your core magic number &mdash; the other two are built from it', sgn(abMod),
+          'Use as-is &mdash; most spells don&rsquo;t ask you to add anything else',
+          'Your ' + abName + ' modifier. This is the ability your class uses to cast spells.',
           'Just your ' + abName + ' modifier: ' + sgn(abMod) + '.')
-      + spellStatCardHtml('Spell Save DC', saveDC,
-          '(includes your ' + pbTxt + ' proficiency bonus)',
-          'Spell save DC = 8 + your spellcasting ability modifier + your Proficiency Bonus. A creature must roll this or higher on its saving throw to resist your spell.',
+      + spellStatCardHtml('Spell Save DC', '&#128737;', 'How hard it is to resist your spells', saveDC,
+          'Already includes proficiency &mdash; don&rsquo;t add it again',
+          'The number a target must meet or beat to resist your spell.',
           'Example: 8 + ' + abMod + ' + ' + profBonus + ' = ' + saveDC + '. The target rolls a d20 and needs ' + saveDC + ' or more.')
-      + spellStatCardHtml('Spell Attack Bonus', sgn(atkBonus),
-          '(includes your ' + pbTxt + ' proficiency bonus)',
-          'Spell attack modifier = your spellcasting ability modifier + your Proficiency Bonus. Add it to the d20 when a spell calls for an attack roll.',
+      + spellStatCardHtml('Spell Attack Bonus', '&#127919;', 'Added to your roll when a spell attacks', sgn(atkBonus),
+          'Already includes proficiency &mdash; don&rsquo;t add it again',
+          'Add this to your d20 roll when a spell makes an attack.',
           'Example: roll a d20 and add ' + sgn(atkBonus) + ' (' + abMod + ' + ' + profBonus + '). Do not add proficiency again.')
     + '</div>';
   }
