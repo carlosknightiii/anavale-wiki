@@ -1507,7 +1507,53 @@
        at a glance, not just two colors of the same thing. Empty state
        renders nothing at all (no row, no placeholder) since this is
        display-only here — no add affordance to keep visible for. */
+    /* Click-to-enlarge shadowbox -- same two-layer pattern and values as
+       dm.html's Field Guide featured-portrait viewer (.scc-fg-imgview-*):
+       a full-bleed blurred click-to-close backdrop plus a separate
+       pointer-events:none flex layer, so a click on the image itself
+       doesn't close it. */
+    .cs-imgview-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1200;
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      display: none;
+    }
+    .cs-imgview-backdrop.open { display: block; }
+    .cs-imgview {
+      position: fixed; inset: 0; z-index: 1201;
+      display: none; align-items: center; justify-content: center;
+      padding: 3rem; pointer-events: none;
+    }
+    .cs-imgview.open { display: flex; }
+    .cs-imgview-img {
+      max-width: 100%; max-height: 100%; object-fit: contain;
+      border-radius: var(--radius-sm); box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+      pointer-events: auto;
+    }
+    .cs-imgview-close {
+      position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1202;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--gold-dim); border: 1px solid var(--char-accent-border);
+      color: var(--gold); font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: auto;
+    }
+    .cs-mi-companions-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
+    .cs-mi-companions-label {
+      font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--char-text-faint);
+    }
     .cs-mi-companions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+    .cs-mi-companion-thumb {
+      width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
+      object-fit: cover; border: 1px solid var(--char-accent-border);
+    }
+    .cs-mi-companion-thumb-fallback {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--gold-dim); color: var(--gold);
+      font-size: 1.2rem; font-weight: 700;
+    }
+    img.cs-mi-companion-thumb { cursor: zoom-in; }
+    .cs-mi-companion-pill.has-thumb { padding-left: 0.25rem; }
     .cs-mi-companion-pill {
       display: inline-flex;
       align-items: center;
@@ -3273,6 +3319,7 @@
   var REGION_ROW = null;     // regions table row for ch.home_region, once fetchRegionData() resolves
   var CONDITIONS_DATA = [];  // conditions table rows (id/name/color_bg/color_border/color_text/tip/sort_order), once fetchConditionsData() resolves
   var ATTACHMENTS_DATA = []; // this character's own active character_attachments rows, once fetchAttachmentsData() resolves — DM-managed (dm.html's sidebar), read-only display here
+  var ATTACHMENT_CHARS = []; // world_characters rows (player_facing only) backing this character's 'character'-type attachments, for their tooltips
   var CREATURES_DATA = [];   // all creatures table rows, once fetchCreaturesData() resolves — small (~52 rows), fetched in full to resolve a creature attachment's real description/behavior for its tooltip
   var SPELLS_DATA = [];  // all 414 spells table rows, once fetchSpellsData() resolves — Handoff B (Spells Learned browser)
   var SPELLS_BY_ID = {}; // spells.id -> row, built alongside SPELLS_DATA for O(1) lookup (Prepared pills, spell picker)
@@ -5385,7 +5432,7 @@
             + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
             + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
           + '</div>'
-          + '<div class="cs-mi-companions" id="cs-mi-companions"></div>'
+          + '<div class="cs-mi-companions-wrap" id="cs-mi-companions-wrap"><div class="cs-mi-companions-label">Companions</div><div class="cs-mi-companions" id="cs-mi-companions"></div></div>'
         + '</div>'
         + '<div class="cs-ov-info">'
           + '<div class="cs-mi-top-row">'
@@ -6077,24 +6124,86 @@
   // same "DM writes, sheet displays" split as Spells Learned). Renders
   // nothing at all when there are no active attachments, rather than an
   // empty section header with no add affordance to offer.
+  // Resolves the tooltip by attachment_type, never assuming a creature
+  // catalog row exists (Meeko is a 'character' attachment backed by
+  // world_characters, and any attachment may have no entity_id at all).
+  // Always returns non-empty text -- falls back to name + mode -- so a
+  // companion can never render without a hover tooltip.
   function attachmentTooltipText(a) {
-    var creature = (a.attachment_type === 'creature' && a.entity_id)
-      ? CREATURES_DATA.find(function(c) { return c.id === a.entity_id; })
-      : null;
     var parts = [];
-    if (creature && creature.description) parts.push(creature.description);
+    var ent = null;
+    if (a.entity_id) {
+      if (a.attachment_type === 'creature') {
+        ent = CREATURES_DATA.find(function(c) { return c.id === a.entity_id; });
+        if (ent && ent.description) parts.push(ent.description);
+      } else if (a.attachment_type === 'character') {
+        ent = ATTACHMENT_CHARS.find(function(c) { return c.id === a.entity_id; });
+        if (ent && ent.summary) parts.push(ent.summary);
+        if (ent && ent.appearance) parts.push(ent.appearance);
+      }
+    }
     if (a.description) parts.push('Why: ' + a.description);
-    if (creature && creature.behavior) parts.push('Behavior: ' + creature.behavior);
+    if (a.effect_text) parts.push('Effect: ' + a.effect_text);
+    if (ent && ent.behavior) parts.push('Behavior: ' + ent.behavior);
+    if (!parts.length) parts.push(a.name + ' (' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + ' companion)');
     return parts.join('\n\n');
   }
+  // Image comes from the companion's own underlying record (creatures.image
+  // / world_characters.image); no image, no entity, or a broken URL all land
+  // on the same initial-letter circle the rest of the app uses for a missing
+  // portrait (dm.html's letter-avatar fallback).
+  function attachmentThumbHtml(a) {
+    var img = null;
+    if (a.entity_id) {
+      var src = a.attachment_type === 'creature' ? CREATURES_DATA
+              : a.attachment_type === 'character' ? ATTACHMENT_CHARS : [];
+      var ent = src.find(function(c) { return c.id === a.entity_id; });
+      img = ent && ent.image;
+    }
+    var fb = '<span class="cs-mi-companion-thumb cs-mi-companion-thumb-fallback"' + (img ? ' style="display:none;"' : '') + '>' + escHtml((a.name || '?').charAt(0).toUpperCase()) + '</span>';
+    if (!img) return fb;
+    return '<img class="cs-mi-companion-thumb" src="' + escHtml(img) + '" alt="" title="Click to enlarge" onclick="openImgView(this.src, this.getAttribute(\'data-name\'))" data-name="' + escHtml(a.name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">' + fb;
+  }
+  // Shadowbox viewer, injected into #cs-modal-root on first use (per the
+  // file's modal rule). Backdrop click, X button, or Escape closes it.
+  function openImgView(url, name) {
+    var root = document.getElementById('cs-modal-root');
+    if (!root || !url) return;
+    var box = document.getElementById('cs-imgview');
+    if (!box) {
+      root.insertAdjacentHTML('beforeend',
+        '<div id="cs-imgview-backdrop" class="cs-imgview-backdrop" onclick="closeImgView()"></div>'
+        + '<div id="cs-imgview" class="cs-imgview" aria-hidden="true">'
+        + '<button type="button" class="cs-imgview-close" onclick="closeImgView()" title="Close" aria-label="Close">&#10005;</button>'
+        + '<img id="cs-imgview-img" class="cs-imgview-img" src="" alt="">'
+        + '</div>');
+    }
+    var img = document.getElementById('cs-imgview-img');
+    img.src = url; img.alt = name || '';
+    document.getElementById('cs-imgview-backdrop').classList.add('open');
+    var v = document.getElementById('cs-imgview');
+    v.classList.add('open'); v.setAttribute('aria-hidden', 'false');
+    document.addEventListener('keydown', imgViewEscHandler);
+  }
+  function closeImgView() {
+    var b = document.getElementById('cs-imgview-backdrop'), v = document.getElementById('cs-imgview'), i = document.getElementById('cs-imgview-img');
+    if (b) b.classList.remove('open');
+    if (v) { v.classList.remove('open'); v.setAttribute('aria-hidden', 'true'); }
+    if (i) i.src = '';
+    document.removeEventListener('keydown', imgViewEscHandler);
+  }
+  function imgViewEscHandler(e) { if (e.key === 'Escape') closeImgView(); }
   function renderCompanions() {
     var el = document.getElementById('cs-mi-companions');
     if (!el) return;
     var rows = Array.isArray(ATTACHMENTS_DATA) ? ATTACHMENTS_DATA : [];
+    var wrap = document.getElementById('cs-mi-companions-wrap');
+    if (wrap) wrap.style.display = rows.length ? '' : 'none';
     if (!rows.length) { el.innerHTML = ''; return; }
     el.innerHTML = rows.map(function(a) {
       var tip = attachmentTooltipText(a);
-      return '<span class="cs-mi-companion-pill' + (a.mode === 'permanent' ? ' permanent' : '') + '"' + (tip ? ' data-tip="' + escHtml(tip) + '"' : '') + '>'
+      return '<span class="cs-mi-companion-pill has-thumb' + (a.mode === 'permanent' ? ' permanent' : '') + '"' + (tip ? ' data-tip="' + escHtml(tip) + '"' : '') + '>'
+        + attachmentThumbHtml(a)
         + escHtml(a.name)
         + '<span class="cs-mi-companion-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
       + '</span>';
@@ -6234,7 +6343,15 @@
   // fetch which loads every active row for the whole party at once.
   function fetchAttachmentsData() {
     return sb.from('character_attachments').select('*').eq('character_id', CHAR_ID).eq('active', true).order('created_at')
-      .then(function(res) { if (!res.error && Array.isArray(res.data)) ATTACHMENTS_DATA = res.data; })
+      .then(function(res) {
+        if (res.error || !Array.isArray(res.data)) return;
+        ATTACHMENTS_DATA = res.data;
+        var ids = res.data.filter(function(a) { return a.attachment_type === 'character' && a.entity_id; })
+          .map(function(a) { return a.entity_id; });
+        if (!ids.length) return;
+        return sb.from('world_characters').select('id,name,summary,appearance,image').eq('player_facing', true).in('id', ids)
+          .then(function(r2) { if (!r2.error && Array.isArray(r2.data)) ATTACHMENT_CHARS = r2.data; });
+      })
       .catch(function() {});
   }
   // Small, whole-table fetch (same "fits in memory, don't round-trip per
