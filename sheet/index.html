@@ -826,6 +826,46 @@
       font-size: var(--char-ov-h3);
       color: var(--text);
     }
+    .cs-spellcast-stat { flex-basis: 220px; }
+    .cs-spellcast-stat-prof {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--gold);
+    }
+    .cs-spellcast-stat-explain,
+    .cs-spellcast-stat-example {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .cs-spellcast-stat-example { opacity: 0.8; font-style: italic; }
+    .cs-spellcast-stat-icon { font-size: 1rem; }
+    /* Small all-caps tag directly above the spell name (mirrors dm.html's
+       .scc-pd-class-ability-tag), not a separate column. */
+    .cs-sl-class-ability-tag {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.85;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+    .cs-spellcast-stat-tagline {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      color: var(--blue-100);
+    }
+    .cs-class-warden-note {
+      display: block;
+      color: var(--gold);
+      font-size: 0.8rem;
+    }
 
     /* ── Spells Prepared (Features accordion, sibling group — Handoff B) ── */
     .cs-prepared-header-row { display: flex; justify-content: space-between; align-items: center; gap: var(--char-ov-gap-2xs); }
@@ -3664,7 +3704,7 @@
     },
     warden: {
       icon: '&#9876;',
-      desc: 'You gain proficiency with martial weapons and medium armor.'
+      desc: 'Passive and always on: you gain proficiency with martial weapons and medium armor. Nothing to use or track; it applies automatically to your weapon attacks and lets you wear medium armor without penalty.'
     }
   };
   var ALIGNMENT_PHB = {
@@ -4310,6 +4350,15 @@
     var weapons = row ? row.weapons           : null;
     var savesTip  = row ? row.saves_tip   : null;
     var weaponsTip = row ? row.weapons_tip : null;
+    // Druid Primal Order: Warden is a passive, always-on proficiency grant
+    // (Martial weapons + Medium armor) — shown here, next to the class's own
+    // proficiencies, since that's where it actually matters.
+    var isWarden = !!(CH && String(CH.primal_order || '').toLowerCase() === 'warden');
+    var wardenNote = '<span class="cs-class-warden-note">+ Primal Order: Warden (always active)</span>';
+    if (isWarden) {
+      armor   = (armor   || '') + ', Medium armor' + wardenNote;
+      weapons = (weapons || '') + ', Martial weapons' + wardenNote;
+    }
     return '<div class="cs-ov-class-detail">'
         + '<p class="cs-ov-class-detail-key">Primary ability:</p><p class="cs-ov-class-detail-val">' + (primary || '—') + '</p>'
         + '<p class="cs-ov-class-detail-key">' + classTraitLabel('Saving throws:', savesTip) + '</p><p class="cs-ov-class-detail-val">' + (saves || '—') + '</p>'
@@ -4934,6 +4983,7 @@
     var prepared = (SHEET && Array.isArray(SHEET.prepared_spells)) ? SHEET.prepared_spells : [];
     var favSet = (SHEET && Array.isArray(SHEET.favorite_spells)) ? SHEET.favorite_spells : [];
     var alwaysPrepared = (SHEET && Array.isArray(SHEET.always_prepared_spells)) ? SHEET.always_prepared_spells : [];
+    var classAbilityIds = classAbilitySpellIds();
     var maxPrepared = computePreparedMax();
     var full = learned.map(function(id) { return SPELLS_BY_ID[id]; }).filter(Boolean)
       .sort(spellsLearnedComparator());
@@ -4962,8 +5012,15 @@
       // regardless of the daily-prepared budget, same reasoning as
       // cantrips: never counted, never checkbox-addable to prepared_spells.
       var isAlwaysPrepared = s.level === 0 || alwaysPrepared.indexOf(s.id) !== -1;
+      // A real class-feature grant (Favored Enemy's Hunter's Mark, etc.) gets
+      // the "Class Ability" tag above its name instead of the generic
+      // "Always Prepared" text — same distinction dm.html's Admin view makes
+      // between a class grant and a personal/story DM grant.
+      var isClassAbility = classAbilityIds.indexOf(s.id) !== -1;
       var preparedCell = isAlwaysPrepared
-        ? '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>'
+        ? (isClassAbility
+            ? '<span style="color:var(--char-text-faint); font-size:0.78rem;" title="Always prepared &mdash; granted by a class feature">&mdash;</span>'
+            : '<span style="color:var(--char-text-faint); font-size:0.78rem;">Always Prepared</span>')
         : '<input type="checkbox" ' + (isPrepared ? 'checked' : '') + (!isPrepared && prepared.length >= maxPrepared ? ' disabled title="Prepared list is full"' : '') + ' onchange="togglePreparedFromTable(\'' + s.id + '\', this.checked)">';
       // Row height matches actual content, not a fixed reservation — the
       // long-description columns forced every row (short spells included)
@@ -4979,7 +5036,7 @@
         + '<td class="cs-inv-td cs-inv-td-thumb">' + spellThumbHtml(s) + '</td>'
         + '<td class="cs-inv-td"><span class="cs-sl-name-cell">'
           + '<button class="cs-sl-fav-btn' + (isFav ? ' favorited' : '') + '" onclick="toggleSpellFavorite(\'' + s.id + '\')" aria-label="' + (isFav ? 'Unfavorite' : 'Favorite') + ' ' + escHtml(s.name) + '" title="' + (isFav ? 'Unfavorite' : 'Favorite') + '">' + (isFav ? '&#9733;' : '&#9734;') + '</button>'
-          + escHtml(s.name)
+          + '<span>' + (isClassAbility ? '<span class="cs-sl-class-ability-tag">Class Ability</span>' : '') + escHtml(s.name) + '</span>'
         + '</span></td>'
         + '<td class="cs-inv-td cs-inv-td-cat">' + levelLabel + '</td>'
         + '<td class="cs-inv-td">' + (s.school ? escHtml(s.school) : '&mdash;') + '</td>'
@@ -5064,13 +5121,34 @@
   // renderClassFeaturesAccordion()), so this function no longer needs to
   // manage its own card visibility; a non-caster simply never gets the
   // target div rendered at all.
-  function spellStatCardHtml(label, value, tip) {
+  // ANV-18: always-visible explanation instead of a "?" tooltip. Formulas are
+  // the 2024 PHB's own wording ("Spell save DC = 8 + your spellcasting
+  // ability modifier + your Proficiency Bonus"; "Spell attack modifier =
+  // your spellcasting ability modifier + your Proficiency Bonus"). The
+  // proficiency note sits directly under the number — the players' main
+  // point of confusion was whether the shown number already includes it.
+  // Icons reuse the sheet's existing emoji-entity convention (same glyphs as
+  // FEAT_ICONS: sparkles = Spellcasting, shield, target) — no new assets.
+  function spellStatCardHtml(label, icon, tagline, value, profNote, explain, example) {
     return '<div class="cs-spellcast-stat">'
-      + '<span class="cs-spellcast-stat-label">' + label
-        + '<span class="cs-ab-tip" data-tip="' + tip.replace(/"/g,'&quot;') + '">?</span>'
-      + '</span>'
+      + '<span class="cs-spellcast-stat-label"><span class="cs-spellcast-stat-icon">' + icon + '</span>' + label + '</span>'
+      + '<span class="cs-spellcast-stat-tagline">' + tagline + '</span>'
       + '<span class="cs-spellcast-stat-val">' + value + '</span>'
+      + '<span class="cs-spellcast-stat-prof">' + profNote + '</span>'
+      + '<span class="cs-spellcast-stat-explain">' + explain + '</span>'
+      + '<span class="cs-spellcast-stat-example">' + example + '</span>'
     + '</div>';
+  }
+  // Ported from dm.html's sccPlayerClassAbilitySpellIds(): classes.
+  // class_ability_spells entries ({spell_id, min_level}) gated on the
+  // character's real level. Null-spell_id entries (spells not in the catalog
+  // yet) are skipped — nothing to match against.
+  function classAbilitySpellIds() {
+    var level = (CH && CH.level) || 1;
+    var entries = (CLASS_ROW && Array.isArray(CLASS_ROW.class_ability_spells)) ? CLASS_ROW.class_ability_spells : [];
+    return entries
+      .filter(function(e) { return e.spell_id && level >= (e.min_level || 1); })
+      .map(function(e) { return e.spell_id; });
   }
   function renderSpellcastingStats() {
     var el = document.getElementById('cs-class-spellcasting-stats');
@@ -5081,10 +5159,21 @@
     var profBonus = SHEET ? (parseInt(SHEET.proficiency_bonus) || 0) : 2;
     var saveDC = 8 + profBonus + abMod;
     var atkBonus = profBonus + abMod;
+    var sgn = function(n) { return (n >= 0 ? '+' : '') + n; };
+    var abName = { str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma' }[castingAbility] || castingAbility;
     el.innerHTML = '<div class="cs-spellcast-stats">'
-      + spellStatCardHtml('Spellcasting Modifier', (abMod >= 0 ? '+' : '') + abMod, 'The ability modifier your class uses to cast spells.')
-      + spellStatCardHtml('Spell Save DC', saveDC, 'The number a creature must roll at or above to resist your spell.')
-      + spellStatCardHtml('Spell Attack Bonus', (atkBonus >= 0 ? '+' : '') + atkBonus, 'Added to the d20 when you make an attack roll with a spell.')
+      + spellStatCardHtml('Spellcasting Modifier', '&#10024;', 'Your core magic number &mdash; the other two are built from it', sgn(abMod),
+          'Use as-is &mdash; most spells don&rsquo;t ask you to add anything else',
+          'Your ' + abName + ' modifier. This is the ability your class uses to cast spells.',
+          'Just your ' + abName + ' modifier: ' + sgn(abMod) + '.')
+      + spellStatCardHtml('Spell Save DC', '&#128737;', 'How hard it is to resist your spells', saveDC,
+          'Already includes proficiency &mdash; don&rsquo;t add it again',
+          'The number a target must meet or beat to resist your spell.',
+          'Example: 8 + ' + abMod + ' + ' + profBonus + ' = ' + saveDC + '. The target rolls a d20 and needs ' + saveDC + ' or more.')
+      + spellStatCardHtml('Spell Attack Bonus', '&#127919;', 'Added to your roll when a spell attacks', sgn(atkBonus),
+          'Already includes proficiency &mdash; don&rsquo;t add it again',
+          'Add this to your d20 roll when a spell makes an attack.',
+          'Example: roll a d20 and add ' + sgn(atkBonus) + ' (' + abMod + ' + ' + profBonus + '). Do not add proficiency again.')
     + '</div>';
   }
 
@@ -5953,9 +6042,21 @@
       if (f.recharge === 'short_rest') spentMap[f.name] = 0;
     });
     SHEET.limited_use_spent = spentMap;
-    saveSheet({ limited_use_spent: spentMap });
+    var fields = { limited_use_spent: spentMap };
+    // Warlock Pact Magic (2024 PHB): slots return on a Short OR Long Rest.
+    // classes.spell_slots_recharge is the data-driven flag (long_rest for
+    // every other caster). doLongRest() deliberately still resets slots for
+    // these classes too — a Long Rest restores Pact Magic slots as well, so
+    // there is no double-refill problem to guard against.
+    var slotsBack = !!(CLASS_ROW && CLASS_ROW.spell_slots_recharge === 'short_rest');
+    if (slotsBack) {
+      SHEET.spell_slots = {};
+      fields.spell_slots = {};
+    }
+    saveSheet(fields);
     renderLimitedUseFeatures();
-    showToast('Short Rest complete — short-rest features restored.');
+    if (slotsBack) renderSpellSlotsGroup();
+    showToast(slotsBack ? 'Short Rest complete — Pact Magic slots and short-rest features restored.' : 'Short Rest complete — short-rest features restored.');
   }
   function doLongRest() {
     if (!SHEET) return;
@@ -6762,6 +6863,7 @@
       if (weightClass === 'heavy') {
         breakdown.push('Dex (not added)');
       } else if (weightClass === 'medium') {
+        if (CH && String(CH.primal_order || '').toLowerCase() === 'warden') breakdown.push('medium armor proficiency via Primal Order: Warden');
         var maxDex = (armor.max_dex_bonus != null && armor.max_dex_bonus !== '') ? parseInt(armor.max_dex_bonus) : 2;
         var dexApplied = Math.min(dexMod, maxDex);
         ac += dexApplied;
