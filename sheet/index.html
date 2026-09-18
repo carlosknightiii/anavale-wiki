@@ -3273,6 +3273,7 @@
   var REGION_ROW = null;     // regions table row for ch.home_region, once fetchRegionData() resolves
   var CONDITIONS_DATA = [];  // conditions table rows (id/name/color_bg/color_border/color_text/tip/sort_order), once fetchConditionsData() resolves
   var ATTACHMENTS_DATA = []; // this character's own active character_attachments rows, once fetchAttachmentsData() resolves — DM-managed (dm.html's sidebar), read-only display here
+  var ATTACHMENT_CHARS = []; // world_characters rows (player_facing only) backing this character's 'character'-type attachments, for their tooltips
   var CREATURES_DATA = [];   // all creatures table rows, once fetchCreaturesData() resolves — small (~52 rows), fetched in full to resolve a creature attachment's real description/behavior for its tooltip
   var SPELLS_DATA = [];  // all 414 spells table rows, once fetchSpellsData() resolves — Handoff B (Spells Learned browser)
   var SPELLS_BY_ID = {}; // spells.id -> row, built alongside SPELLS_DATA for O(1) lookup (Prepared pills, spell picker)
@@ -6077,14 +6078,28 @@
   // same "DM writes, sheet displays" split as Spells Learned). Renders
   // nothing at all when there are no active attachments, rather than an
   // empty section header with no add affordance to offer.
+  // Resolves the tooltip by attachment_type, never assuming a creature
+  // catalog row exists (Meeko is a 'character' attachment backed by
+  // world_characters, and any attachment may have no entity_id at all).
+  // Always returns non-empty text -- falls back to name + mode -- so a
+  // companion can never render without a hover tooltip.
   function attachmentTooltipText(a) {
-    var creature = (a.attachment_type === 'creature' && a.entity_id)
-      ? CREATURES_DATA.find(function(c) { return c.id === a.entity_id; })
-      : null;
     var parts = [];
-    if (creature && creature.description) parts.push(creature.description);
+    var ent = null;
+    if (a.entity_id) {
+      if (a.attachment_type === 'creature') {
+        ent = CREATURES_DATA.find(function(c) { return c.id === a.entity_id; });
+        if (ent && ent.description) parts.push(ent.description);
+      } else if (a.attachment_type === 'character') {
+        ent = ATTACHMENT_CHARS.find(function(c) { return c.id === a.entity_id; });
+        if (ent && ent.summary) parts.push(ent.summary);
+        if (ent && ent.appearance) parts.push(ent.appearance);
+      }
+    }
     if (a.description) parts.push('Why: ' + a.description);
-    if (creature && creature.behavior) parts.push('Behavior: ' + creature.behavior);
+    if (a.effect_text) parts.push('Effect: ' + a.effect_text);
+    if (ent && ent.behavior) parts.push('Behavior: ' + ent.behavior);
+    if (!parts.length) parts.push(a.name + ' (' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + ' companion)');
     return parts.join('\n\n');
   }
   function renderCompanions() {
@@ -6234,7 +6249,15 @@
   // fetch which loads every active row for the whole party at once.
   function fetchAttachmentsData() {
     return sb.from('character_attachments').select('*').eq('character_id', CHAR_ID).eq('active', true).order('created_at')
-      .then(function(res) { if (!res.error && Array.isArray(res.data)) ATTACHMENTS_DATA = res.data; })
+      .then(function(res) {
+        if (res.error || !Array.isArray(res.data)) return;
+        ATTACHMENTS_DATA = res.data;
+        var ids = res.data.filter(function(a) { return a.attachment_type === 'character' && a.entity_id; })
+          .map(function(a) { return a.entity_id; });
+        if (!ids.length) return;
+        return sb.from('world_characters').select('id,name,summary,appearance').eq('player_facing', true).in('id', ids)
+          .then(function(r2) { if (!r2.error && Array.isArray(r2.data)) ATTACHMENT_CHARS = r2.data; });
+      })
       .catch(function() {});
   }
   // Small, whole-table fetch (same "fits in memory, don't round-trip per
