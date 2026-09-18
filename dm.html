@@ -8260,7 +8260,18 @@ function showDMToast(msg, type) {
 .scc-fg-scroll-backdrop {
   position: fixed; top: 0; bottom: 0; right: 0; z-index: 39;
   display: none; pointer-events: none;
-  background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.8) 30px);
+  /* Peak raised 0.8 -> 0.97 same day as the pixel-stop fix above, matching
+     the mobile --revealed backdrop's own ceiling below. Real DM-reported
+     bug: 0.8 black composited over this app's own near-black page bg
+     (#100f0a) is barely different from the bg itself, so it never actually
+     hid the paragraph/box text sitting behind the rail's labels -- narrowing
+     the ramp (the fix above) made the AFFECTED WIDTH thin as intended, but
+     didn't touch this separate problem, so real content kept showing
+     through, cluttered against the gold label text on top of it. 0.97
+     isn't a new value invented for this -- it's the exact ceiling
+     .scc-fg-scroll-backdrop--revealed already uses for the same job on
+     mobile; this just brings desktop's always-on backdrop up to match. */
+  background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.97) 30px);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
 }
