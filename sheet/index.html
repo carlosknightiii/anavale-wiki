@@ -1507,7 +1507,22 @@
        at a glance, not just two colors of the same thing. Empty state
        renders nothing at all (no row, no placeholder) since this is
        display-only here — no add affordance to keep visible for. */
+    .cs-mi-companions-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
+    .cs-mi-companions-label {
+      font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--char-text-faint);
+    }
     .cs-mi-companions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+    .cs-mi-companion-thumb {
+      width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
+      object-fit: cover; border: 1px solid var(--char-accent-border);
+    }
+    .cs-mi-companion-thumb-fallback {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--gold-dim); color: var(--gold);
+      font-size: 0.7rem; font-weight: 700;
+    }
+    .cs-mi-companion-pill.has-thumb { padding-left: 0.25rem; }
     .cs-mi-companion-pill {
       display: inline-flex;
       align-items: center;
@@ -5386,7 +5401,7 @@
             + '<img class="cs-ov-portrait-img" id="cs-hero-portrait-img" src="' + (portraitSrc || '') + '" alt="' + (ch.name || '') + ' portrait" onerror="this.style.display=\'none\'">'
             + '<button class="cs-ov-portrait-upload-btn" onclick="document.getElementById(\'cs-photo-input\').click()">Replace</button>'
           + '</div>'
-          + '<div class="cs-mi-companions" id="cs-mi-companions"></div>'
+          + '<div class="cs-mi-companions-wrap" id="cs-mi-companions-wrap"><div class="cs-mi-companions-label">Companions</div><div class="cs-mi-companions" id="cs-mi-companions"></div></div>'
         + '</div>'
         + '<div class="cs-ov-info">'
           + '<div class="cs-mi-top-row">'
@@ -6102,14 +6117,33 @@
     if (!parts.length) parts.push(a.name + ' (' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + ' companion)');
     return parts.join('\n\n');
   }
+  // Image comes from the companion's own underlying record (creatures.image
+  // / world_characters.image); no image, no entity, or a broken URL all land
+  // on the same initial-letter circle the rest of the app uses for a missing
+  // portrait (dm.html's letter-avatar fallback).
+  function attachmentThumbHtml(a) {
+    var img = null;
+    if (a.entity_id) {
+      var src = a.attachment_type === 'creature' ? CREATURES_DATA
+              : a.attachment_type === 'character' ? ATTACHMENT_CHARS : [];
+      var ent = src.find(function(c) { return c.id === a.entity_id; });
+      img = ent && ent.image;
+    }
+    var fb = '<span class="cs-mi-companion-thumb cs-mi-companion-thumb-fallback"' + (img ? ' style="display:none;"' : '') + '>' + escHtml((a.name || '?').charAt(0).toUpperCase()) + '</span>';
+    if (!img) return fb;
+    return '<img class="cs-mi-companion-thumb" src="' + escHtml(img) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">' + fb;
+  }
   function renderCompanions() {
     var el = document.getElementById('cs-mi-companions');
     if (!el) return;
     var rows = Array.isArray(ATTACHMENTS_DATA) ? ATTACHMENTS_DATA : [];
+    var wrap = document.getElementById('cs-mi-companions-wrap');
+    if (wrap) wrap.style.display = rows.length ? '' : 'none';
     if (!rows.length) { el.innerHTML = ''; return; }
     el.innerHTML = rows.map(function(a) {
       var tip = attachmentTooltipText(a);
-      return '<span class="cs-mi-companion-pill' + (a.mode === 'permanent' ? ' permanent' : '') + '"' + (tip ? ' data-tip="' + escHtml(tip) + '"' : '') + '>'
+      return '<span class="cs-mi-companion-pill has-thumb' + (a.mode === 'permanent' ? ' permanent' : '') + '"' + (tip ? ' data-tip="' + escHtml(tip) + '"' : '') + '>'
+        + attachmentThumbHtml(a)
         + escHtml(a.name)
         + '<span class="cs-mi-companion-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
       + '</span>';
@@ -6255,7 +6289,7 @@
         var ids = res.data.filter(function(a) { return a.attachment_type === 'character' && a.entity_id; })
           .map(function(a) { return a.entity_id; });
         if (!ids.length) return;
-        return sb.from('world_characters').select('id,name,summary,appearance').eq('player_facing', true).in('id', ids)
+        return sb.from('world_characters').select('id,name,summary,appearance,image').eq('player_facing', true).in('id', ids)
           .then(function(r2) { if (!r2.error && Array.isArray(r2.data)) ATTACHMENT_CHARS = r2.data; });
       })
       .catch(function() {});
