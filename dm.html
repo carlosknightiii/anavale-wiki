@@ -8232,17 +8232,35 @@ function showDMToast(msg, type) {
   border-left: 1px solid var(--dm-text-muted); padding-left: 0.9rem;
 }
 .scc-fg-scroll-label:hover { transform: translateY(-50%) scale(1.07); background: var(--gold-subtle); }
-/* Backdrop behind the indicator -- 80% opaque black at the screen's right
-   edge fading to transparent at the indicator's own measured left edge
-   (position set by sccFgPositionScrollBackdrop(), same as before, its
-   width is intrinsic to label content). A real top/bottom mask on this
-   static, non-animating element is safe from the percentage-of-a-growing-
-   box bug that ruled out masking the fill line itself -- the backdrop's
-   own height never changes during scroll, only the indicator's dots do. */
+/* Backdrop behind the indicator -- 80% opaque black behind the rail itself,
+   fading to transparent over a fixed pixel-width ramp, NOT a percentage of
+   the box's own width (position/width set by sccFgPositionScrollBackdrop()).
+   Real bug, fixed 2026-09-18: this rule used to ramp 0%->100% across the
+   box's ENTIRE width (leftPx to the viewport's right edge). That's exactly
+   the "percentage-of-a-growing-box" bug this same comment already warned
+   about for the fill line and the vertical mask below -- it just hadn't
+   been applied to this gradient itself yet. On a normal-width viewport the
+   box is narrow enough that this went unnoticed, but .scc-fg-doc has no
+   max-width (dropped 2026-08-20), so real document content runs edge-to-
+   edge -- on a wide desktop viewport the box's own left edge sits well
+   into that real text, and a 0%->100% ramp spread across the box's full
+   ~200px+ width was still only ~30-40% opaque by the time it reached the
+   actual right edge of visible content, a real, visible darkening over
+   readable text, not a subtle rail-only fade. Fixed the same way the
+   mobile --revealed backdrop below already solves this (pixel stops, not
+   percentage): transparent at the box's own left edge, ramping to fully
+   solid within a fixed SCC_FG_RAIL_LABEL_BUFFER_PX (see the matching JS
+   constant), then held flat at 0.8 for the remainder of the box -- so the
+   visible fade is always the same ~30px strip immediately left of the
+   rail's own label text, never smeared across whatever extra width the
+   box happens to have. A real top/bottom mask on this static, non-
+   animating element is safe from that same growing-box bug -- the
+   backdrop's own height never changes during scroll, only the indicator's
+   dots do, so a percentage-based vertical mask has nothing to grow against. */
 .scc-fg-scroll-backdrop {
   position: fixed; top: 0; bottom: 0; right: 0; z-index: 39;
   display: none; pointer-events: none;
-  background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+  background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.8) 30px);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
 }
@@ -19097,8 +19115,18 @@ function sccFgBuildScrollIndicator() {
 // overflowing text sitting uncovered, directly over busy document
 // content. SCC_FG_RAIL_LABEL_BUFFER_PX pads further left of the widest
 // label so the backdrop's own fade-to-solid ramp (see the matching pixel
-// stops on .scc-fg-scroll-backdrop--revealed) completes in the empty
-// space before any label text starts, never underneath it.
+// stops on .scc-fg-scroll-backdrop and .scc-fg-scroll-backdrop--revealed)
+// completes in the empty space before any label text starts, never
+// underneath it.
+//
+// Shrunk 60 -> 30 on 2026-09-18 alongside the base .scc-fg-scroll-backdrop
+// rule moving from percentage to pixel gradient stops (see that CSS
+// comment): the two constants are meant to stay in lockstep -- this is
+// how far past the label's own left edge the box extends, and the CSS
+// ramp is meant to finish exactly at that edge, not partway through real
+// document content. 30px is comfortably wider than the ramp needs to be
+// for antialiasing at any label's edge, without reopening the original
+// wide-viewport bug this same fix just closed.
 //
 // "Currently visible" is read from real, discrete state (the --revealed
 // class, or the >768px desktop breakpoint where labels have no reveal
@@ -19108,7 +19136,7 @@ function sccFgBuildScrollIndicator() {
 // a synchronous opacity read would resolve at that exact instant isn't
 // reliably specified. The class/breakpoint check has no such ambiguity:
 // it's the same discrete state before, during, and after the fade.
-var SCC_FG_RAIL_LABEL_BUFFER_PX = 60;
+var SCC_FG_RAIL_LABEL_BUFFER_PX = 30;
 function sccFgPositionScrollBackdrop(visible) {
   var backdrop = document.getElementById('scc-fg-scroll-backdrop');
   if (!backdrop) return;
