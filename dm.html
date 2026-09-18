@@ -1453,6 +1453,80 @@
       </div>
     </div>
 
+    <!-- ── Live Session sidebar section popups — one shared modal, one pane
+         per sidebar button (sccLiveOpenPopup()/sccLiveClosePopup()), same
+         centered-fixed-modal convention as .scc-quicknote-modal above.
+         Each pane holds the exact real render-target ids the old
+         always-visible sidebar strip used (#scc-live-party,
+         #scc-live-conditions, #scc-live-attachments,
+         #scc-live-current-beat) plus the Die Roller/Safety Net/Timer
+         markup verbatim, so every existing render function and its
+         audit-mode gating are untouched — only their containing chrome
+         moved here. -->
+    <div id="scc-live-popup-backdrop" class="scc-lookup-backdrop" onclick="sccLiveClosePopup()"></div>
+    <div id="scc-live-popup-modal" class="scc-live-popup-modal" aria-hidden="true">
+      <div class="scc-live-popup-modal-inner">
+        <div class="scc-live-popup-modal-header">
+          <div class="scc-live-popup-modal-title" id="scc-live-popup-title"></div>
+          <button type="button" class="scc-live-popup-modal-close" onclick="sccLiveClosePopup()" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="scc-live-popup-modal-body">
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-attachments">
+            <div id="scc-live-attachments"></div>
+          </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-conditions">
+            <div id="scc-live-conditions"></div>
+          </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-beat">
+            <div id="scc-live-current-beat"></div>
+          </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-dice">
+            <div class="scc-live-dice-row">
+              <button class="scc-live-die-btn" onclick="sccRollDie(4)">d4</button>
+              <button class="scc-live-die-btn" onclick="sccRollDie(6)">d6</button>
+              <button class="scc-live-die-btn" onclick="sccRollDie(8)">d8</button>
+              <button class="scc-live-die-btn" onclick="sccRollDie(10)">d10</button>
+              <button class="scc-live-die-btn" onclick="sccRollDie(12)">d12</button>
+              <button class="scc-live-die-btn scc-live-die-btn--d20" onclick="sccRollDie(20)">d20</button>
+            </div>
+            <div class="scc-live-dice-modifier-row">
+              <span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">Modifier</span>
+              <input type="number" id="scc-live-die-mod" class="scc-input" style="width:60px;text-align:center;padding:0.2rem 0.4rem;" value="0" min="-20" max="20">
+            </div>
+            <div id="scc-live-die-result" class="scc-live-die-result"></div>
+          </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-safety">
+            <div class="scc-live-safety-item">
+              <span class="scc-live-safety-trigger">Players go sideways?</span>
+              <span class="scc-live-safety-response">&#8220;Interesting. Give me a [Perception / Investigation] roll.&#8221;</span>
+            </div>
+            <div class="scc-live-safety-item">
+              <span class="scc-live-safety-trigger">0 HP?</span>
+              <span class="scc-live-safety-response">Unconscious. Death saves: DC 10, 3 successes before 3 failures.</span>
+            </div>
+            <div class="scc-live-safety-item">
+              <span class="scc-live-safety-trigger">Rules dispute?</span>
+              <span class="scc-live-safety-response">&#8220;We&#8217;ll rule it [X] now and look it up after. Keep moving.&#8221;</span>
+            </div>
+            <div class="scc-live-safety-item">
+              <span class="scc-live-safety-trigger">Emotional moment?</span>
+              <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
+            </div>
+          </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-party">
+            <div id="scc-live-party"></div>
+          </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-timer">
+            <div class="scc-live-timer-row">
+              <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
+              <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
+              <button class="scc-btn-sm scc-btn-secondary" id="scc-live-timer-reset-btn" onclick="sccLiveResetTimer()" title="Stop and zero the timer">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- "+ Add Session" — real creation, not just opening whatever's already
          active. Session number is DM-entered (not silently auto-incremented,
          see sccOpenAddSessionModal()'s pre-fill vs. what's actually submitted),
@@ -3530,104 +3604,46 @@
              this one tab. The local search box and standalone "NPCs This
              Session" chip list are gone too -- the header search already covers
              more entity types, and the real NPCs section below supersedes the
-             chip list. -->
+             chip list. The always-visible strip described above was itself
+             replaced 2026-09-17 by a collapsed-by-default sidebar rail +
+             drawer of section buttons, each opening a shared popup instead
+             of expanding inline -- see the SIDEBAR block just below and its
+             matching CSS comment for how/why. -->
         <div class="scc-panel active" id="scc-panel-live">
           <div class="scc-panel-inner scc-live-strip-wrap">
-            <!-- ── ALWAYS-VISIBLE CONTROL STRIP ─────────────────── -->
-            <div class="scc-live-strip">
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-party" onclick="sccLiveToggleCard('party')">
-                  <span>Party HP</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-party">
-                  <div id="scc-live-party"></div>
+            <!-- ── SIDEBAR: collapsed-by-default rail + drawer ───────────
+                 sccLiveToggleSidebar() is the ONLY open/close control (the
+                 same gold tab both opens and closes the drawer) -- do not
+                 add a second close control anywhere else, an earlier review
+                 round found that confusing. Each button below opens the one
+                 shared popup modal (page-level markup, see
+                 #scc-live-popup-modal) via sccLiveOpenPopup(key) -- sorted
+                 alphabetically. Every render-target id a button's popup pane
+                 holds (#scc-live-party, #scc-live-conditions, etc.) is
+                 unchanged from the old always-visible strip, so
+                 sccLiveRenderParty()/sccLiveRenderConditions()/
+                 sccLiveRenderAttachments()/sccRenderCurrentBeatWidget() and
+                 their audit-mode gating are untouched -- only the chrome
+                 around them moved. -->
+            <div class="scc-live-sidebar" id="scc-live-sidebar">
+              <div class="scc-live-sidebar-rail">
+                <button type="button" class="scc-live-sidebar-tab" id="scc-live-sidebar-tab" onclick="sccLiveToggleSidebar()" aria-expanded="false" aria-controls="scc-live-sidebar-drawer">
+                  <span class="scc-live-sidebar-tab-arrow">&#9654;</span>
+                  <span class="scc-live-sidebar-tab-label" id="scc-live-sidebar-tab-label">Open</span>
+                </button>
+              </div>
+              <div class="scc-live-sidebar-drawer" id="scc-live-sidebar-drawer">
+                <div class="scc-live-sidebar-drawer-inner">
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('attachments')"><span class="scc-live-sidebar-btn-icon">🐾</span><span>Companions &amp; Attachments</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('conditions')"><span class="scc-live-sidebar-btn-icon">⚠️</span><span>Conditions</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('beat')"><span class="scc-live-sidebar-btn-icon">📜</span><span>Current Beat</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('dice')"><span class="scc-live-sidebar-btn-icon">🎲</span><span>Die Roller</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('safety')"><span class="scc-live-sidebar-btn-icon">🛡️</span><span>DM Safety Net</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('party')"><span class="scc-live-sidebar-btn-icon">❤️</span><span>Party HP</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('timer')"><span class="scc-live-sidebar-btn-icon">⏱️</span><span>Timer</span></button>
                 </div>
               </div>
-              <!-- Ordered by likely real usage frequency during live play, not
-                   build order: Party HP and the Die Roller get touched almost
-                   every turn; Conditions/Companions/Current Beat are checked
-                   often but not constantly; DM Safety Net and Timer are
-                   reference/occasional. -->
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-dice" onclick="sccLiveToggleCard('dice')">
-                  <span>Die Roller</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-dice">
-                  <div class="scc-live-dice-row">
-                    <button class="scc-live-die-btn" onclick="sccRollDie(4)">d4</button>
-                    <button class="scc-live-die-btn" onclick="sccRollDie(6)">d6</button>
-                    <button class="scc-live-die-btn" onclick="sccRollDie(8)">d8</button>
-                    <button class="scc-live-die-btn" onclick="sccRollDie(10)">d10</button>
-                    <button class="scc-live-die-btn" onclick="sccRollDie(12)">d12</button>
-                    <button class="scc-live-die-btn scc-live-die-btn--d20" onclick="sccRollDie(20)">d20</button>
-                  </div>
-                  <div class="scc-live-dice-modifier-row">
-                    <span style="font-family:var(--font-sans);font-size:0.75rem;color:var(--dm-text-muted);">Modifier</span>
-                    <input type="number" id="scc-live-die-mod" class="scc-input" style="width:60px;text-align:center;padding:0.2rem 0.4rem;" value="0" min="-20" max="20">
-                  </div>
-                  <div id="scc-live-die-result" class="scc-live-die-result"></div>
-                </div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-conditions" onclick="sccLiveToggleCard('conditions')">
-                  <span>Conditions</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-conditions">
-                  <div id="scc-live-conditions"></div>
-                </div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-attachments" onclick="sccLiveToggleCard('attachments')">
-                  <span>Companions &amp; Attachments</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-attachments">
-                  <div id="scc-live-attachments"></div>
-                </div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-beat" onclick="sccLiveToggleCard('beat')">
-                  <span>Current Beat</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-beat">
-                  <div id="scc-live-current-beat"></div>
-                </div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item scc-live-safety-net">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-safety" onclick="sccLiveToggleCard('safety')">
-                  <span>DM Safety Net</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-safety">
-                  <div class="scc-live-safety-item">
-                    <span class="scc-live-safety-trigger">Players go sideways?</span>
-                    <span class="scc-live-safety-response">&#8220;Interesting. Give me a [Perception / Investigation] roll.&#8221;</span>
-                  </div>
-                  <div class="scc-live-safety-item">
-                    <span class="scc-live-safety-trigger">0 HP?</span>
-                    <span class="scc-live-safety-response">Unconscious. Death saves: DC 10, 3 successes before 3 failures.</span>
-                  </div>
-                  <div class="scc-live-safety-item">
-                    <span class="scc-live-safety-trigger">Rules dispute?</span>
-                    <span class="scc-live-safety-response">&#8220;We&#8217;ll rule it [X] now and look it up after. Keep moving.&#8221;</span>
-                  </div>
-                  <div class="scc-live-safety-item">
-                    <span class="scc-live-safety-trigger">Emotional moment?</span>
-                    <span class="scc-live-safety-response">Read slowly. Pause. Then: &#8220;What does your character do?&#8221;</span>
-                  </div>
-                </div>
-              </div>
-              <div class="scc-live-section scc-live-strip-item">
-                <div class="scc-live-section-label open" id="scc-live-card-toggle-timer" onclick="sccLiveToggleCard('timer')">
-                  <span>Timer</span><span class="scc-live-card-arrow">&#9654;</span>
-                </div>
-                <div class="scc-live-card-body open" id="scc-live-card-body-timer">
-                  <div class="scc-live-timer-row">
-                    <div id="scc-live-timer-display" class="scc-live-timer-display">0:00:00</div>
-                    <button class="scc-btn-sm" id="scc-live-timer-btn" onclick="sccLiveToggleTimer()">Start</button>
-                    <button class="scc-btn-sm scc-btn-secondary" id="scc-live-timer-reset-btn" onclick="sccLiveResetTimer()" title="Stop and zero the timer">Reset</button>
-                  </div>
-                </div>
-              </div>
-            </div><!-- /scc-live-strip -->
+            </div><!-- /scc-live-sidebar -->
 
             <!-- ── TABBED SECTIONS ─────────────────── -->
             <div class="scc-live-tabs-wrap">
@@ -7654,41 +7670,166 @@ function showDMToast(msg, type) {
   overflow-y: auto;
   min-height: 0;
 }
-.scc-live-section {
-  background: var(--dm-surface-high);
-  border: 1px solid var(--scc-border);
-  border-radius: var(--dm-radius);
-  padding: 0.75rem;
+/* ── Sidebar rail + drawer (2026-09-17) ──────────────────────────
+   Replaces the old always-visible 7-card accordion strip: collapsed by
+   default behind a thin gold rail, sliding a drawer of section buttons
+   open on click and pushing the Field Guide content over (the drawer's
+   width transition + the sibling .scc-live-tabs-wrap being a flex:1 child
+   of the same row is what produces the "push over" effect -- no JS
+   layout code needed). sccLiveToggleSidebar() is the ONLY open/close
+   control -- no separate close button anywhere else, since an earlier
+   review round found a second one confusing. Each button opens the one
+   shared popup modal below instead of expanding inline; pure UI state,
+   no write, same "toggle never needs audit-mode gating" reasoning already
+   on record above for Setup's own .scc-collapsible-toggle. */
+.scc-live-sidebar {
+  display: flex;
+  align-items: flex-start;
+  flex: none;
+  position: sticky;
+  /* top: 1rem alone meant the sidebar started sticking just 16px from the
+     true viewport top -- well inside the local-dev banner's real height
+     (#dm-env-banner, fixed, z-index:10000), so it rendered underneath/
+     behind it. Same --dm-env-banner-h offset used elsewhere -- 0px on the
+     live site, no behavior change there. */
+  top: calc(var(--dm-env-banner-h) + 1rem);
 }
-.scc-live-section-label {
+.scc-live-sidebar-rail { flex: none; }
+.scc-live-sidebar-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 40px;
+  padding: 0.85rem 0.3rem;
+  background: var(--dm-gold);
+  color: var(--dm-gold-text-on);
+  border: none;
+  border-radius: 0 var(--dm-radius-sm) var(--dm-radius-sm) 0;
   font-family: var(--font-sans);
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--dm-gold);
-  margin-bottom: 0.5rem;
+  cursor: pointer;
+  box-shadow: var(--dm-gold-btn-shadow);
+  transition: var(--dm-transition);
+}
+.scc-live-sidebar-tab:hover { filter: brightness(1.08); }
+.scc-live-sidebar-tab-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.scc-live-sidebar.open .scc-live-sidebar-tab-arrow { transform: rotate(180deg); }
+.scc-live-sidebar-tab-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.06em;
+}
+.scc-live-sidebar-drawer {
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.3s ease;
+}
+.scc-live-sidebar.open .scc-live-sidebar-drawer { width: 260px; }
+.scc-live-sidebar-drawer-inner {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.75rem;
+}
+.scc-live-sidebar-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--dm-surface-high);
+  border: 1px solid var(--scc-border);
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-text);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
   cursor: pointer;
-  user-select: none;
+  transition: var(--dm-transition);
 }
-/* Every sidebar card is a real accordion -- default expanded (both this
-   label and its .scc-live-card-body carry .open in the static markup, so
-   nothing looks different on first load), collapsible via sccLiveToggleCard().
-   Pure UI state, no write -- same "toggle never needs audit-mode gating"
-   reasoning already on record above for Setup's own .scc-collapsible-toggle. */
-.scc-live-card-arrow {
-  font-size: 0.55rem;
-  color: var(--dm-text-muted);
-  flex-shrink: 0;
-  transition: transform 0.2s;
+.scc-live-sidebar-btn:hover { border-color: var(--scc-border-gold); color: var(--dm-gold); }
+.scc-live-sidebar-btn-icon { flex: none; font-size: 1.05rem; width: 1.3rem; text-align: center; }
+/* Shared popup modal -- one instance, one pane per sidebar button, same
+   centered-fixed-modal convention as .scc-quicknote-modal (see that class
+   for the pattern this mirrors). Only one .scc-live-popup-pane carries
+   .active at a time (sccLiveOpenPopup() clears the rest), and there's no
+   [type] gate the modal itself needs -- each pane's own real render
+   function/id is what audit-mode already gates.
+   z-index deliberately NOT the standard 998/999 every other modal in this
+   file shares (.scc-lookup-backdrop/.scc-quicknote-modal and everything
+   built on them, including the Companions & Attachments pane's own
+   Add/Edit Attachment modal, #scc-fg-attach-modal). This popup is the
+   first case in the app where a second, real modal (Edit Attachment) can
+   open from WITHIN an already-open one -- at equal z-index, stacking
+   falls back to DOM order, and Edit Attachment's markup sits earlier in
+   the page than this popup's, so it rendered behind it, its own title
+   bar and input obscured. Sitting one full tier below the shared 998/999
+   (900/901) means ANY standard modal opened from inside this one --
+   Edit Attachment today, whatever else reuses that pattern later --
+   automatically wins without this file's existing modal ecosystem ever
+   needing to know this popup exists. */
+.scc-live-popup-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.96);
+  width: 420px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--dm-surface);
+  border: 1px solid var(--scc-border-gold);
+  border-radius: var(--dm-radius);
+  z-index: 901;
+  padding: 1.25rem;
+  display: none;
+  flex-direction: column;
+  box-shadow: var(--dm-shadow-lg);
+  opacity: 0;
+  transition: var(--dm-transition);
 }
-.scc-live-section-label.open .scc-live-card-arrow { transform: rotate(90deg); }
-.scc-live-card-body { display: none; }
-.scc-live-card-body.open { display: block; }
+.scc-live-popup-modal.open { display: flex; opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.scc-live-popup-modal-inner { display: flex; flex-direction: column; min-height: 0; }
+.scc-live-popup-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.75rem; margin-bottom: 0.85rem;
+}
+.scc-live-popup-modal-title { font-family: var(--font-headers); font-size: 1.1rem; color: var(--dm-gold); }
+.scc-live-popup-modal-close {
+  flex: none;
+  background: transparent; border: none;
+  color: var(--dm-text-muted); font-size: 0.9rem;
+  cursor: pointer; padding: 0.2rem 0.4rem;
+}
+.scc-live-popup-modal-close:hover { color: var(--dm-text); }
+/* overflow:visible, not auto -- the Companions & Attachments pane's own
+   pill tooltips (.scc-fg-attach-pill-main[data-tip]::before) and the
+   Conditions pane's tag tooltips (.scc-live-cond-tag::before) both open
+   upward (bottom: calc(100% + 6px)) with no headroom reserved above
+   them; with this body clipping via overflow-y:auto, a tooltip on any
+   pill/tag near the top of a pane got its own top edge (padding and
+   all) cut off mid-render -- confirmed live, not assumed. All 7 real
+   panes are short enough today to never need this body to scroll on its
+   own (the modal's own max-height is the real safety net if that ever
+   changes), so trading the internal scrollbar for tooltips that render
+   in full is the right call. padding-top gives the same breathing room
+   at the very top even when nothing's clipping -- content flush against
+   the header divider looked cramped regardless of the tooltip bug. */
+.scc-live-popup-modal-body { overflow: visible; min-height: 0; padding-top: 0.35rem; }
+.scc-live-popup-pane { display: none; }
+.scc-live-popup-pane.active { display: block; }
+/* ID selector so it wins over the shared .scc-lookup-backdrop class's own
+   z-index:998 regardless of the two rules' source order -- paired with
+   .scc-live-popup-modal's own 901 above, both one tier below the file's
+   standard 998/999 modal pair for the same nested-popup reason. */
+#scc-live-popup-backdrop { z-index: 900; }
 /* Beat rail */
 .scc-live-beat-item {
   display: flex;
@@ -7847,7 +7988,6 @@ function showDMToast(msg, type) {
   transition: all 0.15s ease;
 }
 /* Safety net */
-.scc-live-safety-net { flex-shrink: 0; }
 .scc-live-safety-item { padding: 0.35rem 0; border-bottom: 1px solid var(--scc-border); }
 .scc-live-safety-item:last-child { border-bottom: none; }
 .scc-live-safety-trigger { display: block; font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; color: var(--dm-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.15rem; }
@@ -7855,32 +7995,37 @@ function showDMToast(msg, type) {
 /* Timer */
 .scc-live-timer-row { display: flex; align-items: center; gap: 0.75rem; }
 .scc-live-timer-display { font-family: var(--font-mono); font-size: 1.4rem; color: var(--dm-gold); letter-spacing: 0.05em; flex: 1; }
-/* ── Live Session: control strip + collapsible sections ──
-   Two real columns now, not a stack: the strip is a sticky left column (own
-   vertical card stack, stays on screen while the right column scrolls) and
-   the accordion is the right column -- same sticky-sidebar technique
-   .scc-quest-two-col/.scc-quest-col-sidebar already use two sections up for
-   the Quests panel, not a new pattern. Collapses to one column at the same
-   900px breakpoint that pattern already uses. */
+/* ── Live Session: sidebar rail/drawer + tabbed content ──
+   Flex row, not a grid: .scc-live-sidebar (rail + drawer, see its own rules
+   above) is a flex:none child that only takes real width once opened, and
+   .scc-live-tabs-wrap is flex:1 -- so opening/closing the drawer reflows
+   the Field Guide content next to it automatically, no JS layout code
+   needed. (Was a fixed-width grid column holding an always-visible strip;
+   the 900px collapse-to-one-column breakpoint that layout needed no longer
+   applies now that the sidebar never occupies more than a thin rail unless
+   a DM opens it.)
+   No left padding on the wrap itself -- the DM flagged the collapsed rail's
+   gold tab sitting 32px off the true left edge as a real gap, not a
+   deliberate inset. The 2rem moved onto .scc-live-tabs-wrap instead (right
+   below), so the Field Guide content's own left edge lands at the exact
+   same on-screen position as before -- only the rail/drawer, now flush
+   left with nothing to its own left, actually changed. */
 .scc-live-strip-wrap {
-  padding: 1.5rem 2rem 3rem; max-width: none; box-sizing: border-box;
-  display: grid;
-  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  padding: 1.5rem 2rem 3rem 0; max-width: none; box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
   gap: 1.5rem;
-  align-items: start;
 }
-/* top: 1rem alone meant the sidebar started sticking just 16px from the
-   true viewport top -- well inside the local-dev banner's real height
-   (#dm-env-banner, fixed, z-index:10000), so it rendered underneath/
-   behind it. Same --dm-env-banner-h offset used elsewhere -- 0px on the
-   live site, no behavior change there. */
-.scc-live-strip { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: calc(var(--dm-env-banner-h) + 1rem); min-width: 0; }
-.scc-live-strip-item { flex: none; min-width: 0; }
 /* ── Live Session tabs (was a 5-section accordion, now horizontal tabs --
    one panel visible at a time). Reuses the same pill-button visual language
    as .scc-tab-btn (the top-level Live Session/Combat/Notes sub-nav one
-   level up), scoped to its own class so the two nav levels can't collide. */
-.scc-live-tabs-wrap { display: flex; flex-direction: column; min-width: 0; }
+   level up), scoped to its own class so the two nav levels can't collide.
+   padding-left here (not on the wrap) is what keeps this column's own
+   content at its original on-screen position now that the wrap's left
+   padding moved to the sidebar's flush-left fix above -- reset to 0 on
+   mobile (see the 768px block) since the sidebar is out of normal flow
+   there and the wrap's own mobile padding already provides the inset. */
+.scc-live-tabs-wrap { display: flex; flex-direction: column; min-width: 0; padding-left: 2rem; }
 .scc-live-tabs {
   display: flex; flex-wrap: wrap; gap: 0.4rem;
   margin-bottom: 1.1rem; padding-bottom: 0.85rem;
@@ -7945,10 +8090,6 @@ function showDMToast(msg, type) {
 .dm-main:has(#scc-panel-combat.active) { overflow: visible; }
 .dm-main:has(#scc-panel-combat.active) .dm-forms-panel { overflow: visible; }
 #scc-panel-combat.active { overflow: visible; }
-@media (max-width: 900px) {
-  .scc-live-strip-wrap { grid-template-columns: 1fr; }
-  .scc-live-strip { position: static; }
-}
 /* Field Guide used to need a real, definite height here -- back when its
    own left-panel card list (NPCs/Creatures/Locations/Items, removed
    entirely in a later session, see CLAUDE.md Decision Log) made this a
@@ -11406,9 +11547,14 @@ function showDMToast(msg, type) {
      ~470px) is clipped rather than scrollable -- pre-existing, flagged. */
   .dm-forms-panel { padding: 1rem var(--dm-mobile-pad); min-width: 0; }
   .scc-panel-inner, .scc-live-strip-wrap { padding: 1rem var(--dm-mobile-pad) 2rem; }
+  /* Undo the desktop-only left-padding swap above -- the sidebar is out of
+     normal flow at this width (hidden, or a fixed-position bottom sheet
+     when open), so .scc-live-tabs-wrap needs no extra left inset of its
+     own; the wrap's own mobile padding (rule just above) already provides
+     it, same as before this fix existed. */
+  .scc-live-tabs-wrap { padding-left: 0; }
   .scc-fg-doc-inner { padding: 1rem var(--dm-mobile-pad) 2rem; }
   .scc-fg-box { padding: 0.65rem 0.75rem; }
-  .scc-live-section { padding: 0.6rem; }
   /* Sessions list (the "< Back" destination): its 4-column grid
      (1fr 90px 200px 150px = 567px measured) can't fit a phone; header and
      rows both become a 2x2 grid (Session/Date over Status/Archived), same
@@ -11437,20 +11583,31 @@ function showDMToast(msg, type) {
   /* round 1, unchanged */
   .scc-fg-scenario-cards-row { grid-template-columns: 1fr; }
   #form-session { padding-bottom: 5.5rem; }
-  /* 7) Session Tools sheet -- replaces round 1's `order` reshuffle of the strip */
-  .scc-live-strip { display: none; }
-  #scc-panel-live.scc-live-tools-open .scc-live-strip {
+  /* 7) Session Tools sheet -- replaces round 1's `order` reshuffle of the
+     strip. 2026-09-17: the strip itself became a collapsed-by-default
+     rail + drawer (.scc-live-sidebar) with per-section popups -- the FAB
+     still opens the same bottom sheet, but the sheet now shows just the
+     7 section buttons (the drawer, forced open/full-width here since the
+     desktop rail tab that normally drives it is redundant with the FAB
+     and hidden); tapping a button still opens the one shared popup modal,
+     same as desktop. No DOM is moved or re-rendered, so every popup
+     pane's render function (Party HP, Conditions, Attachments, Current
+     Beat) and the audit-mode gating on them are untouched. */
+  .scc-live-sidebar { display: none; }
+  #scc-panel-live.scc-live-tools-open .scc-live-sidebar {
     display: flex;
     position: fixed; left: 0; right: 0; bottom: 0; top: auto;
     z-index: 490;
     max-height: 62vh; overflow-y: auto;
-    gap: 0.6rem;
     padding: 0.75rem var(--dm-mobile-pad) 4.25rem;
     background: var(--dm-surface);
     border-top: 2px solid var(--scc-border-gold);
     border-radius: var(--dm-radius) var(--dm-radius) 0 0;
     box-shadow: var(--shadow-md);
   }
+  #scc-panel-live.scc-live-tools-open .scc-live-sidebar-rail { display: none; }
+  #scc-panel-live.scc-live-tools-open .scc-live-sidebar-drawer { width: auto; overflow: visible; }
+  #scc-panel-live.scc-live-tools-open .scc-live-sidebar-drawer-inner { width: auto; }
   .scc-live-tools-fab { display: inline-flex; }
 }
 </style>
@@ -16372,32 +16529,63 @@ function sccRenderLivePanel() {
   sccRenderCurrentBeatWidget();
   sccLiveRenderScenarios();
 }
-// ── Sidebar card accordions ─────────────────────────────────────────
-// Every card in the always-visible strip (Party HP/Conditions/Companions &
-// Attachments/Current Beat/Die Roller/Timer/DM Safety Net) is a real
-// accordion -- collapse/expand only, no write, so no SCC_VIEWING_HISTORY
-// gate is needed (same reasoning already on record for Setup's own
-// .scc-collapsible-toggle). Each card's toggle/body pair share one `key`
-// in their ids (scc-live-card-toggle-{key}/scc-live-card-body-{key}) --
-// the toggle and body always carry .open in lockstep, both starting open
-// in the static markup so nothing looks different on first load. Card
-// content re-renders (sccLiveRenderParty() etc.) only ever touch their own
-// inner render-target div's innerHTML, never the wrapping .scc-live-card-body
-// itself, so a collapse/expand cycle can't be undone by a later re-render.
-function sccLiveToggleCard(key) {
-  var toggle = document.getElementById('scc-live-card-toggle-' + key);
-  var body = document.getElementById('scc-live-card-body-' + key);
-  if (!toggle || !body) return;
-  var willOpen = !body.classList.contains('open');
-  toggle.classList.toggle('open', willOpen);
-  body.classList.toggle('open', willOpen);
+// ── Sidebar rail/drawer + section popups (2026-09-17) ────────────────
+// Replaces the old always-visible 7-card accordion strip (Party HP/
+// Conditions/Companions & Attachments/Current Beat/Die Roller/Timer/DM
+// Safety Net): collapsed by default behind a thin gold rail, sliding a
+// drawer of 7 buttons open on click (sccLiveToggleSidebar(), the ONLY
+// open/close control -- no separate close button anywhere else, an
+// earlier review round found a second one confusing). Each button opens
+// the one shared popup modal instead of expanding inline
+// (sccLiveOpenPopup()/sccLiveClosePopup()). Pure UI state, no write, so
+// no SCC_VIEWING_HISTORY gate is needed here (same reasoning already on
+// record for Setup's own .scc-collapsible-toggle) -- each popup pane's
+// own real render function/id is what audit-mode already gates, and none
+// of those ids moved.
+var SCC_LIVE_SIDEBAR_SECTIONS = {
+  attachments: 'Companions & Attachments',
+  conditions:  'Conditions',
+  beat:        'Current Beat',
+  dice:        'Die Roller',
+  safety:      'DM Safety Net',
+  party:       'Party HP',
+  timer:       'Timer'
+};
+function sccLiveToggleSidebar(force) {
+  var sidebar = document.getElementById('scc-live-sidebar');
+  var tab = document.getElementById('scc-live-sidebar-tab');
+  var label = document.getElementById('scc-live-sidebar-tab-label');
+  if (!sidebar) return;
+  var open = sidebar.classList.toggle('open', force);
+  if (tab) tab.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (label) label.textContent = open ? 'Close' : 'Open';
+}
+function sccLiveOpenPopup(key) {
+  var modal = document.getElementById('scc-live-popup-modal');
+  var backdrop = document.getElementById('scc-live-popup-backdrop');
+  var title = document.getElementById('scc-live-popup-title');
+  if (!modal || !backdrop) return;
+  document.querySelectorAll('.scc-live-popup-pane').forEach(function(p) { p.classList.remove('active'); });
+  var pane = document.getElementById('scc-live-popup-pane-' + key);
+  if (pane) pane.classList.add('active');
+  if (title) title.textContent = SCC_LIVE_SIDEBAR_SECTIONS[key] || '';
+  modal.classList.add('open');
+  backdrop.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+function sccLiveClosePopup() {
+  var modal = document.getElementById('scc-live-popup-modal');
+  var backdrop = document.getElementById('scc-live-popup-backdrop');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+  if (backdrop) backdrop.classList.remove('open');
 }
 // Mobile-only "Session Tools" bottom sheet (<=768px; see the MOBILE
 // RESPONSIVE CSS block, item 7). Toggles a class on #scc-panel-live that the
-// media query turns into a fixed bottom sheet holding the same .scc-live-strip
-// cards the desktop sidebar shows -- no DOM is moved or re-rendered, so every
-// strip render function (Party HP, Conditions, Attachments, Current Beat) and
-// the audit-mode gating on them are untouched. Above 768px the class is inert.
+// media query turns into a fixed bottom sheet holding the same
+// .scc-live-sidebar buttons the desktop rail/drawer shows -- no DOM is moved
+// or re-rendered, so every popup pane's render function (Party HP,
+// Conditions, Attachments, Current Beat) and the audit-mode gating on them
+// are untouched. Above 768px the class is inert.
 function sccLiveToggleMobileTools(force) {
   var panel = document.getElementById('scc-panel-live');
   var fab = document.getElementById('scc-live-tools-fab');
