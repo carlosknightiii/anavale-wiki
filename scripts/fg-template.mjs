@@ -183,6 +183,43 @@ async function loadSchema() {
   if (!Array.isArray(linkTypes) || !linkTypes.length) {
     throw new Error(`${SCHEMA_PATH} has no $recognizedLinkTypes.types array.`);
   }
+  // $railScope (2026-09-18) -- every real box category, styled or
+  // special-cased, must declare whether/how it appears in the Field Guide
+  // jump rail (dm.html's sccFgCollectScrollEntries()). This is the fix for
+  // question_panel shipping with zero rail integration and no error of any
+  // kind: a category missing from $railScope now hard-fails `check`/`build`
+  // here, the same way an unknown category or a malformed link already
+  // does, rather than silently rendering with no way to navigate to it.
+  // Checked against the UNION of `categories`' own keys and
+  // SPECIAL_CASED_BOX_CATEGORIES -- every real category lives in exactly
+  // one of those two sets (see SPECIAL_CASED_BOX_CATEGORIES's own comment),
+  // so their union is the full set of categories that can ever appear on a
+  // real block.
+  const railScope = data.$railScope;
+  if (!railScope || typeof railScope !== 'object') {
+    throw new Error(`${SCHEMA_PATH} has no top-level "$railScope" object.`);
+  }
+  const allRealCategories = new Set([...Object.keys(categories), ...SPECIAL_CASED_BOX_CATEGORIES]);
+  const missingRailScope = [...allRealCategories].filter((cat) => !(cat in railScope));
+  if (missingRailScope.length) {
+    throw new Error(
+      `${SCHEMA_PATH}'s $railScope is missing a declaration for: ${missingRailScope.join(', ')}. ` +
+      `Every real box category needs an explicit { "scope": "none" | "entry" | "container", ... } entry ` +
+      `(see $railScope.$comment) so a new category can't silently disappear from the jump rail.`
+    );
+  }
+  for (const [cat, decl] of Object.entries(railScope)) {
+    if (cat.startsWith('$')) continue; // $comment and any future meta key, not a real category
+    if (!decl || typeof decl !== 'object' || !['none', 'entry', 'container'].includes(decl.scope)) {
+      throw new Error(`${SCHEMA_PATH}'s $railScope.${cat} has no valid "scope" ("none" | "entry" | "container").`);
+    }
+    if (decl.scope === 'entry' && !decl.labelField) {
+      throw new Error(`${SCHEMA_PATH}'s $railScope.${cat} is scope:"entry" but has no labelField.`);
+    }
+    if (decl.scope === 'container' && (!decl.childrenField || !decl.childLabelField)) {
+      throw new Error(`${SCHEMA_PATH}'s $railScope.${cat} is scope:"container" but is missing childrenField/childLabelField.`);
+    }
+  }
   return {
     categories,
     categoryNames: new Set(Object.keys(categories)),
@@ -193,6 +230,7 @@ async function loadSchema() {
     // NOT get alias resolution (sccFgLinkify has none), so featuredTypes is
     // deliberately a superset of linkTypes, not the same set.
     featuredTypes: new Set([...linkTypes, 'pc', 'npc', 'poi', 'nation']),
+    railScope,
   };
 }
 

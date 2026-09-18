@@ -17390,6 +17390,15 @@ var SCC_FG_LINK_TYPES = {
    window.SCC_CONDITIONS_DATA/window.VENDOR_STOCK/etc. in that same list. */
 var SCC_FG_CATEGORY_STYLE = {};
 
+// SCC_FG_RAIL_SCOPE -- js/fg-category-schema.json's own $railScope object,
+// the single source of truth for whether/how a box category appears in the
+// jump rail (see sccFgCollectScrollEntries() below and that JSON key's own
+// $comment for the full shape). Empty object is a safe "nothing opts in"
+// fallback if the fetch fails, same failure posture as SCC_FG_CATEGORY_STYLE
+// below it -- a category with no entry here just renders with no rail
+// participation rather than crashing the page.
+var SCC_FG_RAIL_SCOPE = {};
+
 // Loads js/fg-category-schema.json (a same-origin static file, not a
 // Supabase table — sccFetch() doesn't apply here) and populates
 // SCC_FG_CATEGORY_STYLE from its `categories` object. On any failure
@@ -17405,6 +17414,11 @@ function sccFetchFgCategorySchema() {
         SCC_FG_CATEGORY_STYLE = data.categories;
       } else {
         console.error('fg-category-schema.json loaded but had no `categories` object — Field Guide box styling will fall back to legacy colors.');
+      }
+      if (data && data.$railScope && typeof data.$railScope === 'object') {
+        SCC_FG_RAIL_SCOPE = data.$railScope;
+      } else {
+        console.error('fg-category-schema.json loaded but had no `$railScope` object — Field Guide jump rail will show only h1/h2 entries.');
       }
     })
     .catch(function(err) {
@@ -18398,6 +18412,10 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   return decisionHtml + combatBtnHtml + contentHtml + backBtn;
 }
 
+// Each tile below carries data-fg-rail-child-label -- see the matching
+// comment on sccFgQuestionPanelLeftHtml. scenario_cards declares itself
+// scope:"container", hasOwnEntry:false in $railScope (unchanged rail
+// behavior: no entry for the module itself, only for each card).
 function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
   var domId = sccFgScenarioCardsDomId(b, idx);
   var cards = Array.isArray(b.cards) ? b.cards : [];
@@ -18418,7 +18436,7 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     var statusHtml = '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
         + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status: Not Started → Started → Completed">'
       + '<span class="scc-fg-sc-status-icon">&#8635;</span>' + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
-    return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '" onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
+    return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '" data-fg-rail-child-label="' + sccEsc(card.title || '') + '" onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
       + portrait
       + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
       + statusHtml
@@ -18580,6 +18598,11 @@ function sccFgQuestionPanelGrouped(questions, domId, log) {
   });
 }
 
+// Each button below carries data-fg-rail-child-label -- the generic hook
+// sccFgCollectScrollEntries() queries for ANY container category's child
+// rail entries (see js/fg-category-schema.json's $railScope.$comment).
+// question_panel declares itself scope:"container" there; this is the half
+// of that contract this render function owns.
 function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
   var num = sccFgActiveSessionNum();
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
@@ -18599,6 +18622,7 @@ function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
         + (completed ? '&#10003;' : '') + '</span>';
       return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + '"'
           + ' data-question-id="' + sccEsc(q.id) + '"'
+          + ' data-fg-rail-child-label="' + sccEsc(q.label || '') + '"'
           + ' onclick="sccFgSwitchQuestionPanelQuestion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\', this)">'
         + checkHtml
         + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '') + '</span>'
@@ -18804,6 +18828,34 @@ function sccFgSequencedHeadingText(b, idx) {
 function sccFgRenderBlock(b, idx, ctx) {
   var html = sccFgRenderBlockRaw(b, idx, ctx);
   if (b && b.id && html) html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-block-id="' + sccEsc(b.id) + '"');
+  // Jump-rail markers (2026-09-18) -- generic, schema-driven, same
+  // one-change-point-covers-every-branch reasoning as the data-fg-block-id
+  // injection just above. Every box's OWN root tag gets data-fg-rail-cat
+  // regardless of its $railScope (SCC_FG_RAIL_SCOPE), so
+  // sccFgCollectScrollEntries() can recognize "this is a box, and which
+  // category" purely from the rendered DOM without a hardcoded per-category
+  // class allowlist -- that allowlist (h1/scenario_cards/h2 only) is
+  // exactly what let question_panel ship with zero rail integration. A
+  // category whose declared scope is "entry", or "container" with
+  // hasOwnEntry:true, additionally gets data-fg-rail-label/-tier so the
+  // collector can build that one top-level entry from real block data
+  // (never DOM text-scraping, which would silently break the moment a
+  // category's internal markup changes). A "container" category's own
+  // CHILD entries (cards/questions) are NOT handled here -- see
+  // data-fg-rail-child-label in sccFgOneScenarioCardsHtml/
+  // sccFgOneQuestionPanelHtml, since those live inside markup this
+  // wrapper never sees broken out per-child, only as one joined string.
+  if (html && b && b.type === 'box' && b.category) {
+    var railDecl = SCC_FG_RAIL_SCOPE[b.category] || { scope: 'none' };
+    html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-cat="' + sccEsc(b.category) + '"');
+    var wantsOwnEntry = railDecl.scope === 'entry' || (railDecl.scope === 'container' && railDecl.hasOwnEntry);
+    if (wantsOwnEntry) {
+      var railLabel = (railDecl.labelField && b[railDecl.labelField]) || railDecl.entryFallbackLabel || '';
+      if (railLabel) {
+        html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-label="' + sccEsc(railLabel) + '" data-fg-rail-tier="' + sccEsc(railDecl.tier || 'h2') + '"');
+      }
+    }
+  }
   // Loot table widget (block.loot_table) -- optional on ANY block, not tied
   // to a specific type/category, so this is checked here rather than inside
   // sccFgRenderBlockRaw's per-type switch. Appended as a sibling after the
@@ -19321,98 +19373,122 @@ function sccFgTruncateScrollLabel(text, max) {
   return text.length > max ? text.slice(0, max - 3) + '...' : text;
 }
 
-// Flat, ordered list of {el, full, label, tier, scenarioDomId?, cardIdx?}
-// -- tier is 'h1' | 'h2' | 'card'. One entry per real h1 section AND per h2
-// (every scenario h2, not just a Beat nested under a quest), at the SAME
-// level as each other (item 13, 2026-08-27: the DM's final approved mockup
-// explicitly reverses round 3's own indented sub-nesting for quest Beats --
-// that reversal is untouched here). An h2 can reach this collector three
-// different ways depending on what sccFgRenderDoc()/sccFgRenderBlock()
-// wrapped it in: plain (the child itself IS .scc-fg-doc-h2, no quest
-// section active), featured-thumbnail-wrapped (.scc-fg-h2-featured-wrap,
-// still not quest-tied), or quest-Beat-wrapped (.scc-fg-quest-section-block,
-// added by sccFgRenderDoc() whenever a quest-tied h1 started that
-// section) -- any of those three is a real h2 heading and belongs in the
-// rail. The original code only ever checked the quest-Beat-wrapped case,
-// silently dropping every non-quest-tied scenario h2 -- most sessions'
-// real content, since only Beat-carrying sections are quest-tied.
+// Flat, ordered list of {el, full, label, tier} -- tier is 'h1' | 'h2' |
+// 'card'. One entry per real h1 section, per h2 (every scenario h2, not
+// just a Beat nested under a quest, at the SAME level as h1s -- item 13,
+// 2026-08-27), plus whatever a box category's own $railScope declares (see
+// js/fg-category-schema.json). One shared collector used by build/jump/
+// update below so all three stay in sync by definition.
 //
-// 2026-09-12 addition: a genuinely nested 'card' tier, one entry per
-// scenario_cards card title, nested under whichever h1/h2 precedes its
-// module in the document (a real DM ask, distinct from the round-3
-// Beat-nesting question noted above -- see the CSS comment on
-// .scc-fg-scroll-indicator). The scenario_cards check runs BEFORE the h2
-// branch below and matches only the module's OWN root class (never a
-// descendant search) -- this is deliberate, not just ordering for its own
-// sake: docs/field-guide-render-rules.md §3.1 documents a real, still-open
-// phantom-rail-entry risk where the h2 branch's `child.querySelector(
-// '.scc-fg-doc-h2')` is a full descendant search, so a top-level
-// scenario_cards (or combat_outcomes) block wrapped in
-// .scc-fg-quest-section-block can have an h2 buried in its own active
-// card's nested content picked up as a phantom top-level heading. Matching
-// scenario_cards identity first (on its own root class, or its wrapper's
-// direct child when quest-tied) means a scenario_cards module now never
-// falls through to that querySelector at all -- this closes the
-// scenario_cards half of that documented risk as a side effect of this
-// change, though the combat_outcomes half is untouched (no equivalent
-// check added here, out of scope for this ask) and remains exactly as
-// documented. The h2 lookup itself stays scoped to exactly its two known
-// wrapper classes (never a blanket child.querySelector) for the same
-// reason it always did -- see the branch below. One shared collector used
-// by build/jump/update below so all three stay in sync by definition
-// rather than three independently-maintained heading queries drifting.
+// REWRITE, 2026-09-18: was a hardcoded allowlist of exactly three DOM
+// class checks (h1 / scenario_cards / h2) -- the real bug this closes is
+// that question_panel shipped with ZERO rail integration, because nothing
+// about adding a new box category ever touched this allowlist, and nothing
+// errored when it didn't. A block whose category wasn't literally one of
+// those three strings was invisible here no matter what, silently -- an
+// entire scene could go missing from navigation with no error of any kind.
+// Now schema-driven and genuinely recursive: h1/h2 stay hardcoded here on
+// purpose (they're block TYPES, a fixed pair, not open-ended categories --
+// a different concept from the rest of this function), but every box
+// category's rail participation (none / one entry / a container with its
+// own navigable children) is read from SCC_FG_RAIL_SCOPE, sourced from
+// js/fg-category-schema.json's $railScope -- and scripts/fg-template.mjs
+// now hard-errors if any real category is missing a declaration there, so
+// a future category literally cannot repeat this bug silently.
+//
+// Recurses into every child's own children UNCONDITIONALLY (not just
+// inside a recognized box) -- this is what makes "at every nesting level"
+// real instead of aspirational: a container box's markup wraps its
+// ACTIVE child's own rendered content several DOM levels deep (e.g.
+// .scc-fg-scenario-cards > .scc-fg-scenario-cards-body > ...), and that
+// content can itself contain a further h1/h2/box, including another
+// container nested inside it (a real case already in Session 1's content --
+// see the 2026-09-16 nested-scenario_cards investigation). Un-nested
+// recursion generalizes that from "works for scenario_cards nested in
+// scenario_cards, by accident of one querySelectorAll matching too
+// broadly" (the pre-rewrite behavior) to "works for any container nested
+// inside any other container, deliberately."
+//
+// KNOWN LIMIT, unchanged from before this rewrite: a container only ever
+// renders its ACTIVE child's own content in the DOM (see
+// sccFgOneScenarioCardsHtml/sccFgOneQuestionPanelHtml) -- content nested
+// inside a currently-INACTIVE card/question isn't in the DOM yet, so it
+// can't be measured for a scroll position and doesn't get a rail entry
+// until that card/question is selected. Not a regression: today's code
+// has the exact same limit, just less deliberately (and this is also why
+// jump-to-a-card-entry below still has to activate that card FIRST, then
+// measure/scroll to it).
 function sccFgCollectScrollEntries() {
   var container = document.getElementById('scc-fg-doc-inner');
   if (!container) return [];
   var entries = [];
-  Array.prototype.forEach.call(container.children, function(child) {
-    // A quest-tied h1 is ITSELF wrapped in .scc-fg-quest-section-block --
-    // sccFgRenderDoc() turns inQuestSection on for that same block before
-    // deciding whether to wrap it, by design (item 10b: the gold band
-    // covers the h1 through its last Beat, not just what comes after it).
-    // So an h1 can show up either as a direct child (a plain, non-quest
-    // section) or nested one level inside the wrapper (a quest section) --
-    // check for it either way before falling through to the h2 case, or a
-    // quest's own top-level entry silently disappears.
-    var h1 = child.classList.contains('scc-fg-doc-h1') ? child : child.querySelector('.scc-fg-doc-h1');
-    if (h1) {
-      var titleEl = h1.querySelector('.scc-fg-h1-quest-title');
-      var full = (titleEl ? titleEl.textContent : h1.textContent).trim();
-      entries.push({ el: h1, full: full, label: sccFgScrollIndicatorLabel(full), tier: 'h1' });
-      return;
+  sccFgCollectScrollEntriesFrom(container, entries);
+  return entries;
+}
+
+function sccFgCollectScrollEntriesFrom(root, entries) {
+  Array.prototype.forEach.call(root.children, function(child) {
+    // A quest-tied h1 (or any quest-section block) is wrapped in
+    // .scc-fg-quest-section-block -- sccFgRenderDoc() turns inQuestSection
+    // on for that same block before deciding whether to wrap it (item 10b:
+    // the gold band covers the h1 through its last Beat). Unwrap one level
+    // before classifying below, or a quest section's own top-level entry
+    // silently disappears.
+    var unwrapped = (child.classList.contains('scc-fg-quest-section-block') && child.firstElementChild)
+      ? child.firstElementChild : child;
+
+    if (unwrapped.classList.contains('scc-fg-doc-h1')) {
+      var titleEl = unwrapped.querySelector('.scc-fg-h1-quest-title');
+      var full = (titleEl ? titleEl.textContent : unwrapped.textContent).trim();
+      entries.push({ el: unwrapped, full: full, label: sccFgScrollIndicatorLabel(full), tier: 'h1' });
+      return; // a heading has no rail-relevant substructure of its own
     }
-    // scenario_cards check -- see the comment above this function for why
-    // this runs before the h2 branch and matches only the module's own
-    // root class, never a descendant search.
-    var scBlock = child.classList.contains('scc-fg-scenario-cards') ? child
-      : (child.classList.contains('scc-fg-quest-section-block') && child.firstElementChild
-          && child.firstElementChild.classList.contains('scc-fg-scenario-cards'))
-        ? child.firstElementChild : null;
-    if (scBlock) {
-      var tiles = scBlock.querySelectorAll('.scc-fg-scenario-cards-row > .scc-fg-sc-tile');
-      Array.prototype.forEach.call(tiles, function(tile, cardIdx) {
-        var tileTitleEl = tile.querySelector('.scc-fg-sc-tile-title');
-        var cardFull = (tileTitleEl ? tileTitleEl.textContent : '').trim();
-        if (!cardFull) return; // an untitled card has nothing worth a rail entry
-        entries.push({
-          el: tile, full: cardFull, label: sccFgTruncateScrollLabel(cardFull, 20),
-          tier: 'card', scenarioDomId: scBlock.id, cardIdx: cardIdx
-        });
-      });
-      return;
-    }
-    var h2 = null;
-    if (child.classList.contains('scc-fg-doc-h2')) {
-      h2 = child;
-    } else if (child.classList.contains('scc-fg-quest-section-block') || child.classList.contains('scc-fg-h2-featured-wrap')) {
-      h2 = child.querySelector('.scc-fg-doc-h2');
-    }
+
+    var h2 = unwrapped.classList.contains('scc-fg-doc-h2') ? unwrapped
+      : (unwrapped.classList.contains('scc-fg-h2-featured-wrap') ? unwrapped.querySelector('.scc-fg-doc-h2') : null);
     if (h2) {
       var h2Full = h2.textContent.trim();
       entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full), tier: 'h2' });
+      return;
     }
+
+    // data-fg-rail-cat is injected generically onto every box's own root
+    // tag by sccFgRenderBlock(), regardless of category -- see that
+    // function's own comment. Its presence, not a hardcoded class name,
+    // is what identifies "this is a box, and which category" here.
+    var cat = unwrapped.dataset ? unwrapped.dataset.fgRailCat : null;
+    if (cat) {
+      var decl = SCC_FG_RAIL_SCOPE[cat] || { scope: 'none' };
+      // data-fg-rail-label/-tier are only present when this category's
+      // $railScope wants a top-level entry (scope:"entry", or
+      // scope:"container" with hasOwnEntry:true) -- see sccFgRenderBlock().
+      if (unwrapped.dataset.fgRailLabel) {
+        entries.push({
+          el: unwrapped, full: unwrapped.dataset.fgRailLabel,
+          label: sccFgScrollIndicatorLabel(unwrapped.dataset.fgRailLabel),
+          tier: unwrapped.dataset.fgRailTier || 'h2'
+        });
+      }
+      if (decl.scope === 'container') {
+        // Every one of THIS container's own direct children carries
+        // data-fg-rail-child-label (see sccFgOneScenarioCardsHtml/
+        // sccFgOneQuestionPanelHtml) -- scoped via closest() to exclude a
+        // deeper nested container's own children, which belong to (and
+        // get collected at) that inner container's own level via the
+        // unconditional recursion below, not double-counted here.
+        var childEls = unwrapped.querySelectorAll('[data-fg-rail-child-label]');
+        Array.prototype.forEach.call(childEls, function(childEl) {
+          if (childEl.closest('[data-fg-rail-cat]') !== unwrapped) return;
+          var childFull = childEl.dataset.fgRailChildLabel;
+          if (!childFull) return; // an untitled child has nothing worth a rail entry
+          entries.push({ el: childEl, full: childFull, label: sccFgTruncateScrollLabel(childFull, 20), tier: 'card' });
+        });
+      }
+    }
+    // Recurse regardless of what (if anything) was classified above -- see
+    // this function's own header comment for why this is unconditional.
+    sccFgCollectScrollEntriesFrom(unwrapped, entries);
   });
-  return entries;
 }
 
 // Real px/maxScroll state computed once per build, reused by the scroll
@@ -19537,15 +19613,19 @@ function sccFgScrollIndicatorJump(i) {
   var entries = sccFgCollectScrollEntries();
   var entry = entries[i];
   if (!entry) return;
-  // A 'card' sub-item's own content only exists in the DOM once that card is
-  // the module's active one (sccFgOneScenarioCardsHtml only ever renders
-  // cards[active] -- see docs/field-guide-render-rules.md §4). Open it the
-  // same way clicking its own tile would before scrolling, or "jump to this
-  // card" would just land on the tile row with whichever OTHER card happened
-  // to already be open underneath it.
-  if (entry.tier === 'card' && entry.scenarioDomId != null && entry.cardIdx != null) {
-    sccFgSwitchScenarioCard(entry.scenarioDomId, entry.cardIdx, entry.el);
-  }
+  // A 'card' sub-item's own content only exists in the DOM once that
+  // child is its container's active one (sccFgOneScenarioCardsHtml/
+  // sccFgOneQuestionPanelHtml only ever render the active card/question --
+  // see docs/field-guide-render-rules.md §4). entry.el for a 'card' tier
+  // entry is always the tile/button ITSELF (see
+  // sccFgCollectScrollEntriesFrom()'s data-fg-rail-child-label handling),
+  // never its body content, and that element's own onclick IS the real
+  // activation handler (sccFgSwitchScenarioCard/sccFgSwitchQuestionPanelQuestion,
+  // confirmed neither one ever replaces the tile/button element itself,
+  // only the body/right panel beside it) -- so a genuine .click() here
+  // activates it exactly as a real click would, generically, for ANY
+  // container type, with no per-category function name hardcoded here.
+  if (entry.tier === 'card') entry.el.click();
   var target = entry.el;
   if (!target) return;
   var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
