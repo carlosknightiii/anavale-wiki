@@ -1507,6 +1507,36 @@
        at a glance, not just two colors of the same thing. Empty state
        renders nothing at all (no row, no placeholder) since this is
        display-only here — no add affordance to keep visible for. */
+    /* Click-to-enlarge shadowbox -- same two-layer pattern and values as
+       dm.html's Field Guide featured-portrait viewer (.scc-fg-imgview-*):
+       a full-bleed blurred click-to-close backdrop plus a separate
+       pointer-events:none flex layer, so a click on the image itself
+       doesn't close it. */
+    .cs-imgview-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1200;
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      display: none;
+    }
+    .cs-imgview-backdrop.open { display: block; }
+    .cs-imgview {
+      position: fixed; inset: 0; z-index: 1201;
+      display: none; align-items: center; justify-content: center;
+      padding: 3rem; pointer-events: none;
+    }
+    .cs-imgview.open { display: flex; }
+    .cs-imgview-img {
+      max-width: 100%; max-height: 100%; object-fit: contain;
+      border-radius: var(--radius-sm); box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+      pointer-events: auto;
+    }
+    .cs-imgview-close {
+      position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1202;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--gold-dim); border: 1px solid var(--char-accent-border);
+      color: var(--gold); font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: auto;
+    }
     .cs-mi-companions-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
     .cs-mi-companions-label {
       font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700;
@@ -1514,14 +1544,15 @@
     }
     .cs-mi-companions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
     .cs-mi-companion-thumb {
-      width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
+      width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
       object-fit: cover; border: 1px solid var(--char-accent-border);
     }
     .cs-mi-companion-thumb-fallback {
       display: inline-flex; align-items: center; justify-content: center;
       background: var(--gold-dim); color: var(--gold);
-      font-size: 0.7rem; font-weight: 700;
+      font-size: 1.2rem; font-weight: 700;
     }
+    img.cs-mi-companion-thumb { cursor: zoom-in; }
     .cs-mi-companion-pill.has-thumb { padding-left: 0.25rem; }
     .cs-mi-companion-pill {
       display: inline-flex;
@@ -6131,8 +6162,37 @@
     }
     var fb = '<span class="cs-mi-companion-thumb cs-mi-companion-thumb-fallback"' + (img ? ' style="display:none;"' : '') + '>' + escHtml((a.name || '?').charAt(0).toUpperCase()) + '</span>';
     if (!img) return fb;
-    return '<img class="cs-mi-companion-thumb" src="' + escHtml(img) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">' + fb;
+    return '<img class="cs-mi-companion-thumb" src="' + escHtml(img) + '" alt="" title="Click to enlarge" onclick="openImgView(this.src, this.getAttribute(\'data-name\'))" data-name="' + escHtml(a.name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">' + fb;
   }
+  // Shadowbox viewer, injected into #cs-modal-root on first use (per the
+  // file's modal rule). Backdrop click, X button, or Escape closes it.
+  function openImgView(url, name) {
+    var root = document.getElementById('cs-modal-root');
+    if (!root || !url) return;
+    var box = document.getElementById('cs-imgview');
+    if (!box) {
+      root.insertAdjacentHTML('beforeend',
+        '<div id="cs-imgview-backdrop" class="cs-imgview-backdrop" onclick="closeImgView()"></div>'
+        + '<div id="cs-imgview" class="cs-imgview" aria-hidden="true">'
+        + '<button type="button" class="cs-imgview-close" onclick="closeImgView()" title="Close" aria-label="Close">&#10005;</button>'
+        + '<img id="cs-imgview-img" class="cs-imgview-img" src="" alt="">'
+        + '</div>');
+    }
+    var img = document.getElementById('cs-imgview-img');
+    img.src = url; img.alt = name || '';
+    document.getElementById('cs-imgview-backdrop').classList.add('open');
+    var v = document.getElementById('cs-imgview');
+    v.classList.add('open'); v.setAttribute('aria-hidden', 'false');
+    document.addEventListener('keydown', imgViewEscHandler);
+  }
+  function closeImgView() {
+    var b = document.getElementById('cs-imgview-backdrop'), v = document.getElementById('cs-imgview'), i = document.getElementById('cs-imgview-img');
+    if (b) b.classList.remove('open');
+    if (v) { v.classList.remove('open'); v.setAttribute('aria-hidden', 'true'); }
+    if (i) i.src = '';
+    document.removeEventListener('keydown', imgViewEscHandler);
+  }
+  function imgViewEscHandler(e) { if (e.key === 'Escape') closeImgView(); }
   function renderCompanions() {
     var el = document.getElementById('cs-mi-companions');
     if (!el) return;
