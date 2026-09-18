@@ -2774,6 +2774,19 @@
     .cs-inv-tr:nth-child(odd)  .cs-inv-td { background: var(--blue-600); }
     .cs-inv-tr:nth-child(even) .cs-inv-td { background: var(--blue-500); }
     .cs-inv-tr.selected .cs-inv-td { background: var(--dm-row-selected); }
+    .cs-inv-tr.equipped .cs-inv-td:first-child { box-shadow: inset 4px 0 0 var(--gold); }
+    .cs-inv-equipped-badge {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border-mid);
+      color: var(--gold);
+      font-size: 0.7rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
     .cs-inv-td {
       color: var(--white);
       font-family: var(--font-body);
@@ -6427,6 +6440,7 @@
     renderRingsRow();
     renderSpecialEffects();
     renderAttunement();
+    renderInventory();
     wireAllTooltips();
   }
   // Special Effects panel — read-only summary of every currently-equipped
@@ -7097,7 +7111,18 @@
     if (category === 'weapon') return src.damage_dice ? src.damage_dice + (src.damage_type ? ' (' + src.damage_type + ')' : '') : '&mdash;';
     return '&mdash;';
   }
+  // Slot label for an inventory row that is genuinely equipped right now, or
+  // null. The live EQUIPPED map (character_sheet.equipped) is the source of
+  // truth; the row's own equipped_slot must agree with it, so a stale
+  // equipped_slot left on an old row never shows a false badge.
+  function invRowEquippedLabel(item) {
+    var key = item.equipped_slot;
+    if (!key || EQUIPPED[key] !== (item.item_id || item.id)) return null;
+    var slot = EQUIP_DOLL_SLOTS.filter(function(s) { return s.keys.indexOf(key) !== -1; })[0];
+    return slot ? slot.label : key;
+  }
   function renderInvRow(item) {
+    var equippedLabel = invRowEquippedLabel(item);
     var catalogItem = item.item_id ? CATALOG_CACHE[item.item_id] : null;
     var name     = catalogItem ? catalogItem.name : (item.custom_name || 'Unknown item');
     var category = catalogItem ? catalogItem.category : (item.item_type || 'other');
@@ -7117,10 +7142,11 @@
     // is view-only (.cs-inv-qty-display, a plain span) and the row-level
     // Edit pencil is gone entirely — see the removal note above
     // updateInvQuantity(). Delete is the one remaining mutation here.
-    return '<tr class="cs-inv-tr' + (SELECTED_INV_IDS[item.id] ? ' selected' : '') + '" id="inv-row-' + item.id + '">'
+    return '<tr class="cs-inv-tr' + (equippedLabel ? ' equipped' : '') + (SELECTED_INV_IDS[item.id] ? ' selected' : '') + '" id="inv-row-' + item.id + '">'
       + '<td class="cs-inv-td cs-inv-td-select"><input type="checkbox" ' + (SELECTED_INV_IDS[item.id] ? 'checked' : '') + ' onchange="toggleInvSelect(\'' + item.id + '\', this.checked)"></td>'
       + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
-      + '<td class="cs-inv-td cs-inv-td-name">' + name + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-name">' + name
+        + (equippedLabel ? '<span class="cs-inv-equipped-badge">&#10003; Equipped &middot; ' + equippedLabel + '</span>' : '') + '</td>'
       + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-price">' + costGp + ',' + costSp + ',' + costCp + '</td>'
       + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + '</td>'
