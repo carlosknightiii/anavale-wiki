@@ -18933,6 +18933,10 @@ function sccFgQuestBeatOrderForTitle(title) {
 // (suffix covers "5 min", "50 XP", "300 XP + Level Up", "Hana's Moment" --
 // confirmed live these vary too much to parse into separate
 // duration/XP fields, so it's kept as one free-text field, not two).
+// 2026-09-18: title now leads, with the sequence/number/suffix folded into
+// one trailing parenthetical -- "Beat 3 -- The Extractor (200 XP)" became
+// "The Extractor (Beat 3-200 XP)" -- a display-order change only, none of
+// b.title/b.sequence/num/b.suffix themselves changed meaning.
 function sccFgSequencedHeadingText(b, idx) {
   var num = b.sequence === 'beat' ? sccFgQuestBeatOrderForTitle(b.title) : null;
   if (num == null) {
@@ -18944,7 +18948,7 @@ function sccFgSequencedHeadingText(b, idx) {
     }
   }
   var seqLabel = b.sequence.charAt(0).toUpperCase() + b.sequence.slice(1);
-  return seqLabel + ' ' + num + ' \u2014 ' + (b.title || '') + (b.suffix ? ' (' + b.suffix + ')' : '');
+  return (b.title || '') + ' (' + seqLabel + ' ' + num + (b.suffix ? '\u2013' + b.suffix : '') + ')';
 }
 
 // b.id is an optional, DM-authored stable identifier -- not used by any
