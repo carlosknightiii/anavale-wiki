@@ -7972,9 +7972,15 @@ function showDMToast(msg, type) {
    needed. (Was a fixed-width grid column holding an always-visible strip;
    the 900px collapse-to-one-column breakpoint that layout needed no longer
    applies now that the sidebar never occupies more than a thin rail unless
-   a DM opens it.) */
+   a DM opens it.)
+   No left padding on the wrap itself -- the DM flagged the collapsed rail's
+   gold tab sitting 32px off the true left edge as a real gap, not a
+   deliberate inset. The 2rem moved onto .scc-live-tabs-wrap instead (right
+   below), so the Field Guide content's own left edge lands at the exact
+   same on-screen position as before -- only the rail/drawer, now flush
+   left with nothing to its own left, actually changed. */
 .scc-live-strip-wrap {
-  padding: 1.5rem 2rem 3rem; max-width: none; box-sizing: border-box;
+  padding: 1.5rem 2rem 3rem 0; max-width: none; box-sizing: border-box;
   display: flex;
   align-items: flex-start;
   gap: 1.5rem;
@@ -7982,8 +7988,13 @@ function showDMToast(msg, type) {
 /* ── Live Session tabs (was a 5-section accordion, now horizontal tabs --
    one panel visible at a time). Reuses the same pill-button visual language
    as .scc-tab-btn (the top-level Live Session/Combat/Notes sub-nav one
-   level up), scoped to its own class so the two nav levels can't collide. */
-.scc-live-tabs-wrap { display: flex; flex-direction: column; min-width: 0; }
+   level up), scoped to its own class so the two nav levels can't collide.
+   padding-left here (not on the wrap) is what keeps this column's own
+   content at its original on-screen position now that the wrap's left
+   padding moved to the sidebar's flush-left fix above -- reset to 0 on
+   mobile (see the 768px block) since the sidebar is out of normal flow
+   there and the wrap's own mobile padding already provides the inset. */
+.scc-live-tabs-wrap { display: flex; flex-direction: column; min-width: 0; padding-left: 2rem; }
 .scc-live-tabs {
   display: flex; flex-wrap: wrap; gap: 0.4rem;
   margin-bottom: 1.1rem; padding-bottom: 0.85rem;
@@ -11476,6 +11487,12 @@ function showDMToast(msg, type) {
      ~470px) is clipped rather than scrollable -- pre-existing, flagged. */
   .dm-forms-panel { padding: 1rem var(--dm-mobile-pad); min-width: 0; }
   .scc-panel-inner, .scc-live-strip-wrap { padding: 1rem var(--dm-mobile-pad) 2rem; }
+  /* Undo the desktop-only left-padding swap above -- the sidebar is out of
+     normal flow at this width (hidden, or a fixed-position bottom sheet
+     when open), so .scc-live-tabs-wrap needs no extra left inset of its
+     own; the wrap's own mobile padding (rule just above) already provides
+     it, same as before this fix existed. */
+  .scc-live-tabs-wrap { padding-left: 0; }
   .scc-fg-doc-inner { padding: 1rem var(--dm-mobile-pad) 2rem; }
   .scc-fg-box { padding: 0.65rem 0.75rem; }
   /* Sessions list (the "< Back" destination): its 4-column grid
