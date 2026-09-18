@@ -9481,6 +9481,82 @@ function showDMToast(msg, type) {
 }
 .scc-fg-qp-right .scc-fg-box:last-child, .scc-fg-qp-right p:last-child { margin-bottom: 0; }
 .scc-fg-qp-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
+/* ── Scene Cast panel module (box.category === 'scene_cast', 2026-09-18) --
+   a compact "who matters right now" reference for a section with several
+   NPCs active at once, so juggling them mid-scene doesn't mean flipping
+   over to the full NPCs tab and losing your place (built from Session 2's
+   real "That Evening" scene -- Reva, Marvok, Orvyn, Fess, Vel, Hettie, and
+   both Forres Brothers are all live in the same beat, the DM's own example
+   of the real problem this solves). Deliberately NOT a second NPC browser
+   -- no search, no relationship/stat detail, just a portrait + name + one
+   DM-authored state_note per cast member ("angry, hiding the letter" /
+   "asleep upstairs" / etc.), so a DM can glance at who's in the room and
+   what they're doing without leaving the page. Clicking an entry still
+   opens the real lookup drawer (sccOpenLookup) for full detail -- this
+   panel is a shortcut into that, never a replacement for it. Kept
+   visually neutral/plain (dm-surface-high shell, no ambient color tint),
+   same reasoning as question_panel's own module comment just above --
+   reads as a different kind of tool than a colored content box, not a
+   colored box itself. Collapsible (session-only, not persisted across
+   reloads -- see sccFgToggleSceneCast) since a dense cast list can run
+   several rows tall and a DM who already knows the room doesn't need it
+   pinned open the whole scene. */
+.scc-fg-scene-cast {
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border);
+  border-radius: 8px; margin: 0.5rem 0 0.75rem;
+}
+.scc-fg-sc-header {
+  padding: 0.5rem 0.75rem; background: var(--dm-surface);
+  font-family: var(--font-display); font-size: 0.88rem; font-weight: 700; color: var(--dm-text);
+  border-bottom: 1px solid var(--scc-border);
+  border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;
+}
+/* Collapsed: header keeps its own full-radius corners and loses its
+   bottom border, since there's no body below it to divide from anymore. */
+.scc-fg-scene-cast--collapsed .scc-fg-sc-header { border-radius: 8px; border-bottom: none; }
+.scc-fg-sc-header-icon { font-size: 0.95rem; opacity: 0.85; flex-shrink: 0; }
+/* Title text truncates with an ellipsis instead of wrapping -- a long
+   section label (e.g. "Who's in the Room -- That Evening -- The Forres
+   Brothers Inn") wraps to 2-3 lines on a phone-width header otherwise,
+   which fights the "small and unobtrusive" point of this panel. Count
+   and chevron are flex-shrink:0 siblings so they never get squeezed out. */
+.scc-fg-sc-header-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scc-fg-sc-header-sub { font-weight: 400; color: var(--dm-text-muted); font-size: 0.78rem; }
+.scc-fg-sc-count { font-weight: 400; color: var(--dm-text-muted); font-size: 0.75rem; flex-shrink: 0; }
+.scc-fg-sc-chevron { margin-left: auto; font-size: 0.7rem; color: var(--dm-text-muted); transition: transform 0.15s; flex-shrink: 0; }
+.scc-fg-scene-cast--collapsed .scc-fg-sc-chevron { transform: rotate(-90deg); }
+.scc-fg-sc-body { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; padding: 0.55rem 0.7rem; }
+.scc-fg-scene-cast--collapsed .scc-fg-sc-body { display: none; }
+.scc-fg-sc-entry {
+  display: flex; align-items: center; gap: 0.45rem;
+  width: calc(50% - 0.3rem); min-width: 190px; box-sizing: border-box;
+  padding: 0.3rem 0.4rem; border-radius: var(--dm-radius-sm);
+  transition: background 0.1s;
+}
+/* Not every entity type has a lookup-drawer branch (a 'pc' cast member,
+   say -- sccOpenLookup has no player-character case) -- those entries
+   render with no onclick at all, so the hover/pointer affordance is
+   scoped to the clickable modifier rather than baked into the base rule,
+   which would otherwise promise an interaction that does nothing. */
+.scc-fg-sc-entry--clickable { cursor: pointer; }
+.scc-fg-sc-entry--clickable:hover { background: var(--dm-surface); }
+.scc-fg-sc-portrait, .scc-fg-sc-fallback {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  object-fit: cover; border: 1px solid var(--scc-border-mid);
+}
+.scc-fg-sc-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--dm-surface); color: var(--dm-text-muted);
+  font-family: var(--font-display); font-size: 0.95rem;
+}
+.scc-fg-sc-entry-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.scc-fg-sc-entry-name { font-family: var(--font-sans); font-weight: 700; font-size: 0.8rem; color: var(--dm-text); }
+.scc-fg-sc-entry-note {
+  font-family: var(--font-sans); font-size: 0.72rem; color: var(--dm-text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.scc-fg-sc-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; padding: 0.55rem 0.7rem; }
 /* ── Session-opening empty state -- matches Companions & Attachments'
    "None yet" + "+ Add" language, rather than rendering nothing. ── */
 .scc-fg-opening-empty { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.6rem; }
@@ -11773,6 +11849,9 @@ function showDMToast(msg, type) {
      either. */
   .scc-fg-qp-layout { flex-direction: column; }
   .scc-fg-qp-left { position: static; width: 100%; max-height: none; border-right: none; border-bottom: 1px solid var(--scc-border); }
+  /* Scene Cast panel: 2-per-row wrap has no room at phone width -- one
+     entry per row, same reasoning as .scc-fg-scenario-cards-row above. */
+  .scc-fg-sc-entry { width: 100%; min-width: 0; }
   #form-session { padding-bottom: 5.5rem; }
   /* 7) Session Tools sheet -- replaces round 1's `order` reshuffle of the
      strip. 2026-09-17: the strip itself became a collapsed-by-default
@@ -18733,6 +18812,84 @@ function sccFgRedrawQuestionPanelBlock(domId) {
   wrapEl.outerHTML = sccFgOneQuestionPanelHtml(found.block, found.idx, activeId);
 }
 
+// ── Scene Cast panel module (box.category === 'scene_cast', 2026-09-18) ──
+// A lighter, contextual "who matters right now" reference for a section
+// with several NPCs active at once -- NOT a second NPC browser (no search,
+// no relationship/stat detail), just a portrait + name + one DM-authored
+// state_note per cast member. Placed as a normal box block, authored
+// directly after the h2 it applies to -- positioning "near the top of the
+// section" is an authoring choice (where the DM puts the block), not
+// something this renderer has to compute. Block shape:
+//   { type:'box', category:'scene_cast', label (optional, shown as a
+//     header subtitle), cast: [
+//       { entity_type (anything sccFgResolveFeaturedEntity() resolves --
+//               same vocabulary block.featured already uses: character/
+//               npc, creature, city/poi/nation, item, quest, organization,
+//               concept, pc), entity_id,
+//         state_note (short, DM-authored, e.g. "angry, hiding the
+//               letter") } ] }
+// Portrait/name resolution reuses sccFgResolveFeaturedEntity() verbatim --
+// the exact function block.featured thumbnails already use -- rather than
+// a third copy of that lookup+fallback logic. A cast entry that fails to
+// resolve (bad id/type, or its source array not loaded yet) is silently
+// skipped, same "never show a broken placeholder" rule sccFgRenderFeatured
+// follows -- not fatal to the rest of the panel.
+// Click opens the real lookup drawer (sccOpenLookup, which does its own
+// npc/poi/nation alias resolution -- no need to pre-resolve here) for full
+// detail. Skipped for entity_type 'pc': sccOpenLookup has no branch for a
+// player character (only world entities have a lookup card), so a PC
+// entry renders with no onclick and no hover affordance at all rather
+// than a click that silently does nothing.
+// Collapsible via a plain class toggle on the wrapper (sccFgToggleSceneCast)
+// -- deliberately session-only, not persisted to field_guide_sessions.
+// This panel is a glance aid over DM-authored content, not itself a piece
+// of session state worth saving -- nothing here needs to survive a reload
+// the way a question's completion mark or a scenario card's decision does.
+function sccFgSceneCastDomId(b, idx) {
+  var base = b.label || ('sc-' + idx);
+  var slug = String(base).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return 'scc-fg-sc-' + slug + '-' + idx;
+}
+function sccFgSceneCastEntryHtml(c) {
+  if (!c || typeof c !== 'object') return '';
+  var r = sccFgResolveFeaturedEntity({ type: c.entity_type, id: c.entity_id });
+  if (!r) return '';
+  var initial = sccEsc(r.name.charAt(0));
+  var portraitHtml = r.imgUrl
+    ? '<img class="scc-fg-sc-portrait" src="' + sccEsc(r.imgUrl) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      + '<span class="scc-fg-sc-fallback" style="display:none">' + initial + '</span>'
+    : '<span class="scc-fg-sc-fallback">' + initial + '</span>';
+  var clickable = c.entity_type !== 'pc';
+  var onclick = clickable ? ' onclick="sccOpenLookup(\'' + escQ(c.entity_type) + '\',\'' + escQ(c.entity_id) + '\')"' : '';
+  var titleAttr = ' title="' + sccEsc(r.name + (c.state_note ? ' — ' + c.state_note : '')) + '"';
+  return '<div class="scc-fg-sc-entry' + (clickable ? ' scc-fg-sc-entry--clickable' : '') + '"' + onclick + titleAttr + '>'
+    + portraitHtml
+    + '<div class="scc-fg-sc-entry-text">'
+      + '<span class="scc-fg-sc-entry-name">' + sccEsc(r.name) + '</span>'
+      + (c.state_note ? '<span class="scc-fg-sc-entry-note">' + sccEsc(c.state_note) + '</span>' : '')
+    + '</div>'
+  + '</div>';
+}
+function sccFgRenderSceneCastBlock(b, idx) {
+  var domId = sccFgSceneCastDomId(b, idx);
+  var cast = Array.isArray(b.cast) ? b.cast : [];
+  var entries = cast.map(sccFgSceneCastEntryHtml).join('');
+  var count = cast.length;
+  return '<div class="scc-fg-scene-cast" id="' + domId + '">'
+    + '<div class="scc-fg-sc-header" onclick="sccFgToggleSceneCast(\'' + escQ(domId) + '\')">'
+      + '<span class="scc-fg-sc-header-icon">&#128101;</span>'
+      + '<span class="scc-fg-sc-header-title" title="Who\'s in the Room' + (b.label ? ' — ' + sccEsc(b.label) : '') + '">Who\'s in the Room' + (b.label ? '<span class="scc-fg-sc-header-sub"> — ' + sccEsc(b.label) + '</span>' : '') + '</span>'
+      + (count ? '<span class="scc-fg-sc-count">' + count + '</span>' : '')
+      + '<span class="scc-fg-sc-chevron">&#9660;</span>'
+    + '</div>'
+    + (entries ? '<div class="scc-fg-sc-body">' + entries + '</div>' : '<div class="scc-fg-sc-empty">No cast set for this section.</div>')
+  + '</div>';
+}
+function sccFgToggleSceneCast(domId) {
+  var el = document.getElementById(domId);
+  if (el) el.classList.toggle('scc-fg-scene-cast--collapsed');
+}
+
 // Real quest beat headings ('beat' sequence specifically) have a canonical
 // number already -- the matching entry's own `order` in that quest's real
 // quests.beats array -- found 2026-09-17 while investigating a DM report
@@ -19046,6 +19203,7 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b, ctx);
       if (b.category === 'scenario_cards') return sccFgRenderScenarioCardsBlock(b, idx);
       if (b.category === 'question_panel') return sccFgRenderQuestionPanelBlock(b, idx);
+      if (b.category === 'scene_cast') return sccFgRenderSceneCastBlock(b, idx);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
       var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
       // Loot/shop boxes get a category icon prefix independent of color — reinforces
@@ -22107,8 +22265,21 @@ function sccNpcCategoryBadgeHtml(category) {
 // its *detail* expansion now uses the shared body.
 function sccNpcLinkedQuests(npcId) {
   var quests = typeof QUESTS !== 'undefined' ? QUESTS : [];
+  // Array.isArray guard (2026-09-18, found while testing the Scene Cast
+  // panel's click-through) -- every quest.related is supposed to be an
+  // array of {id,collection}, but 3 real quests (kindpact/stillkeep/
+  // wanderkeep's own, confirmed and fixed via SQL the same session) had
+  // it stored as {characters:[...]} instead -- a plain truthy object, so
+  // the old `q.related &&` guard let it through and `.some` threw,
+  // crashing this function for EVERY npc card render (this is called
+  // unconditionally by sccBuildNpcCardHeaderHtml, the shared component all
+  // 3 NPC card render sites use) rather than just skipping the one
+  // malformed quest. The data is fixed now, but this function has no way
+  // to guarantee the next batch-authored quest won't repeat the same
+  // shape mistake, so it degrades to "no linked quests found" for a
+  // malformed row instead of taking down the whole lookup drawer again.
   return quests.filter(function(q) {
-    return q.related && q.related.some(function(r) { return r.collection === 'characters' && r.id === npcId; });
+    return Array.isArray(q.related) && q.related.some(function(r) { return r.collection === 'characters' && r.id === npcId; });
   });
 }
 function sccBuildNpcCardHeaderHtml(c, opts) {

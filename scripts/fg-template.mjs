@@ -138,7 +138,8 @@ const KNOWN_BLOCK_TYPES = new Set([
 // earlier scenario_tabs/approach_tracker categories entirely.
 // question_panel (2026-09-18) -- Sticky Question Panel module, see
 // js/fg-category-schema.json's own $specialCasedCategories entry for it.
-const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards', 'question_panel']);
+// scene_cast (2026-09-18) -- Scene Cast quick-glance panel, same entry file.
+const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards', 'question_panel', 'scene_cast']);
 
 // The die-emoji skill-check paragraph shape sccFgStyleSkillChecks() looks
 // for inside a box's html, reproduced here only to *validate* -- check
@@ -346,6 +347,25 @@ function validateBlock(block, schema) {
       }
       if (block.group_icons != null && (typeof block.group_icons !== 'object' || Array.isArray(block.group_icons))) {
         issues.push({ level: 'error', message: 'question_panel box group_icons must be an object of {groupName: icon}' });
+      }
+    } else if (cat === 'scene_cast') {
+      if (!Array.isArray(block.cast) || !block.cast.length) {
+        issues.push({ level: 'error', message: 'scene_cast box has no cast (or cast is not a non-empty array)' });
+      } else {
+        block.cast.forEach((c, i) => {
+          if (!c || typeof c !== 'object' || !c.entity_id) {
+            issues.push({ level: 'error', message: `scene_cast box cast[${i}] is missing entity_id` });
+          }
+          if (!c || typeof c !== 'object' || !c.entity_type || !schema.featuredTypes.has(c.entity_type)) {
+            issues.push({
+              level: 'error',
+              message: `scene_cast box cast[${i}].entity_type "${c && c.entity_type}" not recognized — expected one of: ${[...schema.featuredTypes].join(', ')}`,
+            });
+          }
+          if (!c || typeof c !== 'object' || !c.state_note) {
+            issues.push({ level: 'warning', message: `scene_cast box cast[${i}] has no state_note -- renders as just a portrait+name with nothing distinguishing it from the full NPCs tab` });
+          }
+        });
       }
     }
     return issues;
