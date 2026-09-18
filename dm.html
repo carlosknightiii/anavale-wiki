@@ -7999,7 +7999,7 @@ function showDMToast(msg, type) {
    quiet re-litigation of it. */
 .scc-fg-scroll-indicator {
   position: fixed; top: 50%; right: 2px; transform: translateY(-50%);
-  display: none; height: 50vh; width: 130px; z-index: 40; pointer-events: none;
+  display: none; height: 50vh; width: 150px; z-index: 40; pointer-events: none;
 }
 .scc-fg-scroll-line-track { position: absolute; inset: 0; pointer-events: none; }
 .scc-fg-scroll-base-line { position: absolute; right: 15px; width: 2px; background: var(--fg-scroll-line); }
@@ -8035,27 +8035,59 @@ function showDMToast(msg, type) {
    dot's own state color (black at rest, solid gold once --reached). */
 .scc-fg-scroll-dot:hover { transform: translateY(-50%) scale(1.07); box-shadow: 0 0 0 4px var(--gold-subtle); }
 /* Left accent bars by level (2026-09-17, DM-approved Variant B mockup,
-   requests row 540712d9): the base rule below IS the h1 (major-section)
-   treatment -- solid 3px gold, least padding -- since h1 was always this
-   rail's implicit default tier before h2/card got their own modifiers, and
+   requests row 540712d9; indentation model corrected same day -- see
+   below): the base rule below IS the h1 (major-section) treatment --
+   solid 3px gold, least indentation -- since h1 was always this rail's
+   implicit default tier before h2/card got their own modifiers, and
    giving h1 its own empty --h1 rule would just duplicate these values for
    no behavioral difference. h2 and card/sub each override border width+
-   color+padding-left below, in the same graduated direction as their dot's
+   color+indentation below, in the same graduated direction as their dot's
    right-offset ladder above: thinner border, more muted color, more
-   indentation as depth increases. */
+   indentation as depth increases.
+
+   Root cause of the original ship (fixed here): only `right` was set, and
+   WIDTH was left to shrink-wrap the text (auto width + white-space:nowrap)
+   -- so a label's actual on-screen left edge, where border-left renders
+   the bar, was really `right-offset + text-width`, and text-width (this
+   dataset alone ranges roughly 50-110px depending on the real title)
+   swamps the 3-4px step that was supposed to read as the indent between
+   tiers. A short h1 title could render its bar further left than a long
+   sub-item's, and two same-tier items could land 40+px apart -- bar
+   position was effectively driven by string length, not by depth, which
+   reads as "bars scattered with a gap before their own text," not the
+   clean per-tier column the approved mockup shows.
+
+   Fixed by anchoring BOTH edges instead of just one: `right` now stays a
+   shared, tier-independent value (the end nearest the dots), and a new
+   tier-specific `left` pins where the bar itself actually sits -- CSS
+   derives width as `container width - left - right`, which no longer
+   depends on the text at all, so every label at a given tier has its bar
+   in the exact same column regardless of what it says, and the whole
+   column shifts further right (closer to the dots) as depth increases,
+   same direction as a normal nested list. The one thing this trades away:
+   width is now genuinely bounded (it wasn't before -- a label could grow
+   past the indicator's own box with nothing to stop it, which is exactly
+   what made the dynamic backdrop-width measurement below necessary in the
+   first place), so text-overflow:ellipsis is added as a real safety net
+   for the rare title too long for its tier's column -- the full text is
+   still always available via this same element's pre-existing `title=`
+   attribute. The indicator's own box widened 130px -> 150px (both here
+   and in its mobile --revealed counterpart) to keep that ellipsis case
+   rare against this dataset's real titles, not the common case. */
 .scc-fg-scroll-label {
-  position: absolute; right: 25px; transform: translateY(-50%);
+  position: absolute; left: 0; right: 20px; transform: translateY(-50%);
   font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
-  color: #fff; white-space: nowrap; cursor: pointer; pointer-events: auto;
+  color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; pointer-events: auto;
   transition: color 0.15s, transform 0.15s, background-color 0.15s;
   border-left: 3px solid var(--dm-gold); padding: 0.1rem 0.35rem 0.1rem 0.5rem;
 }
 .scc-fg-scroll-label--reached { color: var(--dm-gold); }
 .scc-fg-scroll-label--h2 {
-  right: 28px; border-left: 2px solid var(--gold-border-mid); padding-left: 0.7rem;
+  left: 10px; border-left: 2px solid var(--gold-border-mid); padding-left: 0.7rem;
 }
 .scc-fg-scroll-label--sub {
-  right: 32px; font-size: 0.62rem; font-weight: 600; opacity: 0.85;
+  left: 20px; font-size: 0.62rem; font-weight: 600; opacity: 0.85;
   border-left: 1px solid var(--dm-text-muted); padding-left: 0.9rem;
 }
 .scc-fg-scroll-label:hover { transform: translateY(-50%) scale(1.07); background: var(--gold-subtle); }
@@ -11369,7 +11401,7 @@ function showDMToast(msg, type) {
      which :right:2px pins in place regardless of width -- widening never
      visually moves anything, so there's nothing lost by leaving it un-
      animated. */
-  .scc-fg-scroll-indicator--revealed { width: 130px; }
+  .scc-fg-scroll-indicator--revealed { width: 150px; }
   .scc-fg-scroll-indicator--revealed .scc-fg-scroll-label {
     opacity: 1; pointer-events: auto;
   }
