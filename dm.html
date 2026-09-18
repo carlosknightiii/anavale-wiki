@@ -11482,11 +11482,14 @@ function checkPassword() {
       document.getElementById('dm-app').style.display = 'flex';
       renderRecent();
       updateFileTarget();
-      // Fresh password entry never calls switchTab() (the DOMContentLoaded
-      // already-authenticated boot path does, via switchTab('manage')) --
-      // without this, the Quick Note FAB's visibility was never actually
-      // set on this boot path, only ever fixed once the DM clicked a tab.
-      sccUpdateQuickNoteFabVisibility();
+      // Fresh password entry used to never call switchTab() at all, relying
+      // on Entries' own static "active" markup as the default view -- now
+      // that boot lands on the current session's Field Guide instead (see
+      // the DOMContentLoaded already-authenticated path below), that static
+      // default no longer matches, so this path must explicitly switch too.
+      // switchTab('session') already calls sccUpdateQuickNoteFabVisibility()
+      // itself, so no separate call is needed here anymore.
+      switchTab('session');
     }, 500);
   } else {
     card.classList.remove('shake');
@@ -11505,9 +11508,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('dm-app').style.display = 'flex';
     renderRecent();
     updateFileTarget();
-    switchTab('manage'); // always boot to Manage
+    // Land directly on the current/latest session's Live Session > Field
+    // Guide view, not Entries -- switchTab('session') triggers the same
+    // sccInit()->sccLoadLatestSession() derivation (in_progress session
+    // wins, else next_session) already used every time Session Details is
+    // opened from elsewhere, via the switchTab wrapper's own resync (see
+    // SCC_SKIP_NEXT_SESSION_RESYNC's comment). Field Guide is then applied
+    // as the default Live Session inner-tab by sccLiveApplyAutoExpand(),
+    // same as any other entry into a session -- nothing session-specific
+    // is hardcoded here.
+    switchTab('session'); // always boot to the current session's Field Guide
     sortAllDropdowns();
-    cmResetFilters(); // clear any browser-restored filter values on boot
+    cmResetFilters(); // clear any browser-restored filter values on boot (Entries tab, harmless while unmounted)
   } else {
     document.getElementById('gate-input').focus();
   }
