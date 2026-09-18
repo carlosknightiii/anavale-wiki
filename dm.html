@@ -8215,6 +8215,22 @@ function showDMToast(msg, type) {
    attribute. The indicator's own box widened 130px -> 150px (both here
    and in its mobile --revealed counterpart) to keep that ellipsis case
    rare against this dataset's real titles, not the common case. */
+/* Own tight background per label, 2026-09-18 (round 3 of the same-day
+   backdrop saga): the page-wide .scc-fg-scroll-backdrop below can't
+   simultaneously stay dark enough to hide white text against this app's
+   near-black page bg AND stay light enough not to blank out a bright
+   colored box (Read Aloud green, DM-only purple, etc.) sitting behind the
+   rail -- those are contradictory goals for ONE flat overlay spanning the
+   rail's full ~180px-wide, 50vh-tall footprint regardless of what's under
+   it at any given point. Confirmed via a real DM screenshot: raising the
+   backdrop's peak to fix the first problem (round 2) visibly erased the
+   Read Aloud box's own green background and trailing text instead.
+   Fixed at the right scope instead of tuning the wrong knob a third time:
+   each label gets its OWN solid, tightly-sized dark pill (this rule's
+   existing padding already defines that footprint -- no layout change),
+   so contrast for the rail's actual text is guaranteed regardless of
+   what's underneath, without needing the big backdrop to do that job.
+   The backdrop below drops back to a light, genuinely optional wash. */
 .scc-fg-scroll-label {
   position: absolute; left: 0; right: 20px; transform: translateY(-50%);
   font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
@@ -8222,6 +8238,7 @@ function showDMToast(msg, type) {
   cursor: pointer; pointer-events: auto;
   transition: color 0.15s, transform 0.15s, background-color 0.15s;
   border-left: 3px solid var(--dm-gold); padding: 0.1rem 0.35rem 0.1rem 0.5rem;
+  background: rgba(10,9,7,0.92); border-radius: 3px;
 }
 .scc-fg-scroll-label--reached { color: var(--dm-gold); }
 .scc-fg-scroll-label--h2 {
@@ -8260,18 +8277,17 @@ function showDMToast(msg, type) {
 .scc-fg-scroll-backdrop {
   position: fixed; top: 0; bottom: 0; right: 0; z-index: 39;
   display: none; pointer-events: none;
-  /* Peak raised 0.8 -> 0.97 same day as the pixel-stop fix above, matching
-     the mobile --revealed backdrop's own ceiling below. Real DM-reported
-     bug: 0.8 black composited over this app's own near-black page bg
-     (#100f0a) is barely different from the bg itself, so it never actually
-     hid the paragraph/box text sitting behind the rail's labels -- narrowing
-     the ramp (the fix above) made the AFFECTED WIDTH thin as intended, but
-     didn't touch this separate problem, so real content kept showing
-     through, cluttered against the gold label text on top of it. 0.97
-     isn't a new value invented for this -- it's the exact ceiling
-     .scc-fg-scroll-backdrop--revealed already uses for the same job on
-     mobile; this just brings desktop's always-on backdrop up to match. */
-  background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.97) 30px);
+  /* Peak brought back down 0.97 -> 0.35, 2026-09-18 (round 3, same day):
+     round 2 raised this to 0.97 to fix ghosted white text against the
+     page's own near-black bg, but that same high opacity also blanked out
+     any bright colored box (Read Aloud green, DM-only purple) sitting
+     behind the rail -- a real, worse regression, confirmed via a DM
+     screenshot. Legibility for the rail's OWN text is now handled by each
+     .scc-fg-scroll-label's own tight background (above), so this backdrop
+     no longer needs to carry that job alone -- it's back to a light,
+     genuinely optional ambient wash marking "you're near the rail," not a
+     mechanism relied on to hide content. */
+  background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.35) 30px);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
 }
