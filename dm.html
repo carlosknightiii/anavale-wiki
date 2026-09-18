@@ -7763,7 +7763,20 @@ function showDMToast(msg, type) {
    for the pattern this mirrors). Only one .scc-live-popup-pane carries
    .active at a time (sccLiveOpenPopup() clears the rest), and there's no
    [type] gate the modal itself needs -- each pane's own real render
-   function/id is what audit-mode already gates. */
+   function/id is what audit-mode already gates.
+   z-index deliberately NOT the standard 998/999 every other modal in this
+   file shares (.scc-lookup-backdrop/.scc-quicknote-modal and everything
+   built on them, including the Companions & Attachments pane's own
+   Add/Edit Attachment modal, #scc-fg-attach-modal). This popup is the
+   first case in the app where a second, real modal (Edit Attachment) can
+   open from WITHIN an already-open one -- at equal z-index, stacking
+   falls back to DOM order, and Edit Attachment's markup sits earlier in
+   the page than this popup's, so it rendered behind it, its own title
+   bar and input obscured. Sitting one full tier below the shared 998/999
+   (900/901) means ANY standard modal opened from inside this one --
+   Edit Attachment today, whatever else reuses that pattern later --
+   automatically wins without this file's existing modal ecosystem ever
+   needing to know this popup exists. */
 .scc-live-popup-modal {
   position: fixed;
   top: 50%; left: 50%;
@@ -7774,7 +7787,7 @@ function showDMToast(msg, type) {
   background: var(--dm-surface);
   border: 1px solid var(--scc-border-gold);
   border-radius: var(--dm-radius);
-  z-index: 999;
+  z-index: 901;
   padding: 1.25rem;
   display: none;
   flex-direction: column;
@@ -7796,9 +7809,27 @@ function showDMToast(msg, type) {
   cursor: pointer; padding: 0.2rem 0.4rem;
 }
 .scc-live-popup-modal-close:hover { color: var(--dm-text); }
-.scc-live-popup-modal-body { overflow-y: auto; min-height: 0; }
+/* overflow:visible, not auto -- the Companions & Attachments pane's own
+   pill tooltips (.scc-fg-attach-pill-main[data-tip]::before) and the
+   Conditions pane's tag tooltips (.scc-live-cond-tag::before) both open
+   upward (bottom: calc(100% + 6px)) with no headroom reserved above
+   them; with this body clipping via overflow-y:auto, a tooltip on any
+   pill/tag near the top of a pane got its own top edge (padding and
+   all) cut off mid-render -- confirmed live, not assumed. All 7 real
+   panes are short enough today to never need this body to scroll on its
+   own (the modal's own max-height is the real safety net if that ever
+   changes), so trading the internal scrollbar for tooltips that render
+   in full is the right call. padding-top gives the same breathing room
+   at the very top even when nothing's clipping -- content flush against
+   the header divider looked cramped regardless of the tooltip bug. */
+.scc-live-popup-modal-body { overflow: visible; min-height: 0; padding-top: 0.35rem; }
 .scc-live-popup-pane { display: none; }
 .scc-live-popup-pane.active { display: block; }
+/* ID selector so it wins over the shared .scc-lookup-backdrop class's own
+   z-index:998 regardless of the two rules' source order -- paired with
+   .scc-live-popup-modal's own 901 above, both one tier below the file's
+   standard 998/999 modal pair for the same nested-popup reason. */
+#scc-live-popup-backdrop { z-index: 900; }
 /* Beat rail */
 .scc-live-beat-item {
   display: flex;
