@@ -8928,15 +8928,17 @@ function showDMToast(msg, type) {
    12</strong> ...". Sits above the ability/DC line so the DM knows what
    the check is actually for without reading the full Pass/Fail text --
    entirely optional, a check with no title renders exactly as before. */
+/* ANV-22: the context title is the prominent element (larger, bolder,
+   full-strength text color); the skill/DC line below it is secondary. */
 .scc-fg-check-title {
-  font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.04em; color: var(--dm-text-muted);
+  font-family: var(--font-headers); font-size: 1.25rem; font-weight: 700;
+  line-height: 1.25; color: var(--dm-text);
   margin-bottom: 0.3rem;
 }
 .scc-fg-check-head { display: flex; align-items: center; gap: 0.5rem; }
-.scc-fg-check-icon { font-size: 1.3rem; line-height: 1; }
+.scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
 .scc-fg-check-name {
-  font-family: var(--font-headers); font-size: 1.1rem; font-weight: 700;
+  font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
   color: var(--dm-gold); text-transform: none; letter-spacing: normal;
 }
 .scc-fg-check-body {
