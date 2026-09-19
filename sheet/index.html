@@ -2518,6 +2518,28 @@
       transition: color 0.15s;
     }
     .cs-inv-del:hover { color: #f87171; }
+    .cs-price-g { color: var(--money-text-gold); font-weight: 700; }
+    .cs-price-s { color: var(--money-text-silver); font-weight: 700; }
+    .cs-price-c { color: var(--money-text-copper); font-weight: 700; }
+    .cs-inv-sell {
+      background: none;
+      border: 1px solid var(--gold);
+      border-radius: var(--radius-sm);
+      color: var(--gold);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+    }
+    .cs-inv-sell:hover { background: rgba(240,180,41,0.15); }
+    .cs-sell-name { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.7rem; }
+    .cs-sell-qty-row { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-sans); font-size: 0.85rem; color: var(--char-text-muted); margin-bottom: 0.7rem; }
+    .cs-sell-qty { width: 5rem; }
+    .cs-sell-total { font-family: var(--font-sans); font-size: 0.95rem; color: var(--text); margin-bottom: 0.4rem; }
+    .cs-sell-sub { font-size: 0.8rem; color: var(--char-text-muted); }
+    .cs-sell-warn { font-family: var(--font-sans); font-size: 0.78rem; color: var(--char-text-muted); margin-bottom: 1rem; }
+    .cs-sell-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
     .cs-inv-empty {
       font-family: var(--font-sans);
       font-size: 0.82rem;
@@ -7424,17 +7446,107 @@
         + (equippedLabel ? '<span class="cs-inv-equipped-badge">&#10003; Equipped &middot; ' + equippedLabel + '</span>' : '')
         + name + '</td>'
       + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
-      + '<td class="cs-inv-td cs-inv-td-price">' + costGp + ',' + costSp + ',' + costCp + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-price">' + formatPriceHtml(costGp, costSp, costCp) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-specs">' + specs + '</td>'
       + '<td class="cs-inv-td cs-inv-td-desc">' + desc + '</td>'
       + '<td class="cs-inv-td cs-inv-td-actions">'
         + '<div class="cs-inv-row-actions">'
           + '<span class="cs-inv-qty-display" title="Quantity">' + (item.quantity||0) + '</span>'
+          + '<button class="cs-inv-sell" onclick="openSellModal(\'' + item.id + '\')" title="Sell to a trader">Sell</button>'
           + '<button class="cs-inv-del" onclick="confirmDeleteItem(\'' + item.id + '\', \'' + name.replace(/'/g,"\\'") + '\')" title="Remove">&#10005;</button>'
         + '</div>'
       + '</td>'
     + '</tr>';
+  }
+  // Price as spaced, coin-colored "10g 0s 0c". Inputs may be fractional gp
+  // (catalog cost_gp e.g. 0.5) plus whole sp/cp, so everything is folded to
+  // total copper first (1gp = 100cp, 1sp = 10cp) and re-split.
+  function priceToCp(gp, sp, cp) {
+    return Math.round((parseFloat(gp) || 0) * 100) + (parseInt(sp) || 0) * 10 + (parseInt(cp) || 0);
+  }
+  function formatPriceHtml(gp, sp, cp) {
+    var t = priceToCp(gp, sp, cp);
+    return '<span class="cs-price-g">' + Math.floor(t / 100) + 'g</span> '
+      + '<span class="cs-price-s">' + Math.floor((t % 100) / 10) + 's</span> '
+      + '<span class="cs-price-c">' + (t % 10) + 'c</span>';
+  }
+  // Unit sale price in copper for an inventory row (full listed price, no markdown).
+  function invRowUnitCp(item) {
+    var cat = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+    if (cat) return priceToCp(cat.cost_gp, 0, 0);
+    return priceToCp(item.cost_gp, item.cost_sp, item.cost_cp);
+  }
+  function invRowName(item) {
+    var cat = item.item_id ? CATALOG_CACHE[item.item_id] : null;
+    return cat ? cat.name : (item.custom_name || 'Unknown item');
+  }
+  // ── Sell to trader ──────────────────────────────────────────────────
+  var SELL_ITEM_ID = null;
+  function openSellModal(id) {
+    var item = INVENTORY.filter(function(i) { return i.id === id; })[0];
+    if (!item) return;
+    if (invRowEquippedLabel(item)) { showToast('Unequip this item before selling it', true); return; }
+    var unit = invRowUnitCp(item);
+    if (!unit) { showToast('This item has no sale value', true); return; }
+    SELL_ITEM_ID = id;
+    var owned = item.quantity || 1;
+    var qty = document.getElementById('cs-sell-qty');
+    qty.max = owned; qty.value = 1;
+    qty.disabled = owned <= 1;
+    document.getElementById('cs-sell-name').textContent = invRowName(item) + (owned > 1 ? ' (you have ' + owned + ')' : '');
+    updateSellTotal();
+    document.getElementById('cs-sell-overlay').style.display = 'flex';
+  }
+  function sellQty() {
+    var item = INVENTORY.filter(function(i) { return i.id === SELL_ITEM_ID; })[0];
+    if (!item) return 0;
+    return Math.max(1, Math.min(item.quantity || 1, parseInt(document.getElementById('cs-sell-qty').value) || 1));
+  }
+  function updateSellTotal() {
+    var item = INVENTORY.filter(function(i) { return i.id === SELL_ITEM_ID; })[0];
+    if (!item) return;
+    var total = invRowUnitCp(item) * sellQty();
+    var cp = SHEET ? (SHEET.gold_cp || 0) : 0;
+    document.getElementById('cs-sell-total').innerHTML = 'You receive ' + formatPriceHtml(0, 0, total)
+      + '<br><span class="cs-sell-sub">Your gold: ' + formatPriceHtml(0, 0, cp) + ' &rarr; ' + formatPriceHtml(0, 0, cp + total) + '</span>';
+  }
+  function closeSellModal() {
+    SELL_ITEM_ID = null;
+    document.getElementById('cs-sell-overlay').style.display = 'none';
+  }
+  function confirmSell() {
+    var id = SELL_ITEM_ID;
+    var item = INVENTORY.filter(function(i) { return i.id === id; })[0];
+    if (!item || !SHEET) { closeSellModal(); return; }
+    var qty = sellQty();
+    var total = invRowUnitCp(item) * qty;
+    var owned = item.quantity || 1;
+    var newGold = (SHEET.gold_cp || 0) + total;
+    var btn = document.getElementById('cs-sell-confirm-btn');
+    btn.disabled = true;
+    // Inventory change first, gold second: if the gold write fails after the
+    // item is gone the player is told and the DM can top up; the reverse order
+    // (gold first) would let a failed item write pay out for an item still owned.
+    var invOp = (qty >= owned)
+      ? sb.from('inventory').delete().eq('id', id)
+      : sb.from('inventory').update({ quantity: owned - qty }).eq('id', id);
+    invOp.then(function(res) {
+      if (res.error) { btn.disabled = false; showToast('Sale failed — item unchanged', true); return null; }
+      if (qty >= owned) { INVENTORY = INVENTORY.filter(function(i) { return i.id !== id; }); delete SELECTED_INV_IDS[id]; }
+      else item.quantity = owned - qty;
+      return sb.from('character_sheet').update({ gold_cp: newGold }).eq('character_id', CHAR_ID);
+    }).then(function(res2) {
+      if (res2 === null || res2 === undefined) return;
+      btn.disabled = false;
+      closeSellModal();
+      renderInventory();
+      if (res2.error) { showToast('Item sold but gold failed to save — tell your DM', true); return; }
+      SHEET.gold_cp = newGold;
+      renderGold();
+      if (typeof renderOverviewWeight === 'function') { try { renderOverviewWeight(); } catch(e) {} }
+      showToast('Sold ' + invRowName(item) + ' for ' + Math.floor(total / 100) + 'g ' + Math.floor((total % 100) / 10) + 's ' + (total % 10) + 'c');
+    });
   }
   function toggleInvSelect(id, checked) {
     if (checked) SELECTED_INV_IDS[id] = true; else delete SELECTED_INV_IDS[id];
@@ -8159,6 +8271,21 @@
               + '<div style="display:flex;gap:0.6rem;justify-content:flex-end;">'
                 + '<button class="cs-modal-btn-secondary" onclick="closeDeleteConfirm()">Cancel</button>'
                 + '<button class="cs-modal-btn-danger" id="cs-delete-confirm-btn">Remove</button>'
+              + '</div>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="cs-modal-overlay" id="cs-sell-overlay" style="display:none" onclick="if(event.target===this)closeSellModal()">'
+          + '<div class="cs-modal cs-modal-sm">'
+            + '<div class="cs-modal-title">Sell to Trader</div>'
+            + '<div class="cs-modal-body">'
+              + '<p class="cs-sell-name" id="cs-sell-name"></p>'
+              + '<label class="cs-sell-qty-row">Quantity <input class="cs-inv-input cs-sell-qty" id="cs-sell-qty" type="number" min="1" value="1" oninput="updateSellTotal()"></label>'
+              + '<p class="cs-sell-total" id="cs-sell-total"></p>'
+              + '<p class="cs-sell-warn">This cannot be undone.</p>'
+              + '<div class="cs-sell-actions">'
+                + '<button class="cs-modal-btn-secondary" onclick="closeSellModal()">Cancel</button>'
+                + '<button class="cs-modal-btn-primary" id="cs-sell-confirm-btn" onclick="confirmSell()">Sell</button>'
               + '</div>'
             + '</div>'
           + '</div>'
