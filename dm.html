@@ -3792,8 +3792,18 @@
                sccFgPositionScrollBackdrop() -- the indicator's width is
                intrinsic to its label content, not a fixed value CSS alone
                could reference. -->
-          <div class="scc-fg-scroll-backdrop" id="scc-fg-scroll-backdrop"></div>
+          <!-- ANV-23 (2026-09-18): on desktop (>=769px + hover) the rail is
+               hidden by default and slides out from a thin right-edge
+               trigger strip (#scc-fg-scroll-trigger, only shown while the
+               rail has entries -- see sccFgSetRailTrigger()). DOM order is
+               deliberate: trigger, then indicator, then backdrop, so plain
+               CSS sibling selectors (`~`) can reveal both the rail and its
+               backdrop from either the trigger's or the rail's own :hover.
+               No effect at <=768px (all the rules are inside the desktop
+               media block) or on touch-only wide devices. -->
+          <div class="scc-fg-scroll-trigger" id="scc-fg-scroll-trigger"></div>
           <div class="scc-fg-scroll-indicator" id="scc-fg-scroll-indicator"></div>
+          <div class="scc-fg-scroll-backdrop" id="scc-fg-scroll-backdrop"></div>
           <!-- rendered guide doc, now the only column -->
           <!-- "Jump to a scenario..." dropdown removed (item 3, round 7,
                2026-08-28) -- its data source (session_notes.session_scenarios)
@@ -7824,6 +7834,66 @@ function showDMToast(msg, type) {
 }
 .scc-live-sidebar-btn:hover { border-color: var(--scc-border-gold); color: var(--dm-gold); }
 .scc-live-sidebar-btn-icon { flex: none; font-size: 1.05rem; width: 1.3rem; text-align: center; }
+/* ── Desktop auto-hide (ANV-23, 2026-09-18) ──────────────────────────
+   On a real desktop (wide viewport AND a pointer that can hover), the
+   sidebar stays fully hidden until the mouse nears the left edge, then
+   slides out over the page and slides back once the mouse leaves -- OS
+   auto-hiding dock/taskbar behavior. It overlays content instead of
+   pushing it (the click-to-open drawer above pushes the Field Guide
+   over, which would make the page jump on every hover).
+   Pure CSS, no JS: .scc-live-sidebar itself becomes a thin (12px)
+   full-height fixed strip -- that strip IS the hover-trigger zone --
+   and the drawer is an absolutely-positioned child that overflows it.
+   :hover on the strip matches whenever the pointer is over the strip OR
+   any descendant (the revealed drawer included), which is exactly the
+   "stays open while over the rail, hides only once the mouse has left
+   both" behavior asked for. The transform lives on the DRAWER, not the
+   strip: a transformed ancestor becomes the containing block for its
+   position:fixed descendants, and the strip must stay pinned to the
+   viewport edge. Hide has a 0.35s grace delay (transition-delay on the
+   base state, reset to 0s on :hover so reveal is instant) so a brief
+   wobble off the edge doesn't snap it shut. :focus-within reveals it
+   too, since the buttons stay keyboard-reachable while offscreen.
+   Scoped to (hover: hover) on purpose: a wide touch device (tablet in
+   landscape) has no hover, so it would never be able to reveal this --
+   it keeps the click-to-open rail + drawer above unchanged. Everything
+   at <=768px is untouched (that width already hides the sidebar and uses
+   the Session Tools bottom sheet, see the 768px block far below). */
+@media (min-width: 769px) and (hover: hover) {
+  .scc-live-sidebar {
+    display: block;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 12px;
+    /* Above .dm-shell-header (sticky, z-index 400): the drawer is
+       vertically centered, so on a normal-height viewport its top edge
+       lands under that header and the first button got covered/unclickable
+       at z-index 60 (found live, elementFromPoint returned the header's
+       tab button). Still far below every modal layer (popup backdrop 900,
+       lookup/quick-note 998+), so nothing that should cover it stops
+       doing so. */
+    z-index: 450;
+  }
+  .scc-live-sidebar-rail { display: none; }
+  .scc-live-sidebar-drawer {
+    position: absolute; left: 0; top: 50%;
+    width: auto; overflow: visible;
+    transform: translate(-100%, -50%);
+    transition: transform 0.28s ease 0.35s;
+  }
+  .scc-live-sidebar:hover .scc-live-sidebar-drawer,
+  .scc-live-sidebar:focus-within .scc-live-sidebar-drawer {
+    transform: translate(0, -50%);
+    transition-delay: 0s;
+  }
+  .scc-live-sidebar-drawer-inner {
+    padding: 0.75rem;
+    background: var(--dm-surface);
+    border: 1px solid var(--scc-border-gold);
+    border-left: none;
+    border-radius: 0 var(--dm-radius) var(--dm-radius) 0;
+    box-shadow: var(--shadow-md);
+  }
+}
 /* Shared popup modal -- one instance, one pane per sidebar button, same
    centered-fixed-modal convention as .scc-quicknote-modal (see that class
    for the pattern this mirrors). Only one .scc-live-popup-pane carries
@@ -8356,6 +8426,57 @@ function showDMToast(msg, type) {
   background: linear-gradient(to right, rgba(0,0,0,0) 0px, rgba(0,0,0,0.35) 30px);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+}
+/* ── Desktop auto-hide for the right-edge jump rail (ANV-23, 2026-09-18) ──
+   Same behavior as the left Live Session sidebar's auto-hide (see that
+   block, near .scc-live-sidebar-btn): on a real desktop (>=769px AND a
+   pointer that can hover) the rail + its backdrop stay hidden until the
+   mouse nears the RIGHT edge, slide in over the page, stay put while the
+   mouse is over either the trigger strip or the rail itself, and slide
+   back out 0.35s after it leaves both (transition-delay on the hidden
+   state, reset to 0s while revealed, so reveal is instant and a small
+   wobble off the edge doesn't snap it shut).
+   Pure CSS: .scc-fg-scroll-trigger is a 12px full-height fixed strip
+   (only present while the rail has entries, via --on); DOM order is
+   trigger, indicator, backdrop so `~` reaches the rail and the backdrop
+   from either's :hover. The rail's own box gets pointer-events:auto here
+   (it is none at base, because at base only the dots/labels should be
+   clickable through the transparent box) so hovering the GAPS between
+   labels counts as still over the rail, not a hover loss.
+   z-index: the rail (base 40) sat UNDER .dm-shell-header (sticky, 400),
+   and a tall rail (one 24px slot per entry, centered vertically) reaches
+   up into that header on a normal-height viewport -- the same overlap the
+   left drawer hit. Raised to 450 (backdrop 449, trigger 449), still far
+   below every modal layer (900+).
+   Scoped to (hover: hover) so a wide touch-only device keeps today's
+   always-visible rail (no way to hover it into view); <=768px is
+   untouched entirely -- it keeps its own dots-only + swipe-to-reveal
+   behavior in the mobile block far below. */
+.scc-fg-scroll-trigger { display: none; }
+@media (min-width: 769px) and (hover: hover) {
+  .scc-fg-scroll-trigger.scc-fg-scroll-trigger--on {
+    display: block; position: fixed; top: 0; bottom: 0; right: 0;
+    width: 12px; z-index: 449;
+  }
+  .scc-fg-scroll-indicator {
+    z-index: 450; pointer-events: auto;
+    transform: translate(calc(100% + 2px), -50%);
+    transition: transform 0.28s ease 0.35s;
+  }
+  .scc-fg-scroll-backdrop {
+    z-index: 449; opacity: 0;
+    transition: opacity 0.28s ease 0.35s;
+  }
+  .scc-fg-scroll-trigger--on:hover ~ .scc-fg-scroll-indicator,
+  .scc-fg-scroll-indicator:hover {
+    transform: translate(0, -50%);
+    transition-delay: 0s;
+  }
+  .scc-fg-scroll-trigger--on:hover ~ .scc-fg-scroll-backdrop,
+  .scc-fg-scroll-indicator:hover ~ .scc-fg-scroll-backdrop {
+    opacity: 1;
+    transition-delay: 0s;
+  }
 }
 .scc-fg-link {
   color: var(--dm-gold); cursor: pointer; text-decoration: underline;
@@ -19796,12 +19917,20 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
 // design -- two different denominators was the OTHER round-3 bug class.
 var SCC_FG_SCROLL_STATE = { dotPositions: [], trackHeightPx: 0, bufferPx: 14, maxScroll: 0 };
 
+// Desktop auto-hide trigger strip (ANV-23) -- a class, not inline display,
+// so the strip only ever exists inside the (min-width:769px)+(hover:hover)
+// media block that styles it; on mobile the class is a harmless no-op.
+function sccFgSetRailTrigger(on) {
+  var t = document.getElementById('scc-fg-scroll-trigger');
+  if (t) t.classList.toggle('scc-fg-scroll-trigger--on', !!on);
+}
 function sccFgBuildScrollIndicator() {
   var wrap = document.getElementById('scc-fg-scroll-indicator');
   if (!wrap) return;
   var entries = sccFgCollectScrollEntries();
-  if (!entries.length) { wrap.innerHTML = ''; wrap.style.display = 'none'; wrap.style.height = ''; sccFgPositionScrollBackdrop(false); return; }
+  if (!entries.length) { wrap.innerHTML = ''; wrap.style.display = 'none'; wrap.style.height = ''; sccFgSetRailTrigger(false); sccFgPositionScrollBackdrop(false); return; }
   wrap.style.display = 'block';
+  sccFgSetRailTrigger(true);
   wrap.style.height = '50vh'; // reset to the CSS default before measuring "natural" height below
   var maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
   var offsetsPx = entries.map(function(e) { return e.el.getBoundingClientRect().top + window.scrollY; });
@@ -19886,12 +20015,20 @@ function sccFgPositionScrollBackdrop(visible) {
   if (!backdrop) return;
   var wrap = document.getElementById('scc-fg-scroll-indicator');
   if (!visible || !wrap) { backdrop.style.display = 'none'; return; }
-  var leftPx = wrap.getBoundingClientRect().left;
+  // ANV-23: on desktop the rail can be translated offscreen (auto-hide), and
+  // getBoundingClientRect() includes that transform -- measured mid-slide or
+  // while hidden, every label would read ~150px too far right and the
+  // backdrop would land in the wrong place. Subtract the CURRENT horizontal
+  // translate (0 when not auto-hiding) so the backdrop is always sized for
+  // the rail's revealed position, whatever the animation is doing right now.
+  var slideX = 0;
+  try { slideX = new DOMMatrix(getComputedStyle(wrap).transform).m41 || 0; } catch (e) {}
+  var leftPx = wrap.getBoundingClientRect().left - slideX;
   var labelsVisible = wrap.classList.contains('scc-fg-scroll-indicator--revealed') || window.innerWidth > 768;
   if (labelsVisible) {
     var labels = wrap.querySelectorAll('.scc-fg-scroll-label');
     for (var i = 0; i < labels.length; i++) {
-      var labelLeft = labels[i].getBoundingClientRect().left;
+      var labelLeft = labels[i].getBoundingClientRect().left - slideX;
       if (labelLeft < leftPx) leftPx = labelLeft;
     }
   }
