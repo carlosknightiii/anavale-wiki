@@ -24880,7 +24880,9 @@ function sccLoadPcSpells() {
   var ids = {};
   Object.keys(SCC_SHEETS).forEach(function(k) {
     var sh = SCC_SHEETS[k] || {};
-    (Array.isArray(sh.prepared_spells) ? sh.prepared_spells : []).concat(Array.isArray(sh.always_prepared_spells) ? sh.always_prepared_spells : [])
+    // learned_spells is fetched too so learned cantrips (always available)
+    // can join the panel; non-cantrip learned spells are filtered out at render.
+    (Array.isArray(sh.prepared_spells) ? sh.prepared_spells : []).concat(Array.isArray(sh.always_prepared_spells) ? sh.always_prepared_spells : [], Array.isArray(sh.learned_spells) ? sh.learned_spells : [])
       .forEach(function(id) { ids[id] = true; });
   });
   var list = Object.keys(ids);
@@ -24947,6 +24949,12 @@ function sccBuildInitSpellsPanelHtml(idx, c) {
   var seen = {}, entries = [];
   always.forEach(function(id) { if (!seen[id]) { seen[id] = true; entries.push({ id: id, always: true }); } });
   prepared.forEach(function(id) { if (!seen[id]) { seen[id] = true; entries.push({ id: id, always: false }); } });
+  // Learned cantrips (level 0) are always available, so they show alongside
+  // prepared/always-prepared ones; any other learned-but-unprepared spell never does.
+  var learned = Array.isArray(sheet.learned_spells) ? sheet.learned_spells : [];
+  learned.forEach(function(id) {
+    if (!seen[id] && SCC_PC_SPELLS[id] && SCC_PC_SPELLS[id].level === 0) { seen[id] = true; entries.push({ id: id, always: false, cantrip: true }); }
+  });
   entries = entries.filter(function(e) { return SCC_PC_SPELLS[e.id]; }).sort(function(a, b) {
     var sa = SCC_PC_SPELLS[a.id], sb = SCC_PC_SPELLS[b.id];
     return (sa.level - sb.level) || sa.name.localeCompare(sb.name);
@@ -24961,9 +24969,9 @@ function sccBuildInitSpellsPanelHtml(idx, c) {
     var via = t.viaFreeweave && t.id ? '<span class="scc-gg-type-via">Freeweave &mdash; follows caster&#39;s type</span>' : '';
     var note = sccGgNote(concept, t.id);
     return '<div class="scc-init-spell">'
-      + '<span class="scc-init-spell-kind">' + (e.always ? 'Always Prepared' : 'Prepared') + '</span>'
+      + '<span class="scc-init-spell-kind">' + (e.always ? 'Always Prepared' : e.cantrip ? 'Cantrip' : 'Prepared') + '</span>'
       + '<div class="scc-init-spell-line"><span class="scc-init-spell-name">' + sccEsc(sp.name) + '</span>'
-        + '<span class="scc-init-spell-lvl">' + (sp.level === 0 ? 'Cantrip' : 'Lvl ' + sp.level) + '</span>' + badge + via + '</div>'
+        + (sp.level === 0 ? '' : '<span class="scc-init-spell-lvl">Lvl ' + sp.level + '</span>') + badge + via + '</div>'
       + (note ? '<div class="scc-init-spell-note">' + sccEsc(note) + '</div>' : '')
     + '</div>';
   }).join('') : '<div class="scc-init-spells-empty">No prepared spells.</div>';
