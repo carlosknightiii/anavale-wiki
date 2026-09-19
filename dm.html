@@ -3507,6 +3507,14 @@
                   <button class="scc-btn-sm scc-btn-danger" onclick="sccEndCombat()">End Combat</button>
                 </div>
               </div>
+              <div class="scc-gg-bar scc-gg-bar--none" id="scc-gg-bar">
+                <span class="scc-gg-bar-label">Gigglegloom Presence</span>
+                <div class="scc-gg-bar-btns">
+                  <button type="button" class="scc-gg-btn active" data-gg="none" onclick="sccSetGigglePresence('none')">None</button>
+                  <button type="button" class="scc-gg-btn" data-gg="drained" onclick="sccSetGigglePresence('drained')">Drained</button>
+                  <button type="button" class="scc-gg-btn" data-gg="amplified" onclick="sccSetGigglePresence('amplified')">Amplified</button>
+                </div>
+              </div>
               <div id="scc-initiative-list" class="scc-initiative-list"></div>
             </div>
           </div>
@@ -7562,6 +7570,64 @@ function showDMToast(msg, type) {
 .scc-init-ac-badge-label { font-family: var(--font-sans); font-weight: 700; font-size: 0.5rem; }
 .scc-init-ac-badge-num { font-family: var(--font-headers); font-weight: 700; font-size: 0.8rem; }
 .scc-init-stats-btn { flex-shrink: 0; }
+/* ── Gigglegloom Presence bar (ANV-21) -- DM-set scene condition that decides
+   which world_concepts.situational_behaviors entry the per-PC Spells panel
+   reads. None = plain; Drained = heavy grey; Amplified = animated 4-color
+   border cycling through the real Gigglegloom type tokens. ── */
+.scc-gg-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  margin: 0.6rem 0; padding: 0.5rem 0.75rem;
+  border: 2px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm);
+  background: var(--scc-surface);
+}
+.scc-gg-bar-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dm-text); }
+.scc-gg-bar-btns { display: flex; gap: 0.35rem; }
+.scc-gg-btn {
+  background: var(--dm-surface); color: var(--dm-text); border: 1px solid var(--scc-border-mid);
+  border-radius: var(--dm-radius-sm); padding: 0.25rem 0.75rem; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  font-family: var(--font-sans);
+}
+.scc-gg-btn.active { border-color: var(--gold); color: var(--gold); }
+.scc-gg-bar--drained {
+  background: color-mix(in srgb, var(--region-unknown) 45%, transparent);
+  border: 2px solid var(--region-unknown);
+}
+.scc-gg-bar--amplified {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--scc-surface), var(--scc-surface)) padding-box,
+    linear-gradient(90deg, var(--bubbleseed-bright), var(--featherflow-bright), var(--steelfist-bright), var(--flamerage-bright), var(--bubbleseed-bright)) border-box;
+  background-size: 100% 100%, 300% 100%;
+  animation: scc-gg-cycle 2.2s linear infinite, scc-gg-glow 2.2s ease-in-out infinite;
+}
+@keyframes scc-gg-cycle { from { background-position: 0 0, 0% 0; } to { background-position: 0 0, 150% 0; } }
+@keyframes scc-gg-glow {
+  0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--featherflow-bright) 35%, transparent); }
+  50%      { box-shadow: 0 0 14px color-mix(in srgb, var(--flamerage-bright) 55%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .scc-gg-bar--amplified { animation: none; } }
+/* Per-PC Spells panel */
+.scc-init-spells-btn { flex-shrink: 0; }
+.scc-init-spells-panel {
+  display: none; margin-top: 0.4rem; padding: 0.6rem 0.85rem;
+  background: var(--scc-surface); border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm);
+}
+.scc-init-spells-panel.open { display: block; }
+.scc-init-spell { padding: 0.4rem 0; border-bottom: 1px solid var(--scc-border-mid); }
+.scc-init-spell:last-child { border-bottom: none; }
+.scc-init-spell-kind { display: block; text-align: left; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dm-text); opacity: 0.7; }
+.scc-init-spell-line { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.scc-init-spell-name { font-weight: 700; color: var(--dm-text); }
+.scc-init-spell-lvl { font-size: 0.7rem; color: var(--dm-text); opacity: 0.7; }
+.scc-gg-type-badge { font-size: 0.68rem; font-weight: 700; padding: 0.05rem 0.5rem; border-radius: 999px; border: 1px solid; }
+.scc-gg-type-badge--bubbleseed  { color: var(--bubbleseed-bright);  border-color: var(--bubbleseed-bright);  background: color-mix(in srgb, var(--bubbleseed) 25%, transparent); }
+.scc-gg-type-badge--featherflow { color: var(--featherflow-bright); border-color: var(--featherflow-bright); background: color-mix(in srgb, var(--featherflow) 25%, transparent); }
+.scc-gg-type-badge--steelfist   { color: var(--steelfist-bright);   border-color: var(--steelfist-bright);   background: color-mix(in srgb, var(--steelfist) 25%, transparent); }
+.scc-gg-type-badge--flamerage   { color: var(--flamerage-bright);   border-color: var(--flamerage-bright);   background: color-mix(in srgb, var(--flamerage) 25%, transparent); }
+.scc-gg-type-badge--none        { color: var(--dm-text); border-color: var(--scc-border-mid); }
+.scc-gg-type-via { font-size: 0.65rem; font-style: italic; color: var(--dm-text); opacity: 0.7; }
+.scc-init-spell-note { margin-top: 0.3rem; padding: 0.3rem 0.5rem; font-size: 0.78rem; color: var(--dm-text); border-left: 3px solid var(--gold); background: var(--dm-surface); }
+.scc-init-spells-empty { font-size: 0.8rem; color: var(--dm-text); }
 /* Visual health bar, same look as the character sheet's HP bar
    (sheet/index.html .cs-mi-hp-compact-bar/-fill, --red-track/--red-strong) --
    the −/input/+ quick-adjust controls stay layered on top (position:absolute
@@ -16740,6 +16806,7 @@ function sccLoadPlayers() {
       var sheets = results[0], classes = results[1], photos = results[2];
       SCC_SHEETS = {};
       (Array.isArray(sheets) ? sheets : []).forEach(function(s) { SCC_SHEETS[s.character_id] = s; });
+      sccLoadPcSpells();
       var classById = {};
       (Array.isArray(classes) ? classes : []).forEach(function(c) { classById[c.id] = c; });
       // Same public storage URL pattern sheet/index.html already uses for the
@@ -24724,7 +24791,8 @@ function sccRenderInitiativeList() {
     var lootBtn = (!c.isPC && isDowned && c.loot && (c.loot.items.length || c.loot.gp || c.loot.sp || c.loot.cp))
       ? '<button class="scc-award-btn" onclick="sccOpenLootAward(' + idx + ')">Award Loot</button>' : '';
     var downedBadge = isDowned ? '<span class="scc-downed-badge">&#9760; Downed</span>' : '';
-    var statsBtn = !c.isPC ? '<button class="scc-gold-btn-sm scc-init-stats-btn" onclick="sccToggleInitStatBlock(' + idx + ')">Stats</button>' : '';
+    var statsBtn = !c.isPC ? '<button class="scc-gold-btn-sm scc-init-stats-btn" onclick="sccToggleInitStatBlock(' + idx + ')">Stats</button>'
+      : '<button class="scc-gold-btn-sm scc-init-spells-btn" onclick="sccToggleInitSpells(' + idx + ')">Spells</button>';
     // Only renders for a PC with a real uploaded portrait (character_photo,
     // fetched in sccLoadPlayers()) -- no placeholder/initial for anyone who
     // hasn't uploaded one, matching this file's own no-invented-content rule.
@@ -24788,12 +24856,118 @@ function sccRenderInitiativeList() {
     // mechanic in 5e, and always visible (not a toggle) since it's the
     // exact information a DM needs the instant someone drops.
     + (c.isPC && isDowned ? sccBuildDeathSavesHtml(idx, SCC_SHEETS[c.id]) : '')
+    + (c.isPC ? sccBuildInitSpellsPanelHtml(idx, c) : '')
     + (!c.isPC
         ? '<div class="scc-statblock-panel" id="scc-init-statblock-' + idx + '">'
             + sccBuildCreatureStatBlockHtml(creatures.find(function(x) { return x.id === c.id; }))
           + '</div>'
         : '');
   }).join('');
+}
+
+// ── Gigglegloom Presence + per-PC Spells panel (ANV-21) ─────────────
+// Notes are read LIVE from world_concepts (id 'gigglegloom').situational_behaviors
+// -- nothing hardcoded here, so editing that Supabase data updates every note.
+// Drained -> the existing "Near an Active Drain" entry; Amplified -> the
+// "During Combat" entry. Passive Manifestation Triggers is deliberately NOT
+// wired to anything here (environmental fact the DM reads off the scene).
+var SCC_GG_PRESENCE = 'none';
+var SCC_PC_SPELLS = {};        // spell id -> spells row, only for spells a PC has prepared/always-prepared
+var SCC_SPELLS_OPEN = {};      // combatant id -> bool (keyed by id, not index, so reordering keeps panels open)
+var SCC_GG_SITUATION_PREFIX = { drained: 'Near an Active Drain', amplified: 'During Combat' };
+
+function sccLoadPcSpells() {
+  var ids = {};
+  Object.keys(SCC_SHEETS).forEach(function(k) {
+    var sh = SCC_SHEETS[k] || {};
+    (Array.isArray(sh.prepared_spells) ? sh.prepared_spells : []).concat(Array.isArray(sh.always_prepared_spells) ? sh.always_prepared_spells : [])
+      .forEach(function(id) { ids[id] = true; });
+  });
+  var list = Object.keys(ids);
+  if (!list.length) return Promise.resolve();
+  return sccFetch('spells', '&id=in.(' + list.map(encodeURIComponent).join(',') + ')').then(function(rows) {
+    SCC_PC_SPELLS = {};
+    (Array.isArray(rows) ? rows : []).forEach(function(r) { SCC_PC_SPELLS[r.id] = r; });
+    if (SCC_IN_COMBAT) sccRenderInitiativeList();
+  });
+}
+
+function sccSetGigglePresence(mode) {
+  SCC_GG_PRESENCE = mode;
+  var bar = document.getElementById('scc-gg-bar');
+  if (bar) {
+    bar.className = 'scc-gg-bar scc-gg-bar--' + mode;
+    bar.querySelectorAll('.scc-gg-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-gg') === mode); });
+  }
+  sccRenderInitiativeList();
+}
+
+function sccToggleInitSpells(idx) {
+  var c = SCC_INITIATIVE[idx];
+  if (!c) return;
+  SCC_SPELLS_OPEN[c.id] = !SCC_SPELLS_OPEN[c.id];
+  sccRenderInitiativeList();
+}
+
+// Non-Freeweave spell -> its own types[0]. Freeweave -> the CASTER's own
+// player_characters.class_gigglegloom (any practitioner can cast it, it takes
+// on their palette). No affinity / no type -> null (no note).
+function sccGgResolveType(spell, pc) {
+  var raw = Array.isArray(spell.types) && spell.types.length ? String(spell.types[0]).toLowerCase() : '';
+  if (raw === 'freeweave') {
+    var own = pc && pc.class_gigglegloom ? String(pc.class_gigglegloom).toLowerCase() : '';
+    return { id: own || null, viaFreeweave: true };
+  }
+  return { id: raw || null, viaFreeweave: false };
+}
+
+function sccGgConcept() {
+  var concepts = typeof CONCEPTS !== 'undefined' ? CONCEPTS : [];
+  return concepts.find(function(x) { return x.id === 'gigglegloom'; }) || null;
+}
+
+function sccGgTypeName(concept, typeId) {
+  var t = concept && Array.isArray(concept.types) ? concept.types.find(function(x) { return x.id === typeId; }) : null;
+  return t ? t.name : typeId;
+}
+
+function sccGgNote(concept, typeId) {
+  var prefix = SCC_GG_SITUATION_PREFIX[SCC_GG_PRESENCE];
+  if (!prefix || !typeId || !concept || !Array.isArray(concept.situational_behaviors)) return null;
+  var b = concept.situational_behaviors.find(function(x) { return (x.situation || '').indexOf(prefix) === 0; });
+  var e = b && Array.isArray(b.effects) ? b.effects.find(function(x) { return x.type_id === typeId; }) : null;
+  return e ? e.effect : null;
+}
+
+function sccBuildInitSpellsPanelHtml(idx, c) {
+  var sheet = SCC_SHEETS[c.id] || {};
+  var pc = SCC_PLAYERS.find(function(p) { return p.id === c.id; }) || null;
+  var always = Array.isArray(sheet.always_prepared_spells) ? sheet.always_prepared_spells : [];
+  var prepared = Array.isArray(sheet.prepared_spells) ? sheet.prepared_spells : [];
+  var seen = {}, entries = [];
+  always.forEach(function(id) { if (!seen[id]) { seen[id] = true; entries.push({ id: id, always: true }); } });
+  prepared.forEach(function(id) { if (!seen[id]) { seen[id] = true; entries.push({ id: id, always: false }); } });
+  entries = entries.filter(function(e) { return SCC_PC_SPELLS[e.id]; }).sort(function(a, b) {
+    var sa = SCC_PC_SPELLS[a.id], sb = SCC_PC_SPELLS[b.id];
+    return (sa.level - sb.level) || sa.name.localeCompare(sb.name);
+  });
+  var concept = sccGgConcept();
+  var body = entries.length ? entries.map(function(e) {
+    var sp = SCC_PC_SPELLS[e.id];
+    var t = sccGgResolveType(sp, pc);
+    var badge = t.id
+      ? '<span class="scc-gg-type-badge scc-gg-type-badge--' + sccEsc(t.id) + '">' + sccEsc(sccGgTypeName(concept, t.id)) + '</span>'
+      : '<span class="scc-gg-type-badge scc-gg-type-badge--none">' + (t.viaFreeweave ? 'Freeweave' : 'No type') + '</span>';
+    var via = t.viaFreeweave && t.id ? '<span class="scc-gg-type-via">Freeweave &mdash; follows caster&#39;s type</span>' : '';
+    var note = sccGgNote(concept, t.id);
+    return '<div class="scc-init-spell">'
+      + '<span class="scc-init-spell-kind">' + (e.always ? 'Always Prepared' : 'Prepared') + '</span>'
+      + '<div class="scc-init-spell-line"><span class="scc-init-spell-name">' + sccEsc(sp.name) + '</span>'
+        + '<span class="scc-init-spell-lvl">' + (sp.level === 0 ? 'Cantrip' : 'Lvl ' + sp.level) + '</span>' + badge + via + '</div>'
+      + (note ? '<div class="scc-init-spell-note">' + sccEsc(note) + '</div>' : '')
+    + '</div>';
+  }).join('') : '<div class="scc-init-spells-empty">No prepared spells.</div>';
+  return '<div class="scc-init-spells-panel' + (SCC_SPELLS_OPEN[c.id] ? ' open' : '') + '" id="scc-init-spells-' + idx + '">' + body + '</div>';
 }
 
 function sccNextTurn() {
@@ -25504,6 +25678,8 @@ function sccEndCombat() {
   // ── Reset combat state ──
   SCC_END_COMBAT_ITEMS = allItems;
   SCC_IN_COMBAT = false; SCC_COMBATANTS = []; SCC_INITIATIVE = [];
+  SCC_SPELLS_OPEN = {};
+  sccSetGigglePresence('none');
   SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_SELECTED.combatant = [];
   sccSetEditingEncounter(null);
   document.getElementById('scc-initiative-tracker').style.display = 'none';
