@@ -7824,6 +7824,66 @@ function showDMToast(msg, type) {
 }
 .scc-live-sidebar-btn:hover { border-color: var(--scc-border-gold); color: var(--dm-gold); }
 .scc-live-sidebar-btn-icon { flex: none; font-size: 1.05rem; width: 1.3rem; text-align: center; }
+/* ── Desktop auto-hide (ANV-23, 2026-09-18) ──────────────────────────
+   On a real desktop (wide viewport AND a pointer that can hover), the
+   sidebar stays fully hidden until the mouse nears the left edge, then
+   slides out over the page and slides back once the mouse leaves -- OS
+   auto-hiding dock/taskbar behavior. It overlays content instead of
+   pushing it (the click-to-open drawer above pushes the Field Guide
+   over, which would make the page jump on every hover).
+   Pure CSS, no JS: .scc-live-sidebar itself becomes a thin (12px)
+   full-height fixed strip -- that strip IS the hover-trigger zone --
+   and the drawer is an absolutely-positioned child that overflows it.
+   :hover on the strip matches whenever the pointer is over the strip OR
+   any descendant (the revealed drawer included), which is exactly the
+   "stays open while over the rail, hides only once the mouse has left
+   both" behavior asked for. The transform lives on the DRAWER, not the
+   strip: a transformed ancestor becomes the containing block for its
+   position:fixed descendants, and the strip must stay pinned to the
+   viewport edge. Hide has a 0.35s grace delay (transition-delay on the
+   base state, reset to 0s on :hover so reveal is instant) so a brief
+   wobble off the edge doesn't snap it shut. :focus-within reveals it
+   too, since the buttons stay keyboard-reachable while offscreen.
+   Scoped to (hover: hover) on purpose: a wide touch device (tablet in
+   landscape) has no hover, so it would never be able to reveal this --
+   it keeps the click-to-open rail + drawer above unchanged. Everything
+   at <=768px is untouched (that width already hides the sidebar and uses
+   the Session Tools bottom sheet, see the 768px block far below). */
+@media (min-width: 769px) and (hover: hover) {
+  .scc-live-sidebar {
+    display: block;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 12px;
+    /* Above .dm-shell-header (sticky, z-index 400): the drawer is
+       vertically centered, so on a normal-height viewport its top edge
+       lands under that header and the first button got covered/unclickable
+       at z-index 60 (found live, elementFromPoint returned the header's
+       tab button). Still far below every modal layer (popup backdrop 900,
+       lookup/quick-note 998+), so nothing that should cover it stops
+       doing so. */
+    z-index: 450;
+  }
+  .scc-live-sidebar-rail { display: none; }
+  .scc-live-sidebar-drawer {
+    position: absolute; left: 0; top: 50%;
+    width: auto; overflow: visible;
+    transform: translate(-100%, -50%);
+    transition: transform 0.28s ease 0.35s;
+  }
+  .scc-live-sidebar:hover .scc-live-sidebar-drawer,
+  .scc-live-sidebar:focus-within .scc-live-sidebar-drawer {
+    transform: translate(0, -50%);
+    transition-delay: 0s;
+  }
+  .scc-live-sidebar-drawer-inner {
+    padding: 0.75rem;
+    background: var(--dm-surface);
+    border: 1px solid var(--scc-border-gold);
+    border-left: none;
+    border-radius: 0 var(--dm-radius) var(--dm-radius) 0;
+    box-shadow: var(--shadow-md);
+  }
+}
 /* Shared popup modal -- one instance, one pane per sidebar button, same
    centered-fixed-modal convention as .scc-quicknote-modal (see that class
    for the pattern this mirrors). Only one .scc-live-popup-pane carries
