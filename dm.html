@@ -18816,10 +18816,12 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   return decisionHtml + combatBtnHtml + contentHtml + backBtn;
 }
 
-// Each tile below carries data-fg-rail-child-label -- see the matching
-// comment on sccFgQuestionPanelLeftHtml. scenario_cards declares itself
-// scope:"container", hasOwnEntry:false in $railScope (unchanged rail
-// behavior: no entry for the module itself, only for each card).
+// Each tile below carries data-fg-rail-child-label EXCEPT a card that has a
+// `decision` (ANV-24 round 2, DM-confirmed): decision cards (Talked/
+// Attacked, nested outcomes like Flamerage) never get a rail sub-entry at
+// any depth -- only decision-less cards (e.g. NPC dialogue-tree cards) do.
+// scenario_cards declares itself scope:"container", hasOwnEntry:false in
+// $railScope (no entry for the module itself, only for eligible cards).
 function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
   var domId = sccFgScenarioCardsDomId(b, idx);
   var cards = Array.isArray(b.cards) ? b.cards : [];
@@ -18840,7 +18842,7 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     var statusHtml = '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
         + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status: Not Started → Started → Completed">'
       + '<span class="scc-fg-sc-status-icon">&#8635;</span>' + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
-    return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '" data-fg-rail-child-label="' + sccEsc(card.title || '') + '" onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
+    return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
       + portrait
       + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
       + statusHtml
@@ -19002,11 +19004,9 @@ function sccFgQuestionPanelGrouped(questions, domId, log) {
   });
 }
 
-// Each button below carries data-fg-rail-child-label -- the generic hook
-// sccFgCollectScrollEntries() queries for ANY container category's child
-// rail entries (see js/fg-category-schema.json's $railScope.$comment).
-// question_panel declares itself scope:"container" there; this is the half
-// of that contract this render function owns.
+// question_panel is scope:"entry" in $railScope (ANV-24): one top-level rail
+// entry, deliberately NO per-question child entries, so these buttons do not
+// carry data-fg-rail-child-label.
 function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
   var num = sccFgActiveSessionNum();
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
@@ -19026,7 +19026,6 @@ function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
         + (completed ? '&#10003;' : '') + '</span>';
       return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + '"'
           + ' data-question-id="' + sccEsc(q.id) + '"'
-          + ' data-fg-rail-child-label="' + sccEsc(q.label || '') + '"'
           + ' onclick="sccFgSwitchQuestionPanelQuestion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\', this)">'
         + checkHtml
         + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '') + '</span>'
@@ -19338,7 +19337,7 @@ function sccFgRenderBlock(b, idx, ctx) {
     if (wantsOwnEntry) {
       var railLabel = (railDecl.labelField && b[railDecl.labelField]) || railDecl.entryFallbackLabel || '';
       if (railLabel) {
-        html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-label="' + sccEsc(railLabel) + '" data-fg-rail-tier="' + sccEsc(railDecl.tier || 'h2') + '"');
+        html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-label="' + sccEsc(railLabel) + '" data-fg-rail-tier="' + sccEsc(railDecl.tier || 'h2') + '"' + (railDecl.fullLabel ? ' data-fg-rail-full-label="1"' : ''));
       }
     }
   }
@@ -19891,6 +19890,14 @@ function sccFgScrollIndicatorLabel(text) {
   return sccFgTruncateScrollLabel(text, 20);
 }
 
+// ANV-24 round 4: a shared "If Asked," prefix ate the rail's label width
+// before the distinguishing part appeared. Rail-only -- the panel's own
+// document header is unchanged.
+function sccFgStripAskedPrefix(text) {
+  var t = (text || '').replace(/^\s*if asked,?\s*/i, '').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : (text || '');
+}
+
 function sccFgTruncateScrollLabel(text, max) {
   return text.length > max ? text.slice(0, max - 3) + '...' : text;
 }
@@ -19959,9 +19966,18 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
     var unwrapped = (child.classList.contains('scc-fg-quest-section-block') && child.firstElementChild)
       ? child.firstElementChild : child;
 
+    // ANV-24 round 3 (DM-requested): the pre-session "Session Recap" card
+    // (#scc-fg-opening, built by the opening-section renderer, not a real
+    // block) and the document's own "Session N ..." title h1 are never rail
+    // entries -- always the first two dots regardless of content, and not
+    // useful jump targets. Only their rail entry is skipped; the content
+    // itself still renders normally.
+    if (unwrapped.classList.contains('scc-fg-opening') || (unwrapped.closest && unwrapped.closest('.scc-fg-opening'))) return;
+
     if (unwrapped.classList.contains('scc-fg-doc-h1')) {
       var titleEl = unwrapped.querySelector('.scc-fg-h1-quest-title');
       var full = (titleEl ? titleEl.textContent : unwrapped.textContent).trim();
+      if (/^Session\s+\d+\b/i.test(full)) return;
       entries.push({ el: unwrapped, full: full, label: sccFgScrollIndicatorLabel(full), tier: 'h1' });
       return; // a heading has no rail-relevant substructure of its own
     }
@@ -19987,7 +20003,10 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
       if (unwrapped.dataset.fgRailLabel) {
         entries.push({
           el: unwrapped, full: unwrapped.dataset.fgRailLabel,
-          label: sccFgScrollIndicatorLabel(unwrapped.dataset.fgRailLabel),
+          // fullLabel categories (question_panel) keep their real, specific
+          // label instead of the generic 3-word/pre-dash shortening, which
+          // collapses several panels to identical "If Asked, at" text.
+          label: unwrapped.dataset.fgRailFullLabel ? sccFgTruncateScrollLabel(sccFgStripAskedPrefix(unwrapped.dataset.fgRailLabel), 30) : sccFgScrollIndicatorLabel(unwrapped.dataset.fgRailLabel),
           tier: unwrapped.dataset.fgRailTier || 'h2'
         });
       }
