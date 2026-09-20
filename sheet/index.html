@@ -2467,6 +2467,15 @@
       margin-left: 0.4rem;
     }
     .cs-equip-current-clear:hover { color: #f87171; }
+    /* ANV-25: Add Item modal reuses .cs-equip-result's row shell, but each
+       row isn't itself clickable (the qty input + Add button are the real
+       controls) — override the inherited pointer cursor/hover tint from
+       .cs-equip-result so it doesn't imply the whole row is a click target,
+       and constrain the reused .cs-inv-input class to a small qty box
+       instead of its default flex:1 (which would eat most of the row). */
+    .cs-additem-result { cursor: default; }
+    .cs-additem-result:hover { background: none; }
+    .cs-additem-qty { flex: 0 0 56px; min-width: 0; text-align: center; padding: 0 0.4rem; }
     /* ── Rings — no doll position (existing DM instruction, carried over
        unchanged: stay their own row below the doll), but real inventory-
        backed slots like every other position now — same
@@ -2561,23 +2570,43 @@
       margin: 0.6rem 0 0.35rem;
       font-weight: 700;
     }
-    /* Plain view-only badge, not an <input> — quantity is no longer
-       player-editable (same DM-assignment-only model as the rest of the
-       row). Kept the original .cs-inv-qty-input box look (width/padding/
-       border/font) so the Actions column's layout doesn't shift, just
-       nothing about it implies it can be clicked into. */
-    .cs-inv-qty-display {
-      display: inline-block;
-      min-width: 54px;
+    /* ANV-25: quantity is player-editable again — a -/value/+ stepper,
+       not a free-text input (avoids someone typing a stray non-numeric
+       value; -/+ is also faster for the real motivating case, ticking a
+       ration count down by 1 mid-rest). Sized to roughly the same
+       footprint the old .cs-inv-qty-display view-only badge held, so the
+       Actions column doesn't need a fresh layout pass. */
+    .cs-inv-qty-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .cs-inv-qty-btn {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       box-sizing: border-box;
       background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 4px;
+      color: var(--white);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1;
+      padding: 0;
+      cursor: pointer;
+    }
+    .cs-inv-qty-btn:hover { background: rgba(255,255,255,0.16); }
+    .cs-inv-qty-btn:disabled { opacity: 0.35; cursor: default; }
+    .cs-inv-qty-val {
+      display: inline-block;
+      min-width: 20px;
+      text-align: center;
       color: var(--white);
       font-family: var(--font-mono);
       font-size: 0.78rem;
-      text-align: center;
-      padding: 0.2rem 0.3rem;
     }
     .cs-inv-thumb {
       width: 32px;
@@ -2834,6 +2863,26 @@
     .cs-inv-filter-input { border-radius: 9999px; }
     .cs-inv-filter-input::placeholder { color: rgba(232,232,240,0.75); }
     .cs-inv-filter-select { width: auto; }
+    /* ANV-25: restored "+ Add Item" trigger — sits in the same filter row
+       as Search/Category (matching where it lived before the 2026-08-26
+       removal), sized to the row's shared field height so it lines up on
+       the row's flex-end baseline like the other controls. */
+    .cs-inv-filter-field--btn { flex: 0 0 auto; }
+    .cs-inv-additem-btn {
+      height: var(--char-field-height);
+      box-sizing: border-box;
+      padding: 0 1.1rem;
+      background: rgba(200,148,10,0.25);
+      border: 1px solid rgba(200,148,10,0.5);
+      border-radius: var(--radius-sm);
+      color: var(--gold-light);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .cs-inv-additem-btn:hover { background: rgba(200,148,10,0.4); }
 
     /* ── Bulk delete bar — "Select" column has no bulk action in the
        mockup, built as multi-select -> Delete selected (see build spec). ── */
@@ -2883,7 +2932,7 @@
       padding: var(--char-ov-gap-2xs) var(--char-ov-gap-xs);
     }
     .cs-inv-th-select, .cs-inv-th-thumb { width: 60px; }
-    .cs-inv-th-actions { width: 132px; }
+    .cs-inv-th-actions { width: 170px; } /* widened for ANV-25's qty stepper alongside Sell/Remove */
     .cs-inv-tr:nth-child(odd)  .cs-inv-td { background: var(--blue-600); }
     .cs-inv-tr:nth-child(even) .cs-inv-td { background: var(--blue-500); }
     .cs-inv-tr.selected .cs-inv-td { background: var(--dm-row-selected); }
@@ -2912,7 +2961,7 @@
     .cs-inv-td-select, .cs-inv-td-thumb, .cs-inv-td-cat, .cs-inv-td-price, .cs-inv-td-weight, .cs-inv-td-specs, .cs-inv-td-actions { text-align: center; }
     .cs-inv-td-select input { width: 18px; height: 18px; cursor: pointer; }
     .cs-inv-td-thumb .cs-inv-thumb, .cs-inv-td-thumb .cs-inv-thumb-icon { margin: 0 auto; }
-    .cs-inv-row-actions { display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+    .cs-inv-row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4rem; }
     .cs-inv-empty-row {
       text-align: center;
       padding: 1.5rem;
@@ -3992,14 +4041,20 @@
 
     // "Inventory" tab content — real Figma pass (51:2260 desktop / 51:2265
     // mobile), 2026-08-09. Own title row here instead of the shared
-    // pageTitleHtml() helper every other tab uses. Items are now fully
-    // DM-assignment-only (same model as Spells Learned) — the player's own
-    // "+Add Item" flow (catalog search + custom-item creation), the
-    // row-level Edit pencil, and quantity adjustment are all gone entirely,
-    // see the removal note above confirmDeleteItem(). Viewing, equipping,
-    // and delete are unchanged. Left this wrapper's flex/space-between
-    // as-is with only the title inside — harmless with a single child,
-    // not worth a separate cleanup pass.
+    // pageTitleHtml() helper every other tab uses.
+    // ANV-25 (2026-09-20) reverses the 2026-08-26 "items are DM-assignment-
+    // only" decision (see the note above openAddItemModal() and the
+    // CLAUDE.md Decision Log entry for the full reasoning) — the player's
+    // own "+Add Item" search flow is back (catalog only, DM-authored fields
+    // still not player-editable — no name/stats/description form, unlike
+    // the old pre-08-26 flow which also let a player define a custom
+    // item), and the Actions column's quantity cell is a real -/+ stepper
+    // again instead of a view-only span. The row-level Edit pencil (which
+    // let a player rename/re-describe an owned item) stays gone — restoring
+    // it isn't part of this ask, and it was never mentioned as revert scope.
+    // Viewing, equipping, and delete are otherwise unchanged. Left this
+    // wrapper's flex/space-between as-is with only the title inside —
+    // harmless with a single child, not worth a separate cleanup pass.
     var inventoryTabHtml = '<div class="cs-ov-breakout"><div class="cs-ov-inner">'
       + '<div class="cs-inv-header-row">'
         + '<h2 class="cs-page-title">Inventory</h2>'
@@ -4085,6 +4140,9 @@
             + '<option value="tool">Tool</option>'
             + '<option value="weapon">Weapon</option>'
           + '</select>'
+        + '</div>'
+        + '<div class="cs-inv-filter-field cs-inv-filter-field--btn">'
+          + '<button type="button" class="cs-inv-additem-btn" onclick="openAddItemModal()">&#43; Add Item</button>'
         + '</div>'
       + '</div>'
 
@@ -7390,7 +7448,7 @@
     var rows = INVENTORY.filter(invRowMatchesFilter).sort(function(a,b) { return (a.sort_order||0) - (b.sort_order||0); });
     if (!rows.length) {
       tbody.innerHTML = '<tr><td class="cs-inv-empty-row" colspan="9">'
-        + (INVENTORY.length ? 'No items match your search.' : 'No items yet — your DM assigns items to your inventory.')
+        + (INVENTORY.length ? 'No items match your search.' : 'No items yet — add one, or your DM will assign items to your inventory.')
         + '</td></tr>';
     } else {
       tbody.innerHTML = rows.map(renderInvRow).join('');
@@ -7437,9 +7495,9 @@
     // functionality still needs a home. DM correction: a 9th Actions
     // column, not squeezed into Description (which stays flavor-text only
     // per the confirmed decision at the top of the build spec). Quantity
-    // is view-only (.cs-inv-qty-display, a plain span) and the row-level
-    // Edit pencil is gone entirely — see the removal note above
-    // updateInvQuantity(). Delete is the one remaining mutation here.
+    // is a real -/+ stepper again (ANV-25 restores player-editable
+    // quantity — see adjustInvQty()); the row-level Edit pencil (rename/
+    // re-describe) stays gone, out of this round's scope.
     return '<tr class="cs-inv-tr' + (equippedLabel ? ' equipped' : '') + (SELECTED_INV_IDS[item.id] ? ' selected' : '') + '" id="inv-row-' + item.id + '">'
       + '<td class="cs-inv-td cs-inv-td-select"><input type="checkbox" ' + (SELECTED_INV_IDS[item.id] ? 'checked' : '') + ' onchange="toggleInvSelect(\'' + item.id + '\', this.checked)"></td>'
       + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
@@ -7453,12 +7511,39 @@
       + '<td class="cs-inv-td cs-inv-td-desc">' + desc + '</td>'
       + '<td class="cs-inv-td cs-inv-td-actions">'
         + '<div class="cs-inv-row-actions">'
-          + '<span class="cs-inv-qty-display" title="Quantity">' + (item.quantity||0) + '</span>'
+          + '<div class="cs-inv-qty-stepper" title="Quantity">'
+            + '<button type="button" class="cs-inv-qty-btn" onclick="adjustInvQty(\'' + item.id + '\', -1)"' + ((item.quantity||0) <= 0 ? ' disabled' : '') + ' aria-label="Decrease quantity">&#8722;</button>'
+            + '<span class="cs-inv-qty-val">' + (item.quantity||0) + '</span>'
+            + '<button type="button" class="cs-inv-qty-btn" onclick="adjustInvQty(\'' + item.id + '\', 1)" aria-label="Increase quantity">&#43;</button>'
+          + '</div>'
           + '<button class="cs-inv-sell" onclick="openSellModal(\'' + item.id + '\')" title="Sell to a trader">Sell</button>'
           + '<button class="cs-inv-del" onclick="confirmDeleteItem(\'' + item.id + '\', \'' + name.replace(/'/g,"\\'") + '\')" title="Remove">&#10005;</button>'
         + '</div>'
       + '</td>'
     + '</tr>';
+  }
+  // ANV-25: player-editable quantity, restored. Floors at 0 rather than
+  // auto-deleting the row at 0 — running out of rations still leaves the
+  // row visible at "0" until the player explicitly hits Remove, same as
+  // any other row; this avoids a decrement accidentally doubling as a
+  // delete. Optimistic UI (updates INVENTORY + re-renders immediately,
+  // reverts + toasts on a failed write) matches every other inventory
+  // mutation in this file (sell, delete, equip).
+  function adjustInvQty(id, delta) {
+    var item = INVENTORY.filter(function(i) { return i.id === id; })[0];
+    if (!item) return;
+    var oldQty = parseInt(item.quantity) || 0;
+    var newQty = Math.max(0, oldQty + delta);
+    if (newQty === oldQty) return;
+    item.quantity = newQty;
+    renderInventory();
+    sb.from('inventory').update({ quantity: newQty }).eq('id', id).then(function(res) {
+      if (res.error) {
+        item.quantity = oldQty;
+        renderInventory();
+        showToast('Could not update quantity', true);
+      }
+    });
   }
   // Price as spaced, coin-colored "10g 0s 0c". Inputs may be fractional gp
   // (catalog cost_gp e.g. 0.5) plus whole sp/cp, so everything is folded to
@@ -7586,18 +7671,117 @@
   function catalogWeightFor(itemId) {
     return CATALOG_CACHE[itemId] ? CATALOG_CACHE[itemId].weight_lb : 0;
   }
-  // Items are fully DM-assignment-only now (same model as Spells Learned,
-  // see the note above renderSpellsLearnedTable()) — the player's own
-  // "+Add Item" flow was removed first (catalog search-and-add, custom-
-  // item creation), then this round removed the two remaining player
-  // mutations on an owned row: the Edit pencil (openCustomItemModal()/
-  // closeCustomItemModal()/submitCustomItem(), plus EDITING_ITEM_ID/
-  // ITEM_TYPE_LIST and the #cs-item-modal-overlay markup — all deleted
-  // outright, not left as unreachable dead code, since nothing else
-  // referenced any of them once the pencil's onclick was gone) and
-  // updateInvQuantity() (the qty stepper — the Actions column's quantity
-  // cell is now a plain view-only .cs-inv-qty-display span). Viewing,
-  // equipping, and delete are all untouched.
+  // ANV-25 (2026-09-20): items are no longer DM-assignment-only — this
+  // reverses the 2026-08-26 decision described just below. Spells Learned
+  // (the model this was originally mirroring) is untouched; only the
+  // Inventory side of that decision is being reverted, per this ask.
+  //
+  // 2026-08-26 history, kept for context: items were made fully
+  // DM-assignment-only (same model as Spells Learned, see the note above
+  // renderSpellsLearnedTable()) — the player's own "+Add Item" flow was
+  // removed first (catalog search-and-add, custom-item creation), then a
+  // later round removed the two remaining player mutations on an owned
+  // row: the Edit pencil (openCustomItemModal()/closeCustomItemModal()/
+  // submitCustomItem(), plus EDITING_ITEM_ID/ITEM_TYPE_LIST and the
+  // #cs-item-modal-overlay markup) and updateInvQuantity() (the qty
+  // stepper). Viewing, equipping, and delete were never touched by that
+  // decision either way.
+  //
+  // What's restored now: catalog search-and-add (openAddItemModal() below)
+  // and the quantity stepper (adjustInvQty(), above). What's deliberately
+  // NOT restored: the custom-item-creation sub-form and the row-level Edit
+  // pencil (rename/re-describe an owned item) — the ask is explicit that
+  // players still can't edit item names/stats/descriptions, only add,
+  // remove, adjust quantity, and equip/unequip. The search itself is
+  // scoped to items.player_addable === true AND items.player_facing !==
+  // false (confirmed against the real items schema and DM Tools' own
+  // item-form radios before writing this, not assumed from the pre-removal
+  // comment alone) — a DM-hidden or DM-only-reference item never shows up
+  // here even though a raw `select('*')` would return it. A 'teaser'
+  // player_facing value is deliberately still searchable (only an explicit
+  // `false` excludes a row) — matches the confirmed rule exactly.
+  var ADDITEM_RESULTS = [];
+  var ADDITEM_SEARCH_TIMER = null;
+  function openAddItemModal() {
+    var input = document.getElementById('cs-additem-search-input');
+    var results = document.getElementById('cs-additem-search-results');
+    if (input) input.value = '';
+    if (results) results.innerHTML = '<div class="cs-inv-empty">Type to search for an item.</div>';
+    document.getElementById('cs-additem-modal-overlay').style.display = 'flex';
+    if (input) input.focus();
+  }
+  function closeAddItemModal() {
+    document.getElementById('cs-additem-modal-overlay').style.display = 'none';
+    if (ADDITEM_SEARCH_TIMER) { clearTimeout(ADDITEM_SEARCH_TIMER); ADDITEM_SEARCH_TIMER = null; }
+  }
+  function onAddItemSearchInput() {
+    var q = (document.getElementById('cs-additem-search-input').value || '').trim();
+    if (ADDITEM_SEARCH_TIMER) clearTimeout(ADDITEM_SEARCH_TIMER);
+    var results = document.getElementById('cs-additem-search-results');
+    if (!q) {
+      if (results) results.innerHTML = '<div class="cs-inv-empty">Type to search for an item.</div>';
+      return;
+    }
+    ADDITEM_SEARCH_TIMER = setTimeout(function() { runAddItemSearch(q); }, 250);
+  }
+  function runAddItemSearch(q) {
+    var resultsEl = document.getElementById('cs-additem-search-results');
+    if (!resultsEl) return;
+    resultsEl.innerHTML = '<div class="cs-inv-empty">Searching&#8230;</div>';
+    sb.from('items').select('*').eq('player_addable', true).ilike('name', '%' + q + '%').order('name').limit(30)
+      .then(function(res) {
+        // Stale-response guard — if the search box has moved on to a
+        // different query (or the modal closed) by the time this resolves,
+        // don't paint a result set for a query that's no longer live.
+        var liveInput = document.getElementById('cs-additem-search-input');
+        if (!liveInput || liveInput.value.trim() !== q) return;
+        if (res.error) { resultsEl.innerHTML = '<div class="cs-inv-empty">Search failed — try again.</div>'; return; }
+        var rows = (res.data || []).filter(function(i) { return i.player_facing !== false; });
+        ADDITEM_RESULTS = rows;
+        if (!rows.length) { resultsEl.innerHTML = '<div class="cs-inv-empty">No matches.</div>'; return; }
+        resultsEl.innerHTML = rows.map(function(i) {
+          // Not buildEquipResultThumb() — that helper's icon fallback only
+          // covers the 4 doll-equippable categories (armor/shield/weapon/
+          // accessory), and Add Item's results aren't slot-filtered, so a
+          // searched consumable/tool/misc item needs TYPE_ICONS' broader
+          // category coverage (already used by the main inventory row)
+          // instead of rendering an empty bordered box.
+          var thumb = i.image
+            ? '<img class="cs-equip-thumb" src="' + i.image + '" alt="">'
+            : '<div class="cs-equip-thumb cs-equip-thumb-icon">' + (TYPE_ICONS[i.category] || '📦') + '</div>';
+          return '<div class="cs-equip-result cs-additem-result">'
+            + thumb
+            + '<div class="cs-equip-result-info">'
+              + '<span class="cs-equip-result-name">' + escHtml(i.name) + '</span>'
+              + '<span class="cs-equip-result-stats">' + cap(i.category || '') + (i.cost_gp != null ? ' &middot; ' + i.cost_gp + ' gp' : '') + '</span>'
+            + '</div>'
+            + '<input type="number" class="cs-inv-input cs-additem-qty" id="cs-additem-qty-' + i.id + '" min="1" step="1" value="1" aria-label="Quantity" onclick="event.stopPropagation()">'
+            + '<button type="button" class="cs-modal-btn-primary" onclick="confirmAddItem(\'' + i.id + '\')">Add</button>'
+          + '</div>';
+        }).join('');
+      });
+  }
+  // Real INSERT, not a draft — sheet/index.html has no separate Save step
+  // for Inventory (delete/sell/equip all write immediately too), so Add
+  // matches that convention rather than introducing a new draft-then-save
+  // pattern just for this one flow.
+  function confirmAddItem(itemId) {
+    var item = ADDITEM_RESULTS.filter(function(i) { return i.id === itemId; })[0];
+    if (!item) return;
+    var qtyEl = document.getElementById('cs-additem-qty-' + itemId);
+    var qty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
+    sb.from('inventory').insert({
+      character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty,
+      is_favorite: false, sort_order: 999, dm_granted: false
+    }).select().single().then(function(res) {
+      if (res.error || !res.data) { showToast('Could not add item', true); return; }
+      INVENTORY.push(res.data);
+      CATALOG_CACHE[item.id] = item; // full row already in hand, no separate hydrate fetch needed
+      closeAddItemModal();
+      renderInventory();
+      showToast(item.name + ' added to your inventory');
+    });
+  }
   function confirmDeleteItem(id, name) {
     document.getElementById('cs-delete-confirm-text').textContent = 'Remove "' + name + '" from your inventory? This cannot be undone.';
     var btn = document.getElementById('cs-delete-confirm-btn');
@@ -8287,6 +8471,23 @@
               + '<div class="cs-sell-actions">'
                 + '<button class="cs-modal-btn-secondary" onclick="closeSellModal()">Cancel</button>'
                 + '<button class="cs-modal-btn-primary" id="cs-sell-confirm-btn" onclick="confirmSell()">Sell</button>'
+              + '</div>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        // ANV-25: "+ Add Item" search modal — restored player self-add.
+        // Same .cs-equip-results/.cs-inv-input shell as the slot popover
+        // just below (a search box + a list of result rows), not a new
+        // modal shape. runAddItemSearch() scopes results to
+        // player_addable/player_facing itself; this markup is just the shell.
+        + '<div class="cs-modal-overlay" id="cs-additem-modal-overlay" style="display:none" onclick="if(event.target===this)closeAddItemModal()">'
+          + '<div class="cs-modal">'
+            + '<div class="cs-modal-title">Add Item</div>'
+            + '<div class="cs-modal-body">'
+              + '<input class="cs-inv-input" id="cs-additem-search-input" placeholder="Search items&#8230;" autocomplete="off" oninput="onAddItemSearchInput()">'
+              + '<div class="cs-equip-results" id="cs-additem-search-results"></div>'
+              + '<div style="display:flex;justify-content:flex-end;margin-top:0.8rem;">'
+                + '<button class="cs-modal-btn-secondary" onclick="closeAddItemModal()">Close</button>'
               + '</div>'
             + '</div>'
           + '</div>'
