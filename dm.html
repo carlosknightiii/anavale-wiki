@@ -3502,6 +3502,7 @@
             <div class="scc-initiative-tracker" id="scc-initiative-tracker" style="display:none">
               <div class="scc-combat-header-row">
                 <div class="scc-section-subtitle">Initiative Order — Round <span id="scc-round-counter">1</span></div>
+                <div class="scc-turn-timer" title="How long the current turn has been going">Turn: <span class="scc-turn-timer-val" id="scc-turn-timer-val">0:00</span></div>
                 <div class="scc-combat-controls">
                   <button class="scc-btn-sm" onclick="sccNextTurn()">Next Turn →</button>
                   <button class="scc-btn-sm scc-btn-danger" onclick="sccEndCombat()">End Combat</button>
@@ -7515,6 +7516,12 @@ function showDMToast(msg, type) {
   margin-bottom: 1rem;
 }
 .scc-combat-controls { display: flex; gap: 0.5rem; }
+.scc-turn-timer {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-family: var(--font-headers); font-size: 0.78rem; color: var(--dm-text-muted);
+  letter-spacing: 0.02em;
+}
+.scc-turn-timer-val { color: var(--dm-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
 .scc-initiative-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .scc-init-row {
   display: flex;
@@ -16743,6 +16750,8 @@ var SCC_INITIATIVE = [];
 var SCC_ROUND      = 1;
 var SCC_TURN_IDX   = 0;
 var SCC_IN_COMBAT  = false;
+var SCC_TURN_TIMER_START    = null;
+var SCC_TURN_TIMER_INTERVAL = null;
 var SCC_END_COMBAT_ITEMS = [];
 // Pre-staged encounters (combat_encounters table) -- built ahead of time, kept
 // entirely separate from SCC_COMBATANTS/SCC_INITIATIVE. "Load" copies a saved
@@ -24892,6 +24901,7 @@ function sccStartCombat() {
   var row = document.getElementById('scc-cb2-row');
   if (row) row.style.display = 'none';
   document.getElementById('scc-initiative-tracker').style.display = '';
+  sccStartTurnTimer();
   sccRenderInitiativeList();
 }
 
@@ -25131,9 +25141,40 @@ function sccBuildInitSpellsPanelHtml(idx, c) {
   return '<div class="scc-init-spells-panel' + (SCC_SPELLS_OPEN[c.id] ? ' open' : '') + '" id="scc-init-spells-' + idx + '">' + body + '</div>';
 }
 
+// Turn stopwatch -- deliberately minimal, per DM: just counts up how long
+// the current turn has lasted, resetting to 0:00 whenever the turn advances.
+// No history/averages/per-player stats. setInterval (not a scroll/render
+// hook) so it keeps ticking even if the DM is looking at another sub-panel
+// mid-turn, same "combat keeps going in real life" reasoning as the round
+// counter itself.
+function sccFormatTurnTimer(totalSeconds) {
+  var m = Math.floor(totalSeconds / 60);
+  var s = totalSeconds % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function sccUpdateTurnTimerDisplay() {
+  var el = document.getElementById('scc-turn-timer-val');
+  if (!el || !SCC_TURN_TIMER_START) return;
+  el.textContent = sccFormatTurnTimer(Math.floor((Date.now() - SCC_TURN_TIMER_START) / 1000));
+}
+function sccStartTurnTimer() {
+  if (SCC_TURN_TIMER_INTERVAL) clearInterval(SCC_TURN_TIMER_INTERVAL);
+  SCC_TURN_TIMER_START = Date.now();
+  sccUpdateTurnTimerDisplay();
+  SCC_TURN_TIMER_INTERVAL = setInterval(sccUpdateTurnTimerDisplay, 1000);
+}
+function sccStopTurnTimer() {
+  if (SCC_TURN_TIMER_INTERVAL) clearInterval(SCC_TURN_TIMER_INTERVAL);
+  SCC_TURN_TIMER_INTERVAL = null;
+  SCC_TURN_TIMER_START = null;
+  var el = document.getElementById('scc-turn-timer-val');
+  if (el) el.textContent = '0:00';
+}
+
 function sccNextTurn() {
   SCC_TURN_IDX++;
   if (SCC_TURN_IDX >= SCC_INITIATIVE.length) { SCC_TURN_IDX = 0; SCC_ROUND++; }
+  sccStartTurnTimer();
   sccRenderInitiativeList();
 }
 
@@ -25839,6 +25880,7 @@ function sccEndCombat() {
   // ── Reset combat state ──
   SCC_END_COMBAT_ITEMS = allItems;
   SCC_IN_COMBAT = false; SCC_COMBATANTS = []; SCC_INITIATIVE = [];
+  sccStopTurnTimer();
   SCC_SPELLS_OPEN = {};
   sccSetGigglePresence('none');
   SCC_ROUND = 1; SCC_TURN_IDX = 0; SCC_SELECTED.combatant = [];
