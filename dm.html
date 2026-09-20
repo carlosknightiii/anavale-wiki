@@ -1589,6 +1589,36 @@
       </div>
     </div>
 
+    <!-- Battle Map (Phase 1A) — DM prep tooling for a saved combat_encounters
+         entry: map image or biome fallback, a 5ft-square grid, drag-and-drop
+         token placement. Opened via "View Map" on a Saved Encounters card
+         (sccOpenBattleMap()). Same full-bleed fixed-layer convention as
+         .scc-fg-imgview above (a click-through backdrop plus a separate
+         non-backdrop layer for the actual content) rather than the small
+         centered-modal convention every other page-level modal in this file
+         uses -- a battle map needs real screen real estate, not a 420px box. -->
+    <div id="scc-battlemap-backdrop" class="scc-lookup-backdrop" style="z-index:1200;" onclick="sccCloseBattleMap()"></div>
+    <div id="scc-battlemap-modal" class="scc-battlemap-modal" aria-hidden="true">
+      <div class="scc-battlemap-header">
+        <div class="scc-battlemap-title" id="scc-battlemap-title">Battle Map</div>
+        <div class="scc-battlemap-header-actions">
+          <button type="button" class="scc-btn-primary" onclick="sccSaveBattleMap()">Save</button>
+          <button type="button" class="scc-btn-secondary" onclick="sccCloseBattleMap()">Close</button>
+        </div>
+      </div>
+      <div class="scc-battlemap-settings" id="scc-battlemap-settings"></div>
+      <div class="scc-battlemap-body">
+        <div class="scc-battlemap-surface-wrap" id="scc-battlemap-surface-wrap">
+          <div class="scc-battlemap-surface" id="scc-battlemap-surface" ondragover="event.preventDefault()" ondrop="sccMapSurfaceDrop(event)"></div>
+        </div>
+        <div class="scc-battlemap-tray" id="scc-battlemap-tray-col">
+          <div class="scc-cb2-col-title">Unplaced</div>
+          <div class="scc-battlemap-tray-hint">Drag a token onto the map to place it. Some combatants (reinforcements, later arrivals) can stay here on purpose.</div>
+          <div class="scc-battlemap-tray-list" id="scc-battlemap-tray-list" ondragover="event.preventDefault()" ondrop="sccMapTrayDrop(event)"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ════════════════════════════════════════
          FORMS PANEL
          ════════════════════════════════════════ -->
@@ -6784,6 +6814,85 @@ function showDMToast(msg, type) {
 .scc-cb2-card-quest-link:hover { color: var(--gold-bright); }
 .scc-cb2-card-quests-none { color: var(--text-muted); }
 .scc-cb2-card-action { align-self: flex-start; }
+/* Edit/Close + the new View Map button stack vertically now that there are
+   two actions per card, instead of the single button sitting alone as the
+   card's second flex-row column. */
+.scc-cb2-card-action-col { display: flex; flex-direction: column; gap: 0.4rem; align-self: flex-start; flex-shrink: 0; }
+.scc-cb2-card-viewmap { white-space: nowrap; }
+
+/* ── Battle Map (Phase 1A) ────────────────────────────────────────────
+   Full-bleed fixed layer, same convention as .scc-fg-imgview (a separate
+   click-through backdrop plus a non-backdrop content layer) rather than the
+   small centered-modal shape every other page-level modal here uses -- this
+   one genuinely needs the screen. */
+.scc-battlemap-modal {
+  position: fixed; inset: 0; z-index: 1201;
+  display: none; flex-direction: column;
+  background: var(--dm-surface);
+  padding: 1rem 1.25rem 1.25rem;
+  overflow: hidden;
+}
+.scc-battlemap-modal.open { display: flex; }
+.scc-battlemap-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-shrink: 0; }
+.scc-battlemap-title { font-family: var(--font-headers); font-size: 1.25rem; color: var(--dm-gold); }
+.scc-battlemap-header-actions { display: flex; gap: 0.6rem; }
+.scc-battlemap-settings {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;
+  margin-top: 0.75rem; padding: 0.75rem 1rem;
+  background: var(--blue-600); border-radius: var(--dm-radius);
+  flex-shrink: 0;
+}
+.scc-battlemap-settings-field { display: flex; flex-direction: column; gap: 0.25rem; }
+.scc-battlemap-settings-field label { font-family: var(--font-sans); font-weight: 600; font-size: 0.8rem; color: var(--blue-100); }
+.scc-battlemap-settings-field input[type="number"] { width: 6rem; }
+.scc-battlemap-settings-dims { display: flex; align-items: flex-end; gap: 0.4rem; }
+.scc-battlemap-settings-dims-x { color: var(--dm-text-muted); padding-bottom: 0.5rem; }
+.scc-battlemap-img-name { color: var(--dm-text-muted); font-size: 0.8rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scc-battlemap-body { display: flex; gap: 1rem; flex: 1 1 0; min-height: 0; margin-top: 0.75rem; }
+.scc-battlemap-surface-wrap { flex: 1 1 0; min-width: 0; overflow: auto; background: #0b0e16; border-radius: var(--dm-radius); border: 1px solid var(--scc-border-mid); padding: 1rem; }
+.scc-battlemap-surface { position: relative; background-repeat: repeat, repeat, no-repeat; }
+.scc-battlemap-tray {
+  width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5rem;
+  overflow: hidden;
+}
+.scc-battlemap-tray-hint { font-size: 0.78rem; color: var(--dm-text-muted); }
+.scc-battlemap-tray-list {
+  flex: 1 1 0; min-height: 4rem; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  background: var(--blue-600); border-radius: var(--dm-radius); padding: 0.6rem;
+  border: 1px dashed var(--scc-border-mid);
+}
+.scc-battlemap-tray-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: var(--blue-700); border-radius: 8px; padding: 0.4rem 0.55rem;
+  cursor: grab; user-select: none;
+}
+.scc-battlemap-tray-item:active { cursor: grabbing; }
+.scc-battlemap-tray-thumb, .scc-battlemap-token-thumb {
+  width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  background: var(--dm-surface-high);
+}
+.scc-battlemap-tray-name { font-size: 0.85rem; color: var(--dm-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scc-battlemap-tray-item.is-pc .scc-battlemap-tray-thumb { box-shadow: 0 0 0 2px var(--scc-init-pc-border); }
+.scc-battlemap-tray-item.is-enemy .scc-battlemap-tray-thumb { box-shadow: 0 0 0 2px var(--scc-init-enemy-border); }
+.scc-battlemap-token {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; cursor: grab; box-sizing: border-box;
+  background: var(--dm-surface-high);
+}
+.scc-battlemap-token:active { cursor: grabbing; }
+.scc-battlemap-token.is-pc { box-shadow: 0 0 0 2px var(--scc-init-pc-border); }
+.scc-battlemap-token.is-enemy { box-shadow: 0 0 0 2px var(--scc-init-enemy-border); }
+.scc-battlemap-token-fallback {
+  font-family: var(--font-sans); font-weight: 700; color: var(--dm-text);
+}
+.scc-battlemap-token-label {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  font-size: 0.65rem; color: var(--dm-text); white-space: nowrap;
+  background: rgba(11,14,22,0.85); padding: 0 0.25rem; border-radius: 4px;
+  pointer-events: none; margin-top: 1px;
+}
+.scc-battlemap-empty-note { color: var(--dm-text-muted); font-size: 0.85rem; }
 
 /* Combat's own panel wants (per direct DM ask) to actually use the page's
    width instead of sharing the shared 1100px .scc-panel-inner cap every
@@ -24426,9 +24535,15 @@ function sccRenderSavedEncounters() {
           + '<div class="scc-cb2-card-field"><span class="scc-cb2-card-label">Quests</span>' + questsHtml + '</div>'
         + '</div>'
       + '</div>'
-      + (isEditing
-          ? '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action" onclick="sccCancelEditEncounter()">Close</button>'
-          : '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action" onclick="sccLoadSavedEncounter(\'' + sccEsc(enc.id) + '\')">Edit</button>')
+      + '<div class="scc-cb2-card-action-col">'
+        + (isEditing
+            ? '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action" onclick="sccCancelEditEncounter()">Close</button>'
+            : '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action" onclick="sccLoadSavedEncounter(\'' + sccEsc(enc.id) + '\')">Edit</button>')
+        // Battle Map (Phase 1A) -- works off the saved row directly (enc.id),
+        // independent of whether this card is currently loaded for editing,
+        // since map prep doesn't need the Build Encounter panel open at all.
+        + '<button type="button" class="scc-cb2-pill-btn scc-cb2-card-action scc-cb2-card-viewmap" onclick="sccOpenBattleMap(\'' + sccEsc(enc.id) + '\')">View Map</button>'
+      + '</div>'
       // Gold connector triangle, visible only on the editing card (CSS-gated
       // via .scc-cb2-encounter-card--editing .scc-cb2-card-connector) -- the
       // small protruding arrow Figma shows linking the active card to the
@@ -24612,6 +24727,358 @@ function sccDeleteSavedEncounter(id) {
 function sccDeleteEditingEncounter() {
   if (!SCC_EDITING_ENCOUNTER_ID) return;
   sccDeleteSavedEncounter(SCC_EDITING_ENCOUNTER_ID);
+}
+
+// ── Battle Map (Phase 1A) ────────────────────────────────────────────
+// DM-only prep tooling for a saved encounter: a map image or biome
+// fallback, a grid overlaid at 5ft/square, and drag-and-drop token
+// placement. Deliberately reads/writes the saved combat_encounters ROW
+// directly (enc.combatants), not the live SCC_COMBATANTS staging array --
+// keeps this feature fully decoupled from the encounter builder (it works
+// on any saved encounter whether or not it's currently loaded for editing),
+// and from SCC_INITIATIVE (live combat's own, separately-expanded array) --
+// same componentization Phase 3 (real-time multiplayer sync, later) will
+// need to layer on top of this without this code having assumed a single
+// DM-only user anywhere in its data shape.
+//
+// Token identity is POSITIONAL: "{combatantRowIndex}-{instanceIndex}",
+// derived fresh from enc.combatants each time the map opens -- there's no
+// separate stored id per token. This is stable as long as that array's
+// order/qty doesn't change between saves, which holds for normal DM prep
+// (build the roster, then place tokens) but is a known limitation: editing
+// the roster in the Build Encounter panel AFTER placing tokens can shift
+// which position now belongs to which combatant. Acceptable for Phase 1A
+// (single DM, no concurrency); flagged in the Decision Log for Phase 3 to
+// revisit if live sync ever needs a guaranteed-stable id instead.
+var SCC_MAP_ENCOUNTER = null; // the raw saved-encounter row currently open
+var SCC_MAP_STATE      = null; // working copy: {image_url,biome,width_ft,height_ft,tokens:[{token_key,x,y}]}
+var SCC_MAP_ITEMS      = [];   // every real token this encounter has, expanded from enc.combatants
+var SCC_MAP_SQ         = 32;   // current px size of one 5ft grid square, recomputed on every render
+var SCC_MAP_DIRTY       = false;
+
+// Base color + a simple CSS-gradient "texture" per biome -- deliberately
+// basic (no sourced art), easy to extend with more biomes later (DM's own
+// stated plan). Each texture tiles independently of the grid overlay, which
+// is drawn as its own separate layer on top (see sccMapBackgroundLayers()).
+var SCC_MAP_BIOMES = {
+  grassland: { label: 'Grassland', base: '#3f6b2a', texture: 'repeating-linear-gradient(60deg, rgba(255,255,255,0.06) 0 5px, transparent 5px 11px)', size: '30px 30px' },
+  dirt:      { label: 'Dirt',      base: '#5a3d26', texture: 'repeating-linear-gradient(150deg, rgba(0,0,0,0.15) 0 6px, transparent 6px 15px)', size: '34px 34px' },
+  stone:     { label: 'Stone',     base: '#6c6f73', texture: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 2px, transparent 2px 24px), repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 48px)', size: '48px 48px, 96px 48px' },
+  wood:      { label: 'Wood',      base: '#7a4d24', texture: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 3px, transparent 3px 28px)', size: '28px 28px' },
+  sand:      { label: 'Desert',    base: '#c9a860', texture: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.10) 0 8px, rgba(0,0,0,0.06) 8px 17px)', size: '40px 40px' },
+  snow:      { label: 'Snow',      base: '#c9d9e3', texture: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7) 0 2px, transparent 3px), radial-gradient(circle at 70% 70%, rgba(255,255,255,0.55) 0 2px, transparent 3px)', size: '18px 18px, 22px 22px' },
+  riverbank: { label: 'Riverbank', base: '#6f7d4c', texture: 'repeating-linear-gradient(115deg, rgba(255,255,255,0.06) 0 6px, rgba(0,0,0,0.08) 6px 13px)', size: '32px 32px' },
+  ocean:     { label: 'Ocean',     base: '#1e5872', texture: 'repeating-linear-gradient(100deg, rgba(255,255,255,0.14) 0 4px, transparent 4px 22px)', size: '44px 44px' }
+};
+
+function sccMapWarnUnsaved() {
+  if (!SCC_MAP_DIRTY) return true;
+  return confirm('You have unsaved map changes. Discard them?');
+}
+
+function sccOpenBattleMap(encId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — saved encounters are read-only here', 'error'); return; }
+  var enc = SCC_SAVED_ENCOUNTERS.find(function(e) { return e.id === encId; });
+  if (!enc) return;
+  var m = enc.map || {};
+  SCC_MAP_ENCOUNTER = enc;
+  SCC_MAP_STATE = {
+    image_url: m.image_url || null,
+    biome:     m.biome || 'grassland',
+    width_ft:  m.width_ft  || 100,
+    height_ft: m.height_ft || 100,
+    tokens: Array.isArray(m.tokens) ? m.tokens.map(function(t) { return { token_key: t.token_key, x: t.x, y: t.y }; }) : []
+  };
+  SCC_MAP_DIRTY = false;
+  sccMapBuildItems();
+  var title = document.getElementById('scc-battlemap-title');
+  if (title) title.textContent = 'Battle Map — ' + enc.name;
+  sccRenderBattleMapSettings();
+  sccRenderBattleMapSurface();
+  sccRenderBattleMapTray();
+  document.getElementById('scc-battlemap-backdrop').classList.add('open');
+  document.getElementById('scc-battlemap-modal').classList.add('open');
+}
+
+function sccCloseBattleMap() {
+  if (!sccMapWarnUnsaved()) return;
+  document.getElementById('scc-battlemap-backdrop').classList.remove('open');
+  document.getElementById('scc-battlemap-modal').classList.remove('open');
+  SCC_MAP_ENCOUNTER = null;
+  SCC_MAP_STATE = null;
+  SCC_MAP_ITEMS = [];
+  SCC_MAP_DIRTY = false;
+}
+
+// Expands the saved encounter's combatants (one row per distinct add, each
+// possibly representing qty>1 identical copies -- see sccAddToCombatStaging's
+// own comment) into one descriptor per individually-placeable token. PCs
+// always expand to exactly 1 regardless of any stray qty value, matching
+// every other place in this file that treats qty as monster-only.
+function sccMapBuildItems() {
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  var combatants = (SCC_MAP_ENCOUNTER && SCC_MAP_ENCOUNTER.combatants) || [];
+  SCC_MAP_ITEMS = [];
+  combatants.forEach(function(c, ci) {
+    var n = c.isPC ? 1 : Math.max(1, c.qty || 1);
+    var thumb = null;
+    if (c.isPC) {
+      thumb = (typeof SCC_PLAYER_PHOTOS !== 'undefined' && SCC_PLAYER_PHOTOS[c.id]) || null;
+    } else {
+      var cr = creatures.find(function(x) { return x.id === c.id; });
+      thumb = (cr && cr.image) || null;
+    }
+    for (var ii = 0; ii < n; ii++) {
+      SCC_MAP_ITEMS.push({
+        token_key: ci + '-' + ii,
+        name: c.name + (n > 1 ? ' #' + (ii + 1) : ''),
+        isPC: !!c.isPC,
+        thumb: thumb
+      });
+    }
+  });
+}
+
+function sccMapItemByKey(key) {
+  return SCC_MAP_ITEMS.find(function(it) { return it.token_key === key; });
+}
+
+function sccMapPlacedByKey(key) {
+  return SCC_MAP_STATE.tokens.find(function(t) { return t.token_key === key; });
+}
+
+function sccMapCols() { return Math.max(1, Math.round((SCC_MAP_STATE.width_ft  || 100) / 5)); }
+function sccMapRows() { return Math.max(1, Math.round((SCC_MAP_STATE.height_ft || 100) / 5)); }
+
+function sccRenderBattleMapSettings() {
+  var el = document.getElementById('scc-battlemap-settings');
+  if (!el) return;
+  var s = SCC_MAP_STATE;
+  var biomeOptions = Object.keys(SCC_MAP_BIOMES).map(function(k) {
+    return '<option value="' + k + '"' + (s.biome === k ? ' selected' : '') + '>' + SCC_MAP_BIOMES[k].label + '</option>';
+  }).join('');
+  el.innerHTML =
+      '<div class="scc-battlemap-settings-field">'
+        + '<label>Map Image</label>'
+        + '<div style="display:flex;align-items:center;gap:0.5rem;">'
+          + '<input type="file" accept="image/*" id="scc-battlemap-img-input" style="display:none" onchange="sccMapImageFileSelected(this.files[0])">'
+          + '<button type="button" class="scc-btn-secondary" id="scc-battlemap-img-btn" onclick="document.getElementById(\'scc-battlemap-img-input\').click()">' + (s.image_url ? 'Replace Image' : 'Upload Image') + '</button>'
+          + (s.image_url ? '<button type="button" class="scc-btn-secondary" onclick="sccMapRemoveImage()">Remove</button><span class="scc-battlemap-img-name">Custom map set</span>' : '')
+        + '</div>'
+      + '</div>'
+      + '<div class="scc-battlemap-settings-field">'
+        + '<label>Biome Fallback' + (s.image_url ? ' (unused while an image is set)' : '') + '</label>'
+        + '<select class="cm-select" id="scc-battlemap-biome-select" onchange="sccMapBiomeChanged(this.value)"' + (s.image_url ? ' disabled' : '') + '>' + biomeOptions + '</select>'
+      + '</div>'
+      + '<div class="scc-battlemap-settings-field scc-battlemap-settings-dims">'
+        + '<div><label>Width (ft)</label><input type="number" class="scc-cb2-input" min="5" step="5" id="scc-battlemap-width" value="' + s.width_ft + '" onchange="sccMapSizeChanged()"></div>'
+        + '<span class="scc-battlemap-settings-dims-x">×</span>'
+        + '<div><label>Height (ft)</label><input type="number" class="scc-cb2-input" min="5" step="5" id="scc-battlemap-height" value="' + s.height_ft + '" onchange="sccMapSizeChanged()"></div>'
+      + '</div>';
+}
+
+function sccMapBiomeChanged(val) {
+  SCC_MAP_STATE.biome = val;
+  SCC_MAP_DIRTY = true;
+  sccRenderBattleMapSurface();
+}
+
+function sccMapSizeChanged() {
+  var w = parseInt(document.getElementById('scc-battlemap-width').value) || 100;
+  var h = parseInt(document.getElementById('scc-battlemap-height').value) || 100;
+  SCC_MAP_STATE.width_ft  = Math.max(5, w);
+  SCC_MAP_STATE.height_ft = Math.max(5, h);
+  SCC_MAP_DIRTY = true;
+  sccRenderBattleMapSurface();
+}
+
+async function sccMapImageFileSelected(file) {
+  if (!file || !SCC_MAP_ENCOUNTER) return;
+  var btn = document.getElementById('scc-battlemap-img-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading…'; }
+  try {
+    var blob = await compressToWebP(file, 900, 2200);
+    var filename = 'battle-maps/' + SCC_MAP_ENCOUNTER.id + '.webp';
+    var uploadUrl = SCC_URL + '/storage/v1/object/world-images/' + filename;
+    var uploadHeaders = { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'x-upsert': 'true' };
+    var fd = new FormData();
+    fd.append('', blob, SCC_MAP_ENCOUNTER.id + '.webp');
+    var res = await fetch(uploadUrl, { method: 'POST', headers: uploadHeaders, body: fd });
+    if (!res.ok) {
+      var fd2 = new FormData();
+      fd2.append('', blob, SCC_MAP_ENCOUNTER.id + '.webp');
+      res = await fetch(uploadUrl, { method: 'PUT', headers: uploadHeaders, body: fd2 });
+    }
+    if (!res.ok) { showDMToast('Map image upload failed', 'error'); return; }
+    // Cache-bust, same reasoning as uploadImageToSupabase() elsewhere in this
+    // file -- the storage path is fixed per encounter (upsert-in-place), so a
+    // re-upload needs a genuinely new URL or the CDN can keep serving stale
+    // bytes indefinitely.
+    SCC_MAP_STATE.image_url = SCC_URL + '/storage/v1/object/public/world-images/' + filename + '?v=' + Date.now();
+    SCC_MAP_DIRTY = true;
+    sccRenderBattleMapSettings();
+    sccRenderBattleMapSurface();
+  } catch (err) {
+    console.error(err);
+    showDMToast('Map image upload failed', 'error');
+  } finally {
+    var btn2 = document.getElementById('scc-battlemap-img-btn');
+    if (btn2) { btn2.disabled = false; btn2.textContent = SCC_MAP_STATE.image_url ? 'Replace Image' : 'Upload Image'; }
+  }
+}
+
+function sccMapRemoveImage() {
+  SCC_MAP_STATE.image_url = null;
+  SCC_MAP_DIRTY = true;
+  sccRenderBattleMapSettings();
+  sccRenderBattleMapSurface();
+}
+
+// Grid always renders, over a custom image or a biome fallback alike, scaled
+// so one square = 5ft. Built as layered CSS backgrounds (two 1px-line
+// gradients for the grid, plus either the map image or the biome's own
+// texture gradient underneath) rather than canvas -- resolution-independent,
+// and the grid line layers are identical regardless of what's under them.
+function sccRenderBattleMapSurface() {
+  var wrap = document.getElementById('scc-battlemap-surface-wrap');
+  var surface = document.getElementById('scc-battlemap-surface');
+  if (!wrap || !surface || !SCC_MAP_STATE) return;
+  var cols = sccMapCols(), rows = sccMapRows();
+  var wrapBox = wrap.getBoundingClientRect();
+  var maxW = Math.max(320, wrapBox.width - 40);
+  var maxH = Math.max(320, wrap.clientHeight - 40 || 560);
+  var sq = Math.floor(Math.min(maxW / cols, maxH / rows));
+  sq = Math.max(8, Math.min(56, sq || 32));
+  SCC_MAP_SQ = sq;
+  var pxW = cols * sq, pxH = rows * sq;
+  surface.style.width  = pxW + 'px';
+  surface.style.height = pxH + 'px';
+  var gridV = 'linear-gradient(to right, rgba(255,255,255,0.16) 0 1px, transparent 1px 100%)';
+  var gridH = 'linear-gradient(to bottom, rgba(255,255,255,0.16) 0 1px, transparent 1px 100%)';
+  var gridSizeV = sq + 'px 100%';
+  var gridSizeH = '100% ' + sq + 'px';
+  if (SCC_MAP_STATE.image_url) {
+    surface.style.backgroundImage = [gridV, gridH, 'url("' + SCC_MAP_STATE.image_url + '")'].join(', ');
+    surface.style.backgroundSize  = [gridSizeV, gridSizeH, pxW + 'px ' + pxH + 'px'].join(', ');
+    surface.style.backgroundColor = '#0b0e16';
+  } else {
+    var biome = SCC_MAP_BIOMES[SCC_MAP_STATE.biome] || SCC_MAP_BIOMES.grassland;
+    surface.style.backgroundImage = [gridV, gridH, biome.texture].join(', ');
+    surface.style.backgroundSize  = [gridSizeV, gridSizeH, biome.size].join(', ');
+    surface.style.backgroundColor = biome.base;
+  }
+  // Token layer -- rebuilt fresh each render rather than diffed, simplest
+  // correct approach at Phase 1A's scale (a handful of combatants, not
+  // hundreds).
+  var placedHtml = SCC_MAP_STATE.tokens.map(function(t) {
+    var item = sccMapItemByKey(t.token_key);
+    if (!item) return ''; // stale entry (combatant no longer in the roster) -- silently dropped
+    return sccMapTokenHtml(item, t.x, t.y, sq);
+  }).join('');
+  surface.innerHTML = placedHtml || '';
+}
+
+function sccMapTokenHtml(item, gx, gy, sq) {
+  var inner = item.thumb
+    ? '<img class="scc-battlemap-token-thumb" src="' + sccEsc(item.thumb) + '" alt="" style="width:' + Math.round(sq * 0.82) + 'px;height:' + Math.round(sq * 0.82) + 'px;">'
+    : '<span class="scc-battlemap-token-fallback" style="font-size:' + Math.max(9, Math.round(sq * 0.4)) + 'px;">' + sccEsc((item.name || '?').charAt(0).toUpperCase()) + '</span>';
+  return '<div class="scc-battlemap-token' + (item.isPC ? ' is-pc' : ' is-enemy') + '" draggable="true"'
+    + ' data-token-key="' + sccEsc(item.token_key) + '"'
+    + ' style="left:' + (gx * sq) + 'px;top:' + (gy * sq) + 'px;width:' + sq + 'px;height:' + sq + 'px;"'
+    + ' ondragstart="sccMapTokenDragStart(event,\'' + sccEsc(item.token_key) + '\',\'board\')"'
+    + ' title="' + sccEsc(item.name) + '">'
+    + inner
+    + '<span class="scc-battlemap-token-label">' + sccEsc(item.name) + '</span>'
+  + '</div>';
+}
+
+function sccRenderBattleMapTray() {
+  var el = document.getElementById('scc-battlemap-tray-list');
+  if (!el) return;
+  var unplaced = SCC_MAP_ITEMS.filter(function(it) { return !sccMapPlacedByKey(it.token_key); });
+  if (!unplaced.length) {
+    el.innerHTML = '<div class="scc-battlemap-empty-note">Everything is placed.</div>';
+    return;
+  }
+  el.innerHTML = unplaced.map(function(item) {
+    var thumb = item.thumb
+      ? '<img class="scc-battlemap-tray-thumb" src="' + sccEsc(item.thumb) + '" alt="">'
+      : '<span class="scc-battlemap-tray-thumb scc-battlemap-token-fallback" style="display:flex;align-items:center;justify-content:center;font-size:0.75rem;">' + sccEsc((item.name || '?').charAt(0).toUpperCase()) + '</span>';
+    return '<div class="scc-battlemap-tray-item' + (item.isPC ? ' is-pc' : ' is-enemy') + '" draggable="true"'
+      + ' data-token-key="' + sccEsc(item.token_key) + '"'
+      + ' ondragstart="sccMapTokenDragStart(event,\'' + sccEsc(item.token_key) + '\',\'tray\')">'
+      + thumb
+      + '<span class="scc-battlemap-tray-name">' + sccEsc(item.name) + '</span>'
+    + '</div>';
+  }).join('');
+}
+
+function sccMapTokenDragStart(ev, tokenKey, from) {
+  ev.dataTransfer.setData('text/plain', tokenKey + '|' + from);
+  ev.dataTransfer.effectAllowed = 'move';
+}
+
+// Drop onto the map surface -- places (or re-places) a token, snapped to the
+// nearest grid square, clamped inside the map's real bounds.
+function sccMapSurfaceDrop(ev) {
+  ev.preventDefault();
+  var data = (ev.dataTransfer.getData('text/plain') || '').split('|');
+  var tokenKey = data[0];
+  if (!tokenKey || !sccMapItemByKey(tokenKey)) return;
+  var surface = document.getElementById('scc-battlemap-surface');
+  var box = surface.getBoundingClientRect();
+  var sq = SCC_MAP_SQ || 32;
+  var localX = ev.clientX - box.left;
+  var localY = ev.clientY - box.top;
+  var col = Math.floor(localX / sq);
+  var row = Math.floor(localY / sq);
+  col = Math.max(0, Math.min(sccMapCols() - 1, col));
+  row = Math.max(0, Math.min(sccMapRows() - 1, row));
+  SCC_MAP_STATE.tokens = SCC_MAP_STATE.tokens.filter(function(t) { return t.token_key !== tokenKey; });
+  SCC_MAP_STATE.tokens.push({ token_key: tokenKey, x: col, y: row });
+  SCC_MAP_DIRTY = true;
+  sccRenderBattleMapSurface();
+  sccRenderBattleMapTray();
+}
+
+// Dropping a placed token back onto the tray un-places it -- a valid,
+// supported end state per the spec (reinforcements/later arrivals held back
+// on purpose), not just an accident-recovery path.
+function sccMapTrayDrop(ev) {
+  ev.preventDefault();
+  var data = (ev.dataTransfer.getData('text/plain') || '').split('|');
+  var tokenKey = data[0];
+  if (!tokenKey) return;
+  SCC_MAP_STATE.tokens = SCC_MAP_STATE.tokens.filter(function(t) { return t.token_key !== tokenKey; });
+  SCC_MAP_DIRTY = true;
+  sccRenderBattleMapSurface();
+  sccRenderBattleMapTray();
+}
+
+function sccSaveBattleMap() {
+  if (!SCC_MAP_ENCOUNTER) return;
+  var payload = {
+    image_url: SCC_MAP_STATE.image_url || null,
+    biome:     SCC_MAP_STATE.biome || null,
+    width_ft:  SCC_MAP_STATE.width_ft  || null,
+    height_ft: SCC_MAP_STATE.height_ft || null,
+    tokens:    SCC_MAP_STATE.tokens.slice()
+  };
+  var id = SCC_MAP_ENCOUNTER.id;
+  fetch(SCC_URL + '/rest/v1/combat_encounters?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ map: payload })
+  }).then(function(r) {
+    if (!r.ok) { showDMToast('Could not save the map', 'error'); return; }
+    // Keep the cached saved-encounter row in sync so re-opening View Map
+    // later (without a full sccLoadSavedEncounters() refetch) reflects
+    // exactly what was just saved.
+    var cached = SCC_SAVED_ENCOUNTERS.find(function(e) { return e.id === id; });
+    if (cached) cached.map = payload;
+    SCC_MAP_DIRTY = false;
+    showDMToast('Map saved', 'success');
+  }).catch(function() { showDMToast('Could not save the map', 'error'); });
 }
 
 // One "line" per distinct thing assigned -- coins count as a single line
