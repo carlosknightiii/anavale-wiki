@@ -9091,23 +9091,26 @@ function showDMToast(msg, type) {
    confirming "Completed" once on) rather than leaving a DM to guess what
    an unlabeled circle next to the chip does. Wrapper carries the click
    handler (not just the circle) so clicking the label text also toggles. */
-.scc-fg-box-complete-wrap {
-  display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;
-  margin-left: 0.4rem; vertical-align: middle;
-}
-.scc-fg-box-complete-label {
+/* ANV-39: status dropdown (replaces the Mark Completed toggle). Same
+   tokens as the rest of the Field Guide; state color via modifier class. */
+.scc-fg-status {
   font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.04em; color: var(--dm-text-muted);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--dm-text-muted); background: var(--dm-surface);
+  border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm);
+  padding: 0.15rem 0.35rem; cursor: pointer; max-width: 100%;
 }
-.scc-fg-box-complete-wrap--on .scc-fg-box-complete-label { color: var(--green); }
-.scc-fg-box-complete-toggle {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
-  border: 1px solid var(--scc-border-mid); font-size: 0.6rem; font-weight: 700;
-  color: var(--dm-text-muted);
-}
-.scc-fg-box-complete-wrap:hover .scc-fg-box-complete-toggle { border-color: var(--green-border); }
-.scc-fg-box-complete-toggle--on { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.scc-fg-status--box { margin-left: 0.4rem; vertical-align: middle; }
+.scc-fg-status:hover { border-color: var(--dm-text-muted); }
+.scc-fg-status--completed, .scc-fg-status--passed { color: var(--green); background: var(--green-dim); border-color: var(--green-border); }
+.scc-fg-status--failed { color: var(--red); background: var(--red-dim); border-color: var(--red-border); }
+.scc-fg-status--skipped { color: var(--dm-text-muted); border-style: dashed; }
+.scc-fg-box--skipped { opacity: 0.4; filter: grayscale(1); outline: 1px dashed var(--scc-border-mid); outline-offset: -1px; }
+.scc-fg-check-status { align-self: center; margin-left: auto; flex-shrink: 0; }
+.scc-fg-check-for + .scc-fg-check-status { margin-left: 0; }
+.scc-fg-check--passed { border-left-color: var(--green); }
+.scc-fg-check--failed { border-left-color: var(--red); }
+.scc-fg-check--skipped { opacity: 0.5; filter: grayscale(1); }
 /* ── Featured thumbnails — opt-in per box via block.featured (see
    sccFgRenderFeatured()). Large, prominent portraits, well above
    sccFgEntityThumbHtml()'s small 18px inline-mention thumbnails
@@ -12319,8 +12322,8 @@ function showDMToast(msg, type) {
   .scc-npc2-name { font-size: 1.3rem; }
   .scc-ql-name { font-size: 1.15rem; }
   .scc-cb2-col-title, .scc-cb2-build-title { font-size: 1rem; }
-  /* 5) Mark Completed -- round 1's own-line rule, now with a bottom margin */
-  .scc-fg-box-complete-wrap { display: flex; margin: 0.5rem 0 0.6rem; }
+  /* 5) status dropdown on its own line */
+  .scc-fg-status--box { display: block; margin: 0.5rem 0 0.6rem; }
   /* 6) thumbnails */
   .scc-fg-featured-row { gap: 0.6rem; margin: 0 0.85rem 0.75rem 0; }
   .scc-fg-featured-item { width: 56px; }
@@ -18293,11 +18296,15 @@ function sccFgStyleSkillChecks(html) {
       // into bodyHtml's own <br>-joined string -- matching the
       // .scc-fg-check-body p rules already in the CSS for exactly this.
       var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
-      return '<div class="scc-fg-check">'
+      var chkKey = sccFgCheckStatusKey(title ? title.trim() : '', ability.trim(), dc);
+      var chkLabel = ability.trim() + ' DC ' + dc + (title ? ' — ' + title.trim() : '');
+      var chkSt = sccFgReadStatus('check', chkKey, null);
+      var chkStatusHtml = sccFgStatusSelectHtml('check', chkKey, null, chkLabel, 'scc-fg-check-status');
+      return '<div class="scc-fg-check' + (chkSt !== 'available' ? ' scc-fg-check--' + chkSt : '') + '">'
         + '<div class="scc-fg-check-top"><div class="scc-fg-check-main">'
         + titleHtml
         + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
-        + '</div>' + forChips + '</div>'
+        + '</div>' + forChips + chkStatusHtml + '</div>'
         + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
     }
@@ -18490,7 +18497,7 @@ function sccFgRenderSpokenDialogue(b) {
     ? '<div class="scc-fg-box-cat-badge"><span class="scc-fg-box-cat-badge-icon scc-fg-box-cat-badge-icon--spoken_dialogue">' + spokenStyle.badge.icon + '</span> ' + sccEsc(spokenStyle.badge.name) + '</div>'
     : '';
   var spokenCornerIconHtml = sccFgBoxCornerIconHtml('spoken_dialogue');
-  var spokenCompletedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
+  var spokenCompletedCls = sccFgBoxStatusCls(b);
   var spokenCompleteToggleHtml = sccFgBoxCompletionToggleHtml(b);
 
   // Label header -- independent of speaker entirely. Shows whenever
@@ -18782,74 +18789,131 @@ function sccFgToggleLoggedEntry(el) {
 // destructively -- it just shows as not-yet-completed again) if that
 // exact content is later edited, an acceptable trade-off against adding
 // a new required field to every box ever authored.
-function sccFgBoxCompletionKey(b) {
-  var basis = (b.category || '') + '|' + (b.label || '') + '|' + (b.html || '').slice(0, 120);
+function sccFgHash(basis) {
   var hash = 0;
   for (var i = 0; i < basis.length; i++) {
     hash = ((hash << 5) - hash + basis.charCodeAt(i)) | 0;
   }
-  return 'Box Completed — ' + Math.abs(hash);
+  return Math.abs(hash);
+}
+// Legacy key (pre-ANV-39 "Mark Completed" rows) -- still READ so every
+// existing mark keeps showing as Completed; never written anymore.
+function sccFgBoxCompletionKey(b) {
+  return 'Box Completed — ' + sccFgHash((b.category || '') + '|' + (b.label || '') + '|' + (b.html || '').slice(0, 120));
+}
+// ANV-39: status rows. Same hash basis as the legacy key (identical boxes
+// still share one status). content = "<status>\n<readable label>".
+function sccFgBoxStatusKey(b) {
+  return 'Box Status — ' + sccFgHash((b.category || '') + '|' + (b.label || '') + '|' + (b.html || '').slice(0, 120));
+}
+function sccFgCheckStatusKey(title, ability, dc) {
+  return 'Check Status — ' + sccFgHash('check|' + (title || '') + '|' + ability + '|' + dc);
+}
+
+var SCC_FG_STATUS_DEFS = {
+  box:   [['available', 'Available'], ['completed', 'Completed'], ['skipped', 'Skipped']],
+  check: [['available', 'Available'], ['passed', 'Passed'], ['failed', 'Failed'], ['skipped', 'Skipped']]
+};
+
+// Returns 'available' (default, no row) or the stored status. A legacy
+// "Box Completed" row (any content) reads as 'completed'.
+function sccFgReadStatus(kind, key, legacyKey) {
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[sccFgActiveSessionNum()] || [];
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].title === key) {
+      var st = String(log[i].content || '').split('\n')[0].trim().toLowerCase();
+      var ok = SCC_FG_STATUS_DEFS[kind].some(function(d) { return d[0] === st; });
+      return ok ? st : 'available';
+    }
+  }
+  if (legacyKey && log.some(function(n) { return n.title === legacyKey; })) return 'completed';
+  return 'available';
 }
 
 function sccFgBoxIsCompleted(b) {
-  var num = sccFgActiveSessionNum();
-  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
-  var key = sccFgBoxCompletionKey(b);
-  return log.some(function(n) { return n.title === key; });
+  return sccFgReadStatus('box', sccFgBoxStatusKey(b), sccFgBoxCompletionKey(b)) === 'completed';
+}
+function sccFgBoxStatusCls(b) {
+  var st = sccFgReadStatus('box', sccFgBoxStatusKey(b), sccFgBoxCompletionKey(b));
+  return st === 'completed' ? ' scc-fg-box--completed' : (st === 'skipped' ? ' scc-fg-box--skipped' : '');
 }
 
-// No toggle at all while viewing history -- completion is live-session
-// DM bookkeeping, not something a past, locked session should still be
-// mutable through (same read-only principle as every other click-to-log
-// control in audit mode).
+function sccFgStatusSelectHtml(kind, key, legacyKey, label, extraCls) {
+  var st = sccFgReadStatus(kind, key, legacyKey);
+  var defs = SCC_FG_STATUS_DEFS[kind];
+  if (SCC_VIEWING_HISTORY) {
+    // Locked past session: read-only text, and nothing at all when Available.
+    if (st === 'available') return '';
+    var nm = defs.filter(function(d) { return d[0] === st; })[0][1];
+    return '<span class="scc-fg-status scc-fg-status--' + st + ' ' + extraCls + '">' + nm + '</span>';
+  }
+  var opts = defs.map(function(d) {
+    return '<option value="' + d[0] + '"' + (d[0] === st ? ' selected' : '') + '>' + d[1] + '</option>';
+  }).join('');
+  return '<select class="scc-fg-status scc-fg-status--' + st + ' ' + extraCls + '"'
+    + ' data-kind="' + kind + '" data-key="' + sccEsc(key) + '" data-legacy="' + sccEsc(legacyKey || '') + '"'
+    + ' data-label="' + sccEsc(label) + '" data-prev="' + st + '"'
+    + ' onclick="event.stopPropagation()" onchange="event.stopPropagation(); sccFgSetStatus(this)"'
+    + ' title="Status (carries over to the next session only while Available)">' + opts + '</select>';
+}
+
+function sccFgBoxPlainLabel(b) {
+  var t = b.label || String(b.html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+  return (b.category || 'box') + ': ' + t;
+}
+
+// Box status dropdown (replaces the old Mark Completed toggle, ANV-39).
+// Function name kept so existing call sites are unchanged.
 function sccFgBoxCompletionToggleHtml(b) {
-  if (SCC_VIEWING_HISTORY) return '';
-  var completed = sccFgBoxIsCompleted(b);
-  var key = sccFgBoxCompletionKey(b);
-  return '<span class="scc-fg-box-complete-wrap' + (completed ? ' scc-fg-box-complete-wrap--on' : '') + '"'
-      + ' onclick="event.stopPropagation(); sccFgToggleBoxCompletion(\'' + key + '\', this)"'
-      + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
-    + '<span class="scc-fg-box-complete-toggle' + (completed ? ' scc-fg-box-complete-toggle--on' : '') + '">' + (completed ? '&#10003;' : '') + '</span>'
-    + '<span class="scc-fg-box-complete-label">' + (completed ? 'Completed' : 'Mark Completed') + '</span>'
-  + '</span>';
+  return sccFgStatusSelectHtml('box', sccFgBoxStatusKey(b), sccFgBoxCompletionKey(b), sccFgBoxPlainLabel(b), 'scc-fg-status--box');
 }
 
-// Toggles in place (class + icon on the button and its ancestor box)
-// rather than re-rendering the whole box from scratch -- nothing else
-// about a box's content changes when its completion state flips, so a
-// full outerHTML rebuild (the pattern every OTHER click-to-log control in
-// this file uses) would be needless work for a change this small.
-function sccFgToggleBoxCompletion(key, btnEl) {
-  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — can\'t change that here', 'error'); return; }
+// Writes the new status: removes any existing rows for this item (new or
+// legacy key), then inserts one row unless the status is Available (no row).
+function sccFgSetStatus(sel) {
+  var prev = sel.dataset.prev || 'available';
+  if (SCC_VIEWING_HISTORY) { sel.value = prev; showDMToast('This session is locked for audit — can\'t change that here', 'error'); return; }
   var num = SCC_SESSION ? SCC_SESSION.session_number : null;
-  if (!num) { showDMToast('Save session setup first', 'error'); return; }
+  if (!num) { sel.value = prev; showDMToast('Save session setup first', 'error'); return; }
+  var kind = sel.dataset.kind, key = sel.dataset.key, legacy = sel.dataset.legacy, label = sel.dataset.label;
+  var status = sel.value;
+  var hdr = { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON };
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
-  var existing = log.find(function(n) { return n.title === key; }) || null;
-  var req = existing
-    ? fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, {
-        method: 'DELETE',
-        headers: { 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON }
-      })
-    : fetch(SCC_URL + '/rest/v1/session_note_entries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ session_number: num, category: 'quest', title: key, content: '' })
-      });
-  req.then(function(r) {
-    if (!r.ok) { showDMToast('Could not update', 'error'); return; }
-    sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
-      SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
-      var nowCompleted = !existing;
-      var box = btnEl.closest('.scc-fg-box');
-      if (box) box.classList.toggle('scc-fg-box--completed', nowCompleted);
-      btnEl.classList.toggle('scc-fg-box-complete-wrap--on', nowCompleted);
-      btnEl.title = nowCompleted ? 'Click to mark not completed' : 'Click to mark completed';
-      var circle = btnEl.querySelector('.scc-fg-box-complete-toggle');
-      if (circle) { circle.classList.toggle('scc-fg-box-complete-toggle--on', nowCompleted); circle.innerHTML = nowCompleted ? '&#10003;' : ''; }
-      var label = btnEl.querySelector('.scc-fg-box-complete-label');
-      if (label) label.textContent = nowCompleted ? 'Completed' : 'Mark Completed';
-    });
-  }).catch(function() { showDMToast('Could not update', 'error'); });
+  var existing = log.filter(function(n) { return n.title === key || (legacy && n.title === legacy); });
+  sel.disabled = true;
+  Promise.all(existing.map(function(n) {
+    return fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + n.id, { method: 'DELETE', headers: hdr });
+  })).then(function(rs) {
+    if (rs.some(function(r) { return !r.ok; })) throw new Error('delete');
+    if (status === 'available') return null;
+    return fetch(SCC_URL + '/rest/v1/session_note_entries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SCC_ANON, 'Authorization': 'Bearer ' + SCC_ANON, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ session_number: num, category: 'quest', title: key, content: status + '\n' + label })
+    }).then(function(r) { if (!r.ok) throw new Error('insert'); });
+  }).then(function() {
+    return sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc');
+  }).then(function(rows) {
+    SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+    sel.disabled = false;
+    sel.dataset.prev = status;
+    sel.className = sel.className.replace(/scc-fg-status--(available|completed|skipped|passed|failed)/, 'scc-fg-status--' + status);
+    var host = sel.closest(kind === 'check' ? '.scc-fg-check' : '.scc-fg-box');
+    if (host) {
+      if (kind === 'check') {
+        host.classList.toggle('scc-fg-check--passed', status === 'passed');
+        host.classList.toggle('scc-fg-check--failed', status === 'failed');
+        host.classList.toggle('scc-fg-check--skipped', status === 'skipped');
+      } else {
+        host.classList.toggle('scc-fg-box--completed', status === 'completed');
+        host.classList.toggle('scc-fg-box--skipped', status === 'skipped');
+      }
+    }
+  }).catch(function() {
+    sel.disabled = false;
+    sel.value = prev;
+    showDMToast('Could not update status', 'error');
+  });
 }
 
 function sccFgRenderCombatOutcomesBlock(b, ctx) {
@@ -19906,7 +19970,7 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       var labelHeaderHtml = b.label ? '<div class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</div>' : '';
       var headerHtml = featuredHtml + catBadge + sccFgBoxCompletionToggleHtml(b) + labelHeaderHtml;
       var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
-      var completedCls = sccFgBoxIsCompleted(b) ? ' scc-fg-box--completed' : '';
+      var completedCls = sccFgBoxStatusCls(b);
       // sccFgTextClass(b.category) -- see its own comment. Applied here
       // unconditionally alongside colorClass, so every box's body-text
       // font-size/color is a direct function of its real category, not the
