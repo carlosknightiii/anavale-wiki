@@ -9318,14 +9318,15 @@ function showDMToast(msg, type) {
   margin-bottom: 0.3rem;
 }
 .scc-fg-check-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
-/* ANV-37: player chips ([for:...] marker). Small pills after the DC text;
-   flex-wrap lets them drop below on very narrow widths instead of overflowing. */
-.scc-fg-check-for {
-  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; line-height: 1;
-  padding: 0.18rem 0.5rem; border-radius: 999px; white-space: nowrap;
-  color: var(--blue); background: var(--blue-dim); border: 1px solid var(--blue);
+/* ANV-37: player portraits ([for:...] marker). Reuses the link-thumb
+   round-avatar look; the group is pushed right (margin-left:auto) and the
+   far right is left free for a future status dropdown. Portraits overlap
+   slightly; flex-wrap on the head still lets everything wrap when narrow. */
+.scc-fg-check-for { display: inline-flex; align-items: center; margin-left: auto; padding-left: 6px; }
+.scc-fg-check-pc.scc-fg-link-thumb, .scc-fg-check-pc.scc-fg-link-thumb-fallback {
+  width: 24px; height: 24px; line-height: 20px; margin: 0 0 0 -6px; top: 0;
+  border: 2px solid var(--dm-bg);
 }
-.scc-fg-check-for--all { color: var(--dm-gold); border-color: var(--dm-gold); }
 .scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
 .scc-fg-check-name {
   font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
@@ -18217,7 +18218,30 @@ function sccFgRenderFeatured(featured) {
 // <em>Noticing the Wrongness in the Air</em>, then <strong>Perception DC
 // 12</strong>. A check with no title renders exactly as before --
 // entirely additive, not a required field.
-var SCC_FG_CHECK_FOR_LABELS = { all: 'All', kael: 'Kael', hana: 'Hana', visenya: 'Visenya' };
+// ANV-37: fixed render order; 'all' is handled by the parser (expands to the 3 PCs).
+var SCC_FG_CHECK_FOR_ORDER = ['all', 'kael', 'hana', 'visenya'];
+// Round portraits for a check's [for:...] marker. Matches players by first
+// name against SCC_PLAYERS and reads SCC_PLAYER_PHOTOS -- same data the
+// featured 'pc' thumbnails use; initial-letter fallback when no photo. A
+// name with no matching player renders nothing (never breaks the check).
+function sccFgCheckForHtml(keys) {
+  var out = '';
+  keys.forEach(function(k) {
+    var pc = (typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : []).find(function(x) {
+      return x.name && x.name.trim().split(/\s+/)[0].toLowerCase() === k;
+    });
+    if (!pc) return;
+    var first = pc.name.trim().split(/\s+/)[0];
+    var tip = sccEsc(first);
+    var photo = typeof SCC_PLAYER_PHOTOS !== 'undefined' ? SCC_PLAYER_PHOTOS[pc.id] : null;
+    var initial = sccEsc(pc.name.charAt(0));
+    out += photo
+      ? '<img class="scc-fg-link-thumb scc-fg-check-pc" src="' + sccEsc(photo) + '" alt="' + tip + '" title="' + tip + '" aria-label="' + tip + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
+        + '<span class="scc-fg-link-thumb-fallback scc-fg-check-pc" style="display:none" title="' + tip + '" aria-label="' + tip + '">' + initial + '</span>'
+      : '<span class="scc-fg-link-thumb-fallback scc-fg-check-pc" title="' + tip + '" aria-label="' + tip + '">' + initial + '</span>';
+  });
+  return out ? '<span class="scc-fg-check-for">' + out + '</span>' : '';
+}
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
     /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
@@ -18229,12 +18253,10 @@ function sccFgStyleSkillChecks(html) {
         var seen = {};
         list.split(',').forEach(function(v) {
           var k = v.trim().toLowerCase();
-          if (SCC_FG_CHECK_FOR_LABELS[k]) seen[k] = true;
+          if (SCC_FG_CHECK_FOR_ORDER.indexOf(k) !== -1) seen[k] = true;
         });
-        if (seen.all) seen = { all: true };
-        Object.keys(SCC_FG_CHECK_FOR_LABELS).forEach(function(k) {
-          if (seen[k]) forChips += '<span class="scc-fg-check-for scc-fg-check-for--' + k + '">' + SCC_FG_CHECK_FOR_LABELS[k] + '</span>';
-        });
+        if (seen.all) seen = { kael: true, hana: true, visenya: true };
+        forChips = sccFgCheckForHtml(SCC_FG_CHECK_FOR_ORDER.filter(function(k) { return seen[k]; }));
         return '';
       });
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
