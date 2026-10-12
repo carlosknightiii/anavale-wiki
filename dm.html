@@ -9318,15 +9318,19 @@ function showDMToast(msg, type) {
   margin-bottom: 0.3rem;
 }
 .scc-fg-check-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
-/* ANV-37: player portraits ([for:...] marker). Reuses the link-thumb
-   round-avatar look; the group is pushed right (margin-left:auto) and the
-   far right is left free for a future status dropdown. Portraits overlap
-   slightly; flex-wrap on the head still lets everything wrap when narrow. */
-.scc-fg-check-for { display: inline-flex; align-items: center; margin-left: auto; padding-left: 6px; }
-.scc-fg-check-pc.scc-fg-link-thumb, .scc-fg-check-pc.scc-fg-link-thumb-fallback {
-  width: 24px; height: 24px; line-height: 20px; margin: 0 0 0 -6px; top: 0;
-  border: 2px solid var(--dm-bg);
-}
+/* ANV-37: player portraits ([for:...] marker). Reuses the featured-thumbnail
+   portrait-over-name items (.scc-fg-featured-item/-img/-fallback/-name),
+   sized down to 44px for a check header. The check's title + DC line sit on
+   the left (.scc-fg-check-main), the portraits on the right, vertically
+   centered; the far right after them is left free for a future status
+   dropdown. Items sit side by side with a gap (no overlap) so names stay
+   readable, and wrap below the title on narrow widths. */
+.scc-fg-check-top { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+.scc-fg-check-main { flex: 1 1 12rem; min-width: 0; }
+.scc-fg-check-for { display: flex; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-left: auto; }
+.scc-fg-check-for .scc-fg-featured-item { width: 56px; gap: 0.2rem; }
+.scc-fg-check-for .scc-fg-featured-img, .scc-fg-check-for .scc-fg-featured-fallback { width: 44px; height: 44px; }
+.scc-fg-check-for .scc-fg-featured-name { font-size: 0.72rem; }
 .scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
 .scc-fg-check-name {
   font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
@@ -18235,12 +18239,13 @@ function sccFgCheckForHtml(keys) {
     var tip = sccEsc(first);
     var photo = typeof SCC_PLAYER_PHOTOS !== 'undefined' ? SCC_PLAYER_PHOTOS[pc.id] : null;
     var initial = sccEsc(pc.name.charAt(0));
-    out += photo
-      ? '<img class="scc-fg-link-thumb scc-fg-check-pc" src="' + sccEsc(photo) + '" alt="' + tip + '" title="' + tip + '" aria-label="' + tip + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-block\'">'
-        + '<span class="scc-fg-link-thumb-fallback scc-fg-check-pc" style="display:none" title="' + tip + '" aria-label="' + tip + '">' + initial + '</span>'
-      : '<span class="scc-fg-link-thumb-fallback scc-fg-check-pc" title="' + tip + '" aria-label="' + tip + '">' + initial + '</span>';
+    var img = photo
+      ? '<img class="scc-fg-featured-img" src="' + sccEsc(photo) + '" alt="' + tip + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<span class="scc-fg-featured-fallback" style="display:none">' + initial + '</span>'
+      : '<span class="scc-fg-featured-fallback">' + initial + '</span>';
+    out += '<div class="scc-fg-featured-item" title="' + tip + '" aria-label="' + tip + '">' + img + '<span class="scc-fg-featured-name">' + tip + '</span></div>';
   });
-  return out ? '<span class="scc-fg-check-for">' + out + '</span>' : '';
+  return out ? '<div class="scc-fg-check-for">' + out + '</div>' : '';
 }
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
@@ -18289,8 +18294,10 @@ function sccFgStyleSkillChecks(html) {
       // .scc-fg-check-body p rules already in the CSS for exactly this.
       var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
       return '<div class="scc-fg-check">'
+        + '<div class="scc-fg-check-top"><div class="scc-fg-check-main">'
         + titleHtml
-        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span>' + forChips + '</div>'
+        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
+        + '</div>' + forChips + '</div>'
         + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
     }
