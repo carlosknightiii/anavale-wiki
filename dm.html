@@ -8399,7 +8399,7 @@ function showDMToast(msg, type) {
    padding moved to the sidebar's flush-left fix above -- reset to 0 on
    mobile (see the 768px block) since the sidebar is out of normal flow
    there and the wrap's own mobile padding already provides the inset. */
-.scc-live-tabs-wrap { display: flex; flex-direction: column; min-width: 0; padding-left: 2rem; }
+.scc-live-tabs-wrap { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; padding-left: 2rem; }
 .scc-live-tabs {
   display: flex; flex-wrap: wrap; gap: 0.4rem;
   margin-bottom: 1.1rem; padding-bottom: 0.85rem;
