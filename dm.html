@@ -9317,7 +9317,20 @@ function showDMToast(msg, type) {
   line-height: 1.25; color: var(--dm-text);
   margin-bottom: 0.3rem;
 }
-.scc-fg-check-head { display: flex; align-items: center; gap: 0.5rem; }
+.scc-fg-check-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
+/* ANV-37: player portraits ([for:...] marker). Reuses the featured-thumbnail
+   portrait-over-name items (.scc-fg-featured-item/-img/-fallback/-name),
+   sized down to 44px for a check header. The check's title + DC line sit on
+   the left (.scc-fg-check-main), the portraits on the right, vertically
+   centered; the far right after them is left free for a future status
+   dropdown. Items sit side by side with a gap (no overlap) so names stay
+   readable, and wrap below the title on narrow widths. */
+.scc-fg-check-top { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+.scc-fg-check-main { flex: 1 1 12rem; min-width: 0; }
+.scc-fg-check-for { display: flex; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-left: auto; }
+.scc-fg-check-for .scc-fg-featured-item { width: 56px; gap: 0.2rem; }
+.scc-fg-check-for .scc-fg-featured-img, .scc-fg-check-for .scc-fg-featured-fallback { width: 44px; height: 44px; }
+.scc-fg-check-for .scc-fg-featured-name { font-size: 0.72rem; }
 .scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
 .scc-fg-check-name {
   font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
@@ -18209,10 +18222,48 @@ function sccFgRenderFeatured(featured) {
 // <em>Noticing the Wrongness in the Air</em>, then <strong>Perception DC
 // 12</strong>. A check with no title renders exactly as before --
 // entirely additive, not a required field.
+// ANV-37: fixed render order; 'all' is handled by the parser (expands to the 3 PCs).
+var SCC_FG_CHECK_FOR_ORDER = ['all', 'kael', 'hana', 'visenya'];
+// Round portraits for a check's [for:...] marker. Matches players by first
+// name against SCC_PLAYERS and reads SCC_PLAYER_PHOTOS -- same data the
+// featured 'pc' thumbnails use; initial-letter fallback when no photo. A
+// name with no matching player renders nothing (never breaks the check).
+function sccFgCheckForHtml(keys) {
+  var out = '';
+  keys.forEach(function(k) {
+    var pc = (typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : []).find(function(x) {
+      return x.name && x.name.trim().split(/\s+/)[0].toLowerCase() === k;
+    });
+    if (!pc) return;
+    var first = pc.name.trim().split(/\s+/)[0];
+    var tip = sccEsc(first);
+    var photo = typeof SCC_PLAYER_PHOTOS !== 'undefined' ? SCC_PLAYER_PHOTOS[pc.id] : null;
+    var initial = sccEsc(pc.name.charAt(0));
+    var img = photo
+      ? '<img class="scc-fg-featured-img" src="' + sccEsc(photo) + '" alt="' + tip + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<span class="scc-fg-featured-fallback" style="display:none">' + initial + '</span>'
+      : '<span class="scc-fg-featured-fallback">' + initial + '</span>';
+    out += '<div class="scc-fg-featured-item" title="' + tip + '" aria-label="' + tip + '">' + img + '<span class="scc-fg-featured-name">' + tip + '</span></div>';
+  });
+  return out ? '<div class="scc-fg-check-for">' + out + '</div>' : '';
+}
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
     /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
     function(m, title, ability, dc, rest, siblingParas) {
+      // ANV-37: optional [for:all] / [for:kael,hana] marker right after the
+      // closing </strong>. Parsed and stripped here; unknown names ignored.
+      var forChips = '';
+      rest = rest.replace(/^\s*\[for:([^\]]*)\]/i, function(mm, list) {
+        var seen = {};
+        list.split(',').forEach(function(v) {
+          var k = v.trim().toLowerCase();
+          if (SCC_FG_CHECK_FOR_ORDER.indexOf(k) !== -1) seen[k] = true;
+        });
+        if (seen.all) seen = { kael: true, hana: true, visenya: true };
+        forChips = sccFgCheckForHtml(SCC_FG_CHECK_FOR_ORDER.filter(function(k) { return seen[k]; }));
+        return '';
+      });
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
       // Pass:/Fail: auto-coloring (item 3a) -- detected here, never
       // hand-typed inline styles by whoever authors the content. Matches
@@ -18243,8 +18294,10 @@ function sccFgStyleSkillChecks(html) {
       // .scc-fg-check-body p rules already in the CSS for exactly this.
       var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
       return '<div class="scc-fg-check">'
+        + '<div class="scc-fg-check-top"><div class="scc-fg-check-main">'
         + titleHtml
         + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
+        + '</div>' + forChips + '</div>'
         + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
     }
