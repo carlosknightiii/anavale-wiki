@@ -1214,6 +1214,14 @@
      ══════════════════════════════════════════ -->
 <div id="dm-env-banner"></div>
 <script>
+/* Exact-match loopback check, shared by the banner below and the password-gate
+   skip right after it. EXACT hostname equality only -- never a substring or
+   suffix match, so localhost.evil.com, 127.0.0.1.evil.com, *.localhost, LAN
+   IPs (192.168.x.x) and the live github.io host are all NOT local. file://
+   has an empty hostname and is also not local. */
+function dmIsLocalHost(hostname) {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+}
 (function() {
   var LIVE_HOST = 'carlosknightiii.github.io';
   if (location.hostname === LIVE_HOST) return;
@@ -1237,6 +1245,21 @@
   // has no such dependency.
   document.documentElement.style.setProperty('--dm-env-banner-h', el.offsetHeight + 'px');
 })();
+</script>
+
+<script>
+/* Local dev skips the password gate (ANV-38). Why this is safe: the gate is
+   a client-side UI gate only -- every real data read/write is governed by
+   Supabase RLS, not by this password -- and local builds are already marked
+   by the red LOCAL DEV BUILD banner above, which stays visible. The gate
+   validates exactly as before everywhere else (live github.io included).
+   This sets the same sessionStorage flag a correct password sets, so every
+   existing dm_auth check (boot, deep-link routing, new-tab inheritance)
+   works unchanged. No password/token is stored; the flag is only set when
+   the hostname is exactly loopback. */
+if (dmIsLocalHost(location.hostname)) {
+  try { sessionStorage.setItem('dm_auth', '1'); } catch (e) {}
+}
 </script>
 
 <!-- ══════════════════════════════════════════

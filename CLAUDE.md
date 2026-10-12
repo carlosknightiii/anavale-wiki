@@ -440,6 +440,8 @@ Verified live end-to-end for every item (see Decision Log), zero console errors,
 
 Returns nothing = safe. Throws = fix before pushing.
 
+**Local dev skips the DM password gate (ANV-38):** `dm.html` served from exactly `localhost`, `127.0.0.1`, or `[::1]` opens straight into DM Tools (the red LOCAL DEV BUILD banner stays visible). Code sessions can therefore verify DM Tools UI themselves in the Browser pane — never ask the DM to sign in for a local check. The live github.io site and any other host (LAN IPs, `*.localhost`, lookalike domains) still require the password. `/character` and `/sheet` have no password gate, so nothing changed there.
+
 **CDN propagation delay:** GitHub Pages can take 5–15 minutes after a successful push. Before concluding a fix didn't land:
 
     curl -s "https://carlosknightiii.github.io/anavale-wiki/dm.html" | grep -c "FUNCTION_OR_STRING"
