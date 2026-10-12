@@ -9294,7 +9294,15 @@ function showDMToast(msg, type) {
   line-height: 1.25; color: var(--dm-text);
   margin-bottom: 0.3rem;
 }
-.scc-fg-check-head { display: flex; align-items: center; gap: 0.5rem; }
+.scc-fg-check-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
+/* ANV-37: player chips ([for:...] marker). Small pills after the DC text;
+   flex-wrap lets them drop below on very narrow widths instead of overflowing. */
+.scc-fg-check-for {
+  font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; line-height: 1;
+  padding: 0.18rem 0.5rem; border-radius: 999px; white-space: nowrap;
+  color: var(--blue); background: var(--blue-dim); border: 1px solid var(--blue);
+}
+.scc-fg-check-for--all { color: var(--dm-gold); border-color: var(--dm-gold); }
 .scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
 .scc-fg-check-name {
   font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
@@ -18186,10 +18194,26 @@ function sccFgRenderFeatured(featured) {
 // <em>Noticing the Wrongness in the Air</em>, then <strong>Perception DC
 // 12</strong>. A check with no title renders exactly as before --
 // entirely additive, not a required field.
+var SCC_FG_CHECK_FOR_LABELS = { all: 'All', kael: 'Kael', hana: 'Hana', visenya: 'Visenya' };
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
     /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
     function(m, title, ability, dc, rest, siblingParas) {
+      // ANV-37: optional [for:all] / [for:kael,hana] marker right after the
+      // closing </strong>. Parsed and stripped here; unknown names ignored.
+      var forChips = '';
+      rest = rest.replace(/^\s*\[for:([^\]]*)\]/i, function(mm, list) {
+        var seen = {};
+        list.split(',').forEach(function(v) {
+          var k = v.trim().toLowerCase();
+          if (SCC_FG_CHECK_FOR_LABELS[k]) seen[k] = true;
+        });
+        if (seen.all) seen = { all: true };
+        Object.keys(SCC_FG_CHECK_FOR_LABELS).forEach(function(k) {
+          if (seen[k]) forChips += '<span class="scc-fg-check-for scc-fg-check-for--' + k + '">' + SCC_FG_CHECK_FOR_LABELS[k] + '</span>';
+        });
+        return '';
+      });
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
       // Pass:/Fail: auto-coloring (item 3a) -- detected here, never
       // hand-typed inline styles by whoever authors the content. Matches
@@ -18221,7 +18245,7 @@ function sccFgStyleSkillChecks(html) {
       var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
       return '<div class="scc-fg-check">'
         + titleHtml
-        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
+        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span>' + forChips + '</div>'
         + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
     }
