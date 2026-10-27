@@ -28362,8 +28362,7 @@ function sccOpenLookup(type, id) {
     var crPortraitHtml = cr.image
       ? '<img class="scc-ql-portrait" src="' + sccEsc(cr.image) + '" onerror="this.style.display=\'none\'" alt="">'
       : '<div class="scc-ql-portrait-fallback">' + sccEsc((cr.name||'?').charAt(0)) + '</div>';
-    html = (cr.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(cr.read_aloud)+'</div></div>':'')
-      + '<div class="scc-ql-header">'
+    html = '<div class="scc-ql-header">'
         + crPortraitHtml
         + '<div class="scc-ql-header-info">'
           + '<div class="scc-ql-name">' + sccEsc(cr.name) + '</div>'
@@ -28374,6 +28373,7 @@ function sccOpenLookup(type, id) {
             + '</div>' : '')
         + '</div>'
       + '</div>'
+      + (cr.read_aloud?'<div class="scc-ra-block"><div class="scc-ra-label">📖 Read Aloud</div><div class="scc-ra-text">'+sccEsc(cr.read_aloud)+'</div></div>':'')
       + '<div class="scc-stat-block">'
       + '<div class="scc-stat-block-header"><div class="scc-stat-block-name">'+sccEsc(cr.name)+'</div><div class="scc-stat-block-type">'+sccEsc((cr.size||'')+' '+(cr.creature_type||'')+(cr.creature_alignment?', '+cr.creature_alignment:''))+'</div></div>'
       + '<div class="scc-stat-block-body">'
@@ -28482,7 +28482,7 @@ function sccOpenLookup(type, id) {
       itTagsHtml = it.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
     }
 
-    html = (it.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">&#128214; Read Aloud</div><div class="scc-ra-text">' + sccEsc(it.read_aloud) + '</div></div>' : '')
+    html = ''
       // ── HEADER ──
       + '<div class="scc-ql-header">'
         + itPortraitHtml
@@ -28495,6 +28495,8 @@ function sccOpenLookup(type, id) {
           + '</div>'
         + '</div>'
       + '</div>'
+      // ── READ ALOUD ── (below name/base info, above the rest -- ANV-40)
+      + (it.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">&#128214; Read Aloud</div><div class="scc-ra-text">' + sccEsc(it.read_aloud) + '</div></div>' : '')
       // ── FIELDS ──
       + '<div class="scc-ql-fields">'
         + (it.cost_gp != null    ? '<div class="scc-ql-row"><span class="scc-ql-label">Cost</span><span class="scc-ql-value">' + it.cost_gp + ' gp</span></div>' : '')
