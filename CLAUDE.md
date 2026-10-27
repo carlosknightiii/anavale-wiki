@@ -46,6 +46,12 @@ Once a Code session removes its own worktree, that session is done — its folde
 **Check for an existing service before reaching for a new one:**
 Before creating or suggesting any new third-party account, service, or external dependency, check whether an existing one already used by this project (Supabase, GitHub, ElevenLabs) can do the job instead. Never default to a new service without checking first. If it's genuinely unclear whether an existing service covers it, say so and ask, rather than defaulting to something new.
 
+**Every Code report ends in exactly 5 lines:** (1) what changed, (2) commit hash, (3) how it was actually checked, (4) what is NOT done, (5) row ID(s) updated (`requests` and/or `active_work`).
+
+**On "merge it":** Code does all of this in one step, without further prompting — merge to `main`, push, verify merge status (`git merge-base --is-ancestor <branch> main` plus an empty `git diff --stat main...<branch>`), remove the worktree, delete the branch (local and remote, if it exists there), and update the affected `requests`/`active_work` rows.
+
+**Renaming a session:** use the `set_session_title` tool with `session_id` `"self"`.
+
 ---
 
 ## 2. Current Focus
