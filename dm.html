@@ -383,6 +383,27 @@
   padding-right: 2.25rem;
 }
 
+/* ANV-42: one shared arrow-spacing rule for EVERY single-line <select> in DM
+   Tools. Native arrows hug the right border and padding-right does not move
+   them, so the native arrow is replaced by a token-colored chevron drawn with
+   two gradients, inset from the right edge, with matching right padding.
+   Specificity (0,2,1) beats every single-class select rule (.cm-select,
+   .field-select, .scc-input, .scc-fg-status ...) without touching them;
+   padding-right is !important only because a few selects carry inline
+   padding shorthands. Background COLOR is deliberately left to each
+   select's own rule. */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--dm-text-muted) 50%),
+    linear-gradient(135deg, var(--dm-text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 0.95em) 50%, calc(100% - 0.65em) 50%;
+  background-size: 0.3em 0.3em, 0.3em 0.3em;
+  background-repeat: no-repeat;
+  padding-right: 1.6em !important;
+}
+
 /* ── TWO-COLUMN FIELD ROW ──────────────────── */
 .field-row {
   display: grid;
@@ -9100,7 +9121,19 @@ function showDMToast(msg, type) {
   border: 1px solid var(--scc-border-mid); border-radius: var(--dm-radius-sm);
   padding: 0.15rem 0.35rem; cursor: pointer; max-width: 100%;
 }
-.scc-fg-status--box { margin-left: 0.4rem; vertical-align: middle; }
+/* ANV-42: container status sits at the top RIGHT of the box (float, so header
+   text wraps around it instead of running underneath). The corner glyph is
+   position:absolute at the far right, so when one is present (it always
+   precedes the status in the DOM) the status clears it with extra right
+   margin and sits immediately to its left in the same header row. */
+.scc-fg-status--box { float: right; margin: 0 0 0.3rem 0.6rem; }
+.scc-fg-box-corner-icon ~ .scc-fg-status--box { margin-right: 2.2rem; }
+.scc-fg-box--yellow .scc-fg-box-corner-icon ~ .scc-fg-status--box { margin-right: 2.9rem; }
+/* A --full featured row is a full-width block that would push a floated
+   status below it; anchor to the box's top-right corner instead, same clearance
+   from the corner glyph (right offset = corner right 0.85rem + glyph clearance). */
+.scc-fg-featured-row--full ~ .scc-fg-status--box { position: absolute; float: none; top: 0.45rem; right: 3.05rem; margin: 0; }
+.scc-fg-box--yellow .scc-fg-featured-row--full ~ .scc-fg-status--box { right: 3.75rem; }
 .scc-fg-status:hover { border-color: var(--dm-text-muted); }
 .scc-fg-status--completed, .scc-fg-status--passed { color: var(--green); background: var(--green-dim); border-color: var(--green-border); }
 .scc-fg-status--failed { color: var(--red); background: var(--red-dim); border-color: var(--red-border); }
@@ -12322,8 +12355,7 @@ function showDMToast(msg, type) {
   .scc-npc2-name { font-size: 1.3rem; }
   .scc-ql-name { font-size: 1.15rem; }
   .scc-cb2-col-title, .scc-cb2-build-title { font-size: 1rem; }
-  /* 5) status dropdown on its own line */
-  .scc-fg-status--box { display: block; margin: 0.5rem 0 0.6rem; }
+  /* 5) status dropdown stays top-right (float) at phone width -- ANV-42 */
   /* 6) thumbnails */
   .scc-fg-featured-row { gap: 0.6rem; margin: 0 0.85rem 0.75rem 0; }
   .scc-fg-featured-item { width: 56px; }
