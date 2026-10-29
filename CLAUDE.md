@@ -495,10 +495,11 @@ Use `git reset --hard`, not chained `git revert`. Chained reverts create indeter
 **Region:** us-east-1 · Free tier — kept alive by GitHub Actions every 3 days (targets `species` table, exits 1 on non-200).
 **Supabase MCP** is connected to Claude Chat — query the DB directly without the DM pasting anything.
 
-**Tables (world):** `regions` · `nations` · `cities` · `creatures` · `organizations` · `world_characters` · `pois` · `religions` · `items` · `spells` · `species` · `quests`
-**Tables (player):** `player_characters` · `character_sheet` · `inventory` · `character_notes` · `character_photo`
-**Tables (session):** `session_notes` · `quest_progress`
+**Tables (world):** `regions` · `nations` · `cities` · `creatures` · `organizations` · `world_characters` · `pois` · `religions` · `items` · `spells` · `species` · `quests` · `classes` · `backgrounds` · `languages` · `conditions` · `world_concepts` · `location_entity_presence` · `vendor_stock` (per-vendor shop stock)
+**Tables (player):** `player_characters` · `character_sheet` · `inventory` · `character_notes` · `character_photo` · `character_attachments` (companions/attachments) · `visited_locations`
+**Tables (session):** `session_notes` · `quest_progress` · `session_note_entries` (tagged notes) · `field_guide_sessions` (Field Guide document blocks) · `field_guide_qa_checkpoints` · `field_guide_content_rules` · `session_opening_player_context` · `player_decisions` · `combat_encounters` · `battle_map_assets`
 **Tables (tracking):** `active_work` · `requests`
+**Tables (other — backups):** `field_guide_sessions_backup` · `world_characters_backup` · `quests_backup`
 **Storage:** `world-images` (public) · `character-photos` (private)
 
 **`active_work`** (`id`, `item`, `location`, `status`, `notes`, `updated_at`) — real-time in-progress/blocked/approved state. Its `status` is a DIFFERENT set from `requests.status`: `in-progress` / `ready-for-review` / `merged-not-approved` / `approved` / `done` / `abandoned` / `archived` (`in-qa` is rejected here). General session state only, never a specific tracked item's status (that's `requests`) — check it before starting any new work. Takes priority over `requests` when the two disagree, since it's updated live during a session while `requests` reflects the last time that specific row was touched.
@@ -621,6 +622,9 @@ Always use a bash heredoc when writing file contents that include backtick code 
 ## 10. Design Tokens
 
 All tokens live in `css/tokens.css` — single source of truth. No `:root` blocks anywhere else.
+
+**Colors (all code and content):**
+- No raw hex or `rgba()` values anywhere — in CSS, JS, HTML, or content. Every color references a CSS variable from `css/tokens.css`. If a needed color has no token yet, add the token to `tokens.css` first, then reference it. (Exceptions: `:root` definitions and canvas JS strings.) Mirrors the CSS rule in §9.
 
 **Fonts (two only):**
 - `--font-display: 'Cinzel Decorative', Georgia, serif` — all headings, Bold 700 only
