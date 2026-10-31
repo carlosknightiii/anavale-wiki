@@ -1211,7 +1211,7 @@ function renderGods(el) {
       : '';
 
     var cardStyle = 'background:var(--parchment-light);border-radius:var(--card-radius);border:1px solid rgba(200,148,10,0.15);border-left:3px solid ' + accent + ';overflow:hidden;display:flex;flex-direction:column;';
-    if (isGrak) cardStyle = 'background:#f0ede8;border-radius:var(--card-radius);border:1px solid rgba(100,100,110,0.2);border-left:3px solid #909090;overflow:hidden;display:flex;flex-direction:column;';
+    if (isGrak) cardStyle = 'background:var(--surface-3);border-radius:var(--card-radius);border:1px solid var(--border);border-left:3px solid var(--text-faint);overflow:hidden;display:flex;flex-direction:column;';
 
     cardsHtml += '<div style="' + cardStyle + '">'
       + imgHtml
