@@ -12870,10 +12870,25 @@ var SCC_HEADER_SCROLL_LAST = 0;
 var SCC_HEADER_SCROLL_LAST_CHECK_MS = 0;
 var SCC_HEADER_HIDE_THRESHOLD = 80;
 var SCC_HEADER_SCROLL_THROTTLE_MS = 50;
+// A programmatic in-document jump (jump rail, [[block:]] links) hides the
+// header first and pauses this listener briefly, so the header can't slide
+// back in over the heading the DM just jumped to (DM 2026-10-31).
+var SCC_HEADER_SUPPRESS_UNTIL = 0;
+function sccJumpScrollTo(targetEl, extra, behavior) {
+  var header = document.querySelector('.dm-shell-header');
+  if (header) header.classList.add('dm-shell-header--hidden');
+  if (window.DmClock) DmClock.syncHeaderOffset();
+  SCC_HEADER_SUPPRESS_UNTIL = Date.now() + 700;
+  var top = targetEl.getBoundingClientRect().top + window.scrollY;
+  var y = Math.max(0, top - sccFgStickyTopOffset() - (extra || 12));
+  window.scrollTo({ top: y, behavior: behavior || 'auto' });
+  SCC_HEADER_SCROLL_LAST = y;
+}
 function sccUpdateHeaderScrollState() {
   var header = document.querySelector('.dm-shell-header');
   if (!header) return;
   var y = window.scrollY || window.pageYOffset || 0;
+  if (Date.now() < SCC_HEADER_SUPPRESS_UNTIL) { SCC_HEADER_SCROLL_LAST = y; return; }
   var goingDown = y > SCC_HEADER_SCROLL_LAST;
   if (goingDown && y > SCC_HEADER_HIDE_THRESHOLD) {
     header.classList.add('dm-shell-header--hidden');
@@ -19457,9 +19472,7 @@ function sccFgCycleScenarioCardStatus(domId, cardIdx) {
 function sccFgBackToScenarioCards(domId) {
   var el = document.getElementById(domId);
   if (!el) return;
-  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
-  var targetTop = el.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'smooth' });
+  sccJumpScrollTo(el, 12, 'smooth');
 }
 
 // Portrait-only render, sharing sccFgResolveFeaturedEntity() with
@@ -20402,9 +20415,12 @@ function sccFgRenderBlock(b, idx, ctx) {
     html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-cat="' + sccEsc(b.category) + '"');
     var wantsOwnEntry = railDecl.scope === 'entry' || (railDecl.scope === 'container' && railDecl.hasOwnEntry);
     if (wantsOwnEntry) {
-      var railLabel = (railDecl.labelField && b[railDecl.labelField]) || railDecl.entryFallbackLabel || '';
-      if (railLabel) {
-        html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-label="' + sccEsc(railLabel) + '" data-fg-rail-tier="' + sccEsc(railDecl.tier || 'h2') + '"' + (railDecl.fullLabel ? ' data-fg-rail-full-label="1"' : ''));
+      var railLabel = b.rail_label || (railDecl.labelField && b[railDecl.labelField]) || railDecl.entryFallbackLabel || '';
+      // rail_hide / rail_label / rail_sub: per-block rail overrides
+      // (DM 2026-10-31). rail_sub shows the entry indented under the
+      // section above it.
+      if (railLabel && !b.rail_hide) {
+        html = html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, '$1 data-fg-rail-label="' + sccEsc(railLabel) + '" data-fg-rail-tier="' + sccEsc(b.rail_sub ? 'card' : (railDecl.tier || 'h2')) + '"' + (railDecl.fullLabel ? ' data-fg-rail-full-label="1"' : '') + (b.rail_label ? ' data-fg-rail-override="1"' : '') + (b.rail_sub ? ' data-fg-rail-no-click="1"' : ''));
       }
     }
   }
@@ -20685,8 +20701,11 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       // overwhelming majority of h2 blocks with no featured field at all --
       // falls straight through to the plain, unwrapped h2 exactly as before.
       var h2FeaturedHtml = sccFgRenderFeatured(b.featured);
-      if (!h2FeaturedHtml) return '<div class="scc-fg-doc-h2">' + sccEsc(h2Text) + '</div>';
-      return '<div class="scc-fg-h2-featured-wrap">' + h2FeaturedHtml + '<div class="scc-fg-doc-h2 scc-fg-doc-h2--featured">' + sccEsc(h2Text) + '</div></div>';
+      // Rail overrides (DM 2026-10-31): rail_label renames the jump-rail
+      // entry without touching the heading text; rail_hide drops it.
+      var h2RailAttr = (b.rail_hide ? ' data-fg-rail-hide="1"' : '') + (b.rail_label ? ' data-fg-rail-override="' + sccEsc(b.rail_label) + '"' : '');
+      if (!h2FeaturedHtml) return '<div class="scc-fg-doc-h2"' + h2RailAttr + '>' + sccEsc(h2Text) + '</div>';
+      return '<div class="scc-fg-h2-featured-wrap"' + h2RailAttr + '>' + h2FeaturedHtml + '<div class="scc-fg-doc-h2 scc-fg-doc-h2--featured">' + sccEsc(h2Text) + '</div></div>';
     }
     case 'italic':   return '<p class="scc-fg-doc-italic">' + sccFgLinkify(b.html) + '</p>';
     case 'p': {
@@ -21120,8 +21139,10 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
     var h2 = unwrapped.classList.contains('scc-fg-doc-h2') ? unwrapped
       : (unwrapped.classList.contains('scc-fg-h2-featured-wrap') ? unwrapped.querySelector('.scc-fg-doc-h2') : null);
     if (h2) {
-      var h2Full = h2.textContent.trim();
-      entries.push({ el: h2, full: h2Full, label: sccFgScrollIndicatorLabel(h2Full), tier: 'h2' });
+      if (unwrapped.dataset.fgRailHide) return;
+      var h2Over = unwrapped.dataset.fgRailOverride;
+      var h2Full = h2Over || h2.textContent.trim();
+      entries.push({ el: h2, full: h2Full, label: h2Over ? sccFgTruncateScrollLabel(h2Over, 30) : sccFgScrollIndicatorLabel(h2Full), tier: 'h2' });
       return;
     }
 
@@ -21141,7 +21162,8 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
           // fullLabel categories (question_panel) keep their real, specific
           // label instead of the generic 3-word/pre-dash shortening, which
           // collapses several panels to identical "If Asked, at" text.
-          label: unwrapped.dataset.fgRailFullLabel ? sccFgTruncateScrollLabel(sccFgStripAskedPrefix(unwrapped.dataset.fgRailLabel), 30) : sccFgScrollIndicatorLabel(unwrapped.dataset.fgRailLabel),
+          noClick: !!unwrapped.dataset.fgRailNoClick,
+          label: unwrapped.dataset.fgRailOverride ? sccFgTruncateScrollLabel(unwrapped.dataset.fgRailLabel, 30) : unwrapped.dataset.fgRailFullLabel ? sccFgTruncateScrollLabel(sccFgStripAskedPrefix(unwrapped.dataset.fgRailLabel), 30) : sccFgScrollIndicatorLabel(unwrapped.dataset.fgRailLabel),
           tier: unwrapped.dataset.fgRailTier || 'h2'
         });
       }
@@ -21320,14 +21342,13 @@ function sccFgScrollIndicatorJump(i) {
   // only the body/right panel beside it) -- so a genuine .click() here
   // activates it exactly as a real click would, generically, for ANY
   // container type, with no per-category function name hardcoded here.
-  if (entry.tier === 'card') entry.el.click();
+  if (entry.tier === 'card' && !entry.noClick) entry.el.click();
   var target = entry.el;
   if (!target) return;
-  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
-  var targetTop = target.getBoundingClientRect().top + window.scrollY;
-  // 'auto' (instant), not 'smooth' -- avoids a genuinely slow, sluggish-
-  // feeling animated scroll on the longer jumps in a real, long document.
-  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
+  // Land below every sticky bar (env banner, time bar), not just the env
+  // banner -- the time bar was hiding the section heading. 'auto' (instant),
+  // not 'smooth', for long jumps.
+  sccJumpScrollTo(target, 12, 'auto');
 }
 
 // Recursive search for a block carrying a given b.id, mirroring
@@ -21392,11 +21413,10 @@ function sccFgJumpToBlock(id, originEl) {
   });
   var target = document.querySelector('[data-fg-block-id="' + CSS.escape(id) + '"]');
   if (!target) return;
-  var targetTop = target.getBoundingClientRect().top + window.scrollY;
-  // Land below every sticky bar (env banner, shell header, time bar), and
-  // leave room for the Back pill above the target.
+  // Land below every sticky bar (env banner, time bar), and leave room for
+  // the Back pill above the target.
   var extra = (originEl && originEl.nodeType === 1) ? 48 : 12;
-  window.scrollTo({ top: Math.max(0, targetTop - sccFgStickyTopOffset() - extra), behavior: 'auto' });
+  sccJumpScrollTo(target, extra, 'auto');
   if (originEl && originEl.nodeType === 1) sccFgBackShow(target);
 }
 
