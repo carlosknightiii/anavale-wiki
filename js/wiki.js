@@ -1469,15 +1469,12 @@ function renderNation(id, el) {
 // Never rendered on the player wiki: extra_data.threats, dimming_resistance,
 // dm_only (stripped at load), rivalry tone.
 
-// Static art and locator placement. Locator boxes are a schematic of Caparia
-// drawn from each kingdom's at_a_glance "Land" text, not the canon map.
+// Static hero art per nation. (A map locator waits on the canon Inkarnate map.)
 var NATION_CONFIG = {
-  solenmere: { hero: 'assets/images/nations/solenmere-solenveil.webp', heroCaption: 'Solenveil, the sun ford, capital of the Solenmere', box: [120, 62, 92, 74], label: 'Solenmere' },
-  zippan:    { hero: 'assets/images/nations/zippan-goober-bounce.webp', heroCaption: 'The Goober Bounce Meadows of western Caparia', box: [16, 76, 98, 70], label: 'Zippan' },
-  dingurei:  { hero: 'assets/images/nations/dingurei-doopu-peaks.webp', heroCaption: 'The Doopu Peaks and the Brightwall, on the Dingurei frontier', box: [218, 50, 72, 78], label: 'Dingurei' },
-  janiveth:  { hero: 'assets/images/nations/janiveth-sillywiggles.webp', heroCaption: 'The Sillywiggles Meadows below the Jani Mountains', box: [86, 152, 180, 48], label: 'Janiveth' },
-  opuri:     { box: [16, 10, 98, 60], label: 'Opuri' },
-  bunari:    { box: [296, 30, 58, 116], label: 'Bunari' }
+  solenmere: { hero: 'assets/images/nations/solenmere-solenveil.webp', heroCaption: 'Solenveil, the sun ford, capital of the Solenmere' },
+  zippan:    { hero: 'assets/images/nations/zippan-goober-bounce.webp', heroCaption: 'The Goober Bounce Meadows of western Caparia' },
+  dingurei:  { hero: 'assets/images/nations/dingurei-doopu-peaks.webp', heroCaption: 'The Doopu Peaks and the Brightwall, on the Dingurei frontier' },
+  janiveth:  { hero: 'assets/images/nations/janiveth-sillywiggles.webp', heroCaption: 'The Sillywiggles Meadows below the Jani Mountains' }
 };
 
 var COLOR_HEALTH_LEVELS = [
@@ -1529,32 +1526,6 @@ function nxPull(text, nation) {
   return '<blockquote class="nx-pull"><p>' + esc(text) + '</p><cite>' + esc(nation.name) + '</cite></blockquote>';
 }
 
-// Schematic locator: Caparia's six kingdoms as tiles, this one highlighted.
-function nationLocatorSvg(nation) {
-  var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
-  var tiles = '';
-  Object.keys(NATION_CONFIG).forEach(function(k) {
-    var c = NATION_CONFIG[k];
-    if (!c.box) return;
-    var row = null;
-    for (var i = 0; i < nations.length; i++) { if (nations[i].id === k) { row = nations[i]; break; } }
-    if (!row || row.region !== nation.region) return;
-    var b = c.box, here = k === nation.id, vis = getVisibility(row) !== 'hidden';
-    tiles += '<g class="nx-loc-tile nx-k-' + k + (here ? ' is-here' : '') + (vis && !here ? ' is-link' : '') + '"'
-      + (vis && !here ? ' data-nav="nation/' + k + '" onclick="navigate(\'nation/' + k + '\')"' : '') + '>'
-      + '<rect x="' + b[0] + '" y="' + b[1] + '" width="' + b[2] + '" height="' + b[3] + '" rx="10"></rect>'
-      + '<text x="' + (b[0] + b[2] / 2) + '" y="' + (b[1] + b[3] / 2 + 4) + '" text-anchor="middle">' + esc(c.label) + '</text>'
-      + '</g>';
-  });
-  if (!tiles) return '';
-  return '<div class="nx-loc">'
-    + '<svg class="nx-loc-svg" viewBox="0 0 370 210" role="img" aria-label="Where ' + esc(nation.name) + ' lies in ' + esc(titleCase(nation.region)) + '">'
-    + '<text class="nx-loc-compass" x="352" y="200" text-anchor="end">N &#8593;</text>'
-    + tiles + '</svg>'
-    + '<div class="nx-loc-note">Kingdoms of ' + esc(titleCase(nation.region)) + ', schematic</div>'
-    + '</div>';
-}
-
 function nationInfoboxHtml(nation) {
   var x = nation.extra_data || {};
   var g = x.at_a_glance || {};
@@ -1596,8 +1567,6 @@ function nationInfoboxHtml(nation) {
     + rows.map(function(r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd>'; }).join('')
     + (colorHealthGauge(x.color_health) ? '<dt>Color health</dt><dd>' + colorHealthGauge(x.color_health, true) + '</dd>' : '')
     + '</dl>'
-    + '<div class="nx-ib-section">Location</div>'
-    + nationLocatorSvg(nation)
     + '</aside>';
 }
 
