@@ -82,8 +82,13 @@ function visibilityBadge(entry) {
 // ── VISIBILITY SYSTEM ─────────────────────────────────────────────────────────
 // Three states: 'hidden' (default), 'teaser' (name/summary only), 'visible' (full)
 
+// Supabase player_facing is a boolean, so the teaser tier is a tag:
+// player_facing true + tags containing 'wiki-teaser' = name and summary only.
+// Rule (DM, Oct 2026): hidden = never heard of; teaser = heard of it only;
+// visible = common knowledge, not quest-integral, seen/heard/visited.
 function getVisibility(entry) {
   if (!entry) return 'hidden';
+  if (entry.player_facing === true && Array.isArray(entry.tags) && entry.tags.indexOf('wiki-teaser') >= 0) return 'teaser';
   if (entry.player_facing === true)      return 'visible';
   if (entry.player_facing === 'teaser')  return 'teaser';
   return 'hidden';
@@ -496,6 +501,16 @@ function buildSearchIndex() {
     allData.push({ hash: 'poi/' + p.id, title: p.name, text: text, player_facing: p.player_facing });
   });
 
+  (typeof CONCEPTS !== 'undefined' ? CONCEPTS : []).forEach(function(c) {
+    var vis = getVisibility(c);
+    if (vis === 'hidden') return;
+    allData.push({ hash: 'lore/' + c.id, title: c.name, text: c.name + ' ' + (c.summary || '') + (vis === 'visible' ? ' ' + (c.description || '') : ''), player_facing: true });
+  });
+  (typeof SPECIES !== 'undefined' ? SPECIES : []).forEach(function(sp) {
+    if (sp.player_facing === false) return;
+    allData.push({ hash: 'species/' + sp.id, title: sp.name, text: sp.name + ' ' + (sp.phb_equivalent || '') + ' ' + (sp.description || ''), player_facing: true });
+  });
+
   // Static pages — always player-facing
   [
     { hash: 'home',        title: 'Welcome, To Anavale', text: 'welcome home introduction anavale pogglewog',                                  player_facing: true },
@@ -648,6 +663,18 @@ function buildWikiLinkMap() {
     _wikiLinkMap.push({ term: r.name, hash: 'religion/' + r.id });
   });
 
+  var concepts = typeof CONCEPTS !== 'undefined' ? CONCEPTS : [];
+  concepts.filter(function(c) { return getVisibility(c) !== 'hidden'; }).forEach(function(c) {
+    _wikiLinkMap.push({ term: c.name, hash: 'lore/' + c.id });
+    // "The Wayhouses" also links "Wayhouse"
+    if (/[^s]s$/.test(c.name) && c.name.length >= 8) _wikiLinkMap.push({ term: c.name.slice(0, -1).replace(/^the\s+/i, ''), hash: 'lore/' + c.id });
+  });
+  var species = typeof SPECIES !== 'undefined' ? SPECIES : [];
+  species.filter(function(sp) { return sp.player_facing !== false; }).forEach(function(sp) {
+    _wikiLinkMap.push({ term: sp.name, hash: 'species/' + sp.id });
+    _wikiLinkMap.push({ term: sp.name + 's', hash: 'species/' + sp.id });
+  });
+
   // Static terms
   var statics = [
     { term: 'The Gigglegloom',  hash: 'gigglegloom' },
@@ -678,7 +705,9 @@ function buildWikiLinkMap() {
     { term: 'Sohot',            hash: 'region/sohot' },
     { term: 'Jugabi',           hash: 'region/jugabi' },
     { term: 'Voidblush',        hash: 'org/prism-exchange' },
-    { term: 'Prior Stone',      hash: 'region/caparia' },
+    { term: 'Prior Stone',      hash: 'city/prismhold' },
+    { term: 'Chroma Bureau',    hash: 'city/prismhold' },
+    { term: 'Tamsk',            hash: 'character/where-does-it-end-tamsk' },
     { term: 'Pogglewog',        hash: 'home' },
     // Short names and aliases for pages that exist (audit, Oct 2026)
     { term: 'Anavale',          hash: 'home' },
@@ -1575,7 +1604,8 @@ function mzPulls(row) {
   return Array.isArray(x.pull_quotes) ? x.pull_quotes : [];
 }
 function mzTagsRow(tags) {
-  return (tags || []).length ? '<div class="entry-tags-row">' + tags.map(function(t) {
+  tags = (tags || []).filter(function(t) { return t !== 'wiki-teaser'; });
+  return tags.length ? '<div class="entry-tags-row">' + tags.map(function(t) {
     return '<span class="entry-wiki-tag entry-wiki-tag--link" onclick="navigate(\'search?q=' + esc(encodeURIComponent(t)) + '\')" title="Search for: ' + esc(t) + '">' + esc(t) + '</span>';
   }).join('') + '</div>' : '';
 }
@@ -1673,7 +1703,10 @@ function nationInfoboxHtml(nation) {
   var rows = [
     ['Region', '<span class="wiki-link" data-nav="region/' + esc(nation.region) + '" onclick="navigate(\'region/' + esc(nation.region) + '\')">' + esc(titleCase(nation.region)) + '</span>'],
     ['Capital', g.Capital ? esc(/^none\b/i.test(g.Capital) ? g.Capital.replace(/\.$/, '') : nxFirstSentence(g.Capital)) : (nation.capital_city ? esc(nation.capital_city) : '')],
-    ['Government', esc(nation.government || '')],
+    ['Government', (function() {
+      var gov = nation.government || '', body = x.government_body ? String(x.government_body).split(/\s+[—–-]\s+/)[0] : '';
+      return esc(gov) + (body && body.toLowerCase() !== gov.toLowerCase() ? '<small>' + esc(body) + '</small>' : '');
+    })()],
     ['Leader', leader],
     ['Peoples', g.Peoples ? inl(g.Peoples) : ''],
     ['Faith', faith],
@@ -2058,6 +2091,7 @@ function renderCreature(id, el) {
     epithet: creature.habitat || ''
   };
   if (vis === 'teaser') {
+    base.epithet = '';
     var desc = creature.description || '';
     var dot = desc.search(/[.!?]/);
     base.lede = '<p>' + esc(dot >= 0 ? desc.slice(0, dot + 1) : desc) + '</p>';
@@ -2223,6 +2257,76 @@ function renderItem(id, el) {
     ]
   };
   renderMagazine(el, base);
+}
+
+// Lore pages: world_concepts rows (traditions, events, ideas) at #lore/<id>.
+var CONCEPTS = typeof CONCEPTS !== 'undefined' ? CONCEPTS : [];
+function renderLore(id, el) {
+  var c = mzFind(typeof CONCEPTS !== 'undefined' ? CONCEPTS : [], id);
+  if (!c) { renderNotFound(el, 'lore/' + id); return; }
+  var vis = getVisibility(c);
+  if (vis === 'hidden') { renderNotFound(el, 'lore/' + id); return; }
+  var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
+  var nation = c.nation ? mzFind(nations, c.nation) : null;
+  var nationVisible = nation && getVisibility(nation) !== 'hidden';
+  var crumbs = [];
+  if (c.region) crumbs.push({ label: titleCase(c.region), hash: 'region/' + c.region });
+  if (nationVisible) crumbs.push({ label: nation.name, hash: 'nation/' + nation.id });
+  crumbs.push({ label: c.name, hash: 'lore/' + id });
+  var base = {
+    crumbs: crumbs,
+    accent: c.nation ? mzPlaceAccent(c.nation, c.region) : (MZ_REGION_ACCENT[c.region] || 'mz-accent-gold'),
+    hero: { img: c.image },
+    eyebrow: (c.category || 'Lore') + (c.region ? ' · ' + titleCase(c.region) : ''),
+    title: c.name,
+    epithet: nation ? 'From the lore of ' + nation.name : ''
+  };
+  if (vis === 'teaser') {
+    base.lede = mzText(c.summary);
+    base.after = teaserFooter('story');
+    renderMagazine(el, base);
+    return;
+  }
+  var split = mzSplit(c.description || c.summary || '');
+  base.lede = split.lede;
+  base.sections = [['More', split.rest]];
+  base.infobox = {
+    name: c.name, sub: c.category || 'Lore',
+    rows: [
+      ['Kind', esc(c.category || '')],
+      ['Nation', nation ? (nationVisible ? mzLink('nation/' + nation.id, nation.name) : esc(nation.name)) : ''],
+      ['Region', c.region ? mzLink('region/' + c.region, titleCase(c.region)) : '']
+    ]
+  };
+  renderMagazine(el, base);
+}
+
+// Species pages: the twelve peoples of Anavale at #species/<id>.
+var SPECIES = typeof SPECIES !== 'undefined' ? SPECIES : [];
+function renderSpeciesPage(id, el) {
+  var sp = mzFind(typeof SPECIES !== 'undefined' ? SPECIES : [], id);
+  if (!sp || sp.player_facing === false) { renderNotFound(el, 'species/' + id); return; }
+  var split = mzSplit(sp.description || '');
+  renderMagazine(el, {
+    crumbs: [{ label: 'Peoples', hash: 'species/' + id }, { label: sp.name, hash: 'species/' + id }],
+    accent: mzGgAccent(sp.affinity),
+    hero: {},
+    eyebrow: 'People of Anavale',
+    title: sp.name,
+    epithet: sp.phb_equivalent ? 'Known elsewhere as ' + String(sp.phb_equivalent).toLowerCase() : '',
+    lede: split.lede,
+    sections: [['More', split.rest]],
+    infobox: {
+      name: sp.name, sub: sp.phb_equivalent || '',
+      rows: [
+        ['Also called', esc(sp.phb_equivalent || '')],
+        ['Homeland', sp.region ? mzLink('region/' + sp.region, titleCase(sp.region)) : ''],
+        ['Gigglegloom', esc(titleCase(sp.affinity || ''))],
+        ['Size', esc(titleCase(sp.size || ''))],
+        ['Speed', sp.speed_ft ? esc(String(sp.speed_ft)) + ' ft' : '']
+      ]
+    }
+  });
 }
 
 // Pull quote at index i from a row's extra_data.pull_quotes, if authored.

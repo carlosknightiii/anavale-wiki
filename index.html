@@ -85,7 +85,9 @@
     { table: 'pois',          key: 'pois' },
     { table: 'religions',     key: 'religions' },
     { table: 'items',         key: 'items' },
-    { table: 'quests',        key: 'quests' }
+    { table: 'quests',        key: 'quests' },
+    { table: 'world_concepts', key: 'concepts' },
+    { table: 'species',       key: 'species' }
   ];
 
   function sbFetch(table) {
@@ -120,7 +122,9 @@
         characters:    'CHARACTERS',
         pois:          'POIS',
         religions:     'RELIGIONS',
-        items:         'ITEMS'
+        items:         'ITEMS',
+        concepts:      'CONCEPTS',
+        species:       'SPECIES'
       };
       results.forEach(function(r) {
         if (Array.isArray(r.rows) && r.rows.length > 0) {

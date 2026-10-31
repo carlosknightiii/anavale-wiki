@@ -61,6 +61,8 @@ function handleRoute() {
   else if (type === 'poi'     && id) renderPOI(id, el);
   else if (type === 'character'&& id) renderCharacter(id, el);
   else if (type === 'religion'&& id) renderReligion(id, el);
+  else if (type === 'lore'    && id) renderLore(id, el);
+  else if (type === 'species' && id) renderSpeciesPage(id, el);
   else                               renderNotFound(el, hash);
 
   window.scrollTo(0, 0);
