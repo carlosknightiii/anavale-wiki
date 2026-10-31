@@ -147,50 +147,67 @@ function toggleAccordion(btn) {
     try { sessionStorage.setItem('acc-' + key, isOpen ? '0' : '1'); } catch(e) {}
   }
 
-  if (isOpen) {
-    body.classList.remove('open');
-    btn.classList.remove('open');
-  } else {
-    body.classList.add('open');
-    btn.classList.add('open');
-  }
+  body.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.setAttribute('aria-expanded', String(!isOpen));
 }
 
 function getAccState(key) {
   try { return sessionStorage.getItem('acc-' + key); } catch(e) { return null; }
 }
 
-function makeAccordion(key, label, childrenHtml, defaultOpen) {
+// Line icons for the sidebar sections (stroke uses currentColor)
+var NAV_ICONS = {
+  intro:     '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',
+  world:     '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  regions:   '<path d="M3 20l6-11 4 7 3-4 5 8z"/><circle cx="17" cy="6" r="2"/>',
+  creatures: '<circle cx="6" cy="10" r="2"/><circle cx="10" cy="5.5" r="2"/><circle cx="14" cy="5.5" r="2"/><circle cx="18" cy="10" r="2"/><path d="M12 11c-3 0-5.5 3.5-5.5 6 0 2 1.5 3 3 3 1 0 1.6-.6 2.5-.6s1.5.6 2.5.6c1.5 0 3-1 3-3 0-2.5-2.5-6-5.5-6z"/>',
+  society:   '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2c2.9-.4 5.5 1.8 5.5 5.8"/>',
+  faiths:    '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
+};
+function navIcon(key) {
+  return '<span class="nav-sec-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + (NAV_ICONS[key] || '') + '</svg></span>';
+}
+var NAV_CHEVRON = '<svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
+function makeAccordion(key, label, childrenHtml, defaultOpen, count) {
   var stored = getAccState(key);
   var open   = stored !== null ? stored === '1' : !!defaultOpen;
   var openCls = open ? ' open' : '';
-  return '<button class="nav-accordion-header' + openCls + '" data-key="' + esc(key) + '" onclick="toggleAccordion(this)">'
-    + '<span>' + esc(label) + '</span>'
-    + '<span class="nav-accordion-arrow">▶</span>'
+  return '<button class="nav-accordion-header' + openCls + '" data-key="' + esc(key) + '" aria-expanded="' + open + '" onclick="toggleAccordion(this)">'
+    + NAV_CHEVRON
+    + '<span class="nav-acc-label">' + label + '</span>'
+    + (count ? '<span class="nav-count">' + count + '</span>' : '')
     + '</button>'
-    + '<div class="nav-accordion-body' + openCls + '">'
+    + '<div class="nav-accordion-body' + openCls + '"><div class="nav-acc-inner">'
     + childrenHtml
-    + '</div>';
+    + '</div></div>';
 }
 
-// Like makeAccordion but styled as a top-level section title (larger, less indented)
-function makeSectionAccordion(key, label, childrenHtml, defaultOpen) {
+// Top-level section: icon tile, title, chevron
+function makeSectionAccordion(key, icon, label, childrenHtml, defaultOpen) {
   var stored = getAccState(key);
   var open   = stored !== null ? stored === '1' : !!defaultOpen;
-  var openCls = open ? ' open' : '';
-  return '<button class="nav-section-accordion-header' + openCls + '" data-key="' + esc(key) + '" onclick="toggleAccordion(this)">'
-    + '<span>' + label + '</span>'
-    + '<span class="nav-accordion-arrow">▶</span>'
+  var openCls = (open ? ' open' : '') + (defaultOpen ? ' has-active' : '');
+  return '<button class="nav-section-accordion-header' + openCls + '" data-key="' + esc(key) + '" aria-expanded="' + open + '" onclick="toggleAccordion(this)">'
+    + navIcon(icon)
+    + '<span class="nav-sec-label">' + esc(label) + '</span>'
+    + NAV_CHEVRON
     + '</button>'
-    + '<div class="nav-accordion-body' + openCls + '">'
+    + '<div class="nav-accordion-body nav-sec-body' + (open ? ' open' : '') + '"><div class="nav-acc-inner">'
     + childrenHtml
-    + '</div>';
+    + '</div></div>';
 }
 
-function navLink(label, hash, activeHash) {
+// Teaser entries get a small "rumoured" marker instead of an emoji
+function navLabel(name, vis) {
+  return (vis === 'teaser' ? '<span class="nav-rumour" title="Only rumours so far" aria-label="Only rumours so far"></span>' : '') + esc(name);
+}
+
+function navLink(label, hash, activeHash, isHtml) {
   var isActive = (hash === activeHash) ? ' active' : '';
   return '<button class="nav-link' + isActive + '" data-hash="' + esc(hash) + '" onclick="navigate(\'' + esc(hash) + '\')">'
-    + esc(label) + '</button>';
+    + (isHtml ? label : esc(label)) + '</button>';
 }
 
 function buildSidebar() {
@@ -211,14 +228,14 @@ function buildSidebar() {
   // ── Introduction ──────────────────────────────────
   var introActive = (currentHash === 'home');
   html += '<div class="nav-section">'
-    + makeSectionAccordion('intro', '✦ Introduction',
-        navLink('Welcome, To  Anavale', 'home', currentHash), introActive)
+    + makeSectionAccordion('intro', 'intro', 'Introduction',
+        navLink('Welcome to Anavale', 'home', currentHash), introActive)
     + '</div>';
 
   // ── The World ──────────────────────────────────────
   var worldActive = ['gigglegloom','spells','color','gods','calendar','weather'].indexOf(currentHash) >= 0;
   html += '<div class="nav-section">'
-    + makeSectionAccordion('world', '◯ The World',
+    + makeSectionAccordion('world', 'world', 'The World',
         navLink('The Gigglegloom', 'gigglegloom', currentHash)
         + navLink('Spellbook', 'spells', currentHash)
         + navLink('Color & The Dimming', 'color', currentHash)
@@ -255,9 +272,7 @@ function buildSidebar() {
 
     rNations.forEach(function(n) {
       var nVis   = getVisibility(n);
-      var nLabel = nVis === 'teaser'
-        ? '<span class="nav-teaser-mark">✨</span>' + esc(n.name)
-        : esc(n.name);
+      var nLabel = navLabel(n.name, nVis);
 
       var nCities = cities.filter(function(c) {
         return c.nation === n.id && getVisibility(c) !== 'hidden';
@@ -267,9 +282,9 @@ function buildSidebar() {
         var cityLinks = '';
         nCities.forEach(function(c) {
           var cVis   = getVisibility(c);
-          var cLabel = cVis === 'teaser' ? '✨ ' + c.name : c.name;
+          var cLabel = navLabel(c.name, cVis);
           cityLinks += '<div class="nav-level-4">'
-            + navLink(cLabel, 'city/' + c.id, currentHash)
+            + navLink(cLabel, 'city/' + c.id, currentHash, true)
             + '</div>';
         });
         innerHtml += '<div class="nav-level-3">'
@@ -278,19 +293,19 @@ function buildSidebar() {
           + '</div>';
       } else {
         innerHtml += '<div class="nav-level-3">'
-          + navLink(nLabel, 'nation/' + n.id, currentHash)
+          + navLink(nLabel, 'nation/' + n.id, currentHash, true)
           + '</div>';
       }
     });
 
     innerHtml += '</div>';
-    regionAccordions += makeAccordion('region-' + rId, rLabel, innerHtml);
+    regionAccordions += makeAccordion('region-' + rId, esc(rLabel), innerHtml);
   });
 
   if (regionAccordions) {
     var regActive = currentHash.indexOf('region/') === 0 || currentHash.indexOf('nation/') === 0 || currentHash.indexOf('city/') === 0;
     html += '<div class="nav-section">'
-      + makeSectionAccordion('regions-section', '⛰ Regions', regionAccordions, regActive)
+      + makeSectionAccordion('regions-section', 'regions', 'Regions', regionAccordions, regActive)
       + '</div>';
   }
 
@@ -316,17 +331,17 @@ function buildSidebar() {
     hasCreatures = true;
     var links = grpCreatures.map(function(c) {
       var cVis   = getVisibility(c);
-      var cLabel = cVis === 'teaser' ? '✨ ' + c.name : c.name;
-      return '<div class="nav-level-3">' + navLink(cLabel, 'creature/' + c.id, currentHash) + '</div>';
+      var cLabel = navLabel(c.name, cVis);
+      return '<div class="nav-level-3">' + navLink(cLabel, 'creature/' + c.id, currentHash, true) + '</div>';
     }).join('');
     creatureInner += '<div class="nav-level-2">'
-      + makeAccordion('tier-' + grp.key, grp.label, links)
+      + makeAccordion('tier-' + grp.key, esc(grp.label), links, false, grpCreatures.length)
       + '</div>';
   });
   if (hasCreatures) {
     var creatActive = currentHash.indexOf('creature/') === 0;
     html += '<div class="nav-section">'
-      + makeSectionAccordion('creatures-section', '𓃠 Creatures', creatureInner, creatActive)
+      + makeSectionAccordion('creatures-section', 'creatures', 'Creatures', creatureInner, creatActive)
       + '</div>';
   }
 
@@ -347,11 +362,11 @@ function buildSidebar() {
     if (!catOrgs.length) return;
     var links = catOrgs.map(function(o) {
       var oVis   = getVisibility(o);
-      var oLabel = oVis === 'teaser' ? '✨ ' + o.name : o.name;
-      return '<div class="nav-level-3">' + navLink(oLabel, 'org/' + o.id, currentHash) + '</div>';
+      var oLabel = navLabel(o.name, oVis);
+      return '<div class="nav-level-3">' + navLink(oLabel, 'org/' + o.id, currentHash, true) + '</div>';
     }).join('');
     orgInner += '<div class="nav-level-2">'
-      + makeAccordion('org-' + cat.key, cat.label, links)
+      + makeAccordion('org-' + cat.key, esc(cat.label), links, false, catOrgs.length)
       + '</div>';
   });
   if (orgInner) {
@@ -364,10 +379,10 @@ function buildSidebar() {
   if (visItems.length) {
     var itemLinks = visItems.map(function(it) {
       var itVis   = getVisibility(it);
-      var itLabel = itVis === 'teaser' ? '✨ ' + it.name : it.name;
-      return '<div class="nav-level-2">' + navLink(itLabel, 'item/' + it.id, currentHash) + '</div>';
+      var itLabel = navLabel(it.name, itVis);
+      return '<div class="nav-level-2">' + navLink(itLabel, 'item/' + it.id, currentHash, true) + '</div>';
     }).join('');
-    societyContent += makeAccordion('items', 'Notable Items', itemLinks);
+    societyContent += makeAccordion('items', 'Notable Items', itemLinks, false, visItems.length);
   }
 
   // Characters — filtered by visibility, sorted by name
@@ -377,10 +392,10 @@ function buildSidebar() {
   if (visChars.length) {
     var charLinks = visChars.map(function(c) {
       var cVis   = getVisibility(c);
-      var cLabel = cVis === 'teaser' ? '✨ ' + c.name : c.name;
-      return '<div class="nav-level-2">' + navLink(cLabel, 'character/' + c.id, currentHash) + '</div>';
+      var cLabel = navLabel(c.name, cVis);
+      return '<div class="nav-level-2">' + navLink(cLabel, 'character/' + c.id, currentHash, true) + '</div>';
     }).join('');
-    societyContent += makeAccordion('characters', 'Characters', charLinks);
+    societyContent += makeAccordion('characters', 'Characters', charLinks, false, visChars.length);
   }
 
   // POIs — filtered by visibility
@@ -389,19 +404,19 @@ function buildSidebar() {
   if (visPois.length) {
     var poiLinks = visPois.map(function(p) {
       var pVis   = getVisibility(p);
-      var pLabel = pVis === 'teaser' ? '✨ ' + p.name : p.name;
-      return '<div class="nav-level-2">' + navLink(pLabel, 'poi/' + p.id, currentHash) + '</div>';
+      var pLabel = navLabel(p.name, pVis);
+      return '<div class="nav-level-2">' + navLink(pLabel, 'poi/' + p.id, currentHash, true) + '</div>';
     }).join('');
-    societyContent += makeAccordion('pois', 'Points of Interest', poiLinks);
+    societyContent += makeAccordion('pois', 'Points of Interest', poiLinks, false, visPois.length);
   }
 
   // Rumors — direct link (no extra accordion wrapper needed)
   societyContent += navLink('Rumours & Hearsay', 'rumors', currentHash);
 
-  var societyActive = currentHash.indexOf('org/') === 0 || currentHash.indexOf('item/') === 0
+  var societyActive = currentHash.indexOf('org/') === 0 || currentHash.indexOf('item/') === 0 || currentHash.indexOf('character/') === 0
     || currentHash.indexOf('poi/') === 0 || currentHash === 'rumors';
   html += '<div class="nav-section">'
-    + makeSectionAccordion('society-section', '⚑ Society', societyContent, societyActive)
+    + makeSectionAccordion('society-section', 'society', 'Society', societyContent, societyActive)
     + '</div>';
 
   // ── Faiths (religions, visibility-filtered) ──────────────────────
@@ -412,12 +427,12 @@ function buildSidebar() {
     var faithContent = '';
     visReligions.forEach(function(r) {
       var rVis   = getVisibility(r);
-      var rLabel = rVis === 'teaser' ? '✨ ' + r.name : r.name;
-      faithContent += navLink(rLabel, 'religion/' + r.id, currentHash);
+      var rLabel = navLabel(r.name, rVis);
+      faithContent += navLink(rLabel, 'religion/' + r.id, currentHash, true);
     });
     var faithActive = currentHash.indexOf('religion/') === 0;
     html += '<div class="nav-section">'
-      + makeSectionAccordion('faiths-section', '✦ Faiths', faithContent, faithActive)
+      + makeSectionAccordion('faiths-section', 'faiths', 'Faiths', faithContent, faithActive)
       + '</div>';
   }
 

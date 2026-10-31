@@ -87,17 +87,30 @@ function updateSidebarActive(hash) {
 
   // Auto-open parent accordion if nested item is active
   var activeLink = document.querySelector('[data-hash="' + hash + '"]');
+
+  // Highlight only the section that holds the current page
+  document.querySelectorAll('.nav-section-accordion-header.has-active').forEach(function(el) { el.classList.remove('has-active'); });
+  var sec = activeLink && activeLink.closest ? activeLink.closest('.nav-section') : null;
+  var secHdr = sec ? sec.querySelector('.nav-section-accordion-header') : null;
+  if (secHdr) secHdr.classList.add('has-active');
   if (activeLink) {
     var parent = activeLink.parentElement;
     while (parent) {
       if (parent.classList.contains('nav-accordion-body')) {
         parent.classList.add('open');
         var hdr = parent.previousElementSibling;
-        if (hdr && hdr.classList.contains('nav-accordion-header')) {
+        if (hdr && (hdr.classList.contains('nav-accordion-header') || hdr.classList.contains('nav-section-accordion-header'))) {
           hdr.classList.add('open');
+          hdr.setAttribute('aria-expanded', 'true');
         }
       }
       parent = parent.parentElement;
+    }
+    // Keep the current page visible in the sidebar
+    var sb = document.getElementById('wiki-sidebar');
+    if (sb && activeLink.closest && activeLink.closest('#wiki-sidebar')) {
+      var r = activeLink.getBoundingClientRect(), sr = sb.getBoundingClientRect();
+      if (r.top < sr.top + 80 || r.bottom > sr.bottom - 40) sb.scrollTop += r.top - sr.top - sr.height / 3;
     }
   }
 }
