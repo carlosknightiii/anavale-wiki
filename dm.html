@@ -9377,6 +9377,17 @@ function showDMToast(msg, type) {
 .scc-fg-check-for .scc-fg-featured-img, .scc-fg-check-for .scc-fg-featured-fallback { width: 44px; height: 44px; }
 .scc-fg-check-for .scc-fg-featured-name { font-size: 0.72rem; }
 .scc-fg-check-icon { font-size: 1.15rem; line-height: 1; }
+/* collapsed:true boxes -- header-only until tapped. */
+.scc-fg-box--collapsible { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+.scc-fg-box-collapse-head { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
+.scc-fg-box-collapse-head:focus-visible { outline: 2px solid var(--dm-gold); outline-offset: 2px; border-radius: var(--dm-radius-sm); }
+.scc-fg-box-collapse-chev { color: var(--dm-text-muted); font-size: 0.9rem; transition: transform 0.15s; flex: none; }
+.scc-fg-box--open .scc-fg-box-collapse-chev { transform: rotate(90deg); }
+.scc-fg-box-collapse-main { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem 0.6rem; }
+.scc-fg-box-collapse-main .scc-fg-box-cat-badge, .scc-fg-box-collapse-main .scc-fg-box-label { margin-bottom: 0; }
+.scc-fg-box-collapse-hint { flex: none; font: italic 400 0.75rem var(--font-sans); color: var(--dm-text-muted); }
+.scc-fg-box-collapse-body { display: none; margin-top: 0.6rem; }
+.scc-fg-box--open .scc-fg-box-collapse-body { display: block; }
 /* S3 audit note 40c: [npc:Name] marker -- the DM rolls for this NPC. Red so it
    never reads as one of the player portrait chips. */
 .scc-fg-check-npc {
@@ -20268,6 +20279,26 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       var headerHtml = featuredHtml + catBadge + sccFgBoxCompletionToggleHtml(b) + labelHeaderHtml;
       var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
       var completedCls = sccFgBoxStatusCls(b);
+      // S3 audit note collapsed:true -- a header-only row (badge, label,
+      // chevron, "tap to open" hint) for content that rarely comes up. The
+      // body renders hidden; open/closed is per view, never persisted.
+      if (b.collapsed) {
+        var colKey = sccFgHash('collapse|' + (b.id || '') + '|' + (b.category || '') + '|' + (b.label || '') + '|' + (b.html || ''));
+        var colOpen = !!SCC_FG_BOX_OPEN[colKey];
+        return '<div class="scc-fg-box scc-fg-box--' + colorClass + ' ' + sccFgTextClass(b.category) + completedCls + ' scc-fg-box--collapsible' + (colOpen ? ' scc-fg-box--open' : '') + '" data-collapse-key="' + sccEsc(colKey) + '">'
+          + '<div class="scc-fg-box-collapse-head" role="button" tabindex="0" aria-expanded="' + colOpen + '" onclick="sccFgToggleBoxCollapse(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();sccFgToggleBoxCollapse(this);}">'
+            + '<span class="scc-fg-box-collapse-chev" aria-hidden="true">&#9656;</span>'
+            + '<span class="scc-fg-box-collapse-main">' + catBadge + (b.label ? '<span class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</span>' : '') + '</span>'
+            + '<span class="scc-fg-box-collapse-hint">' + (colOpen ? 'tap to close' : 'tap to open') + '</span>'
+          + '</div>'
+          + '<div class="scc-fg-box-collapse-body">'
+            + featuredHtml + sccFgBoxCompletionToggleHtml(b)
+            + sccFgLinkify(b.html || '') + combatBtnHtml
+            + (b.table ? sccFgRenderTableBlock(b.table) : '')
+            + sccFgRenderQuickAttach(b.quick_attach)
+          + '</div>'
+        + '</div>';
+      }
       // sccFgTextClass(b.category) -- see its own comment. Applied here
       // unconditionally alongside colorClass, so every box's body-text
       // font-size/color is a direct function of its real category, not the
@@ -20282,6 +20313,19 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       + '</div>';
     default: return '';
   }
+}
+
+var SCC_FG_BOX_OPEN = {}; // collapse key -> open (per view, not persisted)
+function sccFgToggleBoxCollapse(head) {
+  var box = head.closest('.scc-fg-box--collapsible');
+  if (!box) return;
+  var key = box.getAttribute('data-collapse-key');
+  var open = !box.classList.contains('scc-fg-box--open');
+  SCC_FG_BOX_OPEN[key] = open;
+  box.classList.toggle('scc-fg-box--open', open);
+  head.setAttribute('aria-expanded', open);
+  var hint = head.querySelector('.scc-fg-box-collapse-hint');
+  if (hint) hint.textContent = open ? 'tap to close' : 'tap to open';
 }
 
 // Quest-tied h1 (block.quest_id, item 10, 2026-08-26) -- badge + a real,
