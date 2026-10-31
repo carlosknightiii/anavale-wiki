@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anavale DM Tools</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/tokens.css?v=20261031a">
 <link rel="stylesheet" href="css/wiki.css">
-<link rel="stylesheet" href="css/calendar.css?v=20261031c">
+<link rel="stylesheet" href="css/calendar.css?v=20261031d">
 <style>
 /* ══════════════════════════════════════════════
    ANAVALE DM TOOLS — dm.html
@@ -4212,7 +4212,7 @@ if (dmIsLocalHost(location.hostname)) {
 <script src="js/hp-calc.js"></script>
 <script src="js/anavale-calendar.js"></script>
 <script src="js/nation-extra.js"></script>
-<script src="js/dm-calendar.js?v=20261031a"></script>
+<script src="js/dm-calendar.js?v=20261031b"></script>
 <script>
 // ── SUPABASE LIVE SYNC — DM Tools ────────────────────────────────
 // Fetches live world data from Supabase after static files load.
@@ -8940,7 +8940,7 @@ function showDMToast(msg, type) {
 /* .scc-fg-box--yellow: Comedy Beats. Genuinely bright/saturated yellow, distinct
    from --gold (below, Loot & Shop) so the two don't read as the same hue. */
 .scc-fg-box--yellow { background: rgba(250,204,21,0.09); border-left: 3px solid rgba(250,204,21,0.45); }
-.scc-fg-box--yellow .scc-fg-box-label { color: #facc15; }
+.scc-fg-box--yellow .scc-fg-box-label { color: var(--dm-text); }
 /* .scc-fg-box--gold: Loot & Shop. Was .scc-fg-box--orange (terracotta) — moved
    onto the app's real --gold token per direct DM instruction, distinct from
    Comedy's brighter yellow above. */
@@ -9084,7 +9084,7 @@ function showDMToast(msg, type) {
 .scc-fg-box--magenta .scc-fg-box-cat-badge { background: var(--dm-only-dim); border: 1px solid var(--dm-only-border); color: var(--dm-only); }
 .scc-fg-box--red .scc-fg-box-cat-badge { background: rgba(214,43,43,0.2); border: 1px solid var(--red-border-strong); color: var(--fg-dont-blow-this); }
 .scc-fg-box--green .scc-fg-box-cat-badge { background: rgba(134,239,172,0.15); border: 1px solid rgba(134,239,172,0.4); color: var(--scc-read-aloud-text); }
-.scc-fg-box--yellow .scc-fg-box-cat-badge { background: rgba(250,204,21,0.18); border: 1px solid rgba(250,204,21,0.5); color: #facc15; }
+.scc-fg-box--yellow .scc-fg-box-cat-badge { background: rgba(250,204,21,0.18); border: 1px solid rgba(250,204,21,0.5); color: var(--dm-text); }
 /* Spoken Dialogue's own chip -- blue never had a badge variant before,
    since it was the one category exempted from the standard chip (see
    SCC_FG_CATEGORY_STYLE.spoken_dialogue). Reuses the exact same --blue
@@ -9195,7 +9195,7 @@ function showDMToast(msg, type) {
 .scc-fg-featured-fallback {
   display: flex; align-items: center; justify-content: center;
   background: var(--dm-surface-high);
-  font-family: var(--font-headers); font-size: 2rem; color: var(--dm-gold);
+  font-family: var(--font-headers); font-size: 2rem; color: var(--dm-text-muted);
 }
 /* Item 6, round 6, 2026-08-28: zoom featured portraits ~50% so faces are
    more visible, less empty background/body. .scc-fg-featured-img-wrap
@@ -9348,7 +9348,7 @@ function showDMToast(msg, type) {
    catch a DM's eye scanning the page without matching a full box's visual
    weight. Real, reusable schema option (category on any type:p block), not
    a one-off fix for a single sentence. */
-.scc-fg-doc-inner p.scc-fg-staging-cue { font-weight: 600; color: var(--dm-gold); }
+.scc-fg-doc-inner p.scc-fg-staging-cue { font-weight: 600; color: var(--dm-text); }
 .scc-fg-staging-cue-icon { margin-right: 0.35rem; opacity: 0.85; }
 /* ── Skill checks (sccFgStyleSkillChecks()) — a real container instead of
    plain paragraph text, so "roll for this" reads as its own distinct thing
@@ -9424,7 +9424,7 @@ function showDMToast(msg, type) {
 .scc-fg-gg-kind { font: 700 0.68rem var(--font-sans); text-transform: uppercase; letter-spacing: 0.06em; padding: 0.12rem 0.5rem; border-radius: 999px; }
 .scc-fg-gg-kind--buff { color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); }
 .scc-fg-gg-kind--debuff { color: var(--red); background: var(--red-dim); border: 1px solid var(--red-border); }
-.scc-fg-gg-kind--mixed { color: var(--dm-gold); background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); }
+.scc-fg-gg-kind--mixed { color: var(--dm-text); background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); }
 .scc-fg-gg-effect-name { font: 700 1rem var(--font-sans); color: var(--dm-text); }
 .scc-fg-gg-duration { font: 600 0.82rem var(--font-sans); color: var(--dm-text-muted); margin-left: auto; }
 .scc-fg-gg-effect-summary { font: 400 0.98rem/1.5 var(--font-sans); color: var(--dm-text); margin-top: 0.3rem; }
@@ -9579,8 +9579,8 @@ function showDMToast(msg, type) {
   color: var(--red); font: 700 0.78rem var(--font-sans); white-space: nowrap;
 }
 .scc-fg-check-name {
-  font-family: var(--font-sans); font-size: 1.08rem; font-weight: 600;
-  color: var(--dm-gold); text-transform: none; letter-spacing: normal;
+  font-family: var(--font-sans); font-size: 1.08rem; font-weight: 700;
+  color: var(--dm-text); text-transform: none; letter-spacing: normal;
 }
 .scc-fg-check-body {
   /* S3 audit note 6: check text read at the table, so it is larger. */
@@ -9626,7 +9626,7 @@ function showDMToast(msg, type) {
 }
 .scc-fg-link-thumb-fallback {
   background: var(--dm-surface-high); text-align: center; line-height: 16px;
-  font-family: var(--font-headers); font-size: 0.6rem; color: var(--dm-gold);
+  font-family: var(--font-headers); font-size: 0.6rem; color: var(--dm-text-muted);
 }
 /* ── Session-opening section — always the first thing in the document when
    present; hidden entirely when the session has no opening data yet. */
@@ -9890,7 +9890,7 @@ function showDMToast(msg, type) {
 /* Plain text label, no pill border or fill: it marks a decision point but is
    not itself clickable (DM 2026-10-31). */
 .scc-fg-decision-header .scc-fg-box-cat-badge {
-  background: none; border: 0; padding: 0; color: var(--dm-gold);
+  background: none; border: 0; padding: 0; color: var(--dm-text-muted);
   font-size: 0.68rem; flex-shrink: 0; margin-bottom: 0;
 }
 .scc-fg-decision-header-label { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); flex: 1; min-width: 0; }
@@ -9951,7 +9951,7 @@ function showDMToast(msg, type) {
 }
 .scc-fg-loot-widget-label {
   font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.06em; color: var(--dm-gold);
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--dm-text-muted);
   margin-bottom: 0.45rem;
 }
 .scc-fg-loot-row {
@@ -9983,7 +9983,7 @@ function showDMToast(msg, type) {
    entry with no catalog match (or a currency entry, which has no catalog
    row at all) renders as plain text, same "no click that does nothing"
    rule Scene Cast's own 'pc' entries follow. */
-.scc-fg-loot-row-companion { display: block; font: 600 0.78rem var(--font-sans); color: var(--dm-gold); }
+.scc-fg-loot-row-companion { display: block; font: 600 0.78rem var(--font-sans); color: var(--dm-text-muted); }
 .scc-fg-loot-row-remaining { font-family: var(--font-body); font-size: 0.7rem; color: var(--dm-text-muted); }
 .scc-fg-loot-row-controls { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
 .scc-fg-loot-pc-select { max-width: 140px; }
@@ -10190,7 +10190,7 @@ function showDMToast(msg, type) {
 .scc-fg-qp-group-label {
   display: flex; align-items: center; gap: 0.35rem;
   font-family: var(--font-sans); font-size: 0.66rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.05em; color: var(--dm-gold);
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--dm-text-muted);
   margin: 0.5rem 0 0.1rem;
 }
 .scc-fg-qp-group:first-child .scc-fg-qp-group-label,
@@ -10221,7 +10221,7 @@ function showDMToast(msg, type) {
 .scc-fg-qp-check--on { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
 .scc-fg-qp-right { flex: 1; min-width: 0; padding: 0.85rem 1.1rem 1rem; }
 .scc-fg-qp-right-title {
-  font-family: var(--font-display); color: var(--dm-gold); font-size: 1.05rem;
+  font-family: var(--font-display); color: var(--dm-text); font-size: 1.05rem;
   margin: 0 0 0.65rem; padding-bottom: 0.55rem; border-bottom: 1px solid var(--scc-border);
 }
 .scc-fg-qp-right .scc-fg-box:last-child, .scc-fg-qp-right p:last-child { margin-bottom: 0; }
@@ -10246,7 +10246,7 @@ function showDMToast(msg, type) {
 .scc-fg-qp-locknote { font-size: 0.85rem; color: var(--dm-text-muted); background: var(--dm-surface); border: 1px dashed var(--scc-border-mid); border-radius: var(--dm-radius-sm); padding: 0.45rem 0.7rem; margin-bottom: 0.65rem; }
 /* question_ref: questions shown inline right after their clue. */
 .scc-fg-qref { background: var(--dm-surface-high); border: 1px solid var(--scc-border); border-left: 3px solid var(--dm-gold); border-radius: var(--dm-radius-sm); margin: 0.6rem 0; }
-.scc-fg-qref-head { display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.8rem; font: 700 0.8rem var(--font-sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm-gold); border-bottom: 1px solid var(--scc-border); }
+.scc-fg-qref-head { display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.8rem; font: 700 0.8rem var(--font-sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm-text-muted); border-bottom: 1px solid var(--scc-border); }
 .scc-fg-qref-list { display: flex; flex-direction: column; }
 .scc-fg-qref-item + .scc-fg-qref-item { border-top: 1px solid var(--scc-border); }
 .scc-fg-qref-q { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.55rem 0.8rem; background: none; border: none; cursor: pointer; text-align: left; color: var(--dm-text); font: 600 0.92rem var(--font-sans); }

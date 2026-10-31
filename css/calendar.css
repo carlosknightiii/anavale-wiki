@@ -48,7 +48,7 @@
   background: var(--cal-strip); border-bottom: 1px solid var(--cal-border);
 }
 .tb-info-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; font-size: 15px; }
-.tb-period { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--gold); }
+.tb-period { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--cal-text); }
 .tb-clock { font-weight: 700; }
 .tb-temp { color: var(--cal-text-2); }
 .tb-add { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-wrap: wrap; }
@@ -121,6 +121,12 @@
 .sct-chip--long { font-size: 14px; }
 .sct-text--inline { font-size: 13px; color: var(--cal-text-3); }
 .sct-edit-row { display: flex; flex-wrap: wrap; gap: 0 18px; align-items: center; }
+.sct-edit-wrap { margin: 0.5rem 0; }
+.sct-edit-wrap > summary { cursor: pointer; font-size: 12px; color: var(--cal-text-3); list-style: none; display: inline-flex; align-items: center; gap: 6px; }
+.sct-edit-wrap > summary::-webkit-details-marker { display: none; }
+.sct-edit-wrap > summary::before { content: "\25B8"; font-size: 10px; transition: transform 0.15s; }
+.sct-edit-wrap[open] > summary::before { transform: rotate(90deg); }
+.sct-edit-wrap > summary:hover { color: var(--cal-text); }
 .sct-edit--wide { flex: 1 1 260px; }
 .sct-edit--wide input { width: auto; flex: 1; min-width: 160px; }
 
