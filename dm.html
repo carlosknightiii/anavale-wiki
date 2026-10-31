@@ -9847,6 +9847,7 @@ function showDMToast(msg, type) {
    entry with no catalog match (or a currency entry, which has no catalog
    row at all) renders as plain text, same "no click that does nothing"
    rule Scene Cast's own 'pc' entries follow. */
+.scc-fg-loot-row-companion { display: block; font: 600 0.78rem var(--font-sans); color: var(--dm-gold); }
 .scc-fg-loot-row-remaining { font-family: var(--font-body); font-size: 0.7rem; color: var(--dm-text-muted); }
 .scc-fg-loot-row-controls { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
 .scc-fg-loot-pc-select { max-width: 140px; }
@@ -20235,13 +20236,15 @@ function sccFgRenderLootTableWidget(b, idx, ctx) {
         + thumb.thumbHtml
         + '<div class="scc-fg-loot-row-text">'
           + nameHtml
+          + (it.companion ? '<span class="scc-fg-loot-row-companion">&#128062; Becomes a companion: ' + sccEsc(it.companion.name || it.companion.id)
+              + ((it.with_items || []).length ? ' &middot; adds ' + sccEsc(it.with_items.map(function(w) { return (w.item_name || w.item_id) + ((w.quantity || 1) > 1 ? ' \u00d7' + w.quantity : ''); }).join(', ')) + ' to inventory' : '') + '</span>' : '')
           + '<span class="scc-fg-loot-row-remaining">' + it.quantity + ' remaining</span>'
         + '</div>'
       + '</div>'
       + (auditLocked ? '' : (players.length
         ? '<div class="scc-fg-loot-row-controls">'
           + '<select class="scc-input scc-fg-loot-pc-select" id="' + domId + '-pc-' + itemIdx + '">' + playerOptions + '</select>'
-          + '<input type="number" class="scc-fg-loot-qty-input" id="' + domId + '-qty-' + itemIdx + '" min="1" max="' + it.quantity + '" value="' + it.quantity + '">'
+          + '<input type="number" class="scc-fg-loot-qty-input" id="' + domId + '-qty-' + itemIdx + '" min="1" max="' + (it.companion ? 1 : it.quantity) + '" value="' + (it.companion ? 1 : it.quantity) + '"' + (it.companion ? ' readonly' : '') + '>'
           + '<button class="scc-gold-btn-sm" onclick="sccFgLootAssign(' + idx + ',\'' + escQ(ctxKey) + '\',' + itemIdx + ')">Assign</button>'
         + '</div>'
         : '<span class="scc-fg-loot-no-players">No players</span>'))
@@ -20291,17 +20294,46 @@ function sccFgLootAssign(idx, ctxKey, itemIdx) {
       if (r.ok) sheet.gold_cp = newTotal;
       return r;
     });
+  } else if (item.companion) {
+    // S3 audit note 61: a companion entry (e.g. the cart horse and cart).
+    // The companion becomes a character_attachments row (same shape the
+    // sidebar's +Add and quick-attach write); the with_items go to inventory.
+    // with_items is the single list of items to add, so a cart listed both
+    // as the entry's item_id and in with_items is added once, not twice.
+    if (qty !== 1) { showDMToast('A companion can only go to one player', 'error'); return; }
+    var comp = item.companion;
+    var invItems = Array.isArray(item.with_items) && item.with_items.length
+      ? item.with_items
+      : (comp.type === 'item' ? [] : [{ item_id: item.item_id, quantity: 1 }]);
+    var creature = (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === comp.id; });
+    var attachBody = {
+      character_id: player.id, session_number: num, active: true,
+      name: comp.name || (creature ? creature.name : comp.id),
+      attachment_type: comp.type === 'character' ? 'character' : 'creature',
+      entity_id: comp.id, mode: comp.mode === 'situational' ? 'situational' : 'permanent',
+      description: creature ? creature.description : null
+    };
+    var invPosts = invItems.filter(function(w) { return w && w.item_id; }).map(function(w) {
+      return sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: w.item_id, quantity: w.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true });
+    });
+    grant = Promise.all(invPosts.concat([sccPost('character_attachments', attachBody)])).then(function(rs) {
+      var bad = rs.filter(function(r) { return !r.ok; }).length;
+      if (!bad && typeof sccFgRefreshAttachmentsCache === 'function') sccFgRefreshAttachmentsCache();
+      return { ok: !bad };
+    });
   } else {
     grant = sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true });
   }
   grant.then(function(r) {
-    if (!r.ok) { showDMToast('Failed to ' + (item.currency ? 'add gold' : 'add to inventory'), 'error'); return null; }
+    if (!r.ok) { showDMToast('Failed to ' + (item.currency ? 'add gold' : (item.companion ? 'add the companion' : 'add to inventory')), 'error'); return null; }
     item.quantity = item.quantity - qty;
     return sccPatch('field_guide_sessions', '?session_number=eq.' + encodeURIComponent(num), { blocks: row.blocks });
   }).then(function(r2) {
     if (!r2) return;
     if (!r2.ok) { showDMToast((item.currency ? 'Gold granted' : 'Item granted') + ', but could not save the updated remaining count', 'error'); return; }
-    var toastLabel = item.currency ? sccFgLootEntryLabel({ currency: item.currency, quantity: qty }) : (item.item_name || item.item_id) + ' \u00d7' + qty;
+    var toastLabel = item.currency ? sccFgLootEntryLabel({ currency: item.currency, quantity: qty })
+      : item.companion ? (item.item_name || item.companion.name) + ' (companion)'
+      : (item.item_name || item.item_id) + ' \u00d7' + qty;
     showDMToast(toastLabel + ' \u2192 ' + player.name + ' \u2713', 'success');
     sccFgRerenderLootWidget(idx, ctx);
     sccFgRefreshAllQuestionPanels();
