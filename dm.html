@@ -3912,6 +3912,11 @@ if (dmIsLocalHost(location.hostname)) {
           <div class="scc-fg-scroll-trigger" id="scc-fg-scroll-trigger"></div>
           <div class="scc-fg-scroll-indicator" id="scc-fg-scroll-indicator"></div>
           <div class="scc-fg-scroll-backdrop" id="scc-fg-scroll-backdrop"></div>
+          <!-- S3 audit note 9: tiny edge buttons. Left opens the Live Session
+               tools drawer, right shows the jump rail. Each stays open until
+               clicked again (the hover reveal still works too). -->
+          <button type="button" class="scc-tip scc-tip--right scc-fg-edge-btn scc-fg-edge-btn--left" id="scc-fg-edge-tools" data-tip="Live Session tools" aria-label="Live Session tools" aria-pressed="false" onclick="sccFgEdgeTools()">&#129520;</button>
+          <button type="button" class="scc-tip scc-tip--left scc-fg-edge-btn scc-fg-edge-btn--right" id="scc-fg-edge-rail" data-tip="Jump to a section" aria-label="Jump to a section" aria-pressed="false" onclick="sccFgEdgeRail()">&#9776;</button>
           <!-- rendered guide doc, now the only column -->
           <!-- "Jump to a scenario..." dropdown removed (item 3, round 7,
                2026-08-28) -- its data source (session_notes.session_scenarios)
@@ -8814,7 +8819,7 @@ function showDMToast(msg, type) {
 .scc-fg-doc-subtitle { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--dm-text); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-tagline { font-family: var(--font-body); font-size: 0.95rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-meta { font-family: var(--font-body); font-size: 0.8rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 1.25rem; }
-.scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
+.scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
 /* ── Quest-tied h1 (block.quest_id set) -- item 10, 2026-08-26. A real
    badge + subtitle on the heading itself, plus a continuous gold accent
    band down every block in that quest's section (h1 through its last
@@ -8829,7 +8834,7 @@ function showDMToast(msg, type) {
   border-radius: 999px; padding: 0.15rem 0.6rem; margin-bottom: 0.4rem;
 }
 .scc-fg-h1-quest-badge:hover { background: rgba(240,180,41,0.22); }
-.scc-fg-h1-quest-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--dm-text); letter-spacing: 0.02em; }
+.scc-fg-h1-quest-title { font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; color: var(--dm-text); letter-spacing: 0.02em; }
 .scc-fg-h1-quest-subtitle { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 400; color: var(--dm-text-muted); margin-top: 0.25rem; }
 .scc-fg-quest-section-block { border-left: 3px solid var(--dm-gold); padding-left: 0.85rem; }
 /* Was #7eb8f0 (blue) -- a pre-existing, category-system-unrelated hardcoded
@@ -8840,7 +8845,8 @@ function showDMToast(msg, type) {
    category-bleed bug, just two unrelated things that happened to clash.
    Plain text color instead, matching h1's own approach (size/weight/border
    already carry the hierarchy, the color doesn't need to). */
-.scc-fg-doc-h2 { font-family: var(--font-body); font-size: 1.25rem; font-weight: 700; color: var(--dm-text); margin: 2.1rem 0 0.4rem; }
+/* S3 audit note 18: h2 enlarged so section headings stand out in the long guide. */
+.scc-fg-doc-h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--dm-text); margin: 2.3rem 0 0.5rem; letter-spacing: 0.01em; }
 /* A featured h2 (Off-Script Scenarios' table headers, e.g. "At the Forres
    Brothers Inn") -- the wrapper carries the h2's own top/bottom spacing so
    it reads identically to a plain h2 from the outside; the h2 itself
@@ -9367,7 +9373,7 @@ function showDMToast(msg, type) {
 /* ANV-22: the context title is the prominent element (larger, bolder,
    full-strength text color); the skill/DC line below it is secondary. */
 .scc-fg-check-title {
-  font-family: var(--font-headers); font-size: 1.25rem; font-weight: 700;
+  font-family: var(--font-headers); font-size: 1.4rem; font-weight: 700;
   line-height: 1.25; color: var(--dm-text);
   margin-bottom: 0.3rem;
 }
@@ -9385,16 +9391,207 @@ function showDMToast(msg, type) {
 .scc-fg-check-for .scc-fg-featured-item { width: 56px; gap: 0.2rem; }
 .scc-fg-check-for .scc-fg-featured-img, .scc-fg-check-for .scc-fg-featured-fallback { width: 44px; height: 44px; }
 .scc-fg-check-for .scc-fg-featured-name { font-size: 0.72rem; }
-.scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
+.scc-fg-check-icon { font-size: 1.15rem; line-height: 1; }
+/* Shared hover tooltip for small controls: class="scc-tip" data-tip="...".
+   Shows below by default; .scc-tip--left/--right anchor it to an edge. */
+.scc-tip { position: relative; }
+.scc-tip[data-tip]::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; max-width: 260px; padding: 0.35rem 0.6rem; border-radius: var(--dm-radius-sm);
+  background: var(--surface-0); border: 1px solid var(--dm-gold); color: var(--dm-text);
+  font: 400 0.72rem/1.3 var(--font-sans); text-transform: none; letter-spacing: normal;
+  opacity: 0; pointer-events: none; transition: opacity 0.12s; z-index: 400;
+}
+.scc-tip[data-tip]:hover::after, .scc-tip[data-tip]:focus-visible::after { opacity: 1; }
+.scc-tip--up[data-tip]::after { top: auto; bottom: calc(100% + 6px); }
+.scc-tip--right[data-tip]::after { top: 50%; left: calc(100% + 8px); transform: translateY(-50%); }
+.scc-tip--left[data-tip]::after { top: 50%; left: auto; right: calc(100% + 8px); transform: translateY(-50%); }
+/* Gigglegloom effect box (S3 audit note 21). One color per type, a masked
+   type icon, and a faint looping type animation behind the content. */
+.scc-fg-gg { --gg-c: var(--bubbleseed-bright); --gg-deep: var(--bubbleseed); position: relative; overflow: hidden; padding: 0; border: 1px solid color-mix(in srgb, var(--gg-c) 45%, transparent); border-left: 4px solid var(--gg-c); background: color-mix(in srgb, var(--gg-deep) 18%, var(--dm-surface)); }
+.scc-fg-gg--featherflow { --gg-c: var(--featherflow-bright); --gg-deep: var(--featherflow); }
+.scc-fg-gg--steelfist { --gg-c: var(--steelfist-bright); --gg-deep: var(--steelfist); }
+.scc-fg-gg--flamerage { --gg-c: var(--flamerage-bright); --gg-deep: var(--flamerage); }
+.scc-fg-gg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.16; pointer-events: none; mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { .scc-fg-gg-video { display: none; } }
+.scc-fg-gg-inner { position: relative; padding: 0.85rem 1rem; }
+.scc-fg-gg-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem; }
+.scc-fg-gg-icon { width: 26px; height: 26px; flex: none; background: var(--gg-c); -webkit-mask: var(--gg-icon) center / contain no-repeat; mask: var(--gg-icon) center / contain no-repeat; }
+.scc-fg-gg-chip { font: 700 0.65rem var(--font-sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--gg-c); padding: 0.15rem 0.55rem; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--gg-c) 55%, transparent); background: color-mix(in srgb, var(--gg-c) 14%, transparent); }
+.scc-fg-gg-label { font: 700 1.05rem var(--font-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--gg-c); margin-bottom: 0.5rem; }
+.scc-fg-gg-effect { border-radius: var(--dm-radius-sm); background: color-mix(in srgb, var(--surface-0) 55%, transparent); border: 1px solid color-mix(in srgb, var(--gg-c) 35%, transparent); padding: 0.55rem 0.75rem; margin-bottom: 0.6rem; }
+.scc-fg-gg-effect-top { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.6rem; }
+.scc-fg-gg-kind { font: 700 0.68rem var(--font-sans); text-transform: uppercase; letter-spacing: 0.06em; padding: 0.12rem 0.5rem; border-radius: 999px; }
+.scc-fg-gg-kind--buff { color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); }
+.scc-fg-gg-kind--debuff { color: var(--red); background: var(--red-dim); border: 1px solid var(--red-border); }
+.scc-fg-gg-kind--mixed { color: var(--dm-gold); background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); }
+.scc-fg-gg-effect-name { font: 700 1rem var(--font-sans); color: var(--dm-text); }
+.scc-fg-gg-duration { font: 600 0.82rem var(--font-sans); color: var(--dm-text-muted); margin-left: auto; }
+.scc-fg-gg-effect-summary { font: 400 0.98rem/1.5 var(--font-sans); color: var(--dm-text); margin-top: 0.3rem; }
+.scc-fg-gg-body { clear: both; color: var(--dm-text); font-size: 1rem; line-height: 1.6; }
+.scc-fg-box.scc-fg-gg .scc-fg-gg-body p { margin: 0 0 0.5rem !important; font-size: 1rem !important; line-height: 1.6; color: var(--dm-text); }
+.scc-fg-box.scc-fg-gg .scc-fg-gg-body p:last-child { margin-bottom: 0 !important; }
+.scc-fg-gg-apply { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.7rem; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed color-mix(in srgb, var(--gg-c) 40%, transparent); }
+.scc-fg-gg-apply-label { font: 400 0.85rem var(--font-sans); color: var(--dm-text-muted); }
+.scc-fg-gg-apply-label strong { color: var(--gg-c); }
+.scc-fg-gg-apply-btns { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+.scc-fg-gg-apply-btn { font: 600 0.82rem var(--font-sans); padding: 0.3rem 0.8rem; border-radius: 999px; cursor: pointer; color: var(--dm-text); background: var(--dm-surface-high); border: 1px solid var(--scc-border-mid); }
+.scc-fg-gg-apply-btn:hover:not([disabled]) { border-color: var(--gg-c); color: var(--gg-c); }
+.scc-fg-gg-apply-btn--on { background: var(--gg-c); border-color: var(--gg-c); color: var(--surface-0); }
+.scc-fg-gg-apply-btn--on:hover:not([disabled]) { color: var(--surface-0); filter: brightness(1.1); }
+.scc-fg-gg-apply-btn--all { font-weight: 700; }
+.scc-fg-gg-apply-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Item 12 (option C, 2026-10-31): side menu + page ──────────────────
+   The tiles become a sticky menu on the left (a horizontal sticky strip
+   when the module is narrow, e.g. phones or nested modules); the chosen
+   card reads as its own page on the right, tied to its menu button by a
+   shared accent color, a breadcrumb and a title. */
+.scc-fg-sc-acc-0 { --sc-acc: var(--bubbleseed-bright); }
+.scc-fg-sc-acc-1 { --sc-acc: var(--featherflow-bright); }
+.scc-fg-sc-acc-2 { --sc-acc: var(--flamerage-bright); }
+.scc-fg-sc-acc-3 { --sc-acc: var(--steelfist-bright); }
+.scc-fg-sc-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: start; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards-row {
+  display: flex; flex-direction: column; gap: 4px; padding: 0.7rem 0.6rem;
+  position: sticky; top: calc(var(--dm-env-banner-h, 0px) + var(--dm-header-visible-h, 0px) + var(--scc-fg-tb-h, 0px) + 8px);
+  max-height: calc(100vh - var(--dm-env-banner-h, 0px) - var(--dm-header-visible-h, 0px) - var(--scc-fg-tb-h, 0px) - 24px);
+  overflow-y: auto; z-index: 5;
+  background: var(--dm-surface); border-right: 1px solid var(--scc-border); border-radius: 0 0 0 8px;
+}
+.scc-fg-sc-menu-head { font: 700 0.66rem var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dm-text-muted); padding: 0.2rem 0.4rem 0.4rem; }
+.scc-fg-scenario-cards .scc-fg-sc-tile {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0.55rem; border-radius: 8px; background: transparent; border: none;
+  box-shadow: inset 0 0 0 1px transparent; color: var(--dm-text-muted);
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+.scc-fg-scenario-cards .scc-fg-sc-tile:hover { background: var(--dm-surface-high); }
+.scc-fg-scenario-cards .scc-fg-sc-tile:focus-visible { outline: 2px solid var(--sc-acc); outline-offset: 1px; }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active {
+  background: var(--dm-surface-high); box-shadow: inset 4px 0 0 var(--sc-acc);
+}
+.scc-fg-sc-tile-thumb { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+.scc-fg-scenario-cards .scc-fg-sc-tile-portrait, .scc-fg-scenario-cards .scc-fg-sc-tile-fallback {
+  width: 34px; height: 34px; border-radius: 8px; border: 2px solid transparent; object-fit: cover;
+}
+.scc-fg-scenario-cards .scc-fg-sc-tile-fallback { font-size: 0.95rem; color: var(--sc-acc); background: color-mix(in srgb, var(--sc-acc) 16%, var(--dm-surface)); }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-portrait,
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-fallback { border-color: var(--sc-acc); }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-fallback { background: var(--sc-acc); color: var(--surface-0); }
+.scc-fg-sc-tile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.scc-fg-sc-tile-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
+.scc-fg-sc-tile-meta:empty { display: none; }
+.scc-fg-scenario-cards .scc-fg-sc-tile-title { font: 600 0.86rem/1.25 var(--font-sans); color: inherit; }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-title { color: var(--dm-text); font-weight: 700; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards-body {
+  margin: 0; border: none; border-radius: 0 0 8px 0; background: transparent;
+  padding: 0.9rem 1.1rem 1rem; border-top: 3px solid var(--sc-acc); min-width: 0;
+}
+.scc-fg-sc-page-head { margin-bottom: 0.8rem; }
+.scc-fg-sc-crumb { font: 400 0.75rem var(--font-sans); color: var(--dm-text-muted); margin-bottom: 0.15rem; }
+.scc-fg-sc-page-title { font: 700 1.25rem/1.25 var(--font-display); color: var(--sc-acc); }
+/* Nested modules sit inside a page: tighter frame, smaller title. */
+.scc-fg-scenario-cards .scc-fg-scenario-cards { padding: 10px; background: var(--dm-surface); box-shadow: inset 0 0 0 1px var(--scc-border-mid); }
+.scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-header { font-size: 0.85rem; padding: 0.4rem 0.65rem; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-page-title { font-size: 1.05rem; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-layout { grid-template-columns: 210px minmax(0, 1fr); }
+/* Narrow module (phone, or a nested module in a narrow page): the menu
+   becomes a sticky horizontal strip above the page. */
+@container (max-width: 620px) {
+  .scc-fg-sc-layout, .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-layout { grid-template-columns: minmax(0, 1fr); }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards-row {
+    flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none;
+    border-right: none; border-bottom: 1px solid var(--scc-border); border-radius: 0; padding: 0.45rem;
+  }
+  .scc-fg-sc-menu-head { display: none; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile { flex: none; max-width: 260px; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile-title { flex: 0 1 auto; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile-thumb, .scc-fg-scenario-cards .scc-fg-sc-tile-portrait, .scc-fg-scenario-cards .scc-fg-sc-tile-fallback { width: 30px; height: 30px; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile--active { box-shadow: inset 0 -3px 0 var(--sc-acc); }
+  .scc-fg-scenario-cards .scc-fg-sc-tile-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards-body { padding: 0.75rem 0.7rem; }
+}
+/* Nested modules use the compact strip unless they have real room. */
+@container (max-width: 900px) {
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-layout { grid-template-columns: minmax(0, 1fr); }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row {
+    flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none;
+    border-right: none; border-bottom: 1px solid var(--scc-border); border-radius: 0; padding: 0.45rem;
+  }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-menu-head { display: none; }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-tile { flex: none; max-width: 280px; }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-tile--active { box-shadow: inset 0 -3px 0 var(--sc-acc); }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-tile-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* A strip inside a strip would stick on top of it: only one level sticks. */
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row { position: static; }
+}
+/* Two stacked sticky strips would cover each other on a phone: only the
+   outermost strip sticks there. */
+@media (max-width: 720px) {
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row { position: static; }
+}
+/* S3 audit note 9: tiny edge buttons on the Field Guide. */
+.scc-fg-edge-btn {
+  position: fixed; top: 68%; z-index: 455; width: 26px; height: 44px; padding: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  font-size: 0.95rem; line-height: 1; color: var(--dm-gold);
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-gold);
+  box-shadow: var(--shadow-md); opacity: 0.75; transition: opacity 0.15s, background 0.15s;
+}
+.scc-fg-edge-btn:hover, .scc-fg-edge-btn:focus-visible { opacity: 1; }
+.scc-fg-edge-btn--left { left: 0; border-left: none; border-radius: 0 10px 10px 0; }
+.scc-fg-edge-btn--right { right: 0; border-right: none; border-radius: 10px 0 0 10px; transition: opacity 0.15s, background 0.15s, right 0.28s ease; }
+.scc-fg-edge-btn--right.scc-fg-edge-btn--on { right: var(--scc-fg-rail-w, 0px); }
+.scc-fg-edge-btn--on { opacity: 1; background: var(--dm-gold); color: var(--surface-0); }
+.scc-fg-edge-btn.scc-tip[data-tip]::after { z-index: 460; }
+@media (min-width: 769px) and (hover: hover) {
+  .scc-live-sidebar.scc-live-sidebar--pinned .scc-live-sidebar-drawer { transform: translate(0, -50%); transition-delay: 0s; }
+  .scc-fg-scroll-indicator.scc-fg-scroll-indicator--pinned { transform: translate(0, -50%); transition-delay: 0s; }
+  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--pinned { opacity: 1; transition-delay: 0s; }
+}
+@media (max-width: 768px) {
+  .scc-fg-edge-btn { width: 22px; height: 40px; top: 60%; z-index: 495; }
+  /* The phone rail keeps a 26px dot column on the right edge: sit beside it. */
+  .scc-fg-edge-btn--right { right: 28px; border-right: 1px solid var(--scc-border-gold); border-radius: 10px; }
+  .scc-fg-edge-btn--right.scc-fg-edge-btn--on { right: calc(var(--scc-fg-rail-w, 0px) + 2px); }
+}
+/* collapsed:true boxes -- header-only until tapped. */
+.scc-fg-box--collapsible { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+.scc-fg-box-collapse-head { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
+.scc-fg-box-collapse-head:focus-visible { outline: 2px solid var(--dm-gold); outline-offset: 2px; border-radius: var(--dm-radius-sm); }
+.scc-fg-box-collapse-chev { color: var(--dm-text-muted); font-size: 0.9rem; transition: transform 0.15s; flex: none; }
+.scc-fg-box--open .scc-fg-box-collapse-chev { transform: rotate(90deg); }
+.scc-fg-box-collapse-main { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem 0.6rem; }
+.scc-fg-box-collapse-main .scc-fg-box-cat-badge, .scc-fg-box-collapse-main .scc-fg-box-label { margin-bottom: 0; }
+.scc-fg-box-collapse-hint { flex: none; font: italic 400 0.75rem var(--font-sans); color: var(--dm-text-muted); }
+.scc-fg-box-collapse-body { display: none; margin-top: 0.6rem; }
+.scc-fg-box--open .scc-fg-box-collapse-body { display: block; }
+/* S3 audit note 40c: [npc:Name] marker -- the DM rolls for this NPC. Red so it
+   never reads as one of the player portrait chips. */
+.scc-fg-check-npc {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.6rem;
+  border-radius: 999px; background: var(--red-dim); border: 1px solid var(--red-border);
+  color: var(--red); font: 700 0.78rem var(--font-sans); white-space: nowrap;
+}
 .scc-fg-check-name {
-  font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
+  font-family: var(--font-sans); font-size: 1.08rem; font-weight: 600;
   color: var(--dm-gold); text-transform: none; letter-spacing: normal;
 }
 .scc-fg-check-body {
-  font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5;
+  /* S3 audit note 6: check text read at the table, so it is larger. */
+  font-family: var(--font-sans); font-size: 1.1rem; line-height: 1.6;
   color: var(--dm-text); margin-top: 0.35rem;
 }
-.scc-fg-check-body p { margin: 0 0 0.4rem; color: inherit !important; }
+.scc-fg-check-body p { margin: 0 0 0.45rem; color: inherit !important; font-size: inherit; line-height: inherit; }
+/* S3 audit note 32: "Back to ..." pill shown where an in-document jump lands. */
+.scc-fg-back-pill {
+  position: absolute; z-index: 60; display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.35rem 0.85rem; border-radius: 999px; cursor: pointer;
+  background: var(--dm-surface-high); color: var(--dm-gold); border: 1px solid var(--dm-gold);
+  font: 600 0.85rem var(--font-sans); box-shadow: var(--nx-hero-shadow);
+}
+.scc-fg-back-pill:hover { background: var(--dm-gold); color: var(--surface-0); }
 .scc-fg-check-body p:last-child { margin-bottom: 0; }
 /* Pass:/Fail: auto-coloring (item 3a, 2026-08-27) -- detected and wrapped
    by sccFgStyleSkillChecks() itself, never hand-typed inline styles.
@@ -9780,6 +9977,7 @@ function showDMToast(msg, type) {
    entry with no catalog match (or a currency entry, which has no catalog
    row at all) renders as plain text, same "no click that does nothing"
    rule Scene Cast's own 'pc' entries follow. */
+.scc-fg-loot-row-companion { display: block; font: 600 0.78rem var(--font-sans); color: var(--dm-gold); }
 .scc-fg-loot-row-remaining { font-family: var(--font-body); font-size: 0.7rem; color: var(--dm-text-muted); }
 .scc-fg-loot-row-controls { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
 .scc-fg-loot-pc-select { max-width: 140px; }
@@ -9817,7 +10015,9 @@ function showDMToast(msg, type) {
   border-radius: 8px;
   padding: 22px;
   box-shadow: inset 0 0 0 3px rgba(240,180,41,0.35);
-  overflow: hidden; margin: 0.5rem 0 0.75rem;
+  /* Item 12: visible, not hidden -- hidden would stop the sticky menu. */
+  overflow: visible; margin: 0.5rem 0 0.75rem;
+  container-type: inline-size;
 }
 .scc-fg-scenario-cards-header {
   padding: 0.55rem 0.85rem; background: var(--dm-surface-high);
@@ -10020,6 +10220,37 @@ function showDMToast(msg, type) {
 }
 .scc-fg-qp-right .scc-fg-box:last-child, .scc-fg-qp-right p:last-child { margin-bottom: 0; }
 .scc-fg-qp-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
+/* S3 audit note 7: question search box in the panel header. */
+.scc-fg-qp-search { margin-left: auto; position: relative; display: inline-flex; align-items: center; flex: 0 1 300px; min-width: 150px; }
+.scc-fg-qp-search-input {
+  width: 100%; height: 32px; box-sizing: border-box; padding: 0 30px 0 10px; border-radius: 16px;
+  border: 1px solid var(--scc-border-mid); background: var(--dm-surface-high); color: var(--dm-text);
+  font: 400 0.85rem var(--font-sans);
+}
+.scc-fg-qp-search-input:focus { outline: none; border-color: var(--scc-border-gold); }
+.scc-fg-qp-search-input::-webkit-search-cancel-button { display: none; }
+.scc-fg-qp-search-clear { position: absolute; right: 6px; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent; color: var(--dm-text-muted); cursor: pointer; font-size: 1rem; line-height: 1; }
+.scc-fg-qp-search-clear:hover { color: var(--dm-gold); }
+.scc-fg-qp-nomatch { font-size: 0.8rem; font-style: italic; color: var(--dm-text-muted); padding: 0.4rem 0.2rem; }
+.scc-fg-qp-groupwrap { display: flex; flex-direction: column; }
+/* S3 audit note 11: clue-gated (locked) questions. */
+.scc-fg-qp-btn--locked { opacity: 0.55; border-style: dashed; }
+.scc-fg-qp-btn--locked.scc-fg-qp-btn--active { opacity: 0.9; }
+.scc-fg-qp-btn-lock { display: block; font-size: 0.68rem; color: var(--dm-text-muted); margin-top: 0.15rem; }
+.scc-fg-qp-locknote { font-size: 0.85rem; color: var(--dm-text-muted); background: var(--dm-surface); border: 1px dashed var(--scc-border-mid); border-radius: var(--dm-radius-sm); padding: 0.45rem 0.7rem; margin-bottom: 0.65rem; }
+/* question_ref: questions shown inline right after their clue. */
+.scc-fg-qref { background: var(--dm-surface-high); border: 1px solid var(--scc-border); border-left: 3px solid var(--dm-gold); border-radius: var(--dm-radius-sm); margin: 0.6rem 0; }
+.scc-fg-qref-head { display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.8rem; font: 700 0.8rem var(--font-sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm-gold); border-bottom: 1px solid var(--scc-border); }
+.scc-fg-qref-list { display: flex; flex-direction: column; }
+.scc-fg-qref-item + .scc-fg-qref-item { border-top: 1px solid var(--scc-border); }
+.scc-fg-qref-q { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.55rem 0.8rem; background: none; border: none; cursor: pointer; text-align: left; color: var(--dm-text); font: 600 0.92rem var(--font-sans); }
+.scc-fg-qref-q:hover { background: var(--dm-surface); }
+.scc-fg-qref-qlabel { flex: 1; min-width: 0; }
+.scc-fg-qref-chev { color: var(--dm-text-muted); transition: transform 0.15s; }
+.scc-fg-qref-item--open .scc-fg-qref-chev { transform: rotate(180deg); }
+.scc-fg-qref-item--done .scc-fg-qref-qlabel { color: var(--dm-text-muted); text-decoration: line-through; }
+.scc-fg-qref-item--locked .scc-fg-qref-q { opacity: 0.6; }
+.scc-fg-qref-a { padding: 0.2rem 0.9rem 0.8rem; }
 /* ── Scene Cast panel module (box.category === 'scene_cast', 2026-09-18) --
    a compact "who matters right now" reference for a section with several
    NPCs active at once, so juggling them mid-scene doesn't mean flipping
@@ -12368,8 +12599,8 @@ function showDMToast(msg, type) {
   .dm-form-title { font-size: var(--text-xl); }
   .scc-fg-doc-title { font-size: 1.4rem; }
   .scc-fg-doc-subtitle { font-size: 1rem; }
-  .scc-fg-doc-h1, .scc-fg-h1-quest-title { font-size: 1.2rem; }
-  .scc-fg-doc-h2 { font-size: 1.05rem; }
+  .scc-fg-doc-h1, .scc-fg-h1-quest-title { font-size: 1.45rem; }
+  .scc-fg-doc-h2 { font-size: 1.3rem; }
   .scc-npc2-name { font-size: 1.3rem; }
   .scc-ql-name { font-size: 1.15rem; }
   .scc-cb2-col-title, .scc-cb2-build-title { font-size: 1rem; }
@@ -17381,6 +17612,44 @@ function sccLiveToggleSidebar(force) {
   if (tab) tab.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (label) label.textContent = open ? 'Close' : 'Open';
 }
+// ── S3 audit note 9: edge buttons (Field Guide) ──
+function sccFgIsHoverDesktop() {
+  return window.matchMedia && window.matchMedia('(min-width: 769px) and (hover: hover)').matches;
+}
+function sccFgEdgeTools() {
+  var btn = document.getElementById('scc-fg-edge-tools');
+  var on;
+  if (window.innerWidth <= 768) {
+    sccLiveToggleMobileTools();
+    var panel = document.getElementById('scc-panel-live');
+    on = !!(panel && panel.classList.contains('scc-live-tools-open'));
+  } else if (sccFgIsHoverDesktop()) {
+    var sb = document.getElementById('scc-live-sidebar');
+    on = !!(sb && sb.classList.toggle('scc-live-sidebar--pinned'));
+  } else {
+    sccLiveToggleSidebar();
+    var sb2 = document.getElementById('scc-live-sidebar');
+    on = !!(sb2 && sb2.classList.contains('open'));
+  }
+  if (btn) { btn.classList.toggle('scc-fg-edge-btn--on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+}
+function sccFgEdgeRail() {
+  var btn = document.getElementById('scc-fg-edge-rail');
+  var wrap = document.getElementById('scc-fg-scroll-indicator');
+  if (!wrap) return;
+  var on;
+  if (sccFgIsHoverDesktop()) {
+    on = wrap.classList.toggle('scc-fg-scroll-indicator--pinned');
+    var bd = document.getElementById('scc-fg-scroll-backdrop');
+    if (bd) bd.classList.toggle('scc-fg-scroll-backdrop--pinned', on);
+  } else {
+    on = !wrap.classList.contains('scc-fg-scroll-indicator--revealed');
+    sccFgSetRailRevealed(on);
+  }
+  // Sit just left of the open rail so the button never covers its dots.
+  document.documentElement.style.setProperty('--scc-fg-rail-w', (on ? wrap.getBoundingClientRect().width : 0) + 'px');
+  if (btn) { btn.classList.toggle('scc-fg-edge-btn--on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+}
 function sccLiveOpenPopup(key) {
   var modal = document.getElementById('scc-live-popup-modal');
   var backdrop = document.getElementById('scc-live-popup-backdrop');
@@ -17618,7 +17887,9 @@ function sccLiveAddCondition(playerId) {
   if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — conditions are read-only here', 'error'); return; }
   var existingPanel = document.getElementById('scc-cond-panel');
   if (existingPanel) existingPanel.remove();
-  var opts = SCC_CONDITIONS_LIST.map(function(c) { return '<option value="' + sccEsc(c) + '">' + sccEsc(c) + '</option>'; }).join('');
+  var condNames = SCC_CONDITIONS_LIST.slice();
+  (window.SCC_CONDITIONS_DATA || []).forEach(function(r) { if (r && r.name && condNames.indexOf(r.name) < 0) condNames.push(r.name); });
+  var opts = condNames.map(function(c) { return '<option value="' + sccEsc(c) + '">' + sccEsc(c) + '</option>'; }).join('');
   var panel = document.createElement('div');
   panel.id = 'scc-cond-panel';
   panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--dm-surface-high);border:1px solid var(--scc-border-gold);border-radius:var(--dm-radius);padding:1.25rem;z-index:9999;min-width:240px;box-shadow:0 16px 48px rgba(0,0,0,0.7);';
@@ -18309,21 +18580,36 @@ function sccFgCheckForHtml(keys) {
 }
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
-    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
-    function(m, title, ability, dc, rest, siblingParas) {
+    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>(?:(Contested:[^<]+?)|([^<]+?)\s+DC\s+(\d+))<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
+    function(m, title, contested, ability, dc, rest, siblingParas) {
+      // S3 audit note 40c: a contested check header ("Contested: Veran's
+      // Sleight of Hand (+2) vs Perception") styles exactly like a DC check.
+      // The whole line becomes the check name; there is no DC number.
+      if (contested) { ability = contested; dc = ''; }
       // ANV-37: optional [for:all] / [for:kael,hana] marker right after the
       // closing </strong>. Parsed and stripped here; unknown names ignored.
+      // S3 audit note 40c: [npc:Name] (the DM rolls for an NPC) may sit
+      // before or after the [for:...] marker; both are parsed and stripped.
       var forChips = '';
-      rest = rest.replace(/^\s*\[for:([^\]]*)\]/i, function(mm, list) {
+      var npcChips = '';
+      var markerRe = /^\s*\[(for|npc):([^\]]*)\]/i, mk;
+      while ((mk = rest.match(markerRe))) {
+        rest = rest.slice(mk[0].length);
+        if (mk[1].toLowerCase() === 'npc') {
+          mk[2].split(',').forEach(function(v) {
+            var nm = v.trim();
+            if (nm) npcChips += '<span class="scc-fg-check-npc" title="You (the DM) roll for ' + sccEsc(nm) + '">&#127922; You roll for ' + sccEsc(nm) + '</span>';
+          });
+          continue;
+        }
         var seen = {};
-        list.split(',').forEach(function(v) {
+        mk[2].split(',').forEach(function(v) {
           var k = v.trim().toLowerCase();
           if (SCC_FG_CHECK_FOR_ORDER.indexOf(k) !== -1) seen[k] = true;
         });
         if (seen.all) seen = { kael: true, hana: true, visenya: true };
         forChips = sccFgCheckForHtml(SCC_FG_CHECK_FOR_ORDER.filter(function(k) { return seen[k]; }));
-        return '';
-      });
+      }
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
       // Pass:/Fail: auto-coloring (item 3a) -- detected here, never
       // hand-typed inline styles by whoever authors the content. Matches
@@ -18353,14 +18639,15 @@ function sccFgStyleSkillChecks(html) {
       // into bodyHtml's own <br>-joined string -- matching the
       // .scc-fg-check-body p rules already in the CSS for exactly this.
       var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
+      var dcText = dc ? ' DC ' + dc : '';
       var chkKey = sccFgCheckStatusKey(title ? title.trim() : '', ability.trim(), dc);
-      var chkLabel = ability.trim() + ' DC ' + dc + (title ? ' — ' + title.trim() : '');
+      var chkLabel = ability.trim() + dcText + (title ? ' — ' + title.trim() : '');
       var chkSt = sccFgReadStatus('check', chkKey, null);
       var chkStatusHtml = sccFgStatusSelectHtml('check', chkKey, null, chkLabel, 'scc-fg-check-status');
       return '<div class="scc-fg-check' + (chkSt !== 'available' ? ' scc-fg-check--' + chkSt : '') + '">'
         + '<div class="scc-fg-check-top"><div class="scc-fg-check-main">'
         + titleHtml
-        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
+        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + dcText + '</span>' + npcChips + '</div>'
         + '</div>' + forChips + chkStatusHtml + '</div>'
         + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
@@ -18381,7 +18668,7 @@ function sccFgLinkify(html) {
   return (html || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
     if (type === 'block') {
-      return '<span class="scc-fg-link" onclick="sccFgJumpToBlock(\'' + id.replace(/'/g, "\\'") + '\')">' + sccEsc(text) + '</span>';
+      return '<span class="scc-fg-link" onclick="sccFgJumpToBlock(\'' + id.replace(/'/g, "\\'") + '\', this)">' + sccEsc(text) + '</span>';
     }
     var key = type + ':' + id;
     var thumb = '';
@@ -18568,8 +18855,18 @@ function sccFgRenderSpokenDialogue(b) {
   // show for an entity that doesn't exist, same as before this rewrite.
   var speakerHeaderHtml = '';
   var visToggleHtml = '';
+  // S3 audit note 25: speaker.name overrides the displayed name once the
+  // players know the NPC's real name (e.g. "Veran" for the Grusk Color
+  // Extractor creature entry). Portrait/link still come from the entity.
+  var speakerDisplayName = (speaker && speaker.name) ? String(speaker.name) : (entity ? entity.name : '');
+  if (!entity && speaker && speaker.name) {
+    speakerHeaderHtml = '<div class="scc-fg-spoken-header">'
+      + '<div class="scc-fg-spoken-thumb-fallback">' + sccEsc(speakerDisplayName.charAt(0)) + '</div>'
+      + '<div class="scc-fg-spoken-meta"><span class="scc-fg-spoken-name">' + sccEsc(speakerDisplayName) + '</span></div>'
+    + '</div>';
+  }
   if (entity) {
-    var initial = sccEsc((entity.name || '?').charAt(0));
+    var initial = sccEsc((speakerDisplayName || '?').charAt(0));
     var thumbHtml = entity.image
       ? '<img class="scc-fg-spoken-thumb" src="' + sccEsc(entity.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
         + '<div class="scc-fg-spoken-thumb-fallback" style="display:none">' + initial + '</div>'
@@ -18577,7 +18874,7 @@ function sccFgRenderSpokenDialogue(b) {
     speakerHeaderHtml = '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
       + thumbHtml
       + '<div class="scc-fg-spoken-meta">'
-        + '<span class="scc-fg-spoken-name">' + sccEsc(entity.name) + '</span>'
+        + '<span class="scc-fg-spoken-name">' + sccEsc(speakerDisplayName) + '</span>'
         + (entity.pronouns ? '<span class="scc-fg-spoken-pronouns">' + sccEsc(entity.pronouns) + '</span>' : '')
       + '</div>'
     + '</div>';
@@ -18813,6 +19110,15 @@ function sccFgToggleLoggedEntry(el) {
   var displayLabel = el.dataset.outcomeLabel || el.dataset.decisionLabel || title;
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
   var existing = log.find(function(n) { return n.title === title; }) || null;
+  // S3 audit notes 35/41: a timed scenario-card decision advances the clock
+  // in the same click (recorded in the row's content, so it is added once
+  // and taken back off on un-log). See js/dm-calendar.js.
+  var timeContent = '';
+  if (!existing && rerenderType === 'scenario_cards' && typeof sccCalDecisionContent === 'function') {
+    var tk = rerenderKey.split('|');
+    timeContent = sccCalDecisionContent(tk[0], parseInt(tk[1], 10));
+    if (timeContent) desc = timeContent;
+  }
   var req = existing
     ? fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, {
         method: 'DELETE',
@@ -18825,6 +19131,7 @@ function sccFgToggleLoggedEntry(el) {
       });
   req.then(function(r) {
     if (!r.ok) { showDMToast(existing ? 'Could not remove log entry' : 'Could not log this', 'error'); return; }
+    if (typeof sccCalApplyDecisionTime === 'function') sccCalApplyDecisionTime(!existing, existing ? existing.content : timeContent);
     showDMToast(existing ? 'Unlogged: ' + displayLabel : 'Logged: ' + displayLabel, 'success');
     sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
       SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
@@ -18921,7 +19228,12 @@ function sccFgBoxPlainLabel(b) {
 
 // Box status dropdown (replaces the old Mark Completed toggle, ANV-39).
 // Function name kept so existing call sites are unchanged.
+// S3 audit notes 10/63: DM-facing reference boxes (the magenta DM-only family
+// and Don't Blow This) are never "done" at the table, so they get no status
+// dropdown at all.
+var SCC_FG_NO_STATUS_CATEGORIES = { dm_only: 1, background: 1, why_this_works: 1, if_they_ask: 1, dont_blow_this: 1 };
 function sccFgBoxCompletionToggleHtml(b) {
+  if (b && SCC_FG_NO_STATUS_CATEGORIES[b.category]) return '';
   return sccFgStatusSelectHtml('box', sccFgBoxStatusKey(b), sccFgBoxCompletionKey(b), sccFgBoxPlainLabel(b), 'scc-fg-status--box');
 }
 
@@ -18966,6 +19278,7 @@ function sccFgSetStatus(sel) {
         host.classList.toggle('scc-fg-box--skipped', status === 'skipped');
       }
     }
+    if (kind === 'box') sccFgRefreshAllQuestionPanels();
   }).catch(function() {
     sel.disabled = false;
     sel.value = prev;
@@ -19147,7 +19460,13 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   // setting it. See js/dm-calendar.js; nothing moves the clock unprompted.
   var timeHtml = typeof sccCalCardTimeHtml === 'function' ? sccCalCardTimeHtml(card, domId, cardIdx) : '';
   var timeEditHtml = typeof sccCalCardEditHtml === 'function' ? sccCalCardEditHtml(card, domId, cardIdx) : '';
-  return timeHtml + decisionHtml + combatBtnHtml + contentHtml + timeEditHtml + backBtn;
+  // Item 12: the page names the card it belongs to (breadcrumb + title in
+  // the card's accent color), so it is never ambiguous which choice is open.
+  var pageHead = '<div class="scc-fg-sc-page-head">'
+      + '<div class="scc-fg-sc-crumb">' + sccEsc(b.label || 'Scenario Cards') + ' &#8250; ' + sccEsc(card.title || '') + '</div>'
+      + '<div class="scc-fg-sc-page-title">' + sccEsc(card.title || '') + '</div>'
+    + '</div>';
+  return pageHead + timeHtml + decisionHtml + combatBtnHtml + contentHtml + timeEditHtml + backBtn;
 }
 
 // Each tile below carries data-fg-rail-child-label EXCEPT a card that has a
@@ -19173,15 +19492,26 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     // visible, not hover-gated) plus a real :hover state below -- both
     // signal "clickable, cycles a value" without relying on the DM finding
     // and reading a delayed tooltip.
-    var statusHtml = '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
+    // S3 audit note 30: decision cards drop the manual status pill -- logging
+    // the decision (the green check) is what marks them done. Cards with no
+    // decision (e.g. NPC conversation cards) keep the pill.
+    var statusHtml = card.decision ? '' : '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
         + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status: Not Started → Started → Completed">'
       + '<span class="scc-fg-sc-status-icon">&#8635;</span>' + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
-    return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
-      + portrait
-      + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
-      + (typeof sccCalDurChip === 'function' ? sccCalDurChip(card) : '')
-      + statusHtml
-      + (loggedTile ? '<span class="scc-fg-sc-tile-check" title="Logged as what happened">&#10003;</span>' : '')
+    // Item 12 (option C, 2026-10-31): the tile is a menu button. Its
+    // thumbnail is the card's entity portrait (letter avatar otherwise) and
+    // it carries the card's accent color, shared with the page it opens.
+    if (!portrait) portrait = '<span class="scc-fg-sc-tile-fallback scc-fg-sc-tile-fallback--letter">' + sccEsc((card.title || '?').replace(/^(they|the|a|an)\s+/i, '').charAt(0).toUpperCase()) + '</span>';
+    return '<div class="scc-fg-sc-tile scc-fg-sc-acc-' + (i % 4) + (i === active ? ' scc-fg-sc-tile--active' : '') + (loggedTile ? ' scc-fg-sc-tile--logged' : '') + '" role="tab" tabindex="0" aria-selected="' + (i === active) + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)" onkeydown="if(event.target===this&&(event.key===\'Enter\'||event.key===\' \')){event.preventDefault();this.click();}">'
+      + '<span class="scc-fg-sc-tile-thumb">' + portrait + '</span>'
+      + '<span class="scc-fg-sc-tile-text">'
+        + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
+        + '<span class="scc-fg-sc-tile-meta">'
+          + (typeof sccCalDurChip === 'function' ? sccCalDurChip(card) : '')
+          + statusHtml
+          + (loggedTile ? '<span class="scc-fg-sc-tile-check" title="Logged as what happened">&#10003;</span>' : '')
+        + '</span>'
+      + '</span>'
     + '</div>';
   }).join('');
   var bodyHtml = sccFgScenarioCardBodyHtml(b, cards[active], domId, active);
@@ -19190,8 +19520,13 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
       + '<span class="scc-fg-scenario-cards-header-icon">&#128203;</span>'
       + '<span>Scenario Cards' + (b.label ? '<span class="scc-fg-scenario-cards-header-sub"> — ' + sccEsc(b.label) + '</span>' : '') + '</span>'
     + '</div>'
-    + '<div class="scc-fg-scenario-cards-row">' + tiles + '</div>'
-    + '<div class="scc-fg-scenario-cards-body" id="' + domId + '-body">' + bodyHtml + '</div>'
+    + '<div class="scc-fg-sc-layout">'
+      + '<div class="scc-fg-scenario-cards-row" role="tablist" aria-label="' + sccEsc(b.label || 'Scenario cards') + '">'
+        + (b.label ? '<div class="scc-fg-sc-menu-head">' + sccEsc(b.label) + '</div>' : '')
+        + tiles
+      + '</div>'
+      + '<div class="scc-fg-scenario-cards-body scc-fg-sc-acc-' + (active % 4) + '" id="' + domId + '-body" role="tabpanel">' + bodyHtml + '</div>'
+    + '</div>'
   + '</div>';
 }
 
@@ -19237,11 +19572,35 @@ function sccFgSwitchScenarioCard(domId, cardIdx, el) {
   if (!found) return;
   var cards = Array.isArray(found.block.cards) ? found.block.cards : [];
   var bodyEl = document.getElementById(domId + '-body');
-  if (bodyEl) bodyEl.innerHTML = sccFgScenarioCardBodyHtml(found.block, cards[cardIdx], domId, cardIdx);
+  if (bodyEl) {
+    bodyEl.innerHTML = sccFgScenarioCardBodyHtml(found.block, cards[cardIdx], domId, cardIdx);
+    bodyEl.className = bodyEl.className.replace(/\bscc-fg-sc-acc-\d\b/g, '').trim() + ' scc-fg-sc-acc-' + (cardIdx % 4);
+  }
   var rowEl = document.querySelector('#' + domId + ' .scc-fg-scenario-cards-row');
   if (rowEl) {
-    Array.prototype.forEach.call(rowEl.querySelectorAll('.scc-fg-sc-tile'), function(t) { t.classList.remove('scc-fg-sc-tile--active'); });
-    if (el) el.classList.add('scc-fg-sc-tile--active');
+    Array.prototype.forEach.call(rowEl.children, function(t) {
+      if (!t.classList.contains('scc-fg-sc-tile')) return;
+      t.classList.remove('scc-fg-sc-tile--active'); t.setAttribute('aria-selected', 'false');
+    });
+    if (el) {
+      el.classList.add('scc-fg-sc-tile--active'); el.setAttribute('aria-selected', 'true');
+      // Horizontal strip: keep the chosen tile in view without moving the page.
+      if (rowEl.scrollWidth > rowEl.clientWidth) {
+        var er = el.getBoundingClientRect(), rr = rowEl.getBoundingClientRect();
+        if (er.left < rr.left || er.right > rr.right) rowEl.scrollLeft += er.left - rr.left - 12;
+      }
+    }
+  }
+  // Item 12: if the chosen page now starts above the screen, bring its
+  // top into view so the DM lands on the start of what they picked.
+  var wrapEl = document.getElementById(domId);
+  if (bodyEl && wrapEl) {
+    var r = bodyEl.getBoundingClientRect();
+    var off = (typeof sccFgStickyTopOffset === 'function' ? sccFgStickyTopOffset() : 0);
+    var rowR = rowEl ? rowEl.getBoundingClientRect() : null;
+    var narrow = rowR && bodyEl.getBoundingClientRect().top >= rowR.bottom - 1;
+    if (narrow) off += rowR.height;
+    if (r.top < off) window.scrollTo({ top: Math.max(0, window.scrollY + r.top - off - 8), behavior: 'auto' });
   }
 }
 
@@ -19323,6 +19682,42 @@ function sccFgQuestionPanelIsCompleted(domId, q, log) {
 // first; completed ones sink to the bottom of that SAME group, also in
 // their original relative order -- never a global bottom across groups,
 // per instruction.
+// ── Clue-gated questions (S3 audit note 11) ──
+// question.unlock_after = a block id (the clue box). The question is locked
+// until that box's status is Completed, or every item in its loot_table has
+// been handed out. Locked questions stay clickable, just dimmed and labeled.
+function sccFgClueFound(blockId) {
+  if (!blockId) return true;
+  var found = sccFgFindBlockById(blockId);
+  if (!found) return true; // unknown clue id: never hide a question behind a typo
+  var bl = found.block;
+  if (sccFgBoxIsCompleted(bl)) return true;
+  if (Array.isArray(bl.loot_table) && bl.loot_table.length) {
+    return bl.loot_table.every(function(it) { return !it || !((it.quantity || 0) > 0); });
+  }
+  return false;
+}
+function sccFgQuestionIsLocked(q) {
+  return !!(q && q.unlock_after) && !sccFgClueFound(q.unlock_after);
+}
+function sccFgQuestionUnlockLabel(q) {
+  if (q.unlock_label) return q.unlock_label;
+  var found = sccFgFindBlockById(q.unlock_after);
+  return (found && (found.block.label || found.block.text)) || q.unlock_after;
+}
+// Plain text of a question (label + all its nested block text) for search.
+function sccFgQuestionSearchText(q) {
+  var parts = [q.label || '', q.group || ''];
+  (function walk(arr) {
+    (arr || []).forEach(function(bl) {
+      if (!bl || typeof bl !== 'object') return;
+      ['label', 'text', 'html', 'tone_note'].forEach(function(k) { if (bl[k]) parts.push(String(bl[k])); });
+      if (bl.cards) bl.cards.forEach(function(c) { parts.push(c.title || ''); walk(c.blocks); });
+    });
+  })(q.blocks);
+  return parts.join(' ').replace(/<[^>]*>/g, ' ').replace(/\[\[[a-z_]+:[\w.-]+\|([^\]]*)\]\]/g, '$1').replace(/\s+/g, ' ').toLowerCase();
+}
+
 function sccFgQuestionPanelGrouped(questions, domId, log) {
   var order = [];
   var byGroup = {};
@@ -19333,9 +19728,13 @@ function sccFgQuestionPanelGrouped(questions, domId, log) {
   });
   return order.map(function(g) {
     var qs = byGroup[g];
-    var open = qs.filter(function(q) { return !sccFgQuestionPanelIsCompleted(domId, q, log); });
     var done = qs.filter(function(q) { return sccFgQuestionPanelIsCompleted(domId, q, log); });
-    return { group: g, questions: open.concat(done) };
+    var notDone = qs.filter(function(q) { return !sccFgQuestionPanelIsCompleted(domId, q, log); });
+    // S3 audit note 11: still-locked (clue not found yet) questions sit after
+    // the askable ones, before the completed ones.
+    var open = notDone.filter(function(q) { return !sccFgQuestionIsLocked(q); });
+    var locked = notDone.filter(function(q) { return sccFgQuestionIsLocked(q); });
+    return { group: g, questions: open.concat(locked, done) };
   });
 }
 
@@ -19359,21 +19758,27 @@ function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
           + (auditLocked ? '' : ' onclick="event.stopPropagation(); sccFgToggleQuestionPanelCompletion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\')"')
           + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
         + (completed ? '&#10003;' : '') + '</span>';
-      return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + '"'
-          + ' data-question-id="' + sccEsc(q.id) + '"'
+      var locked = !completed && sccFgQuestionIsLocked(q);
+      return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + (locked ? ' scc-fg-qp-btn--locked' : '') + '"'
+          + ' data-question-id="' + sccEsc(q.id) + '" data-qp-search="' + sccEsc(sccFgQuestionSearchText(q)) + '"'
           + ' onclick="sccFgSwitchQuestionPanelQuestion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\', this)">'
         + checkHtml
-        + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '') + '</span>'
+        + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '')
+          + (locked ? '<span class="scc-fg-qp-btn-lock">&#128274; Unlocks after: ' + sccEsc(sccFgQuestionUnlockLabel(q)) + '</span>' : '')
+        + '</span>'
       + '</button>';
     }).join('');
-    return headerHtml + '<div class="scc-fg-qp-group">' + btns + '</div>';
-  }).join('');
+    return '<div class="scc-fg-qp-groupwrap">' + headerHtml + '<div class="scc-fg-qp-group">' + btns + '</div></div>';
+  }).join('') + '<div class="scc-fg-qp-nomatch" style="display:none">No questions match.</div>';
 }
 
 function sccFgQuestionPanelBodyHtml(b, q, domId) {
   if (!q) return '<div class="scc-fg-qp-empty">No question selected.</div>';
   var contentHtml = sccFgRenderDoc(q.blocks || []);
-  return '<h3 class="scc-fg-qp-right-title">' + sccEsc(q.label || '') + '</h3>'
+  var lockNote = sccFgQuestionIsLocked(q)
+    ? '<div class="scc-fg-qp-locknote">&#128274; The players can only ask this after: <strong>' + sccEsc(sccFgQuestionUnlockLabel(q)) + '</strong></div>'
+    : '';
+  return '<h3 class="scc-fg-qp-right-title">' + sccEsc(q.label || '') + '</h3>' + lockNote
     + (contentHtml || '<div class="scc-fg-qp-empty">No content yet.</div>');
 }
 
@@ -19388,12 +19793,117 @@ function sccFgOneQuestionPanelHtml(b, idx, activeId) {
     + '<div class="scc-fg-qp-header">'
       + '<span class="scc-fg-qp-header-icon">&#10067;</span>'
       + '<span>Common Questions' + (b.label ? '<span class="scc-fg-qp-header-sub"> — ' + sccEsc(b.label) + '</span>' : '') + '</span>'
+      // S3 audit note 7: keyword search across question titles and answers.
+      + '<span class="scc-fg-qp-search"><input type="search" class="scc-fg-qp-search-input" placeholder="Search questions (e.g. contact, paid)" aria-label="Search questions"'
+        + ' value="' + sccEsc(SCC_FG_QP_FILTER[domId] || '') + '" oninput="sccFgQpFilter(\'' + escQ(domId) + '\', this.value)">'
+        + '<button type="button" class="scc-fg-qp-search-clear" title="Clear search" aria-label="Clear search" onclick="var i=this.previousElementSibling; i.value=\'\'; sccFgQpFilter(\'' + escQ(domId) + '\', \'\'); i.focus();">&#215;</button></span>'
     + '</div>'
     + '<div class="scc-fg-qp-layout">'
       + '<div class="scc-fg-qp-left"><div class="scc-fg-qp-groups" id="' + domId + '-left">' + sccFgQuestionPanelLeftHtml(b, domId, active) + '</div></div>'
       + '<div class="scc-fg-qp-right" id="' + domId + '-right">' + sccFgQuestionPanelBodyHtml(b, activeQ, domId) + '</div>'
     + '</div>'
   + '</div>';
+}
+
+// A clue box changing state can unlock questions anywhere on the page.
+function sccFgRefreshAllQuestionPanels() {
+  Array.prototype.forEach.call(document.querySelectorAll('.scc-fg-question-panel[id]'), function(el) { sccFgRedrawQuestionPanelBlock(el.id); });
+  Array.prototype.forEach.call(document.querySelectorAll('.scc-fg-qref[data-qref]'), function(el) { sccFgRedrawQuestionRef(el); });
+}
+// ── question_ref: inline mirror of panel questions (S3 audit note 11) ──
+// { type:'box', category:'question_ref', label, panel:'<question_panel label>',
+//   question_ids:[...] } -- content is read live from the panel block (single
+// source of truth). Each question is a compact row; clicking expands its
+// answer in place. Open/closed is per view, not persisted.
+var SCC_FG_QREF_OPEN = {};
+function sccFgFindQuestionPanelByLabel(label) {
+  var row = SCC_FG_DOC_CACHE[sccFgActiveSessionNum()];
+  var hit = null;
+  (function walk(arr) {
+    (arr || []).forEach(function(bl, i) {
+      if (hit || !bl || typeof bl !== 'object') return;
+      if (bl.category === 'question_panel' && (bl.label || '') === (label || '')) { hit = { block: bl, idx: i }; return; }
+      if (bl.category === 'scenario_cards' && Array.isArray(bl.cards)) bl.cards.forEach(function(c) { walk(c.blocks); });
+    });
+  })((row && row.blocks) || []);
+  return hit;
+}
+function sccFgQuestionRefInnerHtml(b) {
+  var hit = sccFgFindQuestionPanelByLabel(b.panel);
+  if (!hit) return '<div class="scc-fg-qp-empty">Question panel "' + sccEsc(b.panel || '') + '" not found.</div>';
+  var domId = sccFgQuestionPanelDomId(hit.block, hit.idx);
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[sccFgActiveSessionNum()] || [];
+  var qs = (hit.block.questions || []);
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  return (b.question_ids || []).map(function(id) {
+    var q = qs.find(function(x) { return x.id === id; });
+    if (!q) return '';
+    var completed = sccFgQuestionPanelIsCompleted(domId, q, log);
+    var locked = !completed && sccFgQuestionIsLocked(q);
+    var key = domId + '|' + id;
+    var open = !!SCC_FG_QREF_OPEN[key];
+    var check = '<span class="scc-fg-qp-check' + (completed ? ' scc-fg-qp-check--on' : '') + '"'
+        + (auditLocked ? '' : ' onclick="event.stopPropagation(); sccFgToggleQuestionPanelCompletion(\'' + escQ(domId) + '\', \'' + escQ(id) + '\')"')
+        + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">' + (completed ? '&#10003;' : '') + '</span>';
+    return '<div class="scc-fg-qref-item' + (open ? ' scc-fg-qref-item--open' : '') + (completed ? ' scc-fg-qref-item--done' : '') + (locked ? ' scc-fg-qref-item--locked' : '') + '">'
+      + '<button type="button" class="scc-fg-qref-q" aria-expanded="' + open + '" onclick="sccFgToggleQuestionRef(this, \'' + escQ(key) + '\')">'
+        + check
+        + '<span class="scc-fg-qref-qlabel">' + sccEsc(q.label || '') + (locked ? '<span class="scc-fg-qp-btn-lock">&#128274; Unlocks after: ' + sccEsc(sccFgQuestionUnlockLabel(q)) + '</span>' : '') + '</span>'
+        + '<span class="scc-fg-qref-chev" aria-hidden="true">&#9662;</span>'
+      + '</button>'
+      + (open ? '<div class="scc-fg-qref-a">' + sccFgRenderDoc(q.blocks || []) + '</div>' : '')
+    + '</div>';
+  }).join('');
+}
+function sccFgRenderQuestionRefBlock(b) {
+  var data = sccEsc(JSON.stringify({ panel: b.panel || '', ids: b.question_ids || [], label: b.label || '' }));
+  return '<div class="scc-fg-qref" data-qref="' + data + '">'
+    + '<div class="scc-fg-qref-head"><span class="scc-fg-qref-icon" aria-hidden="true">&#10067;</span>' + sccEsc(b.label || 'If they ask about this') + '</div>'
+    + '<div class="scc-fg-qref-list">' + sccFgQuestionRefInnerHtml(b) + '</div>'
+  + '</div>';
+}
+function sccFgRedrawQuestionRef(el) {
+  var d; try { d = JSON.parse(el.getAttribute('data-qref')); } catch (e) { return; }
+  var list = el.querySelector('.scc-fg-qref-list');
+  if (list) list.innerHTML = sccFgQuestionRefInnerHtml({ panel: d.panel, question_ids: d.ids, label: d.label });
+}
+function sccFgToggleQuestionRef(btn, key) {
+  SCC_FG_QREF_OPEN[key] = !SCC_FG_QREF_OPEN[key];
+  var el = btn.closest('.scc-fg-qref');
+  if (el) sccFgRedrawQuestionRef(el);
+}
+var SCC_FG_QP_FILTER = {}; // domId -> current search text (kept across redraws)
+function sccFgQpFilter(domId, raw) {
+  SCC_FG_QP_FILTER[domId] = raw || '';
+  var left = document.getElementById(domId + '-left');
+  if (!left) return;
+  var words = String(raw || '').toLowerCase().split(/\s+/).filter(Boolean);
+  var any = false;
+  Array.prototype.forEach.call(left.querySelectorAll('.scc-fg-qp-groupwrap'), function(gw) {
+    var shown = 0;
+    Array.prototype.forEach.call(gw.querySelectorAll('.scc-fg-qp-btn'), function(btn) {
+      var hay = btn.getAttribute('data-qp-search') || '';
+      var ok = words.every(function(w) { return hay.indexOf(w) >= 0; });
+      btn.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    gw.style.display = shown ? '' : 'none';
+    if (shown) any = true;
+  });
+  var nm = left.querySelector('.scc-fg-qp-nomatch');
+  if (nm) nm.style.display = any ? 'none' : '';
+  var wrap = document.getElementById(domId);
+  var clr = wrap && wrap.querySelector('.scc-fg-qp-search-clear');
+  if (clr) clr.style.visibility = words.length ? 'visible' : 'hidden';
+}
+// Re-applies any active search after a panel (re)draw.
+function sccFgQpReapplyFilters(root) {
+  Object.keys(SCC_FG_QP_FILTER).forEach(function(domId) {
+    if (document.getElementById(domId)) sccFgQpFilter(domId, SCC_FG_QP_FILTER[domId]);
+  });
+  Array.prototype.forEach.call((root || document).querySelectorAll('.scc-fg-qp-search-clear'), function(c) {
+    var i = c.previousElementSibling; if (i && !i.value) c.style.visibility = 'hidden';
+  });
 }
 
 function sccFgRenderQuestionPanelBlock(b, idx) {
@@ -19472,7 +19982,7 @@ function sccFgToggleQuestionPanelCompletion(domId, questionId) {
     if (!r.ok) { showDMToast('Could not update', 'error'); return; }
     sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
       SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
-      sccFgRedrawQuestionPanelBlock(domId);
+      sccFgRefreshAllQuestionPanels();
     });
   }).catch(function() { showDMToast('Could not update', 'error'); });
 }
@@ -19493,6 +20003,7 @@ function sccFgRedrawQuestionPanelBlock(domId) {
   var activeBtn = wrapEl.querySelector('.scc-fg-qp-btn--active');
   var activeId = activeBtn ? activeBtn.dataset.questionId : null;
   wrapEl.outerHTML = sccFgOneQuestionPanelHtml(found.block, found.idx, activeId);
+  sccFgQpReapplyFilters();
 }
 
 // ── Scene Cast panel module (box.category === 'scene_cast', 2026-09-18) ──
@@ -19553,6 +20064,152 @@ function sccFgSceneCastEntryHtml(c) {
     + '</div>'
   + '</div>';
 }
+// ── Gigglegloom effect box (S3 audit note 21, 2026-10-31) ──
+// { category:'gigglegloom_effect', label, html, featured, gg_type:
+//   'bubbleseed'|'featherflow'|'steelfist'|'flamerage', effect:{ kind:
+//   'buff'|'debuff'|'mixed', name, duration, summary }, condition:'<conditions.name>' }
+// A gigglegloom_effect box with no gg_type keeps the older generic render.
+// The Apply buttons write character_sheet.conditions, the same column the
+// player sheet's Conditions row and Live Session's Conditions panel read.
+var SCC_FG_GG_TYPES = ['bubbleseed', 'featherflow', 'steelfist', 'flamerage'];
+var SCC_FG_GG_KIND_LABEL = { buff: 'Buff', debuff: 'Debuff', mixed: 'Buff and Debuff' };
+function sccFgGgApplyRowHtml(cond) {
+  if (!cond) return '';
+  var players = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+  if (!players.length) return '';
+  var has = function(p) { var sh = SCC_SHEETS[p.id]; return !!(sh && Array.isArray(sh.conditions) && sh.conditions.indexOf(cond) >= 0); };
+  var allOn = players.every(has);
+  var locked = !!SCC_VIEWING_HISTORY;
+  var esc = function(v) { return sccEsc(v).replace(/'/g, '&#39;'); };
+  var btns = players.map(function(p) {
+    var on = has(p);
+    var first = (p.name || '').trim().split(/\s+/)[0];
+    return '<button type="button" class="scc-tip scc-tip--up scc-fg-gg-apply-btn' + (on ? ' scc-fg-gg-apply-btn--on' : '') + '"' + (locked ? ' disabled' : '')
+      + ' data-tip="' + (on ? 'Remove ' + sccEsc(cond) + ' from ' + sccEsc(first) : 'Give ' + sccEsc(first) + ' the ' + sccEsc(cond) + ' condition') + '"'
+      + ' onclick="sccFgGgApply(this, \'' + esc(cond) + '\', \'' + esc(p.id) + '\')">' + (on ? '&#10003; ' : '') + sccEsc(first) + '</button>';
+  }).join('');
+  btns += '<button type="button" class="scc-tip scc-tip--up scc-fg-gg-apply-btn scc-fg-gg-apply-btn--all' + (allOn ? ' scc-fg-gg-apply-btn--on' : '') + '"' + (locked ? ' disabled' : '')
+    + ' data-tip="' + (allOn ? 'Remove from everyone' : 'Give everyone the ' + sccEsc(cond) + ' condition') + '"'
+    + ' onclick="sccFgGgApply(this, \'' + esc(cond) + '\', \'*\')">' + (allOn ? '&#10003; All' : 'All') + '</button>';
+  return '<div class="scc-fg-gg-apply" data-gg-cond="' + sccEsc(cond) + '">'
+    + '<span class="scc-fg-gg-apply-label">Apply <strong>' + sccEsc(cond) + '</strong> to</span>'
+    + '<span class="scc-fg-gg-apply-btns">' + btns + '</span>'
+  + '</div>';
+}
+function sccFgRenderGigglegloomBlock(b) {
+  var t = SCC_FG_GG_TYPES.indexOf(b.gg_type) >= 0 ? b.gg_type : 'bubbleseed';
+  var tName = t.charAt(0).toUpperCase() + t.slice(1);
+  var e = b.effect || {};
+  var kind = SCC_FG_GG_KIND_LABEL[e.kind] ? e.kind : '';
+  var effectHtml = (e.name || e.summary || e.duration)
+    ? '<div class="scc-fg-gg-effect">'
+        + '<div class="scc-fg-gg-effect-top">'
+          + (kind ? '<span class="scc-fg-gg-kind scc-fg-gg-kind--' + kind + '">' + SCC_FG_GG_KIND_LABEL[kind] + '</span>' : '')
+          + (e.name ? '<span class="scc-fg-gg-effect-name">' + sccEsc(e.name) + '</span>' : '')
+          + (e.duration ? '<span class="scc-fg-gg-duration">&#9201; ' + sccEsc(e.duration) + '</span>' : '')
+        + '</div>'
+        + (e.summary ? '<div class="scc-fg-gg-effect-summary">' + sccEsc(e.summary) + '</div>' : '')
+      + '</div>'
+    : '';
+  return '<div class="scc-fg-box scc-fg-gg scc-fg-gg--' + t + sccFgBoxStatusCls(b) + '">'
+    + '<video class="scc-fg-gg-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" data-gg-src="assets/videos/anim-' + t + '.mp4"></video>'
+    + '<div class="scc-fg-gg-inner">'
+      + sccFgRenderFeatured(b.featured)
+      + '<div class="scc-fg-gg-head">'
+        + '<span class="scc-fg-gg-icon" style="--gg-icon:url(assets/icons/icon-' + t + '.svg)" aria-hidden="true"></span>'
+        + '<span class="scc-fg-gg-chip">Gigglegloom &middot; ' + tName + '</span>'
+        + sccFgBoxCompletionToggleHtml(b)
+      + '</div>'
+      + (b.label ? '<div class="scc-fg-gg-label">' + sccEsc(b.label) + '</div>' : '')
+      + effectHtml
+      + '<div class="scc-fg-gg-body">' + sccFgLinkify(b.html || '') + '</div>'
+      + sccFgGgApplyRowHtml(b.condition)
+    + '</div>'
+  + '</div>';
+}
+function sccFgGgApply(btn, cond, playerId) {
+  if (SCC_VIEWING_HISTORY) { showDMToast('This session is locked for audit — conditions are read-only here', 'error'); return; }
+  var players = typeof SCC_PLAYERS !== 'undefined' ? SCC_PLAYERS : [];
+  var targets = playerId === '*' ? players : players.filter(function(p) { return p.id === playerId; });
+  var has = function(p) { var sh = SCC_SHEETS[p.id]; return !!(sh && Array.isArray(sh.conditions) && sh.conditions.indexOf(cond) >= 0); };
+  // One button toggles: if every target already has it, remove; else add.
+  var remove = targets.length && targets.every(has);
+  var fails = 0;
+  var jobs = targets.map(function(p) {
+    var sheet = SCC_SHEETS[p.id];
+    if (!sheet) return Promise.resolve();
+    var list = Array.isArray(sheet.conditions) ? sheet.conditions.slice() : [];
+    if (!remove && list.indexOf(cond) >= 0) return Promise.resolve(); // already has it
+    if (remove) list = list.filter(function(c) { return c !== cond; });
+    else if (list.indexOf(cond) < 0) list.push(cond);
+    sheet.conditions = list;
+    return sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(p.id), { conditions: list })
+      .then(function(r) { if (!r.ok) fails++; }).catch(function() { fails++; });
+  });
+  sccFgGgRefreshApplyRows();
+  if (typeof sccLiveRenderConditions === 'function') sccLiveRenderConditions();
+  Promise.all(jobs).then(function() {
+    if (fails) { showDMToast('Condition save failed', 'error'); return; }
+    var who = playerId === '*' ? 'everyone' : ((targets[0] && targets[0].name) || '').split(/\s+/)[0];
+    showDMToast((remove ? 'Removed ' : 'Applied ') + cond + (remove ? ' from ' : ' to ') + who, 'success');
+  });
+}
+function sccFgGgRefreshApplyRows() {
+  Array.prototype.forEach.call(document.querySelectorAll('.scc-fg-gg-apply[data-gg-cond]'), function(row) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = sccFgGgApplyRowHtml(row.getAttribute('data-gg-cond'));
+    if (tmp.firstChild) row.replaceWith(tmp.firstChild);
+  });
+  if (typeof wireAllTooltips === 'function') wireAllTooltips();
+}
+// Background loops load only when the box is on screen, never for
+// prefers-reduced-motion. One observer watches the document for new boxes
+// (scenario cards and question panels re-render their bodies in place).
+var SCC_FG_GG_IO = null;
+function sccFgGgWireVideos(root) {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var vids = (root || document).querySelectorAll('video.scc-fg-gg-video[data-gg-src]:not([data-gg-wired])');
+  if (!vids.length) return;
+  if (!SCC_FG_GG_IO && 'IntersectionObserver' in window) {
+    SCC_FG_GG_IO = new IntersectionObserver(function(entries) {
+      entries.forEach(function(en) {
+        var v = en.target;
+        if (en.isIntersecting) {
+          if (!v.getAttribute('src')) v.setAttribute('src', v.getAttribute('data-gg-src'));
+          var pr = v.play(); if (pr && pr.catch) pr.catch(function() {});
+        } else if (!v.paused) { v.pause(); }
+      });
+    }, { rootMargin: '200px' });
+  }
+  Array.prototype.forEach.call(vids, function(v) {
+    v.setAttribute('data-gg-wired', '1');
+    if (reduce || !SCC_FG_GG_IO) return;
+    SCC_FG_GG_IO.observe(v);
+  });
+}
+// Item 12: the sticky scenario menu sits below the sticky time bar, whose
+// height is exposed as --scc-fg-tb-h (0 when the bar is hidden).
+var SCC_FG_TB_RO = null;
+function sccFgWatchTimeBarHeight() {
+  var tb = document.querySelector('.tb-wrap');
+  var set = function() {
+    var h = (tb && tb.offsetParent && getComputedStyle(tb).position === 'sticky') ? tb.offsetHeight : 0;
+    document.documentElement.style.setProperty('--scc-fg-tb-h', h + 'px');
+  };
+  set();
+  if (tb && !SCC_FG_TB_RO && 'ResizeObserver' in window) { SCC_FG_TB_RO = new ResizeObserver(set); SCC_FG_TB_RO.observe(tb); }
+}
+var SCC_FG_GG_MO = null;
+function sccFgGgEnsureObserver() {
+  if (SCC_FG_GG_MO || !('MutationObserver' in window)) return;
+  var t = null;
+  SCC_FG_GG_MO = new MutationObserver(function() {
+    if (t) return;
+    t = setTimeout(function() { t = null; if (document.querySelector('video.scc-fg-gg-video:not([data-gg-wired])')) sccFgGgWireVideos(); }, 120);
+  });
+  SCC_FG_GG_MO.observe(document.body, { childList: true, subtree: true });
+}
+
 function sccFgRenderSceneCastBlock(b, idx) {
   var domId = sccFgSceneCastDomId(b, idx);
   var cast = Array.isArray(b.cast) ? b.cast : [];
@@ -19807,13 +20464,15 @@ function sccFgRenderLootTableWidget(b, idx, ctx) {
         + thumb.thumbHtml
         + '<div class="scc-fg-loot-row-text">'
           + nameHtml
+          + (it.companion ? '<span class="scc-fg-loot-row-companion">&#128062; Becomes a companion: ' + sccEsc(it.companion.name || it.companion.id)
+              + ((it.with_items || []).length ? ' &middot; adds ' + sccEsc(it.with_items.map(function(w) { return (w.item_name || w.item_id) + ((w.quantity || 1) > 1 ? ' \u00d7' + w.quantity : ''); }).join(', ')) + ' to inventory' : '') + '</span>' : '')
           + '<span class="scc-fg-loot-row-remaining">' + it.quantity + ' remaining</span>'
         + '</div>'
       + '</div>'
       + (auditLocked ? '' : (players.length
         ? '<div class="scc-fg-loot-row-controls">'
           + '<select class="scc-input scc-fg-loot-pc-select" id="' + domId + '-pc-' + itemIdx + '">' + playerOptions + '</select>'
-          + '<input type="number" class="scc-fg-loot-qty-input" id="' + domId + '-qty-' + itemIdx + '" min="1" max="' + it.quantity + '" value="' + it.quantity + '">'
+          + '<input type="number" class="scc-fg-loot-qty-input" id="' + domId + '-qty-' + itemIdx + '" min="1" max="' + (it.companion ? 1 : it.quantity) + '" value="' + (it.companion ? 1 : it.quantity) + '"' + (it.companion ? ' readonly' : '') + '>'
           + '<button class="scc-gold-btn-sm" onclick="sccFgLootAssign(' + idx + ',\'' + escQ(ctxKey) + '\',' + itemIdx + ')">Assign</button>'
         + '</div>'
         : '<span class="scc-fg-loot-no-players">No players</span>'))
@@ -19863,19 +20522,49 @@ function sccFgLootAssign(idx, ctxKey, itemIdx) {
       if (r.ok) sheet.gold_cp = newTotal;
       return r;
     });
+  } else if (item.companion) {
+    // S3 audit note 61: a companion entry (e.g. the cart horse and cart).
+    // The companion becomes a character_attachments row (same shape the
+    // sidebar's +Add and quick-attach write); the with_items go to inventory.
+    // with_items is the single list of items to add, so a cart listed both
+    // as the entry's item_id and in with_items is added once, not twice.
+    if (qty !== 1) { showDMToast('A companion can only go to one player', 'error'); return; }
+    var comp = item.companion;
+    var invItems = Array.isArray(item.with_items) && item.with_items.length
+      ? item.with_items
+      : (comp.type === 'item' ? [] : [{ item_id: item.item_id, quantity: 1 }]);
+    var creature = (typeof CREATURES !== 'undefined' ? CREATURES : []).find(function(c) { return c.id === comp.id; });
+    var attachBody = {
+      character_id: player.id, session_number: num, active: true,
+      name: comp.name || (creature ? creature.name : comp.id),
+      attachment_type: comp.type === 'character' ? 'character' : 'creature',
+      entity_id: comp.id, mode: comp.mode === 'situational' ? 'situational' : 'permanent',
+      description: creature ? creature.description : null
+    };
+    var invPosts = invItems.filter(function(w) { return w && w.item_id; }).map(function(w) {
+      return sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: w.item_id, quantity: w.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true });
+    });
+    grant = Promise.all(invPosts.concat([sccPost('character_attachments', attachBody)])).then(function(rs) {
+      var bad = rs.filter(function(r) { return !r.ok; }).length;
+      if (!bad && typeof sccFgRefreshAttachmentsCache === 'function') sccFgRefreshAttachmentsCache();
+      return { ok: !bad };
+    });
   } else {
     grant = sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true });
   }
   grant.then(function(r) {
-    if (!r.ok) { showDMToast('Failed to ' + (item.currency ? 'add gold' : 'add to inventory'), 'error'); return null; }
+    if (!r.ok) { showDMToast('Failed to ' + (item.currency ? 'add gold' : (item.companion ? 'add the companion' : 'add to inventory')), 'error'); return null; }
     item.quantity = item.quantity - qty;
     return sccPatch('field_guide_sessions', '?session_number=eq.' + encodeURIComponent(num), { blocks: row.blocks });
   }).then(function(r2) {
     if (!r2) return;
     if (!r2.ok) { showDMToast((item.currency ? 'Gold granted' : 'Item granted') + ', but could not save the updated remaining count', 'error'); return; }
-    var toastLabel = item.currency ? sccFgLootEntryLabel({ currency: item.currency, quantity: qty }) : (item.item_name || item.item_id) + ' \u00d7' + qty;
+    var toastLabel = item.currency ? sccFgLootEntryLabel({ currency: item.currency, quantity: qty })
+      : item.companion ? (item.item_name || item.companion.name) + ' (companion)'
+      : (item.item_name || item.item_id) + ' \u00d7' + qty;
     showDMToast(toastLabel + ' \u2192 ' + player.name + ' \u2713', 'success');
     sccFgRerenderLootWidget(idx, ctx);
+    sccFgRefreshAllQuestionPanels();
   }).catch(function() { showDMToast('Failed to assign loot', 'error'); });
 }
 
@@ -19953,7 +20642,9 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b, ctx);
       if (b.category === 'scenario_cards') return sccFgRenderScenarioCardsBlock(b, idx);
       if (b.category === 'question_panel') return sccFgRenderQuestionPanelBlock(b, idx);
+      if (b.category === 'question_ref') return sccFgRenderQuestionRefBlock(b);
       if (b.category === 'scene_cast') return sccFgRenderSceneCastBlock(b, idx);
+      if (b.category === 'gigglegloom_effect' && b.gg_type) return sccFgRenderGigglegloomBlock(b);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
       var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
       // Loot/shop boxes get a category icon prefix independent of color — reinforces
@@ -20034,6 +20725,26 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       var headerHtml = featuredHtml + catBadge + sccFgBoxCompletionToggleHtml(b) + labelHeaderHtml;
       var cornerIconHtml = sccFgBoxCornerIconHtml(b.category, b.subtype);
       var completedCls = sccFgBoxStatusCls(b);
+      // S3 audit note collapsed:true -- a header-only row (badge, label,
+      // chevron, "tap to open" hint) for content that rarely comes up. The
+      // body renders hidden; open/closed is per view, never persisted.
+      if (b.collapsed) {
+        var colKey = sccFgHash('collapse|' + (b.id || '') + '|' + (b.category || '') + '|' + (b.label || '') + '|' + (b.html || ''));
+        var colOpen = !!SCC_FG_BOX_OPEN[colKey];
+        return '<div class="scc-fg-box scc-fg-box--' + colorClass + ' ' + sccFgTextClass(b.category) + completedCls + ' scc-fg-box--collapsible' + (colOpen ? ' scc-fg-box--open' : '') + '" data-collapse-key="' + sccEsc(colKey) + '">'
+          + '<div class="scc-fg-box-collapse-head" role="button" tabindex="0" aria-expanded="' + colOpen + '" onclick="sccFgToggleBoxCollapse(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();sccFgToggleBoxCollapse(this);}">'
+            + '<span class="scc-fg-box-collapse-chev" aria-hidden="true">&#9656;</span>'
+            + '<span class="scc-fg-box-collapse-main">' + catBadge + (b.label ? '<span class="scc-fg-box-label">' + boxLabelPrefix + sccEsc(b.label) + '</span>' : '') + '</span>'
+            + '<span class="scc-fg-box-collapse-hint">' + (colOpen ? 'tap to close' : 'tap to open') + '</span>'
+          + '</div>'
+          + '<div class="scc-fg-box-collapse-body">'
+            + featuredHtml + sccFgBoxCompletionToggleHtml(b)
+            + sccFgLinkify(b.html || '') + combatBtnHtml
+            + (b.table ? sccFgRenderTableBlock(b.table) : '')
+            + sccFgRenderQuickAttach(b.quick_attach)
+          + '</div>'
+        + '</div>';
+      }
       // sccFgTextClass(b.category) -- see its own comment. Applied here
       // unconditionally alongside colorClass, so every box's body-text
       // font-size/color is a direct function of its real category, not the
@@ -20048,6 +20759,19 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       + '</div>';
     default: return '';
   }
+}
+
+var SCC_FG_BOX_OPEN = {}; // collapse key -> open (per view, not persisted)
+function sccFgToggleBoxCollapse(head) {
+  var box = head.closest('.scc-fg-box--collapsible');
+  if (!box) return;
+  var key = box.getAttribute('data-collapse-key');
+  var open = !box.classList.contains('scc-fg-box--open');
+  SCC_FG_BOX_OPEN[key] = open;
+  box.classList.toggle('scc-fg-box--open', open);
+  head.setAttribute('aria-expanded', open);
+  var hint = head.querySelector('.scc-fg-box-collapse-hint');
+  if (hint) hint.textContent = open ? 'tap to close' : 'tap to open';
 }
 
 // Quest-tied h1 (block.quest_id, item 10, 2026-08-26) -- badge + a real,
@@ -20576,9 +21300,12 @@ function sccFgFindBlockById(id) {
 // step's own DOM exists by the time it runs. Silently no-ops on an
 // unresolvable id (bad/stale content), same as sccOpenLookup() degrading
 // on a bad entity id -- never a broken-looking dead click.
-function sccFgJumpToBlock(id) {
+function sccFgJumpToBlock(id, originEl) {
   var found = sccFgFindBlockById(id);
   if (!found) return;
+  // S3 audit note 32: remember where the jump came from so a "Back to ..."
+  // pill can return the DM there.
+  if (originEl && originEl.nodeType === 1) sccFgBackPush(originEl);
   found.chain.forEach(function(step) {
     var tileEl = null;
     var rowEl = document.querySelector('#' + step.domId + ' .scc-fg-scenario-cards-row');
@@ -20587,9 +21314,93 @@ function sccFgJumpToBlock(id) {
   });
   var target = document.querySelector('[data-fg-block-id="' + CSS.escape(id) + '"]');
   if (!target) return;
-  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
   var targetTop = target.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
+  // Land below every sticky bar (env banner, shell header, time bar), and
+  // leave room for the Back pill above the target.
+  var extra = (originEl && originEl.nodeType === 1) ? 48 : 12;
+  window.scrollTo({ top: Math.max(0, targetTop - sccFgStickyTopOffset() - extra), behavior: 'auto' });
+  if (originEl && originEl.nodeType === 1) sccFgBackShow(target);
+}
+
+// ── "Back to ..." after an in-document jump (S3 audit note 32) ──
+// A stack of origins (scroll position + a readable name for where the DM
+// was). After a [[block:...]] jump a small pill sits at the landing spot;
+// clicking it scrolls back to the exact origin. Several jumps in a row go
+// back one step each. The pill clears once the DM scrolls far away.
+var SCC_FG_BACK_STACK = [];
+function sccFgStickyTopOffset() {
+  var cs = getComputedStyle(document.documentElement);
+  var off = (parseFloat(cs.getPropertyValue('--dm-env-banner-h')) || 0) + (parseFloat(cs.getPropertyValue('--dm-header-visible-h')) || 0);
+  var tb = document.querySelector('.tb-wrap');
+  if (tb && tb.offsetParent && getComputedStyle(tb).position === 'sticky') off += tb.offsetHeight;
+  return off;
+}
+var SCC_FG_BACK_LANDING_Y = null;
+function sccFgBackOriginName(el) {
+  var box = el.closest('.scc-fg-box, .scc-fg-check, .scc-fg-scenario-cards, .scc-fg-qp, .scc-fg-outcomes-box');
+  var lbl = box && box.querySelector('.scc-fg-box-label, .scc-fg-check-title, .scc-fg-scenario-cards-header');
+  var t = lbl ? lbl.textContent.replace(/^\s*Scenario Cards\s*[\u2014-]\s*/, '').trim() : '';
+  if (t) return t;
+  // Fall back to the nearest heading above the link in the document.
+  var heads = document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h1, #scc-fg-doc-inner .scc-fg-doc-h2');
+  var y = el.getBoundingClientRect().top, best = '';
+  heads.forEach(function(h) { if (h.getBoundingClientRect().top <= y) best = h.textContent.trim(); });
+  return best || 'where you were';
+}
+function sccFgBackPush(el) {
+  SCC_FG_BACK_STACK.push({ y: window.scrollY, name: sccFgBackOriginName(el) });
+  if (SCC_FG_BACK_STACK.length > 12) SCC_FG_BACK_STACK.shift();
+}
+function sccFgBackClear() {
+  SCC_FG_BACK_STACK = [];
+  SCC_FG_BACK_LANDING_Y = null;
+  var pill = document.getElementById('scc-fg-back-pill');
+  if (pill) pill.remove();
+}
+function sccFgBackShow(anchorEl) {
+  var top = SCC_FG_BACK_STACK[SCC_FG_BACK_STACK.length - 1];
+  var pill = document.getElementById('scc-fg-back-pill');
+  if (!top) { if (pill) pill.remove(); return; }
+  if (!pill) {
+    pill = document.createElement('button');
+    pill.type = 'button';
+    pill.id = 'scc-fg-back-pill';
+    pill.className = 'scc-fg-back-pill';
+    pill.onclick = sccFgBackGo;
+    document.body.appendChild(pill);
+  }
+  pill.innerHTML = '<span aria-hidden="true">&#8617;</span> Back to ' + sccEsc(top.name.length > 48 ? top.name.slice(0, 46) + '\u2026' : top.name);
+  var stickyH = sccFgStickyTopOffset();
+  var r = anchorEl ? anchorEl.getBoundingClientRect() : null;
+  var docInner = document.getElementById('scc-fg-doc-inner');
+  var left = (r ? r.left : (docInner ? docInner.getBoundingClientRect().left : 16)) + window.scrollX;
+  var y = r ? r.top + window.scrollY - 42 : window.scrollY + stickyH + 8;
+  pill.style.left = Math.max(8, left) + 'px';
+  pill.style.top = Math.max(window.scrollY + stickyH + 4, y) + 'px';
+  SCC_FG_BACK_LANDING_Y = window.scrollY;
+  sccFgEnsureBackScrollWatch();
+}
+function sccFgBackGo() {
+  var top = SCC_FG_BACK_STACK.pop();
+  var pill = document.getElementById('scc-fg-back-pill');
+  if (pill) pill.remove();
+  if (!top) return;
+  window.scrollTo({ top: top.y, behavior: 'auto' });
+  if (SCC_FG_BACK_STACK.length) {
+    // Still deeper in a jump chain: offer the next step back from here.
+    sccFgBackShow(null);
+  } else {
+    SCC_FG_BACK_LANDING_Y = null;
+  }
+}
+var SCC_FG_BACK_WATCH_BOUND = false;
+function sccFgEnsureBackScrollWatch() {
+  if (SCC_FG_BACK_WATCH_BOUND) return;
+  SCC_FG_BACK_WATCH_BOUND = true;
+  window.addEventListener('scroll', function() {
+    if (SCC_FG_BACK_LANDING_Y == null) return;
+    if (Math.abs(window.scrollY - SCC_FG_BACK_LANDING_Y) > Math.max(1400, window.innerHeight * 1.6)) sccFgBackClear();
+  }, { passive: true });
 }
 
 // Fill-line height and each dot/label's reached state are both driven by
@@ -20651,6 +21462,11 @@ function sccFgSetRailRevealed(revealed) {
   var backdrop = document.getElementById('scc-fg-scroll-backdrop');
   if (!wrap) return;
   wrap.classList.toggle('scc-fg-scroll-indicator--revealed', revealed);
+  var edgeBtn = document.getElementById('scc-fg-edge-rail');
+  if (edgeBtn && !sccFgIsHoverDesktop()) {
+    edgeBtn.classList.toggle('scc-fg-edge-btn--on', !!revealed); edgeBtn.setAttribute('aria-pressed', revealed ? 'true' : 'false');
+    document.documentElement.style.setProperty('--scc-fg-rail-w', (revealed ? wrap.getBoundingClientRect().width : 0) + 'px');
+  }
   if (backdrop) backdrop.classList.toggle('scc-fg-scroll-backdrop--revealed', revealed);
   // Re-measure now, not at the next scheduled build: sccFgPositionScrollBackdrop()
   // sizes the backdrop off each real label's OWN measured position, and
@@ -20714,6 +21530,7 @@ function sccFgDrawDocument(num) {
     inner.innerHTML = openingHtml + '<div class="scc-fg-empty-doc">No Field Guide written for Session ' + num + ' yet.</div>';
     SCC_FG_RENDERED_SESSION_NUM = num;
     sccFgBuildScrollIndicator();
+  sccFgQpReapplyFilters();
     sccFgEnsureScrollListenerBound();
     sccFgEnsureRailSwipeBound();
     return;
@@ -20728,6 +21545,8 @@ function sccFgDrawDocument(num) {
   if (window.DmClock) DmClock.update();
   SCC_FG_RENDERED_SESSION_NUM = num;
   sccFgBuildScrollIndicator();
+  sccFgQpReapplyFilters();
+  sccFgGgEnsureObserver(); sccFgGgWireVideos(); sccFgWatchTimeBarHeight();
   sccFgEnsureScrollListenerBound();
   sccFgEnsureRailSwipeBound();
 }

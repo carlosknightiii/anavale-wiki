@@ -139,7 +139,8 @@ const KNOWN_BLOCK_TYPES = new Set([
 // question_panel (2026-09-18) -- Sticky Question Panel module, see
 // js/fg-category-schema.json's own $specialCasedCategories entry for it.
 // scene_cast (2026-09-18) -- Scene Cast quick-glance panel, same entry file.
-const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards', 'question_panel', 'scene_cast']);
+// question_ref (2026-10-31) -- inline mirror of question_panel questions.
+const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 'scenario_cards', 'question_panel', 'scene_cast', 'question_ref']);
 
 // The die-emoji skill-check paragraph shape sccFgStyleSkillChecks() looks
 // for inside a box's html, reproduced here only to *validate* -- check
@@ -147,7 +148,9 @@ const SPECIAL_CASED_BOX_CATEGORIES = new Set(['quest_beats', 'combat_outcomes', 
 // die glyph also has the "<strong>Ability DC N</strong>" shape immediately
 // after it, since a near-miss (wrong emoji, missing DC, etc.) renders as a
 // plain, un-styled paragraph in dm.html with no error of any kind.
-const SKILL_CHECK_RE = /<p>\s*\u{1F3B2}\s*<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>/gu;
+// Matches the renderer: optional <em>title</em>, and either "Ability DC N" or a
+// contested header "Contested: X vs Y" (S3 audit note 40c, 2026-10-31).
+const SKILL_CHECK_RE = /<p>\s*\u{1F3B2}\s*(?:<em>[^<]+?<\/em>\s*)?<strong>(?:Contested:[^<]+?|[^<]+?\s+DC\s+\d+)<\/strong>[\s\S]*?<\/p>/gu;
 // A bare die-glyph paragraph that does NOT match the shape above -- used to
 // flag "this looks like it was meant to be a skill check but doesn't parse
 // as one" without falsely flagging ordinary paragraphs that just happen to

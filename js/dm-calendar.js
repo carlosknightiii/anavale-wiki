@@ -3,8 +3,9 @@
 // campaign_clock row (id=1, `minutes` since Janufrost 1, 312 AA 00:00,
 // `region` = region id used for temperatures):
 //   1. DmClock      the pinned time-of-day bar at the top of the Field Guide
-//   2. scenario cards  optional card.duration_minutes, "They do this" ->
-//                   confirm -> Advance / Keep the time -> Undo
+//   2. scenario cards  optional card.duration_minutes (+ duration_label):
+//                   "Advance the clock N min" -> Undo time; on decision
+//                   cards this also logs the decision, once
 //   3. calendar panel  the Calendar entry in the Field Guide quick-actions
 //                   drawer (sidebar rail), reading world_concepts
 //                   'anavale-calendar'
@@ -158,72 +159,170 @@
   function ckey(domId, idx) { return domId + '|' + idx; }
   function redrawCard(domId, idx) { if (typeof root.sccFgSwitchScenarioCard === 'function') root.sccFgSwitchScenarioCard(domId, idx, null); }
 
-  // Small chip shown under a tile's title (and in the open card).
-  root.sccCalDurChip = function(card) {
+  // Small chip shown under a tile's title (short) and in the open card
+  // (long form, naming what takes the time -- S3 audit note 41).
+  root.sccCalDurChip = function(card, long) {
     var d = card && Number(card.duration_minutes);
-    return d > 0 ? '<span class="sct-chip">' + CLOCK_ICON + 'Takes ' + esc(Cal.durStr(d)) + '</span>' : '';
+    if (!(d > 0)) return '';
+    var lbl = card.duration_label ? String(card.duration_label) : '';
+    var text = (long && lbl) ? esc(lbl) + ': about ' + esc(Cal.durStr(d)) : 'Takes ' + esc(Cal.durStr(d));
+    return '<span class="sct-chip' + (long && lbl ? ' sct-chip--long' : '') + '">' + CLOCK_ICON + text + '</span>';
   };
+
+  // ── Time + decision are one action (S3 audit notes 35/41) ──
+  // A decision card's logged-decision row records the advance in its own
+  // content ("Advanced the clock 40 min (+40 min)"), so the minutes are
+  // added exactly once no matter which control the DM uses, and survive a
+  // reload. Cards without a decision keep the in-memory CARD state.
+  var MARK_RE = /\(\+(\d+) min\)/;
+  root.sccCalTimeMarker = function(d) { return 'Advanced the clock ' + Cal.durStr(d) + ' (+' + d + ' min)'; };
+  root.sccCalMarkerMinutes = function(content) { var m = MARK_RE.exec(String(content || '')); return m ? parseInt(m[1], 10) : 0; };
+  function cardInfo(domId, idx) {
+    var found = root.sccFgFindScenarioCardsBlockByDomId(domId);
+    var card = found && found.block.cards && found.block.cards[idx];
+    var info = { block: found && found.block, card: card, d: card ? Number(card.duration_minutes) || 0 : 0, row: null, title: null };
+    if (card && card.decision && typeof root.sccFgScenarioDecisionTitle === 'function') {
+      info.title = root.sccFgScenarioDecisionTitle(found.block, card);
+      var log = (root.SCC_FG_COMBAT_OUTCOME_LOG_CACHE || {})[root.sccFgActiveSessionNum()] || [];
+      info.row = log.find(function(n) { return n.title === info.title; }) || null;
+    }
+    return info;
+  }
+  root.sccCalCardInfo = cardInfo;
 
   // Block rendered at the top of an open card's body.
   root.sccCalCardTimeHtml = function(card, domId, idx) {
     var d = card && Number(card.duration_minutes);
-    var out = '';
-    if (d > 0) {
-      var st = CARD[ckey(domId, idx)] || null;
-      var stage = st && st.stage;
-      var arriveMin = Clock.minutes() + d;
-      var ap = Cal.parts(arriveMin);
-      var k = '\'' + esc(domId) + '\',' + idx;
-      var inner = root.sccCalDurChip(card);
-      if (!stage && !locked()) {
-        inner += '<div class="sct-row"><button type="button" class="sct-btn" onclick="sccCalCardChoose(' + k + ')">They do this</button></div>';
-      } else if (stage === 'confirm') {
-        inner += '<div class="sct-text">Move the clock ' + esc(Cal.durStr(d)) + '? They arrive around <strong>' + esc(Cal.clockStr(ap.minOfDay)) + ', ' + esc(Cal.periods[ap.periodIdx].name) + '</strong>.</div>'
-          + '<div class="sct-row"><button type="button" class="sct-btn sct-btn--gold" onclick="sccCalCardAdvance(' + k + ')">Advance ' + esc(Cal.durStr(d)) + '</button>'
-          + '<button type="button" class="sct-btn" onclick="sccCalCardKeep(' + k + ')">Keep the time</button></div>';
-      } else if (stage === 'done' || stage === 'kept') {
-        inner += '<div class="sct-done"><span class="sct-done-text">' + CHECK_ICON + (stage === 'kept' ? 'Chosen, time unchanged' : 'Advanced to ' + esc(Cal.clockStr(Cal.parts(Clock.minutes()).minOfDay))) + '</span>'
-          + (locked() ? '' : '<button type="button" class="sct-undo" onclick="sccCalCardUndo(' + k + ')">Undo</button>') + '</div>';
-      }
-      out += '<div class="sct-box' + (stage ? ' sct-box--active' : '') + '">' + inner + '</div>';
+    if (!(d > 0)) return '';
+    var k = '\'' + esc(domId) + '\',' + idx;
+    var inner = root.sccCalDurChip(card, true);
+    var advanced = false, prevNote = '';
+    if (card.decision) {
+      var info = cardInfo(domId, idx);
+      advanced = !!(info.row && root.sccCalMarkerMinutes(info.row.content));
+    } else {
+      var st = CARD[ckey(domId, idx)];
+      advanced = !!(st && st.stage === 'done');
     }
-    return out;
+    if (!advanced) {
+      if (!locked()) {
+        var ap = Cal.parts(Clock.minutes() + d);
+        inner += '<div class="sct-row"><button type="button" class="sct-btn sct-btn--gold" onclick="sccCalCardGo(' + k + ')">Advance the clock ' + esc(Cal.durStr(d)) + '</button>'
+          + '<span class="sct-text sct-text--inline">They would finish around ' + esc(Cal.clockStr(ap.minOfDay)) + ', ' + esc(Cal.periods[ap.periodIdx].name)
+          + (card.decision ? '. This also logs the decision.' : '.') + '</span></div>';
+      }
+    } else {
+      inner += '<div class="sct-done"><span class="sct-done-text">' + CHECK_ICON + 'Clock advanced ' + esc(Cal.durStr(d)) + ', now ' + esc(Cal.clockStr(Cal.parts(Clock.minutes()).minOfDay)) + '</span>'
+        + (locked() ? '' : '<button type="button" class="sct-undo" onclick="sccCalCardUndo(' + k + ')">Undo time</button>') + '</div>';
+    }
+    return '<div class="sct-box' + (advanced ? ' sct-box--active' : '') + '">' + inner + '</div>';
   };
 
-  // DM editor field: the card's optional time cost, saved to the block.
+  // DM editor fields: minutes and what takes the time, saved to the card.
   root.sccCalCardEditHtml = function(card, domId, idx) {
     if (locked()) return '';
     var v = card && Number(card.duration_minutes) > 0 ? Number(card.duration_minutes) : '';
-    return '<label class="sct-edit">Time cost in minutes (optional) <input type="number" min="0" step="5" value="' + v + '" aria-label="Minutes this card takes" onchange="sccCalCardSetDuration(\'' + esc(domId) + '\',' + idx + ',this.value)"></label>';
+    var lbl = card && card.duration_label ? String(card.duration_label) : '';
+    var k = '\'' + esc(domId) + '\',' + idx;
+    return '<div class="sct-edit-row"><label class="sct-edit">Time cost in minutes <input type="number" min="0" step="5" value="' + v + '" placeholder="e.g. 20" aria-label="Minutes this card takes" onchange="sccCalCardSetDuration(' + k + ',this.value)"></label>'
+      + '<label class="sct-edit sct-edit--wide">What takes this long <input type="text" value="' + esc(lbl) + '" placeholder="e.g. Fetching Wrenna and coming back" aria-label="What takes this long" onchange="sccCalCardSetDurationLabel(' + k + ',this.value)"></label></div>';
   };
 
-  root.sccCalCardChoose = function(domId, idx) {
+  function refreshLogThen(fn) {
+    var num = root.sccFgActiveSessionNum();
+    return root.sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
+      root.SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
+      if (fn) fn();
+    });
+  }
+  function hdrs(extra) {
+    var h = { 'Content-Type': 'application/json', 'apikey': root.SCC_ANON, 'Authorization': 'Bearer ' + root.SCC_ANON };
+    for (var k in (extra || {})) h[k] = extra[k];
+    return h;
+  }
+
+  // One press: advance once, and for decision cards make sure the decision
+  // is logged too (with the advance recorded in its content).
+  root.sccCalCardGo = function(domId, idx) {
     if (locked()) return;
     Clock.ensure();
-    CARD[ckey(domId, idx)] = { stage: 'confirm', prev: null };
-    redrawCard(domId, idx);
+    var info = cardInfo(domId, idx);
+    var d = info.d;
+    if (!(d > 0)) return;
+    if (!info.card.decision) {
+      var prevM = Clock.minutes();
+      CARD[ckey(domId, idx)] = { stage: 'done', prev: prevM };
+      Clock.set(prevM + d);
+      redrawCard(domId, idx);
+      return;
+    }
+    if (info.row && root.sccCalMarkerMinutes(info.row.content)) return; // already counted
+    var num = root.sccFgActiveSessionNum();
+    var content = root.sccCalTimeMarker(d);
+    var req = info.row
+      ? fetch(root.SCC_URL + '/rest/v1/session_note_entries?id=eq.' + info.row.id, { method: 'PATCH', headers: hdrs(), body: JSON.stringify({ content: content }) })
+      : fetch(root.SCC_URL + '/rest/v1/session_note_entries', { method: 'POST', headers: hdrs({ 'Prefer': 'return=representation' }), body: JSON.stringify({ session_number: num, category: 'quest', title: info.title, content: content }) });
+    req.then(function(r) {
+      if (!r.ok) { toast('Could not log this'); return; }
+      Clock.set(Clock.minutes() + d);
+      toast((info.row ? '' : 'Logged: ' + (info.card.decision.label || info.card.title) + '. ') + 'Clock advanced ' + Cal.durStr(d), 'success');
+      refreshLogThen(function() { if (root.sccFgRedrawScenarioCardsBlock) root.sccFgRedrawScenarioCardsBlock(domId, idx); });
+    }).catch(function() { toast('Could not log this'); });
   };
-  root.sccCalCardAdvance = function(domId, idx) {
-    var found = root.sccFgFindScenarioCardsBlockByDomId(domId);
-    var card = found && found.block.cards && found.block.cards[idx];
-    var d = card && Number(card.duration_minutes);
-    if (!(d > 0) || locked()) return;
-    var prev = Clock.minutes();
-    CARD[ckey(domId, idx)] = { stage: 'done', prev: prev };
-    Clock.set(prev + d);
-    redrawCard(domId, idx);
-  };
-  root.sccCalCardKeep = function(domId, idx) {
-    CARD[ckey(domId, idx)] = { stage: 'kept', prev: Clock.minutes() };
-    redrawCard(domId, idx);
-  };
+  // Undo only the time (the decision, if logged, stays logged).
   root.sccCalCardUndo = function(domId, idx) {
     if (locked()) return;
-    var st = CARD[ckey(domId, idx)];
-    if (st && st.prev != null && st.prev !== Clock.minutes()) Clock.set(st.prev);
-    delete CARD[ckey(domId, idx)];
-    redrawCard(domId, idx);
+    var info = cardInfo(domId, idx);
+    if (!info.card) return;
+    if (!info.card.decision) {
+      var st = CARD[ckey(domId, idx)];
+      if (st && st.prev != null && st.prev !== Clock.minutes()) Clock.set(st.prev);
+      delete CARD[ckey(domId, idx)];
+      redrawCard(domId, idx);
+      return;
+    }
+    var m = info.row ? root.sccCalMarkerMinutes(info.row.content) : 0;
+    if (!m) return;
+    fetch(root.SCC_URL + '/rest/v1/session_note_entries?id=eq.' + info.row.id, { method: 'PATCH', headers: hdrs(), body: JSON.stringify({ content: '' }) }).then(function(r) {
+      if (!r.ok) { toast('Could not undo'); return; }
+      Clock.set(Clock.minutes() - m);
+      refreshLogThen(function() { if (root.sccFgRedrawScenarioCardsBlock) root.sccFgRedrawScenarioCardsBlock(domId, idx); });
+    }).catch(function() { toast('Could not undo'); });
   };
+  // Used by the decision row (dm.html sccFgToggleLoggedEntry): logging a
+  // timed decision advances the clock in the same step; un-logging takes the
+  // recorded minutes back off. Content first (no side effects), then apply
+  // only once the log write succeeded.
+  root.sccCalDecisionContent = function(domId, idx) {
+    var info = cardInfo(domId, idx);
+    return (info.d > 0 && !locked()) ? root.sccCalTimeMarker(info.d) : '';
+  };
+  root.sccCalApplyDecisionTime = function(logging, content) {
+    if (locked()) return;
+    var m = root.sccCalMarkerMinutes(content);
+    if (!m) return;
+    Clock.ensure();
+    Clock.set(Clock.minutes() + (logging ? m : -m));
+  };
+  root.sccCalCardSetDurationLabel = function(domId, idx, raw) {
+    if (locked()) return;
+    var found = root.sccFgFindScenarioCardsBlockByDomId(domId);
+    var card = found && found.block.cards && found.block.cards[idx];
+    if (!card) return;
+    var t = String(raw || '').trim();
+    if (t) card.duration_label = t; else delete card.duration_label;
+    saveBlocks(domId, idx, 'Saved');
+  };
+  function saveBlocks(domId, idx, okMsg) {
+    var num = root.sccFgActiveSessionNum();
+    var row = root.SCC_FG_DOC_CACHE && root.SCC_FG_DOC_CACHE[num];
+    if (!row) return;
+    root.sccPatch('field_guide_sessions', '?session_number=eq.' + encodeURIComponent(num), { blocks: row.blocks }).then(function(r) {
+      if (!r.ok) toast('Could not save');
+      else toast(okMsg, 'success');
+      root.sccFgRedrawScenarioCardsBlock(domId, idx);
+    }).catch(function() { toast('Could not save'); });
+  }
   // Persists duration_minutes onto the card inside field_guide_sessions.blocks
   // (same whole-column PATCH the loot widget already uses). Empty or 0
   // removes the key so cards without a time cost stay exactly as authored.
