@@ -21145,7 +21145,9 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
           tier: unwrapped.dataset.fgRailTier || 'h2'
         });
       }
-      if (decl.scope === 'container') {
+      // DM 2026-10-31: the rail shows top-level sections only; card and
+      // question sub-entries are off. Flip SCC_FG_RAIL_CHILDREN to bring them back.
+      if (decl.scope === 'container' && SCC_FG_RAIL_CHILDREN) {
         // Every one of THIS container's own direct children carries
         // data-fg-rail-child-label (see sccFgOneScenarioCardsHtml/
         // sccFgOneQuestionPanelHtml) -- scoped via closest() to exclude a
@@ -21180,6 +21182,7 @@ function sccFgCollectScrollEntriesFrom(root, entries) {
 // bug-by-bug history. maxScroll is the same denominator used both here
 // and in sccFgUpdateScrollIndicator()'s fill-percentage calculation, by
 // design -- two different denominators was the OTHER round-3 bug class.
+var SCC_FG_RAIL_CHILDREN = false;
 var SCC_FG_SCROLL_STATE = { dotPositions: [], trackHeightPx: 0, bufferPx: 14, maxScroll: 0 };
 
 // Desktop auto-hide trigger strip (ANV-23) -- a class, not inline display,
