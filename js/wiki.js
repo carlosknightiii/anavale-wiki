@@ -1357,9 +1357,9 @@ function renderRegion(id, el) {
   // Info cards
   body += '<div class="entry-grid">'
     + '<div class="entry-card"><div class="entry-name">Gigglegloom</div>'
-    + '<div class="entry-body">' + esc(region.gigglegloom_notes) + '</div></div>'
+    + '<div class="entry-body">' + esc(region.gigglegloom_notes || (region.extra_data && region.extra_data.gigglegloom_notes) || '') + '</div></div>'
     + '<div class="entry-card"><div class="entry-name">Color Health</div>'
-    + '<div class="entry-tag">' + esc(region.color_health) + '</div>'
+    + colorHealthGauge(region.color_health)
     + '<div class="entry-body">' + esc(region.tone) + '</div></div>';
   body += '</div>';
 
@@ -1368,9 +1368,17 @@ function renderRegion(id, el) {
     body += '<div class="region-section"><div class="region-heading">Nations</div><div class="entry-grid">';
     rNations.forEach(function(n) {
       var nVis = getVisibility(n);
-      body += '<div class="entry-card" data-nav="nation/' + n.id + '" onclick="navigate(\'nation/' + n.id + '\')">'
-        + '<div class="entry-name"><span class="wiki-link">' + esc(n.name) + '</span></div>'
-        + '<div class="entry-tag">' + esc(n.government_type) + '</div>'
+      var nx = n.extra_data || {};
+      var nSig = window.NationExtra ? NationExtra.sigilUrl(n.id) : null;
+      body += '<div class="entry-card nation-card nx-k-' + esc(n.id) + '" data-nav="nation/' + n.id + '" onclick="navigate(\'nation/' + n.id + '\')">'
+        + '<div class="nation-card-head">'
+          + (nSig ? '<img class="nation-card-sigil" src="' + esc(nSig) + '" alt="Sigil of ' + esc(n.name) + '" onerror="this.style.display=\'none\'">' : '')
+          + '<div class="nation-card-titles">'
+            + '<div class="entry-name"><span class="wiki-link">' + esc(n.name) + '</span></div>'
+            + (nx.epithet ? '<div class="nation-card-epithet">' + esc(nx.epithet) + '</div>' : '')
+          + '</div>'
+        + '</div>'
+        + (nx.motto ? '<div class="nation-card-motto">&ldquo;' + esc(nx.motto) + '&rdquo;</div>' : '')
         + '<div class="entry-body">' + esc(n.summary) + '</div>'
         + (nVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
         + '</div>';
@@ -1451,72 +1459,294 @@ function renderNation(id, el) {
     return;
   }
 
-  // Visible — full render
-  var nCities = cities.filter(function(c) {
-    return c.nation === id && getVisibility(c) !== 'hidden';
-  }).sort(function(a,b) { return a.name.localeCompare(b.name); });
+  renderNationMagazine(nation, el);
+}
 
-  var factsHtml = [
-    ['Region',         titleCase(nation.region)],
-    ['Government',     nation.government_type],
-    ['Gov. Body',      nation.government_body],
-    ['Capital',        nation.capital],
-    ['Magic Affinity', nation.gigglegloom_affinity],
-    ['Color Health',   nation.color_health],
-  ].filter(function(r){ return r[1]; }).map(function(r) {
-    return '<div class="nation-fact-row">'
-      + '<div class="nation-fact-label">' + esc(r[0]) + '</div>'
-      + '<div class="nation-fact-value">' + esc(r[1]) + '</div>'
-      + '</div>';
+// ══ NATION PAGES (magazine layout) ════════════════════════════════════════════
+// Hero, lede, section headers, pull quotes, images, a schematic locator and a
+// Wikipedia-style infobox. Content comes from nations.description and
+// nations.extra_data (rendered through js/nation-extra.js's markdown helpers).
+// Never rendered on the player wiki: extra_data.threats, dimming_resistance,
+// dm_only (stripped at load), rivalry tone.
+
+// Static art and locator placement. Locator boxes are a schematic of Caparia
+// drawn from each kingdom's at_a_glance "Land" text, not the canon map.
+var NATION_CONFIG = {
+  solenmere: { hero: 'assets/images/nations/solenmere-solenveil.webp', heroCaption: 'Solenveil, the sun ford, capital of the Solenmere', box: [120, 62, 92, 74], label: 'Solenmere' },
+  zippan:    { hero: 'assets/images/nations/zippan-goober-bounce.webp', heroCaption: 'The Goober Bounce Meadows of western Caparia', box: [16, 76, 98, 70], label: 'Zippan' },
+  dingurei:  { hero: 'assets/images/nations/dingurei-doopu-peaks.webp', heroCaption: 'The Doopu Peaks and the Brightwall, on the Dingurei frontier', box: [218, 50, 72, 78], label: 'Dingurei' },
+  janiveth:  { hero: 'assets/images/nations/janiveth-sillywiggles.webp', heroCaption: 'The Sillywiggles Meadows below the Jani Mountains', box: [86, 152, 180, 48], label: 'Janiveth' },
+  opuri:     { box: [16, 10, 98, 60], label: 'Opuri' },
+  bunari:    { box: [296, 30, 58, 116], label: 'Bunari' }
+};
+
+var COLOR_HEALTH_LEVELS = [
+  { key: 'dimmed', label: 'Dimmed', words: ['dimmed', 'dire', 'severe', 'grey', 'gray'] },
+  { key: 'faded',  label: 'Faded',  words: ['faded', 'fading', 'deteriorating', 'poor', 'stage-1'] },
+  { key: 'muted',  label: 'Muted',  words: ['muted', 'moderate', 'variable', 'fair', 'mixed'] },
+  { key: 'vivid',  label: 'Vivid',  words: ['vivid', 'excellent', 'good', 'strong', 'high'] }
+];
+
+// Reads only the leading word of color_health. The rest of that free text is
+// never rendered: it can name secret threats.
+function colorHealthLevel(raw) {
+  var first = String(raw || '').trim().toLowerCase().split(/[\s,;:(—–-]+/)[0];
+  for (var i = 0; i < COLOR_HEALTH_LEVELS.length; i++) {
+    if (COLOR_HEALTH_LEVELS[i].words.indexOf(first) >= 0) return i;
+  }
+  return -1;
+}
+
+function colorHealthGauge(raw, compact) {
+  var lvl = colorHealthLevel(raw);
+  if (lvl < 0) return '';
+  var segs = COLOR_HEALTH_LEVELS.map(function(l, i) {
+    return '<span class="ch-seg ch-seg--' + l.key + (i <= lvl ? ' is-on' : '') + '"></span>';
   }).join('');
+  var L = COLOR_HEALTH_LEVELS[lvl];
+  return '<div class="ch-gauge ch-gauge--' + L.key + (compact ? ' ch-gauge--compact' : '') + '"'
+    + ' role="img" aria-label="Color health: ' + L.label + ', ' + (lvl + 1) + ' of 4">'
+    + '<div class="ch-track">' + segs + '</div>'
+    + '<div class="ch-label">' + L.label + '</div>'
+    + '</div>';
+}
 
-  var customsHtml = '';
-  if (nation.customs && nation.customs.length) {
-    customsHtml = '<div class="nation-section-heading">Customs</div>'
-      + '<ul class="wiki-list">'
-      + nation.customs.map(function(c) { return '<li>' + esc(c) + '</li>'; }).join('')
-      + '</ul>';
+function nxSlug(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+function nxFirstSentence(s) {
+  var t = String(s || '').trim();
+  var m = t.match(/^(.+?[.!?])(\s|$)/);
+  return (m ? m[1] : t).replace(/\.$/, '');
+}
+function nxParas(text) {
+  return String(text || '').split(/\n{2,}/).map(function(p) { return p.trim(); }).filter(Boolean);
+}
+function nxMdParas(paras) {
+  var NX = window.NationExtra;
+  return paras.map(function(p) { return NX ? NX.md(p) : '<p>' + esc(p) + '</p>'; }).join('');
+}
+function nxPull(text, nation) {
+  if (!text) return '';
+  return '<blockquote class="nx-pull"><p>' + esc(text) + '</p><cite>' + esc(nation.name) + '</cite></blockquote>';
+}
+
+// Schematic locator: Caparia's six kingdoms as tiles, this one highlighted.
+function nationLocatorSvg(nation) {
+  var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
+  var tiles = '';
+  Object.keys(NATION_CONFIG).forEach(function(k) {
+    var c = NATION_CONFIG[k];
+    if (!c.box) return;
+    var row = null;
+    for (var i = 0; i < nations.length; i++) { if (nations[i].id === k) { row = nations[i]; break; } }
+    if (!row || row.region !== nation.region) return;
+    var b = c.box, here = k === nation.id, vis = getVisibility(row) !== 'hidden';
+    tiles += '<g class="nx-loc-tile nx-k-' + k + (here ? ' is-here' : '') + (vis && !here ? ' is-link' : '') + '"'
+      + (vis && !here ? ' data-nav="nation/' + k + '" onclick="navigate(\'nation/' + k + '\')"' : '') + '>'
+      + '<rect x="' + b[0] + '" y="' + b[1] + '" width="' + b[2] + '" height="' + b[3] + '" rx="10"></rect>'
+      + '<text x="' + (b[0] + b[2] / 2) + '" y="' + (b[1] + b[3] / 2 + 4) + '" text-anchor="middle">' + esc(c.label) + '</text>'
+      + '</g>';
+  });
+  if (!tiles) return '';
+  return '<div class="nx-loc">'
+    + '<svg class="nx-loc-svg" viewBox="0 0 370 210" role="img" aria-label="Where ' + esc(nation.name) + ' lies in ' + esc(titleCase(nation.region)) + '">'
+    + '<text class="nx-loc-compass" x="352" y="200" text-anchor="end">N &#8593;</text>'
+    + tiles + '</svg>'
+    + '<div class="nx-loc-note">Kingdoms of ' + esc(titleCase(nation.region)) + ', schematic</div>'
+    + '</div>';
+}
+
+function nationInfoboxHtml(nation) {
+  var x = nation.extra_data || {};
+  var g = x.at_a_glance || {};
+  var NX = window.NationExtra;
+  var inl = function(t) { return NX ? NX.mdInline(t) : esc(t); };
+  var religions = typeof RELIGIONS !== 'undefined' ? RELIGIONS : [];
+  var faith = '';
+  if (x.dominant_religion) {
+    var rel = null;
+    for (var i = 0; i < religions.length; i++) { if (religions[i].id === x.dominant_religion) { rel = religions[i]; break; } }
+    faith = rel && getVisibility(rel) !== 'hidden'
+      ? '<span class="wiki-link" data-nav="religion/' + rel.id + '" onclick="navigate(\'religion/' + rel.id + '\')">' + esc(rel.name) + '</span>'
+      : esc(titleCase(x.dominant_religion));
   }
+  var leader = x.leader && x.leader.name
+    ? esc(x.leader.name) + (x.leader.title ? '<small>' + esc(x.leader.title) + '</small>' : '') : '';
+  var rows = [
+    ['Region', '<span class="wiki-link" data-nav="region/' + esc(nation.region) + '" onclick="navigate(\'region/' + esc(nation.region) + '\')">' + esc(titleCase(nation.region)) + '</span>'],
+    ['Capital', g.Capital ? esc(/^none\b/i.test(g.Capital) ? g.Capital.replace(/\.$/, '') : nxFirstSentence(g.Capital)) : (nation.capital_city ? esc(nation.capital_city) : '')],
+    ['Government', esc(nation.government || '')],
+    ['Leader', leader],
+    ['Peoples', g.Peoples ? inl(g.Peoples) : ''],
+    ['Faith', faith],
+    ['Magic', g.Magic ? inl(g.Magic) : esc(x.gigglegloom_affinity || '')],
+    ['Confederation', x.founding_member ? esc(x.founding_member) : '']
+  ].filter(function(r) { return r[1]; });
 
-  var citiesHtml = '';
-  if (nCities.length) {
-    citiesHtml = '<div class="nation-section-heading">Cities & Settlements</div>'
-      + '<div class="entry-grid">';
-    nCities.forEach(function(c) {
-      var cVis = getVisibility(c);
-      citiesHtml += '<div class="entry-card" data-nav="city/' + c.id + '" onclick="navigate(\'city/' + c.id + '\')">'
-        + '<div class="entry-name"><span class="wiki-link">' + esc(c.name) + '</span></div>'
-        + '<div class="entry-tag">' + esc(c.type) + '</div>'
-        + '<div class="entry-body">' + esc(c.summary || '') + '</div>'
-        + (cVis === 'teaser' ? '<div class="entry-teaser-hint">✦ Not yet fully discovered</div>' : '')
-        + '</div>';
+  var url = NX ? NX.sigilUrl(nation.id) : null;
+  var sig = x.sigil || {};
+  return '<aside class="nx-infobox nx-k-' + esc(nation.id) + '">'
+    + '<div class="nx-ib-head">'
+      + '<div class="nx-ib-name">' + esc(nation.name) + '</div>'
+      + (x.epithet ? '<div class="nx-ib-epithet">' + esc(x.epithet) + '</div>' : '')
+    + '</div>'
+    + (url ? '<figure class="nx-ib-sigil"><img src="' + esc(url) + '" alt="Sigil of ' + esc(nation.name) + '" onerror="this.parentNode.style.display=\'none\'">'
+        + (sig.design ? '<figcaption>' + esc(sig.design) + '</figcaption>' : '') + '</figure>' : '')
+    + (x.motto ? '<div class="nx-ib-motto"><span>Motto</span>&ldquo;' + esc(x.motto) + '&rdquo;</div>' : '')
+    + '<dl class="nx-ib-rows">'
+    + rows.map(function(r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd>'; }).join('')
+    + (colorHealthGauge(x.color_health) ? '<dt>Color health</dt><dd>' + colorHealthGauge(x.color_health, true) + '</dd>' : '')
+    + '</dl>'
+    + '<div class="nx-ib-section">Location</div>'
+    + nationLocatorSvg(nation)
+    + '</aside>';
+}
+
+function renderNationMagazine(nation, el) {
+  var id = nation.id;
+  var NX = window.NationExtra;
+  var x = nation.extra_data || {};
+  var cfg = NATION_CONFIG[id] || {};
+  var quotes = Array.isArray(x.pull_quotes) ? x.pull_quotes : [];
+  var cities = typeof CITIES !== 'undefined' ? CITIES : [];
+  var pois = typeof POIS !== 'undefined' ? POIS : [];
+  var creatures = typeof CREATURES !== 'undefined' ? CREATURES : [];
+  var sections = []; // [title, html]
+
+  // Lede + "Who They Are"
+  var paras = nxParas(nation.description || nation.summary || '');
+  var lede = paras.shift() || '';
+  var who = '';
+  paras.forEach(function(p, i) {
+    who += nxMdParas([p]);
+    if (i === 1 && quotes[0]) who += nxPull(quotes[0], nation);
+  });
+  if (paras.length < 2 && quotes[0]) who += nxPull(quotes[0], nation);
+  if (who) sections.push(['Who They Are', who]);
+
+  // Origin legend
+  if (x.origin_legend) {
+    var ol = nxParas(x.origin_legend), olHtml = '';
+    ol.forEach(function(p, i) {
+      olHtml += nxMdParas([p]);
+      if (i === ol.length - 2 && quotes[1]) olHtml += nxPull(quotes[1], nation);
     });
-    citiesHtml += '</div>';
+    if (ol.length < 2 && quotes[1]) olHtml += nxPull(quotes[1], nation);
+    sections.push(['How They Began' + (x.origin_title ? ': ' + x.origin_title : ''), olHtml]);
   }
+
+  // Color and creatures, with portraits of known creatures it mentions
+  if (x.color_and_creatures) {
+    var cc = x.color_and_creatures, lc = cc.toLowerCase();
+    var seen = {};
+    var mentioned = creatures.filter(function(c) {
+      if (!c.image || getVisibility(c) === 'hidden' || seen[c.id]) return false;
+      var n = String(c.name || '').toLowerCase();
+      if (!n) return false;
+      var stem = n.replace(/s$/, '');
+      var hit = lc.indexOf(n) >= 0 || (stem.length > 4 && lc.indexOf(stem) >= 0);
+      if (hit) seen[c.id] = 1;
+      return hit;
+    }).slice(0, 6);
+    var strip = mentioned.length ? '<div class="nx-creatures">' + mentioned.map(function(c) {
+      return '<figure class="nx-creature" data-nav="creature/' + c.id + '" onclick="navigate(\'creature/' + c.id + '\')">'
+        + '<img src="' + esc(c.image) + '" alt="' + esc(c.name) + '" loading="lazy">'
+        + '<figcaption>' + esc(c.name) + '</figcaption></figure>';
+    }).join('') + '</div>' : '';
+    sections.push(['Color and Creatures', nxMdParas(nxParas(cc)) + strip]);
+  }
+
+  // Customs and beliefs
+  var cb = '';
+  if (nation.culture) cb += '<p>' + esc(nation.culture) + '</p>';
+  if (nation.beliefs) cb += '<p>' + esc(nation.beliefs) + '</p>';
+  if (Array.isArray(x.customs) && x.customs.length) {
+    cb += '<ul class="nx-customs">' + x.customs.map(function(c) {
+      var parts = String(c).split(/\s+[—–]\s+/);
+      return '<li>' + (parts.length > 1 ? '<b>' + esc(parts[0]) + '.</b> ' + esc(parts.slice(1).join(', ')) : esc(c)) + '</li>';
+    }).join('') + '</ul>';
+  }
+  if (cb) sections.push(['Customs and Beliefs', cb]);
+
+  // At a glance (keys the infobox does not already carry)
+  var g = x.at_a_glance || {};
+  var skip = { Capital: 1, Government: 1, Peoples: 1, Faith: 1, Magic: 1 };
+  var gk = Object.keys(g).filter(function(k) { return !skip[k]; });
+  if (gk.length) {
+    sections.push(['At a Glance', '<dl class="nx-glance">' + gk.map(function(k) {
+      return '<dt>' + esc(k) + '</dt><dd>' + (NX ? NX.mdInline(g[k]) : esc(g[k])) + '</dd>';
+    }).join('') + '</dl>']);
+  }
+
+  // Rivalries
+  if (Array.isArray(x.rivalries) && x.rivalries.length) {
+    sections.push(['Rivalries', '<div class="nx-rivals">' + x.rivalries.map(function(r) {
+      return '<div class="nx-rival"><b>' + esc(r.with) + '</b><p>' + (NX ? NX.mdInline(r.text) : esc(r.text)) + '</p></div>';
+    }).join('') + '</div>']);
+  }
+
+  // Leader
+  if (x.leader && x.leader.name) {
+    sections.push(['Leadership', '<div class="nx-leader"><small>' + esc(x.leader.title || '') + '</small><b>' + esc(x.leader.name) + '</b>'
+      + (x.leader.note ? '<p>' + (NX ? NX.mdInline(x.leader.note) : esc(x.leader.note)) + '</p>' : '') + '</div>'
+      + (g.Government ? '<p>' + (NX ? NX.mdInline(g.Government) : esc(g.Government)) + '</p>' : '')]);
+  }
+
+  // At the Signing
+  if (x.accord_contribution) sections.push(['At the Signing', nxMdParas(nxParas(x.accord_contribution))]);
+
+  // Places: visible settlements and sites
+  var places = cities.filter(function(c) { return c.nation === id && getVisibility(c) !== 'hidden'; })
+    .map(function(c) { return { kind: 'city', row: c }; })
+    .concat(pois.filter(function(p) { return p.nation === id && getVisibility(p) !== 'hidden'; })
+    .map(function(p) { return { kind: 'poi', row: p }; }));
+  places.sort(function(a, b) { return (b.row.image ? 1 : 0) - (a.row.image ? 1 : 0) || a.row.name.localeCompare(b.row.name); });
+  if (places.length) {
+    sections.push(['Places', '<div class="nx-places">' + places.map(function(pl) {
+      var r = pl.row, hash = pl.kind + '/' + r.id;
+      return '<figure class="nx-place' + (r.image ? '' : ' nx-place--noimg') + '" data-nav="' + hash + '" onclick="navigate(\'' + hash + '\')">'
+        + (r.image ? '<img src="' + esc(r.image) + '" alt="' + esc(r.name) + '" loading="lazy">' : '')
+        + '<figcaption><b>' + esc(r.name) + '</b><span>' + esc(r.summary || '') + '</span></figcaption></figure>';
+    }).join('') + '</div>']);
+  }
+
+  // Contents
+  var toc = sections.length > 2 ? '<nav class="nx-toc"><div class="nx-toc-title">Contents</div><ol>'
+    + sections.map(function(s) {
+        return '<li><a onclick="var t=document.getElementById(\'nx-' + nxSlug(s[0]) + '\');if(t)t.scrollIntoView({behavior:\'smooth\'});return false;" href="#nation/' + esc(id) + '">' + esc(s[0]) + '</a></li>';
+      }).join('') + '</ol></nav>' : '';
+
+  var hero = '<header class="nx-hero nx-k-' + esc(id) + (cfg.hero ? ' has-img' : '') + '">'
+    + (cfg.hero ? '<img class="nx-hero-img" src="' + esc(cfg.hero) + '" alt="' + esc(cfg.heroCaption || nation.name) + '">' : '')
+    + (!cfg.hero && NX && NX.sigilUrl(id) ? '<img class="nx-hero-sigil" src="' + esc(NX.sigilUrl(id)) + '" alt="" aria-hidden="true">' : '')
+    + '<div class="nx-hero-scrim"></div>'
+    + '<div class="nx-hero-text">'
+      + '<div class="nx-hero-eyebrow">' + esc(titleCase(nation.region)) + ' &middot; Nation</div>'
+      + '<h1 class="nx-hero-title">' + esc(nation.name) + '</h1>'
+      + (x.epithet ? '<div class="nx-hero-epithet">' + esc(x.epithet) + '</div>' : '')
+      + (x.motto ? '<div class="nx-hero-motto">&ldquo;' + esc(x.motto) + '&rdquo;</div>' : '')
+    + '</div>'
+    + (cfg.hero && cfg.heroCaption ? '<div class="nx-hero-caption">' + esc(cfg.heroCaption) + '</div>' : '')
+    + '</header>';
 
   el.innerHTML = breadcrumb([
       { label: 'Regions', hash: 'region/' + nation.region },
       { label: titleCase(nation.region), hash: 'region/' + nation.region },
       { label: nation.name, hash: 'nation/' + id }
     ])
-    + pageHeader(titleCase(nation.region) + ' · Nation', nation.name, nation.summary)
-    + entryImage(nation.image, nation.name)
-    + (window.NationExtra ? NationExtra.topHtml(nation) + NationExtra.descriptionHtml(nation) : '')
-    + '<div class="nation-layout">'
-    + '<div class="nation-body">'
-    + '<p>' + esc(nation.culture) + '</p>'
-    + (nation.beliefs ? '<div class="nation-section-heading">Beliefs</div><p>' + esc(nation.beliefs) + '</p>' : '')
-    + customsHtml
-    + (nation.gigglegloom_notes ? '<div class="nation-section-heading">Gigglegloom</div><p>' + esc(nation.gigglegloom_notes) + '</p>' : '')
-    + (nation.threats ? '<div class="nation-section-heading">Threats & Shadows</div><p>' + esc(nation.threats) + '</p>' : '')
-    + (window.NationExtra ? NationExtra.sectionsHtml(nation) : '')
-    + citiesHtml
+    + '<div class="nx-page nx-k-' + esc(id) + '">'
+    + hero
+    + '<div class="nx-layout">'
+      + '<article class="nx-article nation-body">'
+        + (lede ? '<div class="nx-lede">' + nxMdParas([lede]) + '</div>' : '')
+        + toc
+        + sections.map(function(s) {
+            return '<section class="nx-sec" id="nx-' + nxSlug(s[0]) + '"><h2 class="nx-sec-h">' + esc(s[0]) + '</h2><div class="nx-body">' + s[1] + '</div></section>';
+          }).join('')
+        + renderAssociatedCharacters(getAssociatedCharacters('nations', id))
+      + '</article>'
+      + nationInfoboxHtml(nation)
     + '</div>'
-    + '<div class="nation-facts">'
-    + '<div class="nation-facts-title">⚑ Quick Facts</div>'
-    + factsHtml
-    + '</div></div>'
-    + renderAssociatedCharacters(getAssociatedCharacters('nations', id));
+    + '</div>';
 }
 
 function renderCity(id, el) {
@@ -1612,12 +1842,12 @@ function renderCity(id, el) {
     ['Nation',     nation ? nation.name : titleCase(city.nation)],
     ['Region',     titleCase(city.region)],
     ['Population', city.population || null],
-    ['Color',      city.color_health],
+    ['Color',      colorHealthLevel(city.color_health) >= 0 ? { html: colorHealthGauge(city.color_health, true) } : null],
     ['Formery',    city.formery_present ? 'Yes — office present' : null]
   ].filter(function(r){ return r[1]; }).map(function(r) {
     return '<div class="nation-fact-row">'
       + '<div class="nation-fact-label">' + esc(r[0]) + '</div>'
-      + '<div class="nation-fact-value">' + esc(r[1]) + '</div>'
+      + '<div class="nation-fact-value">' + (r[1] && r[1].html ? r[1].html : esc(r[1])) + '</div>'
       + '</div>';
   }).join('');
 
