@@ -2528,6 +2528,7 @@
     }
     .cs-inv-del:hover { color: #f87171; }
     .cs-inv-td-price { white-space: nowrap; }
+    .cs-inv-weight-note { display: block; font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; cursor: help; }
     .cs-price-g { color: var(--money-text-gold); font-weight: 700; }
     .cs-price-s { color: var(--money-text-silver); font-weight: 700; }
     .cs-price-c { color: var(--money-text-copper); font-weight: 700; }
@@ -5978,8 +5979,15 @@
 
   // ── Overview weight bar — capacity = STR × 15, current = full inventory
   // (equipped + carried), same sum the Carrying bar (renderCarryingBar) uses. ──
+  // DM 2026-10-31: vehicles (Vehicle category, e.g. the Supply Cart) are
+  // pulled by a companion, not carried, so they don't count toward weight.
+  function isVehicleInvRow(item) {
+    var c = item.item_id && CATALOG_CACHE[item.item_id] ? CATALOG_CACHE[item.item_id].category : item.item_type;
+    return String(c || '').toLowerCase() === 'vehicle';
+  }
   function computeCarriedWeight() {
     return INVENTORY.reduce(function(sum, item) {
+      if (isVehicleInvRow(item)) return sum;
       var w = item.item_id ? (catalogWeightFor(item.item_id) || 0) : (parseFloat(item.weight_lb) || 0);
       return sum + (w * (parseInt(item.quantity) || 0));
     }, 0);
@@ -7452,6 +7460,7 @@
         + '</td></tr>';
     } else {
       tbody.innerHTML = rows.map(renderInvRow).join('');
+      if (typeof wireAllTooltips === 'function') wireAllTooltips();
     }
     renderBulkDeleteBar();
   }
@@ -7506,7 +7515,7 @@
         + name + '</td>'
       + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-price">' + formatPriceHtml(costGp, costSp, costCp) + '</td>'
-      + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + '</td>'
+      + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + (isVehicleInvRow(item) ? '<span class="cs-inv-weight-note" data-tip="Pulled by your companion, so it does not count toward what you carry.">not carried</span>' : '') + '</td>'
       + '<td class="cs-inv-td cs-inv-td-specs">' + specs + '</td>'
       + '<td class="cs-inv-td cs-inv-td-desc">' + desc + '</td>'
       + '<td class="cs-inv-td cs-inv-td-actions">'
