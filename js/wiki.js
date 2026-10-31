@@ -620,6 +620,8 @@ function buildWikiLinkMap() {
 
   creatures.filter(function(c) { return getVisibility(c) !== 'hidden'; }).forEach(function(c) {
     _wikiLinkMap.push({ term: c.name, hash: 'creature/' + c.id });
+    // Singular form too: "a Fluffet", "one Bumble Frog"
+    if (/[^s]s$/.test(c.name) && c.name.length >= 6) _wikiLinkMap.push({ term: c.name.slice(0, -1), hash: 'creature/' + c.id });
   });
 
   orgs.filter(function(o) { return getVisibility(o) !== 'hidden'; }).forEach(function(o) {
@@ -677,7 +679,21 @@ function buildWikiLinkMap() {
     { term: 'Jugabi',           hash: 'region/jugabi' },
     { term: 'Voidblush',        hash: 'org/prism-exchange' },
     { term: 'Prior Stone',      hash: 'region/caparia' },
-    { term: 'Pogglewog',        hash: 'home' }
+    { term: 'Pogglewog',        hash: 'home' },
+    // Short names and aliases for pages that exist (audit, Oct 2026)
+    { term: 'Anavale',          hash: 'home' },
+    { term: 'Dimmed',           hash: 'color' },
+    { term: 'Faded',            hash: 'color' },
+    { term: 'the Scar',         hash: 'poi/partition-scar' },
+    { term: 'the Signing',      hash: 'org/pogglewog-confederation' },
+    { term: 'Signing Table',    hash: 'org/pogglewog-confederation' },
+    { term: 'Confederation Council', hash: 'org/pogglewog-confederation' },
+    { term: 'Confederation',    hash: 'org/pogglewog-confederation' },
+    { term: 'Conclave',         hash: 'org/gigglegloom-conclave' },
+    { term: 'Sorvathi',         hash: 'nation/sorvathi-conclave' },
+    { term: 'Telvari',          hash: 'nation/telvari-exchange' },
+    { term: 'Accord Day',       hash: 'calendar' },
+    { term: 'Gerald',           hash: 'character/gobblewump-gerald' }
   ];
   statics.forEach(function(s) { _wikiLinkMap.push(s); });
 
