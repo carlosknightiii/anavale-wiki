@@ -8804,7 +8804,7 @@ function showDMToast(msg, type) {
 .scc-fg-doc-subtitle { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--dm-text); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-tagline { font-family: var(--font-body); font-size: 0.95rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 0.2rem; }
 .scc-fg-doc-meta { font-family: var(--font-body); font-size: 0.8rem; color: var(--dm-text-muted); text-align: center; margin-bottom: 1.25rem; }
-.scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
+.scc-fg-doc-h1 { font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; color: var(--dm-text); margin: 1.75rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 2px solid var(--dm-gold); letter-spacing: 0.02em; }
 /* ── Quest-tied h1 (block.quest_id set) -- item 10, 2026-08-26. A real
    badge + subtitle on the heading itself, plus a continuous gold accent
    band down every block in that quest's section (h1 through its last
@@ -8819,7 +8819,7 @@ function showDMToast(msg, type) {
   border-radius: 999px; padding: 0.15rem 0.6rem; margin-bottom: 0.4rem;
 }
 .scc-fg-h1-quest-badge:hover { background: rgba(240,180,41,0.22); }
-.scc-fg-h1-quest-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--dm-text); letter-spacing: 0.02em; }
+.scc-fg-h1-quest-title { font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; color: var(--dm-text); letter-spacing: 0.02em; }
 .scc-fg-h1-quest-subtitle { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 400; color: var(--dm-text-muted); margin-top: 0.25rem; }
 .scc-fg-quest-section-block { border-left: 3px solid var(--dm-gold); padding-left: 0.85rem; }
 /* Was #7eb8f0 (blue) -- a pre-existing, category-system-unrelated hardcoded
@@ -8830,7 +8830,8 @@ function showDMToast(msg, type) {
    category-bleed bug, just two unrelated things that happened to clash.
    Plain text color instead, matching h1's own approach (size/weight/border
    already carry the hierarchy, the color doesn't need to). */
-.scc-fg-doc-h2 { font-family: var(--font-body); font-size: 1.25rem; font-weight: 700; color: var(--dm-text); margin: 2.1rem 0 0.4rem; }
+/* S3 audit note 18: h2 enlarged so section headings stand out in the long guide. */
+.scc-fg-doc-h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--dm-text); margin: 2.3rem 0 0.5rem; letter-spacing: 0.01em; }
 /* A featured h2 (Off-Script Scenarios' table headers, e.g. "At the Forres
    Brothers Inn") -- the wrapper carries the h2's own top/bottom spacing so
    it reads identically to a plain h2 from the outside; the h2 itself
@@ -9357,7 +9358,7 @@ function showDMToast(msg, type) {
 /* ANV-22: the context title is the prominent element (larger, bolder,
    full-strength text color); the skill/DC line below it is secondary. */
 .scc-fg-check-title {
-  font-family: var(--font-headers); font-size: 1.25rem; font-weight: 700;
+  font-family: var(--font-headers); font-size: 1.4rem; font-weight: 700;
   line-height: 1.25; color: var(--dm-text);
   margin-bottom: 0.3rem;
 }
@@ -9375,16 +9376,17 @@ function showDMToast(msg, type) {
 .scc-fg-check-for .scc-fg-featured-item { width: 56px; gap: 0.2rem; }
 .scc-fg-check-for .scc-fg-featured-img, .scc-fg-check-for .scc-fg-featured-fallback { width: 44px; height: 44px; }
 .scc-fg-check-for .scc-fg-featured-name { font-size: 0.72rem; }
-.scc-fg-check-icon { font-size: 0.95rem; line-height: 1; }
+.scc-fg-check-icon { font-size: 1.15rem; line-height: 1; }
 .scc-fg-check-name {
-  font-family: var(--font-sans); font-size: 0.85rem; font-weight: 400;
+  font-family: var(--font-sans); font-size: 1.08rem; font-weight: 600;
   color: var(--dm-gold); text-transform: none; letter-spacing: normal;
 }
 .scc-fg-check-body {
-  font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5;
+  /* S3 audit note 6: check text read at the table, so it is larger. */
+  font-family: var(--font-sans); font-size: 1.1rem; line-height: 1.6;
   color: var(--dm-text); margin-top: 0.35rem;
 }
-.scc-fg-check-body p { margin: 0 0 0.4rem; color: inherit !important; }
+.scc-fg-check-body p { margin: 0 0 0.45rem; color: inherit !important; font-size: inherit; line-height: inherit; }
 .scc-fg-check-body p:last-child { margin-bottom: 0; }
 /* Pass:/Fail: auto-coloring (item 3a, 2026-08-27) -- detected and wrapped
    by sccFgStyleSkillChecks() itself, never hand-typed inline styles.
@@ -12358,8 +12360,8 @@ function showDMToast(msg, type) {
   .dm-form-title { font-size: var(--text-xl); }
   .scc-fg-doc-title { font-size: 1.4rem; }
   .scc-fg-doc-subtitle { font-size: 1rem; }
-  .scc-fg-doc-h1, .scc-fg-h1-quest-title { font-size: 1.2rem; }
-  .scc-fg-doc-h2 { font-size: 1.05rem; }
+  .scc-fg-doc-h1, .scc-fg-h1-quest-title { font-size: 1.45rem; }
+  .scc-fg-doc-h2 { font-size: 1.3rem; }
   .scc-npc2-name { font-size: 1.3rem; }
   .scc-ql-name { font-size: 1.15rem; }
   .scc-cb2-col-title, .scc-cb2-build-title { font-size: 1rem; }
