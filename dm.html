@@ -3907,6 +3907,11 @@ if (dmIsLocalHost(location.hostname)) {
           <div class="scc-fg-scroll-trigger" id="scc-fg-scroll-trigger"></div>
           <div class="scc-fg-scroll-indicator" id="scc-fg-scroll-indicator"></div>
           <div class="scc-fg-scroll-backdrop" id="scc-fg-scroll-backdrop"></div>
+          <!-- S3 audit note 9: tiny edge buttons. Left opens the Live Session
+               tools drawer, right shows the jump rail. Each stays open until
+               clicked again (the hover reveal still works too). -->
+          <button type="button" class="scc-tip scc-tip--right scc-fg-edge-btn scc-fg-edge-btn--left" id="scc-fg-edge-tools" data-tip="Live Session tools" aria-label="Live Session tools" aria-pressed="false" onclick="sccFgEdgeTools()">&#129520;</button>
+          <button type="button" class="scc-tip scc-tip--left scc-fg-edge-btn scc-fg-edge-btn--right" id="scc-fg-edge-rail" data-tip="Jump to a section" aria-label="Jump to a section" aria-pressed="false" onclick="sccFgEdgeRail()">&#9776;</button>
           <!-- rendered guide doc, now the only column -->
           <!-- "Jump to a scenario..." dropdown removed (item 3, round 7,
                2026-08-28) -- its data source (session_notes.session_scenarios)
@@ -9515,6 +9520,31 @@ function showDMToast(msg, type) {
    outermost strip sticks there. */
 @media (max-width: 720px) {
   .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row { position: static; }
+}
+/* S3 audit note 9: tiny edge buttons on the Field Guide. */
+.scc-fg-edge-btn {
+  position: fixed; top: 68%; z-index: 455; width: 26px; height: 44px; padding: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  font-size: 0.95rem; line-height: 1; color: var(--dm-gold);
+  background: var(--dm-surface-high); border: 1px solid var(--scc-border-gold);
+  box-shadow: var(--shadow-md); opacity: 0.75; transition: opacity 0.15s, background 0.15s;
+}
+.scc-fg-edge-btn:hover, .scc-fg-edge-btn:focus-visible { opacity: 1; }
+.scc-fg-edge-btn--left { left: 0; border-left: none; border-radius: 0 10px 10px 0; }
+.scc-fg-edge-btn--right { right: 0; border-right: none; border-radius: 10px 0 0 10px; transition: opacity 0.15s, background 0.15s, right 0.28s ease; }
+.scc-fg-edge-btn--right.scc-fg-edge-btn--on { right: var(--scc-fg-rail-w, 0px); }
+.scc-fg-edge-btn--on { opacity: 1; background: var(--dm-gold); color: var(--surface-0); }
+.scc-fg-edge-btn.scc-tip[data-tip]::after { z-index: 460; }
+@media (min-width: 769px) and (hover: hover) {
+  .scc-live-sidebar.scc-live-sidebar--pinned .scc-live-sidebar-drawer { transform: translate(0, -50%); transition-delay: 0s; }
+  .scc-fg-scroll-indicator.scc-fg-scroll-indicator--pinned { transform: translate(0, -50%); transition-delay: 0s; }
+  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--pinned { opacity: 1; transition-delay: 0s; }
+}
+@media (max-width: 768px) {
+  .scc-fg-edge-btn { width: 22px; height: 40px; top: 60%; z-index: 495; }
+  /* The phone rail keeps a 26px dot column on the right edge: sit beside it. */
+  .scc-fg-edge-btn--right { right: 28px; border-right: 1px solid var(--scc-border-gold); border-radius: 10px; }
+  .scc-fg-edge-btn--right.scc-fg-edge-btn--on { right: calc(var(--scc-fg-rail-w, 0px) + 2px); }
 }
 /* collapsed:true boxes -- header-only until tapped. */
 .scc-fg-box--collapsible { padding-top: 0.55rem; padding-bottom: 0.55rem; }
@@ -17569,6 +17599,44 @@ function sccLiveToggleSidebar(force) {
   if (tab) tab.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (label) label.textContent = open ? 'Close' : 'Open';
 }
+// ── S3 audit note 9: edge buttons (Field Guide) ──
+function sccFgIsHoverDesktop() {
+  return window.matchMedia && window.matchMedia('(min-width: 769px) and (hover: hover)').matches;
+}
+function sccFgEdgeTools() {
+  var btn = document.getElementById('scc-fg-edge-tools');
+  var on;
+  if (window.innerWidth <= 768) {
+    sccLiveToggleMobileTools();
+    var panel = document.getElementById('scc-panel-live');
+    on = !!(panel && panel.classList.contains('scc-live-tools-open'));
+  } else if (sccFgIsHoverDesktop()) {
+    var sb = document.getElementById('scc-live-sidebar');
+    on = !!(sb && sb.classList.toggle('scc-live-sidebar--pinned'));
+  } else {
+    sccLiveToggleSidebar();
+    var sb2 = document.getElementById('scc-live-sidebar');
+    on = !!(sb2 && sb2.classList.contains('open'));
+  }
+  if (btn) { btn.classList.toggle('scc-fg-edge-btn--on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+}
+function sccFgEdgeRail() {
+  var btn = document.getElementById('scc-fg-edge-rail');
+  var wrap = document.getElementById('scc-fg-scroll-indicator');
+  if (!wrap) return;
+  var on;
+  if (sccFgIsHoverDesktop()) {
+    on = wrap.classList.toggle('scc-fg-scroll-indicator--pinned');
+    var bd = document.getElementById('scc-fg-scroll-backdrop');
+    if (bd) bd.classList.toggle('scc-fg-scroll-backdrop--pinned', on);
+  } else {
+    on = !wrap.classList.contains('scc-fg-scroll-indicator--revealed');
+    sccFgSetRailRevealed(on);
+  }
+  // Sit just left of the open rail so the button never covers its dots.
+  document.documentElement.style.setProperty('--scc-fg-rail-w', (on ? wrap.getBoundingClientRect().width : 0) + 'px');
+  if (btn) { btn.classList.toggle('scc-fg-edge-btn--on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+}
 function sccLiveOpenPopup(key) {
   var modal = document.getElementById('scc-live-popup-modal');
   var backdrop = document.getElementById('scc-live-popup-backdrop');
@@ -21381,6 +21449,11 @@ function sccFgSetRailRevealed(revealed) {
   var backdrop = document.getElementById('scc-fg-scroll-backdrop');
   if (!wrap) return;
   wrap.classList.toggle('scc-fg-scroll-indicator--revealed', revealed);
+  var edgeBtn = document.getElementById('scc-fg-edge-rail');
+  if (edgeBtn && !sccFgIsHoverDesktop()) {
+    edgeBtn.classList.toggle('scc-fg-edge-btn--on', !!revealed); edgeBtn.setAttribute('aria-pressed', revealed ? 'true' : 'false');
+    document.documentElement.style.setProperty('--scc-fg-rail-w', (revealed ? wrap.getBoundingClientRect().width : 0) + 'px');
+  }
   if (backdrop) backdrop.classList.toggle('scc-fg-scroll-backdrop--revealed', revealed);
   // Re-measure now, not at the next scheduled build: sccFgPositionScrollBackdrop()
   // sizes the backdrop off each real label's OWN measured position, and
