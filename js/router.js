@@ -64,6 +64,7 @@ function handleRoute() {
   else                               renderNotFound(el, hash);
 
   window.scrollTo(0, 0);
+  if (typeof closeMobileNav === 'function') closeMobileNav();
   updateSidebarActive(hash);
   addWikiLinks();
 }
@@ -98,6 +99,24 @@ function updateSidebarActive(hash) {
     }
   }
 }
+
+// ── Mobile drawer (index.html .mobile-bar) ──
+function setMobileNav(open) {
+  document.body.classList.toggle('nav-open', !!open);
+  var btn = document.getElementById('mobile-nav-btn');
+  if (btn) {
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+}
+function toggleMobileNav() { setMobileNav(!document.body.classList.contains('nav-open')); }
+function closeMobileNav() { setMobileNav(false); }
+function openMobileSearch() {
+  setMobileNav(true);
+  var input = document.getElementById('wiki-search');
+  if (input) setTimeout(function() { input.focus(); }, 250);
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMobileNav(); });
 
 // Wire up hashchange
 window.addEventListener('hashchange', handleRoute);

@@ -2309,9 +2309,16 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .nx-loc-compass { fill: var(--text-faint); font-family: var(--font-body); font-size: 10px; }
 .nx-loc-note { font-size: 0.72rem; color: var(--text-faint); text-align: center; margin-top: 0.35rem; }
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   .nx-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-  .nx-infobox { position: static; order: -1; max-width: 520px; width: 100%; }
+  .nx-infobox { position: static; max-width: 520px; width: 100%; }
+  /* Phone and tablet order: lede, then infobox, then the rest of the article */
+  .nx-article { display: contents; }
+  .nx-lede { order: -2; }
+  .nx-infobox { order: -1; }
+  .nx-ib-sigil img { width: 92px; height: 108px; }
+  .nx-sec { margin-top: 0.5rem; }
+  .nx-lede p { margin-bottom: 0; }
 }
 @media (max-width: 600px) {
   .nx-hero { min-height: 280px; }
@@ -2319,4 +2326,73 @@ body.wiki-dark .warning-title { color: var(--gold); }
   .nx-lede p { font-size: 1.08rem; }
   .nx-pull p { font-size: 1.1rem; }
   .nx-hero-caption { display: none; }
+}
+
+/* ============================================================
+   MOBILE LAYOUT (900px and below)
+   Compact top bar with a menu button; the sidebar becomes a
+   slide-in drawer (js/router.js toggleMobileNav / closeMobileNav).
+   ============================================================ */
+.mobile-bar, .mobile-nav-backdrop { display: none; }
+
+@media (max-width: 900px) {
+  .mobile-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    position: sticky; top: 0; z-index: 60;
+    height: var(--mobile-bar-h); padding: 0 0.5rem;
+    background: var(--surface-0); border-bottom: 1px solid var(--gold-border);
+  }
+  .mobile-bar-title {
+    flex: 1; min-width: 0; text-align: center; text-decoration: none;
+    font-family: var(--font-display); font-weight: 700; font-size: 1.05rem;
+    color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mobile-bar-btn {
+    flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    background: none; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text); cursor: pointer;
+  }
+  .mobile-bar-btn:focus-visible { border-color: var(--gold); outline: none; }
+  .mobile-bar-burger { display: flex; flex-direction: column; gap: 5px; width: 22px; }
+  .mobile-bar-burger span { display: block; height: 2px; border-radius: 2px; background: var(--text); transition: transform 0.25s, opacity 0.2s; }
+  body.nav-open .mobile-bar-burger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  body.nav-open .mobile-bar-burger span:nth-child(2) { opacity: 0; }
+  body.nav-open .mobile-bar-burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .mobile-bar-search { font-size: 1.5rem; line-height: 1; color: var(--text); }
+
+  .layout { display: block; }
+  .sidebar {
+    position: fixed; top: var(--mobile-bar-h); left: 0; bottom: 0; z-index: 55;
+    width: min(86vw, 340px); height: auto; padding: 1.25rem 0 2rem;
+    transform: translateX(-100%); transition: transform 0.28s ease, visibility 0.28s;
+    visibility: hidden; box-shadow: none; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  }
+  body.nav-open .sidebar { transform: none; visibility: visible; box-shadow: var(--drawer-shadow); }
+  .sidebar-title { display: none; }
+  .mobile-nav-backdrop {
+    display: block; position: fixed; inset: var(--mobile-bar-h) 0 0 0; z-index: 50;
+    background: var(--mobile-backdrop); opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  body.nav-open .mobile-nav-backdrop { opacity: 1; pointer-events: auto; }
+  body.nav-open { overflow: hidden; }
+
+  /* Bigger touch targets in the drawer */
+  .nav-link, .nav-accordion-header, .nav-section-accordion-header { min-height: 40px; }
+  .nav-section-accordion-header { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+
+  /* Page spacing */
+  #wiki-content { padding: 1.25rem 1rem 3rem; min-height: calc(100vh - var(--mobile-bar-h)); }
+  .home-page-wrap { margin: -1.25rem -1rem -3rem; }
+  .page { padding: 1.25rem 1rem 3rem; }
+  .page-header { margin-bottom: 1.5rem; padding-bottom: 1rem; }
+  .page-title { font-size: 2rem; }
+  .entry-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; margin: 1.25rem 0; }
+  .entry-card { padding: 1.1rem; }
+  .pull-quote { margin: 1.25rem 0; padding: 1rem 1.1rem; font-size: 1.05rem; }
+  .wiki-body table { display: block; overflow-x: auto; }
+  /* Quick Facts pages (city, org, religion, character): stack the facts
+     panel under the body. Scoped under .layout to beat css/spells.css. */
+  .layout .nation-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .layout .nation-facts { position: static; }
+  .nation-fact-value { min-width: 0; overflow-wrap: anywhere; }
+  .nation-fact-value .ch-gauge { flex-wrap: wrap; gap: 6px; }
 }
