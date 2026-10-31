@@ -1229,9 +1229,6 @@ function renderGigglegloom(el) {
 }
 
 function renderColor(el) {
-  var regions = typeof REGIONS !== 'undefined' ? REGIONS : [];
-  var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
-
   // The four stages, healthiest first. Text comes from this page's existing lore.
   var STAGES = [
     { key: 'vivid',  label: 'Vivid',  phase: 'Healthy',
@@ -1270,28 +1267,14 @@ function renderColor(el) {
     'Animals go very still for no clear reason.',
     'A small, perfect black prism is carved somewhere it was not yesterday.'
   ];
-  var signs = '<p>Listed from least to most worrying.</p><ol class="clr-signs">' + SIGNS.map(function(t, i) {
-    return '<li style="--clr-sev:' + ((i + 1) / SIGNS.length) + '"><span class="clr-sign-n">' + (i + 1) + '</span><span class="clr-sign-t">' + esc(t) + '</span><span class="clr-sign-bar" aria-hidden="true"><i></i></span></li>';
+  var TIERS = [['early', 'Early warning'], ['early', 'Early warning'], ['worry', 'Worrying'], ['worry', 'Worrying'], ['serious', 'Serious'], ['serious', 'Serious']];
+  var signs = '<p>Listed from least to most worrying. The later the sign, the further the Dimming has already spread.</p><ol class="clr-signs">' + SIGNS.map(function(t, i) {
+    return '<li><span class="clr-sign-n">' + (i + 1) + '</span><span class="clr-sign-t">' + esc(t) + '</span>'
+      + '<span class="clr-sign-tag clr-sign-tag--' + TIERS[i][0] + '">' + TIERS[i][1] + '</span></li>';
   }).join('') + '</ol>';
 
   var noThird = '<p>There is no fifth step. The Dimmed do not become something else. They simply remain, in a world they can no longer feel. Grey Fluffets still try to bring acorn gifts. The acorns are also grey.</p>'
     + '<p>This is the goal of those who cause the Dimming. Not conquest. Not cruelty for its own sake. Simply <em>quietude.</em></p>';
-
-  // Live color health for every place the players know about.
-  function placeRows(list, hashType, getCh) {
-    return list.filter(function(r) { return getVisibility(r) !== 'hidden' && colorHealthLevel(getCh(r)) >= 0; })
-      .map(function(r) {
-        var lvl = colorHealthLevel(getCh(r));
-        return '<div class="clr-place">'
-          + '<span class="clr-place-name">' + mzLink(hashType + '/' + r.id, r.name) + '</span>'
-          + chScaleHtml(lvl)
-          + '</div>';
-      }).join('');
-  }
-  var rRows = placeRows(regions, 'region', function(r) { return r.color_health; });
-  var nRows = placeRows(nations, 'nation', function(n) { return (n.extra_data || {}).color_health; });
-  var places = (rRows ? '<h3 class="clr-sub">Regions</h3><div class="clr-places">' + rRows + '</div>' : '')
-    + (nRows ? '<h3 class="clr-sub">Nations</h3><div class="clr-places">' + nRows + '</div>' : '');
 
   renderMagazine(el, {
     crumbs: [{ label: 'Home', hash: 'home' }, { label: 'Color & The Dimming' }],
@@ -1305,8 +1288,7 @@ function renderColor(el) {
       ['The Four Stages', stageCards],
       ['Why Color Matters', whatIs],
       ['Signs of the Dimming', signs],
-      ['After the Dimming', noThird],
-      ['Color Health Across Anavale', places]
+      ['After the Dimming', noThird]
     ],
     infobox: {
       name: 'Color Health',
@@ -1318,8 +1300,7 @@ function renderColor(el) {
         ['The Dimming', 'Dimmed. Full grey.'],
         ['First sign', 'Colors look slightly dull'],
         ['Worst sign', 'A small black prism, newly carved']
-      ],
-      extra: '<div class="clr-ib-scale">' + chScaleHtml(-1) + '</div>'
+      ]
     }
   });
 }

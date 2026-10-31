@@ -2210,12 +2210,13 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .ch-gauge { margin: 0.6rem 0 0.9rem; max-width: 420px; }
 .ch-scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .ch-step { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.ch-step i { display: block; height: 8px; border-radius: 4px; opacity: 0.35; }
+.ch-step i { display: block; height: 8px; border-radius: 4px; opacity: 0.7; background: linear-gradient(90deg, var(--red), var(--gold), var(--green), var(--blue), var(--purple)); }
 .ch-step b { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); text-align: center; }
-.ch-step--dimmed i { background: var(--region-dimmed); }
-.ch-step--faded i  { background: var(--region-faded); }
-.ch-step--muted i  { background: var(--region-muted); }
-.ch-step--vivid i  { background: var(--region-vivid); }
+/* Each step shows how much color is left: bright rainbow down to grey */
+.ch-step--vivid i  { filter: saturate(1.15); }
+.ch-step--muted i  { filter: saturate(0.55) brightness(0.9); }
+.ch-step--faded i  { filter: saturate(0.2) brightness(0.75); }
+.ch-step--dimmed i { filter: grayscale(1) brightness(0.6); }
 .ch-step.is-current i { opacity: 1; height: 12px; margin-top: -2px; box-shadow: 0 0 0 2px var(--text); }
 .ch-step.is-current b { color: var(--text); }
 .ch-text { margin: 0.6rem 0 0; font-size: 0.88rem; line-height: 1.5; color: var(--text); }
@@ -2445,11 +2446,7 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .clr-stage--muted .clr-swatch  { filter: saturate(0.55) brightness(0.9); }
 .clr-stage--faded .clr-swatch  { filter: saturate(0.2) brightness(0.75); }
 .clr-stage--dimmed .clr-swatch { filter: grayscale(1) brightness(0.55); }
-.clr-stage-body { padding: 0.9rem 1rem 1rem; border-top: 4px solid var(--region-unknown); }
-.clr-stage--vivid .clr-stage-body  { border-top-color: var(--region-vivid); }
-.clr-stage--muted .clr-stage-body  { border-top-color: var(--region-muted); }
-.clr-stage--faded .clr-stage-body  { border-top-color: var(--region-faded); }
-.clr-stage--dimmed .clr-stage-body { border-top-color: var(--region-dimmed); }
+.clr-stage-body { padding: 0.9rem 1rem 1rem; }
 .clr-stage-num { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
 .clr-stage-name { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; color: var(--text); margin: 0.15rem 0 0.6rem; }
 .clr-stage--dimmed .clr-stage-name { color: var(--text-muted); }
@@ -2460,22 +2457,17 @@ body.wiki-dark .warning-title { color: var(--gold); }
 
 /* Signs ladder: each sign a row, the bar fills further as concern rises */
 .clr-signs { list-style: none; padding: 0; margin: 0.5rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.clr-signs li { display: grid; grid-template-columns: 2rem 1fr 90px; align-items: center; gap: 0.8rem; background: var(--surface-3); border: 1px solid var(--border-mid); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; }
+.clr-signs li { display: grid; grid-template-columns: 2rem 1fr auto; align-items: center; gap: 0.8rem; background: var(--surface-3); border: 1px solid var(--border-mid); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; }
 .clr-sign-n { width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--surface-5); color: var(--gold); }
 .clr-sign-t { font-size: 0.95rem; line-height: 1.5; color: var(--text); }
-.clr-sign-bar { height: 6px; border-radius: 3px; background: var(--surface-5); overflow: hidden; }
-.clr-sign-bar i { display: block; height: 100%; width: calc(var(--clr-sev) * 100%); background: linear-gradient(90deg, var(--gold), var(--red)); }
+.clr-sign-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.clr-sign-tag--early   { color: var(--gold); }
+.clr-sign-tag--worry   { color: var(--orange-vivid); }
+.clr-sign-tag--serious { color: var(--red); }
 
-/* Live color health list */
-.clr-sub { font-family: var(--font-body); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin: 1.2rem 0 0.5rem; }
-.clr-places { display: grid; grid-template-columns: 1fr; gap: 0.6rem 1.4rem; }
-.clr-place { display: grid; grid-template-columns: 10rem minmax(0, 340px); align-items: center; gap: 0.8rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border-mid); }
-.clr-place-name { font-size: 0.95rem; min-width: 0; overflow-wrap: anywhere; }
-.clr-ib-scale { padding: 0.8rem 1rem 1rem; }
 
 @media (max-width: 900px) {
   .clr-stages { grid-template-columns: 1fr; }
-  .clr-place { grid-template-columns: 1fr; gap: 0.3rem; }
   .clr-signs li { grid-template-columns: 2rem 1fr; }
-  .clr-sign-bar { grid-column: 2; }
+  .clr-sign-tag { grid-column: 2; justify-self: start; }
 }
