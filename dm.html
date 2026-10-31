@@ -10020,6 +10020,37 @@ function showDMToast(msg, type) {
 }
 .scc-fg-qp-right .scc-fg-box:last-child, .scc-fg-qp-right p:last-child { margin-bottom: 0; }
 .scc-fg-qp-empty { font-style: italic; color: var(--dm-text-muted); font-size: 0.8rem; }
+/* S3 audit note 7: question search box in the panel header. */
+.scc-fg-qp-search { margin-left: auto; position: relative; display: inline-flex; align-items: center; flex: 0 1 300px; min-width: 150px; }
+.scc-fg-qp-search-input {
+  width: 100%; height: 32px; box-sizing: border-box; padding: 0 30px 0 10px; border-radius: 16px;
+  border: 1px solid var(--scc-border-mid); background: var(--dm-surface-high); color: var(--dm-text);
+  font: 400 0.85rem var(--font-sans);
+}
+.scc-fg-qp-search-input:focus { outline: none; border-color: var(--scc-border-gold); }
+.scc-fg-qp-search-input::-webkit-search-cancel-button { display: none; }
+.scc-fg-qp-search-clear { position: absolute; right: 6px; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent; color: var(--dm-text-muted); cursor: pointer; font-size: 1rem; line-height: 1; }
+.scc-fg-qp-search-clear:hover { color: var(--dm-gold); }
+.scc-fg-qp-nomatch { font-size: 0.8rem; font-style: italic; color: var(--dm-text-muted); padding: 0.4rem 0.2rem; }
+.scc-fg-qp-groupwrap { display: flex; flex-direction: column; }
+/* S3 audit note 11: clue-gated (locked) questions. */
+.scc-fg-qp-btn--locked { opacity: 0.55; border-style: dashed; }
+.scc-fg-qp-btn--locked.scc-fg-qp-btn--active { opacity: 0.9; }
+.scc-fg-qp-btn-lock { display: block; font-size: 0.68rem; color: var(--dm-text-muted); margin-top: 0.15rem; }
+.scc-fg-qp-locknote { font-size: 0.85rem; color: var(--dm-text-muted); background: var(--dm-surface); border: 1px dashed var(--scc-border-mid); border-radius: var(--dm-radius-sm); padding: 0.45rem 0.7rem; margin-bottom: 0.65rem; }
+/* question_ref: questions shown inline right after their clue. */
+.scc-fg-qref { background: var(--dm-surface-high); border: 1px solid var(--scc-border); border-left: 3px solid var(--dm-gold); border-radius: var(--dm-radius-sm); margin: 0.6rem 0; }
+.scc-fg-qref-head { display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.8rem; font: 700 0.8rem var(--font-sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm-gold); border-bottom: 1px solid var(--scc-border); }
+.scc-fg-qref-list { display: flex; flex-direction: column; }
+.scc-fg-qref-item + .scc-fg-qref-item { border-top: 1px solid var(--scc-border); }
+.scc-fg-qref-q { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.55rem 0.8rem; background: none; border: none; cursor: pointer; text-align: left; color: var(--dm-text); font: 600 0.92rem var(--font-sans); }
+.scc-fg-qref-q:hover { background: var(--dm-surface); }
+.scc-fg-qref-qlabel { flex: 1; min-width: 0; }
+.scc-fg-qref-chev { color: var(--dm-text-muted); transition: transform 0.15s; }
+.scc-fg-qref-item--open .scc-fg-qref-chev { transform: rotate(180deg); }
+.scc-fg-qref-item--done .scc-fg-qref-qlabel { color: var(--dm-text-muted); text-decoration: line-through; }
+.scc-fg-qref-item--locked .scc-fg-qref-q { opacity: 0.6; }
+.scc-fg-qref-a { padding: 0.2rem 0.9rem 0.8rem; }
 /* ── Scene Cast panel module (box.category === 'scene_cast', 2026-09-18) --
    a compact "who matters right now" reference for a section with several
    NPCs active at once, so juggling them mid-scene doesn't mean flipping
@@ -18988,6 +19019,7 @@ function sccFgSetStatus(sel) {
         host.classList.toggle('scc-fg-box--skipped', status === 'skipped');
       }
     }
+    if (kind === 'box') sccFgRefreshAllQuestionPanels();
   }).catch(function() {
     sel.disabled = false;
     sel.value = prev;
@@ -19348,6 +19380,42 @@ function sccFgQuestionPanelIsCompleted(domId, q, log) {
 // first; completed ones sink to the bottom of that SAME group, also in
 // their original relative order -- never a global bottom across groups,
 // per instruction.
+// ── Clue-gated questions (S3 audit note 11) ──
+// question.unlock_after = a block id (the clue box). The question is locked
+// until that box's status is Completed, or every item in its loot_table has
+// been handed out. Locked questions stay clickable, just dimmed and labeled.
+function sccFgClueFound(blockId) {
+  if (!blockId) return true;
+  var found = sccFgFindBlockById(blockId);
+  if (!found) return true; // unknown clue id: never hide a question behind a typo
+  var bl = found.block;
+  if (sccFgBoxIsCompleted(bl)) return true;
+  if (Array.isArray(bl.loot_table) && bl.loot_table.length) {
+    return bl.loot_table.every(function(it) { return !it || !((it.quantity || 0) > 0); });
+  }
+  return false;
+}
+function sccFgQuestionIsLocked(q) {
+  return !!(q && q.unlock_after) && !sccFgClueFound(q.unlock_after);
+}
+function sccFgQuestionUnlockLabel(q) {
+  if (q.unlock_label) return q.unlock_label;
+  var found = sccFgFindBlockById(q.unlock_after);
+  return (found && (found.block.label || found.block.text)) || q.unlock_after;
+}
+// Plain text of a question (label + all its nested block text) for search.
+function sccFgQuestionSearchText(q) {
+  var parts = [q.label || '', q.group || ''];
+  (function walk(arr) {
+    (arr || []).forEach(function(bl) {
+      if (!bl || typeof bl !== 'object') return;
+      ['label', 'text', 'html', 'tone_note'].forEach(function(k) { if (bl[k]) parts.push(String(bl[k])); });
+      if (bl.cards) bl.cards.forEach(function(c) { parts.push(c.title || ''); walk(c.blocks); });
+    });
+  })(q.blocks);
+  return parts.join(' ').replace(/<[^>]*>/g, ' ').replace(/\[\[[a-z_]+:[\w.-]+\|([^\]]*)\]\]/g, '$1').replace(/\s+/g, ' ').toLowerCase();
+}
+
 function sccFgQuestionPanelGrouped(questions, domId, log) {
   var order = [];
   var byGroup = {};
@@ -19358,9 +19426,13 @@ function sccFgQuestionPanelGrouped(questions, domId, log) {
   });
   return order.map(function(g) {
     var qs = byGroup[g];
-    var open = qs.filter(function(q) { return !sccFgQuestionPanelIsCompleted(domId, q, log); });
     var done = qs.filter(function(q) { return sccFgQuestionPanelIsCompleted(domId, q, log); });
-    return { group: g, questions: open.concat(done) };
+    var notDone = qs.filter(function(q) { return !sccFgQuestionPanelIsCompleted(domId, q, log); });
+    // S3 audit note 11: still-locked (clue not found yet) questions sit after
+    // the askable ones, before the completed ones.
+    var open = notDone.filter(function(q) { return !sccFgQuestionIsLocked(q); });
+    var locked = notDone.filter(function(q) { return sccFgQuestionIsLocked(q); });
+    return { group: g, questions: open.concat(locked, done) };
   });
 }
 
@@ -19384,21 +19456,27 @@ function sccFgQuestionPanelLeftHtml(b, domId, activeId) {
           + (auditLocked ? '' : ' onclick="event.stopPropagation(); sccFgToggleQuestionPanelCompletion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\')"')
           + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">'
         + (completed ? '&#10003;' : '') + '</span>';
-      return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + '"'
-          + ' data-question-id="' + sccEsc(q.id) + '"'
+      var locked = !completed && sccFgQuestionIsLocked(q);
+      return '<button type="button" class="scc-fg-qp-btn' + (active ? ' scc-fg-qp-btn--active' : '') + (completed ? ' scc-fg-qp-btn--completed' : '') + (locked ? ' scc-fg-qp-btn--locked' : '') + '"'
+          + ' data-question-id="' + sccEsc(q.id) + '" data-qp-search="' + sccEsc(sccFgQuestionSearchText(q)) + '"'
           + ' onclick="sccFgSwitchQuestionPanelQuestion(\'' + escQ(domId) + '\', \'' + escQ(q.id) + '\', this)">'
         + checkHtml
-        + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '') + '</span>'
+        + '<span class="scc-fg-qp-btn-label">' + sccEsc(q.label || '')
+          + (locked ? '<span class="scc-fg-qp-btn-lock">&#128274; Unlocks after: ' + sccEsc(sccFgQuestionUnlockLabel(q)) + '</span>' : '')
+        + '</span>'
       + '</button>';
     }).join('');
-    return headerHtml + '<div class="scc-fg-qp-group">' + btns + '</div>';
-  }).join('');
+    return '<div class="scc-fg-qp-groupwrap">' + headerHtml + '<div class="scc-fg-qp-group">' + btns + '</div></div>';
+  }).join('') + '<div class="scc-fg-qp-nomatch" style="display:none">No questions match.</div>';
 }
 
 function sccFgQuestionPanelBodyHtml(b, q, domId) {
   if (!q) return '<div class="scc-fg-qp-empty">No question selected.</div>';
   var contentHtml = sccFgRenderDoc(q.blocks || []);
-  return '<h3 class="scc-fg-qp-right-title">' + sccEsc(q.label || '') + '</h3>'
+  var lockNote = sccFgQuestionIsLocked(q)
+    ? '<div class="scc-fg-qp-locknote">&#128274; The players can only ask this after: <strong>' + sccEsc(sccFgQuestionUnlockLabel(q)) + '</strong></div>'
+    : '';
+  return '<h3 class="scc-fg-qp-right-title">' + sccEsc(q.label || '') + '</h3>' + lockNote
     + (contentHtml || '<div class="scc-fg-qp-empty">No content yet.</div>');
 }
 
@@ -19413,12 +19491,117 @@ function sccFgOneQuestionPanelHtml(b, idx, activeId) {
     + '<div class="scc-fg-qp-header">'
       + '<span class="scc-fg-qp-header-icon">&#10067;</span>'
       + '<span>Common Questions' + (b.label ? '<span class="scc-fg-qp-header-sub"> — ' + sccEsc(b.label) + '</span>' : '') + '</span>'
+      // S3 audit note 7: keyword search across question titles and answers.
+      + '<span class="scc-fg-qp-search"><input type="search" class="scc-fg-qp-search-input" placeholder="Search questions (e.g. contact, paid)" aria-label="Search questions"'
+        + ' value="' + sccEsc(SCC_FG_QP_FILTER[domId] || '') + '" oninput="sccFgQpFilter(\'' + escQ(domId) + '\', this.value)">'
+        + '<button type="button" class="scc-fg-qp-search-clear" title="Clear search" aria-label="Clear search" onclick="var i=this.previousElementSibling; i.value=\'\'; sccFgQpFilter(\'' + escQ(domId) + '\', \'\'); i.focus();">&#215;</button></span>'
     + '</div>'
     + '<div class="scc-fg-qp-layout">'
       + '<div class="scc-fg-qp-left"><div class="scc-fg-qp-groups" id="' + domId + '-left">' + sccFgQuestionPanelLeftHtml(b, domId, active) + '</div></div>'
       + '<div class="scc-fg-qp-right" id="' + domId + '-right">' + sccFgQuestionPanelBodyHtml(b, activeQ, domId) + '</div>'
     + '</div>'
   + '</div>';
+}
+
+// A clue box changing state can unlock questions anywhere on the page.
+function sccFgRefreshAllQuestionPanels() {
+  Array.prototype.forEach.call(document.querySelectorAll('.scc-fg-question-panel[id]'), function(el) { sccFgRedrawQuestionPanelBlock(el.id); });
+  Array.prototype.forEach.call(document.querySelectorAll('.scc-fg-qref[data-qref]'), function(el) { sccFgRedrawQuestionRef(el); });
+}
+// ── question_ref: inline mirror of panel questions (S3 audit note 11) ──
+// { type:'box', category:'question_ref', label, panel:'<question_panel label>',
+//   question_ids:[...] } -- content is read live from the panel block (single
+// source of truth). Each question is a compact row; clicking expands its
+// answer in place. Open/closed is per view, not persisted.
+var SCC_FG_QREF_OPEN = {};
+function sccFgFindQuestionPanelByLabel(label) {
+  var row = SCC_FG_DOC_CACHE[sccFgActiveSessionNum()];
+  var hit = null;
+  (function walk(arr) {
+    (arr || []).forEach(function(bl, i) {
+      if (hit || !bl || typeof bl !== 'object') return;
+      if (bl.category === 'question_panel' && (bl.label || '') === (label || '')) { hit = { block: bl, idx: i }; return; }
+      if (bl.category === 'scenario_cards' && Array.isArray(bl.cards)) bl.cards.forEach(function(c) { walk(c.blocks); });
+    });
+  })((row && row.blocks) || []);
+  return hit;
+}
+function sccFgQuestionRefInnerHtml(b) {
+  var hit = sccFgFindQuestionPanelByLabel(b.panel);
+  if (!hit) return '<div class="scc-fg-qp-empty">Question panel "' + sccEsc(b.panel || '') + '" not found.</div>';
+  var domId = sccFgQuestionPanelDomId(hit.block, hit.idx);
+  var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[sccFgActiveSessionNum()] || [];
+  var qs = (hit.block.questions || []);
+  var auditLocked = !!SCC_VIEWING_HISTORY;
+  return (b.question_ids || []).map(function(id) {
+    var q = qs.find(function(x) { return x.id === id; });
+    if (!q) return '';
+    var completed = sccFgQuestionPanelIsCompleted(domId, q, log);
+    var locked = !completed && sccFgQuestionIsLocked(q);
+    var key = domId + '|' + id;
+    var open = !!SCC_FG_QREF_OPEN[key];
+    var check = '<span class="scc-fg-qp-check' + (completed ? ' scc-fg-qp-check--on' : '') + '"'
+        + (auditLocked ? '' : ' onclick="event.stopPropagation(); sccFgToggleQuestionPanelCompletion(\'' + escQ(domId) + '\', \'' + escQ(id) + '\')"')
+        + ' title="' + (completed ? 'Click to mark not completed' : 'Click to mark completed') + '">' + (completed ? '&#10003;' : '') + '</span>';
+    return '<div class="scc-fg-qref-item' + (open ? ' scc-fg-qref-item--open' : '') + (completed ? ' scc-fg-qref-item--done' : '') + (locked ? ' scc-fg-qref-item--locked' : '') + '">'
+      + '<button type="button" class="scc-fg-qref-q" aria-expanded="' + open + '" onclick="sccFgToggleQuestionRef(this, \'' + escQ(key) + '\')">'
+        + check
+        + '<span class="scc-fg-qref-qlabel">' + sccEsc(q.label || '') + (locked ? '<span class="scc-fg-qp-btn-lock">&#128274; Unlocks after: ' + sccEsc(sccFgQuestionUnlockLabel(q)) + '</span>' : '') + '</span>'
+        + '<span class="scc-fg-qref-chev" aria-hidden="true">&#9662;</span>'
+      + '</button>'
+      + (open ? '<div class="scc-fg-qref-a">' + sccFgRenderDoc(q.blocks || []) + '</div>' : '')
+    + '</div>';
+  }).join('');
+}
+function sccFgRenderQuestionRefBlock(b) {
+  var data = sccEsc(JSON.stringify({ panel: b.panel || '', ids: b.question_ids || [], label: b.label || '' }));
+  return '<div class="scc-fg-qref" data-qref="' + data + '">'
+    + '<div class="scc-fg-qref-head"><span class="scc-fg-qref-icon" aria-hidden="true">&#10067;</span>' + sccEsc(b.label || 'If they ask about this') + '</div>'
+    + '<div class="scc-fg-qref-list">' + sccFgQuestionRefInnerHtml(b) + '</div>'
+  + '</div>';
+}
+function sccFgRedrawQuestionRef(el) {
+  var d; try { d = JSON.parse(el.getAttribute('data-qref')); } catch (e) { return; }
+  var list = el.querySelector('.scc-fg-qref-list');
+  if (list) list.innerHTML = sccFgQuestionRefInnerHtml({ panel: d.panel, question_ids: d.ids, label: d.label });
+}
+function sccFgToggleQuestionRef(btn, key) {
+  SCC_FG_QREF_OPEN[key] = !SCC_FG_QREF_OPEN[key];
+  var el = btn.closest('.scc-fg-qref');
+  if (el) sccFgRedrawQuestionRef(el);
+}
+var SCC_FG_QP_FILTER = {}; // domId -> current search text (kept across redraws)
+function sccFgQpFilter(domId, raw) {
+  SCC_FG_QP_FILTER[domId] = raw || '';
+  var left = document.getElementById(domId + '-left');
+  if (!left) return;
+  var words = String(raw || '').toLowerCase().split(/\s+/).filter(Boolean);
+  var any = false;
+  Array.prototype.forEach.call(left.querySelectorAll('.scc-fg-qp-groupwrap'), function(gw) {
+    var shown = 0;
+    Array.prototype.forEach.call(gw.querySelectorAll('.scc-fg-qp-btn'), function(btn) {
+      var hay = btn.getAttribute('data-qp-search') || '';
+      var ok = words.every(function(w) { return hay.indexOf(w) >= 0; });
+      btn.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    gw.style.display = shown ? '' : 'none';
+    if (shown) any = true;
+  });
+  var nm = left.querySelector('.scc-fg-qp-nomatch');
+  if (nm) nm.style.display = any ? 'none' : '';
+  var wrap = document.getElementById(domId);
+  var clr = wrap && wrap.querySelector('.scc-fg-qp-search-clear');
+  if (clr) clr.style.visibility = words.length ? 'visible' : 'hidden';
+}
+// Re-applies any active search after a panel (re)draw.
+function sccFgQpReapplyFilters(root) {
+  Object.keys(SCC_FG_QP_FILTER).forEach(function(domId) {
+    if (document.getElementById(domId)) sccFgQpFilter(domId, SCC_FG_QP_FILTER[domId]);
+  });
+  Array.prototype.forEach.call((root || document).querySelectorAll('.scc-fg-qp-search-clear'), function(c) {
+    var i = c.previousElementSibling; if (i && !i.value) c.style.visibility = 'hidden';
+  });
 }
 
 function sccFgRenderQuestionPanelBlock(b, idx) {
@@ -19497,7 +19680,7 @@ function sccFgToggleQuestionPanelCompletion(domId, questionId) {
     if (!r.ok) { showDMToast('Could not update', 'error'); return; }
     sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
       SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
-      sccFgRedrawQuestionPanelBlock(domId);
+      sccFgRefreshAllQuestionPanels();
     });
   }).catch(function() { showDMToast('Could not update', 'error'); });
 }
@@ -19518,6 +19701,7 @@ function sccFgRedrawQuestionPanelBlock(domId) {
   var activeBtn = wrapEl.querySelector('.scc-fg-qp-btn--active');
   var activeId = activeBtn ? activeBtn.dataset.questionId : null;
   wrapEl.outerHTML = sccFgOneQuestionPanelHtml(found.block, found.idx, activeId);
+  sccFgQpReapplyFilters();
 }
 
 // ── Scene Cast panel module (box.category === 'scene_cast', 2026-09-18) ──
@@ -19901,6 +20085,7 @@ function sccFgLootAssign(idx, ctxKey, itemIdx) {
     var toastLabel = item.currency ? sccFgLootEntryLabel({ currency: item.currency, quantity: qty }) : (item.item_name || item.item_id) + ' \u00d7' + qty;
     showDMToast(toastLabel + ' \u2192 ' + player.name + ' \u2713', 'success');
     sccFgRerenderLootWidget(idx, ctx);
+    sccFgRefreshAllQuestionPanels();
   }).catch(function() { showDMToast('Failed to assign loot', 'error'); });
 }
 
@@ -19978,6 +20163,7 @@ function sccFgRenderBlockRaw(b, idx, ctx) {
       if (b.category === 'combat_outcomes') return sccFgRenderCombatOutcomesBlock(b, ctx);
       if (b.category === 'scenario_cards') return sccFgRenderScenarioCardsBlock(b, idx);
       if (b.category === 'question_panel') return sccFgRenderQuestionPanelBlock(b, idx);
+      if (b.category === 'question_ref') return sccFgRenderQuestionRefBlock(b);
       if (b.category === 'scene_cast') return sccFgRenderSceneCastBlock(b, idx);
       var style = SCC_FG_CATEGORY_STYLE[b.category];
       var colorClass = style ? style.colorClass : (SCC_FG_BOX_COLOR_CLASS[b.color] || 'grey');
@@ -20826,6 +21012,7 @@ function sccFgDrawDocument(num) {
     inner.innerHTML = openingHtml + '<div class="scc-fg-empty-doc">No Field Guide written for Session ' + num + ' yet.</div>';
     SCC_FG_RENDERED_SESSION_NUM = num;
     sccFgBuildScrollIndicator();
+  sccFgQpReapplyFilters();
     sccFgEnsureScrollListenerBound();
     sccFgEnsureRailSwipeBound();
     return;
@@ -20840,6 +21027,7 @@ function sccFgDrawDocument(num) {
   if (window.DmClock) DmClock.update();
   SCC_FG_RENDERED_SESSION_NUM = num;
   sccFgBuildScrollIndicator();
+  sccFgQpReapplyFilters();
   sccFgEnsureScrollListenerBound();
   sccFgEnsureRailSwipeBound();
 }
