@@ -2455,12 +2455,12 @@ body.wiki-dark .warning-title { color: var(--gold); }
 
 /* Four type cards */
 .gg-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 0.6rem; }
-.gg-type { position: relative; isolation: isolate; overflow: hidden; background: var(--surface-3); border: 1px solid var(--border-mid); border-top: 5px solid var(--gg); border-radius: var(--card-radius); padding: 1.1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.gg-type { position: relative; isolation: isolate; overflow: hidden; background: var(--surface-3); border: 1px solid var(--border-mid); border-top: 5px solid var(--gg); border-radius: var(--card-radius); padding: 7.5rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
 /* Animated type video behind each card, darkened so the text stays readable */
 .gg-type-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .gg-type-video { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
-.gg-type-video.is-on { opacity: 0.55; }
-.gg-type-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--surface-3) 55%, transparent) 0%, color-mix(in srgb, var(--surface-3) 70%, transparent) 25%, var(--surface-3) 60%); }
+.gg-type-video.is-on { opacity: 0.95; }
+.gg-type-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 0, transparent 4.5rem, color-mix(in srgb, var(--surface-3) 80%, transparent) 9rem, var(--surface-3) 16rem); }
 .gg-type-head { display: flex; align-items: center; gap: 0.8rem; }
 .gg-type-head .gg-icon { width: 48px; height: 48px; }
 .gg-type-name { font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; color: var(--gg); line-height: 1.1; }
