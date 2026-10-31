@@ -506,7 +506,7 @@ function buildSearchIndex() {
     var vis = getVisibility(it);
     if (vis === 'hidden') return;
     var text = it.name + ' ' + (it.summary||'');
-    if (vis === 'visible') text += ' ' + (it.description||'');
+    if (vis === 'visible') text += ' ' + (it.read_aloud||'') + ' ' + (it.description||'');
     allData.push({ hash: 'item/' + it.id, title: it.name, text: text, player_facing: it.player_facing });
   });
   pois.forEach(function(p) {
@@ -1770,7 +1770,10 @@ function mzPulls(row) {
   var x = (row && row.extra_data) || {};
   return Array.isArray(x.pull_quotes) ? x.pull_quotes : [];
 }
+// Tag pills are hidden on wiki pages (DM request 2026-10-31): they gave readers
+// nothing to do. Tags stay in the data and still feed search.
 function mzTagsRow(tags) {
+  return '';
   tags = (tags || []).filter(function(t) { return t !== 'wiki-teaser'; });
   return tags.length ? '<div class="entry-tags-row">' + tags.map(function(t) {
     return '<span class="entry-wiki-tag entry-wiki-tag--link" onclick="navigate(\'search?q=' + esc(encodeURIComponent(t)) + '\')" title="Search for: ' + esc(t) + '">' + esc(t) + '</span>';
@@ -2427,9 +2430,14 @@ function renderItem(id, el) {
     renderMagazine(el, base);
     return;
   }
-  var split = mzSplit(item.description || item.summary || '');
+  // Read Aloud is the player-facing description (DM 2026-10-31); Description is a legacy fallback.
+  var split = mzSplit(item.read_aloud || item.description || item.summary || '');
   base.lede = split.lede;
-  base.sections = [['About', split.rest + mzPullsHtml(item, 0)]];
+  base.sections = [
+    ['About', split.rest + mzPullsHtml(item, 0)],
+    ["What's Written On It", item.document_text ? '<div class="wiki-handout">' + esc(item.document_text) + '</div>' : ''],
+    ['Background', mzText(item.history)]
+  ];
   base.infobox = {
     name: item.name, sub: titleCase(item.category || ''),
     rows: [
