@@ -211,12 +211,13 @@ function buildSidebar() {
     + '</div>';
 
   // ── The World ──────────────────────────────────────
-  var worldActive = ['gigglegloom','color','gods'].indexOf(currentHash) >= 0;
+  var worldActive = ['gigglegloom','color','gods','calendar'].indexOf(currentHash) >= 0;
   html += '<div class="nav-section">'
     + makeSectionAccordion('world', '◯ The World',
         navLink('The Gigglegloom', 'gigglegloom', currentHash)
         + navLink('Color & The Dimming', 'color', currentHash)
-        + navLink('The Gods', 'gods', currentHash), worldActive)
+        + navLink('The Gods', 'gods', currentHash)
+        + navLink('The Calendar', 'calendar', currentHash), worldActive)
     + '</div>';
 
   // ── Regions (only show if at least one visible/teaser entry beneath) ──
@@ -1502,6 +1503,7 @@ function renderNation(id, el) {
     ])
     + pageHeader(titleCase(nation.region) + ' · Nation', nation.name, nation.summary)
     + entryImage(nation.image, nation.name)
+    + (window.NationExtra ? NationExtra.topHtml(nation) + NationExtra.descriptionHtml(nation) : '')
     + '<div class="nation-layout">'
     + '<div class="nation-body">'
     + '<p>' + esc(nation.culture) + '</p>'
@@ -1509,6 +1511,7 @@ function renderNation(id, el) {
     + customsHtml
     + (nation.gigglegloom_notes ? '<div class="nation-section-heading">Gigglegloom</div><p>' + esc(nation.gigglegloom_notes) + '</p>' : '')
     + (nation.threats ? '<div class="nation-section-heading">Threats & Shadows</div><p>' + esc(nation.threats) + '</p>' : '')
+    + (window.NationExtra ? NationExtra.sectionsHtml(nation) : '')
     + citiesHtml
     + '</div>'
     + '<div class="nation-facts">'

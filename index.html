@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/wiki.css">
   <link rel="stylesheet" href="css/spells.css">
+  <link rel="stylesheet" href="css/calendar.css">
 </head>
 <body>
 <div class="layout">
@@ -48,6 +49,9 @@
   <script src="data/items.js"></script>
   <script src="data/religions.js"></script>
   <script src="data/index.js"></script>
+  <script src="js/anavale-calendar.js"></script>
+  <script src="js/nation-extra.js"></script>
+  <script src="js/wiki-calendar.js"></script>
   <script src="js/router.js"></script>
   <script src="js/wiki.js"></script>
 
@@ -82,6 +86,13 @@
     }).then(function(r) { return r.json(); });
   }
 
+  // Used by js/wiki-calendar.js to read the live world_concepts calendar row.
+  window.calWikiFetch = function(table, query) {
+    return fetch(SB_URL + '/rest/v1/' + table + '?select=*' + (query || ''), {
+      headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON }
+    }).then(function(r) { return r.json(); });
+  };
+
   function syncFromSupabase() {
     Promise.all(TABLES.map(function(t) {
       return sbFetch(t.table).then(function(rows) {
@@ -102,6 +113,9 @@
       };
       results.forEach(function(r) {
         if (Array.isArray(r.rows) && r.rows.length > 0) {
+          // extra_data.dm_only is DM eyes only: drop it before anything on
+          // the player wiki can read it (ANV-43).
+          if (r.key === 'nations' && window.NationExtra) NationExtra.stripDmOnly(r.rows);
           WORLD_DATA[r.key] = r.rows;
           var globalName = keyToGlobal[r.key];
           if (globalName && typeof window[globalName] !== 'undefined') {
