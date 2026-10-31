@@ -17134,10 +17134,15 @@ function sccPlayerConfirmAddItem(itemId) {
   if (!draft) return;
   var qtyEl = document.getElementById('scc-pd-additem-qty-' + itemId);
   var qty = qtyEl ? Math.max(1, parseInt(qtyEl.value, 10) || 1) : 1;
-  draft.inventory.push({
-    id: null, _tempId: 'new-' + (draft.invTempSeq++),
-    item_id: itemId, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true
-  });
+  var same = draft.inventory.filter(function(r) { return !r.id && r.item_id === itemId && !r.custom_name; })[0];
+  if (same) {
+    same.quantity = (same.quantity || 0) + qty;
+  } else {
+    draft.inventory.push({
+      id: null, _tempId: 'new-' + (draft.invTempSeq++),
+      item_id: itemId, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true
+    });
+  }
   sccPlayerCloseAddItemModal();
   sccPlayerRefreshInventoryBlock(charId);
 }
@@ -17221,7 +17226,7 @@ function sccPlayerSaveChanges(charId) {
     }));
   });
   toInsert.forEach(function(row) {
-    ops.push(sccPost('inventory', {
+    ops.push(sccPostInventory({
       character_id: charId, token: (pc && pc.token) || '', item_id: row.item_id,
       quantity: row.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true,
       notes: 'Given by the DM' + (SCC_SESSION ? ' (Session ' + SCC_SESSION.session_number + ')' : '')
@@ -17375,6 +17380,24 @@ function sccPost(table, body) {
     },
     body: JSON.stringify(body)
   });
+}
+
+// Adds an item to a character's inventory, stacking onto the row they already
+// own for that item (quantity added, source note appended) instead of making a
+// second row for the same item. Falls back to a new row when they have none.
+// Returns a Response-like {ok} so callers can keep their r.ok checks.
+function sccPostInventory(body) {
+  var q = '?character_id=eq.' + encodeURIComponent(body.character_id) + '&item_id=eq.' + encodeURIComponent(body.item_id) + '&order=created_at';
+  return sccFetch('inventory', q).then(function(rows) {
+    var existing = Array.isArray(rows) ? rows.filter(function(r) { return !r.custom_name; })[0] : null;
+    if (!existing || !body.item_id) return sccPost('inventory', body);
+    var notes = existing.notes || '';
+    if (body.notes && notes.indexOf(body.notes) === -1) notes = notes ? notes + '; ' + body.notes : body.notes;
+    return sccPatch('inventory', '?id=eq.' + encodeURIComponent(existing.id), {
+      quantity: (existing.quantity || 0) + (body.quantity || 1),
+      notes: notes || null
+    });
+  }).catch(function() { return sccPost('inventory', body); });
 }
 
 function sccPatch(table, query, body) {
@@ -20652,7 +20675,7 @@ function sccFgLootAssign(idx, ctxKey, itemIdx) {
       description: creature ? creature.description : null
     };
     var invPosts = invItems.filter(function(w) { return w && w.item_id; }).map(function(w) {
-      return sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: w.item_id, quantity: w.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(block.label, num) });
+      return sccPostInventory({ character_id: player.id, token: player.token || '', item_id: w.item_id, quantity: w.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(block.label, num) });
     });
     grant = Promise.all(invPosts.concat([sccPost('character_attachments', attachBody)])).then(function(rs) {
       var bad = rs.filter(function(r) { return !r.ok; }).length;
@@ -20660,7 +20683,7 @@ function sccFgLootAssign(idx, ctxKey, itemIdx) {
       return { ok: !bad };
     });
   } else {
-    grant = sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(block.label, num) });
+    grant = sccPostInventory({ character_id: player.id, token: player.token || '', item_id: item.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(block.label, num) });
   }
   grant.then(function(r) {
     if (!r.ok) { showDMToast('Failed to ' + (item.currency ? 'add gold' : (item.companion ? 'add the companion' : 'add to inventory')), 'error'); return null; }
@@ -27726,11 +27749,7 @@ function sccAwardItem(combatantIdx, itemIdx) {
   // to 1 regardless of how many were actually assigned; the whole stack now
   // goes to whichever one player is picked, matching how a DM actually hands
   // out "here, take all 3 torches" rather than one at a time).
-  fetch(SCC_URL + '/rest/v1/inventory', {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
-    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: item.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(c.name) })
-  }).then(function(r) {
+  sccPostInventory({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: item.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(c.name) }).then(function(r) {
     if (r.ok) {
       item.awarded = true;
       item.awardedTo = player.name;
@@ -27997,7 +28016,7 @@ function sccVendorBuy(stockId, buyerSelId) {
   sccPatch('character_sheet', '?character_id=eq.' + encodeURIComponent(player.id), { gold_cp: newGold }).then(function(r) {
     if (!r.ok) { showDMToast('Purchase failed', 'error'); return null; }
     sheet.gold_cp = newGold;
-    return sccPost('inventory', { character_id: player.id, token: player.token || '', item_id: stock.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: false, notes: 'Bought at ' + sccVendorDisplayName(stock) + (SCC_SESSION ? ' (Session ' + SCC_SESSION.session_number + ')' : '') });
+    return sccPostInventory({ character_id: player.id, token: player.token || '', item_id: stock.item_id, quantity: qty, is_favorite: false, sort_order: 999, dm_granted: false, notes: 'Bought at ' + sccVendorDisplayName(stock) + (SCC_SESSION ? ' (Session ' + SCC_SESSION.session_number + ')' : '') });
   }).then(function(r2) {
     if (!r2) return;
     if (!r2.ok) { showDMToast('Gold deducted but item grant failed', 'error'); return; }
@@ -28192,11 +28211,7 @@ function sccSummaryAwardItem(iIdx) {
   if (!player) return;
   // Grants the item's own real quantity -- was hardcoded to 1 regardless of
   // how many were actually assigned, same fix as sccAwardItem()'s own POST.
-  fetch(SCC_URL + '/rest/v1/inventory', {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json','apikey':SCC_ANON,'Authorization':'Bearer '+SCC_ANON,'Prefer':'return=minimal' },
-    body: JSON.stringify({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: item.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(entry.source) })
-  }).then(function(r) {
+  sccPostInventory({ character_id: player.id, token: player.token || '', item_id: item.id, quantity: item.quantity || 1, is_favorite: false, sort_order: 999, dm_granted: true, notes: sccLootSourceNote(entry.source) }).then(function(r) {
     if (r.ok) {
       item.awarded = true;
       item.awardedTo = player.name;
