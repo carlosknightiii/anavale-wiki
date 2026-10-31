@@ -19,7 +19,8 @@
   // ── Safe linking ──────────────────────────────────────────────────
   var LINK_SRC = {
     nation: ['NATIONS', 'nation'], org: ['ORGANIZATIONS', 'org'], character: ['CHARACTERS', 'character'],
-    religion: ['RELIGIONS', 'religion'], region: ['REGIONS', 'region']
+    religion: ['RELIGIONS', 'religion'], region: ['REGIONS', 'region'],
+    city: ['CITIES', 'city'], poi: ['POIS', 'poi']
   };
   function canLink(type, id) {
     var src = LINK_SRC[type];
@@ -45,25 +46,25 @@
       { year: '488 BA', yc: 'var(--cal-ba)', title: 'Thyun’s Thought', img: 'assets/images/characters/thyun.webp', alt: 'Thyun', ring: 'var(--cal-ba-ring)',
         text: 'Monks of the ' + L('religion', 'stillkeep', 'Stillkeep') + ' begin trying to transcribe one complete thought of ' + L('character', 'thyun', 'Thyun') + '. They are still working on it.' },
       { year: '1 AA', yc: 'var(--gold)', title: 'The Signing', img: 'assets/images/calendar/solenveil-map.jpg', alt: 'Solenveil on the map', ring: 'var(--gold)', pos: '45% 55%',
-        text: 'The Signing at Solenveil founds the Pogglewog Confederation and the Caldenric Accord.' },
+        text: L('org', 'pogglewog-confederation', 'The Signing') + ' at Solenveil founds the ' + L('org', 'pogglewog-confederation', 'Pogglewog Confederation') + ' and the ' + L('org', 'caldenric-accord', 'Caldenric Accord') + '.' },
       { year: '9 AA', title: 'Dated Forms', stamp: '9 AA',
         text: L('org', 'the-formery', 'The Formery') + ' puts the Accord count on its date line. Everyone else follows, eventually.' },
       { year: 'c. 10 AA', title: 'Tekhari Founded', img: 'assets/images/regions/img-nombi-landscape.webp', alt: 'Nombi landscape', ring: 'var(--cal-region-nombi)',
-        text: 'The ' + L('nation', 'tekhari', 'Tekhari') + ' nation is founded at Frostgate, the youngest nation in ' + L('region', 'nombi', 'Nombi') + '.' },
+        text: 'The ' + L('nation', 'tekhari', 'Tekhari') + ' nation is founded at ' + L('city', 'frostgate', 'Frostgate') + ', the youngest nation in ' + L('region', 'nombi', 'Nombi') + '.' },
       { year: 'c. 12 AA', title: 'Studying the Scar', img: 'assets/images/calendar/partition-scar.jpg', alt: 'The Partition Scar on the map', ring: 'var(--cal-stripe-dingurei)',
-        text: 'The ' + L('nation', 'dingurei', 'Dingurei') + ' begin their study of the Partition Scar.' },
+        text: 'The ' + L('nation', 'dingurei', 'Dingurei') + ' begin their study of the ' + L('poi', 'partition-scar', 'Partition Scar') + '.' },
       { year: '112 AA', title: 'The Silent Mosskin', img: 'assets/images/calendar/icey-mountains.jpg', alt: 'The Icey Mountains on the map', ring: 'var(--cal-icey-ring)',
-        text: 'The Ancient One, ' + L('region', 'nombi', 'Nombi') + '’s oldest Mosskin, sends its last clear signal.' },
+        text: L('poi', 'the-ancient-one', 'The Ancient One') + ', ' + L('region', 'nombi', 'Nombi') + '’s oldest ' + L('org', 'mosskin', 'Mosskin') + ', sends its last clear signal.' },
       { year: '232 AA', title: 'A New Republic', img: 'assets/images/regions/img-jugabi-landscape.webp', alt: 'Jugabi landscape', ring: 'var(--cal-region-jugabi)',
         text: 'The ' + L('nation', 'kalori-republic', 'Kalori Republic') + ' emerges from within the ' + L('nation', 'verdathi', 'Verdathi') + '.' },
       { year: '252 AA', title: 'The Uninvited Office', office: true,
-        text: L('org', 'the-formery', 'The Formery') + ' opens its uninvited office in Confederation Hall. The Deepchill Accord begins debating its national flag.' },
+        text: L('org', 'the-formery', 'The Formery') + ' opens its uninvited office in ' + L('poi', 'confederation-hall', 'Confederation Hall') + '. ' + L('org', 'deepchill-accord', 'The Deepchill Accord') + ' begins debating its national flag.' },
       { year: '272 AA', title: 'Veilmoot Withdraws', img: 'assets/images/calendar/doopu-peaks.jpg', alt: 'The Doopu Peaks on the map', ring: 'var(--cal-stripe-janiveth)',
-        text: 'The Veilmoot sends its last ambassador.' },
+        text: 'The ' + L('org', 'veilmoot', 'Veilmoot') + ' sends its last ambassador.' },
       { year: '301 AA', title: 'Tabled Alliance', img: 'assets/images/regions/img-nombi-landscape.webp', alt: 'Nombi landscape', ring: 'var(--cal-region-nombi)', pos: '80% 50%',
-        text: 'The Deepchill Accord of ' + L('region', 'nombi', 'Nombi') + ' tables a trade alliance with ' + L('region', 'caparia', 'Caparia') + '. It is still on the table.' },
+        text: L('org', 'deepchill-accord', 'The Deepchill Accord') + ' of ' + L('region', 'nombi', 'Nombi') + ' tables a trade alliance with ' + L('region', 'caparia', 'Caparia') + '. It is still on the table.' },
       { year: '312 AA', yc: 'var(--gold)', title: 'Now', now: true, img: 'assets/images/calendar/gobblewump-map.jpg', alt: 'Gobblewump Crossing on the map', ring: 'var(--gold)',
-        text: 'Three hundred and twelve years after the Signing. You are here.' }
+        text: 'Three hundred and twelve years after ' + L('org', 'pogglewog-confederation', 'the Signing') + '. You are here.' }
     ];
   }
   var TL_MARKS = [[-488, '488 BA', 'var(--cal-ba)'], [1, '1 AA', 'var(--gold)'], [112, '112 AA', 'var(--cal-text-2)'], [232, '232 AA', 'var(--cal-text-2)'], [272, '272 AA', 'var(--cal-text-2)'], [312, 'Now', 'var(--gold)']];
@@ -101,10 +102,10 @@
       + '<p class="cw-big">Ask anyone in Anavale what year it is and they will say <strong>three-twelve</strong>. Three hundred and twelve years ago, six quarrelling nations sat down at one painted table in Solenveil and agreed to stop quarrelling, more or less. Everyone has been counting from that day since, even the people who would rather not.</p></div>'
       + '<div class="cw-block"><h3 class="cw-h3">The Signing at Solenveil</h3><div class="cw-two">'
       + '<figure class="cw-fig"><img src="assets/images/calendar/solenveil-map.jpg" alt="Map of central Caparia showing Solenveil on the Mirrenflow River, with Prismhold to the south"><figcaption>Solenveil, on the Mirrenflow in the heart of ' + L('region', 'caparia', 'Caparia') + '.</figcaption></figure>'
-      + '<div class="cw-prose"><p>On <strong>Maybloom 20</strong>, after a generation of border squabbles, the six nations of ' + L('region', 'caparia', 'Caparia') + ' met in Solenveil and signed the agreements of the Pogglewog Confederation. They promised four things: no member makes war on another, trade roads belong to everyone, festivals are shared, and every quarrel goes to the Confederation Council.</p>'
-      + '<p>The ' + L('nation', 'solenmere', 'Solenmere') + ' wrote their own new government, the Caldenric Accord, into the same document, and its council sat for the first time that very evening. That day became <strong>1 AA</strong>.</p></div></div>'
-      + '<div class="cw-table-card"><div class="cw-table-head"><b>The Signing Table</b><span>One painted stripe and sigil for each signer, above each kingdom’s motto. It still stands in Confederation Hall.</span></div>' + stripesHtml() + '</div>'
-      + '<blockquote class="cw-quote"><p>“We did not agree on much that day. We agreed to keep talking. It turned out that was enough.”</p><cite>The first Chancellor of the Caldenric Accord, at the Signing</cite></blockquote></div>'
+      + '<div class="cw-prose"><p>On <strong>Maybloom 20</strong>, after a generation of border squabbles, the six nations of ' + L('region', 'caparia', 'Caparia') + ' met in Solenveil and signed the agreements of the ' + L('org', 'pogglewog-confederation', 'Pogglewog Confederation') + '. They promised four things: no member makes war on another, trade roads belong to everyone, festivals are shared, and every quarrel goes to the ' + L('org', 'pogglewog-confederation', 'Confederation Council') + '.</p>'
+      + '<p>The ' + L('nation', 'solenmere', 'Solenmere') + ' wrote their own new government, the ' + L('org', 'caldenric-accord', 'Caldenric Accord') + ', into the same document, and its council sat for the first time that very evening. That day became <strong>1 AA</strong>.</p></div></div>'
+      + '<div class="cw-table-card"><div class="cw-table-head"><b>The Signing Table</b><span>One painted stripe and sigil for each signer, above each kingdom’s motto. It still stands in ' + L('poi', 'confederation-hall', 'Confederation Hall') + '.</span></div>' + stripesHtml() + '</div>'
+      + '<blockquote class="cw-quote"><p>“We did not agree on much that day. We agreed to keep talking. It turned out that was enough.”</p><cite>The first Chancellor of the ' + L('org', 'caldenric-accord', 'Caldenric Accord') + ', at ' + L('org', 'pogglewog-confederation', 'the Signing') + '</cite></blockquote></div>'
       + '<div class="cw-block"><h3 class="cw-h3">How to Say It</h3><div class="cw-ba"><div class="cw-ba-half"></div><div class="cw-ba-mid"></div><div class="cw-ba-tag">THE SIGNING</div>'
       + '<div class="cw-ba-l">BA · Before the Accord</div><div class="cw-ba-ls">counts backwards: 40 BA was 40 years before</div><div class="cw-ba-r">After the Accord · AA</div><div class="cw-ba-rs">counts forward: now is 312 AA</div></div>'
       + '<div class="cw-cards-3"><div class="cw-mini"><b>312 AA</b>“Three-twelve After the Accord,” or just “three-twelve.”</div><div class="cw-mini"><b>1 BA → 1 AA</b>There is no year zero. The year before the Signing is 1 BA.</div><div class="cw-mini"><b>No year at all</b>The Partition happened before anyone was counting, so it has no date.</div></div></div>'
@@ -112,7 +113,7 @@
       + '<div class="cw-form"><div class="cw-form-t">THE FORMERY · FORM 6-C</div><div class="cw-form-s">Declaration of Commercial Intent Through a River Crossing</div><div class="cw-form-d">DATE OF APPLICATION: <span>Julisun 9</span>, <span>312</span> AA</div><div class="cw-form-n">(If BA, see Form 1-B: Retroactive Existence, Request For.)</div><div class="cw-stamp">RECEIVED<br>IN DUE<br>COURSE</div></div></div></div>'
       + '<div class="cw-block"><h3 class="cw-h3">Not Everyone Is Happy About It</h3><p class="cw-lead cw-lead--sm">The Accord is Caparian, and the rest of Pogglewog has never let Caparia forget it.</p><div class="cw-region-cards">'
       + rc('caparia', 'Uses it proudly. Accord Day, Maybloom 20, is a holiday, with painted tables set out in the streets of every town.')
-      + rc('nombi', 'The Deepchill Accord has tabled officially adopting it forty-one times, and uses it anyway on every trade paper. The ' + L('nation', 'tekhari', 'Tekhari') + ' adopted it on day one, which the rest of Nombi has never quite forgiven.')
+      + rc('nombi', L('org', 'deepchill-accord', 'The Deepchill Accord') + ' has tabled officially adopting it forty-one times, and uses it anyway on every trade paper. The ' + L('nation', 'tekhari', 'Tekhari') + ' adopted it on day one, which the rest of Nombi has never quite forgiven.')
       + rc('sohot', 'The ' + L('nation', 'auvari-remnance', 'Auvari Remnance') + ' counts in Imperial Years, a number well over two thousand, and calls AA “Caparian years.” The ' + L('nation', 'telvari-exchange', 'Telvari Exchange') + ' uses whichever date the customer prefers.')
       + rc('jugabi', 'The ' + L('nation', 'verdathi', 'Verdathi') + ' count time by the forest’s own seasons and find numbering years faintly rude. The ' + L('nation', 'kalori-republic', 'Kalori Republic') + ' adopted AA the year it was founded, mostly to annoy them.')
       + '</div><blockquote class="cw-quote cw-quote--sohot"><p>“Our empire was counting its years before Caparia had a word for counting.”</p><cite>A Memory Keeper of the ' + L('nation', 'auvari-remnance', 'Auvari Remnance') + '</cite></blockquote></div>'
