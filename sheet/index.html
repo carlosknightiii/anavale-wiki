@@ -6215,6 +6215,14 @@
     if (!SHEET) return;
     var fields = {};
 
+    // HP — a long rest restores all hit points (max includes the DM's
+    // max-HP modifier), ends temporary HP, and clears death saves.
+    var hpFull = Math.max(0, (parseInt(SHEET.hp_max) || 0) + (parseInt(SHEET.hp_max_modifier) || 0));
+    SHEET.hp_current = hpFull; fields.hp_current = hpFull;
+    SHEET.hp_temp = 0; fields.hp_temp = 0;
+    SHEET.death_save_successes = 0; fields.death_save_successes = 0;
+    SHEET.death_save_failures = 0; fields.death_save_failures = 0;
+
     // Spell Slots — every level's spent count resets to 0 (full).
     SHEET.spell_slots = {};
     fields.spell_slots = {};
@@ -6242,10 +6250,11 @@
     fields.limited_use_spent = spentMap;
 
     saveSheet(fields);
+    renderHeaderHP();
     renderSpellSlotsGroup();
     renderHitDice();
     renderLimitedUseFeatures();
-    showToast('Long Rest complete — spell slots restored, Hit Dice and long-rest features recovered.');
+    showToast('Long Rest complete — HP fully restored, spell slots restored, Hit Dice and long-rest features recovered.');
   }
 
   function adjustHP(delta) {
