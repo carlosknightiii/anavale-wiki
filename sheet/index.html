@@ -1613,6 +1613,7 @@
       cursor: help;
     }
     .cs-mi-companion-pill.permanent { border-color: var(--gold); }
+    .cs-mi-companion-kind { font-weight: 400; color: var(--text-muted); }
     .cs-mi-companion-mode {
       font-size: 0.6rem; font-weight: 400; text-transform: uppercase;
       letter-spacing: 0.03em; color: var(--char-text-faint);
@@ -6412,7 +6413,7 @@
     if (a.description) parts.push('Why: ' + a.description);
     if (a.effect_text) parts.push('Effect: ' + a.effect_text);
     if (ent && ent.behavior) parts.push('Behavior: ' + ent.behavior);
-    if (!parts.length) parts.push(a.name + ' (' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + ' companion)');
+    if (!parts.length) parts.push((a.nickname || a.name) + ' (' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + ' companion)');
     return parts.join('\n\n');
   }
   // Image comes from the companion's own underlying record (creatures.image
@@ -6427,9 +6428,9 @@
       var ent = src.find(function(c) { return c.id === a.entity_id; });
       img = ent && ent.image;
     }
-    var fb = '<span class="cs-mi-companion-thumb cs-mi-companion-thumb-fallback"' + (img ? ' style="display:none;"' : '') + '>' + escHtml((a.name || '?').charAt(0).toUpperCase()) + '</span>';
+    var fb = '<span class="cs-mi-companion-thumb cs-mi-companion-thumb-fallback"' + (img ? ' style="display:none;"' : '') + '>' + escHtml((a.nickname || a.name || '?').charAt(0).toUpperCase()) + '</span>';
     if (!img) return fb;
-    return '<img class="cs-mi-companion-thumb" src="' + escHtml(img) + '" alt="" title="Click to enlarge" onclick="openImgView(this.src, this.getAttribute(\'data-name\'))" data-name="' + escHtml(a.name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">' + fb;
+    return '<img class="cs-mi-companion-thumb" src="' + escHtml(img) + '" alt="" title="Click to enlarge" onclick="openImgView(this.src, this.getAttribute(\'data-name\'))" data-name="' + escHtml(a.nickname ? a.nickname + ' (' + a.name + ')' : a.name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">' + fb;
   }
   // Shadowbox viewer, injected into #cs-modal-root on first use (per the
   // file's modal rule). Backdrop click, X button, or Escape closes it.
@@ -6471,7 +6472,9 @@
       var tip = attachmentTooltipText(a);
       return '<span class="cs-mi-companion-pill has-thumb' + (a.mode === 'permanent' ? ' permanent' : '') + '"' + (tip ? ' data-tip="' + escHtml(tip) + '"' : '') + '>'
         + attachmentThumbHtml(a)
-        + escHtml(a.name)
+        + (a.nickname
+            ? escHtml(a.nickname) + ' <span class="cs-mi-companion-kind">(' + escHtml(a.name) + ')</span>'
+            : escHtml(a.name))
         + '<span class="cs-mi-companion-mode">' + (a.mode === 'permanent' ? 'Permanent' : 'Situational') + '</span>'
       + '</span>';
     }).join('');
