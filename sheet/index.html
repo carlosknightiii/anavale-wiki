@@ -7816,12 +7816,17 @@
     if (!item) return;
     var qtyEl = document.getElementById('cs-additem-qty-' + itemId);
     var qty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
-    sb.from('inventory').insert({
-      character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty,
-      is_favorite: false, sort_order: 999, dm_granted: false
-    }).select().single().then(function(res) {
+    // Already own one? Stack onto that row instead of adding a second row.
+    var same = INVENTORY.filter(function(r) { return r.item_id === itemId && !r.custom_name; })[0];
+    var write = same
+      ? sb.from('inventory').update({ quantity: (same.quantity || 0) + qty }).eq('id', same.id).select().single()
+      : sb.from('inventory').insert({
+          character_id: CHAR_ID, token: TOKEN, item_id: itemId, quantity: qty,
+          is_favorite: false, sort_order: 999, dm_granted: false
+        }).select().single();
+    write.then(function(res) {
       if (res.error || !res.data) { showToast('Could not add item', true); return; }
-      INVENTORY.push(res.data);
+      if (same) Object.assign(same, res.data); else INVENTORY.push(res.data);
       CATALOG_CACHE[item.id] = item; // full row already in hand, no separate hydrate fetch needed
       closeAddItemModal();
       renderInventory();
