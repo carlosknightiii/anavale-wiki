@@ -18910,7 +18910,12 @@ function sccFgBoxPlainLabel(b) {
 
 // Box status dropdown (replaces the old Mark Completed toggle, ANV-39).
 // Function name kept so existing call sites are unchanged.
+// S3 audit notes 10/63: DM-facing reference boxes (the magenta DM-only family
+// and Don't Blow This) are never "done" at the table, so they get no status
+// dropdown at all.
+var SCC_FG_NO_STATUS_CATEGORIES = { dm_only: 1, background: 1, why_this_works: 1, if_they_ask: 1, dont_blow_this: 1 };
 function sccFgBoxCompletionToggleHtml(b) {
+  if (b && SCC_FG_NO_STATUS_CATEGORIES[b.category]) return '';
   return sccFgStatusSelectHtml('box', sccFgBoxStatusKey(b), sccFgBoxCompletionKey(b), sccFgBoxPlainLabel(b), 'scc-fg-status--box');
 }
 
@@ -19162,7 +19167,10 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     // visible, not hover-gated) plus a real :hover state below -- both
     // signal "clickable, cycles a value" without relying on the DM finding
     // and reading a delayed tooltip.
-    var statusHtml = '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
+    // S3 audit note 30: decision cards drop the manual status pill -- logging
+    // the decision (the green check) is what marks them done. Cards with no
+    // decision (e.g. NPC conversation cards) keep the pill.
+    var statusHtml = card.decision ? '' : '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
         + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status: Not Started → Started → Completed">'
       + '<span class="scc-fg-sc-status-icon">&#8635;</span>' + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
     return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
