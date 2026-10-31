@@ -9547,9 +9547,12 @@ function showDMToast(msg, type) {
 .scc-fg-edge-btn--on { opacity: 1; background: var(--dm-gold); color: var(--surface-0); }
 .scc-fg-edge-btn.scc-tip[data-tip]::after { z-index: 460; }
 @media (min-width: 769px) and (hover: hover) {
-  .scc-live-sidebar.scc-live-sidebar--pinned .scc-live-sidebar-drawer { transform: translate(0, -50%); transition-delay: 0s; }
-  .scc-fg-scroll-indicator.scc-fg-scroll-indicator--pinned { transform: translate(0, -50%); transition-delay: 0s; }
-  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--pinned { opacity: 1; transition-delay: 0s; }
+  .scc-live-sidebar.scc-live-sidebar--pinned .scc-live-sidebar-drawer,
+  .scc-live-sidebar.scc-live-sidebar--near .scc-live-sidebar-drawer { transform: translate(0, -50%); transition-delay: 0s; }
+  .scc-fg-scroll-indicator.scc-fg-scroll-indicator--pinned,
+  .scc-fg-scroll-indicator.scc-fg-scroll-indicator--near { transform: translate(0, -50%); transition-delay: 0s; }
+  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--pinned,
+  .scc-fg-scroll-backdrop.scc-fg-scroll-backdrop--near { opacity: 1; transition-delay: 0s; }
 }
 @media (max-width: 768px) {
   .scc-fg-edge-btn { width: 22px; height: 40px; top: 60%; z-index: 495; }
@@ -17636,6 +17639,61 @@ function sccFgEdgeTools() {
   }
   if (btn) { btn.classList.toggle('scc-fg-edge-btn--on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
 }
+// Edge proximity reveal (DM 2026-10-31): the 12px hover strips were easy to
+// skip with a fast mouse, which jumps past them or right out of the window.
+// Open each slide-in panel as soon as the pointer comes within
+// SCC_EDGE_NEAR_PX of its edge (or leaves the window through that edge),
+// and close it once the pointer is well clear of the open panel.
+var SCC_EDGE_NEAR_PX = 56;
+function sccEdgeSetNear(side, on) {
+  if (side === 'left') {
+    var sb = document.getElementById('scc-live-sidebar');
+    if (sb) sb.classList.toggle('scc-live-sidebar--near', on);
+  } else {
+    var trig = document.getElementById('scc-fg-scroll-trigger');
+    var wrap = document.getElementById('scc-fg-scroll-indicator');
+    var bd = document.getElementById('scc-fg-scroll-backdrop');
+    var active = on && trig && trig.classList.contains('scc-fg-scroll-trigger--on');
+    if (wrap) wrap.classList.toggle('scc-fg-scroll-indicator--near', !!active);
+    if (bd) bd.classList.toggle('scc-fg-scroll-backdrop--near', !!active);
+  }
+}
+function sccEdgePanelRight(side) {
+  // How far from its edge the open panel reaches, plus a little slack.
+  var el = document.getElementById(side === 'left' ? 'scc-live-sidebar-drawer' : 'scc-fg-scroll-indicator');
+  var r = el ? el.getBoundingClientRect() : null;
+  if (!r || !r.width) return SCC_EDGE_NEAR_PX;
+  return (side === 'left' ? r.right : window.innerWidth - r.left) + 40;
+}
+function sccEdgeProximityInit() {
+  if (window.__sccEdgeNearBound) return;
+  window.__sccEdgeNearBound = true;
+  var near = { left: false, right: false };
+  function update(x) {
+    if (typeof sccFgIsHoverDesktop === 'function' && !sccFgIsHoverDesktop()) {
+      if (near.left) { near.left = false; sccEdgeSetNear('left', false); }
+      if (near.right) { near.right = false; sccEdgeSetNear('right', false); }
+      return;
+    }
+    var w = window.innerWidth;
+    var fromLeft = x, fromRight = w - x;
+    var L = near.left ? fromLeft <= sccEdgePanelRight('left') : fromLeft <= SCC_EDGE_NEAR_PX;
+    var R = near.right ? fromRight <= sccEdgePanelRight('right') : fromRight <= SCC_EDGE_NEAR_PX;
+    if (L !== near.left) { near.left = L; sccEdgeSetNear('left', L); }
+    if (R !== near.right) { near.right = R; sccEdgeSetNear('right', R); }
+  }
+  document.addEventListener('mousemove', function(e) { update(e.clientX); }, { passive: true });
+  // Pointer left the window entirely: if it went out through a side edge,
+  // treat that as reaching the edge.
+  document.addEventListener('mouseout', function(e) {
+    if (e.relatedTarget) return;
+    var x = e.clientX;
+    if (x <= SCC_EDGE_NEAR_PX * 2) update(0);
+    else if (window.innerWidth - x <= SCC_EDGE_NEAR_PX * 2) update(window.innerWidth);
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sccEdgeProximityInit);
+else sccEdgeProximityInit();
 function sccFgEdgeRail() {
   var btn = document.getElementById('scc-fg-edge-rail');
   var wrap = document.getElementById('scc-fg-scroll-indicator');
