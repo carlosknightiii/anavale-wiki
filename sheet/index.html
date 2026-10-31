@@ -2528,6 +2528,7 @@
     }
     .cs-inv-del:hover { color: #f87171; }
     .cs-inv-td-price { white-space: nowrap; }
+    .cs-inv-source { display: block; font-size: 0.72rem; font-style: italic; color: var(--text-muted); margin-top: 2px; }
     .cs-inv-weight-note { display: block; font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; cursor: help; }
     .cs-price-g { color: var(--money-text-gold); font-weight: 700; }
     .cs-price-s { color: var(--money-text-silver); font-weight: 700; }
@@ -7512,7 +7513,9 @@
       + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
       + '<td class="cs-inv-td cs-inv-td-name">'
         + (equippedLabel ? '<span class="cs-inv-equipped-badge">&#10003; Equipped &middot; ' + equippedLabel + '</span>' : '')
-        + name + '</td>'
+        + name
+        + (item.notes ? '<span class="cs-inv-source">' + escHtml(item.notes) + '</span>' : '')
+        + '</td>'
       + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-price">' + formatPriceHtml(costGp, costSp, costCp) + '</td>'
       + '<td class="cs-inv-td cs-inv-td-weight">' + (weight||0) + (isVehicleInvRow(item) ? '<span class="cs-inv-weight-note" data-tip="Pulled by your companion, so it does not count toward what you carry.">not carried</span>' : '') + '</td>'
