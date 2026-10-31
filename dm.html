@@ -9426,6 +9426,96 @@ function showDMToast(msg, type) {
 .scc-fg-gg-apply-btn--on:hover:not([disabled]) { color: var(--surface-0); filter: brightness(1.1); }
 .scc-fg-gg-apply-btn--all { font-weight: 700; }
 .scc-fg-gg-apply-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Item 12 (option C, 2026-10-31): side menu + page ──────────────────
+   The tiles become a sticky menu on the left (a horizontal sticky strip
+   when the module is narrow, e.g. phones or nested modules); the chosen
+   card reads as its own page on the right, tied to its menu button by a
+   shared accent color, a breadcrumb and a title. */
+.scc-fg-sc-acc-0 { --sc-acc: var(--bubbleseed-bright); }
+.scc-fg-sc-acc-1 { --sc-acc: var(--featherflow-bright); }
+.scc-fg-sc-acc-2 { --sc-acc: var(--flamerage-bright); }
+.scc-fg-sc-acc-3 { --sc-acc: var(--steelfist-bright); }
+.scc-fg-sc-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: start; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards-row {
+  display: flex; flex-direction: column; gap: 4px; padding: 0.7rem 0.6rem;
+  position: sticky; top: calc(var(--dm-env-banner-h, 0px) + var(--dm-header-visible-h, 0px) + var(--scc-fg-tb-h, 0px) + 8px);
+  max-height: calc(100vh - var(--dm-env-banner-h, 0px) - var(--dm-header-visible-h, 0px) - var(--scc-fg-tb-h, 0px) - 24px);
+  overflow-y: auto; z-index: 5;
+  background: var(--dm-surface); border-right: 1px solid var(--scc-border); border-radius: 0 0 0 8px;
+}
+.scc-fg-sc-menu-head { font: 700 0.66rem var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dm-text-muted); padding: 0.2rem 0.4rem 0.4rem; }
+.scc-fg-scenario-cards .scc-fg-sc-tile {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0.55rem; border-radius: 8px; background: transparent; border: none;
+  box-shadow: inset 0 0 0 1px transparent; color: var(--dm-text-muted);
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+.scc-fg-scenario-cards .scc-fg-sc-tile:hover { background: var(--dm-surface-high); }
+.scc-fg-scenario-cards .scc-fg-sc-tile:focus-visible { outline: 2px solid var(--sc-acc); outline-offset: 1px; }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active {
+  background: var(--dm-surface-high); box-shadow: inset 4px 0 0 var(--sc-acc);
+}
+.scc-fg-sc-tile-thumb { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+.scc-fg-scenario-cards .scc-fg-sc-tile-portrait, .scc-fg-scenario-cards .scc-fg-sc-tile-fallback {
+  width: 34px; height: 34px; border-radius: 8px; border: 2px solid transparent; object-fit: cover;
+}
+.scc-fg-scenario-cards .scc-fg-sc-tile-fallback { font-size: 0.95rem; color: var(--sc-acc); background: color-mix(in srgb, var(--sc-acc) 16%, var(--dm-surface)); }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-portrait,
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-fallback { border-color: var(--sc-acc); }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-fallback { background: var(--sc-acc); color: var(--surface-0); }
+.scc-fg-sc-tile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.scc-fg-sc-tile-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
+.scc-fg-sc-tile-meta:empty { display: none; }
+.scc-fg-scenario-cards .scc-fg-sc-tile-title { font: 600 0.86rem/1.25 var(--font-sans); color: inherit; }
+.scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-title { color: var(--dm-text); font-weight: 700; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards-body {
+  margin: 0; border: none; border-radius: 0 0 8px 0; background: transparent;
+  padding: 0.9rem 1.1rem 1rem; border-top: 3px solid var(--sc-acc); min-width: 0;
+}
+.scc-fg-sc-page-head { margin-bottom: 0.8rem; }
+.scc-fg-sc-crumb { font: 400 0.75rem var(--font-sans); color: var(--dm-text-muted); margin-bottom: 0.15rem; }
+.scc-fg-sc-page-title { font: 700 1.25rem/1.25 var(--font-display); color: var(--sc-acc); }
+/* Nested modules sit inside a page: tighter frame, smaller title. */
+.scc-fg-scenario-cards .scc-fg-scenario-cards { padding: 10px; background: var(--dm-surface); box-shadow: inset 0 0 0 1px var(--scc-border-mid); }
+.scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-header { font-size: 0.85rem; padding: 0.4rem 0.65rem; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-page-title { font-size: 1.05rem; }
+.scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-layout { grid-template-columns: 210px minmax(0, 1fr); }
+/* Narrow module (phone, or a nested module in a narrow page): the menu
+   becomes a sticky horizontal strip above the page. */
+@container (max-width: 620px) {
+  .scc-fg-sc-layout, .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-layout { grid-template-columns: minmax(0, 1fr); }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards-row {
+    flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none;
+    border-right: none; border-bottom: 1px solid var(--scc-border); border-radius: 0; padding: 0.45rem;
+  }
+  .scc-fg-sc-menu-head { display: none; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile { flex: none; max-width: 260px; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile-title { flex: 0 1 auto; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile-thumb, .scc-fg-scenario-cards .scc-fg-sc-tile-portrait, .scc-fg-scenario-cards .scc-fg-sc-tile-fallback { width: 30px; height: 30px; }
+  .scc-fg-scenario-cards .scc-fg-sc-tile--active { box-shadow: inset 0 -3px 0 var(--sc-acc); }
+  .scc-fg-scenario-cards .scc-fg-sc-tile-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards-body { padding: 0.75rem 0.7rem; }
+}
+/* Nested modules use the compact strip unless they have real room. */
+@container (max-width: 900px) {
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-layout { grid-template-columns: minmax(0, 1fr); }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row {
+    flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none;
+    border-right: none; border-bottom: 1px solid var(--scc-border); border-radius: 0; padding: 0.45rem;
+  }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-menu-head { display: none; }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-tile { flex: none; max-width: 280px; }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-tile--active { box-shadow: inset 0 -3px 0 var(--sc-acc); }
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-sc-tile-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* A strip inside a strip would stick on top of it: only one level sticks. */
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row { position: static; }
+}
+/* Two stacked sticky strips would cover each other on a phone: only the
+   outermost strip sticks there. */
+@media (max-width: 720px) {
+  .scc-fg-scenario-cards .scc-fg-scenario-cards .scc-fg-scenario-cards-row { position: static; }
+}
 /* collapsed:true boxes -- header-only until tapped. */
 .scc-fg-box--collapsible { padding-top: 0.55rem; padding-bottom: 0.55rem; }
 .scc-fg-box-collapse-head { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
@@ -9885,7 +9975,9 @@ function showDMToast(msg, type) {
   border-radius: 8px;
   padding: 22px;
   box-shadow: inset 0 0 0 3px rgba(240,180,41,0.35);
-  overflow: hidden; margin: 0.5rem 0 0.75rem;
+  /* Item 12: visible, not hidden -- hidden would stop the sticky menu. */
+  overflow: visible; margin: 0.5rem 0 0.75rem;
+  container-type: inline-size;
 }
 .scc-fg-scenario-cards-header {
   padding: 0.55rem 0.85rem; background: var(--dm-surface-high);
@@ -19287,7 +19379,13 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   // setting it. See js/dm-calendar.js; nothing moves the clock unprompted.
   var timeHtml = typeof sccCalCardTimeHtml === 'function' ? sccCalCardTimeHtml(card, domId, cardIdx) : '';
   var timeEditHtml = typeof sccCalCardEditHtml === 'function' ? sccCalCardEditHtml(card, domId, cardIdx) : '';
-  return timeHtml + decisionHtml + combatBtnHtml + contentHtml + timeEditHtml + backBtn;
+  // Item 12: the page names the card it belongs to (breadcrumb + title in
+  // the card's accent color), so it is never ambiguous which choice is open.
+  var pageHead = '<div class="scc-fg-sc-page-head">'
+      + '<div class="scc-fg-sc-crumb">' + sccEsc(b.label || 'Scenario Cards') + ' &#8250; ' + sccEsc(card.title || '') + '</div>'
+      + '<div class="scc-fg-sc-page-title">' + sccEsc(card.title || '') + '</div>'
+    + '</div>';
+  return pageHead + timeHtml + decisionHtml + combatBtnHtml + contentHtml + timeEditHtml + backBtn;
 }
 
 // Each tile below carries data-fg-rail-child-label EXCEPT a card that has a
@@ -19319,12 +19417,20 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     var statusHtml = card.decision ? '' : '<span class="scc-fg-sc-status scc-fg-sc-status--' + status + '"'
         + ' onclick="event.stopPropagation(); sccFgCycleScenarioCardStatus(\'' + domId + '\', ' + i + ')" title="Click to cycle status: Not Started → Started → Completed">'
       + '<span class="scc-fg-sc-status-icon">&#8635;</span>' + SCC_FG_SC_STATUS_LABEL[status] + '</span>';
-    return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
-      + portrait
-      + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
-      + (typeof sccCalDurChip === 'function' ? sccCalDurChip(card) : '')
-      + statusHtml
-      + (loggedTile ? '<span class="scc-fg-sc-tile-check" title="Logged as what happened">&#10003;</span>' : '')
+    // Item 12 (option C, 2026-10-31): the tile is a menu button. Its
+    // thumbnail is the card's entity portrait (letter avatar otherwise) and
+    // it carries the card's accent color, shared with the page it opens.
+    if (!portrait) portrait = '<span class="scc-fg-sc-tile-fallback scc-fg-sc-tile-fallback--letter">' + sccEsc((card.title || '?').replace(/^(they|the|a|an)\s+/i, '').charAt(0).toUpperCase()) + '</span>';
+    return '<div class="scc-fg-sc-tile scc-fg-sc-acc-' + (i % 4) + (i === active ? ' scc-fg-sc-tile--active' : '') + (loggedTile ? ' scc-fg-sc-tile--logged' : '') + '" role="tab" tabindex="0" aria-selected="' + (i === active) + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)" onkeydown="if(event.target===this&&(event.key===\'Enter\'||event.key===\' \')){event.preventDefault();this.click();}">'
+      + '<span class="scc-fg-sc-tile-thumb">' + portrait + '</span>'
+      + '<span class="scc-fg-sc-tile-text">'
+        + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
+        + '<span class="scc-fg-sc-tile-meta">'
+          + (typeof sccCalDurChip === 'function' ? sccCalDurChip(card) : '')
+          + statusHtml
+          + (loggedTile ? '<span class="scc-fg-sc-tile-check" title="Logged as what happened">&#10003;</span>' : '')
+        + '</span>'
+      + '</span>'
     + '</div>';
   }).join('');
   var bodyHtml = sccFgScenarioCardBodyHtml(b, cards[active], domId, active);
@@ -19333,8 +19439,13 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
       + '<span class="scc-fg-scenario-cards-header-icon">&#128203;</span>'
       + '<span>Scenario Cards' + (b.label ? '<span class="scc-fg-scenario-cards-header-sub"> — ' + sccEsc(b.label) + '</span>' : '') + '</span>'
     + '</div>'
-    + '<div class="scc-fg-scenario-cards-row">' + tiles + '</div>'
-    + '<div class="scc-fg-scenario-cards-body" id="' + domId + '-body">' + bodyHtml + '</div>'
+    + '<div class="scc-fg-sc-layout">'
+      + '<div class="scc-fg-scenario-cards-row" role="tablist" aria-label="' + sccEsc(b.label || 'Scenario cards') + '">'
+        + (b.label ? '<div class="scc-fg-sc-menu-head">' + sccEsc(b.label) + '</div>' : '')
+        + tiles
+      + '</div>'
+      + '<div class="scc-fg-scenario-cards-body scc-fg-sc-acc-' + (active % 4) + '" id="' + domId + '-body" role="tabpanel">' + bodyHtml + '</div>'
+    + '</div>'
   + '</div>';
 }
 
@@ -19380,11 +19491,35 @@ function sccFgSwitchScenarioCard(domId, cardIdx, el) {
   if (!found) return;
   var cards = Array.isArray(found.block.cards) ? found.block.cards : [];
   var bodyEl = document.getElementById(domId + '-body');
-  if (bodyEl) bodyEl.innerHTML = sccFgScenarioCardBodyHtml(found.block, cards[cardIdx], domId, cardIdx);
+  if (bodyEl) {
+    bodyEl.innerHTML = sccFgScenarioCardBodyHtml(found.block, cards[cardIdx], domId, cardIdx);
+    bodyEl.className = bodyEl.className.replace(/\bscc-fg-sc-acc-\d\b/g, '').trim() + ' scc-fg-sc-acc-' + (cardIdx % 4);
+  }
   var rowEl = document.querySelector('#' + domId + ' .scc-fg-scenario-cards-row');
   if (rowEl) {
-    Array.prototype.forEach.call(rowEl.querySelectorAll('.scc-fg-sc-tile'), function(t) { t.classList.remove('scc-fg-sc-tile--active'); });
-    if (el) el.classList.add('scc-fg-sc-tile--active');
+    Array.prototype.forEach.call(rowEl.children, function(t) {
+      if (!t.classList.contains('scc-fg-sc-tile')) return;
+      t.classList.remove('scc-fg-sc-tile--active'); t.setAttribute('aria-selected', 'false');
+    });
+    if (el) {
+      el.classList.add('scc-fg-sc-tile--active'); el.setAttribute('aria-selected', 'true');
+      // Horizontal strip: keep the chosen tile in view without moving the page.
+      if (rowEl.scrollWidth > rowEl.clientWidth) {
+        var er = el.getBoundingClientRect(), rr = rowEl.getBoundingClientRect();
+        if (er.left < rr.left || er.right > rr.right) rowEl.scrollLeft += er.left - rr.left - 12;
+      }
+    }
+  }
+  // Item 12: if the chosen page now starts above the screen, bring its
+  // top into view so the DM lands on the start of what they picked.
+  var wrapEl = document.getElementById(domId);
+  if (bodyEl && wrapEl) {
+    var r = bodyEl.getBoundingClientRect();
+    var off = (typeof sccFgStickyTopOffset === 'function' ? sccFgStickyTopOffset() : 0);
+    var rowR = rowEl ? rowEl.getBoundingClientRect() : null;
+    var narrow = rowR && bodyEl.getBoundingClientRect().top >= rowR.bottom - 1;
+    if (narrow) off += rowR.height;
+    if (r.top < off) window.scrollTo({ top: Math.max(0, window.scrollY + r.top - off - 8), behavior: 'auto' });
   }
 }
 
@@ -19970,6 +20105,18 @@ function sccFgGgWireVideos(root) {
     if (reduce || !SCC_FG_GG_IO) return;
     SCC_FG_GG_IO.observe(v);
   });
+}
+// Item 12: the sticky scenario menu sits below the sticky time bar, whose
+// height is exposed as --scc-fg-tb-h (0 when the bar is hidden).
+var SCC_FG_TB_RO = null;
+function sccFgWatchTimeBarHeight() {
+  var tb = document.querySelector('.tb-wrap');
+  var set = function() {
+    var h = (tb && tb.offsetParent && getComputedStyle(tb).position === 'sticky') ? tb.offsetHeight : 0;
+    document.documentElement.style.setProperty('--scc-fg-tb-h', h + 'px');
+  };
+  set();
+  if (tb && !SCC_FG_TB_RO && 'ResizeObserver' in window) { SCC_FG_TB_RO = new ResizeObserver(set); SCC_FG_TB_RO.observe(tb); }
 }
 var SCC_FG_GG_MO = null;
 function sccFgGgEnsureObserver() {
@@ -21313,7 +21460,7 @@ function sccFgDrawDocument(num) {
   SCC_FG_RENDERED_SESSION_NUM = num;
   sccFgBuildScrollIndicator();
   sccFgQpReapplyFilters();
-  sccFgGgEnsureObserver(); sccFgGgWireVideos();
+  sccFgGgEnsureObserver(); sccFgGgWireVideos(); sccFgWatchTimeBarHeight();
   sccFgEnsureScrollListenerBound();
   sccFgEnsureRailSwipeBound();
 }
