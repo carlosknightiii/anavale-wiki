@@ -785,7 +785,7 @@ function walkTextNodes(container, termMap, re, linked) {
     var parent = textNode.parentNode;
     if (parent && (parent.nodeName === 'A' || (parent.classList && parent.classList.contains('wiki-link')))) return;
     // Never auto-link labels inside the color health scale
-    if (parent && parent.closest && parent.closest('.ch-scale')) return;
+    if (parent && parent.closest && parent.closest('.ch-gauge')) return;
 
     re.lastIndex = 0;
     if (!re.test(textNode.textContent)) return;

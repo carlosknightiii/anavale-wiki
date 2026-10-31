@@ -2210,14 +2210,14 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .ch-gauge { margin: 0.6rem 0 0.9rem; max-width: 420px; }
 .ch-scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .ch-step { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.ch-step i { display: block; height: 8px; border-radius: 4px; opacity: 0.7; background: linear-gradient(90deg, var(--red), var(--gold), var(--green), var(--blue), var(--purple)); }
+.ch-step i { display: block; height: 14px; border-radius: 3px; opacity: 0.85; background: linear-gradient(90deg, var(--red) 0 20%, var(--gold) 20% 40%, var(--green) 40% 60%, var(--blue) 60% 80%, var(--purple) 80%); }
 .ch-step b { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); text-align: center; }
 /* Each step shows how much color is left: bright rainbow down to grey */
 .ch-step--vivid i  { filter: saturate(1.15); }
 .ch-step--muted i  { filter: saturate(0.55) brightness(0.9); }
 .ch-step--faded i  { filter: saturate(0.2) brightness(0.75); }
 .ch-step--dimmed i { filter: grayscale(1) brightness(0.6); }
-.ch-step.is-current i { opacity: 1; height: 12px; margin-top: -2px; box-shadow: 0 0 0 2px var(--text); }
+.ch-step.is-current i { opacity: 1; height: 20px; margin-top: -3px; box-shadow: 0 0 0 2px var(--text); }
 .ch-step.is-current b { color: var(--text); }
 .ch-text { margin: 0.6rem 0 0; font-size: 0.88rem; line-height: 1.5; color: var(--text); }
 .ch-text strong { color: var(--text); }
