@@ -18557,8 +18557,18 @@ function sccFgRenderSpokenDialogue(b) {
   // show for an entity that doesn't exist, same as before this rewrite.
   var speakerHeaderHtml = '';
   var visToggleHtml = '';
+  // S3 audit note 25: speaker.name overrides the displayed name once the
+  // players know the NPC's real name (e.g. "Veran" for the Grusk Color
+  // Extractor creature entry). Portrait/link still come from the entity.
+  var speakerDisplayName = (speaker && speaker.name) ? String(speaker.name) : (entity ? entity.name : '');
+  if (!entity && speaker && speaker.name) {
+    speakerHeaderHtml = '<div class="scc-fg-spoken-header">'
+      + '<div class="scc-fg-spoken-thumb-fallback">' + sccEsc(speakerDisplayName.charAt(0)) + '</div>'
+      + '<div class="scc-fg-spoken-meta"><span class="scc-fg-spoken-name">' + sccEsc(speakerDisplayName) + '</span></div>'
+    + '</div>';
+  }
   if (entity) {
-    var initial = sccEsc((entity.name || '?').charAt(0));
+    var initial = sccEsc((speakerDisplayName || '?').charAt(0));
     var thumbHtml = entity.image
       ? '<img class="scc-fg-spoken-thumb" src="' + sccEsc(entity.image) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
         + '<div class="scc-fg-spoken-thumb-fallback" style="display:none">' + initial + '</div>'
@@ -18566,7 +18576,7 @@ function sccFgRenderSpokenDialogue(b) {
     speakerHeaderHtml = '<div class="scc-fg-spoken-header" onclick="sccOpenLookup(\'' + speakerType.replace(/'/g, "\\'") + '\',\'' + String(speaker.id).replace(/'/g, "\\'") + '\')" title="Open full entry">'
       + thumbHtml
       + '<div class="scc-fg-spoken-meta">'
-        + '<span class="scc-fg-spoken-name">' + sccEsc(entity.name) + '</span>'
+        + '<span class="scc-fg-spoken-name">' + sccEsc(speakerDisplayName) + '</span>'
         + (entity.pronouns ? '<span class="scc-fg-spoken-pronouns">' + sccEsc(entity.pronouns) + '</span>' : '')
       + '</div>'
     + '</div>';
