@@ -1245,11 +1245,11 @@ function renderGods(el) {
   var godOrder = ['oro', 'nara', 'thyun', 'solvara', 'grak'];
 
     var GOD_CFG = {
-    oro:     { accent: '#7a5200', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
-    nara:    { accent: '#1a5c30', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
-    thyun:   { accent: '#1a3a6a', faith: 'The Stillkeep',   faithHash: 'religion/stillkeep'   },
-    solvara: { accent: '#4a2070', faith: 'The Veilborn',    faithHash: 'religion/veilborn'    },
-    grak:    { accent: '#444444', faith: null,               faithHash: null                   },
+    oro:     { accent: 'var(--gold)', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
+    nara:    { accent: 'var(--green)', faith: 'The Brightcreed', faithHash: 'religion/brightcreed' },
+    thyun:   { accent: 'var(--blue)', faith: 'The Stillkeep',   faithHash: 'religion/stillkeep'   },
+    solvara: { accent: 'var(--purple)', faith: 'The Veilborn',    faithHash: 'religion/veilborn'    },
+    grak:    { accent: 'var(--text-muted)', faith: null,               faithHash: null                   },
   };
 
   var cardsHtml = '';
@@ -1271,28 +1271,28 @@ function renderGods(el) {
       : '';
 
     var faithHtml = cfg.faith
-      ? '<div onclick="navigate(\'' + esc(cfg.faithHash) + '\')" style="margin-top:1rem;padding-top:0.85rem;border-top:1px solid rgba(0,0,0,0.08);font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:' + accent + ';cursor:pointer;">' + esc(cfg.faith) + '</div>'
-      : '<div style="margin-top:1rem;padding-top:0.85rem;border-top:1px solid rgba(0,0,0,0.08);font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-faint);font-style:italic;">No worshippers</div>';
+      ? '<div onclick="navigate(\'' + esc(cfg.faithHash) + '\')" style="margin-top:1rem;padding-top:0.85rem;border-top:1px solid var(--border-mid);font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:700;color:var(--gold);text-decoration:underline;text-underline-offset:3px;cursor:pointer;">' + esc(cfg.faith) + '</div>'
+      : '<div style="margin-top:1rem;padding-top:0.85rem;border-top:1px solid var(--border-mid);font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-faint);font-style:italic;">No worshippers</div>';
 
     var appearanceHtml = c.appearance
-      ? '<div style="margin-top:0.85rem;"><div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:' + accent + ';opacity:0.6;margin-bottom:0.3rem;">Appearance</div>'
-        + '<p style="font-size:0.88rem;line-height:1.7;color:var(--ink-light);margin:0;">' + esc(c.appearance) + '</p></div>'
+      ? '<div style="margin-top:0.85rem;"><div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:' + accent + ';font-weight:700;margin-bottom:0.3rem;">Appearance</div>'
+        + '<p style="font-size:0.88rem;line-height:1.7;color:var(--text);margin:0;">' + esc(c.appearance) + '</p></div>'
       : '';
 
     var gigHtml = c.gigglegloom_relationship
-      ? '<div style="margin-top:0.85rem;"><div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:' + accent + ';opacity:0.6;margin-bottom:0.3rem;">Gigglegloom</div>'
-        + '<p style="font-size:0.88rem;line-height:1.7;color:var(--ink-light);margin:0;">' + esc(c.gigglegloom_relationship) + '</p></div>'
+      ? '<div style="margin-top:0.85rem;"><div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:' + accent + ';font-weight:700;margin-bottom:0.3rem;">Gigglegloom</div>'
+        + '<p style="font-size:0.88rem;line-height:1.7;color:var(--text);margin:0;">' + esc(c.gigglegloom_relationship) + '</p></div>'
       : '';
 
-    var cardStyle = 'background:var(--parchment-light);border-radius:var(--card-radius);border:1px solid rgba(200,148,10,0.15);border-left:3px solid ' + accent + ';overflow:hidden;display:flex;flex-direction:column;';
+    var cardStyle = 'background:var(--parchment-light);border-radius:var(--card-radius);border:1px solid var(--border-mid);border-left:4px solid ' + accent + ';overflow:hidden;display:flex;flex-direction:column;';
     if (isGrak) cardStyle = 'background:var(--surface-3);border-radius:var(--card-radius);border:1px solid var(--border);border-left:3px solid var(--text-faint);overflow:hidden;display:flex;flex-direction:column;';
 
     cardsHtml += '<div style="' + cardStyle + '">'
       + imgHtml
       + '<div style="padding:' + (c.image ? '0 1.5rem 1.5rem' : '1.5rem') + ';flex:1;">'
       + '<div style="font-family:var(--font-serif);font-size:1.4rem;font-weight:400;color:var(--ink);margin-bottom:0.2rem;' + (c.image ? 'margin-top:1.25rem;' : '') + '">' + esc(c.name) + '</div>'
-      + '<div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:' + accent + ';margin-bottom:0.75rem;">' + esc(m.domain || '') + '</div>'
-      + '<p style="font-size:0.94rem;line-height:1.78;color:var(--ink-light);margin:0;">' + esc(c.player_knowledge || c.summary || '') + '</p>'
+      + '<div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:700;color:' + accent + ';margin-bottom:0.75rem;">' + esc(m.domain || '') + '</div>'
+      + '<p style="font-size:0.94rem;line-height:1.78;color:var(--text);margin:0;">' + esc(c.player_knowledge || c.summary || '') + '</p>'
       + appearanceHtml + gigHtml + faithHtml
       + '</div></div>';
   });
@@ -1304,9 +1304,9 @@ function renderGods(el) {
     + '<p>Three faiths have built their entire understanding of the world around this event — and reached very different conclusions about what it means.</p>';
 
   var religionCardsHtml = '<div class="entry-grid" style="margin-top:1rem;">'
-    + '<div class="entry-card" onclick="navigate(\'religion/brightcreed\')" style="cursor:pointer;border-left:3px solid #c8940a;"><div class="entry-name">The Brightcreed</div><div class="entry-tag">Oro · Nara · The Light of the World</div><div class="entry-body">Joy is an act of defiance. Color is proof the world is still alive. Grak\'s jealousy was always its weakness — the Partition was inevitable.</div></div>'
-    + '<div class="entry-card" onclick="navigate(\'religion/stillkeep\')" style="cursor:pointer;border-left:3px solid #4a5878;"><div class="entry-name">The Stillkeep</div><div class="entry-tag">Thyun · Memory · The Long View</div><div class="entry-body">The Partition was preventable. Grak\'s grief was legitimate. The world that exists now is the result of a failure to listen — and we must remember that.</div></div>'
-    + '<div class="entry-card" onclick="navigate(\'religion/veilborn\')" style="cursor:pointer;border-left:3px solid #6a3aaa;"><div class="entry-name">The Veilborn</div><div class="entry-tag">Solvara · Shadow · Hidden Truth</div><div class="entry-body">Solvara knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.</div></div>'
+    + '<div class="entry-card" onclick="navigate(\'religion/brightcreed\')" style="cursor:pointer;border-left:4px solid var(--gold);"><div class="entry-name">The Brightcreed</div><div class="entry-tag">Oro · Nara · The Light of the World</div><div class="entry-body">Joy is an act of defiance. Color is proof the world is still alive. Grak\'s jealousy was always its weakness — the Partition was inevitable.</div></div>'
+    + '<div class="entry-card" onclick="navigate(\'religion/stillkeep\')" style="cursor:pointer;border-left:4px solid var(--blue);"><div class="entry-name">The Stillkeep</div><div class="entry-tag">Thyun · Memory · The Long View</div><div class="entry-body">The Partition was preventable. Grak\'s grief was legitimate. The world that exists now is the result of a failure to listen — and we must remember that.</div></div>'
+    + '<div class="entry-card" onclick="navigate(\'religion/veilborn\')" style="cursor:pointer;border-left:4px solid var(--purple);"><div class="entry-name">The Veilborn</div><div class="entry-tag">Solvara · Shadow · Hidden Truth</div><div class="entry-body">Solvara knows what actually happened at the Partition and has told no one. The Veilborn consider this correct.</div></div>'
     + '</div>';
 
   el.innerHTML = pageHeader('Theology', 'The Gods of Anavale', 'Five gods shaped this world. Four of them are still trying to save it.')
