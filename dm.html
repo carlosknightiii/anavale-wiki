@@ -9377,6 +9377,13 @@ function showDMToast(msg, type) {
 .scc-fg-check-for .scc-fg-featured-img, .scc-fg-check-for .scc-fg-featured-fallback { width: 44px; height: 44px; }
 .scc-fg-check-for .scc-fg-featured-name { font-size: 0.72rem; }
 .scc-fg-check-icon { font-size: 1.15rem; line-height: 1; }
+/* S3 audit note 40c: [npc:Name] marker -- the DM rolls for this NPC. Red so it
+   never reads as one of the player portrait chips. */
+.scc-fg-check-npc {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.6rem;
+  border-radius: 999px; background: var(--red-dim); border: 1px solid var(--red-border);
+  color: var(--red); font: 700 0.78rem var(--font-sans); white-space: nowrap;
+}
 .scc-fg-check-name {
   font-family: var(--font-sans); font-size: 1.08rem; font-weight: 600;
   color: var(--dm-gold); text-transform: none; letter-spacing: normal;
@@ -18337,21 +18344,36 @@ function sccFgCheckForHtml(keys) {
 }
 function sccFgStyleSkillChecks(html) {
   return (html || '').replace(
-    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>([^<]+?)\s+DC\s+(\d+)<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
-    function(m, title, ability, dc, rest, siblingParas) {
+    /<p>\s*\uD83C\uDFB2\s*(?:<em>([^<]+?)<\/em>\s*)?<strong>(?:(Contested:[^<]+?)|([^<]+?)\s+DC\s+(\d+))<\/strong>([\s\S]*?)<\/p>((?:\s*<p>(?:(?!\uD83C\uDFB2)[\s\S])*?<\/p>)*)/g,
+    function(m, title, contested, ability, dc, rest, siblingParas) {
+      // S3 audit note 40c: a contested check header ("Contested: Veran's
+      // Sleight of Hand (+2) vs Perception") styles exactly like a DC check.
+      // The whole line becomes the check name; there is no DC number.
+      if (contested) { ability = contested; dc = ''; }
       // ANV-37: optional [for:all] / [for:kael,hana] marker right after the
       // closing </strong>. Parsed and stripped here; unknown names ignored.
+      // S3 audit note 40c: [npc:Name] (the DM rolls for an NPC) may sit
+      // before or after the [for:...] marker; both are parsed and stripped.
       var forChips = '';
-      rest = rest.replace(/^\s*\[for:([^\]]*)\]/i, function(mm, list) {
+      var npcChips = '';
+      var markerRe = /^\s*\[(for|npc):([^\]]*)\]/i, mk;
+      while ((mk = rest.match(markerRe))) {
+        rest = rest.slice(mk[0].length);
+        if (mk[1].toLowerCase() === 'npc') {
+          mk[2].split(',').forEach(function(v) {
+            var nm = v.trim();
+            if (nm) npcChips += '<span class="scc-fg-check-npc" title="You (the DM) roll for ' + sccEsc(nm) + '">&#127922; You roll for ' + sccEsc(nm) + '</span>';
+          });
+          continue;
+        }
         var seen = {};
-        list.split(',').forEach(function(v) {
+        mk[2].split(',').forEach(function(v) {
           var k = v.trim().toLowerCase();
           if (SCC_FG_CHECK_FOR_ORDER.indexOf(k) !== -1) seen[k] = true;
         });
         if (seen.all) seen = { kael: true, hana: true, visenya: true };
         forChips = sccFgCheckForHtml(SCC_FG_CHECK_FOR_ORDER.filter(function(k) { return seen[k]; }));
-        return '';
-      });
+      }
       var bodyHtml = rest.replace(/^\s*[—-]\s*/, '').trim();
       // Pass:/Fail: auto-coloring (item 3a) -- detected here, never
       // hand-typed inline styles by whoever authors the content. Matches
@@ -18381,14 +18403,15 @@ function sccFgStyleSkillChecks(html) {
       // into bodyHtml's own <br>-joined string -- matching the
       // .scc-fg-check-body p rules already in the CSS for exactly this.
       var bodyInner = (bodyHtml ? '<p>' + bodyHtml + '</p>' : '') + (siblingParas || '');
+      var dcText = dc ? ' DC ' + dc : '';
       var chkKey = sccFgCheckStatusKey(title ? title.trim() : '', ability.trim(), dc);
-      var chkLabel = ability.trim() + ' DC ' + dc + (title ? ' — ' + title.trim() : '');
+      var chkLabel = ability.trim() + dcText + (title ? ' — ' + title.trim() : '');
       var chkSt = sccFgReadStatus('check', chkKey, null);
       var chkStatusHtml = sccFgStatusSelectHtml('check', chkKey, null, chkLabel, 'scc-fg-check-status');
       return '<div class="scc-fg-check' + (chkSt !== 'available' ? ' scc-fg-check--' + chkSt : '') + '">'
         + '<div class="scc-fg-check-top"><div class="scc-fg-check-main">'
         + titleHtml
-        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + ' DC ' + dc + '</span></div>'
+        + '<div class="scc-fg-check-head"><span class="scc-fg-check-icon">&#127922;</span><span class="scc-fg-check-name">' + sccEsc(ability.trim()) + dcText + '</span>' + npcChips + '</div>'
         + '</div>' + forChips + chkStatusHtml + '</div>'
         + (bodyInner ? '<div class="scc-fg-check-body">' + bodyInner + '</div>' : '')
       + '</div>';
