@@ -224,8 +224,11 @@
     var v = card && Number(card.duration_minutes) > 0 ? Number(card.duration_minutes) : '';
     var lbl = card && card.duration_label ? String(card.duration_label) : '';
     var k = '\'' + esc(domId) + '\',' + idx;
-    return '<div class="sct-edit-row"><label class="sct-edit">Time cost in minutes <input type="number" min="0" step="5" value="' + v + '" placeholder="e.g. 20" aria-label="Minutes this card takes" onchange="sccCalCardSetDuration(' + k + ',this.value)"></label>'
-      + '<label class="sct-edit sct-edit--wide">What takes this long <input type="text" value="' + esc(lbl) + '" placeholder="e.g. Fetching Wrenna and coming back" aria-label="What takes this long" onchange="sccCalCardSetDurationLabel(' + k + ',this.value)"></label></div>';
+    // DM 2026-10-31: the always-open fields were confusing mid-session. Tucked
+    // into a closed disclosure; the summary says what it is and its value.
+    var sum = v ? 'Edit time cost (' + esc(Cal.durStr(v)) + ')' : 'Add a time cost to this choice';
+    return '<details class="sct-edit-wrap"><summary>' + sum + '</summary><div class="sct-edit-row"><label class="sct-edit">Time cost in minutes <input type="number" min="0" step="5" value="' + v + '" placeholder="e.g. 20" aria-label="Minutes this card takes" onchange="sccCalCardSetDuration(' + k + ',this.value)"></label>'
+      + '<label class="sct-edit sct-edit--wide">What takes this long <input type="text" value="' + esc(lbl) + '" placeholder="e.g. Fetching Wrenna and coming back" aria-label="What takes this long" onchange="sccCalCardSetDurationLabel(' + k + ',this.value)"></label></div></details>';
   };
 
   function refreshLogThen(fn) {
