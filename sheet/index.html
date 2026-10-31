@@ -2528,6 +2528,13 @@
     }
     .cs-inv-del:hover { color: #f87171; }
     .cs-inv-td-price { white-space: nowrap; }
+    .cs-inv-doc-link { background: none; border: none; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+    .cs-inv-doc-link:hover { color: var(--gold); }
+    .cs-inv-doc-read { display: inline-block; margin-left: 4px; font-size: 0.72rem; font-weight: 700; color: var(--gold); border: 1px solid var(--gold); border-radius: 999px; padding: 0 6px; white-space: nowrap; }
+    .cs-doc-modal { max-width: 640px; }
+    .cs-doc-look { font-style: italic; color: var(--text-muted); font-size: 0.85rem; margin: 0 0 0.75rem; }
+    .cs-doc-look:empty { display: none; }
+    .cs-doc-paper { white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.55; color: var(--text); background: var(--blue-700); border-left: 3px solid var(--gold); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1rem; }
     .cs-inv-source { display: block; font-size: 0.72rem; font-style: italic; color: var(--text-muted); margin-top: 2px; }
     .cs-inv-weight-note { display: block; font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; cursor: help; }
     .cs-price-g { color: var(--money-text-gold); font-weight: 700; }
@@ -7513,7 +7520,9 @@
       + '<td class="cs-inv-td cs-inv-td-thumb">' + thumb + '</td>'
       + '<td class="cs-inv-td cs-inv-td-name">'
         + (equippedLabel ? '<span class="cs-inv-equipped-badge">&#10003; Equipped &middot; ' + equippedLabel + '</span>' : '')
-        + name
+        + (invDocText(catalogItem)
+            ? '<button type="button" class="cs-inv-doc-link" onclick="openDocModal(\'' + item.id + '\')" title="Read it">' + name + ' <span class="cs-inv-doc-read">&#128220; Read</span></button>'
+            : name)
         + (item.notes ? '<span class="cs-inv-source">' + escHtml(item.notes) + '</span>' : '')
         + '</td>'
       + '<td class="cs-inv-td cs-inv-td-cat">' + cap(category) + '</td>'
@@ -7581,6 +7590,28 @@
   }
   // ── Sell to trader ──────────────────────────────────────────────────
   var SELL_ITEM_ID = null;
+  // Documents in inventory can be opened and read. items.document_text is
+  // the literal text written on it; Document/Book items without it fall
+  // back to their description so nothing readable is a dead end.
+  function invDocText(cat) {
+    if (!cat) return '';
+    if (cat.document_text) return cat.document_text;
+    if (/^(document|book)$/i.test(cat.category || '') && cat.description) return cat.description;
+    return '';
+  }
+  function openDocModal(id) {
+    var item = INVENTORY.filter(function(i) { return i.id === id; })[0];
+    var cat = item && item.item_id ? CATALOG_CACHE[item.item_id] : null;
+    var text = invDocText(cat);
+    if (!text) return;
+    document.getElementById('cs-doc-title').textContent = cat.name;
+    document.getElementById('cs-doc-look').textContent = (cat.document_text && cat.read_aloud) ? cat.read_aloud : '';
+    document.getElementById('cs-doc-text').textContent = text;
+    document.getElementById('cs-doc-overlay').style.display = 'flex';
+  }
+  function closeDocModal() {
+    document.getElementById('cs-doc-overlay').style.display = 'none';
+  }
   function openSellModal(id) {
     var item = INVENTORY.filter(function(i) { return i.id === id; })[0];
     if (!item) return;
@@ -8470,6 +8501,14 @@
                 + '<button class="cs-modal-btn-danger" id="cs-delete-confirm-btn">Remove</button>'
               + '</div>'
             + '</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="cs-modal-overlay" id="cs-doc-overlay" style="display:none" onclick="if(event.target===this)closeDocModal()">'
+          + '<div class="cs-modal cs-doc-modal">'
+            + '<div class="cs-modal-title" id="cs-doc-title"></div>'
+            + '<p class="cs-doc-look" id="cs-doc-look"></p>'
+            + '<div class="cs-doc-paper" id="cs-doc-text"></div>'
+            + '<div class="cs-sell-actions"><button class="cs-modal-btn-secondary" onclick="closeDocModal()">Close</button></div>'
           + '</div>'
         + '</div>'
         + '<div class="cs-modal-overlay" id="cs-sell-overlay" style="display:none" onclick="if(event.target===this)closeSellModal()">'
