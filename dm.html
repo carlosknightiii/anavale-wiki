@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/wiki.css">
-<link rel="stylesheet" href="css/calendar.css?v=20261031a">
+<link rel="stylesheet" href="css/calendar.css?v=20261031b">
 <style>
 /* ══════════════════════════════════════════════
    ANAVALE DM TOOLS — dm.html
@@ -9479,6 +9479,7 @@ function showDMToast(msg, type) {
 .scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-portrait,
 .scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-fallback { border-color: var(--sc-acc); }
 .scc-fg-scenario-cards .scc-fg-sc-tile--active .scc-fg-sc-tile-fallback { background: var(--sc-acc); color: var(--surface-0); }
+.scc-fg-scenario-cards .scc-fg-sc-tile-fallback--range { font-family: var(--font-sans); font-weight: 700; font-size: 0.72rem; letter-spacing: -0.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .scc-fg-sc-tile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .scc-fg-sc-tile-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
 .scc-fg-sc-tile-meta:empty { display: none; }
@@ -9883,8 +9884,10 @@ function showDMToast(msg, type) {
    category chip already uses -- not a new one-off badge shape, just a
    consistent size override and a shared label treatment next to it. */
 .scc-fg-decision-header { display: flex; align-items: center; gap: 0.5rem; }
+/* Plain text label, no pill border or fill: it marks a decision point but is
+   not itself clickable (DM 2026-10-31). */
 .scc-fg-decision-header .scc-fg-box-cat-badge {
-  background: var(--dm-gold-dim); border: 1px solid var(--scc-border-gold); color: var(--dm-gold);
+  background: none; border: 0; padding: 0; color: var(--dm-gold);
   font-size: 0.68rem; flex-shrink: 0; margin-bottom: 0;
 }
 .scc-fg-decision-header-label { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--dm-text); flex: 1; min-width: 0; }
@@ -19475,6 +19478,16 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
 // any depth -- only decision-less cards (e.g. NPC dialogue-tree cards) do.
 // scenario_cards declares itself scope:"container", hasOwnEntry:false in
 // $railScope (no entry for the module itself, only for eligible cards).
+// Roll range from a card title's trailing parenthetical: "(14+)" -> "14+",
+// "(10 to 13)" -> "10\u201313", "(9 or lower)" -> "\u22649". Null if none.
+function sccFgScenarioRollRange(title) {
+  var t = String(title || ''), m;
+  if ((m = /\((\d+)\s*\+\)\s*$/.exec(t))) return m[1] + '+';
+  if ((m = /\((\d+)\s*(?:to|-|\u2013)\s*(\d+)\)\s*$/i.exec(t))) return m[1] + '\u2013' + m[2];
+  if ((m = /\((\d+)\s*or\s*(?:lower|less|below)\)\s*$/i.exec(t))) return '\u2264' + m[1];
+  if ((m = /\((\d+)\s*or\s*(?:higher|more|above)\)\s*$/i.exec(t))) return m[1] + '+';
+  return null;
+}
 function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
   var domId = sccFgScenarioCardsDomId(b, idx);
   var cards = Array.isArray(b.cards) ? b.cards : [];
@@ -19501,6 +19514,10 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     // Item 12 (option C, 2026-10-31): the tile is a menu button. Its
     // thumbnail is the card's entity portrait (letter avatar otherwise) and
     // it carries the card's accent color, shared with the page it opens.
+    // DM 2026-10-31: a roll-outcome card ("It Comes Apart Cleanly (14+)")
+    // shows its roll range in the box instead of a letter.
+    var rangeTxt = sccFgScenarioRollRange(card.title);
+    if (!portrait && rangeTxt) portrait = '<span class="scc-fg-sc-tile-fallback scc-fg-sc-tile-fallback--range">' + sccEsc(rangeTxt) + '</span>';
     if (!portrait) portrait = '<span class="scc-fg-sc-tile-fallback scc-fg-sc-tile-fallback--letter">' + sccEsc((card.title || '?').replace(/^(they|the|a|an)\s+/i, '').charAt(0).toUpperCase()) + '</span>';
     return '<div class="scc-fg-sc-tile scc-fg-sc-acc-' + (i % 4) + (i === active ? ' scc-fg-sc-tile--active' : '') + (loggedTile ? ' scc-fg-sc-tile--logged' : '') + '" role="tab" tabindex="0" aria-selected="' + (i === active) + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)" onkeydown="if(event.target===this&&(event.key===\'Enter\'||event.key===\' \')){event.preventDefault();this.click();}">'
       + '<span class="scc-fg-sc-tile-thumb">' + portrait + '</span>'
