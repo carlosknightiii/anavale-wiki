@@ -974,15 +974,21 @@ background-image: var(--gradient-colorful);
 /* Inline wiki links — underlined, inherit text color.
    Font weight 400 used because Cinzel Decorative only has 400.
    text-shadow creates a faux-bold effect for visual weight. */
+/* Site-wide rule (DM, Oct 2026): every text link is the primary gold with an
+   underline, so players always know what is clickable. Nothing else in body
+   text uses gold + underline. */
 .wiki-link {
   font-weight: 400;
   text-shadow: 0.4px 0 0 currentColor, -0.2px 0 0 currentColor;
   text-decoration: underline;
+  text-decoration-color: var(--gold);
   text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
   cursor: pointer;
-  color: inherit;
+  color: var(--gold);
 }
+/* The light rainbow pull-quote panel keeps dark text, so links there stay ink-colored */
+.pull-quote .wiki-link { color: inherit; text-decoration-color: currentColor; }
 .wiki-link:hover {
   text-decoration-thickness: 2.5px;
   opacity: 0.75;
@@ -1011,14 +1017,15 @@ mark.search-highlight {
 }
 .wiki-breadcrumb a,
 .wiki-breadcrumb span[data-nav] {
-  color: var(--ink);
+  color: var(--gold);
   text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
   font-weight: 700;
 }
 .wiki-breadcrumb a:hover,
 .wiki-breadcrumb span[data-nav]:hover {
-  color: var(--ink);
+  color: var(--gold-bright);
 }
 /* Separator character between breadcrumb segments */
 .wiki-breadcrumb .sep {
@@ -2247,7 +2254,7 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .nx-sec-h { font-family: var(--font-display); font-weight: 700; font-size: 1.55rem; color: var(--text); margin: 0 0 0.9rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--border-mid); position: relative; }
 .nx-sec-h::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 64px; height: 3px; background: var(--nx-accent); border-radius: 2px; }
 .nx-article .nx-body p { font-size: 1.02rem; line-height: 1.8; }
-.nx-article .nx-body strong { color: var(--nx-accent); }
+.nx-article .nx-body strong { color: var(--text); }
 
 /* Pull quote */
 .nx-pull { margin: 2rem 0; padding: 1.4rem 1.6rem 1.2rem 1.8rem; border-left: 4px solid var(--nx-accent); background: var(--surface-2); border-radius: 0 var(--radius) var(--radius) 0; position: relative; }
@@ -2260,8 +2267,8 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .nx-toc-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; }
 .nx-toc ol { margin: 0; padding-left: 1.2rem; }
 .nx-toc li { margin: 0.2rem 0; font-size: 0.92rem; }
-.nx-toc a { color: var(--text); text-decoration: none; cursor: pointer; }
-.nx-toc a:hover { color: var(--nx-accent); text-decoration: underline; }
+.nx-toc a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.nx-toc a:hover { color: var(--gold-bright); }
 
 /* Customs list */
 .nx-customs { margin: 0.5rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
@@ -2384,4 +2391,30 @@ body.wiki-dark .warning-title { color: var(--gold); }
   .layout .nation-facts { position: static; }
   .nation-fact-value { min-width: 0; overflow-wrap: anywhere; }
   .nation-fact-value .ch-gauge { flex-wrap: wrap; gap: 6px; }
+}
+
+
+/* ── Magazine pages for every entry type (renderMagazine) ── */
+.mz-accent-gold   { --nx-accent: var(--gold);   --nx-field: var(--mz-field-gold); }
+.mz-accent-blue   { --nx-accent: var(--blue);   --nx-field: var(--mz-field-blue); }
+.mz-accent-green  { --nx-accent: var(--green);  --nx-field: var(--mz-field-green); }
+.mz-accent-red    { --nx-accent: var(--red);    --nx-field: var(--mz-field-red); }
+.mz-accent-purple { --nx-accent: var(--purple); --nx-field: var(--mz-field-purple); }
+.nx-hero-glyph { position: absolute; right: 6%; top: 50%; transform: translateY(-50%); font-family: var(--font-display); font-weight: 700; font-size: 15rem; line-height: 1; color: var(--nx-accent); opacity: 0.22; pointer-events: none; }
+.nx-hero-portrait { position: absolute; right: 4%; top: 7%; height: 86%; max-width: 44%; object-fit: contain; border-radius: var(--radius-md); filter: drop-shadow(0 10px 30px var(--nx-field)); }
+.nx-hero.is-portrait .nx-hero-text { max-width: 56%; }
+.nx-layout.no-infobox { grid-template-columns: minmax(0, 1fr); }
+.nx-ib-sigil.is-photo img { width: 100%; max-width: 260px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-md); filter: none; border: 2px solid var(--nx-accent); }
+.nx-ib-action { display: block; margin: 0.9rem 0.8rem; padding: 0.6rem 0.9rem; text-align: center; border: 1px solid var(--gold-border); border-radius: var(--radius-sm); color: var(--gold); font-family: var(--font-display); font-weight: 700; font-size: 0.85rem; text-decoration: none; }
+.nx-ib-action:hover { background: var(--gold-subtle); }
+.nx-creatures--grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.nx-creature-ph { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); border: 2px solid var(--border-mid); background: var(--nx-field); color: var(--nx-accent); font-family: var(--font-display); font-weight: 700; font-size: 2.5rem; }
+.nx-creature figcaption small { color: var(--text-faint); }
+.nx-formery-stamp { margin: 0 0 1rem; }
+.nx-body .settlement-card { margin-bottom: 1rem; }
+@media (max-width: 600px) {
+  .nx-hero.is-portrait { flex-direction: column; align-items: stretch; }
+  .nx-hero-portrait { position: relative; right: auto; top: auto; display: block; height: auto; max-height: 240px; max-width: 70%; margin: 1.25rem auto 0; }
+  .nx-hero.is-portrait .nx-hero-text { max-width: none; }
+  .nx-hero-glyph { font-size: 9rem; }
 }
