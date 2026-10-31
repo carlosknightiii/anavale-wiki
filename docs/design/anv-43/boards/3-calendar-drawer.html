@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calendar Drawer</title>
+<!-- Design-canvas component file (x-dc template + DCLogic class). Read it as a spec: the template is HTML with {{holes}}, sc-for loops and sc-if conditionals; the class at the bottom holds all data and behavior. It will not run as-is outside the canvas. -->
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#121218}
+a{color:#f0b429}a:hover{color:#ffd166}
+</style>
+</helmet>
+<div style="width: 400px; height: 1180px; box-sizing: border-box; background: #18181f; border-left: 1px solid #2c2c36; font-family: Roboto, system-ui, sans-serif; color: #ece9e1; padding: 20px 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 700; font-size: 22px; color: #f0b429">Calendar</div>
+<div style="font-size: 13px; color: #c9c5ba">312 AA · After the Accord</div>
+</div>
+<button type="button" onClick="{{goToday}}" style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #f0b429; background: transparent; color: #f0b429; font: 700 13px Roboto, sans-serif; cursor: pointer">Today</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{regions}}" as="r" hint-placeholder-count="4">
+<button type="button" onClick="{{r.pick}}" aria-label="Show {{r.name}}" style="{{r.style}}">
+<img src="{{r.img}}" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 0; background: rgba(12,12,16,0.72); color: #ffffff; font: 700 12px Roboto, sans-serif; text-align: center">{{r.name}}</span>
+</button>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #b9b5aa; margin-top: -6px">{{hereNote}}</div>
+
+<div style="border-radius: 14px; overflow: hidden; background: #1f1f28; border: 1px solid #34343f">
+<div style="height: 6px; background: {{selSeasonColor}}"></div>
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 14px">
+<div style="flex: none; width: 62px; height: 62px; border-radius: 12px; background: #2d2610; border: 1px solid #f0b429; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px">
+<div style="font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #e3d9bd">{{selMonthShort}}</div>
+<div style="font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 700; font-size: 26px; color: #f0b429; line-height: 1">{{selDay}}</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 19px; font-weight: 700">{{selWeekday}}</span>
+<sc-if value="{{selIsToday}}" hint-placeholder-val="{{ true }}">
+<span style="padding: 2px 8px; border-radius: 10px; background: #f0b429; color: #1b1b22; font-size: 11px; font-weight: 700; letter-spacing: 1px">TODAY</span>
+</sc-if>
+</div>
+<div style="font-size: 13px; color: #c9c5ba">{{selMonth}} {{selDay}}, 312 AA</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: #17171e">
+<img src="{{selIcon}}" alt="" width="40" height="40" style="flex: none">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<div style="font-size: 15px; font-weight: 700">{{selIconAlt}}</div>
+<div style="font-size: 12px; color: #b9b5aa">in {{rName}}</div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+<div style="font-size: 26px; font-weight: 700; color: {{selHiColor}}; line-height: 1">{{selHi}}°</div>
+<div style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #b9b5aa">HIGH</div>
+</div>
+<div style="width: 1px; height: 34px; background: #34343f"></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+<div style="font-size: 26px; font-weight: 700; color: {{selLoColor}}; line-height: 1">{{selLo}}°</div>
+<div style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #b9b5aa">LOW</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+<span style="padding: 4px 10px; border-radius: 12px; background: {{selSeasonColor}}; color: #15151b; font-size: 12px; font-weight: 700">{{selSeason}}</span>
+<span style="padding: 3px 10px; border-radius: 12px; border: 1px solid #44444f; color: #c9c5ba; font-size: 12px; font-weight: 600">{{rName}}</span>
+</div>
+<div style="border-left: 3px solid {{selSeasonColor}}; padding-left: 10px; font-size: 14px; font-style: italic; line-height: 1.5; color: #e3dfd4">{{selFeel}}</div>
+<sc-if value="{{selHasNote}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: {{noteBg}}; border: 1px solid {{noteColor}}; color: {{noteColor}}; font-size: 13px; font-weight: 700">
+<span style="flex: none; width: 8px; height: 8px; border-radius: 4px; background: {{noteColor}}"></span>{{selNote}}
+</div>
+</sc-if>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<button type="button" onClick="{{prev}}" aria-label="Previous month" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #44444f; background: transparent; color: #ece9e1; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+<div style="font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 700; font-size: 20px">{{mName}}</div>
+<div style="font-size: 12px; color: #b9b5aa">like {{mLike}} · {{mSeason}}</div>
+</div>
+<button type="button" onClick="{{next}}" aria-label="Next month" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #44444f; background: transparent; color: #ece9e1; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+<sc-for list="{{heads}}" as="hd" hint-placeholder-count="7">
+<div style="text-align: center; font-size: 12px; font-weight: 700; color: #b9b5aa; padding: 2px 0" title="{{hd.full}}">{{hd.short}}</div>
+</sc-for>
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+<button type="button" onClick="{{c.pick}}" aria-label="{{c.aria}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #b9b5aa">
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 12px; height: 12px; border-radius: 6px; border: 2px solid #f0b429; display: inline-block"></span>Today</span>
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #e98a5c; display: inline-block"></span>Something happens (DM only)</span>
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #8fd19e; display: inline-block"></span>Holiday</span>
+</div>
+<div style="height: 1px; background: #2c2c36"></div>
+<div style="font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #b9b5aa">THE YEAR IN {{rUpper}}</div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<sc-for list="{{year}}" as="y" hint-placeholder-count="12">
+<button type="button" onClick="{{y.pick}}" style="{{y.style}}">
+<img src="{{y.icon}}" alt="" width="20" height="20" style="flex: none">
+<span style="width: 92px; text-align: left; font-weight: 700">{{y.name}}</span>
+<span style="flex: 1; text-align: left; color: #b9b5aa; font-size: 12px">{{y.season}}</span>
+<span style="width: 34px; text-align: right; font-size: 14px; font-weight: 700; color: {{y.hiColor}}">{{y.hi}}°</span>
+<span style="color: #5a5a68">/</span>
+<span style="width: 30px; text-align: left; font-size: 14px; font-weight: 700; color: {{y.loColor}}">{{y.lo}}°</span>
+</button>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":400,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { vm: 6, sm: 6, sd: 9, rg: 'caparia' }; }
+  renderVals() {
+    const I = { sun: '../assets/weather/wx-sun.svg', heat: '../assets/weather/wx-heat.svg', rain: '../assets/weather/wx-rain.svg', monsoon: '../assets/weather/wx-monsoon.svg', storm: '../assets/weather/wx-storm.svg', snow: '../assets/weather/wx-snow.svg', wind: '../assets/weather/wx-wind.svg', leaf: '../assets/weather/wx-leaf.svg', flower: '../assets/weather/wx-flower.svg', fog: '../assets/weather/wx-fog.svg', cloud: '../assets/weather/wx-cloud.svg', thaw: '../assets/weather/wx-thaw.svg', partly: '../assets/weather/wx-partly.svg' };
+    const IL = { sun: 'Clear and sunny', heat: 'Heat wave', rain: 'Rain', monsoon: 'Monsoon downpours', storm: 'Thunderstorms', snow: 'Snow and deep cold', wind: 'Wind and dust', leaf: 'Autumn', flower: 'Spring bloom', fog: 'Fog and mist', cloud: 'Overcast', thaw: 'Thaw', partly: 'Sun and cloud' };
+    const M = [['Janufrost','January',31],['Febrillow','February',28],['Marchwind','March',31],['Aprillune','April',30],['Maybloom','May',31],['Junebright','June',30],['Julisun','July',31],['Augustorm','August',31],['Septemleaf','September',30],['Octumble','October',31],['Novemmist','November',30],['Decembell','December',31]];
+    const R = {
+      caparia: { name: 'Caparia', img: '../assets/regions/img-caparia-landscape.webp', m: [['Mild wet winter',56,39,'rain','Cool rain off the hills, frost only on the coldest mornings.'],['Mild wet winter',58,40,'rain','Almond trees blooming between rainstorms.'],['Spring',63,44,'flower','Wildflowers on the meadows, rivers running full.'],['Spring',68,48,'flower','Warm afternoons, cool nights, the frogs singing again.'],['Spring',76,55,'sun','Everything green and gold; perfect travel weather.'],['Dry summer',84,62,'sun','Hot sun, dry roads, midsummer festivals at month end.'],['Dry summer',90,67,'heat','Baking afternoons; everyone is in the river by noon.'],['Dry summer',90,67,'heat','Dusty heat, buzzing cicadas, the grass gone gold.'],['Autumn',83,61,'leaf','Grape and olive harvests, long warm evenings.'],['Autumn',73,53,'rain','The first rains return and the land turns green again.'],['Autumn',63,45,'fog','Damp and windy, river fog in the mornings.'],['Mild wet winter',57,40,'cloud','Short grey days, bell festivals, snow only on the peaks.']] },
+      nombi: { name: 'Nombi', img: '../assets/regions/img-nombi-landscape.webp', m: [['Deep winter',10,-8,'snow','A few hours of blue daylight, deep snow, the aurora most nights.'],['Deep winter',13,-7,'snow','Bitter, clear cold; rivers frozen solid.'],['Late winter',24,4,'snow','The light comes back; the snow does not leave.'],['Thaw',36,18,'thaw','River ice breaks with a roar; mud everywhere.'],['Spring',49,29,'flower','Birch leaves overnight, lakes open, endless evenings.'],['Bright summer',58,38,'sun','The sun barely sets and nobody sleeps much.'],['Bright summer',62,43,'sun','The warmest it gets: berries, and swimming in cold lakes.'],['Late summer',59,41,'partly','Cool nights creep back; mushroom season.'],['Autumn',48,32,'leaf','Gold birches, the first frost, fish and berry harvests.'],['Autumn',35,23,'rain','Grey rain turning to sleet, early dark.'],['Early winter',23,12,'snow','The first real snow; the long dark begins.'],['Deep winter',13,-4,'snow','Barely any daylight; candles in every window.']] },
+      sohot: { name: 'Sohot', img: '../assets/regions/img-sohot-landscape.webp', m: [['Cool season',74,50,'sun','Warm days, cold desert nights; the best time to travel.'],['Cool season',78,53,'sun','Clear skies, cold mornings, oases in bloom.'],['Warming',86,60,'wind','Dust winds start blowing in off the dunes.'],['Hot season',96,68,'wind','Sandstorms; travelers move only at dawn and dusk.'],['Hot season',105,77,'heat','Shimmering heat; the dunes are too hot to cross by noon.'],['Scorching season',113,84,'heat','Nobody moves at midday.'],['Scorching season',116,87,'heat','The hottest month; wells guarded, roads empty at noon.'],['Scorching season',115,86,'heat','Heavy, breathless heat; nights barely cool.'],['Hot season',109,80,'heat','Still blazing, with the first relief after dark.'],['Cooling',99,71,'sun','The heat breaks and the caravans set out again.'],['Cool season',86,60,'sun','Pleasant days, crisp nights, market season.'],['Cool season',76,51,'sun','Mild days and cold, clear nights full of stars.']] },
+      jugabi: { name: 'Jugabi', img: '../assets/regions/img-jugabi-landscape.webp', m: [['Cool dry season',84,66,'sun','Warm, dry and pleasant; festival season.'],['Cool dry season',88,68,'sun','Clear skies and rising heat.'],['Hot season',93,73,'heat','Heat building; the rainforest hums.'],['Hot season',97,78,'heat','The hottest and stickiest month; everyone waits for rain.'],['Hot season',96,80,'storm','Thunderheads gather every afternoon.'],['Monsoon',91,79,'monsoon','The rains arrive with a roar; rivers rise overnight.'],['Monsoon',88,78,'monsoon','Daily downpours, flooded roads, everything green.'],['Monsoon',87,77,'monsoon','Warm rain all day; mushrooms and frogs everywhere.'],['Monsoon',88,77,'rain','The rains thin out and steam rises off the forest.'],['Retreating rains',89,75,'partly','Storms ease and the land glistens.'],['Cool dry season',87,70,'sun','Drier air, cooler nights, the harvest.'],['Cool dry season',84,66,'sun','Warm days, mild nights, lantern festivals.']] }
+    };
+    const SEASON = (s) => /winter|Cool/.test(s) ? '#8fb3e0' : /Monsoon|rains/.test(s) ? '#5fc4c0' : /Spring|Thaw|Warming/.test(s) ? '#8fd19e' : /Scorching/.test(s) ? '#ef6b5f' : /summer|Hot/.test(s) ? '#f0b429' : '#e98a5c';
+    const STOPS = [[-10, [220, 236, 255]], [24, [143, 200, 255]], [74, [111, 211, 154]], [96, [239, 91, 91]], [116, [214, 52, 52]]];
+    const TC = (t) => {
+      if (t <= STOPS[0][0]) return 'rgb(' + STOPS[0][1].join(',') + ')';
+      for (let i = 1; i < STOPS.length; i++) {
+        if (t <= STOPS[i][0]) {
+          const a = STOPS[i - 1], b = STOPS[i], f = (t - a[0]) / (b[0] - a[0]);
+          return 'rgb(' + a[1].map((v, j) => Math.round(v + (b[1][j] - v) * f)).join(',') + ')';
+        }
+      }
+      return 'rgb(' + STOPS[STOPS.length - 1][1].join(',') + ')';
+    };
+    const W = ['Shineday','Moonday','Tumbleday','Wishday','Thunderday','Frogday','Starday'];
+    const SH = ['Sh','Mo','Tu','Wi','Th','Fr','St'];
+    const NOTES = { '6-15': 'Grusk courier collects at the Sunken Ferry' };
+    const HOL = { '4-20': 'Accord Day (Caparia)', '3-14': 'Creature Festival Day (Caparia)', '5-21': 'The Dawnburst', '11-21': 'The Long Vigil' };
+    const start = []; let acc = 0; M.forEach((m) => { start.push(acc); acc += m[2]; });
+    const wd = (d) => (((d - 189) % 7) + 7 + 5) % 7;
+    const rg = this.state.rg; const RG = R[rg];
+    const vm = this.state.vm;
+    const first = wd(start[vm]);
+    const cells = [];
+    for (let i = 0; i < first; i++) cells.push({ label: '', aria: 'empty', pick: () => {}, style: 'height: 40px; border: none; background: transparent;' });
+    for (let d = 1; d <= M[vm][2]; d++) {
+      const isToday = vm === 6 && d === 9;
+      const isSel = vm === this.state.sm && d === this.state.sd;
+      const mark = NOTES[vm + '-' + d] ? '#e98a5c' : HOL[vm + '-' + d] ? '#8fd19e' : null;
+      cells.push({
+        label: String(d),
+        aria: W[wd(start[vm] + d - 1)] + ', ' + M[vm][0] + ' ' + d,
+        pick: () => this.setState({ sm: vm, sd: d }),
+        style: 'height: 40px; border-radius: 20px; cursor: pointer; font: ' + (isToday ? '700' : '500') + ' 14px Roboto, sans-serif; color: #ece9e1; ' +
+          (isSel ? 'background: #3a3420; ' : 'background: transparent; ') +
+          (isToday ? 'border: 2px solid #f0b429; ' : 'border: 2px solid transparent; ') +
+          (mark ? 'box-shadow: inset 0 -5px 0 -2px ' + mark + ';' : '')
+      });
+    }
+    const sm = this.state.sm, sd = this.state.sd;
+    const ev = NOTES[sm + '-' + sd], hol = HOL[sm + '-' + sd];
+    const sel = RG.m[sm];
+    return {
+      regions: Object.keys(R).map((k) => ({
+        name: R[k].name, img: R[k].img,
+        pick: () => this.setState({ rg: k }),
+        style: 'position: relative; height: 64px; padding: 0; border-radius: 10px; overflow: hidden; cursor: pointer; background: #22222c; ' + (k === rg ? 'border: 3px solid #f0b429;' : 'border: 3px solid transparent; opacity: 0.75;')
+      })),
+      hereNote: rg === 'caparia' ? 'The party is in Caparia. Tap another region to compare.' : 'Comparing ' + RG.name + '. The party is still in Caparia.',
+      rName: RG.name, rUpper: RG.name.toUpperCase(),
+      heads: SH.map((s, i) => ({ short: s, full: W[i] })),
+      cells,
+      mName: M[vm][0], mLike: M[vm][1], mSeason: RG.m[vm][0],
+      selDay: sd, selMonth: M[sm][0], selMonthShort: M[sm][0].slice(0, 3).toUpperCase(),
+      selWeekday: W[wd(start[sm] + sd - 1)], selIsToday: sm === 6 && sd === 9,
+      selSeason: sel[0], selSeasonColor: SEASON(sel[0]),
+      selHi: sel[1], selLo: sel[2], selHiColor: TC(sel[1]), selLoColor: TC(sel[2]),
+      selFeel: sel[4], selIcon: I[sel[3]], selIconAlt: IL[sel[3]],
+      selHasNote: !!(ev || hol), selNote: ev || hol || '',
+      noteColor: ev ? '#ffb38a' : '#8fe0a8', noteBg: ev ? '#3a2418' : '#1d2a22',
+      prev: () => this.setState({ vm: (vm + 11) % 12 }),
+      next: () => this.setState({ vm: (vm + 1) % 12 }),
+      goToday: () => this.setState({ vm: 6, sm: 6, sd: 9, rg: 'caparia' }),
+      year: M.map((m, i) => ({
+        name: m[0], season: RG.m[i][0], icon: I[RG.m[i][3]], hi: RG.m[i][1], lo: RG.m[i][2], hiColor: TC(RG.m[i][1]), loColor: TC(RG.m[i][2]),
+        pick: () => this.setState({ vm: i }),
+        style: 'display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border-radius: 8px; cursor: pointer; font: 14px Roboto, sans-serif; color: #ece9e1; border: 1px solid ' + (i === vm ? '#f0b429' : 'transparent') + '; background: ' + (i === vm ? '#22222c' : 'transparent') + ';'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

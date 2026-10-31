@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Time Bar</title>
+<!-- Design-canvas component file (x-dc template + DCLogic class). Read it as a spec: the template is HTML with {{holes}}, sc-for loops and sc-if conditionals; the class at the bottom holds all data and behavior. It will not run as-is outside the canvas. -->
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#121218}
+a{color:#f0b429}a:hover{color:#ffd166}
+</style>
+</helmet>
+<div style="width: 1100px; height: 600px; box-sizing: border-box; background: #121218; font-family: Roboto, system-ui, sans-serif; color: #ece9e1; display: flex; flex-direction: column">
+<div style="height: 40px; box-sizing: border-box; background: {{p.bg}}; color: {{p.fg}}; padding: 0 22px; display: flex; align-items: center; transition: background 400ms ease">
+<div style="position: relative; flex: 1; height: 40px">
+<div style="position: absolute; left: 0; right: 0; top: 19px; height: 2px; background: {{p.fg}}; opacity: 0.55"></div>
+<div style="position: absolute; left: 25%; top: 14px; width: 2px; height: 12px; background: {{p.fg}}; opacity: 0.4"></div>
+<div style="position: absolute; left: 50%; top: 14px; width: 2px; height: 12px; background: {{p.fg}}; opacity: 0.4"></div>
+<div style="position: absolute; left: 75%; top: 14px; width: 2px; height: 12px; background: {{p.fg}}; opacity: 0.4"></div>
+<div style="position: absolute; top: 3px; left: {{iconLeft}}; width: 34px; height: 34px; border-radius: 17px; background: {{p.fg}}; color: {{p.bg}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.35)">
+<sc-if value="{{isMorning}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 18h18"></path><path d="M7 18a5 5 0 0 1 10 0"></path><path d="M12 6v3"></path><path d="M5.6 10.6l1.4 1.4"></path><path d="M18.4 10.6L17 12"></path></svg></sc-if>
+<sc-if value="{{isAfternoon}}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></sc-if>
+<sc-if value="{{isEvening}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 18h18"></path><path d="M7 18a5 5 0 0 1 10 0"></path><path d="M12 9v3"></path><path d="M9 6l3 3 3-3"></path></svg></sc-if>
+<sc-if value="{{isNight}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if>
+</div>
+<input type="range" min="0" max="1430" step="10" value="{{minOfDay}}" onChange="{{onSlide}}" aria-label="Time of day, drag to change" style="position: absolute; left: 0; top: 0; width: 100%; height: 40px; margin: 0; opacity: 0; cursor: grab">
+</div>
+</div>
+<div style="min-height: 46px; box-sizing: border-box; background: #18181f; border-bottom: 1px solid #2c2c36; padding: 6px 22px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; font-size: 15px">
+<span style="font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 700; font-size: 17px; color: #f0b429">{{p.name}}</span>
+<span style="font-weight: 700">{{clock}}</span>
+<span>{{date}}</span>
+<span style="color: #c9c5ba">{{temp}}°F, {{word}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px">
+<span style="color: #c9c5ba">Add</span>
+<label style="display: flex; align-items: center; gap: 4px"><input type="number" value="{{addD}}" onChange="{{setD}}" style="width: 44px; height: 32px; box-sizing: border-box; border-radius: 6px; border: 1px solid #44444f; background: #121218; color: #ece9e1; padding: 0 6px; font: 14px Roboto, sans-serif">days</label>
+<label style="display: flex; align-items: center; gap: 4px"><input type="number" step="0.25" value="{{addH}}" onChange="{{setH}}" style="width: 52px; height: 32px; box-sizing: border-box; border-radius: 6px; border: 1px solid #44444f; background: #121218; color: #ece9e1; padding: 0 6px; font: 14px Roboto, sans-serif">hours</label>
+<button type="button" onClick="{{addTime}}" style="height: 32px; padding: 0 14px; border-radius: 16px; border: none; background: #f0b429; color: #1b1b22; font: 700 14px Roboto, sans-serif; cursor: pointer">Add</button>
+</div>
+</div>
+<div style="padding: 30px 40px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 700; font-size: 26px">The Walk Back, Nell and the Town</div>
+<div style="height: 2px; background: #f0b429"></div>
+<div style="background: #18241d; border: 1px solid #3f8f62; border-radius: 10px; padding: 18px 22px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #6fd39a">READ ALOUD</div>
+<div style="font-size: 18px; line-height: 1.55">The last stretch to the bridge doesn't feel like the walk out. The light is going long and gold across the water. Ahead of you, the color keeps spreading, faster than you're walking.</div>
+</div>
+<div style="font-size: 15px; color: #b9b5aa; line-height: 1.55; max-width: 760px">Drag the sun across the bar to set the time. The bar runs midnight to midnight, with small ticks at 6 AM, noon and 6 PM, and its color follows the time of day. To jump ahead, type days and hours and press Add; going past midnight rolls the date forward. A negative number rewinds.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":600}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { mins: 189 * 1440 + 14 * 60, addD: 0, addH: 1 }; }
+  renderVals() {
+    const M = [['Janufrost',31,56,39],['Febrillow',28,58,40],['Marchwind',31,63,44],['Aprillune',30,68,48],['Maybloom',31,76,55],['Junebright',30,84,62],['Julisun',31,90,67],['Augustorm',31,90,67],['Septemleaf',30,83,61],['Octumble',31,73,53],['Novemmist',30,63,45],['Decembell',31,57,40]];
+    const W = ['Shineday','Moonday','Tumbleday','Wishday','Thunderday','Frogday','Starday'];
+    const P = [
+      { name: 'Night', bg: '#26335f', fg: '#f3f0e6' },
+      { name: 'Morning', bg: '#f2cf86', fg: '#1b1b22' },
+      { name: 'Afternoon', bg: '#8cc4ec', fg: '#13202b' },
+      { name: 'Evening', bg: '#e98a5c', fg: '#1d120c' }
+    ];
+    const mins = this.state.mins;
+    const day = Math.floor(mins / 1440);
+    const m = mins - day * 1440;
+    const h = m / 60;
+    let dy = ((day % 365) + 365) % 365; let mi = 0;
+    while (dy >= M[mi][1]) { dy -= M[mi][1]; mi++; }
+    const wd = (((day - 189) % 7) + 7 + 5) % 7;
+    const pi = (h < 5 || h >= 21) ? 0 : h < 12 ? 1 : h < 17 ? 2 : 3;
+    const hi = M[mi][2], lo = M[mi][3];
+    const f = (h >= 5 && h < 15) ? (h - 5) / 10 : 1 - (((h - 15) + 24) % 24) / 14;
+    const temp = Math.round(lo + (hi - lo) * (0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, f)))));
+    const words = [[20,'bitter cold'],[35,'freezing'],[50,'cold'],[62,'cool'],[75,'mild'],[85,'warm'],[95,'hot'],[999,'blazing']];
+    const word = words.find((w) => temp < w[0])[1];
+    const hh = Math.floor(h), mm = m % 60;
+    const clock = ((hh % 12) || 12) + ':' + String(mm).padStart(2, '0') + ' ' + (hh < 12 ? 'AM' : 'PM');
+    return {
+      p: P[pi], isNight: pi === 0, isMorning: pi === 1, isAfternoon: pi === 2, isEvening: pi === 3,
+      minOfDay: m, iconLeft: 'calc(' + (m / 1440 * 100) + '% - 17px)',
+      clock, date: W[wd] + ', ' + M[mi][0] + ' ' + (dy + 1), temp, word,
+      addD: this.state.addD, addH: this.state.addH,
+      onSlide: (e) => { const v = Number(e.target.value); this.setState({ mins: day * 1440 + v }); },
+      setD: (e) => this.setState({ addD: e.target.value }),
+      setH: (e) => this.setState({ addH: e.target.value }),
+      addTime: () => {
+        const d = Number(this.state.addD) || 0, hr = Number(this.state.addH) || 0;
+        this.setState({ mins: Math.max(0, this.state.mins + Math.round(d * 1440 + hr * 60)) });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
