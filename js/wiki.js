@@ -638,8 +638,6 @@ function buildWikiLinkMap() {
   var rels  = typeof RELIGIONS  !== 'undefined' ? RELIGIONS  : [];
   pois.filter(function(p) { return getVisibility(p) !== 'hidden'; }).forEach(function(p) {
     _wikiLinkMap.push({ term: p.name, hash: 'poi/' + p.id });
-    // "The Partition Scar" also links as "Partition Scar"
-    if (/^the\s+/i.test(p.name)) _wikiLinkMap.push({ term: p.name.replace(/^the\s+/i, ''), hash: 'poi/' + p.id });
   });
   chars.filter(function(c) { return getVisibility(c) !== 'hidden' && c.category !== 'god'; }).forEach(function(c) {
     _wikiLinkMap.push({ term: c.name, hash: 'character/' + c.id });
@@ -682,6 +680,13 @@ function buildWikiLinkMap() {
     { term: 'Pogglewog',        hash: 'home' }
   ];
   statics.forEach(function(s) { _wikiLinkMap.push(s); });
+
+  // Names stored as "The X" also link when the text says just "X"
+  // ("the Tekhari of Nombi", "Partition Scar"). Skip very short leftovers.
+  _wikiLinkMap.slice().forEach(function(e) {
+    var m = /^the\s+(.+)$/i.exec(e.term);
+    if (m && m[1].length >= 5) _wikiLinkMap.push({ term: m[1], hash: e.hash });
+  });
 
   // Sort longest first to prevent partial matches
   _wikiLinkMap.sort(function(a, b) { return b.term.length - a.term.length; });
