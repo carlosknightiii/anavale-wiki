@@ -3004,11 +3004,6 @@ if (dmIsLocalHost(location.hostname)) {
           <!-- QUEST ITEM FIELDS -->
           <div id="item-fields-quest_item" class="item-category-fields" style="display:none">
             <div class="field-group">
-              <label class="field-label" for="item-story-note">Story Note</label>
-              <span class="field-help">DM context — what this item means in the campaign</span>
-              <textarea class="field-textarea" id="item-story-note" placeholder="e.g. The scroll Skiv left behind. Contains a single line in Veilborn cipher."></textarea>
-            </div>
-            <div class="field-group">
               <label class="field-label" for="item-associated-quest">Associated Quest</label>
               <span class="field-help">Quest ID this item belongs to (e.g. the-missing-shipment)</span>
               <input class="field-input" type="text" id="item-associated-quest" placeholder="e.g. the-missing-shipment">
@@ -3025,9 +3020,19 @@ if (dmIsLocalHost(location.hostname)) {
             <input class="field-input" type="text" id="item-summary" placeholder="e.g. Restores HP when consumed.">
           </div>
           <div class="field-group">
-            <label class="field-label" for="item-description">Description <span class="req">✦</span></label>
-            <span class="field-help">Physical appearance, feel, and properties — what it looks like and what it does</span>
-            <textarea class="field-textarea tall" id="item-description" placeholder="Appearance, properties, and effects…"></textarea>
+            <label class="field-label" for="item-read-aloud">Read Aloud <span class="req">✦</span></label>
+            <span class="field-help">What the players see when they find or handle it. Read it to them as written; it is also the description on the player wiki.</span>
+            <textarea class="field-textarea tall" id="item-read-aloud" placeholder="A small brass key, warm from someone's pocket…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-document-text">What's Written On It</label>
+            <span class="field-help">Documents only: the exact words on the page. Shown as a handout in DM Tools and on the wiki.</span>
+            <textarea class="field-textarea tall" id="item-document-text" placeholder="SITE: …"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="item-description">Description (legacy)</label>
+            <span class="field-help">Older field. Only used when Read Aloud is empty.</span>
+            <textarea class="field-textarea" id="item-description" placeholder="Appearance, properties, and effects…"></textarea>
           </div>
           <div class="field-group">
             <label class="field-label" for="item-gigglegloom">Gigglegloom Relationship</label>
@@ -3035,8 +3040,8 @@ if (dmIsLocalHost(location.hostname)) {
             <textarea class="field-textarea" id="item-gigglegloom" placeholder="e.g. Bubbleseed-infused. Glows faintly gold near healthy color zones."></textarea>
           </div>
           <div class="field-group">
-            <label class="field-label" for="item-history">History</label>
-            <span class="field-help">Where this item came from — who made it, how it was found, what events shaped it</span>
+            <label class="field-label" for="item-history">Background</label>
+            <span class="field-help">Where it came from and how the players found it. Shown to players on the wiki, so keep secrets in DM Notes.</span>
             <textarea class="field-textarea" id="item-history" placeholder="Origin, creation, notable past events…"></textarea>
           </div>
           <div class="field-group">
@@ -6419,6 +6424,11 @@ function showDMToast(msg, type) {
   line-height: 1.55;
 }
 /* DM Only block — red warning */
+/* Document handout in the item drawer: the exact words on a page (DM 2026-10-31) */
+.scc-doc-handout { margin: 0.75rem 0; padding: 0.9rem 1rem; border-radius: var(--radius-sm); background: var(--handout-bg); border: 1px solid var(--handout-border); box-shadow: inset 0 0 0 1px var(--handout-inner); }
+.scc-doc-handout-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--handout-label); margin-bottom: 0.5rem; }
+.scc-doc-handout-text { font-family: var(--font-mono); font-size: 0.92rem; line-height: 1.6; color: var(--handout-ink); white-space: pre-wrap; }
+.scc-ql-dm-summary { margin: 0.75rem 0; }
 .scc-dm-block {
   background: var(--scc-dm-only-bg);
   border: 1px solid var(--scc-dm-only-border);
@@ -13859,7 +13869,8 @@ function generateItem() {
   var summary = val('item-summary');
   if (!summary) { alert('Summary is required (✦).'); return; }
   var desc = val('item-description');
-  if (!desc) { alert('Description is required (✦).'); return; }
+  var readAloud = val('item-read-aloud');
+  if (!readAloud && !desc) { alert('Read Aloud is required (✦).'); return; }
 
   var entryId = val('item-id') || slugify(name);
 
@@ -13891,7 +13902,9 @@ function generateItem() {
     cost_gp:                  costGp,
     weight_lb:                weightLb,
     summary:                  summary,
-    description:              desc,
+    description:              orNull(desc),
+    read_aloud:               orNull(readAloud),
+    document_text:            orNull(val('item-document-text')),
     gigglegloom_relationship: orNull(val('item-gigglegloom')),
     gigglegloom_type:         null,
     history:                  orNull(val('item-history')),
@@ -13997,7 +14010,6 @@ function generateItem() {
   }
 
   if (category === 'quest_item') {
-    entry.story_note       = orNull(val('item-story-note'));
     entry.associated_quest = orNull(val('item-associated-quest'));
     entry.player_addable   = false; // always DM-only
   }
@@ -15031,6 +15043,8 @@ function cmPopulateForm(entry, type) {
     sv('item-id',          entry.id);
     sv('item-summary',     entry.summary);
     sv('item-description', entry.description);
+    sv('item-read-aloud',  entry.read_aloud);
+    sv('item-document-text', entry.document_text);
     sv('item-history',     entry.history);
     sv('item-gigglegloom', entry.gigglegloom_relationship);
     sv('item-effect-mechanical', entry.equipped_effect_mechanical);
@@ -15111,7 +15125,6 @@ function cmPopulateForm(entry, type) {
     }
     // Quest item fields
     if (entry.category === 'quest_item') {
-      sv('item-story-note', entry.story_note);
       sv('item-associated-quest', entry.associated_quest);
     }
     setRadioVal('item-pf', entry.player_facing);
@@ -23225,7 +23238,8 @@ function sccBuildNpcCardBodyHtml(c) {
   // Tags
   if (c.tags && c.tags.length) {
     var tagsHtml = c.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
-    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + tagsHtml + '</div></div>';
+    // Tags hidden from the drawer (DM request 2026-10-31); data kept for search/filters.
+    void tagsHtml;
   }
   // DM-only block
   var linkedQuests = sccNpcLinkedQuests(c.id);
@@ -23428,7 +23442,8 @@ function sccBuildLocationCardBodyHtml(loc) {
   // Tags
   if (loc.tags && loc.tags.length) {
     var locTagsHtml = loc.tags.map(function(t){ return '<span class="scc-ql-tag">' + sccEsc(t) + '</span>'; }).join('');
-    body += '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + locTagsHtml + '</div></div>';
+    // Tags hidden from the drawer (DM request 2026-10-31); data kept for search/filters.
+    void locTagsHtml;
   }
   // DM-only block
   if (loc.dm_notes || loc.vareth_presence) {
@@ -28524,7 +28539,7 @@ function sccOpenLookup(type, id) {
       + (org.secret    ? '<div class="scc-dm-block"><div class="scc-dm-label">&#9888; Secret</div><div class="scc-dm-text">' + sccEsc(org.secret) + '</div></div>' : '')
       + (org.dm_notes  ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(org.dm_notes) + '</div></div>' : '')
       // ── TAGS ──
-      + (orgTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + orgTagsHtml + '</div></div>' : '');
+      + '';
   } else if (type === 'item') {
     var itemsAll = typeof ITEMS !== 'undefined' ? ITEMS : [];
     var it = itemsAll.find(function(x){ return x.id === id; });
@@ -28553,8 +28568,10 @@ function sccOpenLookup(type, id) {
           + '</div>'
         + '</div>'
       + '</div>'
-      // ── READ ALOUD ── (below name/base info, above the rest -- ANV-40)
-      + (it.read_aloud ? '<div class="scc-ra-block"><div class="scc-ra-label">&#128214; Read Aloud</div><div class="scc-ra-text">' + sccEsc(it.read_aloud) + '</div></div>' : '')
+      // ── READ ALOUD ── replaces Description (DM 2026-10-31): one text to read to players.
+      + ((it.read_aloud || it.description) ? '<div class="scc-ra-block"><div class="scc-ra-label">&#128214; Read Aloud</div><div class="scc-ra-text">' + sccEsc(it.read_aloud || it.description) + '</div></div>' : '')
+      // ── WHAT'S WRITTEN ON IT ── exact document words, handout style
+      + (it.document_text ? '<div class="scc-doc-handout"><div class="scc-doc-handout-label">&#128220; What\'s written on it</div><div class="scc-doc-handout-text">' + sccEsc(it.document_text) + '</div></div>' : '')
       // ── FIELDS ──
       + '<div class="scc-ql-fields">'
         + (it.cost_gp != null    ? '<div class="scc-ql-row"><span class="scc-ql-label">Cost</span><span class="scc-ql-value">' + it.cost_gp + ' gp</span></div>' : '')
@@ -28565,15 +28582,13 @@ function sccOpenLookup(type, id) {
         + (it.magic_bonus        ? '<div class="scc-ql-row"><span class="scc-ql-label">Magic Bonus</span><span class="scc-ql-value">+' + it.magic_bonus + '</span></div>' : '')
       + '</div>'
       // ── PROSE SECTIONS ──
-      + (it.summary                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Summary</div><div class="scc-ql-section-body">' + sccEsc(it.summary) + '</div></div>' : '')
-      + (it.description             ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Description</div><div class="scc-ql-section-body">' + sccEsc(it.description) + '</div></div>' : '')
-      + (it.history                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">History</div><div class="scc-ql-section-body">' + sccEsc(it.history) + '</div></div>' : '')
+      + (it.summary                 ? '<div class="scc-dm-block scc-ql-dm-summary"><div class="scc-dm-label">&#9888; Summary (DM only)</div><div class="scc-dm-text">' + sccEsc(it.summary) + '</div></div>' : '')
+      + (it.history                 ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Background</div><div class="scc-ql-section-body">' + sccEsc(it.history) + '</div></div>' : '')
       + (it.gigglegloom_relationship ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Gigglegloom Relationship</div><div class="scc-ql-section-body">' + sccEsc(it.gigglegloom_relationship) + '</div></div>' : '')
-      + (it.story_note              ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Story Note</div><div class="scc-ql-section-body">' + sccEsc(it.story_note) + '</div></div>' : '')
       // ── DM-ONLY ──
       + (it.dm_notes ? '<div class="scc-dm-block" style="margin-top:0.75rem;"><div class="scc-dm-label">&#9888; DM Notes</div><div class="scc-dm-text">' + sccEsc(it.dm_notes) + '</div></div>' : '')
       // ── TAGS ──
-      + (itTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + itTagsHtml + '</div></div>' : '');
+      + '';
   } else if (type === 'region') {
     var regionsAll = typeof REGIONS !== 'undefined' ? REGIONS : [];
     var reg = regionsAll.find(function(x){ return x.id === id; });
@@ -28616,7 +28631,7 @@ function sccOpenLookup(type, id) {
       // ── AUTO-COMPUTED ROLLUP (separate from reg.color_health above) ──
       + sccBuildRegionHealthRollupHtml(reg.id)
       // ── TAGS ──
-      + (regionTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + regionTagsHtml + '</div></div>' : '');
+      + '';
   } else if (type === 'religion') {
     var religionsAll = typeof RELIGIONS !== 'undefined' ? RELIGIONS : [];
     var relg = religionsAll.find(function(x){ return x.id === id; });
@@ -28655,7 +28670,7 @@ function sccOpenLookup(type, id) {
       + (relg.beliefs     ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Beliefs</div><div class="scc-ql-section-body">' + sccEsc(relg.beliefs) + '</div></div>' : '')
       + (relg.practices   ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Practices</div><div class="scc-ql-section-body">' + sccEsc(relg.practices) + '</div></div>' : '')
       // ── TAGS ──
-      + (religionTagsHtml ? '<div class="scc-ql-section"><div class="scc-ql-section-label">Tags</div><div class="scc-ql-tags">' + religionTagsHtml + '</div></div>' : '');
+      + '';
   } else if (type === 'species') {
     var speciesAll = typeof SPECIES !== 'undefined' ? SPECIES : [];
     var sp = speciesAll.find(function(x){ return x.id === id; });
