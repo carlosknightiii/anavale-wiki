@@ -2207,19 +2207,23 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .nx-k-opuri     { --nx-accent: var(--kingdom-opuri);     --nx-field: var(--kingdom-opuri-field); }
 
 /* Color health gauge: four segments, lit up to the level */
-.ch-gauge { display: flex; align-items: center; gap: 10px; margin: 0.6rem 0 0.9rem; }
-.ch-track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 180px; max-width: 100%; }
-.ch-seg { height: 10px; border-radius: 3px; background: var(--surface-4); }
-.ch-seg--dimmed.is-on { background: var(--region-dimmed); }
-.ch-seg--faded.is-on  { background: var(--region-faded); }
-.ch-seg--muted.is-on  { background: var(--region-muted); }
-.ch-seg--vivid.is-on  { background: var(--region-vivid); box-shadow: 0 0 8px var(--region-vivid); }
-.ch-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
-.ch-gauge--vivid .ch-label { color: var(--region-vivid); }
-.ch-gauge--muted .ch-label { color: var(--region-muted); }
+.ch-gauge { margin: 0.6rem 0 0.9rem; max-width: 420px; }
+.ch-scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.ch-step { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ch-step i { display: block; height: 8px; border-radius: 4px; opacity: 0.35; }
+.ch-step b { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); text-align: center; }
+.ch-step--dimmed i { background: var(--region-dimmed); }
+.ch-step--faded i  { background: var(--region-faded); }
+.ch-step--muted i  { background: var(--region-muted); }
+.ch-step--vivid i  { background: var(--region-vivid); }
+.ch-step.is-current i { opacity: 1; height: 12px; margin-top: -2px; box-shadow: 0 0 0 2px var(--text); }
+.ch-step.is-current b { color: var(--text); }
+.ch-text { margin: 0.6rem 0 0; font-size: 0.88rem; line-height: 1.5; color: var(--text); }
+.ch-text strong { color: var(--text); }
+.ch-text .wiki-link { white-space: nowrap; }
 .ch-gauge--compact { margin: 0; }
-.ch-gauge--compact .ch-track { width: 110px; }
-.ch-gauge--compact .ch-seg { height: 8px; }
+.ch-gauge--compact .ch-step b { font-size: 0.58rem; letter-spacing: 0.03em; }
+.ch-gauge--compact .ch-text { font-size: 0.8rem; }
 
 /* Region page nation cards */
 .nation-card { border-top: 4px solid var(--nx-accent, var(--gold)); }
@@ -2418,3 +2422,7 @@ body.wiki-dark .warning-title { color: var(--gold); }
   .nx-hero.is-portrait .nx-hero-text { max-width: none; }
   .nx-hero-glyph { font-size: 9rem; }
 }
+
+/* Color health takes the full infobox width so the scale and sentence can breathe */
+.nx-ib-rows dt.nx-ib-wide { grid-column: 1 / -1; border-bottom: 0; padding-bottom: 0.2rem; }
+.nx-ib-rows dd.nx-ib-wide { grid-column: 1 / -1; padding-top: 0.2rem; }

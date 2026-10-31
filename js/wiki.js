@@ -784,6 +784,8 @@ function walkTextNodes(container, termMap, re, linked) {
     // Skip text inside existing <a> or .wiki-link elements
     var parent = textNode.parentNode;
     if (parent && (parent.nodeName === 'A' || (parent.classList && parent.classList.contains('wiki-link')))) return;
+    // Never auto-link labels inside the color health scale
+    if (parent && parent.closest && parent.closest('.ch-scale')) return;
 
     re.lastIndex = 0;
     if (!re.test(textNode.textContent)) return;
@@ -1562,7 +1564,7 @@ function renderMagazine(el, o) {
         + (ib.sub ? '<div class="nx-ib-epithet">' + esc(ib.sub) + '</div>' : '') + '</div>'
       + fig
       + (ib.motto ? '<div class="nx-ib-motto"><span>' + esc(ib.mottoLabel || 'Motto') + '</span>&ldquo;' + esc(ib.motto) + '&rdquo;</div>' : '')
-      + (rows.length ? '<dl class="nx-ib-rows">' + rows.map(function(r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>' : '')
+      + (rows.length ? '<dl class="nx-ib-rows">' + rows.map(function(r) { var w = r[1].indexOf('ch-gauge') >= 0 ? ' class="nx-ib-wide"' : ''; return '<dt' + w + '>' + esc(r[0]) + '</dt><dd' + w + '>' + r[1] + '</dd>'; }).join('') + '</dl>' : '')
       + (ib.extra || '')
       + '</aside>';
   }
@@ -1652,17 +1654,28 @@ function colorHealthLevel(raw) {
   return -1;
 }
 
+// Plain-language meaning of each level, matching the Color & The Dimming page.
+var COLOR_HEALTH_TEXT = {
+  vivid:  'Full, bright color. The land and its people are healthy.',
+  muted:  'Color is a little dull. Most people would not notice anything is wrong.',
+  faded:  'The Fading has set in. Color and joy are visibly slipping away.',
+  dimmed: 'Grey. Joy here is remembered, not felt.'
+};
+
+// A labeled four-step scale from Dimmed to Vivid with the current level
+// marked, then one sentence saying what that level means.
 function colorHealthGauge(raw, compact) {
   var lvl = colorHealthLevel(raw);
   if (lvl < 0) return '';
-  var segs = COLOR_HEALTH_LEVELS.map(function(l, i) {
-    return '<span class="ch-seg ch-seg--' + l.key + (i <= lvl ? ' is-on' : '') + '"></span>';
-  }).join('');
   var L = COLOR_HEALTH_LEVELS[lvl];
-  return '<div class="ch-gauge ch-gauge--' + L.key + (compact ? ' ch-gauge--compact' : '') + '"'
-    + ' role="img" aria-label="Color health: ' + L.label + ', ' + (lvl + 1) + ' of 4">'
-    + '<div class="ch-track">' + segs + '</div>'
-    + '<div class="ch-label">' + L.label + '</div>'
+  var steps = COLOR_HEALTH_LEVELS.map(function(l, i) {
+    return '<span class="ch-step ch-step--' + l.key + (i === lvl ? ' is-current' : '') + '">'
+      + '<i aria-hidden="true"></i><b>' + l.label + '</b></span>';
+  }).join('');
+  return '<div class="ch-gauge ch-gauge--' + L.key + (compact ? ' ch-gauge--compact' : '') + '">'
+    + '<div class="ch-scale" role="img" aria-label="Color health: ' + L.label + ' (scale from Dimmed to Vivid)">' + steps + '</div>'
+    + '<p class="ch-text"><strong>' + L.label + ':</strong> ' + COLOR_HEALTH_TEXT[L.key] + ' '
+    + '<span class="wiki-link" data-nav="color" onclick="navigate(\'color\')">What is color health?</span></p>'
     + '</div>';
 }
 
@@ -1726,7 +1739,7 @@ function nationInfoboxHtml(nation) {
     + (x.motto ? '<div class="nx-ib-motto"><span>Motto</span>&ldquo;' + esc(x.motto) + '&rdquo;</div>' : '')
     + '<dl class="nx-ib-rows">'
     + rows.map(function(r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd>'; }).join('')
-    + (colorHealthGauge(x.color_health) ? '<dt>Color health</dt><dd>' + colorHealthGauge(x.color_health, true) + '</dd>' : '')
+    + (colorHealthGauge(x.color_health) ? '<dt class="nx-ib-wide">Color health</dt><dd class="nx-ib-wide">' + colorHealthGauge(x.color_health, true) + '</dd>' : '')
     + '</dl>'
     + '</aside>';
 }
