@@ -500,7 +500,7 @@ function buildSearchIndex() {
   [
     { hash: 'home',        title: 'Welcome, To Anavale', text: 'welcome home introduction anavale pogglewog',                                  player_facing: true },
     { hash: 'gigglegloom', title: 'The Gigglegloom',    text: 'gigglegloom magic bubbleseed featherflow steelfist flamerage prior conclave',   player_facing: true },
-    { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey vareth quietude',                              player_facing: true },
+    { hash: 'color',       title: 'Color & The Dimming',text: 'color dimming fading stage grey quietude',                              player_facing: true },
     { hash: 'gods',        title: 'The Gods',           text: 'gods oro nara thyun solvara grak partition brightcreed stillkeep veilborn',     player_facing: true },
     { hash: 'religion/brightcreed', title: 'The Brightcreed', text: 'The Brightcreed brightcreed oro nara faith color festivals joy practices lumenites wardens',  player_facing: true },
     { hash: 'religion/stillkeep',   title: 'The Stillkeep',   text: 'The Stillkeep stillkeep thyun memory records archive monastic patience partition history',   player_facing: true },
@@ -991,7 +991,7 @@ function renderHome(el) {
 
         + '<div class="glance-card reveal reveal-delay-3">'
           + '<div class="glance-card-subhead">The Threat</div>'
-          + '<div class="glance-card-title">The Vareth</div>'
+          + '<div class="glance-card-title">The Grey Silence</div>'
           + '<div class="glance-card-body">A grey silence spreading from the edges of the world. It does not conquer. It waits.</div>'
           + '<div class="glance-card-link" style="opacity:0.45;font-style:italic;">✦ Discover in play</div>'
         + '</div>'
@@ -1226,7 +1226,7 @@ function renderGods(el) {
   var partitionHtml = '<div class="pull-quote">'
     + '"Before the world had color, there were three gods. Then came the Partition — and there were five. One of them is what the trouble is."'
     + '<cite>— The Stillkeep, opening meditation</cite></div>'
-    + '<p>The <strong>Partition</strong> is the central divine event of Anavale. Oro, Nara, and Grak were balanced — until Grak developed grief over impermanence and confronted Nara. Their collision fractured everything: Thyun and Solvara were sheared from Nara as fully independent gods. Nara survived, smaller. Grak was emptied of everything except hunger for control. What remained of Grak became the Vareth.</p>'
+    + '<p>The <strong>Partition</strong> is the central divine event of Anavale. Oro, Nara, and Grak were balanced — until Grak developed grief over impermanence and confronted Nara. Their collision fractured everything: Thyun and Solvara were sheared from Nara as fully independent gods. Nara survived, smaller. Grak was emptied of everything except hunger for control. What remained of Grak is not spoken of.</p>'
     + '<p>Three faiths have built their entire understanding of the world around this event — and reached very different conclusions about what it means.</p>';
 
   var religionCardsHtml = '<div class="entry-grid" style="margin-top:1rem;">'
@@ -1361,10 +1361,6 @@ function renderRegion(id, el) {
     + '<div class="entry-card"><div class="entry-name">Color Health</div>'
     + '<div class="entry-tag">' + esc(region.color_health) + '</div>'
     + '<div class="entry-body">' + esc(region.tone) + '</div></div>';
-  if (region.vareth_presence) {
-    body += '<div class="entry-card"><div class="entry-name" style="color:#7a6a60;">Vareth Presence</div>'
-      + '<div class="entry-body">' + esc(region.vareth_presence) + '</div></div>';
-  }
   body += '</div>';
 
   // Nations
@@ -1467,7 +1463,6 @@ function renderNation(id, el) {
     ['Capital',        nation.capital],
     ['Magic Affinity', nation.gigglegloom_affinity],
     ['Color Health',   nation.color_health],
-    ['Dimming',        nation.vareth_presence || 'None noted'],
   ].filter(function(r){ return r[1]; }).map(function(r) {
     return '<div class="nation-fact-row">'
       + '<div class="nation-fact-label">' + esc(r[0]) + '</div>'
@@ -1618,7 +1613,6 @@ function renderCity(id, el) {
     ['Region',     titleCase(city.region)],
     ['Population', city.population || null],
     ['Color',      city.color_health],
-    ['Vareth',     city.vareth_presence || 'None noted'],
     ['Formery',    city.formery_present ? 'Yes — office present' : null]
   ].filter(function(r){ return r[1]; }).map(function(r) {
     return '<div class="nation-fact-row">'
@@ -1836,9 +1830,12 @@ function renderReligion(id, el) {
 
   // ── Practices section ──
   var practicesHtml = '';
-  if (religion.practices && religion.practices.length) {
+  // practices is stored as text (paragraphs) in Supabase; older seeds used an array.
+  var practicesList = Array.isArray(religion.practices) ? religion.practices
+    : String(religion.practices || '').split(/\n\s*\n|\n/).map(function(x) { return x.trim(); }).filter(Boolean);
+  if (practicesList.length) {
     practicesHtml = '<div class="section-heading">Practices</div><ul class="wiki-list">'
-      + religion.practices.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('')
+      + practicesList.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('')
       + '</ul>';
   }
 
@@ -1924,7 +1921,6 @@ function renderReligion(id, el) {
     + practicesHtml
     + structureHtml
     + (religion.relationship_to_gigglegloom ? '<div class="nation-section-heading">Relationship to the Gigglegloom</div><p>' + esc(religion.relationship_to_gigglegloom) + '</p>' : '')
-    + (religion.relationship_to_vareth ? '<div class="nation-section-heading">Relationship to the Vareth</div><p>' + esc(religion.relationship_to_vareth) + '</p>' : '')
     + (religion.relationship_to_other_faiths ? '<div class="nation-section-heading">Other Faiths</div><p>' + esc(religion.relationship_to_other_faiths) + '</p>' : '')
     + godsHtml
     + sitesHtml
