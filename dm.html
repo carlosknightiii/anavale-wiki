@@ -9387,6 +9387,14 @@ function showDMToast(msg, type) {
   color: var(--dm-text); margin-top: 0.35rem;
 }
 .scc-fg-check-body p { margin: 0 0 0.45rem; color: inherit !important; font-size: inherit; line-height: inherit; }
+/* S3 audit note 32: "Back to ..." pill shown where an in-document jump lands. */
+.scc-fg-back-pill {
+  position: absolute; z-index: 60; display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.35rem 0.85rem; border-radius: 999px; cursor: pointer;
+  background: var(--dm-surface-high); color: var(--dm-gold); border: 1px solid var(--dm-gold);
+  font: 600 0.85rem var(--font-sans); box-shadow: var(--nx-hero-shadow);
+}
+.scc-fg-back-pill:hover { background: var(--dm-gold); color: var(--surface-0); }
 .scc-fg-check-body p:last-child { margin-bottom: 0; }
 /* Pass:/Fail: auto-coloring (item 3a, 2026-08-27) -- detected and wrapped
    by sccFgStyleSkillChecks() itself, never hand-typed inline styles.
@@ -18370,7 +18378,7 @@ function sccFgLinkify(html) {
   return (html || '').replace(/\[\[([a-z_]+):([\w.-]+)(?:\|([^\]]*))?\]\]/g, function(m, type, id, label) {
     var text = label != null ? label : id;
     if (type === 'block') {
-      return '<span class="scc-fg-link" onclick="sccFgJumpToBlock(\'' + id.replace(/'/g, "\\'") + '\')">' + sccEsc(text) + '</span>';
+      return '<span class="scc-fg-link" onclick="sccFgJumpToBlock(\'' + id.replace(/'/g, "\\'") + '\', this)">' + sccEsc(text) + '</span>';
     }
     var key = type + ':' + id;
     var thumb = '';
@@ -20593,9 +20601,12 @@ function sccFgFindBlockById(id) {
 // step's own DOM exists by the time it runs. Silently no-ops on an
 // unresolvable id (bad/stale content), same as sccOpenLookup() degrading
 // on a bad entity id -- never a broken-looking dead click.
-function sccFgJumpToBlock(id) {
+function sccFgJumpToBlock(id, originEl) {
   var found = sccFgFindBlockById(id);
   if (!found) return;
+  // S3 audit note 32: remember where the jump came from so a "Back to ..."
+  // pill can return the DM there.
+  if (originEl && originEl.nodeType === 1) sccFgBackPush(originEl);
   found.chain.forEach(function(step) {
     var tileEl = null;
     var rowEl = document.querySelector('#' + step.domId + ' .scc-fg-scenario-cards-row');
@@ -20604,9 +20615,93 @@ function sccFgJumpToBlock(id) {
   });
   var target = document.querySelector('[data-fg-block-id="' + CSS.escape(id) + '"]');
   if (!target) return;
-  var bannerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dm-env-banner-h')) || 0;
   var targetTop = target.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo({ top: Math.max(0, targetTop - bannerH - 12), behavior: 'auto' });
+  // Land below every sticky bar (env banner, shell header, time bar), and
+  // leave room for the Back pill above the target.
+  var extra = (originEl && originEl.nodeType === 1) ? 48 : 12;
+  window.scrollTo({ top: Math.max(0, targetTop - sccFgStickyTopOffset() - extra), behavior: 'auto' });
+  if (originEl && originEl.nodeType === 1) sccFgBackShow(target);
+}
+
+// ── "Back to ..." after an in-document jump (S3 audit note 32) ──
+// A stack of origins (scroll position + a readable name for where the DM
+// was). After a [[block:...]] jump a small pill sits at the landing spot;
+// clicking it scrolls back to the exact origin. Several jumps in a row go
+// back one step each. The pill clears once the DM scrolls far away.
+var SCC_FG_BACK_STACK = [];
+function sccFgStickyTopOffset() {
+  var cs = getComputedStyle(document.documentElement);
+  var off = (parseFloat(cs.getPropertyValue('--dm-env-banner-h')) || 0) + (parseFloat(cs.getPropertyValue('--dm-header-visible-h')) || 0);
+  var tb = document.querySelector('.tb-wrap');
+  if (tb && tb.offsetParent && getComputedStyle(tb).position === 'sticky') off += tb.offsetHeight;
+  return off;
+}
+var SCC_FG_BACK_LANDING_Y = null;
+function sccFgBackOriginName(el) {
+  var box = el.closest('.scc-fg-box, .scc-fg-check, .scc-fg-scenario-cards, .scc-fg-qp, .scc-fg-outcomes-box');
+  var lbl = box && box.querySelector('.scc-fg-box-label, .scc-fg-check-title, .scc-fg-scenario-cards-header');
+  var t = lbl ? lbl.textContent.replace(/^\s*Scenario Cards\s*[\u2014-]\s*/, '').trim() : '';
+  if (t) return t;
+  // Fall back to the nearest heading above the link in the document.
+  var heads = document.querySelectorAll('#scc-fg-doc-inner .scc-fg-doc-h1, #scc-fg-doc-inner .scc-fg-doc-h2');
+  var y = el.getBoundingClientRect().top, best = '';
+  heads.forEach(function(h) { if (h.getBoundingClientRect().top <= y) best = h.textContent.trim(); });
+  return best || 'where you were';
+}
+function sccFgBackPush(el) {
+  SCC_FG_BACK_STACK.push({ y: window.scrollY, name: sccFgBackOriginName(el) });
+  if (SCC_FG_BACK_STACK.length > 12) SCC_FG_BACK_STACK.shift();
+}
+function sccFgBackClear() {
+  SCC_FG_BACK_STACK = [];
+  SCC_FG_BACK_LANDING_Y = null;
+  var pill = document.getElementById('scc-fg-back-pill');
+  if (pill) pill.remove();
+}
+function sccFgBackShow(anchorEl) {
+  var top = SCC_FG_BACK_STACK[SCC_FG_BACK_STACK.length - 1];
+  var pill = document.getElementById('scc-fg-back-pill');
+  if (!top) { if (pill) pill.remove(); return; }
+  if (!pill) {
+    pill = document.createElement('button');
+    pill.type = 'button';
+    pill.id = 'scc-fg-back-pill';
+    pill.className = 'scc-fg-back-pill';
+    pill.onclick = sccFgBackGo;
+    document.body.appendChild(pill);
+  }
+  pill.innerHTML = '<span aria-hidden="true">&#8617;</span> Back to ' + sccEsc(top.name.length > 48 ? top.name.slice(0, 46) + '\u2026' : top.name);
+  var stickyH = sccFgStickyTopOffset();
+  var r = anchorEl ? anchorEl.getBoundingClientRect() : null;
+  var docInner = document.getElementById('scc-fg-doc-inner');
+  var left = (r ? r.left : (docInner ? docInner.getBoundingClientRect().left : 16)) + window.scrollX;
+  var y = r ? r.top + window.scrollY - 42 : window.scrollY + stickyH + 8;
+  pill.style.left = Math.max(8, left) + 'px';
+  pill.style.top = Math.max(window.scrollY + stickyH + 4, y) + 'px';
+  SCC_FG_BACK_LANDING_Y = window.scrollY;
+  sccFgEnsureBackScrollWatch();
+}
+function sccFgBackGo() {
+  var top = SCC_FG_BACK_STACK.pop();
+  var pill = document.getElementById('scc-fg-back-pill');
+  if (pill) pill.remove();
+  if (!top) return;
+  window.scrollTo({ top: top.y, behavior: 'auto' });
+  if (SCC_FG_BACK_STACK.length) {
+    // Still deeper in a jump chain: offer the next step back from here.
+    sccFgBackShow(null);
+  } else {
+    SCC_FG_BACK_LANDING_Y = null;
+  }
+}
+var SCC_FG_BACK_WATCH_BOUND = false;
+function sccFgEnsureBackScrollWatch() {
+  if (SCC_FG_BACK_WATCH_BOUND) return;
+  SCC_FG_BACK_WATCH_BOUND = true;
+  window.addEventListener('scroll', function() {
+    if (SCC_FG_BACK_LANDING_Y == null) return;
+    if (Math.abs(window.scrollY - SCC_FG_BACK_LANDING_Y) > Math.max(1400, window.innerHeight * 1.6)) sccFgBackClear();
+  }, { passive: true });
 }
 
 // Fill-line height and each dot/label's reached state are both driven by
