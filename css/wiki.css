@@ -2471,3 +2471,94 @@ body.wiki-dark .warning-title { color: var(--gold); }
   .clr-signs li { grid-template-columns: 2rem 1fr; }
   .clr-sign-tag { grid-column: 2; justify-self: start; }
 }
+
+/* ── The Gigglegloom page ─────────────────────────────────── */
+.gg-c-bubbleseed  { --gg: var(--bubbleseed-bright); }
+.gg-c-featherflow { --gg: var(--featherflow-bright); }
+.gg-c-steelfist   { --gg: var(--steelfist-bright); }
+.gg-c-flamerage   { --gg: var(--flamerage-bright); }
+
+/* Type icons: the SVGs have a baked-in dark fill, so draw them as masks in the type color */
+.gg-icon { display: inline-block; width: 1.4em; height: 1.4em; flex: none; background: var(--gg, var(--gold)); -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; vertical-align: middle; }
+.gg-icon--bubbleseed  { --gg: var(--bubbleseed-bright);  -webkit-mask-image: url(../assets/icons/icon-bubbleseed.svg);  mask-image: url(../assets/icons/icon-bubbleseed.svg); }
+.gg-icon--featherflow { --gg: var(--featherflow-bright); -webkit-mask-image: url(../assets/icons/icon-featherflow.svg); mask-image: url(../assets/icons/icon-featherflow.svg); }
+.gg-icon--steelfist   { --gg: var(--steelfist-bright);   -webkit-mask-image: url(../assets/icons/icon-steelfist.svg);   mask-image: url(../assets/icons/icon-steelfist.svg); }
+.gg-icon--flamerage   { --gg: var(--flamerage-bright);   -webkit-mask-image: url(../assets/icons/icon-flamerage.svg);   mask-image: url(../assets/icons/icon-flamerage.svg); }
+
+/* Hero: four glowing color pools with the type icons floating on the right */
+.gg-hero-art { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 62% 30%, var(--bubbleseed-bright), transparent 32%),
+    radial-gradient(circle at 82% 22%, var(--featherflow-bright), transparent 30%),
+    radial-gradient(circle at 70% 78%, var(--steelfist-bright), transparent 32%),
+    radial-gradient(circle at 92% 70%, var(--flamerage-bright), transparent 30%);
+  opacity: 0.7; display: grid; grid-template-columns: repeat(2, 72px); gap: 18px; justify-content: end; align-content: center; padding-right: 7%; }
+.gg-hero-art .gg-icon { width: 72px; height: 72px; background: var(--text); opacity: 0.9; }
+
+/* How it works */
+.gg-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; margin: 0.4rem 0 1rem; }
+.gg-rule { display: flex; gap: 0.75rem; background: var(--surface-3); border: 1px solid var(--border-mid); border-radius: var(--card-radius); padding: 1rem; }
+.gg-rule-n { flex: none; width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--surface-5); color: var(--gold); }
+.gg-rule-t { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--text); margin-bottom: 0.3rem; }
+.gg-rule p { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--text-muted); }
+
+/* Four type cards */
+.gg-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 0.6rem; }
+.gg-type { background: var(--surface-3); border: 1px solid var(--border-mid); border-top: 5px solid var(--gg); border-radius: var(--card-radius); padding: 1.1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.gg-type-head { display: flex; align-items: center; gap: 0.8rem; }
+.gg-type-head .gg-icon { width: 48px; height: 48px; }
+.gg-type-name { font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; color: var(--gg); line-height: 1.1; }
+.gg-type-mood { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.2rem; }
+.gg-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.gg-chip { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--gg); color: var(--gg); }
+.gg-type-body { margin: 0; font-size: 0.93rem; line-height: 1.6; color: var(--text); }
+.gg-type-sense { margin: 0; font-size: 0.88rem; font-style: italic; color: var(--text-muted); }
+.gg-suits { border-top: 1px solid var(--border-mid); padding-top: 0.7rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: baseline; }
+.gg-suits-h { width: 100%; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.gg-suit { font-size: 0.82rem; background: var(--surface-5); border-radius: var(--radius-sm); padding: 0.25rem 0.55rem; color: var(--text-muted); }
+.gg-suit b { color: var(--text); font-weight: 700; }
+.gg-fading { font-size: 0.85rem; font-weight: 700; color: var(--gg); background: var(--surface-5); border-left: 3px solid var(--gg); border-radius: var(--radius-sm); padding: 0.45rem 0.7rem; }
+
+/* Comparison table */
+.gg-compare { display: flex; flex-direction: column; border: 1px solid var(--border-mid); border-radius: var(--card-radius); overflow: hidden; margin-top: 0.4rem; }
+.gg-cmp-row { display: grid; grid-template-columns: 9.5rem 7rem 1fr 1.3fr; gap: 0.8rem; padding: 0.75rem 1rem; border-top: 1px solid var(--border-mid); font-size: 0.9rem; color: var(--text); align-items: center; }
+.gg-cmp-row:first-child { border-top: 0; }
+.gg-cmp-head { background: var(--surface-5); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
+.gg-cmp-row:not(.gg-cmp-head) { border-left: 4px solid var(--gg); }
+.gg-cmp-type { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--gg); }
+
+/* The paperwork: a Conclave form */
+.gg-form { position: relative; background: var(--surface-2); border: 1px dashed var(--border-mid); border-radius: var(--radius-sm); padding: 1.2rem 1.4rem; font-family: var(--font-mono); overflow: hidden; }
+.gg-form-head { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+.gg-form-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 0.3rem 0 0.9rem; }
+.gg-form-rows { display: grid; grid-template-columns: 12rem 1fr; gap: 0.45rem 1rem; margin: 0; font-size: 0.9rem; }
+.gg-form-rows dt { color: var(--text-faint); }
+.gg-form-rows dd { margin: 0; color: var(--text); }
+.gg-form-stamp { position: absolute; right: 1.2rem; top: 1rem; transform: rotate(-12deg); border: 3px solid var(--red); color: var(--red); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.2rem 0.7rem; border-radius: var(--radius-sm); opacity: 0.85; }
+
+/* Infobox type list */
+.gg-ib-types { display: flex; flex-direction: column; gap: 0.35rem; }
+.gg-ib-type { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; color: var(--gg); }
+
+@media (max-width: 900px) {
+  .gg-rules, .gg-types { grid-template-columns: 1fr; }
+  .gg-cmp-head { display: none; }
+  .gg-cmp-row { grid-template-columns: 1fr; gap: 0.25rem; }
+  .gg-form-rows { grid-template-columns: 1fr; gap: 0.1rem; }
+  .gg-form-rows dd { margin-bottom: 0.5rem; }
+  .gg-hero-art { grid-template-columns: repeat(2, 44px); gap: 10px; padding-right: 5%; align-content: start; padding-top: 1rem; }
+  .gg-hero-art .gg-icon { width: 44px; height: 44px; }
+}
+
+/* Gigglegloom page: rules stack number above text; spellbook link card */
+.gg-rule { flex-direction: column; }
+.nation-body .gg-rule p { line-height: 1.55; font-size: 0.92rem; }
+.gg-book { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; background: var(--surface-3); border: 1px solid var(--border-mid); border-left: 4px solid var(--gold); border-radius: var(--card-radius); padding: 1.1rem 3.5rem 1.1rem 1.2rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.gg-book:hover, .gg-book:focus-visible { background: var(--surface-4); border-color: var(--gold); }
+.gg-book-text { flex: 1 1 260px; }
+.gg-book-title { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--gold); }
+.nation-body .gg-book p { margin: 0.25rem 0 0; font-size: 0.92rem; line-height: 1.5; color: var(--text-muted); }
+.gg-book-counts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gg-book-count { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--gg); background: var(--surface-5); border-radius: 999px; padding: 0.3rem 0.7rem 0.3rem 0.5rem; }
+.gg-book-count b { color: var(--text); }
+.gg-book-go { position: absolute; right: 1.2rem; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: var(--gold); }

@@ -216,10 +216,11 @@ function buildSidebar() {
     + '</div>';
 
   // ── The World ──────────────────────────────────────
-  var worldActive = ['gigglegloom','color','gods','calendar','weather'].indexOf(currentHash) >= 0;
+  var worldActive = ['gigglegloom','spells','color','gods','calendar','weather'].indexOf(currentHash) >= 0;
   html += '<div class="nav-section">'
     + makeSectionAccordion('world', '◯ The World',
         navLink('The Gigglegloom', 'gigglegloom', currentHash)
+        + navLink('Spellbook', 'spells', currentHash)
         + navLink('Color & The Dimming', 'color', currentHash)
         + navLink('The Gods', 'gods', currentHash)
         + navLink('The Calendar', 'calendar', currentHash)
@@ -825,7 +826,7 @@ var GIGGLEGLOOM_TYPES = [
   { id: 'bubbleseed', name: 'Bubbleseed', color: '#1a5a28',
     icon: 'assets/icons/icon-bubbleseed.svg',
     tag: 'Earth · Growth · Happiness',
-    body: 'Warm golden magic. Generous to a fault. Smells like fresh soil after rain. Tends to overshoot — ask for a flower, receive twelve. Common among healers, farmers, and optimistic people generally.' },
+    body: 'Warm golden magic. Generous to a fault. Smells like fresh soil after rain. Tends to overshoot. Ask for a flower, receive twelve. Common among healers, farmers, and optimistic people generally.' },
   { id: 'featherflow', name: 'Featherflow', color: '#1a4f8f',
     icon: 'assets/icons/icon-featherflow.svg',
     tag: 'Wind · Water · Freewill',
@@ -1182,50 +1183,109 @@ function renderHome(el) {
 }
 
 function renderGigglegloom(el) {
-  var typesHtml = GIGGLEGLOOM_TYPES.map(function(t) {
-    return '<div class="entry-card">'
-      + '<div class="entry-name" style="color:' + t.color + ';">'
-      + '<img src="' + esc(t.icon) + '" class="giggle-icon" alt=""> '
-      + esc(t.name) + '</div>'
-      + '<div class="entry-tag">' + t.tag + '</div>'
-      + '<div class="entry-body">' + esc(t.body) + '</div>'
-      + '</div>';
-  }).join('');
+  // Extra, player-facing detail per type (same wording players see in the character creator)
+  var GG_MORE = {
+    bubbleseed:  { mood: 'Warm and generous', suits: [['The Verdant', 'Druid'], ['The Faithful', 'Cleric'], ['The Warden', 'Paladin']], sense: 'Smells like rain on warm earth.' },
+    featherflow: { mood: 'Free and restless', suits: [['The Wanderer', 'Ranger'], ['The Nimble', 'Rogue'], ['The Reveler', 'Bard']], sense: 'Sounds like wind through tall grass.', fading: 'Can counteract early Fading.' },
+    steelfist:   { mood: 'Precise and obedient', suits: [['The Tested', 'Fighter'], ['The Still', 'Monk'], ['The Learned', 'Wizard']], sense: 'Smells faintly of old books and cold metal.' },
+    flamerage:   { mood: 'Loud and emotional', suits: [['The Sparked', 'Sorcerer'], ['The Bound', 'Warlock'], ['The Furious', 'Barbarian']], sense: 'Smells like something about to catch fire.', fading: 'The only type that can briefly overpower early Fading.' }
+  };
 
-  el.innerHTML = pageHeader('Magic', 'The Gigglegloom', 'The living magical force woven through all things')
-    + '<div class="wiki-body">'
-    + '<p>The <em>Gigglegloom</em> is what most people mean when they say "magic" in Anavale, though scholars and the Gigglegloom Conclave\'s licensing department would like it noted that this is an oversimplification they find professionally upsetting.</p>'
-    + '<p>The Gigglegloom is not a tool. It is not a resource in the conventional sense. It is a <em>living force</em> woven through every thing that exists in Anavale — through the roots of trees, the water in rivers, the warmth of sunlight, and the bodies of every creature. It responds to emotion. It responds to intent. It has opinions about what it is asked to do.</p>'
-    + '<div class="pull-quote">"Asking the Gigglegloom nicely does not guarantee results. But it does seem to improve them."<cite>— Wanderkeep Field Notes, Vol. 44</cite></div>'
-    + '<div class="ornament">✦</div>'
-    + '<div class="entry-grid">' + typesHtml + '</div>'
-    + '<div class="warning-box"><div class="warning-title">Regarding the Gigglegloom Conclave</div>'
-    + '<div class="warning-body">All use of the Gigglegloom within governed territories technically requires a license from the Gigglegloom Conclave. The application form is Form 7-A. Form 7-A requires Form 7-B as supporting documentation. Form 7-B requires Form 7-A. This has been noted. It has not been resolved.</div>'
-    + '<div class="spellbook-section">'
-    + '<div class="spellbook-heading">The Gigglegloom Spellbook</div>'
-    + '<p>The following spells are known to practitioners across Anavale.</p>'
-    + '<div class="spell-filters" id="sb-type-filters">'
-    + '<button class="spell-type-btn all active" data-type="all">All Types</button>'
-    + '<button class="spell-type-btn Bubbleseed" data-type="Bubbleseed">Bubbleseed</button>'
-    + '<button class="spell-type-btn Featherflow" data-type="Featherflow">Featherflow</button>'
-    + '<button class="spell-type-btn Steelfist" data-type="Steelfist">Steelfist</button>'
-    + '<button class="spell-type-btn Flamerage" data-type="Flamerage">Flamerage</button>'
-    + '<button class="spell-type-btn Freeweave" data-type="Freeweave">Freeweave</button>'
+  function ggIcon(t) {
+    return '<span class="gg-icon gg-icon--' + esc(t.id) + '" aria-hidden="true"></span>';
+  }
+
+  var rules = '<div class="gg-rules">'
+    + [
+        ['It is alive', 'Not a tool or a fuel. A living force woven through roots, rivers, sunlight and every creature.'],
+        ['It listens', 'It responds to emotion and to intent. How you feel when you cast matters.'],
+        ['It has opinions', 'It may not do exactly what you ask. Asking nicely seems to help.']
+      ].map(function(r, i) {
+        return '<div class="gg-rule"><span class="gg-rule-n">' + (i + 1) + '</span><div><div class="gg-rule-t">' + r[0] + '</div><p>' + r[1] + '</p></div></div>';
+      }).join('')
     + '</div>'
-    + '<div class="spell-filters" id="sb-lvl-filters">'
-    + '<button class="spell-lvl-btn all active" data-lvl="all">All Levels</button>'
-    + '<button class="spell-lvl-btn" data-lvl="0">Cantrip</button>'
-    + ['1','2','3','4','5','6','7','8','9'].map(function(n){ return '<button class="spell-lvl-btn" data-lvl="' + n + '">Level ' + n + '</button>'; }).join('')
-    + '</div>'
-    + '<input class="spell-search-bar" id="sb-search" type="text" placeholder="Search spells..." oninput="renderSpells()">'
-    + '<div class="spell-count" id="sb-count"></div>'
-    + '<div class="spell-list-box" id="sb-list"></div>'
-    + '<div class="sb-pagination" id="sb-pagination"></div>'
-    + '</div></div>'
+    + '<blockquote class="nx-pull"><p>Asking the Gigglegloom nicely does not guarantee results. But it does seem to improve them.</p><cite>Wanderkeep Field Notes, Vol. 44</cite></blockquote>';
+
+  var types = '<p>Every caster draws on one of four types. Each has its own color, its own temper, and its own idea of what it is for.</p>'
+    + '<div class="gg-types">' + GIGGLEGLOOM_TYPES.map(function(t) {
+      var m = GG_MORE[t.id] || {};
+      var tags = String(t.tag || '').split(/\s*·\s*/).map(function(k) { return '<span class="gg-chip">' + esc(k) + '</span>'; }).join('');
+      return '<article class="gg-type gg-c-' + t.id + '">'
+        + '<header class="gg-type-head">' + ggIcon(t)
+          + '<div><div class="gg-type-name">' + esc(t.name) + '</div><div class="gg-type-mood">' + esc(m.mood || '') + '</div></div></header>'
+        + '<div class="gg-chips">' + tags + '</div>'
+        + '<p class="gg-type-body">' + esc(t.body) + '</p>'
+        + (m.sense ? '<p class="gg-type-sense">' + esc(m.sense) + '</p>' : '')
+        + (m.suits ? '<div class="gg-suits"><div class="gg-suits-h">Who channels it</div>'
+            + m.suits.map(function(x) { return '<span class="gg-suit"><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span>'; }).join('') + '</div>' : '')
+        + (m.fading ? '<div class="gg-fading">Against the Fading: ' + esc(m.fading) + '</div>' : '')
+        + '</article>';
+    }).join('') + '</div>';
+
+  var compare = '<div class="gg-compare" role="table" aria-label="The four types compared">'
+    + '<div class="gg-cmp-row gg-cmp-head" role="row"><span role="columnheader">Type</span><span role="columnheader">Temper</span><span role="columnheader">Best at</span><span role="columnheader">Watch out for</span></div>'
+    + [
+        ['bubbleseed', 'Generous', 'Growing and healing', 'Overshooting. Ask for a flower, get twelve.'],
+        ['featherflow', 'Free', 'Moving, scouting, slipping away', 'Resists anything that feels like a cage.'],
+        ['steelfist', 'Obedient', 'Doing exactly what it is told', 'Punishes sloppiness.'],
+        ['flamerage', 'Emotional', 'Spectacle and raw force', 'Acts on feeling before intent. Bad at subtle.']
+      ].map(function(r) {
+        var t = GIGGLEGLOOM_TYPES.filter(function(x) { return x.id === r[0]; })[0] || { name: r[0], icon: '' };
+        return '<div class="gg-cmp-row gg-c-' + r[0] + '" role="row"><span role="cell" class="gg-cmp-type">' + ggIcon(t) + esc(t.name) + '</span>'
+          + '<span role="cell">' + r[1] + '</span><span role="cell">' + r[2] + '</span><span role="cell">' + r[3] + '</span></div>';
+      }).join('')
     + '</div>';
 
-  // Reinitialize spellbook now that the DOM nodes exist
-  initSpellbook();
+  var paperwork = '<div class="gg-form">'
+    + '<div class="gg-form-stamp">Pending</div>'
+    + '<div class="gg-form-head">Gigglegloom Conclave &middot; Licensing Office</div>'
+    + '<div class="gg-form-title">Form 7-A: Application to Use the Gigglegloom</div>'
+    + '<dl class="gg-form-rows"><dt>Required for</dt><dd>All use of the Gigglegloom within governed territories</dd>'
+    + '<dt>Supporting documents</dt><dd>Form 7-B</dd>'
+    + '<dt>Form 7-B requires</dt><dd>Form 7-A</dd>'
+    + '<dt>Status</dt><dd>This has been noted. It has not been resolved.</dd></dl>'
+    + '</div>';
+
+  var spellSrc = (typeof SPELL_DATA !== 'undefined' && SPELL_DATA.length) ? SPELL_DATA : ((typeof WORLD_DATA !== 'undefined' && WORLD_DATA && WORLD_DATA.spells) || []);
+  var spellbook = '<div class="gg-book" role="link" tabindex="0" onclick="navigate(\'spells\')" onkeydown="if(event.key===\'Enter\')navigate(\'spells\')">'
+    + '<div class="gg-book-text"><div class="gg-book-title">Open the Spellbook</div>'
+    + '<p>' + (spellSrc.length ? spellSrc.length + ' spells' : 'Every spell') + ' known to practitioners across Anavale. Filter by type or level, or search by name.</p></div>'
+    + '<div class="gg-book-counts">' + GIGGLEGLOOM_TYPES.map(function(t) {
+        var n = spellSrc.filter(function(sp) { return (sp.types || []).indexOf(t.name) >= 0; }).length;
+        return '<span class="gg-book-count gg-c-' + t.id + '">' + ggIcon(t) + '<b>' + n + '</b>' + esc(t.name) + '</span>';
+      }).join('') + '</div>'
+    + '<span class="gg-book-go" aria-hidden="true">&rarr;</span>'
+    + '</div>';
+
+  var typeDots = GIGGLEGLOOM_TYPES.map(function(t) { return '<span class="gg-ib-type gg-c-' + t.id + '">' + ggIcon(t) + esc(t.name) + '</span>'; }).join('');
+
+  renderMagazine(el, {
+    crumbs: [{ label: 'Home', hash: 'home' }, { label: 'The Gigglegloom' }],
+    accent: 'mz-accent-gold',
+    hero: { art: '<div class="gg-hero-art" aria-hidden="true">' + GIGGLEGLOOM_TYPES.map(function(t) { return ggIcon(t); }).join('') + '</div>' },
+    eyebrow: 'Magic',
+    title: 'The Gigglegloom',
+    epithet: 'The living magical force woven through all things',
+    lede: '<p>The <em>Gigglegloom</em> is what most people mean when they say "magic" in Anavale. Scholars, and the Gigglegloom Conclave\'s licensing department, would like it noted that this is an oversimplification they find professionally upsetting.</p>',
+    sections: [
+      ['How It Works', rules],
+      ['The Four Types', types],
+      ['The Types at a Glance', compare],
+      ['The Paperwork', paperwork],
+      ['The Spellbook', spellbook]
+    ],
+    infobox: {
+      name: 'The Gigglegloom',
+      sub: 'The living magic of Anavale',
+      rows: [
+        ['What it is', 'A living force in all things'],
+        ['Responds to', 'Emotion and intent'],
+        ['Seen as', mzLink('color', 'Color') + '. Every colored thing holds a piece of it.'],
+        ['Types', '<div class="gg-ib-types">' + typeDots + '</div>'],
+        ['Licensed by', 'The Gigglegloom Conclave']
+      ]
+    }
+  });
 }
 
 function renderColor(el) {
