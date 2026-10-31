@@ -628,3 +628,20 @@
   --cal-fx-mote:      rgba(255,214,150,0.95);
   --cal-fx-mote-glow: rgba(255,160,80,0.55);
 }
+
+/* ── PLAYER WIKI DARK THEME ─────────────────────────────────────
+   The player wiki (index.html, body.wiki-dark) uses the same dark
+   surfaces and text colors as DM Tools. The parchment/ink tokens are
+   remapped only inside the wiki, so the character creator, sheet,
+   maps and DM Tools keep their own look.
+   ─────────────────────────────────────────────────────────────── */
+body.wiki-dark {
+  --parchment:       var(--surface-1);
+  --parchment-light: var(--surface-2);
+  --parchment-dark:  var(--surface-3);
+  --ink:             var(--text);
+  --ink-light:       var(--text-muted);
+  --ink-faint:       var(--text-faint);
+  --ink-muted:       var(--text-muted);
+  --amber:           var(--gold);
+}

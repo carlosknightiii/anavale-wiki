@@ -2152,3 +2152,35 @@ mark.search-highlight {
   margin-top: 0.15rem;
 }
 
+
+
+/* ============================================================
+   DARK THEME EXCEPTIONS (body.wiki-dark)
+   tokens.css remaps parchment/ink to the DM Tools dark palette.
+   These rules fix the few places that used ink as a dark fill or
+   hardcoded a dark text color for the old parchment background.
+   ============================================================ */
+body.wiki-dark { background: var(--surface-0); }
+body.wiki-dark .search-result-excerpt mark { background: var(--gold-dim); color: var(--text); }
+body.wiki-dark .home-section-heading-light { color: var(--text); }
+body.wiki-dark .pull-quote { border-left-color: var(--gold-border-mid); }
+body.wiki-dark .search-results { border-color: var(--gold-border); }
+/* Quotes sit on the bright rainbow gradient, so they keep dark text. */
+body.wiki-dark .pull-quote,
+body.wiki-dark .pull-quote cite { color: var(--gold-text-on); }
+body.wiki-dark .pull-quote { border-left-color: var(--gold-text-on); }
+/* spells.css hardcodes dark text and light hover fills for the old
+   parchment look; give them dark-theme values inside the wiki. */
+body.wiki-dark .nation-breadcrumb,
+body.wiki-dark .nation-breadcrumb button,
+body.wiki-dark .nation-facts-title { color: var(--text); }
+body.wiki-dark .nation-section-heading { color: var(--gold); }
+body.wiki-dark .dimming-zero { color: var(--green); }
+body.wiki-dark .dimming-low  { color: var(--gold); }
+body.wiki-dark .dimming-med  { color: var(--orange-vivid); }
+body.wiki-dark .dimming-high { color: var(--red); }
+body.wiki-dark .accordion summary:hover { background: var(--surface-3); }
+body.wiki-dark .accordion details[open] summary { background: var(--surface-4); }
+/* Freeweave's chip is pale, so its label stays dark. */
+body.wiki-dark .spell-type-btn.Freeweave,
+body.wiki-dark .sm-type-badge.Freeweave { color: var(--gold-text-on) !important; }
