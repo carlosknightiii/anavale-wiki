@@ -1197,6 +1197,27 @@ function renderHome(el) {
   }, 50);
 }
 
+// Load and play each type card's background video only when it scrolls near
+// view, and never for visitors who ask for reduced motion.
+function ggStartVideos(root) {
+  var vids = Array.prototype.slice.call(root.querySelectorAll('.gg-type-video'));
+  if (!vids.length) return;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return;
+  function start(v) {
+    if (!v.getAttribute('src')) { v.src = v.getAttribute('data-src'); }
+    var pr = v.play(); if (pr && pr.catch) pr.catch(function() {});
+  }
+  if (!('IntersectionObserver' in window)) { vids.forEach(start); return; }
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { start(e.target); e.target.classList.add('is-on'); }
+      else if (e.target.getAttribute('src')) { e.target.pause(); }
+    });
+  }, { rootMargin: '150px' });
+  vids.forEach(function(v) { io.observe(v); });
+}
+
 function renderGigglegloom(el) {
   // Extra, player-facing detail per type (same wording players see in the character creator)
   var GG_MORE = {
@@ -1226,13 +1247,17 @@ function renderGigglegloom(el) {
       var m = GG_MORE[t.id] || {};
       var tags = String(t.tag || '').split(/\s*·\s*/).map(function(k) { return '<span class="gg-chip">' + esc(k) + '</span>'; }).join('');
       return '<article class="gg-type gg-c-' + t.id + '">'
+        + '<div class="gg-type-bg" aria-hidden="true"><video class="gg-type-video" data-src="assets/videos/anim-' + esc(t.id) + '.mp4" muted loop playsinline preload="none"></video></div>'
         + '<header class="gg-type-head">' + ggIcon(t)
           + '<div><div class="gg-type-name">' + esc(t.name) + '</div><div class="gg-type-mood">' + esc(m.mood || '') + '</div></div></header>'
         + '<div class="gg-chips">' + tags + '</div>'
         + '<p class="gg-type-body">' + esc(t.body) + '</p>'
         + (m.sense ? '<p class="gg-type-sense">' + esc(m.sense) + '</p>' : '')
-        + (m.suits ? '<div class="gg-suits"><div class="gg-suits-h">Who channels it</div>'
-            + m.suits.map(function(x) { return '<span class="gg-suit"><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span>'; }).join('') + '</div>' : '')
+        + (m.suits ? '<div class="gg-suits"><div class="gg-suits-h">Who channels it</div><div class="gg-suit-row">'
+            + m.suits.map(function(x) {
+                return '<figure class="gg-suit"><img src="assets/images/classes/class-' + esc(x[1].toLowerCase()) + '.webp" alt="" loading="lazy">'
+                  + '<figcaption><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></figcaption></figure>';
+              }).join('') + '</div></div>' : '')
         + (m.fading ? '<div class="gg-fading">Against the Fading: ' + esc(m.fading) + '</div>' : '')
         + '</article>';
     }).join('') + '</div>';
@@ -1301,6 +1326,7 @@ function renderGigglegloom(el) {
       ]
     }
   });
+  ggStartVideos(el);
 }
 
 function renderColor(el) {
