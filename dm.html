@@ -18812,6 +18812,15 @@ function sccFgToggleLoggedEntry(el) {
   var displayLabel = el.dataset.outcomeLabel || el.dataset.decisionLabel || title;
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
   var existing = log.find(function(n) { return n.title === title; }) || null;
+  // S3 audit notes 35/41: a timed scenario-card decision advances the clock
+  // in the same click (recorded in the row's content, so it is added once
+  // and taken back off on un-log). See js/dm-calendar.js.
+  var timeContent = '';
+  if (!existing && rerenderType === 'scenario_cards' && typeof sccCalDecisionContent === 'function') {
+    var tk = rerenderKey.split('|');
+    timeContent = sccCalDecisionContent(tk[0], parseInt(tk[1], 10));
+    if (timeContent) desc = timeContent;
+  }
   var req = existing
     ? fetch(SCC_URL + '/rest/v1/session_note_entries?id=eq.' + existing.id, {
         method: 'DELETE',
@@ -18824,6 +18833,7 @@ function sccFgToggleLoggedEntry(el) {
       });
   req.then(function(r) {
     if (!r.ok) { showDMToast(existing ? 'Could not remove log entry' : 'Could not log this', 'error'); return; }
+    if (typeof sccCalApplyDecisionTime === 'function') sccCalApplyDecisionTime(!existing, existing ? existing.content : timeContent);
     showDMToast(existing ? 'Unlogged: ' + displayLabel : 'Logged: ' + displayLabel, 'success');
     sccFetch('session_note_entries', '&session_number=eq.' + num + '&category=eq.quest&order=created_at.desc').then(function(rows) {
       SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] = Array.isArray(rows) ? rows : [];
