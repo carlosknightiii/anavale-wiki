@@ -2426,3 +2426,56 @@ body.wiki-dark .warning-title { color: var(--gold); }
 /* Color health takes the full infobox width so the scale and sentence can breathe */
 .nx-ib-rows dt.nx-ib-wide { grid-column: 1 / -1; border-bottom: 0; padding-bottom: 0.2rem; }
 .nx-ib-rows dd.nx-ib-wide { grid-column: 1 / -1; padding-top: 0.2rem; }
+
+/* ── Color & The Dimming page ─────────────────────────────── */
+/* Hero art: a band of color that drains to grey from left to right */
+.clr-hero-art { position: absolute; inset: 0; background: linear-gradient(100deg, var(--red), var(--gold) 22%, var(--green) 44%, var(--blue) 66%, var(--purple)); opacity: 0.8; pointer-events: none; }
+.clr-hero-art::after { content: ''; position: absolute; inset: 0; background: var(--region-dimmed); -webkit-mask-image: linear-gradient(90deg, transparent 15%, black 85%); mask-image: linear-gradient(90deg, transparent 15%, black 85%); }
+
+/* Four stage cards; the swatch strip loses saturation stage by stage */
+.clr-stages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0.5rem 0 1rem; }
+.clr-stage { background: var(--surface-3); border: 1px solid var(--border-mid); border-radius: var(--card-radius); overflow: hidden; display: flex; flex-direction: column; }
+.clr-swatch { display: grid; grid-template-columns: repeat(5, 1fr); height: 56px; }
+.clr-swatch span:nth-child(1) { background: var(--red); }
+.clr-swatch span:nth-child(2) { background: var(--gold); }
+.clr-swatch span:nth-child(3) { background: var(--green); }
+.clr-swatch span:nth-child(4) { background: var(--blue); }
+.clr-swatch span:nth-child(5) { background: var(--purple); }
+.clr-stage--vivid .clr-swatch  { filter: saturate(1.15); }
+.clr-stage--muted .clr-swatch  { filter: saturate(0.55) brightness(0.9); }
+.clr-stage--faded .clr-swatch  { filter: saturate(0.2) brightness(0.75); }
+.clr-stage--dimmed .clr-swatch { filter: grayscale(1) brightness(0.55); }
+.clr-stage-body { padding: 0.9rem 1rem 1rem; border-top: 4px solid var(--region-unknown); }
+.clr-stage--vivid .clr-stage-body  { border-top-color: var(--region-vivid); }
+.clr-stage--muted .clr-stage-body  { border-top-color: var(--region-muted); }
+.clr-stage--faded .clr-stage-body  { border-top-color: var(--region-faded); }
+.clr-stage--dimmed .clr-stage-body { border-top-color: var(--region-dimmed); }
+.clr-stage-num { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
+.clr-stage-name { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; color: var(--text); margin: 0.15rem 0 0.6rem; }
+.clr-stage--dimmed .clr-stage-name { color: var(--text-muted); }
+.clr-stage-dl { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin: 0; }
+.clr-stage-dl dt { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); padding-top: 0.2rem; }
+.clr-stage-dl dd { margin: 0; font-size: 0.92rem; line-height: 1.55; color: var(--text); }
+.clr-note { font-size: 0.92rem; color: var(--text-muted); }
+
+/* Signs ladder: each sign a row, the bar fills further as concern rises */
+.clr-signs { list-style: none; padding: 0; margin: 0.5rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.clr-signs li { display: grid; grid-template-columns: 2rem 1fr 90px; align-items: center; gap: 0.8rem; background: var(--surface-3); border: 1px solid var(--border-mid); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; }
+.clr-sign-n { width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--surface-5); color: var(--gold); }
+.clr-sign-t { font-size: 0.95rem; line-height: 1.5; color: var(--text); }
+.clr-sign-bar { height: 6px; border-radius: 3px; background: var(--surface-5); overflow: hidden; }
+.clr-sign-bar i { display: block; height: 100%; width: calc(var(--clr-sev) * 100%); background: linear-gradient(90deg, var(--gold), var(--red)); }
+
+/* Live color health list */
+.clr-sub { font-family: var(--font-body); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin: 1.2rem 0 0.5rem; }
+.clr-places { display: grid; grid-template-columns: 1fr; gap: 0.6rem 1.4rem; }
+.clr-place { display: grid; grid-template-columns: 10rem minmax(0, 340px); align-items: center; gap: 0.8rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border-mid); }
+.clr-place-name { font-size: 0.95rem; min-width: 0; overflow-wrap: anywhere; }
+.clr-ib-scale { padding: 0.8rem 1rem 1rem; }
+
+@media (max-width: 900px) {
+  .clr-stages { grid-template-columns: 1fr; }
+  .clr-place { grid-template-columns: 1fr; gap: 0.3rem; }
+  .clr-signs li { grid-template-columns: 2rem 1fr; }
+  .clr-sign-bar { grid-column: 2; }
+}

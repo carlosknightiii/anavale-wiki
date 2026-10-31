@@ -1229,17 +1229,99 @@ function renderGigglegloom(el) {
 }
 
 function renderColor(el) {
-  el.innerHTML = pageHeader('Magic', 'Color & The Dimming', 'What color means in Anavale, and what its absence means')
-    + '<div class="wiki-body">'
-    + '<p>In Anavale, color is not decoration. It is the Gigglegloom made visible. Every colored thing holds a fragment of the world\'s magic within it. This is not metaphorical. A red apple is alive with red in a way that a grey stone is not.</p>'
-    + '<div class="pull-quote">"When the paint starts fading faster than it should, call the Wanderkeep. Don\'t wait until you can\'t remember why you painted it in the first place."<cite>— Brightcreed practical wisdom, Caparia</cite></div>'
-    + '<p><strong>The Fading</strong> is the first stage of color loss — colors muting slightly, joy becoming a little harder to access, laughter arriving a moment late. Most people in affected regions live at this stage without realizing anything is wrong. It is subtle by design.</p>'
-    + '<div class="dimming-fader"></div>'
-    + '<p><strong>The Dimming</strong> is the second stage. Full greyscale. Joy is not felt — only remembered. People and creatures at this stage continue to function, but the light has gone out behind their eyes. Grey Fluffets still try to bring acorn gifts. The acorns are also grey.</p>'
-    + '<p>There is no third stage. The Dimmed do not become something else. They simply remain — in a world they can no longer feel. This is the goal of those who cause the Dimming. Not conquest. Not cruelty for its own sake. Simply <em>quietude.</em></p>'
-    + '<div class="warning-box"><div class="warning-title">Signs of the Dimming</div>'
-    + '<div class="warning-body">In order of increasing concern: colors appearing slightly muted; food losing an unnamed quality; Bumble Frogs going quiet; Hollowmoths appearing in daylight; animals going very still without apparent cause; a small perfect black prism carved somewhere it wasn\'t yesterday.</div></div>'
-    + '</div>';
+  var regions = typeof REGIONS !== 'undefined' ? REGIONS : [];
+  var nations = typeof NATIONS !== 'undefined' ? NATIONS : [];
+
+  // The four stages, healthiest first. Text comes from this page's existing lore.
+  var STAGES = [
+    { key: 'vivid',  label: 'Vivid',  phase: 'Healthy',
+      see: 'Full, bright color.',
+      feel: 'Joy comes easily. Laughter arrives on time.' },
+    { key: 'muted',  label: 'Muted',  phase: 'Early Fading',
+      see: 'Colors look a little dull.',
+      feel: 'Most people live here without realizing anything is wrong.' },
+    { key: 'faded',  label: 'Faded',  phase: 'The Fading',
+      see: 'Color is visibly washing out.',
+      feel: 'Joy is harder to reach. Laughter arrives a moment late.' },
+    { key: 'dimmed', label: 'Dimmed', phase: 'The Dimming',
+      see: 'Full greyscale.',
+      feel: 'Joy is not felt, only remembered. The light has gone out behind people\'s eyes.' }
+  ];
+
+  var stageCards = '<div class="clr-stages">' + STAGES.map(function(st, i) {
+    return '<div class="clr-stage clr-stage--' + st.key + '">'
+      + '<div class="clr-swatch" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>'
+      + '<div class="clr-stage-body">'
+        + '<div class="clr-stage-num">Stage ' + (i + 1) + ' of 4 &middot; ' + esc(st.phase) + '</div>'
+        + '<div class="clr-stage-name">' + esc(st.label) + '</div>'
+        + '<dl class="clr-stage-dl"><dt>You see</dt><dd>' + esc(st.see) + '</dd><dt>You feel</dt><dd>' + esc(st.feel) + '</dd></dl>'
+      + '</div></div>';
+  }).join('') + '</div>'
+    + '<p class="clr-note">On every region, nation and town page you will find a <strong>Color health</strong> bar using this same scale. The outlined step is where that place is today.</p>';
+
+  var whatIs = '<p>Every colored thing holds a fragment of the world\'s magic. This is not a metaphor. A red apple is alive with red in a way that a grey stone is not. When color drains out of a place, the magic and the joy drain with it.</p>'
+    + '<blockquote class="nx-pull"><p>When the paint starts fading faster than it should, call the Wanderkeep. Don\'t wait until you can\'t remember why you painted it in the first place.</p><cite>Brightcreed practical wisdom, Caparia</cite></blockquote>';
+
+  var SIGNS = [
+    'Colors appear slightly muted.',
+    'Food loses a quality you cannot quite name.',
+    'Bumble Frogs go quiet.',
+    'Hollowmoths appear in daylight.',
+    'Animals go very still for no clear reason.',
+    'A small, perfect black prism is carved somewhere it was not yesterday.'
+  ];
+  var signs = '<p>Listed from least to most worrying.</p><ol class="clr-signs">' + SIGNS.map(function(t, i) {
+    return '<li style="--clr-sev:' + ((i + 1) / SIGNS.length) + '"><span class="clr-sign-n">' + (i + 1) + '</span><span class="clr-sign-t">' + esc(t) + '</span><span class="clr-sign-bar" aria-hidden="true"><i></i></span></li>';
+  }).join('') + '</ol>';
+
+  var noThird = '<p>There is no fifth step. The Dimmed do not become something else. They simply remain, in a world they can no longer feel. Grey Fluffets still try to bring acorn gifts. The acorns are also grey.</p>'
+    + '<p>This is the goal of those who cause the Dimming. Not conquest. Not cruelty for its own sake. Simply <em>quietude.</em></p>';
+
+  // Live color health for every place the players know about.
+  function placeRows(list, hashType, getCh) {
+    return list.filter(function(r) { return getVisibility(r) !== 'hidden' && colorHealthLevel(getCh(r)) >= 0; })
+      .map(function(r) {
+        var lvl = colorHealthLevel(getCh(r));
+        return '<div class="clr-place">'
+          + '<span class="clr-place-name">' + mzLink(hashType + '/' + r.id, r.name) + '</span>'
+          + chScaleHtml(lvl)
+          + '</div>';
+      }).join('');
+  }
+  var rRows = placeRows(regions, 'region', function(r) { return r.color_health; });
+  var nRows = placeRows(nations, 'nation', function(n) { return (n.extra_data || {}).color_health; });
+  var places = (rRows ? '<h3 class="clr-sub">Regions</h3><div class="clr-places">' + rRows + '</div>' : '')
+    + (nRows ? '<h3 class="clr-sub">Nations</h3><div class="clr-places">' + nRows + '</div>' : '');
+
+  renderMagazine(el, {
+    crumbs: [{ label: 'Home', hash: 'home' }, { label: 'Color & The Dimming' }],
+    accent: 'mz-accent-gold',
+    hero: { art: '<div class="clr-hero-art" aria-hidden="true"></div>' },
+    eyebrow: 'Magic',
+    title: 'Color & The Dimming',
+    epithet: 'What color means in Anavale, and what its absence means',
+    lede: '<p>In Anavale, color is not decoration. It is the <span class="wiki-link" data-nav="gigglegloom" onclick="navigate(\'gigglegloom\')">Gigglegloom</span> made visible. Every place has a <strong>color health</strong>, from Vivid down to Dimmed, and it tells you how much joy and magic is left there.</p>',
+    sections: [
+      ['The Four Stages', stageCards],
+      ['Why Color Matters', whatIs],
+      ['Signs of the Dimming', signs],
+      ['After the Dimming', noThird],
+      ['Color Health Across Anavale', places]
+    ],
+    infobox: {
+      name: 'Color Health',
+      sub: 'At a glance',
+      rows: [
+        ['Source', 'The ' + mzLink('gigglegloom', 'Gigglegloom')],
+        ['Stages', 'Vivid, Muted, Faded, Dimmed'],
+        ['The Fading', 'Muted and Faded. Gradual, easy to miss.'],
+        ['The Dimming', 'Dimmed. Full grey.'],
+        ['First sign', 'Colors look slightly dull'],
+        ['Worst sign', 'A small black prism, newly carved']
+      ],
+      extra: '<div class="clr-ib-scale">' + chScaleHtml(-1) + '</div>'
+    }
+  });
 }
 
 function renderGods(el) {
@@ -1534,7 +1616,8 @@ function renderMagazine(el, o) {
     + (h.img && !h.portrait ? '<img class="nx-hero-img" src="' + esc(h.img) + '" alt="' + esc(h.caption || o.title) + '">' : '')
     + (h.img && h.portrait ? '<img class="nx-hero-portrait" src="' + esc(h.img) + '" alt="' + esc(o.title) + '" onerror="this.style.display=\'none\'">' : '')
     + (!h.img && h.emblem ? '<img class="nx-hero-sigil" src="' + esc(h.emblem) + '" alt="" aria-hidden="true">' : '')
-    + (!h.img && !h.emblem ? '<div class="nx-hero-glyph" aria-hidden="true">' + esc(String(o.title || '').replace(/^the\s+/i, '').charAt(0)) + '</div>' : '')
+    + (h.art ? h.art : '')
+    + (!h.img && !h.emblem && !h.art ? '<div class="nx-hero-glyph" aria-hidden="true">' + esc(String(o.title || '').replace(/^the\s+/i, '').charAt(0)) + '</div>' : '')
     + '<div class="nx-hero-scrim"></div>'
     + '<div class="nx-hero-text">'
       + (o.eyebrow ? '<div class="nx-hero-eyebrow">' + esc(o.eyebrow) + '</div>' : '')
@@ -1662,18 +1745,24 @@ var COLOR_HEALTH_TEXT = {
   dimmed: 'Grey. Joy here is remembered, not felt.'
 };
 
+// The labeled four-step scale alone. lvl -1 marks no step.
+function chScaleHtml(lvl) {
+  var L = COLOR_HEALTH_LEVELS[lvl];
+  var steps = COLOR_HEALTH_LEVELS.map(function(l, i) {
+    return '<span class="ch-step ch-step--' + l.key + (i === lvl ? ' is-current' : '') + '">'
+      + '<i aria-hidden="true"></i><b>' + l.label + '</b></span>';
+  }).join('');
+  return '<div class="ch-scale" role="img" aria-label="' + (L ? 'Color health: ' + L.label + ' (scale from Dimmed to Vivid)' : 'Color health scale from Dimmed to Vivid') + '">' + steps + '</div>';
+}
+
 // A labeled four-step scale from Dimmed to Vivid with the current level
 // marked, then one sentence saying what that level means.
 function colorHealthGauge(raw, compact) {
   var lvl = colorHealthLevel(raw);
   if (lvl < 0) return '';
   var L = COLOR_HEALTH_LEVELS[lvl];
-  var steps = COLOR_HEALTH_LEVELS.map(function(l, i) {
-    return '<span class="ch-step ch-step--' + l.key + (i === lvl ? ' is-current' : '') + '">'
-      + '<i aria-hidden="true"></i><b>' + l.label + '</b></span>';
-  }).join('');
   return '<div class="ch-gauge ch-gauge--' + L.key + (compact ? ' ch-gauge--compact' : '') + '">'
-    + '<div class="ch-scale" role="img" aria-label="Color health: ' + L.label + ' (scale from Dimmed to Vivid)">' + steps + '</div>'
+    + chScaleHtml(lvl)
     + '<p class="ch-text"><strong>' + L.label + ':</strong> ' + COLOR_HEALTH_TEXT[L.key] + ' '
     + '<span class="wiki-link" data-nav="color" onclick="navigate(\'color\')">What is color health?</span></p>'
     + '</div>';
