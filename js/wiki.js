@@ -211,13 +211,14 @@ function buildSidebar() {
     + '</div>';
 
   // ── The World ──────────────────────────────────────
-  var worldActive = ['gigglegloom','color','gods','calendar'].indexOf(currentHash) >= 0;
+  var worldActive = ['gigglegloom','color','gods','calendar','weather'].indexOf(currentHash) >= 0;
   html += '<div class="nav-section">'
     + makeSectionAccordion('world', '◯ The World',
         navLink('The Gigglegloom', 'gigglegloom', currentHash)
         + navLink('Color & The Dimming', 'color', currentHash)
         + navLink('The Gods', 'gods', currentHash)
-        + navLink('The Calendar', 'calendar', currentHash), worldActive)
+        + navLink('The Calendar', 'calendar', currentHash)
+        + navLink('Weather', 'weather', currentHash), worldActive)
     + '</div>';
 
   // ── Regions (only show if at least one visible/teaser entry beneath) ──
@@ -505,7 +506,9 @@ function buildSearchIndex() {
     { hash: 'religion/stillkeep',   title: 'The Stillkeep',   text: 'The Stillkeep stillkeep thyun memory records archive monastic patience partition history',   player_facing: true },
     { hash: 'religion/veilborn',    title: 'The Veilborn',     text: 'The Veilborn veilborn solvara secrets shadow partition truth veilmoot hidden faith',        player_facing: true },
     { hash: 'rumors',      title: 'Rumours & Hearsay',  text: 'rumors hearsay rumours',                                                       player_facing: true },
-    { hash: 'spells',      title: 'Spellbook',          text: 'spells spellbook gigglegloom cast',                                            player_facing: true }
+    { hash: 'spells',      title: 'Spellbook',          text: 'spells spellbook gigglegloom cast',                                            player_facing: true },
+    { hash: 'calendar',    title: 'The Calendar',       text: 'calendar months weekdays holidays year accord signing timeline',              player_facing: true },
+    { hash: 'weather',     title: 'Weather',            text: 'weather seasons temperature climate snow rain heat caparia nombi sohot jugabi', player_facing: true }
   ].forEach(function(p) { allData.push(p); });
 
   allData.forEach(function(entry) {

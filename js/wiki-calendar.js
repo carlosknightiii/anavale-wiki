@@ -207,11 +207,19 @@
       + '<div class="cw-pane" id="cw-pane">' + (STATE.tab === 'cal' ? partYear() + partMonths() + partWeek() : partWeather()) + '</div></div></div>';
   }
 
-  root.renderCalendarPage = function(el) {
+  root.renderCalendarPage = function(el, startTab) {
+    if (startTab === 'cal' || startTab === 'wx') STATE.tab = startTab;
     function draw() {
       el.innerHTML = pageHtml();
       Array.prototype.forEach.call(el.querySelectorAll('.cw-tab'), function(b) {
-        b.addEventListener('click', function() { STATE.tab = b.getAttribute('data-tab'); draw(); });
+        b.addEventListener('click', function() {
+          STATE.tab = b.getAttribute('data-tab');
+          // Keep the address and the sidebar in step with the tab (no re-route).
+          var h = STATE.tab === 'wx' ? 'weather' : 'calendar';
+          if (root.history && root.history.replaceState) root.history.replaceState(null, '', '#' + h);
+          if (typeof root.updateSidebarActive === 'function') root.updateSidebarActive(h);
+          draw();
+        });
       });
       Array.prototype.forEach.call(el.querySelectorAll('.cw-wx-tab'), function(b) {
         b.addEventListener('click', function() { STATE.region = b.getAttribute('data-region'); draw(); });
