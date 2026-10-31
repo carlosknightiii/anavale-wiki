@@ -217,6 +217,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .nav-accordion-body, .nav-chev { transition: none; }
+  .gg-type-bg { display: none; }
 }
 
 .gradient-text {
@@ -2454,7 +2455,12 @@ body.wiki-dark .warning-title { color: var(--gold); }
 
 /* Four type cards */
 .gg-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 0.6rem; }
-.gg-type { background: var(--surface-3); border: 1px solid var(--border-mid); border-top: 5px solid var(--gg); border-radius: var(--card-radius); padding: 1.1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.gg-type { position: relative; isolation: isolate; overflow: hidden; background: var(--surface-3); border: 1px solid var(--border-mid); border-top: 5px solid var(--gg); border-radius: var(--card-radius); padding: 1.1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+/* Animated type video behind each card, darkened so the text stays readable */
+.gg-type-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.gg-type-video { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
+.gg-type-video.is-on { opacity: 0.55; }
+.gg-type-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--surface-3) 55%, transparent) 0%, color-mix(in srgb, var(--surface-3) 70%, transparent) 25%, var(--surface-3) 60%); }
 .gg-type-head { display: flex; align-items: center; gap: 0.8rem; }
 .gg-type-head .gg-icon { width: 48px; height: 48px; }
 .gg-type-name { font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; color: var(--gg); line-height: 1.1; }
@@ -2463,10 +2469,14 @@ body.wiki-dark .warning-title { color: var(--gold); }
 .gg-chip { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--gg); color: var(--gg); }
 .gg-type-body { margin: 0; font-size: 0.93rem; line-height: 1.6; color: var(--text); }
 .gg-type-sense { margin: 0; font-size: 0.88rem; font-style: italic; color: var(--text-muted); }
-.gg-suits { border-top: 1px solid var(--border-mid); padding-top: 0.7rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: baseline; }
-.gg-suits-h { width: 100%; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
-.gg-suit { font-size: 0.82rem; background: var(--surface-5); border-radius: var(--radius-sm); padding: 0.25rem 0.55rem; color: var(--text-muted); }
-.gg-suit b { color: var(--text); font-weight: 700; }
+.gg-suits { border-top: 1px solid var(--border-mid); padding-top: 0.7rem; }
+.gg-suits-h { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.55rem; }
+.gg-suit-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.gg-suit { margin: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; background: var(--surface-5); border-radius: var(--radius-sm); padding: 0.55rem 0.4rem 0.6rem; }
+.gg-suit img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; box-shadow: 0 0 0 1px var(--border-mid); }
+.gg-suit figcaption { display: flex; flex-direction: column; line-height: 1.25; }
+.gg-suit b { font-size: 0.8rem; color: var(--text); }
+.gg-suit span { font-size: 0.72rem; color: var(--text-muted); }
 .gg-fading { font-size: 0.85rem; font-weight: 700; color: var(--gg); background: var(--surface-5); border-left: 3px solid var(--gg); border-radius: var(--radius-sm); padding: 0.45rem 0.7rem; }
 
 /* Comparison table */
