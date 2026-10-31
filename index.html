@@ -138,6 +138,8 @@
       if (updated) {
         if (typeof buildSidebar === 'function') buildSidebar();
         if (typeof buildSearchIndex === 'function') { _searchIndex = null; buildSearchIndex(); }
+        // Auto-link list was built from the static seed files; rebuild it from live data.
+        if (typeof _wikiLinkMap !== 'undefined') _wikiLinkMap = null;
         if (typeof handleRoute === 'function') handleRoute();
       }
     }).catch(function(err) {
