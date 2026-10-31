@@ -238,7 +238,8 @@ The one genuinely nested, non-trivial block shape. Replaces two older, now-fully
       "title": "…",           // the tile's own label, and the fallback label for its decision
       "entity": { "type": "…", "id": "…" },   // optional — omit entirely for no portrait
       "blocks": [ /* a full, ordinary field_guide_sessions block array */ ],
-      "decision": { "label": "…", "affects_quest_id": "…" }   // optional — omit for no decision row
+      "decision": { "label": "…", "affects_quest_id": "…" },  // optional — omit for no decision row
+      "duration_minutes": 100   // optional positive integer — how long this path takes in the story (ANV-43)
     }
   ]
 }
@@ -247,6 +248,15 @@ The one genuinely nested, non-trivial block shape. Replaces two older, now-fully
 - **Give the module a `beat_label` (or at minimum a `label`) whenever there's more than one `scenario_cards`/`combat_outcomes` module in the document.** The DOM id and every logged status/decision title are derived from this string (slugified) — two modules sharing the same `label`/`beat_label` (or both left unlabeled at the same position) collide, and only the first one found responds to clicks; the second silently does nothing.
 - `entity` uses the exact same type vocabulary and alias map as `h2`/box `featured` (§3.3) — same silent-drop-on-failure behavior for a bad type/id.
 - **Card 0 is always the initially-open card on every redraw.** Which card the DM last had open is not persisted — reopening the document (or triggering any redraw of the module) always resets to the first card.
+
+### Time cost (`duration_minutes`, ANV-43)
+
+- Optional integer on a **card** (not on the module). Omit it (or set it to 0) and the card behaves exactly as before.
+- With a duration, the tile shows a small "Takes 1 hr 40 min" chip, and the open card shows the same chip plus a **They do this** button. Pressing it asks once: *"Move the clock 1 hr 40 min? They arrive around 3:40 PM, Afternoon."* with **Advance 1 hr 40 min** (writes `campaign_clock.minutes` and the time bar glides there) or **Keep the time** (marks the card chosen, clock untouched). Both end states show **Undo**, which puts the clock back to the value it had before the press.
+- Nothing ever moves the clock without that confirmation. The confirm/done state is session-only (not persisted); the clock itself is `campaign_clock` row id=1.
+- Format is minutes: `20` → "20 min", `60` → "1 hr", `100` → "1 hr 40 min".
+- **Editing:** there is no block editor in DM Tools any more, so the open card carries a small "Time cost in minutes (optional)" field (hidden when a past session is locked for audit). Saving PATCHes the whole `field_guide_sessions.blocks` column, the same path the loot widget uses. Clearing the field removes the key.
+- In a locked/audit session the chip still shows, but "They do this", Undo and the editing field are hidden.
 
 ### Nested content
 

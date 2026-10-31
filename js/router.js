@@ -7,6 +7,8 @@
 //   #gods          → Gods
 //   #rumors        → Rumours
 //   #spells        → Spellbook page
+//   #calendar      → The Anavale Calendar (The Calendar / Weather tabs)
+//   #weather       → Same page, opened on the Weather tab
 //   #region/caparia        → Region page
 //   #nation/solenmere      → Nation entry
 //   #city/solenveil        → City entry
@@ -48,6 +50,8 @@ function handleRoute() {
   else if (type === 'gods')          renderGods(el);
   else if (type === 'rumors')        renderRumors(el);
   else if (type === 'spells')        renderSpellsPage(el);
+  else if (type === 'calendar')      renderCalendarPage(el, 'cal');
+  else if (type === 'weather')       renderCalendarPage(el, 'wx');
   else if (type === 'region'  && id) renderRegion(id, el);
   else if (type === 'nation'  && id) renderNation(id, el);
   else if (type === 'city'    && id) renderCity(id, el);

@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/wiki.css">
+<link rel="stylesheet" href="css/calendar.css">
 <style>
 /* ══════════════════════════════════════════════
    ANAVALE DM TOOLS — dm.html
@@ -1518,6 +1519,7 @@ if (dmIsLocalHost(location.hostname)) {
           <div class="scc-live-popup-pane" id="scc-live-popup-pane-attachments">
             <div id="scc-live-attachments"></div>
           </div>
+          <div class="scc-live-popup-pane" id="scc-live-popup-pane-calendar"></div>
           <div class="scc-live-popup-pane" id="scc-live-popup-pane-conditions">
             <div id="scc-live-conditions"></div>
           </div>
@@ -3741,6 +3743,7 @@ if (dmIsLocalHost(location.hostname)) {
               <div class="scc-live-sidebar-drawer" id="scc-live-sidebar-drawer">
                 <div class="scc-live-sidebar-drawer-inner">
                   <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('attachments')"><span class="scc-live-sidebar-btn-icon">🐾</span><span>Companions &amp; Attachments</span></button>
+                  <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('calendar')"><span class="scc-live-sidebar-btn-icon">&#128197;</span><span>Calendar</span></button>
                   <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('conditions')"><span class="scc-live-sidebar-btn-icon">⚠️</span><span>Conditions</span></button>
                   <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('beat')"><span class="scc-live-sidebar-btn-icon">📜</span><span>Current Beat</span></button>
                   <button type="button" class="scc-live-sidebar-btn" onclick="sccLiveOpenPopup('dice')"><span class="scc-live-sidebar-btn-icon">🎲</span><span>Die Roller</span></button>
@@ -3870,6 +3873,8 @@ if (dmIsLocalHost(location.hostname)) {
               </div>
 
               <div class="scc-live-tab-panel open" id="scc-live-acc-body-fieldguide">
+          <!-- ANV-43: pinned time-of-day bar, built by js/dm-calendar.js (DmClock) -->
+          <div class="tb-wrap" id="scc-time-bar"></div>
           <div class="scc-fg-layout">
           <div class="scc-fg-header">
             <div class="scc-npc-page-title">Field Guide</div>
@@ -4195,6 +4200,9 @@ if (dmIsLocalHost(location.hostname)) {
 <script src="data/items.js"></script>
 <script src="data/quests.js"></script>
 <script src="js/hp-calc.js"></script>
+<script src="js/anavale-calendar.js"></script>
+<script src="js/nation-extra.js"></script>
+<script src="js/dm-calendar.js"></script>
 <script>
 // ── SUPABASE LIVE SYNC — DM Tools ────────────────────────────────
 // Fetches live world data from Supabase after static files load.
@@ -12626,6 +12634,7 @@ function sccUpdateHeaderScrollState() {
     header.classList.remove('dm-shell-header--hidden');
   }
   SCC_HEADER_SCROLL_LAST = y;
+  if (window.DmClock) DmClock.syncHeaderOffset();
 }
 function sccOnHeaderScroll() {
   var now = Date.now();
@@ -17342,6 +17351,7 @@ function sccRenderLivePanel() {
 // of those ids moved.
 var SCC_LIVE_SIDEBAR_SECTIONS = {
   attachments: 'Companions & Attachments',
+  calendar:    'Calendar',
   conditions:  'Conditions',
   beat:        'Current Beat',
   dice:        'Die Roller',
@@ -17367,6 +17377,8 @@ function sccLiveOpenPopup(key) {
   var pane = document.getElementById('scc-live-popup-pane-' + key);
   if (pane) pane.classList.add('active');
   if (title) title.textContent = SCC_LIVE_SIDEBAR_SECTIONS[key] || '';
+  modal.classList.toggle('cp-open', key === 'calendar');
+  if (key === 'calendar' && typeof sccCalOpenPanel === 'function') sccCalOpenPanel();
   modal.classList.add('open');
   backdrop.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
@@ -19117,7 +19129,12 @@ function sccFgScenarioCardBodyHtml(b, card, domId, cardIdx) {
   var contentHtml = sccFgRenderDoc(card.blocks || [], { scenarioCardsDomId: domId, cardIdx: cardIdx });
   if (!contentHtml && !decisionHtml && !combatBtnHtml) contentHtml = '<div class="scc-fg-sc-empty">No content yet.</div>';
   var backBtn = '<div class="scc-fg-sc-back-btn" onclick="sccFgBackToScenarioCards(\'' + sccEsc(domId) + '\')">&#8593; Back to Scenario Cards</div>';
-  return decisionHtml + combatBtnHtml + contentHtml + backBtn;
+  // ANV-43: optional time cost (card.duration_minutes) -- "They do this" ->
+  // confirm -> Advance / Keep the time -> Undo, plus the DM's own field for
+  // setting it. See js/dm-calendar.js; nothing moves the clock unprompted.
+  var timeHtml = typeof sccCalCardTimeHtml === 'function' ? sccCalCardTimeHtml(card, domId, cardIdx) : '';
+  var timeEditHtml = typeof sccCalCardEditHtml === 'function' ? sccCalCardEditHtml(card, domId, cardIdx) : '';
+  return timeHtml + decisionHtml + combatBtnHtml + contentHtml + timeEditHtml + backBtn;
 }
 
 // Each tile below carries data-fg-rail-child-label EXCEPT a card that has a
@@ -19149,6 +19166,7 @@ function sccFgOneScenarioCardsHtml(b, idx, activeIdx) {
     return '<div class="scc-fg-sc-tile' + (i === active ? ' scc-fg-sc-tile--active' : '') + '"' + (card.decision ? '' : ' data-fg-rail-child-label="' + sccEsc(card.title || '') + '"') + ' onclick="sccFgSwitchScenarioCard(\'' + domId + '\', ' + i + ', this)">'
       + portrait
       + '<span class="scc-fg-sc-tile-title">' + sccEsc(card.title || '') + '</span>'
+      + (typeof sccCalDurChip === 'function' ? sccCalDurChip(card) : '')
       + statusHtml
       + (loggedTile ? '<span class="scc-fg-sc-tile-check" title="Logged as what happened">&#10003;</span>' : '')
     + '</div>';
@@ -20102,6 +20120,7 @@ function sccFgHomedScenarioGroupNames() {
 }
 
 function sccFgInitDocument() {
+  if (window.DmClock) DmClock.ensure();
   var num = sccFgActiveSessionNum();
   // Already showing this exact session's guide — don't touch the DOM. Before
   // this guard, switching to another Live Session tab and back rebuilt the
@@ -20693,6 +20712,7 @@ function sccFgDrawDocument(num) {
     + sccFgScenarioSectionHtml()
     + sccFgRenderDoc(footerBlocks);
   sccLiveRenderScenarios();
+  if (window.DmClock) DmClock.update();
   SCC_FG_RENDERED_SESSION_NUM = num;
   sccFgBuildScrollIndicator();
   sccFgEnsureScrollListenerBound();
@@ -23314,7 +23334,7 @@ function sccBuildLocationCardBodyHtml(loc) {
     body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128214;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Summary</div><div class="scc-npc2-section-body">' + sccEsc(loc.summary) + '</div></div></div>';
   }
   if (loc.description) {
-    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128203;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Description</div><div class="scc-npc2-section-body">' + sccEsc(loc.description) + '</div></div></div>';
+    body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#128203;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Description</div><div class="scc-npc2-section-body">' + ((info.isNationEntry && window.NationExtra) ? NationExtra.md(loc.description) : sccEsc(loc.description)) + '</div></div></div>';
   }
   if (loc.strategic_importance) {
     body += '<div class="scc-npc2-section"><div class="scc-npc2-icon">&#9873;</div><div class="scc-npc2-section-txt"><div class="scc-npc2-section-title">Strategic Importance</div><div class="scc-npc2-section-body">' + sccEsc(loc.strategic_importance) + '</div></div></div>';
@@ -23341,6 +23361,12 @@ function sccBuildLocationCardBodyHtml(loc) {
     + ((info.isNationEntry && loc.government)   ? '<div class="scc-ql-row"><span class="scc-ql-label">Government</span><span class="scc-ql-value">' + sccEsc(loc.government) + '</span></div>' : '')
     + ((info.isNationEntry && loc.capital_city) ? '<div class="scc-ql-row"><span class="scc-ql-label">Capital</span><span class="scc-ql-value">' + sccEsc(loc.capital_city) + '</span></div>' : '');
   if (fieldsHtml) body += '<div class="scc-ql-fields">' + fieldsHtml + '</div>';
+  // ANV-43: nation extra_data (sigil, motto, origin, rivalries, at a glance,
+  // leader, accord) and, DM Tools only, the DM-only box. The description
+  // itself renders in the Description section above, as markdown.
+  if (info.isNationEntry && window.NationExtra) {
+    body += '<div class="nx-view">' + NationExtra.topHtml(loc) + NationExtra.sectionsHtml(loc, { dm: true }) + '</div>';
+  }
   // Population
   if (loc.population_data) {
     var pd = loc.population_data;
