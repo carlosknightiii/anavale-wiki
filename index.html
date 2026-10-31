@@ -12,10 +12,21 @@
   <link rel="stylesheet" href="css/calendar.css">
 </head>
 <body class="wiki-dark">
+<!-- ══ MOBILE TOP BAR (shown at 900px and below) ══ -->
+<header class="mobile-bar">
+  <button type="button" class="mobile-bar-btn" id="mobile-nav-btn" aria-label="Open menu" aria-controls="wiki-sidebar" aria-expanded="false" onclick="toggleMobileNav()">
+    <span class="mobile-bar-burger" aria-hidden="true"><span></span><span></span><span></span></span>
+  </button>
+  <a class="mobile-bar-title" href="#home" onclick="closeMobileNav()">The Traveller's <span class="text-gradient">Compendium</span></a>
+  <button type="button" class="mobile-bar-btn" aria-label="Search" onclick="openMobileSearch()">
+    <span class="mobile-bar-search" aria-hidden="true">&#8981;</span>
+  </button>
+</header>
+<div class="mobile-nav-backdrop" onclick="closeMobileNav()"></div>
 <div class="layout">
 
 <!-- ══ SIDEBAR ══ -->
-<nav class="sidebar">
+<nav class="sidebar" id="wiki-sidebar">
   <div class="sidebar-title">The Traveller's <span class="text-gradient">Compendium</span></div>
 
   <div class="search-container">
