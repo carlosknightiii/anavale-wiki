@@ -4,16 +4,21 @@
 // sheet/index.html's renderEquippedAC() and needs no stored/cached state.
 // ══════════════════════════════════════════════════════════════════
 
-// Level-1-only: hpBase is hit die max + CON mod + Tough. Past level 1,
-// a player's per-level HP roll can't be derived from a formula and must
-// be stored permanently once made — not built yet (whole party is level 1).
+// hpBase: level 1 is hit die max + CON mod; each later level adds the fixed
+// average (die/2 + 1) + CON mod; Tough adds 2 per level. Rolled HP isn't
+// supported: the table uses the fixed value.
 function computeHpBase(character, classRow) {
   var scores = (typeof character.ability_scores === 'object' && character.ability_scores) ? character.ability_scores : {};
   var conMod = Math.floor(((parseInt(scores.con) || 10) - 10) / 2);
   var hitDieMax = (classRow && classRow.hit_die) ? parseInt(String(classRow.hit_die).replace('d', '')) : 8;
   var level = character.level || 1;
   var toughBonus = (Array.isArray(character.feats) && character.feats.indexOf('Tough') >= 0) ? 2 * level : 0;
-  return { hpBase: hitDieMax + conMod + toughBonus, conMod: conMod };
+  // Levels past 1 use the 2024 PHB fixed hit point value (half the die + 1)
+  // plus CON mod per level. The table takes this "standard" increase rather
+  // than rolling, so it stays derivable instead of needing a stored roll.
+  var perLevel = Math.max(1, Math.floor(hitDieMax / 2) + 1 + conMod);
+  var higher = Math.max(0, level - 1) * perLevel;
+  return { hpBase: hitDieMax + conMod + higher + toughBonus, conMod: conMod };
 }
 
 // Recomputes hp_max from the character's current CON/feats/level every time

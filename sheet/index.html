@@ -2536,6 +2536,19 @@
     .cs-doc-look { font-style: italic; color: var(--text-muted); font-size: 0.85rem; margin: 0 0 0.75rem; }
     .cs-doc-look:empty { display: none; }
     .cs-doc-paper { white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.55; color: var(--text); background: var(--blue-700); border-left: 3px solid var(--gold); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1rem; }
+    .cs-choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--char-ov-gap-m); }
+    .cs-choice-group { display: flex; flex-direction: column; gap: var(--char-ov-gap-xs); background: var(--blue-700); border: 1px solid var(--blue-200); border-radius: var(--radius-sm); padding: var(--char-ov-gap-xs); }
+    .cs-choice-group-title { font-family: var(--font-display); font-weight: 700; font-size: var(--char-ov-h5); color: var(--gold); }
+    .cs-choice-help { font-size: 0.8rem; color: var(--text-muted); }
+    .cs-choice-row { display: flex; flex-direction: column; gap: 4px; padding-top: var(--char-ov-gap-2xs); border-top: 1px solid var(--blue-600); }
+    .cs-choice-name { font-weight: 700; color: var(--text); }
+    .cs-choice-text { font-size: 0.85rem; line-height: 1.45; color: var(--text); }
+    .cs-choice-select { width: 100%; }
+    .cs-choice-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--char-ov-gap-2xs); }
+    .cs-choice-btn { align-self: flex-start; background: none; border: 1px solid var(--gold); color: var(--gold); border-radius: 999px; padding: 4px 12px; font-weight: 700; cursor: pointer; }
+    .cs-choice-btn:disabled { opacity: 0.45; cursor: default; }
+    .cs-mastery-chip { display: block; margin-top: 3px; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); cursor: help; }
+    .cs-mastery-chip.active { color: var(--gold); }
     .cs-inv-source { display: block; font-size: 0.72rem; font-style: italic; color: var(--text-muted); margin-top: 2px; }
     .cs-inv-weight-note { display: block; font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; cursor: help; }
     .cs-price-g { color: var(--money-text-gold); font-weight: 700; }
@@ -3684,6 +3697,7 @@
     'Inspiring Leader': 'After a 10-minute speech, nearby allies gain temporary HP equal to your level + your Charisma modifier.',
     'Tavern Brawler':   'Proficiency with improvised weapons. Unarmed strikes deal 1d4 + Strength modifier.',
     'Savage Attacker':  'Once per turn when you hit with a weapon, reroll the damage dice and use the higher result.',
+    'Interception':     'Fighting Style. When a creature you can see hits another creature within 5 feet of you with an attack roll, you can take a Reaction to reduce the damage by 1d10 + your Proficiency Bonus. You must be holding a Shield or a Simple or Martial weapon.',
     'Keen Mind':        'Always know which direction is north, how long until sunrise/sunset, and can recall anything you\'ve heard or read in the past month.'
   };
   // Skill proficiency tooltips — mirrors SKILL_TIPS in js/character.js
@@ -4680,6 +4694,10 @@
       // Prepared, so it reads as one Features group instead of a separate
       // card. No standalone wrapper left behind.
       + '<div id="cs-class-features-acc-wrap"></div>'
+      // Level-up choices (invocations, Weapon Mastery, Wild Shape forms,
+      // Magical Cunning / Wild Companion buttons). Filled by
+      // renderClassChoices() once SHEET is loaded.
+      + '<div id="cs-class-choices-wrap"></div>'
       // Round 2 Revisions — DM decision: spells are DM-assigned only, no
       // player self-serve — that's still true, this table has zero
       // add-a-spell path. Round 2 also removed search/filter entirely on
@@ -6026,6 +6044,7 @@
     renderSpellsLearnedTable();
     renderSpellcastingStats();
     renderLimitedUseFeatures();
+    renderClassChoices();
     renderAbilitySkills();
     wireAllTooltips();
   }
@@ -6193,6 +6212,9 @@
     var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
     features.forEach(function(f) {
       if (f.recharge === 'short_rest') spentMap[f.name] = 0;
+      // Features like the 2024 Wild Shape get back only some uses on a
+      // Short Rest (short_rest_regain), and all of them on a Long Rest.
+      else if (f.short_rest_regain) spentMap[f.name] = Math.max(0, (parseInt(spentMap[f.name]) || 0) - parseInt(f.short_rest_regain));
     });
     SHEET.limited_use_spent = spentMap;
     var fields = { limited_use_spent: spentMap };
@@ -6243,8 +6265,11 @@
     // being the sole source of truth for which bucket a feature is in.
     var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
     var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
+    // A Long Rest restores every limited-use feature, short-rest ones
+    // included (anything that comes back on a Short Rest also comes back
+    // on a Long Rest).
     features.forEach(function(f) {
-      if (f.recharge === 'long_rest') spentMap[f.name] = 0;
+      spentMap[f.name] = 0;
     });
     SHEET.limited_use_spent = spentMap;
     fields.limited_use_spent = spentMap;
@@ -7490,10 +7515,227 @@
   };
   // Category-dependent one-line mechanical summary — reuses fields already
   // read elsewhere (computeAC()), no new columns.
+
+  // ── Level-up class choices (Class tab) ──────────────────────────────
+  // character_sheet.class_choices (jsonb) holds per-character picks that
+  // have no column of their own: Warlock invocations, Weapon Mastery
+  // weapons, Druid Wild Shape forms. Rules text is the 2024 PHB.
+  var WEAPON_MASTERY_TIPS = {
+    Cleave: 'If you hit a creature with a melee attack roll using this weapon, you can make a melee attack roll with the weapon against a second creature within 5 feet of the first that is also within your reach. On a hit, the second creature takes the weapon\'s damage, but don\'t add your ability modifier unless it is negative. Once per turn.',
+    Graze: 'If your attack roll with this weapon misses a creature, you can deal damage to that creature equal to the ability modifier you used to make the attack roll. The damage is the same type the weapon deals.',
+    Nick: 'When you make the extra attack of the Light property, you can make it as part of the Attack action instead of as a Bonus Action. Once per turn.',
+    Push: 'If you hit a creature with this weapon, you can push the creature up to 10 feet straight away from yourself if it is Large or smaller.',
+    Sap: 'If you hit a creature with this weapon, that creature has Disadvantage on its next attack roll before the start of your next turn.',
+    Slow: 'If you hit a creature with this weapon and deal damage to it, you can reduce its Speed by 10 feet until the start of your next turn. Hitting it more than once doesn\'t reduce its Speed by more than 10 feet.',
+    Topple: 'If you hit a creature with this weapon, you can force it to make a Constitution saving throw (DC 8 + the ability modifier used for the attack + your Proficiency Bonus). On a failed save, it has the Prone condition.',
+    Vex: 'If you hit a creature with this weapon and deal damage to it, you have Advantage on your next attack roll against that creature before the end of your next turn.'
+  };
+  var WEAPON_KINDS = [
+    ['battleaxe','Battleaxe','Topple'],['blowgun','Blowgun','Vex'],['club','Club','Slow'],['dagger','Dagger','Nick'],['dart','Dart','Vex'],
+    ['flail','Flail','Sap'],['glaive','Glaive','Graze'],['greataxe','Greataxe','Cleave'],['greatclub','Greatclub','Push'],['greatsword','Greatsword','Graze'],
+    ['halberd','Halberd','Cleave'],['hand-crossbow','Hand Crossbow','Vex'],['handaxe','Handaxe','Vex'],['heavy-crossbow','Heavy Crossbow','Push'],['javelin','Javelin','Slow'],
+    ['lance','Lance','Topple'],['light-crossbow','Light Crossbow','Slow'],['light-hammer','Light Hammer','Nick'],['longbow','Longbow','Slow'],['longsword','Longsword','Sap'],
+    ['mace','Mace','Sap'],['maul','Maul','Topple'],['morningstar','Morningstar','Sap'],['musket','Musket','Slow'],['pike','Pike','Push'],['pistol','Pistol','Vex'],
+    ['quarterstaff','Quarterstaff','Topple'],['rapier','Rapier','Vex'],['scimitar','Scimitar','Nick'],['shortbow','Shortbow','Vex'],['shortsword','Shortsword','Vex'],
+    ['sickle','Sickle','Nick'],['sling','Sling','Slow'],['spear','Spear','Sap'],['trident','Trident','Topple'],['war-pick','War Pick','Sap'],['warhammer','Warhammer','Push'],['whip','Whip','Slow']
+  ];
+  // How many weapon kinds each 2024 class can use the mastery of.
+  var WEAPON_MASTERY_COUNT = { barbarian: 2, fighter: 3, paladin: 2, ranger: 2, rogue: 2 };
+  var INVOCATION_TIPS = {
+    'Agonizing Blast': 'Add your Charisma modifier to the damage of Eldritch Blast.',
+    'Armor of Shadows': 'Cast Mage Armor on yourself without expending a spell slot.',
+    'Devil\'s Sight': 'You can see normally in Dim Light and Darkness, magical or not, within 120 feet.',
+    'Eldritch Mind': 'Advantage on Constitution saving throws to maintain Concentration.',
+    'Eldritch Spear': 'Eldritch Blast\'s range increases by 30 feet times your Warlock level.',
+    'Fiendish Vigor': 'Cast False Life on yourself without a spell slot; you get the maximum Temporary Hit Points.',
+    'Lessons of the First Ones': 'Gain one Origin feat of your choice.',
+    'Mask of Many Faces': 'Cast Disguise Self without expending a spell slot.',
+    'Misty Visions': 'Cast Silent Image without expending a spell slot.',
+    'Otherworldly Leap': 'Cast Jump on yourself without expending a spell slot.',
+    'Pact of the Blade': 'Conjure a pact weapon (or bond a magic weapon) as a Bonus Action. You are proficient with it and can use Charisma for its attack and damage rolls.',
+    'Pact of the Chain': 'You learn Find Familiar and can cast it as a Magic action without a spell slot. Your familiar can take a special form (Imp, Pseudodragon, Quasit, Skeleton, Slaad Tadpole, Sphinx of Wonder, Sprite, or Venomous Snake). When you take the Attack action, you can give up one attack so your familiar attacks with its Reaction.',
+    'Pact of the Tome': 'A Book of Shadows appears. While it\'s on you, you have three cantrips and two level 1 Ritual spells of your choice (from any class) prepared; you can cast the rituals only as Rituals.',
+    'Repelling Blast': 'When you hit a Large or smaller creature with Eldritch Blast, you can push it up to 10 feet straight away from you.'
+  };
+  function classChoices() {
+    return (SHEET && SHEET.class_choices && typeof SHEET.class_choices === 'object') ? SHEET.class_choices : {};
+  }
+  function saveClassChoices(next) {
+    SHEET.class_choices = next;
+    saveSheet({ class_choices: next });
+    renderClassChoices();
+    renderInventory();
+  }
+  function weaponKindOf(src) {
+    var id = (src && (src.id || src.item_id)) || '';
+    return String(id).replace(/-plus-(one|two|three)$/, '');
+  }
+  function weaponMasteryActive(src) {
+    var picks = classChoices().weapon_masteries;
+    return Array.isArray(picks) && picks.indexOf(weaponKindOf(src)) !== -1;
+  }
+  function weaponMasteryChipHtml(src) {
+    var m = src && src.mastery;
+    if (!m) { var k = WEAPON_KINDS.filter(function(w){ return w[0] === weaponKindOf(src); })[0]; m = k ? k[2] : null; }
+    if (!m) return '';
+    var cls = (CH && WEAPON_MASTERY_COUNT[CH.class_id]) ? (weaponMasteryActive(src) ? ' active' : ' inactive') : ' inactive';
+    var label = cls === ' active' ? 'Mastery: ' + m : 'Mastery: ' + m + ' (not chosen)';
+    return '<span class="cs-mastery-chip' + cls + '" data-tip="' + escHtml(m + ': ' + (WEAPON_MASTERY_TIPS[m] || '')) + '">' + label + '</span>';
+  }
+  function setWeaponMastery(idx, value) {
+    var c = Object.assign({}, classChoices());
+    var picks = Array.isArray(c.weapon_masteries) ? c.weapon_masteries.slice() : [];
+    picks[idx] = value || null;
+    c.weapon_masteries = picks.filter(function(v, i, a){ return v && a.indexOf(v) === i; });
+    saveClassChoices(c);
+    showToast('Weapon Mastery updated');
+  }
+  function setWildShapeForm(idx, input) {
+    var c = Object.assign({}, classChoices());
+    var forms = Array.isArray(c.wild_shape_forms) ? c.wild_shape_forms.slice() : [];
+    forms[idx] = input.value.trim();
+    c.wild_shape_forms = forms;
+    SHEET.class_choices = c;
+    saveSheet({ class_choices: c });
+  }
+  function limitedUseState(name) {
+    var features = (CLASS_ROW && Array.isArray(CLASS_ROW.limited_use_features)) ? CLASS_ROW.limited_use_features : [];
+    var f = features.find(function(x){ return x.name === name; });
+    if (!f) return null;
+    var max = computeLimitedUseMax(f, (CH && CH.level) || 1);
+    var spentMap = (SHEET && typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? SHEET.limited_use_spent : {};
+    return { max: max, spent: Math.min(max, parseInt(spentMap[name]) || 0) };
+  }
+  function spendLimitedUse(name) {
+    var spentMap = (typeof SHEET.limited_use_spent === 'object' && SHEET.limited_use_spent) ? Object.assign({}, SHEET.limited_use_spent) : {};
+    spentMap[name] = (parseInt(spentMap[name]) || 0) + 1;
+    SHEET.limited_use_spent = spentMap;
+    return spentMap;
+  }
+  // Magical Cunning (Warlock 2): a 1-minute rite that regains expended Pact
+  // Magic slots, up to half the maximum (rounded up). Once per Long Rest.
+  function useMagicalCunning() {
+    if (!SHEET) return;
+    var st = limitedUseState('Magical Cunning');
+    if (!st || st.max <= 0) return;
+    if (st.spent >= st.max) { showToast('Magical Cunning is used. It comes back after a Long Rest.', true); return; }
+    var arr = computeSpellSlotsArray() || [];
+    var spentSlots = (typeof SHEET.spell_slots === 'object' && SHEET.spell_slots) ? Object.assign({}, SHEET.spell_slots) : {};
+    var lvl = 0, max = 0;
+    for (var i = 0; i < 9; i++) { if ((parseInt(arr[i]) || 0) > 0) { lvl = i + 1; max = parseInt(arr[i]); } }
+    if (!lvl) return;
+    var used = parseInt(spentSlots[lvl]) || 0;
+    if (!used) { showToast('Your Pact Magic slots are already full. Save Magical Cunning for later.', true); return; }
+    var back = Math.min(used, Math.ceil(max / 2));
+    spentSlots[lvl] = used - back;
+    SHEET.spell_slots = spentSlots;
+    var spentMap = spendLimitedUse('Magical Cunning');
+    saveSheet({ spell_slots: spentSlots, limited_use_spent: spentMap });
+    renderSpellSlotsGroup();
+    renderLimitedUseFeatures();
+    renderClassChoices();
+    showToast('Magical Cunning: regained ' + back + ' Pact Magic slot' + (back === 1 ? '' : 's') + '.');
+  }
+  // Wild Companion (Druid 2): spend a Wild Shape use to cast Find Familiar
+  // without a spell slot. The familiar is a Fey and lasts until a Long Rest.
+  function useWildCompanion() {
+    if (!SHEET) return;
+    var st = limitedUseState('Wild Shape');
+    if (!st || st.max <= 0) return;
+    if (st.spent >= st.max) { showToast('No Wild Shape uses left. One comes back on a Short Rest.', true); return; }
+    var spentMap = spendLimitedUse('Wild Shape');
+    saveSheet({ limited_use_spent: spentMap });
+    renderLimitedUseFeatures();
+    renderClassChoices();
+    showToast('Wild Companion: one Wild Shape use spent. Find Familiar is cast.');
+  }
+  function choiceRowHtml(name, text, extra) {
+    return '<div class="cs-choice-row">'
+      + '<div class="cs-choice-name">' + escHtml(name) + '</div>'
+      + '<div class="cs-choice-text">' + escHtml(text) + '</div>'
+      + (extra || '')
+    + '</div>';
+  }
+  function renderClassChoices() {
+    var wrap = document.getElementById('cs-class-choices-wrap');
+    if (!wrap || !CH || !SHEET) return;
+    var cls = CH.class_id, lvl = CH.level || 1, c = classChoices();
+    var sections = [];
+
+    if (WEAPON_MASTERY_COUNT[cls]) {
+      var n = WEAPON_MASTERY_COUNT[cls];
+      var picks = Array.isArray(c.weapon_masteries) ? c.weapon_masteries : [];
+      var rows = '';
+      for (var i = 0; i < n; i++) {
+        var cur = picks[i] || '';
+        var kind = WEAPON_KINDS.filter(function(w){ return w[0] === cur; })[0];
+        var opts = '<option value="">Choose a weapon</option>' + WEAPON_KINDS.map(function(w) {
+          return '<option value="' + w[0] + '"' + (w[0] === cur ? ' selected' : '') + '>' + escHtml(w[1]) + ' (' + w[2] + ')</option>';
+        }).join('');
+        rows += '<div class="cs-choice-row">'
+          + '<select class="cs-inv-filter-select cs-choice-select" onchange="setWeaponMastery(' + i + ', this.value)">' + opts + '</select>'
+          + (kind ? '<div class="cs-choice-name">' + escHtml(kind[1]) + ': ' + kind[2] + '</div><div class="cs-choice-text">' + escHtml(WEAPON_MASTERY_TIPS[kind[2]]) + '</div>' : '')
+        + '</div>';
+      }
+      sections.push('<div class="cs-choice-group"><div class="cs-choice-group-title">Weapon Mastery</div>'
+        + '<div class="cs-choice-help">You can use the mastery property of ' + n + ' kinds of weapons you are proficient with. When you finish a Long Rest, you can change one of these choices.</div>'
+        + rows + '</div>');
+    }
+
+    var feats = Array.isArray(CH.feats) ? CH.feats : [];
+    if (feats.indexOf('Interception') !== -1) {
+      sections.push('<div class="cs-choice-group"><div class="cs-choice-group-title">Fighting Style</div>' + choiceRowHtml('Interception', FEAT_TIPS['Interception']) + '</div>');
+    }
+
+    if (cls === 'warlock') {
+      var inv = Array.isArray(c.invocations) ? c.invocations : [];
+      var invRows = inv.map(function(name) { return choiceRowHtml(name, INVOCATION_TIPS[name] || ''); }).join('');
+      if (inv.indexOf('Pact of the Tome') !== -1) {
+        var tc = Array.isArray(c.tome_cantrips) && c.tome_cantrips.length ? c.tome_cantrips.join(', ') : 'Not chosen yet (pick 3 cantrips with your DM)';
+        var tr = Array.isArray(c.tome_rituals) && c.tome_rituals.length ? c.tome_rituals.join(', ') : 'Not chosen yet (pick 2 level 1 Ritual spells with your DM)';
+        invRows += choiceRowHtml('Book of Shadows', 'Cantrips: ' + tc + '. Rituals: ' + tr + '.');
+      }
+      sections.push('<div class="cs-choice-group"><div class="cs-choice-group-title">Eldritch Invocations</div>'
+        + (invRows || '<div class="cs-choice-help">No invocations recorded yet.</div>') + '</div>');
+      var mc = limitedUseState('Magical Cunning');
+      if (mc && mc.max > 0) {
+        var left = mc.max - mc.spent;
+        sections.push('<div class="cs-choice-group"><div class="cs-choice-group-title">Magical Cunning</div>'
+          + choiceRowHtml('Magical Cunning', 'Perform a 1-minute rite to regain expended Pact Magic spell slots, up to half your maximum (rounded up). Once per Long Rest.',
+              '<button type="button" class="cs-choice-btn"' + (left ? '' : ' disabled') + ' onclick="useMagicalCunning()">' + (left ? 'Use Magical Cunning' : 'Used until Long Rest') + '</button>')
+        + '</div>');
+      }
+    }
+
+    if (cls === 'druid' && lvl >= 2) {
+      var ws = limitedUseState('Wild Shape');
+      var wsLeft = ws ? ws.max - ws.spent : 0;
+      var forms = Array.isArray(c.wild_shape_forms) ? c.wild_shape_forms : [];
+      var known = lvl >= 8 ? 8 : (lvl >= 4 ? 6 : 4);
+      var maxCr = lvl >= 8 ? '1' : (lvl >= 4 ? '1/2' : '1/4');
+      var formInputs = '';
+      for (var f = 0; f < known; f++) {
+        formInputs += '<input class="cs-inv-input cs-choice-form" type="text" placeholder="Beast form ' + (f + 1) + '" value="' + escHtml(forms[f] || '') + '" onblur="setWildShapeForm(' + f + ', this)" onkeydown="if(event.key===\'Enter\')this.blur()">';
+      }
+      sections.push('<div class="cs-choice-group"><div class="cs-choice-group-title">Wild Shape</div>'
+        + choiceRowHtml('Wild Shape', 'As a Bonus Action, take the shape of a Beast form you know for hours equal to half your Druid level. You know ' + known + ' Beast forms of Challenge Rating ' + maxCr + ' or lower' + (lvl < 8 ? ' with no Fly Speed' : '') + '. You regain one use on a Short Rest and all uses on a Long Rest (track uses under Class-Specific).')
+        + '<div class="cs-choice-help">Your known forms (you can swap one when you finish a Long Rest):</div>'
+        + '<div class="cs-choice-forms">' + formInputs + '</div>'
+        + choiceRowHtml('Wild Companion', 'Expend a use of Wild Shape to cast Find Familiar without a spell slot or material components. The familiar is a Fey and disappears when you finish a Long Rest.',
+            '<button type="button" class="cs-choice-btn"' + (wsLeft ? '' : ' disabled') + ' onclick="useWildCompanion()">' + (wsLeft ? 'Use Wild Companion' : 'No Wild Shape uses left') + '</button>')
+      + '</div>');
+    }
+
+    wrap.innerHTML = sections.length ? accordionShell('cs-class-choices-acc', 'Class Choices', '<div class="cs-choice-grid">' + sections.join('') + '</div>') : '';
+    wireAllTooltips();
+  }
   function invRowSpecs(category, src) {
     if (category === 'armor')  return src.base_ac  != null ? 'AC ' + src.base_ac : '&mdash;';
     if (category === 'shield') return src.ac_bonus != null ? 'AC +' + src.ac_bonus : '&mdash;';
-    if (category === 'weapon') return src.damage_dice ? src.damage_dice + (src.damage_type ? ' (' + src.damage_type + ')' : '') : '&mdash;';
+    if (category === 'weapon') {
+      var dmg = src.damage_dice ? src.damage_dice + (src.damage_type ? ' (' + src.damage_type + ')' : '') : '&mdash;';
+      return dmg + weaponMasteryChipHtml(src);
+    }
     return '&mdash;';
   }
   // Slot label for an inventory row that is genuinely equipped right now, or
