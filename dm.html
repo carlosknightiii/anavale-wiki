@@ -19122,6 +19122,9 @@ function sccFgPlayerDecisionHeaderHtml(label) {
 // When ctx is set, the row's rerender key points at the SAME
 // scenario_cards redraw machinery decision rows already use instead of
 // a label-keyed lookup that can't see inside nested card content.
+// > 0 while rendering content whose loot is awarded somewhere else (combat
+// outcomes); block.combat_loot:true opts a single block out the same way.
+var SCC_FG_SUPPRESS_LOOT = 0;
 function sccFgOneCombatOutcomesHtml(b, ctx) {
   var num = sccFgActiveSessionNum();
   var log = SCC_FG_COMBAT_OUTCOME_LOG_CACHE[num] || [];
@@ -19141,8 +19144,16 @@ function sccFgOneCombatOutcomesHtml(b, ctx) {
     // been migrated yet, and is still what gets written to the log entry's
     // own content field either way -- a short plain-text summary is more
     // useful there than serialized HTML.
-    var contentHtml = Array.isArray(o.blocks) && o.blocks.length
-      ? '<div class="scc-fg-outcome-content">' + sccFgRenderDoc(o.blocks) + '</div>'
+    // Combat loot is handed out from the Combat tab's own End Combat
+    // summary, so a loot_table inside a combat outcome never renders its
+    // assign widget here (it would show loot that was already awarded, and
+    // its assign path can't address blocks nested in an outcome anyway).
+    SCC_FG_SUPPRESS_LOOT++;
+    var outcomeDocHtml = '';
+    try { outcomeDocHtml = (Array.isArray(o.blocks) && o.blocks.length) ? sccFgRenderDoc(o.blocks) : ''; }
+    finally { SCC_FG_SUPPRESS_LOOT--; }
+    var contentHtml = outcomeDocHtml
+      ? '<div class="scc-fg-outcome-content">' + outcomeDocHtml + '</div>'
       : (o.description ? '<div class="scc-fg-outcome-content"><div class="scc-fg-outcome-desc">' + sccEsc(o.description) + '</div></div>' : '');
     var wrapCls = 'scc-fg-outcome-wrap' + (loggedRow ? ' scc-fg-outcome-wrap--logged' : '');
     return '<div class="' + wrapCls + '">'
@@ -20454,7 +20465,7 @@ function sccFgRenderBlock(b, idx, ctx) {
   // block's own content, not wrapped inside it -- simplest way to support
   // every block type (a 'p', a 'box', a table row header, etc.) with the
   // same one check.
-  if (html && b && Array.isArray(b.loot_table) && b.loot_table.length) {
+  if (html && b && Array.isArray(b.loot_table) && b.loot_table.length && !SCC_FG_SUPPRESS_LOOT && !b.combat_loot) {
     html += sccFgRenderLootTableWidget(b, idx, ctx);
   }
   return html;
